@@ -4,11 +4,14 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+/**
+ * Represents a favorite entity
+ */
 @Entity(tableName = "favorites")
 data class Favorites(
     @PrimaryKey
     @ColumnInfo(name = "id")
-    var id: String,
+    val id: String,
     @ColumnInfo(name = "position")
-    var position: Int?
+    val position: Int
 )

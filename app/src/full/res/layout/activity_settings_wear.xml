@@ -10,7 +10,7 @@
         android:layout_height="wrap_content"
         android:elevation="4dp"
         app:layout_constraintTop_toTopOf="parent"
-        android:theme="@style/ThemeOverlay.HomeAssistant.ActionBar" />
+        android:theme="@style/ThemeOverlay.HomeAssistant.ConfigActionBar" />
 
     <TextView
         android:id="@+id/information_text_view"

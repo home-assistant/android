@@ -141,7 +141,11 @@ class SensorDetailViewModel @Inject constructor(
         }
 
         updateSensorEntity(isEnabled)
-        if (isEnabled) sensorManager?.requestSensorUpdate(app)
+        if (isEnabled) try {
+            sensorManager?.requestSensorUpdate(app)
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception while requesting update for sensor $sensorId", e)
+        }
     }
 
     fun onSettingWithDialogPressed(setting: SensorSetting) {
@@ -181,7 +185,11 @@ class SensorDetailViewModel @Inject constructor(
 
     fun setSetting(setting: SensorSetting) {
         sensorDao.add(setting)
-        sensorManager?.requestSensorUpdate(app)
+        try {
+            sensorManager?.requestSensorUpdate(app)
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception while requesting update for sensor $sensorId", e)
+        }
         refreshSensorData()
     }
 

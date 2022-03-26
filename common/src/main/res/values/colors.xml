@@ -4,6 +4,7 @@
     <color name="colorDialogMessage">@android:color/black</color>
     <color name="colorDialogTitle">@android:color/black</color>
     <color name="colorBackground">@android:color/white</color>
+    <color name="colorOnBackground">#212121</color>
     <color name="colorPrimary">#03A9F4</color>
     <color name="colorPrimaryDark">#0288D1</color>
     <color name="colorAccent">#03A9F4</color>

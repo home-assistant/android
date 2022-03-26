@@ -7,6 +7,7 @@ import android.os.Build
 import android.telephony.SubscriptionInfo
 import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
+import android.util.Log
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.R as commonR
@@ -121,16 +122,19 @@ class PhoneStateSensorManager : SensorManager {
                     subscriptionManager?.getActiveSubscriptionInfoForSimSlotIndex(slotIndex)
 
                 if (info != null) {
-                    displayName = info.displayName.toString()
-                    attrs["carrier name"] = info.carrierName
-                    attrs["iso country code"] = info.countryIso
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        attrs["carrier id"] = info.carrierId
-                        attrs["mcc"] = info.mccString.toString()
-                        attrs["mnc"] = info.mncString.toString()
-                        attrs["is opportunistic"] = info.isOpportunistic
-                        if (info.dataRoaming == SubscriptionManager.DATA_ROAMING_ENABLE) attrs["data roaming"] = "enable"
-                        else attrs["data roaming"] = "disable"
+                    try {
+                        displayName = info.displayName?.toString() ?: displayName
+                        attrs["carrier name"] = info.carrierName
+                        attrs["iso country code"] = info.countryIso
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                            attrs["carrier id"] = info.carrierId
+                            attrs["mcc"] = info.mccString.toString()
+                            attrs["mnc"] = info.mncString.toString()
+                            attrs["is opportunistic"] = info.isOpportunistic
+                            attrs["data roaming"] = if (info.dataRoaming == SubscriptionManager.DATA_ROAMING_ENABLE) "enable" else "disable"
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Unable to get SIM data", e)
                     }
                 }
             }

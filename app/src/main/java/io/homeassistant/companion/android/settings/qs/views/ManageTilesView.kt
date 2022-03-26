@@ -49,123 +49,121 @@ fun ManageTilesView(
     val context = LocalContext.current
     var expandedTile by remember { mutableStateOf(false) }
     var expandedEntity by remember { mutableStateOf(false) }
-    Column(
-        modifier = Modifier
-            .padding(20.dp)
-            .verticalScroll(scrollState)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = stringResource(R.string.tile_select),
-                fontSize = 15.sp,
-                modifier = Modifier.padding(end = 10.dp)
-            )
-            Box {
-                OutlinedButton(onClick = { expandedTile = true }) {
-                    Text(
-                        viewModel.selectedTileName.value
-                    )
-                }
+    Box(modifier = Modifier.verticalScroll(scrollState)) {
+        Column(modifier = Modifier.padding(all = 16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(R.string.tile_select),
+                    fontSize = 15.sp,
+                    modifier = Modifier.padding(end = 10.dp)
+                )
+                Box {
+                    OutlinedButton(onClick = { expandedTile = true }) {
+                        Text(
+                            viewModel.selectedTileName.value
+                        )
+                    }
 
-                DropdownMenu(expanded = expandedTile, onDismissRequest = { expandedTile = false }) {
-                    val tileNameArray =
-                        stringArrayResource(id = io.homeassistant.companion.android.R.array.tile_name)
-                    val tileIdArray =
-                        stringArrayResource(id = io.homeassistant.companion.android.R.array.tile_ids)
-                    for ((tileName, tileId) in tileNameArray.zip(tileIdArray)) {
-                        DropdownMenuItem(onClick = {
-                            viewModel.selectedTile.value = tileId
-                            viewModel.selectedTileName.value = tileName
-                            expandedTile = false
-                            if (viewModel.currentTile() != null)
-                                viewModel.updateExistingTileFields()
-                        }) {
-                            Text(tileName)
+                    DropdownMenu(expanded = expandedTile, onDismissRequest = { expandedTile = false }) {
+                        val tileNameArray =
+                            stringArrayResource(id = io.homeassistant.companion.android.R.array.tile_name)
+                        val tileIdArray =
+                            stringArrayResource(id = io.homeassistant.companion.android.R.array.tile_ids)
+                        for ((tileName, tileId) in tileNameArray.zip(tileIdArray)) {
+                            DropdownMenuItem(onClick = {
+                                viewModel.selectedTile.value = tileId
+                                viewModel.selectedTileName.value = tileName
+                                expandedTile = false
+                                if (viewModel.currentTile() != null)
+                                    viewModel.updateExistingTileFields()
+                            }) {
+                                Text(tileName)
+                            }
                         }
                     }
                 }
             }
-        }
 
-        Divider()
-        TextField(
-            value = viewModel.tileLabel.value ?: "",
-            onValueChange = { viewModel.tileLabel.value = it },
-            label = {
-                Text(
-                    text = stringResource(id = R.string.tile_label)
-                )
-            },
-            modifier = Modifier.padding(10.dp)
-        )
-
-        TextField(
-            value = viewModel.tileSubtitle.value ?: "",
-            onValueChange = { viewModel.tileSubtitle.value = it },
-            label = {
-                Text(
-                    text = stringResource(id = R.string.tile_subtitle)
-                )
-            },
-            modifier = Modifier.padding(10.dp)
-        )
-
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = stringResource(id = R.string.tile_icon),
-                fontSize = 15.sp,
-                modifier = Modifier.padding(end = 10.dp)
+            Divider()
+            TextField(
+                value = viewModel.tileLabel.value ?: "",
+                onValueChange = { viewModel.tileLabel.value = it },
+                label = {
+                    Text(
+                        text = stringResource(id = R.string.tile_label)
+                    )
+                },
+                modifier = Modifier.padding(10.dp)
             )
-            OutlinedButton(onClick = {
-                iconDialog.show(childFragment, viewModel.selectedTile.value)
-            }) {
-                val icon = viewModel.drawableIcon.value?.let { DrawableCompat.wrap(it) }
-                icon?.toBitmap()?.asImageBitmap()
-                    ?.let {
-                        Image(
-                            it,
-                            contentDescription = stringResource(id = R.string.tile_icon),
-                            colorFilter = ColorFilter.tint(colorResource(R.color.colorAccent))
-                        )
-                    }
-            }
-        }
 
-        Text(
-            text = stringResource(id = R.string.tile_entity),
-            fontSize = 15.sp
-        )
-        OutlinedButton(onClick = { expandedEntity = true }) {
-            Text(text = viewModel.selectedEntityId.value)
-        }
+            TextField(
+                value = viewModel.tileSubtitle.value ?: "",
+                onValueChange = { viewModel.tileSubtitle.value = it },
+                label = {
+                    Text(
+                        text = stringResource(id = R.string.tile_subtitle)
+                    )
+                },
+                modifier = Modifier.padding(10.dp)
+            )
 
-        DropdownMenu(expanded = expandedEntity, onDismissRequest = { expandedEntity = false }) {
-            val sortedEntities = viewModel.entities.values.sortedBy { it.entityId }
-            for (item in sortedEntities) {
-                DropdownMenuItem(onClick = {
-                    viewModel.selectedEntityId.value = item.entityId
-                    expandedEntity = false
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(id = R.string.tile_icon),
+                    fontSize = 15.sp,
+                    modifier = Modifier.padding(end = 10.dp)
+                )
+                OutlinedButton(onClick = {
+                    iconDialog.show(childFragment, viewModel.selectedTile.value)
                 }) {
-                    Text(text = item.entityId, fontSize = 15.sp)
+                    val icon = viewModel.drawableIcon.value?.let { DrawableCompat.wrap(it) }
+                    icon?.toBitmap()?.asImageBitmap()
+                        ?.let {
+                            Image(
+                                it,
+                                contentDescription = stringResource(id = R.string.tile_icon),
+                                colorFilter = ColorFilter.tint(colorResource(R.color.colorAccent))
+                            )
+                        }
                 }
             }
-        }
-        Button(
-            onClick = {
-                val tileData = TileEntity(
-                    if (viewModel.currentTile() == null) 0 else viewModel.currentTile()!!.id,
-                    viewModel.selectedTile.value,
-                    viewModel.selectedIcon.value,
-                    viewModel.selectedEntityId.value,
-                    viewModel.tileLabel.value.toString(),
-                    viewModel.tileSubtitle.value
-                )
-                AppDatabase.getInstance(context).tileDao().add(tileData)
-                Toast.makeText(context, R.string.tile_updated, Toast.LENGTH_SHORT).show()
-            },
-            enabled = !viewModel.tileLabel.value.isNullOrEmpty() && viewModel.selectedEntityId.value.isNotEmpty()
-        ) {
-            Text(stringResource(id = R.string.tile_save))
+
+            Text(
+                text = stringResource(id = R.string.tile_entity),
+                fontSize = 15.sp
+            )
+            OutlinedButton(onClick = { expandedEntity = true }) {
+                Text(text = viewModel.selectedEntityId.value)
+            }
+
+            DropdownMenu(expanded = expandedEntity, onDismissRequest = { expandedEntity = false }) {
+                val sortedEntities = viewModel.entities.values.sortedBy { it.entityId }
+                for (item in sortedEntities) {
+                    DropdownMenuItem(onClick = {
+                        viewModel.selectedEntityId.value = item.entityId
+                        expandedEntity = false
+                    }) {
+                        Text(text = item.entityId, fontSize = 15.sp)
+                    }
+                }
+            }
+            Button(
+                onClick = {
+                    val tileData = TileEntity(
+                        if (viewModel.currentTile() == null) 0 else viewModel.currentTile()!!.id,
+                        viewModel.selectedTile.value,
+                        viewModel.selectedIcon.value,
+                        viewModel.selectedEntityId.value,
+                        viewModel.tileLabel.value.toString(),
+                        viewModel.tileSubtitle.value
+                    )
+                    AppDatabase.getInstance(context).tileDao().add(tileData)
+                    Toast.makeText(context, R.string.tile_updated, Toast.LENGTH_SHORT).show()
+                },
+                enabled = !viewModel.tileLabel.value.isNullOrEmpty() && viewModel.selectedEntityId.value.isNotEmpty()
+            ) {
+                Text(stringResource(id = R.string.tile_save))
+            }
         }
     }
 }
