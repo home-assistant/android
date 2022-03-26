@@ -23,7 +23,7 @@ interface CameraWidgetDao {
     suspend fun deleteAll(ids: IntArray)
 
     @Query("SELECT * FROM camera_widgets")
-    fun getAll(): Array<CameraWidgetEntity>?
+    fun getAll(): List<CameraWidgetEntity>
 
     @Query("SELECT * FROM camera_widgets")
     fun getAllFlow(): Flow<List<CameraWidgetEntity>>

@@ -32,9 +32,9 @@ class TemplateWidget : BaseWidgetProvider() {
         }
     }
 
-    override fun getAllWidgetIds(context: Context): List<Int> {
+    override suspend fun getAllWidgetIds(context: Context): List<Int> {
         val templateWidgetDao = AppDatabase.getInstance(context).templateWidgetDao()
-        return templateWidgetDao.getAll()?.map { it.id }.orEmpty()
+        return templateWidgetDao.getAll().map { it.id }
     }
 
     override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity<Map<String, Any>>?): RemoteViews {
@@ -103,7 +103,7 @@ class TemplateWidget : BaseWidgetProvider() {
         }
     }
 
-    override fun onEntityStateChanged(context: Context, entity: Entity<*>) {
+    override suspend fun onEntityStateChanged(context: Context, entity: Entity<*>) {
         getAllWidgetIds(context).forEach { appWidgetId ->
             val intent = Intent(context, TemplateWidget::class.java).apply {
                 action = UPDATE_VIEW

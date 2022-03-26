@@ -23,7 +23,7 @@ interface ButtonWidgetDao {
     suspend fun deleteAll(ids: IntArray)
 
     @Query("SELECT * FROM button_widgets")
-    fun getAll(): List<ButtonWidgetEntity>?
+    fun getAll(): List<ButtonWidgetEntity>
 
     @Query("SELECT * FROM button_widgets")
     fun getAllFlow(): Flow<List<ButtonWidgetEntity>>

@@ -381,8 +381,8 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         }
     }
 
-    override fun getAllWidgetIds(context: Context): List<Int> {
-        return AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao().getAll()?.map { it.id }.orEmpty()
+    override suspend fun getAllWidgetIds(context: Context): List<Int> {
+        return AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao().getAll().map { it.id }
     }
 
     private suspend fun getEntity(context: Context, entityId: String, suggestedEntity: Entity<Map<String, Any>>?): Entity<Map<String, Any>>? {
@@ -472,8 +472,8 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         }
     }
 
-    override fun onEntityStateChanged(context: Context, entity: Entity<*>) {
-        AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao().getAll().orEmpty().forEach {
+    override suspend fun onEntityStateChanged(context: Context, entity: Entity<*>) {
+        AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao().getAll().forEach {
             if (it.entityId == entity.entityId) {
                 mainScope.launch {
                     val views = getWidgetRemoteViews(context, it.id, entity as Entity<Map<String, Any>>)

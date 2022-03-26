@@ -23,11 +23,11 @@ interface StaticWidgetDao {
     suspend fun deleteAll(ids: IntArray)
 
     @Query("SELECT * FROM static_widget")
-    fun getAll(): List<StaticWidgetEntity>?
+    suspend fun getAll(): List<StaticWidgetEntity>
 
     @Query("SELECT * FROM static_widget")
     fun getAllFlow(): Flow<List<StaticWidgetEntity>>
 
     @Query("UPDATE static_widget SET last_update = :lastUpdate WHERE id = :widgetId")
-    fun updateWidgetLastUpdate(widgetId: Int, lastUpdate: String)
+    suspend fun updateWidgetLastUpdate(widgetId: Int, lastUpdate: String)
 }

@@ -75,9 +75,9 @@ class ButtonWidget : AppWidgetProvider() {
 
     private fun updateAllWidgets(
         context: Context,
-        buttonWidgetEntityList: List<ButtonWidgetEntity>?
+        buttonWidgetEntityList: List<ButtonWidgetEntity>
     ) {
-        if (buttonWidgetEntityList != null) {
+        if (buttonWidgetEntityList.isNotEmpty()) {
             Log.d(TAG, "Updating all widgets")
             val appWidgetManager = AppWidgetManager.getInstance(context)
             for (item in buttonWidgetEntityList) {
@@ -124,13 +124,12 @@ class ButtonWidget : AppWidgetProvider() {
         )
 
         buttonWidgetDao = AppDatabase.getInstance(context).buttonWidgetDao()
-        val buttonWidgetList = buttonWidgetDao.getAll()
 
         super.onReceive(context, intent)
         when (action) {
             CALL_SERVICE -> callConfiguredService(context, appWidgetId)
             RECEIVE_DATA -> saveServiceCallConfiguration(context, intent.extras, appWidgetId)
-            Intent.ACTION_SCREEN_ON -> updateAllWidgets(context, buttonWidgetList)
+            Intent.ACTION_SCREEN_ON -> updateAllWidgets(context, buttonWidgetDao.getAll())
         }
     }
 

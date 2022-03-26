@@ -23,7 +23,7 @@ interface MediaPlayerControlsWidgetDao {
     suspend fun deleteAll(ids: IntArray)
 
     @Query("SELECT * FROM mediaplayctrls_widgets")
-    fun getAll(): List<MediaPlayerControlsWidgetEntity>?
+    suspend fun getAll(): List<MediaPlayerControlsWidgetEntity>
 
     @Query("SELECT * FROM mediaplayctrls_widgets")
     fun getAllFlow(): Flow<List<MediaPlayerControlsWidgetEntity>>

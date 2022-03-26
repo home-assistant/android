@@ -85,9 +85,9 @@ class CameraWidget : AppWidgetProvider() {
 
     private fun updateAllWidgets(
         context: Context,
-        cameraWidgetList: Array<CameraWidgetEntity>?
+        cameraWidgetList: List<CameraWidgetEntity>
     ) {
-        if (cameraWidgetList != null) {
+        if (cameraWidgetList.isNotEmpty()) {
             Log.d(TAG, "Updating all widgets")
             for (item in cameraWidgetList) {
                 updateAppWidget(context, item.id)
@@ -193,13 +193,12 @@ class CameraWidget : AppWidgetProvider() {
         )
 
         cameraWidgetDao = AppDatabase.getInstance(context).cameraWidgetDao()
-        val cameraWidgetList = cameraWidgetDao.getAll()
 
         super.onReceive(context, intent)
         when (lastIntent) {
             RECEIVE_DATA -> saveEntityConfiguration(context, intent.extras, appWidgetId)
             UPDATE_IMAGE -> updateAppWidget(context, appWidgetId)
-            Intent.ACTION_SCREEN_ON -> updateAllWidgets(context, cameraWidgetList)
+            Intent.ACTION_SCREEN_ON -> updateAllWidgets(context, cameraWidgetDao.getAll())
         }
     }
 

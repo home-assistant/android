@@ -23,11 +23,11 @@ interface TemplateWidgetDao {
     suspend fun deleteAll(ids: IntArray)
 
     @Query("SELECT * FROM template_widgets")
-    fun getAll(): List<TemplateWidgetEntity>?
+    suspend fun getAll(): List<TemplateWidgetEntity>
 
     @Query("SELECT * FROM template_widgets")
     fun getAllFlow(): Flow<List<TemplateWidgetEntity>>
 
     @Query("UPDATE template_widgets SET last_update = :lastUpdate WHERE id = :widgetId")
-    fun updateTemplateWidgetLastUpdate(widgetId: Int, lastUpdate: String)
+    suspend fun updateTemplateWidgetLastUpdate(widgetId: Int, lastUpdate: String)
 }
