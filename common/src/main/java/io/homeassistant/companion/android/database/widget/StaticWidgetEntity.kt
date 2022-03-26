@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "static_widget")
 data class StaticWidgetEntity(
     @PrimaryKey
-    val id: Int,
+    override val id: Int,
     @ColumnInfo(name = "entity_id")
     val entityId: String,
     @ColumnInfo(name = "attribute_ids")
@@ -22,4 +22,4 @@ data class StaticWidgetEntity(
     val attributeSeparator: String = "",
     @ColumnInfo(name = "last_update")
     val lastUpdate: String
-)
+) : WidgetEntity
