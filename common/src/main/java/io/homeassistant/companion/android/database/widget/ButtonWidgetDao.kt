@@ -26,5 +26,5 @@ interface ButtonWidgetDao {
     fun getAll(): List<ButtonWidgetEntity>?
 
     @Query("SELECT * FROM button_widgets")
-    fun getAllFlow(): Flow<List<ButtonWidgetEntity>>?
+    fun getAllFlow(): Flow<List<ButtonWidgetEntity>>
 }

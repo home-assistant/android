@@ -26,5 +26,5 @@ interface CameraWidgetDao {
     fun getAll(): Array<CameraWidgetEntity>?
 
     @Query("SELECT * FROM camera_widgets")
-    fun getAllFlow(): Flow<List<CameraWidgetEntity>>?
+    fun getAllFlow(): Flow<List<CameraWidgetEntity>>
 }

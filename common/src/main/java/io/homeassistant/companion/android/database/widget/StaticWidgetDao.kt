@@ -26,7 +26,7 @@ interface StaticWidgetDao {
     fun getAll(): List<StaticWidgetEntity>?
 
     @Query("SELECT * FROM static_widget")
-    fun getAllFlow(): Flow<List<StaticWidgetEntity>>?
+    fun getAllFlow(): Flow<List<StaticWidgetEntity>>
 
     @Query("UPDATE static_widget SET last_update = :lastUpdate WHERE id = :widgetId")
     fun updateWidgetLastUpdate(widgetId: Int, lastUpdate: String)

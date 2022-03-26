@@ -26,5 +26,5 @@ interface MediaPlayerControlsWidgetDao {
     fun getAll(): List<MediaPlayerControlsWidgetEntity>?
 
     @Query("SELECT * FROM mediaplayctrls_widgets")
-    fun getAllFlow(): Flow<List<MediaPlayerControlsWidgetEntity>>?
+    fun getAllFlow(): Flow<List<MediaPlayerControlsWidgetEntity>>
 }

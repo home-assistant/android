@@ -26,7 +26,7 @@ interface TemplateWidgetDao {
     fun getAll(): List<TemplateWidgetEntity>?
 
     @Query("SELECT * FROM template_widgets")
-    fun getAllFlow(): Flow<List<TemplateWidgetEntity>>?
+    fun getAllFlow(): Flow<List<TemplateWidgetEntity>>
 
     @Query("UPDATE template_widgets SET last_update = :lastUpdate WHERE id = :widgetId")
     fun updateTemplateWidgetLastUpdate(widgetId: Int, lastUpdate: String)
