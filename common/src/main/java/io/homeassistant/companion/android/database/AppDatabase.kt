@@ -12,6 +12,7 @@ import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.OnConflictStrategy
 import androidx.room.Room
@@ -68,7 +69,9 @@ import io.homeassistant.companion.android.common.R as commonR
         Setting::class
     ],
     version = 25,
-    exportSchema = false
+    autoMigrations = [
+        AutoMigration(from = 24, to = 25)
+    ]
 )
 @TypeConverters(
     LocalNotificationSettingConverter::class,
