@@ -699,8 +699,8 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
         mediaPlayCtrlWidgetDao = AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao()
         // When the user deletes the widget, delete the preference associated with it.
-        for (appWidgetId in appWidgetIds) {
-            mediaPlayCtrlWidgetDao.delete(appWidgetId)
+        mainScope.launch {
+            mediaPlayCtrlWidgetDao.deleteAll(appWidgetIds)
         }
     }
 

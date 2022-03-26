@@ -14,13 +14,13 @@ interface ButtonWidgetDao {
     fun get(id: Int): ButtonWidgetEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun add(buttonWidgetEntity: ButtonWidgetEntity)
-
-    @Update
-    fun update(buttonWidgetEntity: ButtonWidgetEntity)
+    suspend fun add(buttonWidgetEntity: ButtonWidgetEntity)
 
     @Query("DELETE FROM button_widgets WHERE id = :id")
     fun delete(id: Int)
+
+    @Query("DELETE FROM button_widgets WHERE id IN (:ids)")
+    suspend fun deleteAll(ids: IntArray)
 
     @Query("SELECT * FROM button_widgets")
     fun getAll(): List<ButtonWidgetEntity>?

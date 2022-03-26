@@ -14,13 +14,13 @@ interface MediaPlayerControlsWidgetDao {
     fun get(id: Int): MediaPlayerControlsWidgetEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun add(mediaPlayCtrlWidgetEntity: MediaPlayerControlsWidgetEntity)
-
-    @Update
-    fun update(mediaPlayCtrlWidgetEntity: MediaPlayerControlsWidgetEntity)
+    suspend fun add(mediaPlayCtrlWidgetEntity: MediaPlayerControlsWidgetEntity)
 
     @Query("DELETE FROM mediaplayctrls_widgets WHERE id = :id")
     fun delete(id: Int)
+
+    @Query("DELETE FROM mediaplayctrls_widgets WHERE id IN (:ids)")
+    suspend fun deleteAll(ids: IntArray)
 
     @Query("SELECT * FROM mediaplayctrls_widgets")
     fun getAll(): List<MediaPlayerControlsWidgetEntity>?

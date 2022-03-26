@@ -14,13 +14,13 @@ interface CameraWidgetDao {
     fun get(id: Int): CameraWidgetEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun add(cameraWidgetEntity: CameraWidgetEntity)
-
-    @Update
-    fun update(cameraWidgetEntity: CameraWidgetEntity)
+    suspend fun add(cameraWidgetEntity: CameraWidgetEntity)
 
     @Query("DELETE FROM camera_widgets WHERE id = :id")
     fun delete(id: Int)
+
+    @Query("DELETE FROM camera_widgets WHERE id IN (:ids)")
+    suspend fun deleteAll(ids: IntArray)
 
     @Query("SELECT * FROM camera_widgets")
     fun getAll(): Array<CameraWidgetEntity>?

@@ -99,8 +99,8 @@ class ButtonWidget : AppWidgetProvider() {
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
         buttonWidgetDao = AppDatabase.getInstance(context).buttonWidgetDao()
         // When the user deletes the widget, delete the preference associated with it.
-        for (appWidgetId in appWidgetIds) {
-            buttonWidgetDao.delete(appWidgetId)
+        mainScope.launch {
+            buttonWidgetDao.deleteAll(appWidgetIds)
         }
     }
 

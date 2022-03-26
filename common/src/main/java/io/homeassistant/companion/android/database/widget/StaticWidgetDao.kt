@@ -14,13 +14,13 @@ interface StaticWidgetDao {
     fun get(id: Int): StaticWidgetEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun add(staticWidgetEntity: StaticWidgetEntity)
-
-    @Update
-    fun update(staticWidgetEntity: StaticWidgetEntity)
+    suspend fun add(staticWidgetEntity: StaticWidgetEntity)
 
     @Query("DELETE FROM static_widget WHERE id = :id")
     fun delete(id: Int)
+
+    @Query("DELETE FROM static_widget WHERE id IN (:ids)")
+    suspend fun deleteAll(ids: IntArray)
 
     @Query("SELECT * FROM static_widget")
     fun getAll(): List<StaticWidgetEntity>?

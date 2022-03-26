@@ -27,8 +27,8 @@ class TemplateWidget : BaseWidgetProvider() {
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
         val templateWidgetDao = AppDatabase.getInstance(context).templateWidgetDao()
         // When the user deletes the widget, delete the preference associated with it.
-        for (appWidgetId in appWidgetIds) {
-            templateWidgetDao.delete(appWidgetId)
+        mainScope.launch {
+            templateWidgetDao.deleteAll(appWidgetIds)
         }
     }
 

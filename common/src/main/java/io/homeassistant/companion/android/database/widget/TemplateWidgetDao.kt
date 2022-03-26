@@ -14,13 +14,13 @@ interface TemplateWidgetDao {
     fun get(id: Int): TemplateWidgetEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun add(templateWidgetEntity: TemplateWidgetEntity)
-
-    @Update
-    fun update(templateWidgetEntity: TemplateWidgetEntity)
+    suspend fun add(templateWidgetEntity: TemplateWidgetEntity)
 
     @Query("DELETE FROM template_widgets WHERE id = :id")
     fun delete(id: Int)
+
+    @Query("DELETE FROM template_widgets WHERE id IN (:ids)")
+    suspend fun deleteAll(ids: IntArray)
 
     @Query("SELECT * FROM template_widgets")
     fun getAll(): List<TemplateWidgetEntity>?

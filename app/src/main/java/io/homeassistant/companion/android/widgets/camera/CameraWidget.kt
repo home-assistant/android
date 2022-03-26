@@ -233,8 +233,8 @@ class CameraWidget : AppWidgetProvider() {
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
         cameraWidgetDao = AppDatabase.getInstance(context).cameraWidgetDao()
         // When the user deletes the widget, delete the preference associated with it.
-        for (appWidgetId in appWidgetIds) {
-            cameraWidgetDao.delete(appWidgetId)
+        mainScope.launch {
+            cameraWidgetDao.deleteAll(appWidgetIds)
         }
     }
 

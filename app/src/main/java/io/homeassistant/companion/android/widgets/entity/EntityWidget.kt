@@ -193,8 +193,8 @@ class EntityWidget : BaseWidgetProvider() {
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
         val staticWidgetDao = AppDatabase.getInstance(context).staticWidgetDao()
-        appWidgetIds.forEach { appWidgetId ->
-            staticWidgetDao.delete(appWidgetId)
+        mainScope.launch {
+            staticWidgetDao.deleteAll(appWidgetIds)
         }
     }
 }
