@@ -9,7 +9,6 @@ import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
-import io.homeassistant.companion.android.common.data.authentication.AuthorizationException
 import io.homeassistant.companion.android.common.data.integration.ServiceData
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.url.UrlRepository
@@ -291,12 +290,7 @@ class WebSocketRepositoryImpl @Inject constructor(
 
             // Wait up to 30 seconds for auth response
             return true == withTimeoutOrNull(30000) {
-                return@withTimeoutOrNull try {
-                    connected.await()
-                } catch (e: Exception) {
-                    Log.e(TAG, "Unable to authenticate", e)
-                    false
-                }
+                return@withTimeoutOrNull connected.await()
             }
         }
     }
@@ -334,7 +328,7 @@ class WebSocketRepositoryImpl @Inject constructor(
             connected.complete(true)
         } else {
             connectionState = WebSocketState.CLOSED_AUTH
-            connected.completeExceptionally(AuthorizationException())
+            connected.complete(false)
         }
     }
 

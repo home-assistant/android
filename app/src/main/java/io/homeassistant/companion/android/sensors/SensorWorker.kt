@@ -14,6 +14,7 @@ import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
 import io.homeassistant.companion.android.common.sensors.SensorWorkerBase
+import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
 
 class SensorWorker(
@@ -40,6 +41,7 @@ class SensorWorker(
     @InstallIn(SingletonComponent::class)
     interface SensorWorkerEntryPoint {
         fun integrationRepository(): IntegrationRepository
+        fun httpClient(): OkHttpClient
     }
 
     override val integrationUseCase: IntegrationRepository

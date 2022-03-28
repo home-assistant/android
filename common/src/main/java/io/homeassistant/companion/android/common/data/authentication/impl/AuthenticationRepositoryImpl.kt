@@ -9,7 +9,6 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
-import io.homeassistant.companion.android.common.data.authentication.AuthorizationException
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowAuthentication
 import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowCreateEntry
@@ -59,7 +58,7 @@ class AuthenticationRepositoryImpl @Inject constructor(
         val url = urlRepository.getUrl()?.toHttpUrlOrNull()
         if (url == null) {
             Log.e(TAG, "Unable to authenticate with username/password.")
-            throw AuthorizationException()
+            return null
         }
 
         val response = authenticationService.authenticatePassword(
@@ -70,7 +69,8 @@ class AuthenticationRepositoryImpl @Inject constructor(
                 password
             )
         )
-        if (!response.isSuccessful || response.body() == null) throw AuthorizationException()
+        if (!response.isSuccessful || response.body() == null)
+            return null
         return mapLoginFlowResponse(response.body()!!)
     }
 
@@ -78,7 +78,7 @@ class AuthenticationRepositoryImpl @Inject constructor(
         val url = urlRepository.getUrl()?.toHttpUrlOrNull()
         if (url == null) {
             Log.e(TAG, "Unable to authenticate with MFA code.")
-            throw AuthorizationException()
+            return null
         }
 
         val response = authenticationService.authenticateMfa(
@@ -88,7 +88,8 @@ class AuthenticationRepositoryImpl @Inject constructor(
                 code
             )
         )
-        if (!response.isSuccessful || response.body() == null) throw AuthorizationException()
+        if (!response.isSuccessful || response.body() == null)
+            return null
         return mapLoginFlowResponse(response.body()!!)
     }
 
@@ -115,12 +116,12 @@ class AuthenticationRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun retrieveExternalAuthentication(forceRefresh: Boolean): String {
+    override suspend fun retrieveExternalAuthentication(forceRefresh: Boolean): String? {
         return convertSession(ensureValidSession(forceRefresh))
     }
 
-    override suspend fun retrieveAccessToken(): String {
-        return ensureValidSession(false).accessToken
+    override suspend fun retrieveAccessToken(): String? {
+        return ensureValidSession(false)?.accessToken
     }
 
     override suspend fun revokeSession() {
@@ -162,8 +163,9 @@ class AuthenticationRepositoryImpl @Inject constructor(
             .toUrl()
     }
 
-    override suspend fun buildBearerToken(): String {
-        return "Bearer " + ensureValidSession().accessToken
+    override suspend fun buildBearerToken(): String? {
+        val accessToken = ensureValidSession()?.accessToken
+        return if (accessToken != null) "Bearer $accessToken" else null
     }
 
     private fun mapLoginFlowResponse(responseBody: ResponseBody): LoginFlowResponse? {
@@ -176,13 +178,17 @@ class AuthenticationRepositoryImpl @Inject constructor(
         }
     }
 
-    private fun convertSession(session: Session): String {
-        return ObjectMapper().writeValueAsString(
-            mapOf(
-                "access_token" to session.accessToken,
-                "expires_in" to session.expiresIn()
+    private fun convertSession(session: Session?): String? {
+        return if (session != null) {
+            ObjectMapper().writeValueAsString(
+                mapOf(
+                    "access_token" to session.accessToken,
+                    "expires_in" to session.expiresIn()
+                )
             )
-        )
+        } else {
+            null
+        }
     }
 
     private suspend fun retrieveSession(): Session? {
@@ -198,12 +204,12 @@ class AuthenticationRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun ensureValidSession(forceRefresh: Boolean = false): Session {
+    private suspend fun ensureValidSession(forceRefresh: Boolean = false): Session? {
         val session = retrieveSession()
         val url = urlRepository.getUrl()?.toHttpUrlOrNull()
         if (session == null || url == null) {
             Log.e(TAG, "Unable to revoke session.")
-            throw AuthorizationException()
+            return null
         }
 
         if (session.isExpired() || forceRefresh) {
@@ -214,21 +220,25 @@ class AuthenticationRepositoryImpl @Inject constructor(
                 AuthenticationService.CLIENT_ID
             ).let {
                 if (it.isSuccessful) {
-                    val refreshedToken = it.body() ?: throw AuthorizationException()
-                    val refreshSession = Session(
-                        refreshedToken.accessToken,
-                        System.currentTimeMillis() / 1000 + refreshedToken.expiresIn,
-                        session.refreshToken,
-                        refreshedToken.tokenType
-                    )
-                    saveSession(refreshSession)
-                    return@let refreshSession
+                    val refreshedToken = it.body()
+                    return@let if (refreshedToken != null) {
+                        val refreshSession = Session(
+                            refreshedToken.accessToken,
+                            System.currentTimeMillis() / 1000 + refreshedToken.expiresIn,
+                            session.refreshToken,
+                            refreshedToken.tokenType
+                        )
+                        saveSession(refreshSession)
+                        refreshSession
+                    } else {
+                        null
+                    }
                 } else if (it.code() == 400 &&
                     it.errorBody()?.string()?.contains("invalid_grant") == true
                 ) {
                     revokeSession()
                 }
-                throw AuthorizationException()
+                return@let null
             }
         }
 

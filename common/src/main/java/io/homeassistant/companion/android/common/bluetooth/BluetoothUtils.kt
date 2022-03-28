@@ -62,7 +62,7 @@ object BluetoothUtils {
             val m: Method = device.javaClass.getMethod("isConnected")
             m.invoke(device) as Boolean
         } catch (e: Exception) {
-            throw IllegalStateException(e)
+            false
         }
     }
 }

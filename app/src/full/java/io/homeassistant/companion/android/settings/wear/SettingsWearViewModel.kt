@@ -111,14 +111,9 @@ class SettingsWearViewModel @Inject constructor(
         templateTileContent.value = template
         if (template.isNotEmpty()) {
             viewModelScope.launch {
-                try {
-                    templateTileContentRendered.value =
-                        integrationUseCase.renderTemplate(template, mapOf())
-                } catch (e: Exception) {
-                    templateTileContentRendered.value = getApplication<Application>().getString(
-                        commonR.string.template_tile_error
-                    )
-                }
+                templateTileContentRendered.value =
+                    integrationUseCase.renderTemplate(template, mapOf())
+                        ?: getApplication<Application>().getString(commonR.string.template_tile_error)
             }
         } else {
             templateTileContentRendered.value = ""

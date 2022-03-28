@@ -190,7 +190,7 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
-    override fun getAuthorizationHeader(): String {
+    override fun getAuthorizationHeader(): String? {
         return runBlocking {
             authenticationUseCase.buildBearerToken()
         }

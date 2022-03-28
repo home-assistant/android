@@ -5,17 +5,17 @@ import kotlinx.coroutines.flow.Flow
 
 interface IntegrationRepository {
 
-    suspend fun registerDevice(deviceRegistration: DeviceRegistration)
-    suspend fun updateRegistration(deviceRegistration: DeviceRegistration)
+    suspend fun registerDevice(deviceRegistration: DeviceRegistration): Boolean
+    suspend fun updateRegistration(deviceRegistration: DeviceRegistration): Boolean
     suspend fun getRegistration(): DeviceRegistration
 
     suspend fun isRegistered(): Boolean
 
-    suspend fun getNotificationRateLimits(): RateLimitResponse
+    suspend fun getNotificationRateLimits(): RateLimitResponse?
 
-    suspend fun renderTemplate(template: String, variables: Map<String, String>): String
+    suspend fun renderTemplate(template: String, variables: Map<String, String>): String?
 
-    suspend fun updateLocation(updateLocation: UpdateLocation)
+    suspend fun updateLocation(updateLocation: UpdateLocation): Boolean
 
     suspend fun getZones(): Array<Entity<ZoneAttributes>>
 
@@ -61,13 +61,13 @@ interface IntegrationRepository {
     suspend fun getEntity(entityId: String): Entity<Map<String, Any>>?
     suspend fun getEntityUpdates(): Flow<Entity<*>>?
 
-    suspend fun callService(domain: String, service: String, serviceData: HashMap<String, Any>)
+    suspend fun callService(domain: String, service: String, serviceData: HashMap<String, Any>): Boolean
 
-    suspend fun scanTag(data: HashMap<String, Any>)
+    suspend fun scanTag(data: HashMap<String, Any>): Boolean
 
-    suspend fun fireEvent(eventType: String, eventData: Map<String, Any>)
+    suspend fun fireEvent(eventType: String, eventData: Map<String, Any>): Boolean
 
-    suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>)
+    suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>): Boolean
     suspend fun updateSensors(sensors: Array<SensorRegistration<Any>>): Boolean
 
     suspend fun shouldNotifySecurityWarning(): Boolean

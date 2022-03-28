@@ -6,7 +6,6 @@ import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.IntegrationException
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
 import io.homeassistant.companion.android.common.data.integration.Service
@@ -80,7 +79,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         private val VERSION_PATTERN = Pattern.compile("([0-9]{4})\\.([0-9]{1,2})\\.([0-9]{1,2}).*")
     }
 
-    override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {
+    override suspend fun registerDevice(deviceRegistration: DeviceRegistration): Boolean {
         val request = createUpdateRegistrationRequest(deviceRegistration)
         request.appId = APP_ID
         request.appName = APP_NAME
@@ -91,28 +90,32 @@ class IntegrationRepositoryImpl @Inject constructor(
         val url = urlRepository.getUrl()?.toHttpUrlOrNull()
         if (url == null) {
             Log.e(TAG, "Unable to register device due to missing URL")
-            return
+            return false
         }
-        try {
-            val response =
-                integrationService.registerDevice(
-                    url.newBuilder().addPathSegments("api/mobile_app/registrations").build(),
-                    authenticationRepository.buildBearerToken(),
-                    request
-                )
-            persistDeviceRegistration(deviceRegistration)
-            urlRepository.saveRegistrationUrls(
-                response.cloudhookUrl,
-                response.remoteUiUrl,
-                response.webhookId
+
+        val bearerToken = authenticationRepository.buildBearerToken()
+        if (bearerToken == null) {
+            Log.e(TAG, "Unable to build bearer token.")
+            return false
+        }
+
+        val response =
+            integrationService.registerDevice(
+                url.newBuilder().addPathSegments("api/mobile_app/registrations").build(),
+                bearerToken,
+                request
             )
-            localStorage.putString(PREF_SECRET, response.secret)
-        } catch (e: Exception) {
-            Log.e(TAG, "Unable to register device", e)
-        }
+        persistDeviceRegistration(deviceRegistration)
+        urlRepository.saveRegistrationUrls(
+            response.cloudhookUrl,
+            response.remoteUiUrl,
+            response.webhookId
+        )
+        localStorage.putString(PREF_SECRET, response.secret)
+        return true
     }
 
-    override suspend fun updateRegistration(deviceRegistration: DeviceRegistration) {
+    override suspend fun updateRegistration(deviceRegistration: DeviceRegistration): Boolean {
         val request =
             IntegrationRequest(
                 "update_registration",
@@ -123,7 +126,7 @@ class IntegrationRepositoryImpl @Inject constructor(
             try {
                 if (integrationService.callWebhook(it.toHttpUrlOrNull()!!, request).isSuccessful) {
                     persistDeviceRegistration(deviceRegistration)
-                    return
+                    return true
                 }
             } catch (e: Exception) {
                 if (causeException == null) causeException = e
@@ -131,8 +134,8 @@ class IntegrationRepositoryImpl @Inject constructor(
             }
         }
 
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration request update_registration")
+        Log.e(TAG, "Unable to update registration", causeException)
+        return false
     }
 
     override suspend fun getRegistration(): DeviceRegistration {
@@ -156,7 +159,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         return urlRepository.getApiUrls().isNotEmpty()
     }
 
-    override suspend fun renderTemplate(template: String, variables: Map<String, String>): String {
+    override suspend fun renderTemplate(template: String, variables: Map<String, String>): String? {
         var causeException: Exception? = null
         for (it in urlRepository.getApiUrls()) {
             try {
@@ -173,11 +176,11 @@ class IntegrationRepositoryImpl @Inject constructor(
             }
         }
 
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration request render_template")
+        Log.e(TAG, "Unable to render template", causeException)
+        return null
     }
 
-    override suspend fun updateLocation(updateLocation: UpdateLocation) {
+    override suspend fun updateLocation(updateLocation: UpdateLocation): Boolean {
         val updateLocationRequest = createUpdateLocation(updateLocation)
 
         var causeException: Exception? = null
@@ -195,18 +198,18 @@ class IntegrationRepositoryImpl @Inject constructor(
             }
             // if we had a successful call we can return
             if (wasSuccess)
-                return
+                return true
         }
 
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration request update_location")
+        Log.e(TAG, "Issue updating location", causeException)
+        return false
     }
 
     override suspend fun callService(
         domain: String,
         service: String,
         serviceData: HashMap<String, Any>
-    ) {
+    ): Boolean {
         var wasSuccess = false
 
         val serviceCallRequest =
@@ -233,14 +236,13 @@ class IntegrationRepositoryImpl @Inject constructor(
             }
             // if we had a successful call we can return
             if (wasSuccess)
-                return
+                return true
         }
-
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration request call_service")
+        Log.e(TAG, "Issue calling service", causeException)
+        return false
     }
 
-    override suspend fun scanTag(data: HashMap<String, Any>) {
+    override suspend fun scanTag(data: HashMap<String, Any>): Boolean {
         var wasSuccess = false
 
         var causeException: Exception? = null
@@ -260,14 +262,13 @@ class IntegrationRepositoryImpl @Inject constructor(
             }
             // if we had a successful call we can return
             if (wasSuccess)
-                return
+                return true
         }
-
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration request scan_tag")
+        Log.e(TAG, "Issue scanning tag", causeException)
+        return false
     }
 
-    override suspend fun fireEvent(eventType: String, eventData: Map<String, Any>) {
+    override suspend fun fireEvent(eventType: String, eventData: Map<String, Any>): Boolean {
         var wasSuccess = false
 
         val fireEventRequest = FireEventRequest(
@@ -292,11 +293,11 @@ class IntegrationRepositoryImpl @Inject constructor(
             }
             // if we had a successful call we can return
             if (wasSuccess)
-                return
+                return true
         }
 
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration request fire_event")
+        Log.e(TAG, "Unable to fire event", causeException)
+        return false
     }
 
     override suspend fun getZones(): Array<Entity<ZoneAttributes>> {
@@ -319,9 +320,8 @@ class IntegrationRepositoryImpl @Inject constructor(
                 return createZonesResponse(zones)
             }
         }
-
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration request get_zones")
+        Log.e(TAG, "Unable to get zones", causeException)
+        return arrayOf()
     }
 
     override suspend fun setFullScreenEnabled(enabled: Boolean) {
@@ -431,25 +431,16 @@ class IntegrationRepositoryImpl @Inject constructor(
         return localStorage.getBoolean(PREF_SHOW_TILE_SHORTCUTS_TEXT)
     }
 
-    override suspend fun getNotificationRateLimits(): RateLimitResponse {
+    override suspend fun getNotificationRateLimits(): RateLimitResponse? {
         val pushToken = localStorage.getString(PREF_PUSH_TOKEN) ?: ""
         val requestBody = RateLimitRequest(pushToken)
-        var checkRateLimits: RateLimitResponse? = null
 
-        var causeException: Exception? = null
-
-        try {
-            checkRateLimits =
-                integrationService.getRateLimit(RATE_LIMIT_URL, requestBody).rateLimits
+        return try {
+            integrationService.getRateLimit(RATE_LIMIT_URL, requestBody).rateLimits
         } catch (e: Exception) {
-            causeException = e
             Log.e(TAG, "Unable to get notification rate limits", e)
+            null
         }
-        if (checkRateLimits != null)
-            return checkRateLimits
-
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling checkRateLimits")
     }
 
     override suspend fun getHomeAssistantVersion(): String {
@@ -505,13 +496,18 @@ class IntegrationRepositoryImpl @Inject constructor(
     override suspend fun getEntity(entityId: String): Entity<Map<String, Any>>? {
         val url = urlRepository.getUrl()?.toHttpUrlOrNull()
         if (url == null) {
-            Log.e(TAG, "Unable to register device due to missing URL")
+            Log.e(TAG, "Unable to get entity due to missing URL")
+            return null
+        }
+        val bearerToken = authenticationRepository.buildBearerToken()
+        if (bearerToken == null) {
+            Log.e(TAG, "Unable to get entity due to missing bearer token")
             return null
         }
 
         val response = integrationService.getState(
             url.newBuilder().addPathSegments("api/states/$entityId").build(),
-            authenticationRepository.buildBearerToken()
+            bearerToken
         )
         return Entity(
             response.entityId,
@@ -552,7 +548,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         return canRegisterCategoryStateClass
     }
 
-    override suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>) {
+    override suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>): Boolean {
 
         val canRegisterCategoryStateClass = canRegisterEntityCategoryStateClass()
         val integrationRequest = IntegrationRequest(
@@ -577,7 +573,7 @@ class IntegrationRepositoryImpl @Inject constructor(
                 integrationService.callWebhook(it.toHttpUrlOrNull()!!, integrationRequest).let {
                     // If we created sensor or it already exists
                     if (it.isSuccessful || it.code() == 409) {
-                        return
+                        return true
                     }
                 }
             } catch (e: Exception) {
@@ -585,8 +581,8 @@ class IntegrationRepositoryImpl @Inject constructor(
                 // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
             }
         }
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration request register_sensor")
+        Log.e(TAG, "Unable to register sensor", causeException)
+        return false
     }
 
     override suspend fun updateSensors(sensors: Array<SensorRegistration<Any>>): Boolean {
@@ -620,8 +616,8 @@ class IntegrationRepositoryImpl @Inject constructor(
             }
         }
 
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration update_sensor_states")
+        Log.e(TAG, "Unable to update sensors", causeException)
+        return false
     }
 
     override suspend fun shouldNotifySecurityWarning(): Boolean {

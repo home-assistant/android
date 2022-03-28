@@ -72,7 +72,7 @@ class TemplateTile : TileService() {
                     Timeline.Builder().addTimelineEntry(
                         TimelineEntry.Builder().setLayout(
                             Layout.Builder().setRoot(
-                                layout(renderedText)
+                                layout(renderedText.toString())
                             ).build()
                         ).build()
                     ).build()

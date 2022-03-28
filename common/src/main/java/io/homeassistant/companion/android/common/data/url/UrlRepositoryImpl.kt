@@ -2,9 +2,7 @@ package io.homeassistant.companion.android.common.data.url
 
 import android.util.Log
 import io.homeassistant.companion.android.common.data.LocalStorage
-import io.homeassistant.companion.android.common.data.MalformedHttpUrlException
 import io.homeassistant.companion.android.common.data.wifi.WifiHelper
-import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.net.URL
@@ -93,19 +91,7 @@ class UrlRepositoryImpl @Inject constructor(
     }
 
     override suspend fun saveUrl(url: String, isInternal: Boolean?) {
-        val trimUrl = if (url == "") null else try {
-            val httpUrl = url.toHttpUrl()
-            HttpUrl.Builder()
-                .scheme(httpUrl.scheme)
-                .host(httpUrl.host)
-                .port(httpUrl.port)
-                .toString()
-        } catch (e: IllegalArgumentException) {
-            throw MalformedHttpUrlException(
-                e.message
-            )
-        }
-        localStorage.putString(if (isInternal ?: isInternal()) PREF_LOCAL_URL else PREF_REMOTE_URL, trimUrl)
+        localStorage.putString(if (isInternal ?: isInternal()) PREF_LOCAL_URL else PREF_REMOTE_URL, url.toHttpUrlOrNull()?.toString())
     }
 
     override suspend fun getHomeWifiSsids(): Set<String> {

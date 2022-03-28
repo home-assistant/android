@@ -14,7 +14,6 @@ import io.homeassistant.companion.android.BuildConfig
 import java.io.IOException
 
 object NFCUtil {
-    @Throws(Exception::class)
     fun createNFCMessage(url: String, intent: Intent?): Boolean {
         val nfcRecord = NdefRecord.createUri(url)
         val applicationRecords = BuildConfig.APPLICATION_IDS.map {
@@ -47,7 +46,6 @@ object NFCUtil {
         nfcAdapter.enableForegroundDispatch(activity, pendingIntent, filters, techLists)
     }
 
-    @Throws(Exception::class)
     private fun writeMessageToTag(
         nfcMessage: NdefMessage,
         fallbackMessage: NdefMessage,
@@ -63,7 +61,7 @@ object NFCUtil {
             }
             if (it.maxSize < fallbackMessage.toByteArray().size) {
                 // Message to large to write to NFC tag
-                throw Exception("Message is too large")
+                return false
             }
             return if (it.isWritable) {
                 it.writeNdefMessage(messageToWrite)
@@ -71,7 +69,7 @@ object NFCUtil {
                 // Message is written to tag
                 true
             } else {
-                throw Exception("NFC tag is read-only")
+                return false
             }
         }
 
@@ -85,7 +83,7 @@ object NFCUtil {
                 // The data is written to the tag
             } catch (e: IOException) {
                 // Failed to format tag
-                throw Exception("Failed to format tag", e)
+                return false
             }
         }
         return true

@@ -101,6 +101,8 @@ class NetworkSensorManager : SensorManager {
         private const val SETTING_GET_CURRENT_BSSID = "network_get_current_bssid"
     }
 
+    lateinit var httpClient: OkHttpClient
+
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#connection-type-sensor"
     }
@@ -416,7 +418,10 @@ class NetworkSensorManager : SensorManager {
             }
 
             override fun onResponse(call: Call, response: Response) {
-                if (!response.isSuccessful) throw IOException("Unexpected response code $response")
+                if (!response.isSuccessful) {
+                    Log.e(TAG, "Unable to update public ip, $response")
+                    return
+                }
                 try {
                     val jsonObject = JSONObject(response.body!!.string())
                     ip = jsonObject.getString("ip")
