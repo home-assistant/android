@@ -15,7 +15,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import okhttp3.OkHttpClient
 import java.util.Locale
 import javax.inject.Inject
 
