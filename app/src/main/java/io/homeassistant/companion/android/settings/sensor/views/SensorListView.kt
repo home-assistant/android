@@ -1,9 +1,10 @@
 package io.homeassistant.companion.android.settings.sensor.views
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -30,6 +31,7 @@ import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.settings.sensor.SensorSettingsViewModel
 import io.homeassistant.companion.android.common.R as commonR
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SensorListView(
     viewModel: SensorSettingsViewModel,
@@ -37,19 +39,24 @@ fun SensorListView(
     onSensorClicked: (String) -> Unit
 ) {
     val context = LocalContext.current
+    val listEntries = managers.associateWith { manager ->
+        manager.getAvailableSensors(context)
+            .filter { basicSensor ->
+                viewModel.sensors.any { basicSensor.id == it.id }
+            }
+    }
 
-    LazyColumn(
-        contentPadding = PaddingValues(vertical = 8.dp)
-    ) {
-        managers.forEachIndexed { index, manager ->
-            if (manager.hasSensor(context)) {
-                val basicSensors = manager.getAvailableSensors(context)
-                val currentSensors = basicSensors.filter { basicSensor ->
-                    viewModel.sensors.any { basicSensor.id == it.id }
-                }.sortedBy { context.getString(it.name) }
+    LazyColumn {
+        listEntries.forEach { (manager, currentSensors) ->
+            stickyHeader(
+                key = manager.id()
+            ) {
                 if (currentSensors.any()) {
-                    item {
-                        if (index != 0) Divider()
+                    Column(
+                        modifier = Modifier
+                            .background(MaterialTheme.colors.background)
+                            .fillMaxWidth()
+                    ) {
                         Row(
                             modifier = Modifier
                                 .height(48.dp)
@@ -65,15 +72,20 @@ fun SensorListView(
                         }
                     }
                 }
-                items(
-                    items = currentSensors,
-                    key = { "${manager.id()}_${it.id}" }
-                ) { basicSensor ->
-                    SensorRow(
-                        basicSensor = basicSensor,
-                        dbSensor = viewModel.sensors.firstOrNull { it.id == basicSensor.id },
-                        onSensorClicked = onSensorClicked
-                    )
+            }
+            items(
+                items = currentSensors,
+                key = { "${manager.id()}_${it.id}" }
+            ) { basicSensor ->
+                SensorRow(
+                    basicSensor = basicSensor,
+                    dbSensor = viewModel.sensors.firstOrNull { it.id == basicSensor.id },
+                    onSensorClicked = onSensorClicked
+                )
+            }
+            if (currentSensors.any() && manager.id() != listEntries.keys.last().id()) {
+                item {
+                    Divider()
                 }
             }
         }
