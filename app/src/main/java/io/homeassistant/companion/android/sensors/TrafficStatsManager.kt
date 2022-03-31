@@ -21,6 +21,7 @@ class TrafficStatsManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_mobile_rx_gb,
             commonR.string.sensor_description_mobile_rx_gb,
+            "mdi:radio-tower",
             unitOfMeasurement = "GB",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
@@ -30,6 +31,7 @@ class TrafficStatsManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_mobile_tx_gb,
             commonR.string.sensor_description_mobile_tx_gb,
+            "mdi:radio-tower",
             unitOfMeasurement = "GB",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
@@ -39,6 +41,7 @@ class TrafficStatsManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_total_rx_gb,
             commonR.string.sensor_description_total_rx_gb,
+            "mdi:radio-tower",
             unitOfMeasurement = "GB",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
@@ -48,6 +51,7 @@ class TrafficStatsManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_total_tx_gb,
             commonR.string.sensor_description_total_tx_gb,
+            "mdi:radio-tower",
             unitOfMeasurement = "GB",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
@@ -98,8 +102,6 @@ class TrafficStatsManager : SensorManager {
         if (!isEnabled(context, rxBytesMobile.id))
             return
 
-        val icon = "mdi:radio-tower"
-
         val mobileRx = try {
             TrafficStats.getMobileRxBytes().toFloat() / GB
         } catch (e: Exception) {
@@ -111,7 +113,7 @@ class TrafficStatsManager : SensorManager {
             context,
             rxBytesMobile,
             mobileRx.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN),
-            icon,
+            rxBytesMobile.statelessIcon,
             mapOf()
         )
     }
@@ -120,8 +122,6 @@ class TrafficStatsManager : SensorManager {
 
         if (!isEnabled(context, txBytesMobile.id))
             return
-
-        val icon = "mdi:radio-tower"
 
         val mobileTx = try {
             TrafficStats.getMobileTxBytes().toFloat() / GB
@@ -134,7 +134,7 @@ class TrafficStatsManager : SensorManager {
             context,
             txBytesMobile,
             mobileTx.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN),
-            icon,
+            txBytesMobile.statelessIcon,
             mapOf()
         )
     }
@@ -142,8 +142,6 @@ class TrafficStatsManager : SensorManager {
 
         if (!isEnabled(context, rxBytesTotal.id))
             return
-
-        val icon = "mdi:radio-tower"
 
         val totalRx = try {
             TrafficStats.getTotalRxBytes().toFloat().absoluteValue / GB
@@ -156,7 +154,7 @@ class TrafficStatsManager : SensorManager {
             context,
             rxBytesTotal,
             totalRx.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN),
-            icon,
+            rxBytesTotal.statelessIcon,
             mapOf()
         )
     }
@@ -165,8 +163,6 @@ class TrafficStatsManager : SensorManager {
 
         if (!isEnabled(context, txBytesTotal.id))
             return
-
-        val icon = "mdi:radio-tower"
 
         val totalTx = try {
             TrafficStats.getTotalTxBytes().toFloat().absoluteValue / GB
@@ -179,7 +175,7 @@ class TrafficStatsManager : SensorManager {
             context,
             txBytesTotal,
             totalTx.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN),
-            icon,
+            txBytesTotal.statelessIcon,
             mapOf()
         )
     }

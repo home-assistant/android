@@ -32,6 +32,7 @@ interface SensorManager {
         val type: String,
         val name: Int = commonR.string.sensor,
         val descriptionId: Int = commonR.string.sensor_description_none,
+        val statelessIcon: String = "",
         val deviceClass: String? = null,
         val unitOfMeasurement: String? = null,
         val docsLink: String? = null,

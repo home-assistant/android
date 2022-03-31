@@ -19,7 +19,8 @@ class LastAppSensorManager : SensorManager {
             "last_used_app",
             "sensor",
             commonR.string.basic_sensor_name_last_used_app,
-            commonR.string.sensor_description_last_used_app
+            commonR.string.sensor_description_last_used_app,
+            "mdi:android"
         )
     }
 
@@ -69,13 +70,11 @@ class LastAppSensorManager : SensorManager {
             Log.e(TAG, "Unable to get package label for: $lastApp", e)
         }
 
-        val icon = "mdi:android"
-
         onSensorUpdated(
             context,
             last_used,
             lastApp,
-            icon,
+            last_used.statelessIcon,
             mapOf(
                 "Label" to appLabel
             )

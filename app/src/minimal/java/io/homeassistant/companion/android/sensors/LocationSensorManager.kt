@@ -26,19 +26,22 @@ class LocationSensorManager : LocationSensorManagerBase(), SensorManager {
             "location_background",
             "",
             commonR.string.basic_sensor_name_location_background,
-            commonR.string.sensor_description_location_background
+            commonR.string.sensor_description_location_background,
+            "mdi:map-marker-multiple"
         )
         val zoneLocation = SensorManager.BasicSensor(
             "zone_background",
             "",
             commonR.string.basic_sensor_name_location_zone,
-            commonR.string.sensor_description_location_zone
+            commonR.string.sensor_description_location_zone,
+            "mdi:map-marker-radius"
         )
         val singleAccurateLocation = SensorManager.BasicSensor(
             "accurate_location",
             "",
             commonR.string.basic_sensor_name_location_accurate,
-            commonR.string.sensor_description_location_accurate
+            commonR.string.sensor_description_location_accurate,
+            "mdi:crosshairs-gps",
         )
         internal const val TAG = "LocBroadcastReceiver"
 

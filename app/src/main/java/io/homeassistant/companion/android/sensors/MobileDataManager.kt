@@ -17,6 +17,7 @@ class MobileDataManager : SensorManager {
             "binary_sensor",
             commonR.string.basic_sensor_name_mobile_data,
             commonR.string.sensor_description_mobile_data,
+            "mdi:signal",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         val mobileDataRoaming = SensorManager.BasicSensor(
@@ -24,6 +25,7 @@ class MobileDataManager : SensorManager {
             "binary_sensor",
             commonR.string.basic_sensor_name_mobile_data_roaming,
             commonR.string.sensor_description_mobile_data_roaming,
+            "mdi:toggle-switch",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
     }
@@ -51,8 +53,8 @@ class MobileDataManager : SensorManager {
     override fun requestSensorUpdate(
         context: Context
     ) {
-        checkState(context, mobileDataState, "mobile_data", "mdi:signal")
-        checkState(context, mobileDataRoaming, Settings.Global.DATA_ROAMING, "mdi:toggle-switch")
+        checkState(context, mobileDataState, "mobile_data", mobileDataState.statelessIcon)
+        checkState(context, mobileDataRoaming, Settings.Global.DATA_ROAMING, mobileDataRoaming.statelessIcon)
     }
 
     private fun checkState(

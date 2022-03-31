@@ -45,6 +45,7 @@ class BluetoothSensorManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_bluetooth,
             commonR.string.sensor_description_bluetooth_connection,
+            "mdi:bluetooth",
             unitOfMeasurement = "connection(s)",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT
         )
@@ -53,6 +54,7 @@ class BluetoothSensorManager : SensorManager {
             "binary_sensor",
             commonR.string.basic_sensor_name_bluetooth_state,
             commonR.string.sensor_description_bluetooth_state,
+            "mdi:bluetooth",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         val bleTransmitter = SensorManager.BasicSensor(
@@ -60,6 +62,7 @@ class BluetoothSensorManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_bluetooth_ble_emitter,
             commonR.string.sensor_description_bluetooth_ble_emitter,
+            "mdi:bluetooth",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
 
@@ -121,7 +124,6 @@ class BluetoothSensorManager : SensorManager {
             return
 
         var totalConnectedDevices = 0
-        val icon = "mdi:bluetooth"
         var connectedPairedDevices: List<String> = ArrayList()
         var connectedNotPairedDevices: List<String> = ArrayList()
         var bondedString = ""
@@ -138,7 +140,7 @@ class BluetoothSensorManager : SensorManager {
             context,
             bluetoothConnection,
             totalConnectedDevices,
-            icon,
+            bluetoothConnection.statelessIcon,
             mapOf(
                 "connected_paired_devices" to connectedPairedDevices,
                 "connected_not_paired_devices" to connectedNotPairedDevices,

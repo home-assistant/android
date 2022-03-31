@@ -18,6 +18,7 @@ class PowerSensorManager : SensorManager {
             "binary_sensor",
             commonR.string.basic_sensor_name_interactive,
             commonR.string.sensor_description_interactive,
+            "mdi:cellphone",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#interactive-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
@@ -26,6 +27,7 @@ class PowerSensorManager : SensorManager {
             "binary_sensor",
             commonR.string.basic_sensor_name_doze,
             commonR.string.sensor_description_doze,
+            "mdi:sleep",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#doze-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
@@ -34,6 +36,7 @@ class PowerSensorManager : SensorManager {
             "binary_sensor",
             commonR.string.basic_sensor_name_power_save,
             commonR.string.sensor_description_power_save,
+            "mdi:battery-plus",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#power-save-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
@@ -110,13 +113,12 @@ class PowerSensorManager : SensorManager {
             return
 
         val powerSaveState = powerManager.isPowerSaveMode
-        val icon = "mdi:battery-plus"
 
         onSensorUpdated(
             context,
             powerSave,
             powerSaveState,
-            icon,
+            powerSave.statelessIcon,
             mapOf()
         )
     }
