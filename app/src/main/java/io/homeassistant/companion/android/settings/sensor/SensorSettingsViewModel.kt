@@ -52,7 +52,13 @@ class SensorSettingsViewModel @Inject constructor(application: Application) :
             sensors.addAll(
                 manager.getAvailableSensors(app.applicationContext)
                     .filter { sensor ->
-                        (searchQuery.isNullOrEmpty() || app.getString(sensor.name).contains(searchQuery!!, true)) &&
+                        (
+                            searchQuery.isNullOrEmpty() ||
+                                (
+                                    app.getString(sensor.name).contains(searchQuery!!, true) ||
+                                        app.getString(manager.name).contains(searchQuery!!, true)
+                                    )
+                            ) &&
                             (!showOnlyEnabledSensors.value || manager.isEnabled(app.applicationContext, sensor.id))
                     }
                     .mapNotNull { sensor -> sensorsList.firstOrNull { it.id == sensor.id } }
