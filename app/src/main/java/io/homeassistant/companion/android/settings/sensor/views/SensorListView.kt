@@ -53,6 +53,7 @@ fun SensorListView(
             .filter { basicSensor ->
                 viewModel.sensors.any { basicSensor.id == it.id }
             }
+            .sortedBy { context.getString(it.name) }
     }
 
     LazyColumn {
