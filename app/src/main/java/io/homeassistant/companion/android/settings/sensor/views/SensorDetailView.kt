@@ -145,9 +145,12 @@ fun SensorDetailView(
                                     )
                                 }
                                 "list-apps", "list-bluetooth", "list-zones" -> {
+                                    val summaryValues = setting.value.split(", ").mapNotNull { it.ifBlank { null } }
                                     SensorDetailRow(
                                         title = viewModel.getSettingTranslatedTitle(setting.name),
-                                        summary = setting.value.split(", ").map { it }.toString(),
+                                        summary =
+                                        if (summaryValues.any()) summaryValues.toString()
+                                        else stringResource(commonR.string.none_selected),
                                         enabled = setting.enabled,
                                         clickable = setting.enabled,
                                         onClick = { onDialogSettingClicked(setting) }
