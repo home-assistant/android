@@ -114,7 +114,7 @@ fun SensorRow(
         modifier = Modifier
             .clickable { onSensorClicked(basicSensor.id) }
             .heightIn(min = 72.dp)
-            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)
+            .padding(all = 16.dp)
             .fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {

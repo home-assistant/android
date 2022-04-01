@@ -1,37 +1,48 @@
 package io.homeassistant.companion.android.settings.sensor.views
 
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.material.Card
 import androidx.compose.material.Checkbox
 import androidx.compose.material.ContentAlpha
+import androidx.compose.material.Divider
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.RadioButton
+import androidx.compose.material.Surface
 import androidx.compose.material.Switch
 import androidx.compose.material.SwitchDefaults
 import androidx.compose.material.Text
+import androidx.compose.material.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.colorResource
@@ -39,7 +50,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.mikepenz.iconics.IconicsDrawable
+import com.mikepenz.iconics.compose.Image
+import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.settings.sensor.SensorDetailViewModel
 import io.homeassistant.companion.android.util.compose.MdcAlertDialog
@@ -63,19 +80,16 @@ fun SensorDetailView(
             onSubmit = { state -> onDialogSettingSubmitted(state) }
         )
     }
-    LazyColumn(
-        contentPadding = PaddingValues(vertical = 8.dp)
-    ) {
-        if (viewModel.sensorManager != null &&
-            viewModel.basicSensor != null
-        ) {
+    LazyColumn {
+        if (viewModel.sensorManager != null && viewModel.basicSensor != null) {
             item {
-                SensorDetailRow(
-                    title = stringResource(commonR.string.enabled),
-                    summary = stringResource(commonR.string.enabled_summary),
-                    switch = viewModel.sensor.value?.sensor?.enabled
-                        ?: (viewModel.sensorManager.enabledByDefault && viewModel.sensorManager.checkPermission(context, viewModel.basicSensor.id)),
-                    onClick = { onSetEnabled(it!!) }
+                val sensorEnabled = viewModel.sensor.value?.sensor?.enabled
+                    ?: (viewModel.sensorManager.enabledByDefault && viewModel.sensorManager.checkPermission(context, viewModel.basicSensor.id))
+                SensorDetailTopPanel(
+                    basicSensor = viewModel.basicSensor,
+                    dbSensor = viewModel.sensor.value?.sensor,
+                    sensorEnabled = sensorEnabled,
+                    onSetEnabled = onSetEnabled
                 )
             }
             item {
@@ -86,45 +100,6 @@ fun SensorDetailView(
                 )
             }
             viewModel.sensor.value?.let { sensor ->
-                item {
-                    SensorDetailRow(
-                        title = stringResource(commonR.string.unique_id),
-                        summary = viewModel.basicSensor.id,
-                        clickable = false,
-                        selectingEnabled = true
-                    )
-                }
-                item {
-                    SensorDetailRow(
-                        title = stringResource(commonR.string.state),
-                        summary = if (!sensor.sensor.enabled) {
-                            stringResource(commonR.string.disabled)
-                        } else {
-                            if (sensor.sensor.unitOfMeasurement.isNullOrBlank()) sensor.sensor.state
-                            else "${sensor.sensor.state} ${sensor.sensor.unitOfMeasurement}"
-                        },
-                        clickable = false,
-                        selectingEnabled = true
-                    )
-                }
-                if (sensor.sensor.deviceClass != null) {
-                    item {
-                        SensorDetailRow(
-                            title = stringResource(commonR.string.device_class),
-                            summary = sensor.sensor.deviceClass!!,
-                            clickable = false
-                        )
-                    }
-                }
-                if (sensor.sensor.icon.isNotBlank()) {
-                    item {
-                        SensorDetailRow(
-                            title = stringResource(commonR.string.icon),
-                            summary = sensor.sensor.icon,
-                            clickable = false
-                        )
-                    }
-                }
                 if (sensor.sensor.enabled && sensor.attributes.isNotEmpty()) {
                     item {
                         SensorDetailHeader(stringResource(commonR.string.attributes))
@@ -197,6 +172,119 @@ fun SensorDetailView(
 }
 
 @Composable
+fun SensorDetailTopPanel(
+    basicSensor: SensorManager.BasicSensor,
+    dbSensor: Sensor?,
+    sensorEnabled: Boolean,
+    onSetEnabled: (Boolean) -> Unit
+) {
+    val context = LocalContext.current
+
+    Surface(color = colorResource(commonR.color.colorSensorTopBackground)) {
+        Column {
+            CompositionLocalProvider(
+                LocalContentAlpha provides (if (sensorEnabled) ContentAlpha.high else ContentAlpha.disabled)
+            ) {
+                val cardElevation: Dp by animateDpAsState(if (sensorEnabled) 8.dp else 1.dp)
+                Card(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 32.dp),
+                    elevation = cardElevation
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .background(MaterialTheme.colors.background)
+                            .padding(all = 16.dp)
+                            .fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        var iconToUse = basicSensor.statelessIcon
+                        dbSensor?.let {
+                            if (it.enabled && it.icon.isNotBlank()) {
+                                iconToUse = it.icon
+                            }
+                        }
+                        val mdiIcon = try {
+                            IconicsDrawable(context, "cmd-${iconToUse.split(":")[1]}").icon
+                        } catch (e: Exception) { null }
+
+                        if (mdiIcon != null) {
+                            Image(
+                                asset = mdiIcon,
+                                contentDescription = stringResource(commonR.string.icon),
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .alpha(if (sensorEnabled) ContentAlpha.high else ContentAlpha.disabled),
+                                colorFilter = ColorFilter.tint(
+                                    if (sensorEnabled) colorResource(commonR.color.colorSensorIconEnabled)
+                                    else contentColorFor(backgroundColor = MaterialTheme.colors.background)
+                                )
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                        }
+                        Text(
+                            text = stringResource(basicSensor.name),
+                            modifier = Modifier
+                                .padding(end = 16.dp)
+                                .weight(0.5f)
+                        )
+                        SelectionContainer(modifier = Modifier.weight(0.5f)) {
+                            Text(
+                                text = if (dbSensor?.enabled == true) {
+                                    if (dbSensor.state.isBlank()) {
+                                        stringResource(commonR.string.enabled)
+                                    } else {
+                                        if (dbSensor.unitOfMeasurement.isNullOrBlank()) dbSensor.state
+                                        else "${dbSensor.state} ${dbSensor.unitOfMeasurement}"
+                                    }
+                                } else {
+                                    stringResource(commonR.string.disabled)
+                                },
+                                textAlign = TextAlign.End
+                            )
+                        }
+                    }
+                }
+            }
+
+            val enableBarModifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 64.dp)
+                .clickable {
+                    onSetEnabled(!sensorEnabled)
+                }
+            Column(
+                modifier =
+                if (sensorEnabled) Modifier.background(colorResource(commonR.color.colorSensorTopEnabled)).then(enableBarModifier)
+                else enableBarModifier
+            ) {
+                Row(
+                    modifier = Modifier
+                        .padding(all = 16.dp)
+                        .weight(1f),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(
+                            if (basicSensor.type == "binary_sensor" || basicSensor.type == "sensor") commonR.string.enable_sensor
+                            else (if (sensorEnabled) commonR.string.enabled else commonR.string.disabled)
+                        ),
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Switch(
+                        checked = sensorEnabled,
+                        onCheckedChange = null,
+                        modifier = Modifier.padding(start = 16.dp),
+                        colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(commonR.color.colorSwitchUncheckedThumb))
+                    )
+                }
+            }
+            Divider()
+        }
+    }
+}
+
+@Composable
 fun SensorDetailHeader(text: String) {
     Row(
         modifier = Modifier
@@ -225,7 +313,7 @@ fun SensorDetailRow(
 ) {
     var rowModifier = Modifier
         .heightIn(min = if (summary.isNullOrBlank()) 56.dp else 72.dp)
-        .padding(horizontal = 16.dp, vertical = 8.dp)
+        .padding(all = 16.dp)
         .fillMaxWidth()
     if (clickable) {
         rowModifier = Modifier

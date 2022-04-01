@@ -133,7 +133,6 @@
     <string name="description">Description</string>
     <string name="details">Details</string>
     <string name="developer_tools">Developer Tools</string>
-    <string name="device_class">Device Class</string>
     <string name="device_name">Device Name</string>
     <string name="device_registration">Device Registration</string>
     <string name="dialog_add_panel_shortcut_content">Create a shortcut to this item?</string>
@@ -163,7 +162,7 @@
     <string name="enable_location_tracking_prompt">This app collects location data to enable Location Tracking, WiFi Connection Status, and URL decision making even when the app is closed or not in use.</string>
     <string name="enable_location_tracking">Enable Location Tracking</string>
     <string name="enable_remaining_sensors">Enable %1$d Sensors</string>
-    <string name="enabled_summary">When enabled values will be sent to Home Assistant</string>
+    <string name="enable_sensor">Enable sensor</string>
     <string name="enabled">Enabled</string>
     <plurals name="entities_found">
         <item quantity="one">%d entity found</item>
@@ -686,7 +685,6 @@
     <string name="tts_error">Unable to process notification \"%1$s\" as text to speech.</string>
     <string name="tts_no_title">Please set a title for text to speech to process</string>
     <string name="unable_to_register">Unable to Register Application</string>
-    <string name="unique_id">Unique Id</string>
     <string name="unknown_address">Unknown address</string>
     <string name="update_pinned_shortcut">Update Pinned Shortcut Data</string>
     <string name="update_shortcut">Update Shortcut Data</string>

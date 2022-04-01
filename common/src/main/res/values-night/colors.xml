@@ -14,6 +14,8 @@
     <color name="colorHeadline2">@android:color/white</color>
     <color name="colorActionBar">#1c1c1c</color>
     <color name="colorIcon">@android:color/white</color>
+    <color name="colorSensorTopBackground">#212227</color>
+    <color name="colorSensorTopEnabled">#192d36</color>
     <color name="colorSwitchUncheckedThumb">#b9b9b9</color>
     <color name="colorWidgetButtonBackground">#1c1c1c</color>
     <color name="colorWidgetButtonLabel">#E6E6E6</color>
