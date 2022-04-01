@@ -46,7 +46,8 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
             commonR.string.sensor_description_sleep_confidence,
             "mdi:sleep",
             unitOfMeasurement = "%",
-            stateClass = SensorManager.STATE_CLASS_MEASUREMENT
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
+            updateType = SensorManager.BasicSensor.UpdateType.CUSTOM
         )
 
         private val sleepSegment = SensorManager.BasicSensor(
@@ -55,7 +56,8 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
             commonR.string.basic_sensor_name_sleep_segment,
             commonR.string.sensor_description_sleep_segment,
             "mdi:sleep",
-            unitOfMeasurement = "ms"
+            unitOfMeasurement = "ms",
+            updateType = SensorManager.BasicSensor.UpdateType.CUSTOM
         )
     }
 

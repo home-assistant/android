@@ -72,21 +72,24 @@ class LocationSensorManager : LocationSensorManagerBase() {
             "",
             commonR.string.basic_sensor_name_location_background,
             commonR.string.sensor_description_location_background,
-            "mdi:map-marker-multiple"
+            "mdi:map-marker-multiple",
+            updateType = SensorManager.BasicSensor.UpdateType.LOCATION
         )
         val zoneLocation = SensorManager.BasicSensor(
             "zone_background",
             "",
             commonR.string.basic_sensor_name_location_zone,
             commonR.string.sensor_description_location_zone,
-            "mdi:map-marker-radius"
+            "mdi:map-marker-radius",
+            updateType = SensorManager.BasicSensor.UpdateType.LOCATION
         )
         val singleAccurateLocation = SensorManager.BasicSensor(
             "accurate_location",
             "",
             commonR.string.basic_sensor_name_location_accurate,
             commonR.string.sensor_description_location_accurate,
-            "mdi:crosshairs-gps"
+            "mdi:crosshairs-gps",
+            updateType = SensorManager.BasicSensor.UpdateType.LOCATION
         )
 
         val highAccuracyMode = SensorManager.BasicSensor(
@@ -95,7 +98,8 @@ class LocationSensorManager : LocationSensorManagerBase() {
             commonR.string.basic_sensor_name_high_accuracy_mode,
             commonR.string.sensor_description_high_accuracy_mode,
             "mdi:crosshairs-gps",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         internal const val TAG = "LocBroadcastReceiver"
 

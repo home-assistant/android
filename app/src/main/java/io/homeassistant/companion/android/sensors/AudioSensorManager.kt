@@ -18,7 +18,8 @@ class AudioSensorManager : SensorManager {
             "sensor",
             commonR.string.sensor_name_ringer_mode,
             commonR.string.sensor_description_audio_sensor,
-            "mdi:volume-high"
+            "mdi:volume-high",
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         private val audioState = SensorManager.BasicSensor(
             "audio_mode",
@@ -32,14 +33,18 @@ class AudioSensorManager : SensorManager {
             "binary_sensor",
             commonR.string.sensor_name_headphone,
             commonR.string.sensor_description_headphone,
-            "mdi:headphones"
+            "mdi:headphones",
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         val micMuted = SensorManager.BasicSensor(
             "mic_muted",
             "binary_sensor",
             commonR.string.sensor_name_mic_muted,
             commonR.string.sensor_description_mic_muted,
-            "mdi:microphone-off"
+            "mdi:microphone-off",
+            updateType =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) SensorManager.BasicSensor.UpdateType.INTENT
+            else SensorManager.BasicSensor.UpdateType.WORKER
         )
         private val musicActive = SensorManager.BasicSensor(
             "music_active",
@@ -53,7 +58,10 @@ class AudioSensorManager : SensorManager {
             "binary_sensor",
             commonR.string.sensor_name_speakerphone,
             commonR.string.sensor_description_speakerphone,
-            "mdi:volume-high"
+            "mdi:volume-high",
+            updateType =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) SensorManager.BasicSensor.UpdateType.INTENT
+            else SensorManager.BasicSensor.UpdateType.WORKER
         )
         private val volAlarm = SensorManager.BasicSensor(
             "volume_alarm",

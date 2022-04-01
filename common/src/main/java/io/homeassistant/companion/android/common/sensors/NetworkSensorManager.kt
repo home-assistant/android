@@ -32,7 +32,8 @@ class NetworkSensorManager : SensorManager {
             commonR.string.basic_sensor_name_wifi,
             commonR.string.sensor_description_wifi_connection,
             "mdi:wifi",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         val bssidState = SensorManager.BasicSensor(
             "wifi_bssid",
@@ -40,7 +41,8 @@ class NetworkSensorManager : SensorManager {
             commonR.string.basic_sensor_name_wifi_bssid,
             commonR.string.sensor_description_wifi_bssid,
             "mdi:wifi",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         val wifiIp = SensorManager.BasicSensor(
             "wifi_ip_address",
@@ -48,7 +50,8 @@ class NetworkSensorManager : SensorManager {
             commonR.string.basic_sensor_name_wifi_ip,
             commonR.string.sensor_description_wifi_ip,
             "mdi:ip",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         val wifiLinkSpeed = SensorManager.BasicSensor(
             "wifi_link_speed",
@@ -58,7 +61,8 @@ class NetworkSensorManager : SensorManager {
             "mdi:wifi-strength-3",
             unitOfMeasurement = "Mbps",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         val wifiState = SensorManager.BasicSensor(
             "wifi_state",
@@ -66,7 +70,8 @@ class NetworkSensorManager : SensorManager {
             commonR.string.basic_sensor_name_wifi_state,
             commonR.string.sensor_description_wifi_state,
             "mdi:wifi",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         val wifiFrequency = SensorManager.BasicSensor(
             "wifi_frequency",
@@ -76,7 +81,8 @@ class NetworkSensorManager : SensorManager {
             "mdi:wifi",
             unitOfMeasurement = "MHz",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         val wifiSignalStrength = SensorManager.BasicSensor(
             "wifi_signal_strength",
@@ -87,7 +93,8 @@ class NetworkSensorManager : SensorManager {
             deviceClass = "signal_strength",
             unitOfMeasurement = "dBm",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         val publicIp = SensorManager.BasicSensor(
             "public_ip_address",
@@ -105,7 +112,8 @@ class NetworkSensorManager : SensorManager {
             commonR.string.sensor_description_network_type,
             "mdi:network",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#network-type-sensor",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         private const val SETTING_GET_CURRENT_BSSID = "network_get_current_bssid"
     }

@@ -29,7 +29,8 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             commonR.string.basic_sensor_name_last_notification,
             commonR.string.sensor_description_last_notification,
             "mdi:bell-ring",
-            docsLink = "https://companion.home-assistant.io/docs/core/sensors#last-notification"
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#last-notification",
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         val lastRemovedNotification = SensorManager.BasicSensor(
             "last_removed_notification",
@@ -37,7 +38,8 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             commonR.string.basic_sensor_name_last_removed_notification,
             commonR.string.sensor_description_last_removed_notification,
             "mdi:bell-ring",
-            docsLink = "https://companion.home-assistant.io/docs/core/sensors#last-removed-notification"
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#last-removed-notification",
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         val activeNotificationCount = SensorManager.BasicSensor(
             "active_notification_count",
@@ -47,7 +49,8 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             "mdi:bell-ring",
             unitOfMeasurement = "notifications",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#active-notification-count",
-            stateClass = SensorManager.STATE_CLASS_MEASUREMENT
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         private val mediaSession = SensorManager.BasicSensor(
             "media_session",

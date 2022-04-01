@@ -47,6 +47,7 @@ fun MdcAlertDialog(
     content: @Composable () -> Unit,
     onCancel: (() -> Unit)? = null,
     onSave: (() -> Unit)? = null,
+    onOK: (() -> Unit)? = null,
     contentPadding: PaddingValues = PaddingValues(horizontal = 24.dp)
 ) {
     val configuration = LocalConfiguration.current
@@ -89,6 +90,12 @@ fun MdcAlertDialog(
                     onSave?.let {
                         TextButton(onClick = it) {
                             Text(stringResource(commonR.string.save))
+                        }
+                    }
+                    if ((onCancel != null || onSave != null) && onOK != null) Spacer(modifier = Modifier.width(8.dp))
+                    onOK?.let {
+                        TextButton(onClick = it) {
+                            Text(stringResource(commonR.string.ok))
                         }
                     }
                 }

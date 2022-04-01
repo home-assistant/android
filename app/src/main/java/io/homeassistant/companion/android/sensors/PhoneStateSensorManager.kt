@@ -22,7 +22,8 @@ class PhoneStateSensorManager : SensorManager {
             commonR.string.basic_sensor_name_phone,
             commonR.string.sensor_description_phone_state,
             "mdi:phone",
-            docsLink = "https://companion.home-assistant.io/docs/core/sensors#phone-state-sensor"
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#phone-state-sensor",
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
 
         val sim_1 = SensorManager.BasicSensor(
@@ -31,7 +32,8 @@ class PhoneStateSensorManager : SensorManager {
             commonR.string.basic_sensor_name_sim1,
             commonR.string.sensor_description_sim_1,
             "mdi:sim",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
 
         val sim_2 = SensorManager.BasicSensor(
@@ -40,7 +42,8 @@ class PhoneStateSensorManager : SensorManager {
             commonR.string.basic_sensor_name_sim2,
             commonR.string.sensor_description_sim_2,
             "mdi:sim",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
     }
 

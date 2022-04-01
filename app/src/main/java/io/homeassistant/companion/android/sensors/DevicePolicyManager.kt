@@ -14,7 +14,8 @@ class DevicePolicyManager : SensorManager {
             "binary_sensor",
             R.string.sensor_name_work_profile,
             R.string.sensor_description_work_profile,
-            "mdi:briefcase"
+            "mdi:briefcase",
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
     }
 

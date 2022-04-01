@@ -19,7 +19,8 @@ class DNDSensorManager : SensorManager {
             commonR.string.sensor_name_dnd,
             commonR.string.sensor_description_dnd_sensor,
             "mdi:minus-circle",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
     }
 

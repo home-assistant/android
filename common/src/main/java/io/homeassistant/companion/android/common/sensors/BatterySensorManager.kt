@@ -27,7 +27,8 @@ class BatterySensorManager : SensorManager {
             commonR.string.basic_sensor_name_battery_state,
             commonR.string.sensor_description_battery_state,
             "mdi:battery-charging",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         val isChargingState = SensorManager.BasicSensor(
             "is_charging",
@@ -36,7 +37,8 @@ class BatterySensorManager : SensorManager {
             commonR.string.sensor_description_charging,
             "mdi:power-plug",
             deviceClass = "plug",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         private val chargerTypeState = SensorManager.BasicSensor(
             "charger_type",
@@ -44,7 +46,8 @@ class BatterySensorManager : SensorManager {
             commonR.string.basic_sensor_name_charger_type,
             commonR.string.sensor_description_charger_type,
             "mdi:power-plug",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         private val batteryHealthState = SensorManager.BasicSensor(
             "battery_health",

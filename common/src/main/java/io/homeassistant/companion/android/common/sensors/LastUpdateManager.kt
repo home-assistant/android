@@ -17,7 +17,8 @@ class LastUpdateManager : SensorManager {
             commonR.string.basic_sensor_name_last_update,
             commonR.string.sensor_description_last_update,
             "mdi:update",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
     }
 

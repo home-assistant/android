@@ -16,7 +16,8 @@ class QuestSensorManager : SensorManager {
             commonR.string.basic_sensor_name_headset_mounted,
             commonR.string.sensor_description_headset_mounted,
             "mdi:virtual-reality",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
     }
 

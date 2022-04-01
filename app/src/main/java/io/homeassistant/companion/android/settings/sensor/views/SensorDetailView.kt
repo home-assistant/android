@@ -38,6 +38,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -55,11 +56,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.compose.Image
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorSetting
+import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.settings.sensor.SensorDetailViewModel
 import io.homeassistant.companion.android.util.compose.MdcAlertDialog
+import io.homeassistant.companion.android.util.compose.TransparentChip
 import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
@@ -71,8 +75,22 @@ fun SensorDetailView(
     onDialogSettingSubmitted: (SensorDetailViewModel.Companion.SettingDialogState) -> Unit
 ) {
     val context = LocalContext.current
+    var sensorUpdateTypeInfo by remember { mutableStateOf(false) }
 
-    viewModel.sensorSettingsDialog.value?.let {
+    val sensorEnabled = viewModel.sensor.value?.sensor?.enabled
+        ?: (
+            viewModel.basicSensor != null && viewModel.sensorManager?.enabledByDefault == true &&
+                viewModel.sensorManager.checkPermission(context, viewModel.basicSensor.id)
+            )
+
+    if (sensorUpdateTypeInfo && viewModel.basicSensor != null) {
+        SensorDetailUpdateInfoDialog(
+            basicSensor = viewModel.basicSensor,
+            sensorEnabled = sensorEnabled,
+            userSetting = viewModel.settingUpdateFrequency,
+            onDismiss = { sensorUpdateTypeInfo = false }
+        )
+    } else viewModel.sensorSettingsDialog.value?.let {
         SensorDetailSettingDialog(
             viewModel = viewModel,
             state = it,
@@ -83,8 +101,6 @@ fun SensorDetailView(
     LazyColumn {
         if (viewModel.sensorManager != null && viewModel.basicSensor != null) {
             item {
-                val sensorEnabled = viewModel.sensor.value?.sensor?.enabled
-                    ?: (viewModel.sensorManager.enabledByDefault && viewModel.sensorManager.checkPermission(context, viewModel.basicSensor.id))
                 SensorDetailTopPanel(
                     basicSensor = viewModel.basicSensor,
                     dbSensor = viewModel.sensor.value?.sensor,
@@ -93,11 +109,32 @@ fun SensorDetailView(
                 )
             }
             item {
-                SensorDetailRow(
-                    title = stringResource(commonR.string.sensor_description),
-                    summary = stringResource(viewModel.basicSensor.descriptionId),
-                    clickable = false
+                Text(
+                    text = stringResource(viewModel.basicSensor.descriptionId),
+                    modifier = Modifier.padding(all = 16.dp)
                 )
+            }
+            item {
+                TransparentChip(
+                    modifier = Modifier.padding(start = 16.dp, bottom = 40.dp),
+                    text = stringResource(
+                        when (viewModel.basicSensor.updateType) {
+                            SensorManager.BasicSensor.UpdateType.INTENT -> commonR.string.sensor_update_type_chip_intent
+                            SensorManager.BasicSensor.UpdateType.WORKER -> {
+                                when (viewModel.settingUpdateFrequency) {
+                                    SensorUpdateFrequencySetting.FAST_ALWAYS -> commonR.string.sensor_update_type_chip_worker_fast_always
+                                    SensorUpdateFrequencySetting.FAST_WHILE_CHARGING -> commonR.string.sensor_update_type_chip_worker_fast_charging
+                                    SensorUpdateFrequencySetting.NORMAL -> commonR.string.sensor_update_type_chip_worker_normal
+                                }
+                            }
+                            SensorManager.BasicSensor.UpdateType.LOCATION -> commonR.string.sensor_update_type_chip_location
+                            SensorManager.BasicSensor.UpdateType.CUSTOM -> commonR.string.sensor_update_type_chip_custom
+                        }
+                    ),
+                    icon = CommunityMaterial.Icon.cmd_clock_fast
+                ) {
+                    sensorUpdateTypeInfo = true
+                }
             }
             viewModel.sensor.value?.let { sensor ->
                 if (sensor.sensor.enabled && sensor.attributes.isNotEmpty()) {
@@ -422,6 +459,41 @@ fun SensorDetailSettingDialog(
             }
         } else null, // list is saved when selecting a value
         contentPadding = if (listSettingDialog) PaddingValues(all = 0.dp) else PaddingValues(horizontal = 24.dp)
+    )
+}
+
+@Composable
+fun SensorDetailUpdateInfoDialog(
+    basicSensor: SensorManager.BasicSensor,
+    sensorEnabled: Boolean,
+    userSetting: SensorUpdateFrequencySetting,
+    onDismiss: () -> Unit
+) {
+    MdcAlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(commonR.string.sensor_update_type_info_title)) },
+        content = {
+            var infoString = when (basicSensor.updateType) {
+                SensorManager.BasicSensor.UpdateType.INTENT -> stringResource(commonR.string.sensor_update_type_info_intent)
+                SensorManager.BasicSensor.UpdateType.WORKER -> {
+                    "${stringResource(
+                        when (userSetting) {
+                            SensorUpdateFrequencySetting.FAST_ALWAYS -> commonR.string.sensor_update_type_info_worker_fast_always
+                            SensorUpdateFrequencySetting.FAST_WHILE_CHARGING -> commonR.string.sensor_update_type_info_worker_fast_charging
+                            SensorUpdateFrequencySetting.NORMAL -> commonR.string.sensor_update_type_info_worker_normal
+                        }
+                    )}\n\n${stringResource(commonR.string.sensor_update_type_info_worker_setting, stringResource(commonR.string.sensor_update_frequency))}"
+                }
+                SensorManager.BasicSensor.UpdateType.LOCATION -> stringResource(commonR.string.sensor_update_type_info_location)
+                SensorManager.BasicSensor.UpdateType.CUSTOM -> stringResource(commonR.string.sensor_update_type_info_custom)
+            }
+            if (!sensorEnabled && (basicSensor.type == "binary_sensor" || basicSensor.type == "sensor")) {
+                infoString = stringResource(commonR.string.sensor_update_type_info_enable) + infoString
+            }
+
+            Text(infoString)
+        },
+        onOK = onDismiss
     )
 }
 

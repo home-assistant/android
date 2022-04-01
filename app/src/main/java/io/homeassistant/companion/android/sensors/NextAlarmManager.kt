@@ -25,7 +25,8 @@ class NextAlarmManager : SensorManager {
             commonR.string.basic_sensor_name_alarm,
             commonR.string.sensor_description_next_alarm,
             "mdi:alarm",
-            deviceClass = "timestamp"
+            deviceClass = "timestamp",
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
     }
 
