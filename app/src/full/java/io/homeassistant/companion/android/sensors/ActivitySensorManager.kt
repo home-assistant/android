@@ -36,7 +36,8 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_activity,
             commonR.string.sensor_description_detected_activity,
-            "mdi:walk"
+            "mdi:walk",
+            updateType = SensorManager.BasicSensor.UpdateType.CUSTOM
         )
 
         private val sleepConfidence = SensorManager.BasicSensor(
