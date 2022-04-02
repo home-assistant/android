@@ -6,5 +6,8 @@
         <change>Migrate Manage Sensors screen to Compose, small design tweaks and speed improvements</change>
         <change>Add a network transport sensor</change>
         <change>Allow changing high accuracy update interval via notification command</change>
+        <change>Add a new notification command to launch an app with only the package name, if app is not installed user will be taken to install the app</change>
+        <change>Add missing volume level sensors and allow control via notification command for some of them</change>
+        <change>Bug fixes, design tweaks and dependency updates</change>
     </release>
 </changelog>
