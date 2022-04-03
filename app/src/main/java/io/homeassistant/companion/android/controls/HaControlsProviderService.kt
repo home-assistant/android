@@ -19,6 +19,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 import java.util.Calendar
 import java.util.concurrent.Flow
@@ -71,9 +72,8 @@ class HaControlsProviderService : ControlsProviderService() {
                     val entityRegistry = webSocketRepository.getEntityRegistry()
 
                     val entities = integrationRepository.getEntities()
-                    val areaForEntity = mutableMapOf<String, AreaRegistryResponse?>()
-                    entities?.forEach {
-                        areaForEntity[it.entityId] = RegistriesDataHandler.getAreaForEntity(it.entityId, areaRegistry, deviceRegistry, entityRegistry)
+                    val areaForEntity = entities.orEmpty().associate {
+                        it.entityId to RegistriesDataHandler.getAreaForEntity(it.entityId, areaRegistry, deviceRegistry, entityRegistry)
                     }
 
                     entities
@@ -190,18 +190,23 @@ class HaControlsProviderService : ControlsProviderService() {
         val domain = controlId.split(".")[0]
         val haControl = domainToHaControl[domain]
 
-        var actionSuccess = false
-        if (haControl != null) {
-            try {
-                actionSuccess = haControl.performAction(integrationRepository, action)
-            } catch (e: Exception) {
-                Log.e(TAG, "Unable to control or get entity information", e)
+        ioScope.launch {
+            var actionSuccess = false
+            if (haControl != null) {
+                try {
+                    actionSuccess = haControl.performAction(integrationRepository, action)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unable to control or get entity information", e)
+                }
             }
-        }
-        if (actionSuccess) {
-            consumer.accept(ControlAction.RESPONSE_OK)
-        } else {
-            consumer.accept(ControlAction.RESPONSE_UNKNOWN)
+
+            withContext(Dispatchers.Main) {
+                if (actionSuccess) {
+                    consumer.accept(ControlAction.RESPONSE_OK)
+                } else {
+                    consumer.accept(ControlAction.RESPONSE_UNKNOWN)
+                }
+            }
         }
     }
 
