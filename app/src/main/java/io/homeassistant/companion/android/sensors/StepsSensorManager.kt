@@ -24,6 +24,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
             "sensor",
             commonR.string.sensor_name_steps,
             commonR.string.sensor_description_steps_sensor,
+            "mdi:walk",
             unitOfMeasurement = "steps",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING
         )
@@ -98,7 +99,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
                 latestContext,
                 stepsSensor,
                 event.values[0].roundToInt().toString(),
-                "mdi:walk",
+                stepsSensor.statelessIcon,
                 mapOf()
             )
         }

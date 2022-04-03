@@ -27,7 +27,8 @@ class LastRebootSensorManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_last_reboot,
             commonR.string.sensor_description_last_reboot,
-            "timestamp",
+            "mdi:restart",
+            deviceClass = "timestamp",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
     }
@@ -86,13 +87,11 @@ class LastRebootSensorManager : SensorManager {
             Log.e(TAG, "Error getting the last reboot timestamp", e)
         }
 
-        val icon = "mdi:restart"
-
         onSensorUpdated(
             context,
             lastRebootSensor,
             utc,
-            icon,
+            lastRebootSensor.statelessIcon,
             mapOf(
                 LOCAL_TIME to local,
                 TIME_MILLISECONDS to timeInMillis

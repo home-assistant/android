@@ -22,8 +22,9 @@ class PressureSensorManager : SensorManager, SensorEventListener {
             "sensor",
             commonR.string.sensor_name_pressure,
             commonR.string.sensor_description_pressure_sensor,
-            "pressure",
-            "hPa",
+            "mdi:gauge",
+            deviceClass = "pressure",
+            unitOfMeasurement = "hPa",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT
         )
     }
@@ -87,7 +88,7 @@ class PressureSensorManager : SensorManager, SensorEventListener {
                     latestContext,
                     pressureSensor,
                     event.values[0].toBigDecimal().setScale(1, RoundingMode.HALF_EVEN).toString(),
-                    "mdi:gauge",
+                    pressureSensor.statelessIcon,
                     mapOf()
                 )
             }

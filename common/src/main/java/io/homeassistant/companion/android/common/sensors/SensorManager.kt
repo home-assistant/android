@@ -32,12 +32,18 @@ interface SensorManager {
         val type: String,
         val name: Int = commonR.string.sensor,
         val descriptionId: Int = commonR.string.sensor_description_none,
+        val statelessIcon: String = "",
         val deviceClass: String? = null,
         val unitOfMeasurement: String? = null,
         val docsLink: String? = null,
         val stateClass: String? = null,
-        val entityCategory: String? = null
-    )
+        val entityCategory: String? = null,
+        val updateType: UpdateType = UpdateType.WORKER
+    ) {
+        enum class UpdateType {
+            INTENT, WORKER, LOCATION, CUSTOM
+        }
+    }
 
     fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors"

@@ -28,29 +28,36 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_last_notification,
             commonR.string.sensor_description_last_notification,
-            docsLink = "https://companion.home-assistant.io/docs/core/sensors#last-notification"
+            "mdi:bell-ring",
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#last-notification",
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         val lastRemovedNotification = SensorManager.BasicSensor(
             "last_removed_notification",
             "sensor",
             commonR.string.basic_sensor_name_last_removed_notification,
             commonR.string.sensor_description_last_removed_notification,
-            docsLink = "https://companion.home-assistant.io/docs/core/sensors#last-removed-notification"
+            "mdi:bell-ring",
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#last-removed-notification",
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         val activeNotificationCount = SensorManager.BasicSensor(
             "active_notification_count",
             "sensor",
             commonR.string.basic_sensor_name_active_notification_count,
             commonR.string.sensor_description_active_notification_count,
+            "mdi:bell-ring",
             unitOfMeasurement = "notifications",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#active-notification-count",
-            stateClass = SensorManager.STATE_CLASS_MEASUREMENT
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         private val mediaSession = SensorManager.BasicSensor(
             "media_session",
             "sensor",
             commonR.string.basic_sensor_name_media_session,
             commonR.string.sensor_description_media_session,
+            "mdi:play-circle",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#media-session-sensor"
         )
     }
@@ -140,7 +147,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             applicationContext,
             lastNotification,
             state.toString().take(255),
-            "mdi:bell-ring",
+            lastNotification.statelessIcon,
             attr
         )
 
@@ -194,7 +201,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             applicationContext,
             lastRemovedNotification,
             state.toString().take(255),
-            "mdi:bell-ring",
+            lastRemovedNotification.statelessIcon,
             attr
         )
 
@@ -220,7 +227,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
                 applicationContext,
                 activeNotificationCount,
                 activeNotifications.size,
-                "mdi:bell-ring",
+                activeNotificationCount.statelessIcon,
                 attr
             )
         } catch (e: Exception) {
@@ -237,7 +244,6 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         val sessionCount = mediaList.size
         val primaryPlaybackState = if (sessionCount > 0) getPlaybackState(mediaList[0].playbackState?.state) else "Unavailable"
         val attr: MutableMap<String, Any?> = mutableMapOf()
-        val icon = "mdi:play-circle"
         if (mediaList.size > 0) {
             for (item in mediaList) {
                 attr += mapOf(
@@ -256,7 +262,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             context,
             mediaSession,
             primaryPlaybackState,
-            icon,
+            mediaSession.statelessIcon,
             attr
         )
     }
