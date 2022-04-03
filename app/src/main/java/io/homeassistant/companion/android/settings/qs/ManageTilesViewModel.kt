@@ -33,11 +33,9 @@ class ManageTilesViewModel @Inject constructor(
     private lateinit var iconPack: IconPack
 
     private val tileDao = AppDatabase.getInstance(application).tileDao()
-    private fun tileDaoFlow(): Flow<List<TileEntity>>? = tileDao.getAllFlow()
     fun currentTile() = tileDao.get(selectedTile.value)
     var entities = mutableStateMapOf<String, Entity<*>>()
         private set
-    private var tileList = mutableStateListOf<TileEntity>()
     var selectedTile = mutableStateOf("tile_1")
         private set
     var selectedTileName = mutableStateOf(application.getString(R.string.tile_1))
@@ -58,18 +56,6 @@ class ManageTilesViewModel @Inject constructor(
             integrationUseCase.getEntities()?.forEach {
                 if (it.domain in ManageTilesFragment.validDomains)
                     entities[it.entityId] = it
-            }
-        }
-        tileFlow()
-    }
-
-    private fun tileFlow() {
-        viewModelScope.launch {
-            tileDaoFlow()?.collect {
-                tileList.clear()
-                it.forEach { tile ->
-                    tileList.add(tile)
-                }
             }
         }
     }
