@@ -7,9 +7,9 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "template_widgets")
 data class TemplateWidgetEntity(
     @PrimaryKey
-    val id: Int,
+    override val id: Int,
     @ColumnInfo(name = "template")
     val template: String,
     @ColumnInfo(name = "last_update")
     val lastUpdate: String
-)
+) : WidgetEntity

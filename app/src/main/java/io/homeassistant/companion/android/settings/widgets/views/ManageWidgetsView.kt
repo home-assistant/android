@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.settings.widgets.views
 
 import android.appwidget.AppWidgetManager
 import android.content.Intent
+import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.Button
 import androidx.compose.material.ExtendedFloatingActionButton
 import androidx.compose.material.Icon
@@ -37,6 +39,7 @@ import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.database.widget.WidgetEntity
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.util.compose.MdcAlertDialog
 import io.homeassistant.companion.android.widgets.button.ButtonWidgetConfigureActivity
@@ -44,6 +47,22 @@ import io.homeassistant.companion.android.widgets.camera.CameraWidgetConfigureAc
 import io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.template.TemplateWidgetConfigureActivity
+
+enum class WidgetType(val widgetIcon: IIcon) {
+    BUTTON(CommunityMaterial.Icon2.cmd_gesture_tap),
+    CAMERA(CommunityMaterial.Icon.cmd_camera),
+    STATE(CommunityMaterial.Icon3.cmd_shape),
+    MEDIA(CommunityMaterial.Icon3.cmd_play_box_multiple),
+    TEMPLATE(CommunityMaterial.Icon.cmd_code_braces);
+
+    fun configureActivity() = when (this) {
+        BUTTON -> ButtonWidgetConfigureActivity::class.java
+        CAMERA -> CameraWidgetConfigureActivity::class.java
+        MEDIA -> MediaPlayerControlsWidgetConfigureActivity::class.java
+        STATE -> EntityWidgetConfigureActivity::class.java
+        TEMPLATE -> TemplateWidgetConfigureActivity::class.java
+    }
+}
 
 @Composable
 fun ManageWidgetsView(
@@ -62,23 +81,23 @@ fun ManageWidgetsView(
         }
     }) {
         if (expandedAddWidget) {
-            val availableWidgets = mapOf(
-                stringResource(R.string.widget_button_image_description) to Pair("button", CommunityMaterial.Icon2.cmd_gesture_tap),
-                stringResource(R.string.widget_camera_description) to Pair("camera", CommunityMaterial.Icon.cmd_camera),
-                stringResource(R.string.widget_static_image_description) to Pair("state", CommunityMaterial.Icon3.cmd_shape),
-                stringResource(R.string.widget_media_player_description) to Pair("media", CommunityMaterial.Icon3.cmd_play_box_multiple),
-                stringResource(R.string.template_widget) to Pair("template", CommunityMaterial.Icon.cmd_code_braces)
-            ).toSortedMap(compareBy { it })
+            val availableWidgets = listOf(
+                stringResource(R.string.widget_button_image_description) to WidgetType.BUTTON,
+                stringResource(R.string.widget_camera_description) to WidgetType.CAMERA,
+                stringResource(R.string.widget_static_image_description) to WidgetType.STATE,
+                stringResource(R.string.widget_media_player_description) to WidgetType.MEDIA,
+                stringResource(R.string.template_widget) to WidgetType.TEMPLATE
+            ).sortedBy { it.first }
+
             MdcAlertDialog(
                 onDismissRequest = { expandedAddWidget = false },
                 title = { Text(stringResource(R.string.add_widget)) },
                 content = {
                     LazyColumn {
-                        availableWidgets.forEach {
-                            item {
-                                PopupWidgetRow(widgetLabel = it.key, widgetIcon = it.value.second, widgetType = it.value.first) {
-                                    expandedAddWidget = false
-                                }
+                        items(availableWidgets.size) { index ->
+                            val (key, widgetType) = availableWidgets[index]
+                            PopupWidgetRow(widgetLabel = key, widgetType = widgetType) {
+                                expandedAddWidget = false
                             }
                         }
                     }
@@ -88,15 +107,17 @@ fun ManageWidgetsView(
             )
         }
         LazyColumn(modifier = Modifier.padding(all = 16.dp)) {
-            if (viewModel.buttonWidgetList.isNullOrEmpty() && viewModel.staticWidgetList.isNullOrEmpty() &&
-                viewModel.mediaWidgetList.isNullOrEmpty() && viewModel.templateWidgetList.isNullOrEmpty() &&
-                viewModel.cameraWidgetList.isNullOrEmpty()
+            if (viewModel.buttonWidgetList.value.isEmpty() && viewModel.staticWidgetList.value.isEmpty() &&
+                viewModel.mediaWidgetList.value.isEmpty() && viewModel.templateWidgetList.value.isEmpty() &&
+                viewModel.cameraWidgetList.value.isEmpty()
             ) {
                 item {
                     Column(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.fillMaxWidth().padding(top = 64.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 64.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Widgets,
@@ -107,7 +128,9 @@ fun ManageWidgetsView(
                             text = stringResource(id = R.string.no_widgets),
                             style = MaterialTheme.typography.h6,
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth(0.7f).padding(top = 8.dp)
+                            modifier = Modifier
+                                .fillMaxWidth(0.7f)
+                                .padding(top = 8.dp)
                         )
                         Text(
                             text = stringResource(id = R.string.no_widgets_summary),
@@ -117,92 +140,91 @@ fun ManageWidgetsView(
                     }
                 }
             }
-            if (!viewModel.buttonWidgetList.isNullOrEmpty()) {
-                item {
-                    Text(stringResource(id = R.string.button_widgets))
-                }
-                items(viewModel.buttonWidgetList.size) { index ->
-                    val item = viewModel.buttonWidgetList[index]
-                    val label = if (!item.label.isNullOrEmpty()) item.label else "${item.domain}.${item.service}"
-                    WidgetRow(widgetLabel = label.toString(), widgetId = item.id, widgetType = "button")
-                }
-            }
-            if (!viewModel.cameraWidgetList.isNullOrEmpty()) {
-                item {
-                    Text(stringResource(id = R.string.camera_widgets))
-                }
-                items(viewModel.cameraWidgetList.size) { index ->
-                    val item = viewModel.cameraWidgetList[index]
-                    WidgetRow(widgetLabel = item.entityId, widgetId = item.id, widgetType = "camera")
-                }
-            }
-            if (!viewModel.staticWidgetList.isNullOrEmpty()) {
-                item {
-                    Text(stringResource(id = R.string.entity_state_widgets))
-                }
-                items(viewModel.staticWidgetList.size) { index ->
-                    val item = viewModel.staticWidgetList[index]
-                    val label = if (!item.label.isNullOrEmpty()) item.label else "${item.entityId} ${item.stateSeparator} ${item?.attributeIds ?: ""}"
-                    WidgetRow(widgetLabel = label.toString(), widgetId = item.id, widgetType = "state")
-                }
-            }
-            if (!viewModel.mediaWidgetList.isNullOrEmpty()) {
-                item {
-                    Text(stringResource(id = R.string.media_player_widgets))
-                }
-                items(viewModel.mediaWidgetList.size) { index ->
-                    val item = viewModel.mediaWidgetList[index]
-                    val label = if (!item.label.isNullOrEmpty()) item.label else item.entityId
-                    WidgetRow(widgetLabel = label.toString(), widgetId = item.id, widgetType = "media")
-                }
-            }
-            if (!viewModel.templateWidgetList.isNullOrEmpty()) {
-                item {
-                    Text(stringResource(id = R.string.template_widgets))
-                }
-                items(viewModel.templateWidgetList.size) { index ->
-                    val item = viewModel.templateWidgetList[index]
-                    WidgetRow(widgetLabel = item.template, widgetId = item.id, widgetType = "template")
-                }
-            }
+            widgetItems(
+                viewModel.buttonWidgetList.value,
+                widgetType = WidgetType.BUTTON,
+                title = R.string.button_widgets,
+                widgetLabel = { item ->
+                    val label = item.label
+                    if (!label.isNullOrEmpty()) label else "${item.domain}.${item.service}"
+                },
+            )
+            widgetItems(
+                viewModel.cameraWidgetList.value,
+                widgetType = WidgetType.CAMERA,
+                title = R.string.camera_widgets,
+                widgetLabel = { item -> item.entityId },
+            )
+            widgetItems(
+                viewModel.staticWidgetList.value,
+                widgetType = WidgetType.STATE,
+                title = R.string.entity_state_widgets,
+                widgetLabel = { item ->
+                    val label = item.label
+                    if (!label.isNullOrEmpty()) label else "${item.entityId} ${item.stateSeparator} ${item.attributeIds.orEmpty()}"
+                },
+            )
+            widgetItems(
+                viewModel.mediaWidgetList.value,
+                widgetType = WidgetType.MEDIA,
+                title = R.string.media_player_widgets,
+                widgetLabel = { item ->
+                    val label = item.label
+                    if (!label.isNullOrEmpty()) label else item.entityId
+                },
+            )
+            widgetItems(
+                viewModel.templateWidgetList.value,
+                widgetType = WidgetType.TEMPLATE,
+                title = R.string.template_widgets,
+                widgetLabel = { item -> item.template },
+            )
+        }
+    }
+}
+
+private fun <T : WidgetEntity> LazyListScope.widgetItems(
+    widgetList: List<T>,
+    @StringRes title: Int,
+    widgetLabel: @Composable (T) -> String,
+    widgetType: WidgetType
+) {
+    if (widgetList.isNotEmpty()) {
+        item {
+            Text(stringResource(id = title))
+        }
+        items(widgetList.size, key = { index -> widgetList[index].id }) { index ->
+            val item = widgetList[index]
+            WidgetRow(widgetLabel = widgetLabel(item), widgetId = item.id, widgetType = widgetType)
         }
     }
 }
 
 @Composable
-fun PopupWidgetRow(
+private fun PopupWidgetRow(
     widgetLabel: String,
-    widgetIcon: IIcon,
-    widgetType: String,
+    widgetType: WidgetType,
     onClickCallback: () -> Unit
 ) {
     val context = LocalContext.current
     Box(
-        modifier = Modifier.fillMaxWidth().clickable {
-            val intent = Intent(
-                context,
-                when (widgetType) {
-                    "button" -> ButtonWidgetConfigureActivity::class.java
-                    "camera" -> CameraWidgetConfigureActivity::class.java
-                    "media" -> MediaPlayerControlsWidgetConfigureActivity::class.java
-                    "state" -> EntityWidgetConfigureActivity::class.java
-                    "template" -> TemplateWidgetConfigureActivity::class.java
-                    else -> ButtonWidgetConfigureActivity::class.java // We will never reach this
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                val intent = Intent(context, widgetType.configureActivity()).apply {
+                    putExtra(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, true)
+                    addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 }
-            ).apply {
-                putExtra(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, true)
-                addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                context.startActivity(intent)
+                onClickCallback()
             }
-            context.startActivity(intent)
-            onClickCallback()
-        }
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Image(
-                asset = widgetIcon,
+                asset = widgetType.widgetIcon,
                 colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface),
                 contentDescription = widgetLabel
             )
@@ -212,25 +234,15 @@ fun PopupWidgetRow(
 }
 
 @Composable
-fun WidgetRow(
+private fun WidgetRow(
     widgetLabel: String,
     widgetId: Int,
-    widgetType: String
+    widgetType: WidgetType,
 ) {
     val context = LocalContext.current
     Row {
         Button(onClick = {
-            val intent = Intent(
-                context,
-                when (widgetType) {
-                    "button" -> ButtonWidgetConfigureActivity::class.java
-                    "camera" -> CameraWidgetConfigureActivity::class.java
-                    "media" -> MediaPlayerControlsWidgetConfigureActivity::class.java
-                    "state" -> EntityWidgetConfigureActivity::class.java
-                    "template" -> TemplateWidgetConfigureActivity::class.java
-                    else -> ButtonWidgetConfigureActivity::class.java // We will never reach this
-                }
-            ).apply {
+            val intent = Intent(context, widgetType.configureActivity()).apply {
                 putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId)
             }
             context.startActivity(intent)

@@ -4,7 +4,6 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -14,17 +13,17 @@ interface MediaPlayerControlsWidgetDao {
     fun get(id: Int): MediaPlayerControlsWidgetEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun add(mediaPlayCtrlWidgetEntity: MediaPlayerControlsWidgetEntity)
-
-    @Update
-    fun update(mediaPlayCtrlWidgetEntity: MediaPlayerControlsWidgetEntity)
+    suspend fun add(mediaPlayCtrlWidgetEntity: MediaPlayerControlsWidgetEntity)
 
     @Query("DELETE FROM mediaplayctrls_widgets WHERE id = :id")
     fun delete(id: Int)
 
-    @Query("SELECT * FROM mediaplayctrls_widgets")
-    fun getAll(): List<MediaPlayerControlsWidgetEntity>?
+    @Query("DELETE FROM mediaplayctrls_widgets WHERE id IN (:ids)")
+    suspend fun deleteAll(ids: IntArray)
 
     @Query("SELECT * FROM mediaplayctrls_widgets")
-    fun getAllFlow(): Flow<List<MediaPlayerControlsWidgetEntity>>?
+    suspend fun getAll(): List<MediaPlayerControlsWidgetEntity>
+
+    @Query("SELECT * FROM mediaplayctrls_widgets")
+    fun getAllFlow(): Flow<List<MediaPlayerControlsWidgetEntity>>
 }
