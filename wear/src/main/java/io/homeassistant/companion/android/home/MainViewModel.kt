@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.home
 import android.app.Application
 import android.util.Log
 import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -52,7 +53,6 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
         this.homePresenter = homePresenter
         loadSettings()
         loadEntities()
-        getSensors()
     }
 
     // entities
@@ -62,7 +62,7 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
     /**
      * IDs of favorites in the Favorites database.
      */
-    val favoriteEntityIds = favoritesDao.getAllFlow().collectAsState(initial = emptyList())
+    val favoriteEntityIds = favoritesDao.getAllFlow().collectAsState()
 
     var shortcutEntities = mutableStateListOf<SimplifiedEntity>()
         private set
@@ -97,14 +97,12 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
     var templateTileRefreshInterval = mutableStateOf(0)
         private set
 
-    private fun sensors(): Flow<List<Sensor>>? = sensorsDao.getAllFlow()
-
     fun supportedDomains(): List<String> = HomePresenterImpl.supportedDomains
 
     fun stringForDomain(domain: String): String? =
         HomePresenterImpl.domainsWithNames[domain]?.let { app.applicationContext.getString(it) }
 
-    var sensors = mutableStateListOf<Sensor>()
+    val sensors = sensorsDao.getAllFlow().collectAsState()
 
     private fun loadSettings() {
         viewModelScope.launch {
@@ -271,12 +269,11 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
         }
     }
 
-    private fun updateSensorEntity(
+    private suspend fun updateSensorEntity(
         sensorDao: SensorDao,
         basicSensor: SensorManager.BasicSensor,
         isEnabled: Boolean
     ) {
-
         var sensorEntity = sensorDao.get(basicSensor.id)
         if (sensorEntity != null) {
             sensorEntity.enabled = isEnabled
@@ -300,17 +297,6 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
     fun clearFavorites() {
         viewModelScope.launch {
             favoritesDao.deleteAll()
-        }
-    }
-
-    private fun getSensors() {
-        viewModelScope.launch {
-            sensors()?.collect {
-                sensors.clear()
-                for (sensor in it) {
-                    sensors.add(sensor)
-                }
-            }
         }
     }
 
@@ -397,4 +383,5 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
         }
         return state
     }
+    private fun <T> Flow<List<T>>.collectAsState(): State<List<T>> = collectAsState(initial = emptyList())
 }

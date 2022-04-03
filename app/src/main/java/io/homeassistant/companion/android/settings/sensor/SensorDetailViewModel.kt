@@ -4,7 +4,7 @@ import android.Manifest
 import android.app.Application
 import android.content.pm.PackageManager
 import android.util.Log
-import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
@@ -23,6 +23,7 @@ import io.homeassistant.companion.android.database.settings.SensorUpdateFrequenc
 import io.homeassistant.companion.android.sensors.LastAppSensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
@@ -68,9 +69,7 @@ class SensorDetailViewModel @Inject constructor(
     var sensor = mutableStateOf<SensorWithAttributes?>(null)
         private set
     private var sensorCheckedEnabled = false
-    private val sensorSettingsFlow = sensorDao.getSettingsFlow(sensorId)
-    var sensorSettings = mutableStateListOf<SensorSetting>()
-        private set
+    val sensorSettings = sensorDao.getSettingsFlow(sensorId).collectAsState()
     var sensorSettingsDialog = mutableStateOf<SettingDialogState?>(null)
         private set
 
@@ -95,15 +94,9 @@ class SensorDetailViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            sensorFlow?.collect {
+            sensorFlow.collect {
                 sensor.value = it
                 if (!sensorCheckedEnabled) checkSensorEnabled()
-            }
-        }
-        viewModelScope.launch {
-            sensorSettingsFlow.collect {
-                sensorSettings.clear()
-                sensorSettings.addAll(it)
             }
         }
     }
@@ -267,13 +260,13 @@ class SensorDetailViewModel @Inject constructor(
     }
 
     private fun convertRawVarsToStringVars(rawVars: List<String>): Array<String> {
-        var stringVars: MutableList<String> = ArrayList()
+        val stringVars: MutableList<String> = ArrayList()
         if (rawVars.isNotEmpty()) {
             Log.d(TAG, "Convert raw vars \"$rawVars\" to string vars...")
-            var varPrefixRegex = "var\\d:".toRegex()
-            var varSuffixRegex = ":$".toRegex()
+            val varPrefixRegex = "var\\d:".toRegex()
+            val varSuffixRegex = ":$".toRegex()
             for (rawVar in rawVars) {
-                var stringVar = rawVar.replace(varPrefixRegex, "").replace(varSuffixRegex, "")
+                val stringVar = rawVar.replace(varPrefixRegex, "").replace(varSuffixRegex, "")
                 Log.d(TAG, "Convert raw var \"$rawVar\" to string var \"$stringVar\"")
                 stringVars.add(stringVar)
             }
@@ -325,4 +318,18 @@ class SensorDetailViewModel @Inject constructor(
         updateSensorEntity(results.values.all { it } && sensorManager?.checkPermission(app, sensorId) == true)
         permissionRequests.value = emptyArray()
     }
+
+    /**
+     * Convert a Flow into a State object that updates until the view model is cleared.
+     */
+    private fun <T> Flow<T>.collectAsState(
+        initial: T
+    ): State<T> {
+        val state = mutableStateOf(initial)
+        viewModelScope.launch {
+            collect { state.value = it }
+        }
+        return state
+    }
+    private fun <T> Flow<List<T>>.collectAsState(): State<List<T>> = collectAsState(initial = emptyList())
 }

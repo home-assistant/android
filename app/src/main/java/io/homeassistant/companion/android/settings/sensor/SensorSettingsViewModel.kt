@@ -14,11 +14,8 @@ import javax.inject.Inject
 class SensorSettingsViewModel @Inject constructor(application: Application) :
     AndroidViewModel(application) {
 
-    val app = application
-
-    private val sensorsDao = AppDatabase.getInstance(app.applicationContext).sensorDao()
-    private val sensorsFlow = sensorsDao.getAllFlow()
-    private var sensorsList = mutableListOf<Sensor>()
+    private val sensorsDao = AppDatabase.getInstance(getApplication()).sensorDao()
+    private var sensorsList = emptyList<Sensor>()
     var sensors = mutableStateListOf<Sensor>()
 
     var searchQuery: String? = null
@@ -27,9 +24,8 @@ class SensorSettingsViewModel @Inject constructor(application: Application) :
 
     init {
         viewModelScope.launch {
-            sensorsFlow?.collect {
-                sensorsList.clear()
-                sensorsList.addAll(it)
+            sensorsDao.getAllFlow().collect {
+                sensorsList = it
                 filterSensorsList()
             }
         }
@@ -46,6 +42,7 @@ class SensorSettingsViewModel @Inject constructor(application: Application) :
     }
 
     private fun filterSensorsList() {
+        val app = getApplication<Application>()
         sensors.clear()
 
         SensorReceiver.MANAGERS.filter { it.hasSensor(app.applicationContext) }.forEach { manager ->

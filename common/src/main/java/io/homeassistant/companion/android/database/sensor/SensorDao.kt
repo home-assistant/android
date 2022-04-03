@@ -15,7 +15,7 @@ interface SensorDao {
     fun get(id: String): Sensor?
 
     @Query("SELECT * FROM sensors")
-    fun getAllFlow(): Flow<List<Sensor>>?
+    fun getAllFlow(): Flow<List<Sensor>>
 
     @Transaction
     @Query("SELECT * FROM Sensors WHERE id = :id")
@@ -23,7 +23,7 @@ interface SensorDao {
 
     @Transaction
     @Query("SELECT * FROM Sensors WHERE id = :id")
-    fun getFullFlow(id: String): Flow<SensorWithAttributes>?
+    fun getFullFlow(id: String): Flow<SensorWithAttributes?>
 
     @Transaction
     @Query("SELECT * FROM sensor_settings WHERE sensor_id = :id")
@@ -52,14 +52,14 @@ interface SensorDao {
     fun clearAttributes(sensorId: String)
 
     @Query("UPDATE sensor_settings SET enabled = :enabled WHERE sensor_id = :sensorId AND name = :settingName")
-    fun updateSettingEnabled(sensorId: String, settingName: String, enabled: Boolean)
+    suspend fun updateSettingEnabled(sensorId: String, settingName: String, enabled: Boolean)
 
     @Query("UPDATE sensor_settings SET value = :value WHERE sensor_id = :sensorId AND name = :settingName")
     fun updateSettingValue(sensorId: String, settingName: String, value: String)
 
     @Query("UPDATE sensors SET last_sent_state = :state WHERE id = :sensorId")
-    fun updateLastSendState(sensorId: String, state: String)
+    suspend fun updateLastSendState(sensorId: String, state: String)
 
     @Query("SELECT COUNT(id) FROM sensors WHERE enabled = 1")
-    fun getEnabledCount(): Int?
+    suspend fun getEnabledCount(): Int?
 }

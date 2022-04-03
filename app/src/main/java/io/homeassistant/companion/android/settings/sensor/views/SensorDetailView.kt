@@ -152,11 +152,11 @@ fun SensorDetailView(
                         }
                     }
                 }
-                if (sensor.sensor.enabled && viewModel.sensorSettings.isNotEmpty()) {
+                if (sensor.sensor.enabled && viewModel.sensorSettings.value.isNotEmpty()) {
                     item {
                         SensorDetailHeader(stringResource(commonR.string.sensor_settings))
                     }
-                    viewModel.sensorSettings.forEach { setting ->
+                    viewModel.sensorSettings.value.forEach { setting ->
                         item {
                             when (setting.valueType) {
                                 "toggle" -> {
