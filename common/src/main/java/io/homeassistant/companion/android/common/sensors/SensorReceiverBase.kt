@@ -19,6 +19,21 @@ import java.util.Locale
 import javax.inject.Inject
 
 abstract class SensorReceiverBase : BroadcastReceiver() {
+    companion object {
+        fun shouldDoFastUpdates(context: Context): Boolean {
+            val settingDao = AppDatabase.getInstance(context).settingsDao().get(0)
+            return when (settingDao?.sensorUpdateFrequency) {
+                SensorUpdateFrequencySetting.FAST_ALWAYS -> true
+                SensorUpdateFrequencySetting.FAST_WHILE_CHARGING -> {
+                    val batteryStatusIntent =
+                        context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+                    return batteryStatusIntent?.let { BatterySensorManager.getIsCharging(it) } ?: false
+                }
+                else -> false
+            }
+        }
+    }
+
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
     protected abstract val tag: String
@@ -84,14 +99,8 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         }
 
         ioScope.launch {
-            val settingDao = AppDatabase.getInstance(context).settingsDao().get(0)
-            val batteryStatusIntent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-            val isCharging = batteryStatusIntent?.let { BatterySensorManager.getIsCharging(it) }
-            if (isCharging != true && settingDao != null &&
-                settingDao.sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_WHILE_CHARGING &&
-                intent.action == Intent.ACTION_TIME_TICK
-            ) {
-                Log.i(tag, "Skipping faster update as device is not charging")
+            if (intent.action == Intent.ACTION_TIME_TICK && !shouldDoFastUpdates(context)) {
+                Log.i(tag, "Skipping faster update because not charging/different preference")
                 return@launch
             }
             updateSensors(context, integrationUseCase, intent)
