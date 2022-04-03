@@ -15,6 +15,8 @@ import com.google.android.gms.location.SleepSegmentEvent
 import com.google.android.gms.location.SleepSegmentRequest
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
+import java.util.concurrent.TimeUnit
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
@@ -216,7 +218,8 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
             actReg.removeActivityUpdates(pendingIntent)
 
             Log.d(TAG, "Registering for activity updates.")
-            actReg.requestActivityUpdates(120000, pendingIntent)
+            val fastUpdate = SensorReceiverBase.shouldDoFastUpdates(context)
+            actReg.requestActivityUpdates(TimeUnit.MINUTES.toMillis(if (fastUpdate) 1 else 2), pendingIntent)
         }
         if ((
             isEnabled(context, sleepConfidence.id) || isEnabled(
