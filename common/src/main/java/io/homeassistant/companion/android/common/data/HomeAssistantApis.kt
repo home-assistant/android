@@ -15,7 +15,14 @@ import retrofit2.converter.jackson.JacksonConverterFactory
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-class HomeAssistantApis @Inject constructor(private val urlRepository: UrlRepository) {
+class HomeAssistantApis @Inject constructor(
+    private val urlRepository: UrlRepository,
+    private val tlsHelper: TLSHelper
+) {
+/*
+    @Inject
+    lateinit var mltsHelper: MTLSHelper
+*/
     companion object {
         private const val LOCAL_HOST = "http://localhost/"
         private const val USER_AGENT = "User-Agent"
@@ -55,7 +62,7 @@ class HomeAssistantApis @Inject constructor(private val urlRepository: UrlReposi
         builder.callTimeout(CALL_TIMEOUT, TimeUnit.SECONDS)
         builder.readTimeout(READ_TIMEOUT, TimeUnit.SECONDS)
 
-        MTLSHelper().setupOkHttpClientSSLSocketFactory(builder)
+        tlsHelper.setupOkHttpClientSSLSocketFactory(builder)
 
         return builder
     }

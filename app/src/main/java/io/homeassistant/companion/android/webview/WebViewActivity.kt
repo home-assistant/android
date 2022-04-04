@@ -67,6 +67,7 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.data.HomeAssistantApis
+import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.database.authentication.Authentication
@@ -84,7 +85,7 @@ import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.ChangeLog
 import io.homeassistant.companion.android.util.OnSwipeListener
 import io.homeassistant.companion.android.util.DisabledLocationHandler
-import io.homeassistant.companion.android.util.MTLSWebViewClient
+import io.homeassistant.companion.android.util.TLSWebViewClient
 import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import kotlinx.coroutines.CoroutineScope
@@ -165,6 +166,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     @Inject
     lateinit var authenticationDao: AuthenticationDao
+
+    @Inject
+    lateinit var keyChainRepository: KeyChainRepository
 
     private lateinit var binding: ActivityWebviewBinding
     private lateinit var webView: WebView
@@ -267,7 +271,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             settings.displayZoomControls = false
             settings.mediaPlaybackRequiresUserGesture = !presenter.isAutoPlayVideoEnabled()
             settings.userAgentString = settings.userAgentString + " ${HomeAssistantApis.USER_AGENT_STRING}"
-            webViewClient = object : MTLSWebViewClient() {
+            webViewClient = object : TLSWebViewClient(keyChainRepository) {
                 override fun onReceivedError(
                     view: WebView?,
                     errorCode: Int,
@@ -1097,6 +1101,16 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             return
         isShowingError = true
 
+        // If the endpoint requires a TLS client certificate and we got a timeout, ignore the error
+        // It is likely due to the user not choosing a key yet
+        val tlsWebViewclient = webView.webViewClient as TLSWebViewClient
+        if (tlsWebViewclient != null &&
+            tlsWebViewclient.isTLSClientAuthNeeded &&
+            !tlsWebViewclient.hasUserDeniedAccess &&
+            errorType == io.homeassistant.companion.android.webview.WebView.ErrorType.TIMEOUT) {
+            return
+        }
+
         val alert = AlertDialog.Builder(this)
             .setTitle(commonR.string.error_connection_failed)
             .setOnDismissListener {
@@ -1105,7 +1119,17 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 waitForConnection()
             }
 
-        if (errorType == io.homeassistant.companion.android.webview.WebView.ErrorType.AUTHENTICATION) {
+        if (errorType == io.homeassistant.companion.android.webview.WebView.ErrorType.TIMEOUT && tlsWebViewclient.hasUserDeniedAccess) {
+            alert.setMessage(io.homeassistant.companion.android.common.R.string.tls_cert_not_found_message)
+            alert.setTitle(commonR.string.tls_cert_not_found_title)
+            alert.setPositiveButton(android.R.string.ok) { _, _ ->
+                presenter.clearKnownUrls()
+                relaunchApp()
+            }
+            alert.setNeutralButton(commonR.string.exit) { _, _ ->
+                finishAffinity()
+            }
+        } else if (errorType == io.homeassistant.companion.android.webview.WebView.ErrorType.AUTHENTICATION) {
             alert.setMessage(commonR.string.error_auth_revoked)
             alert.setPositiveButton(android.R.string.ok) { _, _ ->
                 presenter.clearKnownUrls()

@@ -25,10 +25,11 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
+import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.onboarding.OnboardingViewModel
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationFragment
 import io.homeassistant.companion.android.themes.ThemesManager
-import io.homeassistant.companion.android.util.MTLSWebViewClient
+import io.homeassistant.companion.android.util.TLSWebViewClient
 import io.homeassistant.companion.android.util.isStarted
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import javax.inject.Inject
@@ -47,6 +48,9 @@ class AuthenticationFragment : Fragment() {
     @Inject
     lateinit var themesManager: ThemesManager
 
+    @Inject
+    lateinit var keyChainRepository: KeyChainRepository
+
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -62,7 +66,7 @@ class AuthenticationFragment : Fragment() {
                             settings.javaScriptEnabled = true
                             settings.domStorageEnabled = true
                             settings.userAgentString = settings.userAgentString + " ${HomeAssistantApis.USER_AGENT_STRING}"
-                            webViewClient = object : MTLSWebViewClient() {
+                            webViewClient = object : TLSWebViewClient(keyChainRepository) {
                                 override fun shouldOverrideUrlLoading(view: WebView?, url: String): Boolean {
                                     return onRedirect(url)
                                 }

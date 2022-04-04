@@ -9,11 +9,17 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.databinding.ActivityMyBinding
-import io.homeassistant.companion.android.util.MTLSWebViewClient
+import io.homeassistant.companion.android.util.TLSWebViewClient
 import io.homeassistant.companion.android.webview.WebViewActivity
+import javax.inject.Inject
 
 class MyActivity : BaseActivity() {
+
+    @Inject
+    lateinit var keyChainRepository: KeyChainRepository
+
     companion object {
         val EXTRA_URI = "EXTRA_URI"
 
@@ -44,7 +50,7 @@ class MyActivity : BaseActivity() {
 
             binding.webview.apply {
                 settings.javaScriptEnabled = true
-                webViewClient = object : MTLSWebViewClient() {
+                webViewClient = object : TLSWebViewClient(keyChainRepository) {
                     override fun shouldOverrideUrlLoading(
                         view: WebView?,
                         request: WebResourceRequest?

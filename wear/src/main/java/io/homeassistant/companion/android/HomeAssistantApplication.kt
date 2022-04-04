@@ -4,7 +4,7 @@ import android.app.Application
 import android.content.Intent
 import android.content.IntentFilter
 import dagger.hilt.android.HiltAndroidApp
-import io.homeassistant.companion.android.common.data.MTLSHelper
+import io.homeassistant.companion.android.common.data.TLSHelper
 import io.homeassistant.companion.android.complications.ComplicationReceiver
 import io.homeassistant.companion.android.sensors.SensorReceiver
 
@@ -12,8 +12,6 @@ import io.homeassistant.companion.android.sensors.SensorReceiver
 open class HomeAssistantApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-
-        MTLSHelper().init(this)
 
         val sensorReceiver = SensorReceiver()
         // This will cause the sensor to be updated every time the OS broadcasts that a cable was plugged/unplugged.
