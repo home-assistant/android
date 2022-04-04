@@ -19,10 +19,6 @@ class HomeAssistantApis @Inject constructor(
     private val urlRepository: UrlRepository,
     private val tlsHelper: TLSHelper
 ) {
-/*
-    @Inject
-    lateinit var mltsHelper: MTLSHelper
-*/
     companion object {
         private const val LOCAL_HOST = "http://localhost/"
         private const val USER_AGENT = "User-Agent"
