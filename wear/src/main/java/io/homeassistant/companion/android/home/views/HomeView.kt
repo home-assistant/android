@@ -248,7 +248,7 @@ fun LoadHomePage(
                         sensorManager.id() == sensorManagerId
                     }
                     SensorManagerUi(
-                        allSensors = mainViewModel.sensors,
+                        allSensors = mainViewModel.sensors.value,
                         sensorManager = sensorManager,
                     ) { sensorId, isEnabled ->
                         mainViewModel.enableDisableSensor(sensorManager, sensorId, isEnabled)

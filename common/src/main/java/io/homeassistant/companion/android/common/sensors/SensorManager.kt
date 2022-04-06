@@ -125,7 +125,7 @@ interface SensorManager {
         return setting?.enabled ?: false
     }
 
-    fun enableDisableSetting(context: Context, sensor: BasicSensor, settingName: String, enabled: Boolean) {
+    suspend fun enableDisableSetting(context: Context, sensor: BasicSensor, settingName: String, enabled: Boolean) {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val settingEnabled = isSettingEnabled(context, sensor, settingName)
         if (enabled && !settingEnabled ||
