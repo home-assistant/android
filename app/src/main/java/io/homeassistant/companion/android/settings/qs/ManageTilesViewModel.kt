@@ -2,8 +2,8 @@ package io.homeassistant.companion.android.settings.qs
 
 import android.app.Application
 import android.graphics.PorterDuff
+import android.widget.Toast
 import androidx.appcompat.content.res.AppCompatResources
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.graphics.drawable.DrawableCompat
@@ -20,7 +20,6 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.qs.TileEntity
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -33,11 +32,9 @@ class ManageTilesViewModel @Inject constructor(
     private lateinit var iconPack: IconPack
 
     private val tileDao = AppDatabase.getInstance(application).tileDao()
-    private fun tileDaoFlow(): Flow<List<TileEntity>>? = tileDao.getAllFlow()
     fun currentTile() = tileDao.get(selectedTile.value)
     var entities = mutableStateMapOf<String, Entity<*>>()
         private set
-    private var tileList = mutableStateListOf<TileEntity>()
     var selectedTile = mutableStateOf("tile_1")
         private set
     var selectedTileName = mutableStateOf(application.getString(R.string.tile_1))
@@ -60,18 +57,6 @@ class ManageTilesViewModel @Inject constructor(
                     entities[it.entityId] = it
             }
         }
-        tileFlow()
-    }
-
-    private fun tileFlow() {
-        viewModelScope.launch {
-            tileDaoFlow()?.collect {
-                tileList.clear()
-                it.forEach { tile ->
-                    tileList.add(tile)
-                }
-            }
-        }
     }
 
     fun updateExistingTileFields() {
@@ -88,6 +73,13 @@ class ManageTilesViewModel @Inject constructor(
             val icon = DrawableCompat.wrap(iconDrawable)
             icon.setColorFilter(getApplication<HomeAssistantApplication>().resources.getColor(R.color.colorAccent), PorterDuff.Mode.SRC_IN)
             drawableIcon.value = icon
+        }
+    }
+
+    fun addTile(tileData: TileEntity) {
+        viewModelScope.launch {
+            tileDao.add(tileData)
+            Toast.makeText(getApplication(), R.string.tile_updated, Toast.LENGTH_SHORT).show()
         }
     }
 }
