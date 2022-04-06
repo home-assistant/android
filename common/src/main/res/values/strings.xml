@@ -276,8 +276,8 @@
     <string name="login">Login</string>
     <string name="login_wear_os_device">Login Wear OS Device</string>
     <string name="logout">Logout</string>
-    <string name="lovelace_view_dashboard">Lovelace View or Dashboard</string>
-    <string name="lovelace">Lovelace</string>
+    <string name="lovelace_view_dashboard">Dashboard View or Dashboard</string>
+    <string name="lovelace">Dashboard</string>
     <string name="mailbox">Mailbox</string>
     <string name="manage_all_notifications">Manage All Notifications</string>
     <string name="manage_all_sensors_summary">This device has %1$d available sensors to utilize.</string>
