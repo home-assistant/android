@@ -58,7 +58,7 @@ class NfcSetupActivity : BaseActivity() {
 
         intent.getStringExtra(EXTRA_TAG_VALUE)?.let {
             simpleWrite = true
-            viewModel.setTagIdentifierForSimple(it)
+            viewModel.writeNewTagSimple(it)
         }
 
         setContent {

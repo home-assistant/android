@@ -112,7 +112,10 @@ fun LoadNfcView(
             composable(NfcSetupActivity.NAV_WRITE) {
                 NfcWriteView(
                     isNfcEnabled = viewModel.isNfcEnabled.value,
-                    identifier = viewModel.nfcTagIdentifier.value
+                    identifier = viewModel.nfcTagIdentifier.value,
+                    onSetIdentifier = if (viewModel.nfcIdentifierIsEditable.value) {
+                        { viewModel.setTagIdentifier(it) }
+                    } else null
                 )
             }
             composable(NfcSetupActivity.NAV_EDIT) {

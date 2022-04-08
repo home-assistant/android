@@ -331,6 +331,8 @@
     <string name="nfc_welcome_turnon">NFC is turned off. To get started, please turn on NFC in your device\'s settings.</string>
     <string name="nfc_write_tag_error">Error while writing NFC tag</string>
     <string name="nfc_write_tag_instructions">Hold your device near an NFC tag to write the following identifier to it:\n\n%1$s</string>
+    <string name="nfc_write_tag_change">Change identifier</string>
+    <string name="nfc_write_tag_enter_identifier">Tag identifier</string>
     <string name="nfc_write_tag_turnon">Please turn on NFC to enable writing to an NFC tag</string>
     <string name="nfc_write_tag_success">Successfully wrote NFC tag</string>
     <string name="no_notifications_summary">You have not received any notifications yet</string>

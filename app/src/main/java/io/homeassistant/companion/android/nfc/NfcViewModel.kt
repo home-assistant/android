@@ -28,6 +28,7 @@ class NfcViewModel @Inject constructor(
 
     val isNfcEnabled = mutableStateOf(false)
     val nfcTagIdentifier = mutableStateOf<String?>(null)
+    val nfcIdentifierIsEditable = mutableStateOf(true)
     var nfcEventShouldWrite = false
         private set
 
@@ -44,13 +45,19 @@ class NfcViewModel @Inject constructor(
         isNfcEnabled.value = NfcAdapter.getDefaultAdapter(getApplication()).isEnabled
     }
 
-    fun setTagIdentifierForSimple(value: String) {
+    fun setTagIdentifier(value: String) {
+        if (nfcIdentifierIsEditable.value && value.trim().isNotEmpty()) nfcTagIdentifier.value = value
+    }
+
+    fun writeNewTagSimple(value: String) {
         nfcTagIdentifier.value = value
+        nfcIdentifierIsEditable.value = false
         // We don't need to perform navigation here because it will be set as the startDestination
     }
 
     fun writeNewTag() {
         nfcTagIdentifier.value = UUID.randomUUID().toString()
+        nfcIdentifierIsEditable.value = true
         navigator.navigateTo(NfcSetupActivity.NAV_WRITE)
     }
 
@@ -81,7 +88,10 @@ class NfcViewModel @Inject constructor(
 
     suspend fun onNfcWriteFailure() = _nfcResultSnackbar.emit(commonR.string.nfc_write_tag_error)
 
-    fun duplicateNfcTag() = navigator.navigateTo(NfcSetupActivity.NAV_WRITE)
+    fun duplicateNfcTag() {
+        nfcIdentifierIsEditable.value = false
+        navigator.navigateTo(NfcSetupActivity.NAV_WRITE)
+    }
 
     fun fireNfcTagEvent() {
         viewModelScope.launch {
