@@ -1,7 +1,9 @@
 package io.homeassistant.companion.android.nfc
 
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.nfc.NdefMessage
 import android.nfc.NfcAdapter
 import android.os.Bundle
@@ -25,6 +27,12 @@ class NfcSetupActivity : BaseActivity() {
     private var mNfcAdapter: NfcAdapter? = null
     private var simpleWrite = false
     private var messageId: Int = -1
+
+    private val nfcStateChangedReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == NfcAdapter.ACTION_ADAPTER_STATE_CHANGED) viewModel.checkNfcEnabled()
+        }
+    }
 
     companion object {
         val TAG = NfcSetupActivity::class.simpleName
@@ -70,9 +78,14 @@ class NfcSetupActivity : BaseActivity() {
 
     override fun onResume() {
         super.onResume()
+        viewModel.checkNfcEnabled()
         mNfcAdapter?.let {
             NFCUtil.enableNFCInForeground(it, this, javaClass)
         }
+        registerReceiver(
+            nfcStateChangedReceiver,
+            IntentFilter(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED)
+        )
     }
 
     override fun onPause() {
@@ -80,6 +93,7 @@ class NfcSetupActivity : BaseActivity() {
         mNfcAdapter?.let {
             NFCUtil.disableNFCInForeground(it, this)
         }
+        unregisterReceiver(nfcStateChangedReceiver)
     }
 
     override fun onNewIntent(intent: Intent) {

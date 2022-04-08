@@ -1,8 +1,10 @@
 package io.homeassistant.companion.android.nfc
 
+import android.app.Application
+import android.nfc.NfcAdapter
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -16,13 +18,15 @@ import io.homeassistant.companion.android.common.R as commonR
 
 @HiltViewModel
 class NfcViewModel @Inject constructor(
-    private val integrationUseCase: IntegrationRepository
-) : ViewModel() {
+    private val integrationUseCase: IntegrationRepository,
+    application: Application
+) : AndroidViewModel(application) {
 
     companion object {
         const val TAG = "NfcViewModel"
     }
 
+    val isNfcEnabled = mutableStateOf(false)
     val nfcTagIdentifier = mutableStateOf<String?>(null)
     var nfcEventShouldWrite = false
         private set
@@ -34,6 +38,10 @@ class NfcViewModel @Inject constructor(
 
     fun setDestination(destination: String?) {
         nfcEventShouldWrite = nfcTagIdentifier.value != null && destination == NfcSetupActivity.NAV_WRITE
+    }
+
+    fun checkNfcEnabled() {
+        isNfcEnabled.value = NfcAdapter.getDefaultAdapter(getApplication()).isEnabled
     }
 
     fun setTagIdentifierForSimple(value: String) {

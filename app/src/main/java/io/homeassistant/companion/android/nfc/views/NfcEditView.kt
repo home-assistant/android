@@ -19,7 +19,6 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -32,7 +31,7 @@ import io.homeassistant.companion.android.common.R as commonR
 @SuppressLint("HardwareIds")
 @Composable
 fun NfcEditView(
-    identifier: MutableState<String?>,
+    identifier: String?,
     onDuplicateClicked: () -> Unit,
     onFireEventClicked: () -> Unit
 ) {
@@ -45,7 +44,7 @@ fun NfcEditView(
             )
         }
         item {
-            NfcCodeContainer(text = identifier.value ?: "")
+            NfcCodeContainer(text = identifier ?: "")
         }
         item {
             Row(modifier = Modifier.padding(top = 8.dp)) {
@@ -69,8 +68,8 @@ fun NfcEditView(
         }
 
         val deviceId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
-        val tagTriggerExample = "- platform: tag\n  tag_id: ${identifier.value}"
-        val deviceTriggerExample = "- platform: event\n  event_type: tag_scanned\n  event_data:\n    device_id: $deviceId\n    tag_id: ${identifier.value}"
+        val tagTriggerExample = "- platform: tag\n  tag_id: $identifier"
+        val deviceTriggerExample = "- platform: event\n  event_type: tag_scanned\n  event_data:\n    device_id: $deviceId\n    tag_id: $identifier"
         item {
             Text(
                 text = stringResource(commonR.string.nfc_trigger_summary),
