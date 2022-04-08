@@ -317,7 +317,9 @@
     <string name="nfc_btn_write_tag">Write NFC Tag</string>
     <string name="nfc_event_fired_fail">Firing event failed, please try again</string>
     <string name="nfc_event_fired_success">Event fired</string>
-    <string name="nfc_example_trigger">Example Trigger</string>
+    <string name="nfc_trigger_summary">Use this tag as a trigger for an automation. Select the \'Tag\' trigger type and choose the identifier in the visual editor, or use the following YAML code:</string>
+    <string name="nfc_trigger_any">Scanned by any device:</string>
+    <string name="nfc_trigger_device">Scanned by this device:</string>
     <string name="nfc_invalid_tag">This tag does not contain Home Assistant data</string>
     <string name="nfc_processing_tag_error">Error while processing NFC tag</string>
     <string name="nfc_read_tag_instructions">Hold your phone near an NFC tag</string>

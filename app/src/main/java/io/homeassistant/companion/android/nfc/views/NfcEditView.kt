@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.nfc.views
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.provider.Settings
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,11 +11,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.Button
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
@@ -31,14 +37,10 @@ fun NfcEditView(
     onFireEventClicked: () -> Unit
 ) {
     val context = LocalContext.current
-    val deviceId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
-    val triggerExample = "- platform: event\n  event_type: tag_scanned\n  event_data:\n    device_id: $deviceId\n    tag_id: ${identifier.value}"
-
     LazyColumn(contentPadding = PaddingValues(all = 16.dp)) {
         item {
             Text(
                 text = stringResource(commonR.string.nfc_tag_identifier),
-                style = MaterialTheme.typography.subtitle1,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
         }
@@ -65,31 +67,28 @@ fun NfcEditView(
                 }
             }
         }
+
+        val deviceId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
+        val tagTriggerExample = "- platform: tag\n  tag_id: ${identifier.value}"
+        val deviceTriggerExample = "- platform: event\n  event_type: tag_scanned\n  event_data:\n    device_id: $deviceId\n    tag_id: ${identifier.value}"
         item {
             Text(
-                text = stringResource(commonR.string.nfc_example_trigger),
-                style = MaterialTheme.typography.subtitle1,
-                modifier = Modifier.padding(top = 32.dp, bottom = 8.dp)
+                text = stringResource(commonR.string.nfc_trigger_summary),
+                modifier = Modifier.padding(top = 48.dp, bottom = 8.dp)
             )
         }
         item {
-            NfcCodeContainer(text = triggerExample)
+            NfcTriggerExample(
+                modifier = Modifier.padding(bottom = 8.dp),
+                description = stringResource(commonR.string.nfc_trigger_any),
+                example = tagTriggerExample
+            )
         }
         item {
-            Button(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = {
-                    val sendIntent: Intent = Intent().apply {
-                        action = Intent.ACTION_SEND
-                        putExtra(Intent.EXTRA_TEXT, triggerExample)
-                        type = "text/plain"
-                    }
-                    val shareIntent = Intent.createChooser(sendIntent, null)
-                    context.startActivity(shareIntent)
-                }
-            ) {
-                Text(stringResource(commonR.string.nfc_btn_share))
-            }
+            NfcTriggerExample(
+                description = stringResource(commonR.string.nfc_trigger_device),
+                example = deviceTriggerExample
+            )
         }
     }
 }
@@ -110,5 +109,40 @@ fun NfcCodeContainer(
                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
             )
         }
+    }
+}
+
+@Composable
+fun NfcTriggerExample(
+    modifier: Modifier = Modifier,
+    description: String,
+    example: String
+) {
+    val context = LocalContext.current
+    Column(modifier = modifier) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = description,
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(
+                modifier = Modifier.padding(all = 8.dp),
+                onClick = {
+                    val sendIntent: Intent = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        putExtra(Intent.EXTRA_TEXT, example)
+                        type = "text/plain"
+                    }
+                    val shareIntent = Intent.createChooser(sendIntent, null)
+                    context.startActivity(shareIntent)
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Share,
+                    contentDescription = stringResource(commonR.string.nfc_btn_share)
+                )
+            }
+        }
+        NfcCodeContainer(text = example)
     }
 }
