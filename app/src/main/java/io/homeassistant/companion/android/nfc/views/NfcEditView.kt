@@ -69,7 +69,7 @@ fun NfcEditView(
 
         val deviceId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
         val tagTriggerExample = "- platform: tag\n  tag_id: $identifier"
-        val deviceTriggerExample = "- platform: event\n  event_type: tag_scanned\n  event_data:\n    device_id: $deviceId\n    tag_id: $identifier"
+        val deviceTriggerExample = "- platform: tag\n  tag_id: $identifier\n  device_id: $deviceId"
         item {
             Text(
                 text = stringResource(commonR.string.nfc_trigger_summary),
