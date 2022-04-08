@@ -3,7 +3,9 @@ package io.homeassistant.companion.android.nfc
 import android.app.Application
 import android.nfc.NfcAdapter
 import android.util.Log
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,43 +28,46 @@ class NfcViewModel @Inject constructor(
         const val TAG = "NfcViewModel"
     }
 
-    val isNfcEnabled = mutableStateOf(false)
-    val nfcTagIdentifier = mutableStateOf<String?>(null)
-    val nfcIdentifierIsEditable = mutableStateOf(true)
+    var isNfcEnabled by mutableStateOf(false)
+        private set
+    var nfcTagIdentifier by mutableStateOf<String?>(null)
+        private set
+    var nfcIdentifierIsEditable by mutableStateOf(true)
+        private set
     var nfcEventShouldWrite = false
         private set
 
     val navigator = Navigator()
 
     private val _nfcResultSnackbar = MutableSharedFlow<Int>()
-    val nfcResultSnackbar = _nfcResultSnackbar.asSharedFlow()
+    var nfcResultSnackbar = _nfcResultSnackbar.asSharedFlow()
 
     fun setDestination(destination: String?) {
-        nfcEventShouldWrite = nfcTagIdentifier.value != null && destination == NfcSetupActivity.NAV_WRITE
+        nfcEventShouldWrite = nfcTagIdentifier != null && destination == NfcSetupActivity.NAV_WRITE
     }
 
     fun checkNfcEnabled() {
-        isNfcEnabled.value = NfcAdapter.getDefaultAdapter(getApplication()).isEnabled
+        isNfcEnabled = NfcAdapter.getDefaultAdapter(getApplication()).isEnabled
     }
 
     fun setTagIdentifier(value: String) {
-        if (nfcIdentifierIsEditable.value && value.trim().isNotEmpty()) nfcTagIdentifier.value = value
+        if (nfcIdentifierIsEditable && value.trim().isNotEmpty()) nfcTagIdentifier = value
     }
 
     fun writeNewTagSimple(value: String) {
-        nfcTagIdentifier.value = value
-        nfcIdentifierIsEditable.value = false
+        nfcTagIdentifier = value
+        nfcIdentifierIsEditable = false
         // We don't need to perform navigation here because it will be set as the startDestination
     }
 
     fun writeNewTag() {
-        nfcTagIdentifier.value = UUID.randomUUID().toString()
-        nfcIdentifierIsEditable.value = true
+        nfcTagIdentifier = UUID.randomUUID().toString()
+        nfcIdentifierIsEditable = true
         navigator.navigateTo(NfcSetupActivity.NAV_WRITE)
     }
 
     fun onNfcReadSuccess(identifier: String) {
-        nfcTagIdentifier.value = identifier
+        nfcTagIdentifier = identifier
 
         navigator.navigateTo(
             Navigator.NavigatorItem(
@@ -76,7 +81,7 @@ class NfcViewModel @Inject constructor(
 
     suspend fun onNfcWriteSuccess(identifier: String) {
         _nfcResultSnackbar.emit(commonR.string.nfc_write_tag_success)
-        nfcTagIdentifier.value = identifier
+        nfcTagIdentifier = identifier
 
         navigator.navigateTo(
             Navigator.NavigatorItem(
@@ -89,13 +94,13 @@ class NfcViewModel @Inject constructor(
     suspend fun onNfcWriteFailure() = _nfcResultSnackbar.emit(commonR.string.nfc_write_tag_error)
 
     fun duplicateNfcTag() {
-        nfcIdentifierIsEditable.value = false
+        nfcIdentifierIsEditable = false
         navigator.navigateTo(NfcSetupActivity.NAV_WRITE)
     }
 
     fun fireNfcTagEvent() {
         viewModelScope.launch {
-            nfcTagIdentifier.value?.let {
+            nfcTagIdentifier?.let {
                 try {
                     integrationUseCase.scanTag(
                         hashMapOf("tag_id" to it)

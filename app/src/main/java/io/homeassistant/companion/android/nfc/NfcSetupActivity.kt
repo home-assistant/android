@@ -101,7 +101,7 @@ class NfcSetupActivity : BaseActivity() {
 
         if (NfcAdapter.ACTION_TECH_DISCOVERED == intent.action) {
             lifecycleScope.launch {
-                val nfcTagToWriteUUID = viewModel.nfcTagIdentifier.value
+                val nfcTagToWriteUUID = viewModel.nfcTagIdentifier
 
                 // Create new nfc tag
                 if (!viewModel.nfcEventShouldWrite) {

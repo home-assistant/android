@@ -101,7 +101,7 @@ fun LoadNfcView(
         ) {
             composable(NfcSetupActivity.NAV_WELCOME) {
                 NfcWelcomeView(
-                    isNfcEnabled = viewModel.isNfcEnabled.value,
+                    isNfcEnabled = viewModel.isNfcEnabled,
                     onReadClicked = { viewModel.navigator.navigateTo(NfcSetupActivity.NAV_READ) },
                     onWriteClicked = { viewModel.writeNewTag() }
                 )
@@ -111,16 +111,16 @@ fun LoadNfcView(
             }
             composable(NfcSetupActivity.NAV_WRITE) {
                 NfcWriteView(
-                    isNfcEnabled = viewModel.isNfcEnabled.value,
-                    identifier = viewModel.nfcTagIdentifier.value,
-                    onSetIdentifier = if (viewModel.nfcIdentifierIsEditable.value) {
+                    isNfcEnabled = viewModel.isNfcEnabled,
+                    identifier = viewModel.nfcTagIdentifier,
+                    onSetIdentifier = if (viewModel.nfcIdentifierIsEditable) {
                         { viewModel.setTagIdentifier(it) }
                     } else null
                 )
             }
             composable(NfcSetupActivity.NAV_EDIT) {
                 NfcEditView(
-                    identifier = viewModel.nfcTagIdentifier.value,
+                    identifier = viewModel.nfcTagIdentifier,
                     onDuplicateClicked = { viewModel.duplicateNfcTag() },
                     onFireEventClicked = { viewModel.fireNfcTagEvent() }
                 )
