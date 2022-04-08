@@ -21,4 +21,5 @@
     <color name="colorWidgetButtonLabel">#E6E6E6</color>
     <color name="colorActionBarPopupBackground">#2B2B2B</color>
     <color name="colorLaunchScreenBackground">#111111</color>
+    <color name="colorCodeBackground">#282828</color>
 </resources>

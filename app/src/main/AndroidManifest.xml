@@ -353,7 +353,8 @@
         <activity
             android:name=".nfc.NfcSetupActivity"
             android:exported="false"
-            android:label="@string/nfc_title_nfc_setup" />
+            android:label="@string/nfc_title_nfc_setup"
+            android:theme="@style/Theme.HomeAssistant.Config" />
 
         <activity android:name=".share.ShareActivity"
             android:exported="true">
