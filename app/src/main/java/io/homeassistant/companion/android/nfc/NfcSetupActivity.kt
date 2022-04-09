@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.nfc.NdefMessage
 import android.nfc.NfcAdapter
 import android.os.Bundle
 import android.util.Log
@@ -99,15 +98,13 @@ class NfcSetupActivity : BaseActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
 
-        if (NfcAdapter.ACTION_TECH_DISCOVERED == intent.action) {
+        if (intent.action == NfcAdapter.ACTION_TECH_DISCOVERED) {
             lifecycleScope.launch {
                 val nfcTagToWriteUUID = viewModel.nfcTagIdentifier
 
                 // Create new nfc tag
                 if (!viewModel.nfcEventShouldWrite) {
-                    val rawMessages = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES)
-                    val ndefMessage = rawMessages?.firstOrNull() as NdefMessage?
-                    val url = ndefMessage?.records?.get(0)?.toUri().toString()
+                    val url = NFCUtil.extractUrlFromNFCIntent(intent)
                     val nfcTagId = UrlHandler.splitNfcTagId(url)
                     if (nfcTagId == null) {
                         viewModel.onNfcReadEmpty()

@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.nfc
 
 import android.content.Intent
-import android.nfc.NdefMessage
+import android.net.Uri
 import android.nfc.NfcAdapter
 import android.os.Bundle
 import android.util.Log
@@ -36,10 +36,8 @@ class TagReaderActivity : BaseActivity() {
         setSupportActionBar(findViewById(R.id.toolbar))
 
         mainScope.launch {
-            if (NfcAdapter.ACTION_NDEF_DISCOVERED == intent.action) {
-                val rawMessages = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES)
-                val ndefMessage = rawMessages?.get(0) as NdefMessage?
-                val url = ndefMessage?.records?.get(0)?.toUri().toString()
+            if (intent.action == NfcAdapter.ACTION_NDEF_DISCOVERED) {
+                val url = NFCUtil.extractUrlFromNFCIntent(intent)
                 try {
                     handleTag(url)
                 } catch (e: Exception) {
@@ -49,7 +47,7 @@ class TagReaderActivity : BaseActivity() {
                     finish()
                 }
             } else if (Intent.ACTION_VIEW == intent.action) {
-                val url: String = intent?.data.toString()
+                val url: Uri? = intent.data
                 try {
                     handleTag(url)
                 } catch (e: Exception) {
@@ -67,7 +65,7 @@ class TagReaderActivity : BaseActivity() {
         super.onDestroy()
     }
 
-    private suspend fun handleTag(url: String) {
+    private suspend fun handleTag(url: Uri?) {
         // https://www.home-assistant.io/tag/5f0ba733-172f-430d-a7f8-e4ad940c88d7
 
         val nfcTagId = UrlHandler.splitNfcTagId(url)
