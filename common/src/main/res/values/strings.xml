@@ -376,7 +376,7 @@
     <string name="privacy_policy">Privacy Policy</string>
     <string name="privacy_url">https://www.home-assistant.io/privacy</string>
     <string name="profile">Profile</string>
-    <string name="qrcode_processing_tag_error">Error while processing qrcode tag</string>
+    <string name="qrcode_processing_tag_error">Error while processing QR code tag</string>
     <string name="quick_settings">Quick Settings</string>
     <string name="rate_limit_notification.body">You have now sent more than %s notifications today. You will not receive new notifications until midnight UTC.</string>
     <string name="rate_limit_notification.title">Notifications Rate Limited</string>
