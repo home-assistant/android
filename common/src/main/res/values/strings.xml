@@ -18,7 +18,7 @@
     <string name="auth_error_message">The \'Username\' and \'Password\' fields must be completed</string>
     <string name="auth_error">Authentication Error</string>
     <string name="auth_request">Authentication Requested</string>
-    <string name="autoplay_video_summary">Autoplay Videos when lovelace dashboard is active. Enabling this setting may increase data usage unexpectedly, proceed with caution.</string>
+    <string name="autoplay_video_summary">Autoplay Videos when dashboard is active. Enabling this setting may increase data usage unexpectedly, proceed with caution.</string>
     <string name="autoplay_video">Autoplay Videos</string>
     <string name="background_access_disabled">Home Assistant does not have access to run in the background. Without this permission the app will not be able to reliably send data back to your server. Click here to request permissions.</string>
     <string name="background_access_enabled">Home Assistant has access to run in the background.</string>
@@ -226,7 +226,7 @@
         <item quantity="other">%d seconds</item>
     </plurals>
     <string name="irreversible">This action is irreversible</string>
-    <string name="keep_screen_on_def">Do not lock screen when Lovelace dashboard is active</string>
+    <string name="keep_screen_on_def">Do not lock screen when dashboard is active</string>
     <string name="keep_screen_on">Keep screen On</string>
     <string name="pinch_to_zoom_def">Allow Pinch-to-zoom gesture to zoom app window</string>
     <string name="pinch_to_zoom">Pinch To Zoom</string>
