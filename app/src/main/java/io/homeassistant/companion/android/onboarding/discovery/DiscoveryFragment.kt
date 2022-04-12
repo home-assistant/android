@@ -36,6 +36,8 @@ class DiscoveryFragment @Inject constructor() : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        lifecycle.addObserver(viewModel.homeAssistantSearcher)
+
         return ComposeView(requireContext()).apply {
             setContent {
                 MdcTheme {
@@ -48,16 +50,6 @@ class DiscoveryFragment @Inject constructor() : Fragment() {
                 }
             }
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        viewModel.startSearch()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        viewModel.stopSearch()
     }
 
     private fun openHomeAssistantHomePage() {

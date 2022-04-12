@@ -64,7 +64,7 @@ fun ManualSetupView(
         )
 
         Button(
-            enabled = onboardingViewModel.manualContinueEnabled.value,
+            enabled = onboardingViewModel.manualContinueEnabled,
             onClick = connectedClicked,
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)

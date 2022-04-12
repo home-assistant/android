@@ -3,6 +3,8 @@ package io.homeassistant.companion.android.onboarding.discovery
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.util.Log
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import okio.internal.commonToUtf8String
 import java.net.URL
 import java.util.concurrent.locks.ReentrantLock
@@ -11,7 +13,7 @@ class HomeAssistantSearcher constructor(
     private val nsdManager: NsdManager,
     private val onInstanceFound: (instance: HomeAssistantInstance) -> Unit,
     private val onError: () -> Unit
-) : NsdManager.DiscoveryListener {
+) : NsdManager.DiscoveryListener, DefaultLifecycleObserver {
 
     companion object {
         private const val SERVICE_TYPE = "_home-assistant._tcp"
@@ -46,6 +48,10 @@ class HomeAssistantSearcher constructor(
             Log.e(TAG, "Issue stopping discovery", e)
         }
     }
+
+    override fun onResume(owner: LifecycleOwner) = beginSearch()
+
+    override fun onPause(owner: LifecycleOwner) = stopSearch()
 
     // Called as soon as service discovery begins.
     override fun onDiscoveryStarted(regType: String) {

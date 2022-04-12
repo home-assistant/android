@@ -176,7 +176,7 @@ class MobileAppIntegrationFragment : Fragment() {
     private fun onComplete() {
         val retData = OnboardApp.Output(
             url = viewModel.manualUrl.value,
-            authCode = viewModel.authCode.value,
+            authCode = viewModel.authCode,
             deviceName = viewModel.deviceName.value,
             deviceTrackingEnabled = viewModel.locationTrackingEnabled.value
         )
