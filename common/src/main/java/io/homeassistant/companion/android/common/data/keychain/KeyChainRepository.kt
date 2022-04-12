@@ -7,7 +7,9 @@ import java.security.cert.X509Certificate
 interface KeyChainRepository {
     suspend fun getAlias(): String?
 
-    suspend fun load(context: Context, alias: String)
+    suspend fun load(context: Context, alias: String): Boolean
+
+    suspend fun load(context: Context): Boolean
 
     suspend fun getPrivateKey(): PrivateKey?
 

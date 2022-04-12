@@ -11,6 +11,7 @@ import android.os.Build
 import android.os.PowerManager
 import android.telephony.TelephonyManager
 import dagger.hilt.android.HiltAndroidApp
+import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
 import io.homeassistant.companion.android.database.AppDatabase
@@ -21,10 +22,7 @@ import io.homeassistant.companion.android.widgets.button.ButtonWidget
 import io.homeassistant.companion.android.widgets.entity.EntityWidget
 import io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget
 import io.homeassistant.companion.android.widgets.template.TemplateWidget
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import javax.inject.Inject
 
 @HiltAndroidApp
@@ -34,6 +32,9 @@ open class HomeAssistantApplication : Application() {
 
     @Inject
     lateinit var prefsRepository: PrefsRepository
+
+    @Inject
+    lateinit var keyChainRepository: KeyChainRepository
 
     override fun onCreate() {
         super.onCreate()
@@ -56,6 +57,10 @@ open class HomeAssistantApplication : Application() {
                 addAction(WifiManager.WIFI_STATE_CHANGED_ACTION)
             }
         )
+
+        runBlocking {
+            keyChainRepository.load(applicationContext)
+        }
 
         val sensorReceiver = SensorReceiver()
         // This will cause the sensor to be updated every time the OS broadcasts that a cable was plugged/unplugged.
