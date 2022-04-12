@@ -44,10 +44,8 @@ class ManageShortcutsViewModel @Inject constructor(
     private lateinit var iconPack: IconPack
     private var shortcutManager = application.applicationContext.getSystemService<ShortcutManager>()!!
     val canPinShortcuts = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && shortcutManager.isRequestPinShortcutSupported
-    @RequiresApi(Build.VERSION_CODES.N_MR1)
     var pinnedShortcuts: MutableList<ShortcutInfo> = shortcutManager.pinnedShortcuts
         private set
-    @RequiresApi(Build.VERSION_CODES.N_MR1)
     var dynamicShortcuts: MutableList<ShortcutInfo> = shortcutManager.dynamicShortcuts
         private set
 
@@ -102,7 +100,6 @@ class ManageShortcutsViewModel @Inject constructor(
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.N_MR1)
     fun createShortcut(shortcutId: String, shortcutLabel: String, shortcutDesc: String, shortcutPath: String, bitmap: Bitmap? = null, iconId: Int) {
         Log.d(TAG, "Attempt to add shortcut $shortcutId")
         val intent = Intent(
@@ -149,13 +146,11 @@ class ManageShortcutsViewModel @Inject constructor(
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.N_MR1)
     fun deleteShortcut(shortcutId: String) {
         shortcutManager.removeDynamicShortcuts(listOf(shortcutId))
         dynamicShortcuts = shortcutManager.dynamicShortcuts
     }
 
-    @RequiresApi(Build.VERSION_CODES.N_MR1)
     fun setPinnedShortcutData(shortcutId: String) {
         for (item in pinnedShortcuts) {
             if (item.id == shortcutId) {
@@ -174,7 +169,6 @@ class ManageShortcutsViewModel @Inject constructor(
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.N_MR1)
     fun setDynamicShortcutData(shortcutId: String, index: Int) {
         if (dynamicShortcuts.isNotEmpty()) {
             for (item in dynamicShortcuts) {
@@ -208,7 +202,6 @@ class ManageShortcutsViewModel @Inject constructor(
         return null
     }
 
-    @RequiresApi(Build.VERSION_CODES.N_MR1)
     fun updatePinnedShortcuts() {
         pinnedShortcuts = shortcutManager.pinnedShortcuts
     }
