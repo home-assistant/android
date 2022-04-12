@@ -9,11 +9,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.getSystemService
 import androidx.lifecycle.AndroidViewModel
-<<<<<<< HEAD
 import androidx.lifecycle.LifecycleObserver
-=======
 import androidx.lifecycle.viewModelScope
->>>>>>> 6115eb12 (Add setSensorsEnabled helper)
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository

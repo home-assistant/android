@@ -18,7 +18,6 @@ import io.homeassistant.companion.android.common.data.integration.DeviceRegistra
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.onboarding.getMessagingToken
 import io.homeassistant.companion.android.sensors.LocationSensorManager
