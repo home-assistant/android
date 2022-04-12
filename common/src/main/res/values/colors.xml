@@ -22,4 +22,5 @@
     <color name="colorWidgetButtonLabel">#3A3A3A</color>
     <color name="colorActionBarPopupBackground">@android:color/white</color>
     <color name="colorLaunchScreenBackground">#fafafa</color>
+    <color name="colorCodeBackground">#f5f5f5</color>
 </resources>
