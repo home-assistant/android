@@ -63,6 +63,7 @@ import io.homeassistant.companion.android.sensors.NotificationSensorManager
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.UrlHandler
+import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -1805,6 +1806,8 @@ class MessagingManager @Inject constructor(
                 }
             }
         }
+
+        WebsocketManager.start(context)
     }
 
     private fun notifyMissingPermission(type: String) {
