@@ -274,15 +274,7 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
         basicSensor: SensorManager.BasicSensor,
         isEnabled: Boolean
     ) {
-        var sensorEntity = sensorDao.get(basicSensor.id)
-        if (sensorEntity != null) {
-            sensorEntity.enabled = isEnabled
-            sensorEntity.lastSentState = ""
-            sensorDao.update(sensorEntity)
-        } else {
-            sensorEntity = Sensor(basicSensor.id, isEnabled, false, "")
-            sensorDao.add(sensorEntity)
-        }
+        sensorDao.setSensorsEnabled(listOf(basicSensor.id), isEnabled)
     }
 
     fun getAreaForEntity(entityId: String): AreaRegistryResponse? =

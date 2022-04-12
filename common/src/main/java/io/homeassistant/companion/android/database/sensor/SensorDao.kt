@@ -6,6 +6,9 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -62,4 +65,20 @@ interface SensorDao {
 
     @Query("SELECT COUNT(id) FROM sensors WHERE enabled = 1")
     suspend fun getEnabledCount(): Int?
+
+    @Transaction
+    suspend fun setSensorsEnabled(sensorIds: List<String>, enabled: Boolean) {
+        coroutineScope {
+            sensorIds.map { sensorId ->
+                async {
+                    val sensorEntity = get(sensorId)
+                    if (sensorEntity != null) {
+                        update(sensorEntity.copy(enabled = enabled, lastSentState = ""))
+                    } else {
+                        add(Sensor(sensorId, enabled, registered = false, state = ""))
+                    }
+                }
+            }.awaitAll()
+        }
+    }
 }

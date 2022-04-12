@@ -142,22 +142,15 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
         displayWebview()
     }
 
-    private fun setLocationTracking(enabled: Boolean) {
+    private suspend fun setLocationTracking(enabled: Boolean) {
         val sensorDao = AppDatabase.getInstance(applicationContext).sensorDao()
-        arrayOf(
-            LocationSensorManager.backgroundLocation,
-            LocationSensorManager.zoneLocation,
-            LocationSensorManager.singleAccurateLocation
-        ).forEach { basicSensor ->
-            var sensorEntity = sensorDao.get(basicSensor.id)
-            if (sensorEntity != null) {
-                sensorEntity.enabled = enabled
-                sensorEntity.lastSentState = ""
-                sensorDao.update(sensorEntity)
-            } else {
-                sensorEntity = Sensor(basicSensor.id, enabled, false, "")
-                sensorDao.add(sensorEntity)
-            }
-        }
+        sensorDao.setSensorsEnabled(
+            sensorIds = listOf(
+                LocationSensorManager.backgroundLocation.id,
+                LocationSensorManager.zoneLocation.id,
+                LocationSensorManager.singleAccurateLocation.id
+            ),
+            enabled = enabled
+        )
     }
 }
