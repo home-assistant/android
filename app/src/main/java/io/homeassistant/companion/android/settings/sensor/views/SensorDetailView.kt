@@ -77,7 +77,7 @@ fun SensorDetailView(
     val context = LocalContext.current
     var sensorUpdateTypeInfo by remember { mutableStateOf(false) }
 
-    val sensorEnabled = viewModel.sensor.value?.sensor?.enabled
+    val sensorEnabled = viewModel.sensor?.sensor?.enabled
         ?: (
             viewModel.basicSensor != null && viewModel.sensorManager?.enabledByDefault == true &&
                 viewModel.sensorManager.checkPermission(context, viewModel.basicSensor.id)
@@ -90,7 +90,7 @@ fun SensorDetailView(
             userSetting = viewModel.settingUpdateFrequency,
             onDismiss = { sensorUpdateTypeInfo = false }
         )
-    } else viewModel.sensorSettingsDialog.value?.let {
+    } else viewModel.sensorSettingsDialog?.let {
         SensorDetailSettingDialog(
             viewModel = viewModel,
             state = it,
@@ -103,7 +103,7 @@ fun SensorDetailView(
             item {
                 SensorDetailTopPanel(
                     basicSensor = viewModel.basicSensor,
-                    dbSensor = viewModel.sensor.value?.sensor,
+                    dbSensor = viewModel.sensor?.sensor,
                     sensorEnabled = sensorEnabled,
                     onSetEnabled = onSetEnabled
                 )
@@ -136,7 +136,7 @@ fun SensorDetailView(
                     sensorUpdateTypeInfo = true
                 }
             }
-            viewModel.sensor.value?.let { sensor ->
+            viewModel.sensor?.let { sensor ->
                 if (sensor.sensor.enabled && sensor.attributes.isNotEmpty()) {
                     item {
                         SensorDetailHeader(stringResource(commonR.string.attributes))
