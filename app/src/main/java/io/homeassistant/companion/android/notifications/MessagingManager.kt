@@ -436,16 +436,28 @@ class MessagingManager @Inject constructor(
                         }
                     }
                     COMMAND_PERSISTENT_CONNECTION -> {
-                        if (!jsonData[PERSISTENT].isNullOrEmpty()) {
-                            handleDeviceCommands(jsonData)
-                        } else {
-                            mainScope.launch {
-                                Log.d(
-                                    TAG,
-                                    "Missing persistent modifier, posting notification to device"
-                                )
-                                sendNotification(jsonData)
+                        val validPersistentTypes = WebsocketSetting.values().map { setting -> setting.name }
+
+                        when {
+                            jsonData[PERSISTENT].isNullOrEmpty() -> {
+                                mainScope.launch {
+                                    Log.d(
+                                        TAG,
+                                        "Missing persistent modifier, posting notification to device"
+                                    )
+                                    sendNotification(jsonData)
+                                }
                             }
+                            jsonData[PERSISTENT]!!.uppercase() !in validPersistentTypes -> {
+                                mainScope.launch {
+                                    Log.d(
+                                        TAG,
+                                        "Persistent modifier is not one of $validPersistentTypes"
+                                    )
+                                    sendNotification(jsonData)
+                                }
+                            }
+                            else -> handleDeviceCommands(jsonData)
                         }
                     }
                     else -> Log.d(TAG, "No command received")
