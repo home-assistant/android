@@ -37,12 +37,24 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:contentDescription="@null"
+            android:contentDescription="@string/add_ssid"
             android:layout_gravity="center_vertical"
             android:src="@drawable/ic_plus"
-            android:tint="@android:color/white"/>
+            app:tint="@android:color/white"/>
 
     </LinearLayout>
+
+    <com.google.android.material.chip.Chip
+        android:id="@+id/suggestCurrentSsid"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/add_ssid_name_suggestion"
+        app:chipIcon="@drawable/ic_wifi"
+        app:chipIconSize="20dp"
+        app:chipIconTint="?attr/colorControlNormal"
+        android:visibility="gone"
+        tools:visibility="visible" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvSsids"
@@ -50,7 +62,6 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         tools:itemCount="4"
         tools:listitem="@layout/item_ssid" />
