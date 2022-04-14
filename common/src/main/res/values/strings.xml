@@ -38,6 +38,7 @@
     <string name="basic_sensor_name_battery_state">Battery State</string>
     <string name="basic_sensor_name_battery_temperature">Battery Temperature</string>
     <string name="basic_sensor_name_bluetooth_ble_emitter">BLE Transmitter</string>
+    <string name="basic_sensor_name_bluetooth_ble_beacon_distance">Beacon Distance</string>
     <string name="basic_sensor_name_bluetooth_state">Bluetooth State</string>
     <string name="basic_sensor_name_bluetooth">Bluetooth Connection</string>
     <string name="basic_sensor_name_call_number">Call Number</string>
@@ -423,6 +424,7 @@
     <string name="sensor_description_battery_state">The current charging state of the battery</string>
     <string name="sensor_description_battery_temperature">The current battery temperature</string>
     <string name="sensor_description_bluetooth_ble_emitter">Send BLE iBeacon with configured interval, used to track presence around house, e.g. together with roomassistant, esp32-mqtt-room or espresence projects.\n\nWarning: this can affect battery life, particularly if the \"Transmitter power\" setting is set to High or \"Advertise Mode\" is set to Low latency.\nSettings allow for specifying:\n- \"UUID\" (standard UUID format), \"Major\" and \"Minor\" (should be 0 - 65535), to tailor identifiers and groups\n- \"Transmitter Power\" and \"Advertise Mode\" to help to preserve battery life (use lowest values if possible)#n - \"Measured Power\" to specify power measured at 1m (initial default -59)\n\nNote:\nAdditionally a separate setting exists (\"Enable Transmitter\") to stop or start transmitting.</string>
+    <string name="sensor_description_bluetooth_ble_beacon_distance">Distance to the nearest iBeacon, used to track presence around house, e.g. together with ESPHome beacons</string>
     <string name="sensor_description_bluetooth_connection">Information about currently connected Bluetooth devices</string>
     <string name="sensor_description_bluetooth_state">Whether Bluetooth is enabled on the device</string>
     <string name="sensor_description_call_number">The cell number of the incoming or outgoing call</string>
@@ -542,6 +544,7 @@
     <string name="sensor_setting_ble_transmit_power_medium_label">Medium</string>
     <string name="sensor_setting_ble_transmit_power_title">Transmitter power</string>
     <string name="sensor_setting_ble_transmit_power_ultraLow_label">Ultra Low</string>
+    <string name="sensor_setting_beacon_monitor_enabled_title">Enable Beacon Monitor</string>
     <string name="sensor_setting_ble_uuid_title">UUID</string>
     <string name="sensor_setting_geocode_minimum_accuracy_title">Minimum Accuracy</string>
     <string name="sensor_setting_lastreboot_deadband_title">Deadband</string>
