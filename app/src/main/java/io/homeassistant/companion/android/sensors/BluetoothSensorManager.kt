@@ -253,25 +253,15 @@ class BluetoothSensorManager : SensorManager {
     }
 
     private fun updateBeaconMonitoringDevice(context: Context) {
-        val receiveActive = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_ENABLED, "toggle", "true").toBoolean()
+        beaconMonitoringDevice.sensorManager = this
+
+        val monitoringActive = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_ENABLED, "toggle", "true").toBoolean()
 
         priorBluetoothStateEnabled = isBtOn(context)
 
-        beaconMonitoringDevice.receiveRequested = receiveActive
-        beaconMonitoringDevice.sensorManager = this
-
-        if (!isEnabled(context, beaconMonitor.id)) {
-            MonitoringManager.stopMonitoring(beaconMonitoringDevice)
-            return
-        }
-
-        if (isBtOn(context)) {
-            if (beaconMonitoringDevice.receiveRequested && (!beaconMonitoringDevice.monitoring)) {
-                MonitoringManager.startMonitoring(context, beaconMonitoringDevice)
-            }
-        }
-
-        if (!isBtOn(context) || !beaconMonitoringDevice.receiveRequested) {
+        if (isEnabled(context, beaconMonitor.id) && monitoringActive && isBtOn(context)) {
+            MonitoringManager.startMonitoring(context, beaconMonitoringDevice)
+        } else {
             MonitoringManager.stopMonitoring(beaconMonitoringDevice)
         }
     }

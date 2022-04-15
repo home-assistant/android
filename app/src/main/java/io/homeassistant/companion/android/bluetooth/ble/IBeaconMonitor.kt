@@ -8,7 +8,6 @@ import org.altbeacon.beacon.Beacon
 
 class IBeaconMonitor {
     var monitoring: Boolean = false
-    var receiveRequested: Boolean = false
     lateinit var sensorManager: BluetoothSensorManager
     var beacons: Map<String, Double> = mapOf()
     var requireSensorUpdate: Boolean = false

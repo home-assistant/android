@@ -11,7 +11,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.util.UUID
 
-const val TAG = "BEACON_RECEIVER"
+const val TAG = "Beacon Manager"
 
 object MonitoringManager {
     private lateinit var beaconManager: BeaconManager
@@ -39,36 +39,38 @@ object MonitoringManager {
                 BeaconParser().
                 setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"))
 
-            beaconManager.setEnableScheduledScanJobs(false);
+            beaconManager.setIntentScanningStrategyEnabled(true)
             beaconManager.setBackgroundBetweenScanPeriod(500);
             beaconManager.setBackgroundScanPeriod(1100);
+        }
+        if (!beaconManager.isAnyConsumerBound) {
+            region = buildRegion()
+            GlobalScope.launch(Dispatchers.Main) {
+                beaconManager.getRegionViewModel(region).rangedBeacons.observeForever(
+                    object : Observer<Collection<Beacon>> {
+                        override fun onChanged(beacons: Collection<Beacon>) {
+                            haMonitor.setBeacons(context, beacons)
+                        }
+                    }
+                )
+            }
         }
         val bluetoothAdapter = context.getSystemService<BluetoothManager>()?.adapter
         val bluetoothOn = bluetoothAdapter?.isEnabled == true
         if (bluetoothOn) {
-            region = buildRegion()
-            if (!beaconManager.isAnyConsumerBound()) {
-                GlobalScope.launch(Dispatchers.Main) {
-                    beaconManager.getRegionViewModel(region).rangedBeacons.observeForever(
-                        object: Observer<Collection<Beacon>>{
-                            override fun onChanged(beacons: Collection<Beacon>) {
-                                haMonitor.setBeacons(context, beacons)
-                            }
-                        }
-                    )
-                }
-                beaconManager.startRangingBeacons(region)
-                haMonitor.monitoring = true
-                Log.e("Beacon Monitoring", "starting")
-            }
+            Log.e(TAG, "starting")
+            beaconManager.startRangingBeacons(region)
+            haMonitor.monitoring = true
+
         } else {
             stopMonitoring(haMonitor)
         }
     }
 
     fun stopMonitoring(haMonitor: IBeaconMonitor) {
-        if (this::beaconManager.isInitialized && beaconManager.isAnyConsumerBound) {
-            beaconManager.stopMonitoring(region)
+        if (this::beaconManager.isInitialized && haMonitor.monitoring) {
+            Log.e(TAG, "stopping")
+            beaconManager.stopRangingBeacons(region)
         }
         haMonitor.monitoring = false
     }
