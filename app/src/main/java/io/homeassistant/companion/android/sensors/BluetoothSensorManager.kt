@@ -99,14 +99,15 @@ class BluetoothSensorManager : SensorManager {
 
         fun enableDisableBeaconMonitor(context: Context, receiverEnabled: Boolean) {
             val sensorDao = AppDatabase.getInstance(context).sensorDao()
-            val sensorEntity = sensorDao.get(bleTransmitter.id)
+            val sensorEntity = sensorDao.get(beaconMonitor.id)
             val sensorEnabled = (sensorEntity != null && sensorEntity.enabled)
             if (!sensorEnabled)
                 return
 
-            MonitoringManager.stopMonitoring(beaconMonitoringDevice)
             if (receiverEnabled){
                 MonitoringManager.startMonitoring(context, beaconMonitoringDevice)
+            } else {
+                MonitoringManager.stopMonitoring(beaconMonitoringDevice)
             }
             sensorDao.add(SensorSetting(beaconMonitor.id, SETTING_BEACON_MONITOR_ENABLED, receiverEnabled.toString(), "toggle"))
         }
@@ -305,12 +306,6 @@ class BluetoothSensorManager : SensorManager {
 
     fun updateBeaconMonitoringSensor(context: Context) {
         val nearestBeacon = beaconMonitoringDevice.getNearestBeacon(beaconMonitoringDevice.beacons)
-        val state =
-            if (!isBtOn(context)) "Bluetooth is turned off"
-            else if (!beaconMonitoringDevice.monitoring) "Stopped"
-            else if (nearestBeacon == null) "No Beacon Found"
-            else nearestBeacon.first
-
         val icon = if (beaconMonitoringDevice.monitoring) "mdi:bluetooth" else "mdi:bluetooth-off"
 
         var attr: Map<String, Any?> = mapOf()
@@ -318,7 +313,6 @@ class BluetoothSensorManager : SensorManager {
             attr += Pair("Beacon ID", nearestBeacon.first)
         }
 
-        Log.e("Beacon Sensor", "update sensor ${nearestBeacon}")
         onSensorUpdated(
             context,
             beaconMonitor,

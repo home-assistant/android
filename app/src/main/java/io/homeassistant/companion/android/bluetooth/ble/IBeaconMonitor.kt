@@ -11,6 +11,7 @@ class IBeaconMonitor {
     lateinit var sensorManager: BluetoothSensorManager
     var beacons: Map<String, Double> = mapOf()
     var requireSensorUpdate: Boolean = false
+    var noBeaconIterations: Int = 0
 
     fun getNearestBeacon(tmp: Map<String, Double>): Pair<String, Double>? {
         var beaconID: String? = null
@@ -31,33 +32,34 @@ class IBeaconMonitor {
 
     fun setBeacons(context: Context, newBeacons: Collection<Beacon>) {
         var tmp: Map<String, Double> = mapOf()
-        var requireUpdate = false
-
         for (beacon: Beacon in newBeacons) {
-            val id = beacon.id1.toString()
-            val distance = beacon.distance
-            val previousDistance = beacons[id]
-
-            tmp += Pair(id, beacon.distance)
-            if (previousDistance == null || kotlin.math.abs(previousDistance - distance) >= 0.5) {
-                requireUpdate = true
-            }
+            tmp += Pair(beacon.id1.toString(), beacon.distance)
         }
 
         val previousNearest = getNearestBeacon(beacons)
-        val currentNearest = getNearestBeacon(beacons)
-        if (currentNearest != null && previousNearest != null && currentNearest.first != previousNearest.first) {
-            requireUpdate = true
-        } else if (previousNearest == null) {
-            requireUpdate = true
+        val currentNearest = getNearestBeacon(tmp)
+
+        if (currentNearest == null) {
+            noBeaconIterations++
         }
 
-        if (requireUpdate) {
-            Log.e("Beacon Monitor", "update ${newBeacons.count()}")
+        // due to the variation of beacon distances, we only update the sensor if one of the following condition is met
+        // - the nearest beacon did change
+        // - there is a major change in distance (>= 0.5m)
+        // - we didn't detect a beacon for 10 iterations
+        if (previousNearest == null ||
+            (currentNearest == null && noBeaconIterations >= 10) ||
+            (
+                currentNearest != null && previousNearest != null &&
+                (
+                    currentNearest.first != previousNearest.first ||
+                    kotlin.math.abs(currentNearest.second - previousNearest.second) >= 0.5
+                )
+            )
+        ) {
             beacons = tmp
+            noBeaconIterations = 0
             sensorManager!!.updateBeaconMonitoringSensor(context)
-        } else {
-            Log.e("Beacon Monitor", "skip update ${newBeacons.count()}")
         }
     }
 }

@@ -133,7 +133,7 @@ class MessagingManager @Inject constructor(
         const val COMMAND_VOLUME_LEVEL = "command_volume_level"
         const val COMMAND_BLUETOOTH = "command_bluetooth"
         const val COMMAND_BLE_TRANSMITTER = "command_ble_transmitter"
-        const val COMMAND_BLE_RECEIVER = "command_ble_receiver"
+        const val COMMAND_BEACON_MONITOR = "command_beacon_monitor"
         const val COMMAND_SCREEN_ON = "command_screen_on"
         const val COMMAND_MEDIA = "command_media"
         const val COMMAND_UPDATE_SENSORS = "command_update_sensors"
@@ -703,6 +703,12 @@ class MessagingManager @Inject constructor(
                             }
                         }
                     )
+            }
+            COMMAND_BEACON_MONITOR -> {
+                if (title == TURN_OFF)
+                    BluetoothSensorManager.enableDisableBeaconMonitor(context, false)
+                if (title == TURN_ON)
+                    BluetoothSensorManager.enableDisableBeaconMonitor(context, true)
             }
             COMMAND_HIGH_ACCURACY_MODE -> {
                 when (title) {
