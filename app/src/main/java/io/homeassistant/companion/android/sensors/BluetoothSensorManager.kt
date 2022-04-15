@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.sensors
 import android.Manifest
 import android.content.Context
 import android.os.Build
-import android.util.Log
 import io.homeassistant.companion.android.bluetooth.ble.*
 import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils
 import io.homeassistant.companion.android.common.sensors.SensorManager
@@ -97,19 +96,19 @@ class BluetoothSensorManager : SensorManager {
             sensorDao.add(SensorSetting(bleTransmitter.id, SETTING_BLE_TRANSMIT_ENABLED, transmitEnabled.toString(), "toggle"))
         }
 
-        fun enableDisableBeaconMonitor(context: Context, receiverEnabled: Boolean) {
+        fun enableDisableBeaconMonitor(context: Context, monitorEnabled: Boolean) {
             val sensorDao = AppDatabase.getInstance(context).sensorDao()
             val sensorEntity = sensorDao.get(beaconMonitor.id)
             val sensorEnabled = (sensorEntity != null && sensorEntity.enabled)
             if (!sensorEnabled)
                 return
 
-            if (receiverEnabled){
+            if (monitorEnabled){
                 MonitoringManager.startMonitoring(context, beaconMonitoringDevice)
             } else {
                 MonitoringManager.stopMonitoring(beaconMonitoringDevice)
             }
-            sensorDao.add(SensorSetting(beaconMonitor.id, SETTING_BEACON_MONITOR_ENABLED, receiverEnabled.toString(), "toggle"))
+            sensorDao.add(SensorSetting(beaconMonitor.id, SETTING_BEACON_MONITOR_ENABLED, monitorEnabled.toString(), "toggle"))
         }
     }
 

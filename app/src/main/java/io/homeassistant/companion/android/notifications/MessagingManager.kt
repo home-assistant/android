@@ -201,6 +201,7 @@ class MessagingManager @Inject constructor(
             COMMAND_VOLUME_LEVEL,
             COMMAND_BLUETOOTH,
             COMMAND_BLE_TRANSMITTER,
+            COMMAND_BEACON_MONITOR,
             COMMAND_HIGH_ACCURACY_MODE,
             COMMAND_ACTIVITY,
             COMMAND_WEBVIEW,
@@ -358,6 +359,19 @@ class MessagingManager @Inject constructor(
                                 Log.d(
                                     TAG,
                                     "Invalid ble transmitter command received, posting notification to device"
+                                )
+                                sendNotification(jsonData)
+                            }
+                        }
+                    }
+                    COMMAND_BEACON_MONITOR -> {
+                        if (!jsonData[TITLE].isNullOrEmpty() && jsonData[TITLE] in ENABLE_COMMANDS)
+                            handleDeviceCommands(jsonData)
+                        else {
+                            mainScope.launch {
+                                Log.d(
+                                    TAG,
+                                    "Invalid beacon monitor command received, posting notification to device"
                                 )
                                 sendNotification(jsonData)
                             }
