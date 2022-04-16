@@ -9,6 +9,7 @@ import androidx.lifecycle.Observer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.altbeacon.beacon.service.RunningAverageRssiFilter
 import java.util.UUID
 
 const val TAG = "Beacon Manager"
@@ -42,6 +43,7 @@ object MonitoringManager {
             beaconManager.setIntentScanningStrategyEnabled(true)
             beaconManager.setBackgroundBetweenScanPeriod(500);
             beaconManager.setBackgroundScanPeriod(1100);
+            RunningAverageRssiFilter.setSampleExpirationMilliseconds(30000)
         }
         if (!beaconManager.isAnyConsumerBound) {
             region = buildRegion()

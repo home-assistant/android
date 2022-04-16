@@ -311,6 +311,7 @@ class BluetoothSensorManager : SensorManager {
         if (nearestBeacon != null) {
             attr += Pair("Beacon ID", nearestBeacon.first)
         }
+        attr += Pair("All Beacons", beaconMonitoringDevice.beacons)
 
         onSensorUpdated(
             context,
