@@ -5,6 +5,8 @@
     <string name="activity_intent_error">Unable to send activity intent, please check command format</string>
     <string name="add_service_data_field">Add Field</string>
     <string name="add_shortcut">Add Shortcut</string>
+    <string name="add_ssid">Add SSID</string>
+    <string name="add_ssid_name_suggestion">Add %1$s</string>
     <string name="add_widget">Add widget</string>
     <string name="all_entities">All entities</string>
     <string name="app_name">Home Assistant</string>
@@ -390,6 +392,7 @@
     <string name="registerDevice">Register watch</string>
     <string name="remaining">Remaining</string>
     <string name="remember">Remember</string>
+    <string name="remove_ssid">Remove SSID</string>
     <string name="required_fields">requires a username and password.</string>
     <string name="resets_at">Resets at</string>
     <string name="retry">Retry</string>
