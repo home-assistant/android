@@ -43,7 +43,7 @@ object MonitoringManager {
             beaconManager.setIntentScanningStrategyEnabled(true)
             beaconManager.setBackgroundBetweenScanPeriod(500);
             beaconManager.setBackgroundScanPeriod(1100);
-            RunningAverageRssiFilter.setSampleExpirationMilliseconds(30000)
+            BeaconManager.setRssiFilterImplClass(KalmanFilter::class.java)
         }
         if (!beaconManager.isAnyConsumerBound) {
             region = buildRegion()
