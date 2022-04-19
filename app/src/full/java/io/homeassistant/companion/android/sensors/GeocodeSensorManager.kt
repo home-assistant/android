@@ -18,17 +18,21 @@ import io.homeassistant.companion.android.common.R as commonR
 class GeocodeSensorManager : SensorManager {
 
     companion object {
-        const val SETTING_ACCURACY = "Minimum Accuracy"
-        const val DEFAULT_MINIMUM_ACCURACY = 200
+        private const val SETTING_ACCURACY = "geocode_minimum_accuracy"
+        private const val DEFAULT_MINIMUM_ACCURACY = 200
         private const val TAG = "GeocodeSM"
         val geocodedLocation = SensorManager.BasicSensor(
             "geocoded_location",
             "sensor",
             commonR.string.basic_sensor_name_geolocation,
-            commonR.string.sensor_description_geocoded_location
+            commonR.string.sensor_description_geocoded_location,
+            "mdi:map"
         )
     }
 
+    override fun docsLink(): String {
+        return "https://companion.home-assistant.io/docs/core/sensors#geocoded-location-sensor"
+    }
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
@@ -116,12 +120,13 @@ class GeocodeSensorManager : SensorManager {
 
         HighAccuracyLocationService.updateNotificationAddress(context, location, if (!prettyAddress.isNullOrEmpty()) prettyAddress else context.getString(commonR.string.unknown_address))
 
-        onSensorUpdated(
-            context,
-            geocodedLocation,
-            if (!prettyAddress.isNullOrEmpty()) prettyAddress else "Unknown",
-            "mdi:map",
-            attributes
-        )
+            onSensorUpdated(
+                context,
+                geocodedLocation,
+                if (!prettyAddress.isNullOrEmpty()) prettyAddress else "Unknown",
+                geocodedLocation.statelessIcon,
+                attributes
+            )
+        }
     }
 }

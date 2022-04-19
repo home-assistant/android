@@ -182,24 +182,28 @@
         </receiver>
 
         <activity android:name=".widgets.button.ButtonWidgetConfigureActivity"
+            android:configChanges="orientation|screenSize"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>
         </activity>
         <activity android:name=".widgets.camera.CameraWidgetConfigureActivity"
+            android:configChanges="orientation|screenSize"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>
         </activity>
         <activity android:name=".widgets.entity.EntityWidgetConfigureActivity"
+            android:configChanges="orientation|screenSize"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>
         </activity>
         <activity android:name=".widgets.media_player_controls.MediaPlayerControlsWidgetConfigureActivity"
+            android:configChanges="orientation|screenSize"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
@@ -291,7 +295,8 @@
             android:name=".settings.wear.SettingsWearActivity"
             android:parentActivityName=".settings.SettingsActivity"
             android:configChanges="orientation|screenSize"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@style/Theme.HomeAssistant.Config">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -306,7 +311,8 @@
         <activity
             android:name=".settings.wear.views.SettingsWearMainView"
             android:parentActivityName=".settings.SettingsActivity"
-            android:configChanges="orientation|screenSize" />
+            android:configChanges="orientation|screenSize"
+            android:theme="@style/Theme.HomeAssistant.Config" />
 
         <service android:name=".onboarding.WearOnboardingListener"
             android:exported="true">
@@ -329,7 +335,8 @@
             android:name=".settings.SettingsActivity"
             android:parentActivityName=".webview.WebViewActivity"
             android:exported="false"
-            android:configChanges="orientation|screenSize"/>
+            android:configChanges="orientation|screenSize"
+            android:theme="@style/Theme.HomeAssistant.Config"/>
 
         <activity
             android:name=".nfc.TagReaderActivity"
@@ -360,7 +367,8 @@
         <activity
             android:name=".nfc.NfcSetupActivity"
             android:exported="false"
-            android:label="@string/nfc_title_nfc_setup" />
+            android:label="@string/nfc_title_nfc_setup"
+            android:theme="@style/Theme.HomeAssistant.Config" />
 
         <activity android:name=".share.ShareActivity"
             android:exported="true">

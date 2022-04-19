@@ -59,19 +59,25 @@ class LocationSensorManager : LocationSensorManagerBase() {
             "location_background",
             "",
             commonR.string.basic_sensor_name_location_background,
-            commonR.string.sensor_description_location_background
+            commonR.string.sensor_description_location_background,
+            "mdi:map-marker-multiple",
+            updateType = SensorManager.BasicSensor.UpdateType.LOCATION
         )
         val zoneLocation = SensorManager.BasicSensor(
             "zone_background",
             "",
             commonR.string.basic_sensor_name_location_zone,
-            commonR.string.sensor_description_location_zone
+            commonR.string.sensor_description_location_zone,
+            "mdi:map-marker-radius",
+            updateType = SensorManager.BasicSensor.UpdateType.LOCATION
         )
         val singleAccurateLocation = SensorManager.BasicSensor(
             "accurate_location",
             "",
             commonR.string.basic_sensor_name_location_accurate,
-            commonR.string.sensor_description_location_accurate
+            commonR.string.sensor_description_location_accurate,
+            "mdi:crosshairs-gps",
+            updateType = SensorManager.BasicSensor.UpdateType.LOCATION
         )
 
         val highAccuracyMode = SensorManager.BasicSensor(
@@ -79,7 +85,9 @@ class LocationSensorManager : LocationSensorManagerBase() {
             "binary_sensor",
             commonR.string.basic_sensor_name_high_accuracy_mode,
             commonR.string.sensor_description_high_accuracy_mode,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            "mdi:crosshairs-gps",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         internal const val TAG = "LocBroadcastReceiver"
 
@@ -91,6 +99,8 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
         private var lastHighAccuracyMode = false
         private var lastHighAccuracyUpdateInterval = DEFAULT_MINIMUM_ACCURACY
+        private var forceHighAccuracyModeOn = false
+        private var highAccuracyModeEnabled = false
 
         fun setHighAccuracyModeSetting(context: Context, enabled: Boolean) {
             val sensorDao = AppDatabase.getInstance(context).sensorDao()
@@ -260,7 +270,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
         return updateIntervalHighAccuracySecondsInt
     }
 
-    private fun getHighAccuracyMode(): Boolean {
+    private fun getHighAccuracyModeState(): Boolean {
 
         val highAccuracyModeBTDevices = getSetting(
             latestContext,
@@ -365,7 +375,6 @@ class LocationSensorManager : LocationSensorManagerBase() {
             accuracy = location.accuracy.toInt()
         }
         val updateLocation = UpdateLocation(
-            // name,
             arrayOf(location.latitude, location.longitude),
             accuracy,
             location.speed.toInt(),
@@ -377,11 +386,8 @@ class LocationSensorManager : LocationSensorManagerBase() {
         val now = System.currentTimeMillis()
 
         Log.d(TAG, "Begin evaluating if location update should be skipped")
-        if (now + 5000 < location.time) {
-            Log.d(
-                TAG,
-                "Skipping location update that came from the future. ${now + 5000} should always be greater than ${location.time}"
-            )
+        if (now + 5000 < location.time && !highAccuracyModeEnabled) {
+            Log.d(TAG, "Skipping location update that came from the future. ${now + 5000} should always be greater than ${location.time}")
             return
         }
 
@@ -404,7 +410,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                     return
                 }
             } else {
-                if (now < lastLocationSend + 5000 && !geofenceUpdate) {
+                if (now < lastLocationSend + 5000 && !geofenceUpdate && !highAccuracyModeEnabled) {
                     Log.d(
                         TAG,
                         "New location update not possible within 5 seconds, not sending to HA"

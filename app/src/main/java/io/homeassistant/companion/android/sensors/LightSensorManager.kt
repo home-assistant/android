@@ -22,8 +22,9 @@ class LightSensorManager : SensorManager, SensorEventListener {
             "sensor",
             commonR.string.sensor_name_light,
             commonR.string.sensor_description_light_sensor,
-            "illuminance",
-            "lx",
+            "mdi:brightness-5",
+            deviceClass = "illuminance",
+            unitOfMeasurement = "lx",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT
         )
     }
@@ -88,7 +89,7 @@ class LightSensorManager : SensorManager, SensorEventListener {
                 latestContext,
                 lightSensor,
                 event.values[0].roundToInt().toString(),
-                "mdi:brightness-5",
+                lightSensor.statelessIcon,
                 mapOf()
             )
         }

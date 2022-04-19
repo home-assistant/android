@@ -24,7 +24,9 @@ class NextAlarmManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_alarm,
             commonR.string.sensor_description_next_alarm,
-            "timestamp"
+            "mdi:alarm",
+            deviceClass = "timestamp",
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
     }
 
@@ -98,13 +100,11 @@ class NextAlarmManager : SensorManager {
             Log.e(TAG, "Error getting the next alarm info", e)
         }
 
-        val icon = "mdi:alarm"
-
         onSensorUpdated(
             context,
             nextAlarm,
             utc,
-            icon,
+            nextAlarm.statelessIcon,
             mapOf(
                 "Local Time" to local,
                 "Time in Milliseconds" to triggerTime,

@@ -56,12 +56,14 @@ import io.homeassistant.companion.android.common.util.generalChannel
 import io.homeassistant.companion.android.common.util.getActiveNotification
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.notification.NotificationItem
+import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.NotificationSensorManager
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.UrlHandler
+import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -91,6 +93,7 @@ class MessagingManager @Inject constructor(
         const val TAG = "MessagingService"
 
         const val APP_PREFIX = "app://"
+        const val MARKET_PREFIX = "https://play.google.com/store/apps/details?id="
         const val SETTINGS_PREFIX = "settings://"
         const val NOTIFICATION_HISTORY = "notification_history"
 
@@ -117,6 +120,7 @@ class MessagingManager @Inject constructor(
         const val BLE_ADVERTISE = "ble_advertise"
         const val BLE_TRANSMIT = "ble_transmit"
         const val HIGH_ACCURACY_UPDATE_INTERVAL = "high_accuracy_update_interval"
+        const val PACKAGE_NAME = "package_name"
 
         // special action constants
         const val REQUEST_LOCATION_UPDATE = "request_location_update"
@@ -136,6 +140,8 @@ class MessagingManager @Inject constructor(
         const val COMMAND_ACTIVITY = "command_activity"
         const val COMMAND_WEBVIEW = "command_webview"
         const val COMMAND_KEEP_SCREEN_ON = "keep_screen_on"
+        const val COMMAND_LAUNCH_APP = "command_launch_app"
+        const val COMMAND_PERSISTENT_CONNECTION = "command_persistent_connection"
 
         // DND commands
         const val DND_PRIORITY_ONLY = "priority_only"
@@ -154,6 +160,9 @@ class MessagingManager @Inject constructor(
         const val MUSIC_STREAM = "music_stream"
         const val NOTIFICATION_STREAM = "notification_stream"
         const val RING_STREAM = "ring_stream"
+        const val SYSTEM_STREAM = "system_stream"
+        const val CALL_STREAM = "call_stream"
+        const val DTMF_STREAM = "dtmf_stream"
 
         // Enable/Disable Commands
         const val TURN_ON = "turn_on"
@@ -196,12 +205,16 @@ class MessagingManager @Inject constructor(
             COMMAND_WEBVIEW,
             COMMAND_SCREEN_ON,
             COMMAND_MEDIA,
-            COMMAND_UPDATE_SENSORS
+            COMMAND_UPDATE_SENSORS,
+            COMMAND_LAUNCH_APP,
+            COMMAND_PERSISTENT_CONNECTION
         )
         val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
         val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
-        val CHANNEL_VOLUME_STREAM =
-            listOf(ALARM_STREAM, MUSIC_STREAM, NOTIFICATION_STREAM, RING_STREAM)
+        val CHANNEL_VOLUME_STREAM = listOf(
+            ALARM_STREAM, MUSIC_STREAM, NOTIFICATION_STREAM, RING_STREAM, CALL_STREAM,
+            SYSTEM_STREAM, DTMF_STREAM
+        )
         val ENABLE_COMMANDS = listOf(TURN_OFF, TURN_ON)
         val MEDIA_COMMANDS = listOf(
             MEDIA_FAST_FORWARD, MEDIA_NEXT, MEDIA_PAUSE, MEDIA_PLAY,
@@ -353,7 +366,7 @@ class MessagingManager @Inject constructor(
                         if ((!jsonData[TITLE].isNullOrEmpty() && jsonData[TITLE] in ENABLE_COMMANDS) ||
                             (
                                 !jsonData[TITLE].isNullOrEmpty() && jsonData[TITLE] == HIGH_ACCURACY_SET_UPDATE_INTERVAL &&
-                                    jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toIntOrNull() != null && jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toInt()!! > 5
+                                    jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toIntOrNull() != null && jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toInt()!! >= 5
                                 )
                         )
                             handleDeviceCommands(jsonData)
@@ -410,6 +423,44 @@ class MessagingManager @Inject constructor(
                         }
                     }
                     COMMAND_UPDATE_SENSORS -> SensorWorker.start(context)
+                    COMMAND_LAUNCH_APP -> {
+                        if (!jsonData[PACKAGE_NAME].isNullOrEmpty()) {
+                            handleDeviceCommands(jsonData)
+                        } else {
+                            mainScope.launch {
+                                Log.d(
+                                    TAG,
+                                    "Missing package name for app to launch, posting notification to device"
+                                )
+                                sendNotification(jsonData)
+                            }
+                        }
+                    }
+                    COMMAND_PERSISTENT_CONNECTION -> {
+                        val validPersistentTypes = WebsocketSetting.values().map { setting -> setting.name }
+
+                        when {
+                            jsonData[PERSISTENT].isNullOrEmpty() -> {
+                                mainScope.launch {
+                                    Log.d(
+                                        TAG,
+                                        "Missing persistent modifier, posting notification to device"
+                                    )
+                                    sendNotification(jsonData)
+                                }
+                            }
+                            jsonData[PERSISTENT]!!.uppercase() !in validPersistentTypes -> {
+                                mainScope.launch {
+                                    Log.d(
+                                        TAG,
+                                        "Persistent modifier is not one of $validPersistentTypes"
+                                    )
+                                    sendNotification(jsonData)
+                                }
+                            }
+                            else -> handleDeviceCommands(jsonData)
+                        }
+                    }
                     else -> Log.d(TAG, "No command received")
                 }
             }
@@ -719,6 +770,18 @@ class MessagingManager @Inject constructor(
                         processMediaCommand(data)
                     }
                 }
+            }
+            COMMAND_LAUNCH_APP -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (!Settings.canDrawOverlays(context))
+                        notifyMissingPermission(data[MESSAGE].toString())
+                    else
+                        launchApp(data)
+                } else
+                    launchApp(data)
+            }
+            COMMAND_PERSISTENT_CONNECTION -> {
+                togglePersistentConnection(data[PERSISTENT].toString())
             }
             else -> Log.d(TAG, "No command received")
         }
@@ -1143,7 +1206,8 @@ class MessagingManager @Inject constructor(
     private fun prepareText(
         text: String
     ): Spanned {
-        var brText = text.replace("\\n", "<br>")
+        // Replace control char \r\n, \r, \n and also \r\n, \r, \n as text literals in strings to <br>
+        var brText = text.replace("(\r\n|\r|\n)|(\\\\r\\\\n|\\\\r|\\\\n)".toRegex(), "<br>")
         var emojiParsedText = EmojiParser.parseToUnicode(brText)
         return HtmlCompat.fromHtml(emojiParsedText, HtmlCompat.FROM_HTML_MODE_LEGACY)
     }
@@ -1613,54 +1677,29 @@ class MessagingManager @Inject constructor(
     }
 
     private fun processStreamVolume(audioManager: AudioManager, stream: String, volume: Int) {
-        var volumeLevel = volume
         when (stream) {
-            ALARM_STREAM -> {
-                if (volumeLevel > audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM))
-                    volumeLevel = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
-                else if (volumeLevel < 0)
-                    volumeLevel = 0
-                audioManager.setStreamVolume(
-                    AudioManager.STREAM_ALARM,
-                    volumeLevel,
-                    AudioManager.FLAG_SHOW_UI
-                )
-            }
-            MUSIC_STREAM -> {
-                if (volumeLevel > audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC))
-                    volumeLevel = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-                else if (volumeLevel < 0)
-                    volumeLevel = 0
-                audioManager.setStreamVolume(
-                    AudioManager.STREAM_MUSIC,
-                    volumeLevel,
-                    AudioManager.FLAG_SHOW_UI
-                )
-            }
-            NOTIFICATION_STREAM -> {
-                if (volumeLevel > audioManager.getStreamMaxVolume(AudioManager.STREAM_NOTIFICATION))
-                    volumeLevel = audioManager.getStreamMaxVolume(AudioManager.STREAM_NOTIFICATION)
-                else if (volumeLevel < 0)
-                    volumeLevel = 0
-                audioManager.setStreamVolume(
-                    AudioManager.STREAM_NOTIFICATION,
-                    volumeLevel,
-                    AudioManager.FLAG_SHOW_UI
-                )
-            }
-            RING_STREAM -> {
-                if (volumeLevel > audioManager.getStreamMaxVolume(AudioManager.STREAM_RING))
-                    volumeLevel = audioManager.getStreamMaxVolume(AudioManager.STREAM_RING)
-                else if (volumeLevel < 0)
-                    volumeLevel = 0
-                audioManager.setStreamVolume(
-                    AudioManager.STREAM_RING,
-                    volumeLevel,
-                    AudioManager.FLAG_SHOW_UI
-                )
-            }
+            ALARM_STREAM -> adjustVolumeStream(AudioManager.STREAM_ALARM, volume, audioManager)
+            MUSIC_STREAM -> adjustVolumeStream(AudioManager.STREAM_MUSIC, volume, audioManager)
+            NOTIFICATION_STREAM -> adjustVolumeStream(AudioManager.STREAM_NOTIFICATION, volume, audioManager)
+            RING_STREAM -> adjustVolumeStream(AudioManager.STREAM_RING, volume, audioManager)
+            CALL_STREAM -> adjustVolumeStream(AudioManager.STREAM_VOICE_CALL, volume, audioManager)
+            SYSTEM_STREAM -> adjustVolumeStream(AudioManager.STREAM_SYSTEM, volume, audioManager)
+            DTMF_STREAM -> adjustVolumeStream(AudioManager.STREAM_DTMF, volume, audioManager)
             else -> Log.d(TAG, "Skipping command due to invalid channel stream")
         }
+    }
+
+    private fun adjustVolumeStream(stream: Int, volume: Int, audioManager: AudioManager) {
+        var volumeLevel = volume
+        if (volumeLevel > audioManager.getStreamMaxVolume(stream))
+            volumeLevel = audioManager.getStreamMaxVolume(stream)
+        else if (volumeLevel < 0)
+            volumeLevel = 0
+        audioManager.setStreamVolume(
+            stream,
+            volumeLevel,
+            AudioManager.FLAG_SHOW_UI
+        )
     }
 
     private fun processActivityCommand(data: Map<String, String>) {
@@ -1718,6 +1757,59 @@ class MessagingManager @Inject constructor(
         }
     }
 
+    private fun launchApp(data: Map<String, String>) {
+        try {
+            val launchIntent = context.packageManager.getLaunchIntentForPackage(data[PACKAGE_NAME]!!)
+            if (launchIntent != null)
+                context.startActivity(launchIntent)
+            else {
+                Log.w(TAG, "No intent to launch app found, opening app store")
+                val marketIntent = Intent(Intent.ACTION_VIEW)
+                marketIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                marketIntent.data = Uri.parse(
+                    MARKET_PREFIX + data[PACKAGE_NAME]
+                )
+                context.startActivity(marketIntent)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to launch app", e)
+            mainScope.launch { sendNotification(data) }
+        }
+    }
+
+    private fun togglePersistentConnection(mode: String) {
+        val settingsDao = AppDatabase.getInstance(context).settingsDao()
+
+        when (mode.uppercase()) {
+            WebsocketSetting.NEVER.name -> {
+                settingsDao.get(0)?.let {
+                    it.websocketSetting = WebsocketSetting.NEVER
+                    settingsDao.update(it)
+                }
+            }
+            WebsocketSetting.ALWAYS.name -> {
+                settingsDao.get(0)?.let {
+                    it.websocketSetting = WebsocketSetting.ALWAYS
+                    settingsDao.update(it)
+                }
+            }
+            WebsocketSetting.HOME_WIFI.name -> {
+                settingsDao.get(0)?.let {
+                    it.websocketSetting = WebsocketSetting.HOME_WIFI
+                    settingsDao.update(it)
+                }
+            }
+            WebsocketSetting.SCREEN_ON.name -> {
+                settingsDao.get(0)?.let {
+                    it.websocketSetting = WebsocketSetting.SCREEN_ON
+                    settingsDao.update(it)
+                }
+            }
+        }
+
+        WebsocketManager.start(context)
+    }
+
     private fun notifyMissingPermission(type: String) {
         val appManager =
             context.getSystemService<ActivityManager>()
@@ -1733,7 +1825,7 @@ class MessagingManager @Inject constructor(
                         }
                     } else {
                         when (type) {
-                            COMMAND_WEBVIEW, COMMAND_ACTIVITY -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            COMMAND_WEBVIEW, COMMAND_ACTIVITY, COMMAND_LAUNCH_APP -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                                 requestSystemAlertPermission()
                             }
                             COMMAND_RINGER_MODE, COMMAND_DND, COMMAND_VOLUME_LEVEL -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {

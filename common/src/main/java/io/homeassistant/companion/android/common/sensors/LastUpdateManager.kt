@@ -16,7 +16,9 @@ class LastUpdateManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_last_update,
             commonR.string.sensor_description_last_update,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            "mdi:update",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
     }
 
@@ -50,15 +52,13 @@ class LastUpdateManager : SensorManager {
         if (intentAction.isNullOrEmpty())
             return
 
-        val icon = "mdi:update"
-
         Log.d(TAG, "Last update is $intentAction")
 
         onSensorUpdated(
             context,
             lastUpdate,
             intentAction,
-            icon,
+            lastUpdate.statelessIcon,
             mapOf()
         )
 

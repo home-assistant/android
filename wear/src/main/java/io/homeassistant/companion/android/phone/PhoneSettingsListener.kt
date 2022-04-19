@@ -20,7 +20,8 @@ import io.homeassistant.companion.android.common.data.integration.DeviceRegistra
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.database.wear.Favorites
+import io.homeassistant.companion.android.database.wear.getAll
+import io.homeassistant.companion.android.database.wear.replaceAll
 import io.homeassistant.companion.android.home.HomeActivity
 import io.homeassistant.companion.android.home.HomePresenterImpl
 import kotlinx.coroutines.CoroutineScope
@@ -65,12 +66,12 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
 
     private fun sendPhoneData() = mainScope.launch {
         val currentFavorites =
-            AppDatabase.getInstance(applicationContext).favoritesDao().getAll() ?: listOf()
+            AppDatabase.getInstance(applicationContext).favoritesDao().getAll()
         val putDataRequest = PutDataMapRequest.create("/config").run {
             dataMap.putLong(KEY_UPDATE_TIME, System.nanoTime())
             dataMap.putBoolean(KEY_IS_AUTHENTICATED, integrationUseCase.isRegistered())
             dataMap.putString(KEY_SUPPORTED_DOMAINS, objectMapper.writeValueAsString(HomePresenterImpl.supportedDomains))
-            dataMap.putString(KEY_FAVORITES, objectMapper.writeValueAsString(currentFavorites.map { it.id }))
+            dataMap.putString(KEY_FAVORITES, objectMapper.writeValueAsString(currentFavorites))
             dataMap.putString(KEY_TEMPLATE_TILE, integrationUseCase.getTemplateTileContent())
             dataMap.putInt(KEY_TEMPLATE_TILE_REFRESH_INTERVAL, integrationUseCase.getTemplateTileRefreshInterval())
             setUrgent()
@@ -130,10 +131,10 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
     private fun saveFavorites(dataMap: DataMap) {
         val favoritesIds: List<String> =
             objectMapper.readValue(dataMap.getString(KEY_FAVORITES, "[]"))
+
         val favoritesDao = AppDatabase.getInstance(applicationContext).favoritesDao()
-        favoritesDao.deleteAll()
-        favoritesIds.forEachIndexed { index, entityId ->
-            favoritesDao.add(Favorites(entityId, index))
+        mainScope.launch {
+            favoritesDao.replaceAll(favoritesIds)
         }
     }
 

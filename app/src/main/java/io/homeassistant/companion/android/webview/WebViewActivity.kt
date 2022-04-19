@@ -67,6 +67,7 @@ import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
+import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.database.AppDatabase
@@ -82,6 +83,7 @@ import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.ChangeLog
+import io.homeassistant.companion.android.util.OnSwipeListener
 import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import kotlinx.coroutines.CoroutineScope
@@ -109,7 +111,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         private const val APP_PREFIX = "app://"
         private const val INTENT_PREFIX = "intent://"
         private const val MARKET_PREFIX = "https://play.google.com/store/apps/details?id="
-        private const val USER_AGENT_STRING = " HomeAssistant/Android"
 
         fun newInstance(context: Context, path: String? = null): Intent {
             return Intent(context, WebViewActivity::class.java).apply {
@@ -235,20 +236,33 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         webView = binding.webview
         webView.apply {
-            setOnTouchListener { _, motionEvent ->
-                if (motionEvent.pointerCount == 3 && motionEvent.action == MotionEvent.ACTION_POINTER_3_DOWN) {
-                    dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_E))
+            setOnTouchListener(object : OnSwipeListener() {
+                override fun onSwipe(
+                    e1: MotionEvent,
+                    e2: MotionEvent,
+                    velocity: Float,
+                    direction: SwipeDirection,
+                    pointerCount: Int
+                ): Boolean {
+                    if (pointerCount == 3 &&
+                        direction == SwipeDirection.DOWN &&
+                        velocity >= 150
+                    ) {
+                        dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_E))
+                    }
+                    return !unlocked
                 }
-                return@setOnTouchListener !unlocked
-            }
+
+                override fun onMotionEventHandled(v: View?, event: MotionEvent?): Boolean {
+                    return !unlocked
+                }
+            })
 
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             settings.displayZoomControls = false
             settings.mediaPlaybackRequiresUserGesture = !presenter.isAutoPlayVideoEnabled()
-            val deviceUa = settings.userAgentString
-            settings.userAgentString = deviceUa + USER_AGENT_STRING + " ${Build.MODEL} ${BuildConfig.VERSION_NAME}"
-
+            settings.userAgentString = settings.userAgentString + " ${HomeAssistantApis.USER_AGENT_STRING}"
             webViewClient = object : WebViewClient() {
                 override fun onReceivedError(
                     view: WebView?,

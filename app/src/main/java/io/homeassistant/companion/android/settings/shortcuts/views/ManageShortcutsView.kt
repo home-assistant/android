@@ -46,8 +46,7 @@ fun ManageShortcutsView(
     iconDialog: IconDialog,
     childFragment: FragmentManager
 ) {
-
-    LazyColumn(contentPadding = PaddingValues(20.dp)) {
+    LazyColumn(contentPadding = PaddingValues(16.dp)) {
         item {
             Text(
                 text = stringResource(id = R.string.shortcut_instruction_desc),

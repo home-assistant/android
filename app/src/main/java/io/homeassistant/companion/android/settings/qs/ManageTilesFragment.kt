@@ -12,6 +12,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.composethemeadapter.MdcTheme
 import com.maltaisn.icondialog.IconDialog
 import com.maltaisn.icondialog.IconDialogSettings
@@ -22,6 +23,9 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.settings.qs.views.ManageTilesView
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
@@ -43,6 +47,14 @@ class ManageTilesFragment constructor(
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
+
+        lifecycleScope.launch {
+            withContext(Dispatchers.IO) {
+                val loader = IconPackLoader(requireContext())
+                iconPack = createMaterialDesignIconPack(loader)
+                iconPack.loadDrawables(loader.drawableLoader)
+            }
+        }
     }
 
     override fun onPrepareOptionsMenu(menu: Menu) {
@@ -75,11 +87,6 @@ class ManageTilesFragment constructor(
 
     override fun onResume() {
         super.onResume()
-
-        val loader = IconPackLoader(requireContext())
-        iconPack = createMaterialDesignIconPack(loader)
-        iconPack.loadDrawables(loader.drawableLoader)
-
         activity?.title = getString(commonR.string.tiles)
     }
 

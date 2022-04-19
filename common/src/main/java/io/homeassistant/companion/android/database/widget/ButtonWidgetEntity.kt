@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "button_widgets")
 data class ButtonWidgetEntity(
     @PrimaryKey
-    val id: Int,
+    override val id: Int,
     @ColumnInfo(name = "icon_id")
     val iconId: Int,
     @ColumnInfo(name = "domain")
@@ -18,4 +18,4 @@ data class ButtonWidgetEntity(
     val serviceData: String,
     @ColumnInfo(name = "label")
     val label: String?
-)
+) : WidgetEntity

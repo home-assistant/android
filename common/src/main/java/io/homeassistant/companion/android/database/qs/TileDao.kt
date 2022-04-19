@@ -4,8 +4,6 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Update
-import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TileDao {
@@ -14,17 +12,8 @@ interface TileDao {
     fun get(tileId: String): TileEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun add(tileEntity: TileEntity)
-
-    @Update
-    fun update(tileEntity: TileEntity)
+    suspend fun add(tileEntity: TileEntity)
 
     @Query("DELETE FROM qs_tiles WHERE tileId = :id")
     fun delete(id: String)
-
-    @Query("SELECT * FROM qs_tiles")
-    fun getAll(): List<TileEntity>?
-
-    @Query("SELECT * FROM qs_tiles")
-    fun getAllFlow(): Flow<List<TileEntity>>?
 }

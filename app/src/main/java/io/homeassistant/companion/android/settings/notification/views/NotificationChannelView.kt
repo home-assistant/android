@@ -41,7 +41,7 @@ fun NotificationChannelView(
     Scaffold(
         scaffoldState = scaffoldState
     ) {
-        LazyColumn(contentPadding = PaddingValues(20.dp)) {
+        LazyColumn(contentPadding = PaddingValues(16.dp)) {
             item {
                 Text(
                     text = stringResource(id = R.string.notification_channels_description),

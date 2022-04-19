@@ -2,9 +2,14 @@
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
     <release version="2022.4">
+        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Updated User Agent String format to also include the WebView User Agent</change>
+        <change>Add new notification command to allow for changing Persistent Connection setting</change>
         <change>Allow persistent connection to work when the device has no internet</change>
         <change>Migrate Manage Sensors screen to Compose, small design tweaks and speed improvements</change>
         <change>Add a network transport sensor</change>
         <change>Allow changing high accuracy update interval via notification command</change>
+        <change>Add a new notification command to launch an app with only the package name, if app is not installed user will be taken to install the app</change>
+        <change>Add missing volume level sensors and allow control via notification command for some of them</change>
+        <change>Bug fixes, design tweaks and dependency updates</change>
     </release>
 </changelog>

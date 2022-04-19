@@ -15,7 +15,9 @@ class QuestSensorManager : SensorManager {
             "binary_sensor",
             commonR.string.basic_sensor_name_headset_mounted,
             commonR.string.sensor_description_headset_mounted,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            "mdi:virtual-reality",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
     }
 
@@ -65,13 +67,11 @@ class QuestSensorManager : SensorManager {
 
         val state: Boolean = getHeadsetState(intent)
 
-        val icon = "mdi:virtual-reality"
-
         onSensorUpdated(
             context,
             headsetMounted,
             state,
-            icon,
+            headsetMounted.statelessIcon,
             mapOf()
         )
     }
