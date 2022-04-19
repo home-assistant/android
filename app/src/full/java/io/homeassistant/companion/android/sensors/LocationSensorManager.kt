@@ -221,7 +221,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 if (backgroundEnabled) {
 
                     val updateIntervalHighAccuracySeconds = getHighAccuracyModeUpdateInterval()
-                    val highAccuracyMode = getHighAccuracyMode()
+                    val highAccuracyMode = getHighAccuracyModeState()
 
                     lastHighAccuracyMode = highAccuracyMode
                     lastHighAccuracyUpdateInterval = updateIntervalHighAccuracySeconds

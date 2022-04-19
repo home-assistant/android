@@ -128,5 +128,4 @@ class GeocodeSensorManager : SensorManager {
                 attributes
             )
         }
-    }
 }
