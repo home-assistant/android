@@ -58,7 +58,7 @@ android {
 //    val AMAP_KEY: String by project
     val NESTOR_KEYSTORE_PASSWORD = System.getenv("NESTOR_KEYSTORE_PASSWORD")
     val NESTOR_KEYSTORE_ALIAS = System.getenv("NESTOR_KEYSTORE_ALIAS")
-    val AMAP_KEY = System.getenv("NESTOR_KEYSTORE_PASSWORD")
+    val AMAP_KEY = System.getenv("AMAP_KEY")
 
     signingConfigs {
         create("release") {
