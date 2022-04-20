@@ -304,19 +304,20 @@ class BluetoothSensorManager : SensorManager {
     }
 
     fun updateBeaconMonitoringSensor(context: Context) {
-        val nearestBeacon = beaconMonitoringDevice.getNearestBeacon(beaconMonitoringDevice.beacons)
         val icon = if (beaconMonitoringDevice.monitoring) "mdi:bluetooth" else "mdi:bluetooth-off"
 
+        var state = 0.0
         var attr: Map<String, Any?> = mapOf()
-        if (nearestBeacon != null) {
-            attr += Pair("Beacon ID", nearestBeacon.first)
+        if (beaconMonitoringDevice.beacons.count() >= 1) {
+            attr += Pair("Beacon ID", beaconMonitoringDevice.beacons[0].first)
+            state = beaconMonitoringDevice.beacons[0].second
         }
         attr += beaconMonitoringDevice.beacons
 
         onSensorUpdated(
             context,
             beaconMonitor,
-            state = nearestBeacon?.second?.toFloat() ?: 0.0f,
+            state,
             icon,
             attr
         )

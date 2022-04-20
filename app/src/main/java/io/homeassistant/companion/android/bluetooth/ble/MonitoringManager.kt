@@ -40,21 +40,20 @@ object MonitoringManager {
                 BeaconParser().
                 setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"))
 
-            beaconManager.setIntentScanningStrategyEnabled(true)
-            beaconManager.setBackgroundBetweenScanPeriod(500);
+            beaconManager.setEnableScheduledScanJobs(false)
+            beaconManager.setBackgroundBetweenScanPeriod(1000);
             beaconManager.setBackgroundScanPeriod(1100);
             BeaconManager.setRssiFilterImplClass(KalmanFilter::class.java)
         }
         if (!beaconManager.isAnyConsumerBound) {
             region = buildRegion()
             GlobalScope.launch(Dispatchers.Main) {
-                beaconManager.getRegionViewModel(region).rangedBeacons.observeForever(
-                    object : Observer<Collection<Beacon>> {
-                        override fun onChanged(beacons: Collection<Beacon>) {
-                            haMonitor.setBeacons(context, beacons)
-                        }
-                    }
-                )
+                beaconManager.getRegionViewModel(region).rangedBeacons.observeForever { beacons ->
+                    haMonitor.setBeacons(
+                        context,
+                        beacons
+                    )
+                }
             }
         }
         val bluetoothAdapter = context.getSystemService<BluetoothManager>()?.adapter

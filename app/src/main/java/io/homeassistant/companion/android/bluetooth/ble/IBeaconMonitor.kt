@@ -4,54 +4,45 @@ import android.content.Context
 import io.homeassistant.companion.android.sensors.BluetoothSensorManager
 import org.altbeacon.beacon.Beacon
 
+const val MAX_SKIPPED_UPDATED = 10
+
 class IBeaconMonitor {
     var monitoring: Boolean = false
     lateinit var sensorManager: BluetoothSensorManager
-    var beacons: Map<String, Double> = mapOf()
+    var beacons: List<Pair<String, Double>> = listOf()
     private var skippedUpdates: Int = 0
 
-    fun getNearestBeacon(tmp: Map<String, Double>): Pair<String, Double>? {
-        var beaconID: String? = null
-        var minDistance: Double = Double.MAX_VALUE
-
-        for ((id, distance) in tmp) {
-            if (distance <= minDistance) {
-                minDistance = distance
-                beaconID = id
-            }
-        }
-
-        if (beaconID == null) {
-            return null
-        }
-        return Pair(beaconID, minDistance)
+    fun sort(tmp: List<Pair<String, Double>>): List<Pair<String, Double>> {
+        return tmp.sortedBy { (_, value) -> value}
     }
 
     fun setBeacons(context: Context, newBeacons: Collection<Beacon>) {
-        var tmp: Map<String, Double> = mapOf()
-        var requireUpdate: Boolean = false
-        for (beacon: Beacon in newBeacons) {
-            val id = beacon.id1.toString()
-            val distance = beacon.distance
-            val previousDistance = beacons[id]
+        var tmp: List<Pair<String, Double>> = listOf()
+        for (newBeacon: Beacon in newBeacons) {
+            val id = newBeacon.id1.toString()
+            val distance = kotlin.math.round(newBeacon.distance * 100) / 100
+            tmp += Pair(id, distance)
+        }
 
-            tmp += Pair(id, beacon.distance)
-            if (previousDistance == null || kotlin.math.abs(previousDistance - distance) >= 0.5) {
-                requireUpdate = true
+        tmp = sort(tmp)
+        if (beacons.count() < tmp.count() || skippedUpdates > MAX_SKIPPED_UPDATED) {
+            sendUpdate(context, tmp)
+        } else if (beacons.count() == tmp.count()) {
+            tmp.forEachIndexed {i, newBeacon ->
+                if (beacons[i].first != newBeacon.first || kotlin.math.abs(beacons[i].second - newBeacon.second) > 0.5){
+                    sendUpdate(context, tmp)
+                    return@forEachIndexed
+                }
             }
-        }
-
-        if (!requireUpdate) {
-            return
-        }
-
-        if (tmp.count() >= beacons.count() || skippedUpdates >= 10) {
-            beacons = tmp
-            skippedUpdates = 0
-            sensorManager!!.updateBeaconMonitoringSensor(context)
         } else {
             skippedUpdates++
         }
+    }
+
+    private fun sendUpdate(context: Context, tmp: List<Pair<String, Double>>) {
+        beacons = tmp
+        skippedUpdates = 0
+        sensorManager!!.updateBeaconMonitoringSensor(context)
     }
 }
 

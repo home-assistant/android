@@ -2,7 +2,7 @@ package io.homeassistant.companion.android.bluetooth.ble
 
 import org.altbeacon.beacon.service.RssiFilter
 
-const val MAX_ITERATIONS = 100
+const val MAX_ITERATIONS = 10
 
 class KalmanFilter: RssiFilter {
     private var predictedValue: Double = 0.0
@@ -16,12 +16,12 @@ class KalmanFilter: RssiFilter {
             numIterations++
         }
         val delta: Double = rssi.toDouble() - predictedValue
-        val gain: Double = if (delta < 0) (1 / (kotlin.math.abs(delta) * numIterations)) else 1.0 / numIterations
+        val gain: Double = 1.0 / (kotlin.math.abs(rssi.toDouble()) + numIterations)
         predictedValue += gain * delta
     }
 
     override fun noMeasurementsAvailable(): Boolean {
-        return numIterations == 0
+        return numIterations < MAX_ITERATIONS
     }
 
     override fun calculateRssi(): Double {
