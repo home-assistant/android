@@ -33,6 +33,7 @@ import io.homeassistant.companion.android.database.sensor.EntriesTypeConverter
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.sensor.SensorSetting
+import io.homeassistant.companion.android.database.sensor.SensorSettingTypeConverter
 import io.homeassistant.companion.android.database.settings.LocalNotificationSettingConverter
 import io.homeassistant.companion.android.database.settings.LocalSensorSettingConverter
 import io.homeassistant.companion.android.database.settings.Setting
@@ -76,7 +77,8 @@ import io.homeassistant.companion.android.common.R as commonR
 @TypeConverters(
     LocalNotificationSettingConverter::class,
     LocalSensorSettingConverter::class,
-    EntriesTypeConverter::class
+    EntriesTypeConverter::class,
+    SensorSettingTypeConverter::class
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun authenticationDao(): AuthenticationDao

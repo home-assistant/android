@@ -14,6 +14,7 @@ import android.util.Log
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.common.R as commonR
 
 class NotificationSensorManager : NotificationListenerService(), SensorManager {
@@ -113,16 +114,16 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             applicationContext,
             lastNotification,
             SETTING_ALLOW_LIST,
-            "list-apps",
-            ""
+            SensorSettingType.LIST_APPS,
+            default = ""
         ).split(", ").filter { it.isNotBlank() }
 
         val disableAllowListRequirement = getSetting(
             applicationContext,
             lastNotification,
             SETTING_DISABLE_ALLOW_LIST,
-            "toggle",
-            "false"
+            SensorSettingType.TOGGLE,
+            default = "false"
         ).toBoolean()
 
         if (sbn.packageName == application.packageName ||
@@ -167,15 +168,15 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             applicationContext,
             lastRemovedNotification,
             SETTING_ALLOW_LIST,
-            "list-apps",
-            ""
+            SensorSettingType.LIST_APPS,
+            default = ""
         ).split(", ").filter { it.isNotBlank() }
 
         val disableAllowListRequirement = getSetting(
             applicationContext,
             lastRemovedNotification,
             SETTING_DISABLE_ALLOW_LIST,
-            "toggle",
+            SensorSettingType.TOGGLE,
             "false"
         ).toBoolean()
 

@@ -60,6 +60,7 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorSetting
+import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.settings.sensor.SensorDetailViewModel
 import io.homeassistant.companion.android.util.compose.MdcAlertDialog
@@ -159,7 +160,7 @@ fun SensorDetailView(
                     viewModel.sensorSettings.value.forEach { setting ->
                         item {
                             when (setting.valueType) {
-                                "toggle" -> {
+                                SensorSettingType.TOGGLE -> {
                                     SensorDetailRow(
                                         title = viewModel.getSettingTranslatedTitle(setting.name),
                                         switch = setting.value == "true",
@@ -167,12 +168,12 @@ fun SensorDetailView(
                                         clickable = setting.enabled,
                                         onClick = { isEnabled ->
                                             onToggleSettingSubmitted(
-                                                SensorSetting(viewModel.basicSensor.id, setting.name, isEnabled.toString(), "toggle", setting.enabled)
+                                                SensorSetting(viewModel.basicSensor.id, setting.name, isEnabled.toString(), SensorSettingType.TOGGLE, setting.enabled)
                                             )
                                         }
                                     )
                                 }
-                                "list" -> {
+                                SensorSettingType.LIST -> {
                                     SensorDetailRow(
                                         title = viewModel.getSettingTranslatedTitle(setting.name),
                                         summary = viewModel.getSettingTranslatedEntry(setting.name, setting.value),
@@ -181,7 +182,7 @@ fun SensorDetailView(
                                         onClick = { onDialogSettingClicked(setting) }
                                     )
                                 }
-                                "list-apps", "list-bluetooth", "list-zones" -> {
+                                SensorSettingType.LIST_APPS, SensorSettingType.LIST_BLUETOOTH, SensorSettingType.LIST_ZONES -> {
                                     val summaryValues = setting.value.split(", ").mapNotNull { it.ifBlank { null } }
                                     SensorDetailRow(
                                         title = viewModel.getSettingTranslatedTitle(setting.name),
@@ -193,7 +194,7 @@ fun SensorDetailView(
                                         onClick = { onDialogSettingClicked(setting) }
                                     )
                                 }
-                                "string", "number" -> {
+                                SensorSettingType.STRING, SensorSettingType.NUMBER -> {
                                     SensorDetailRow(
                                         title = viewModel.getSettingTranslatedTitle(setting.name),
                                         summary = setting.value,
@@ -401,7 +402,7 @@ fun SensorDetailSettingDialog(
     onSubmit: (SensorDetailViewModel.Companion.SettingDialogState) -> Unit
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
-    val listSettingDialog = state.setting.valueType != "string" && state.setting.valueType != "number"
+    val listSettingDialog = state.setting.valueType.listType
     val inputValue = remember { mutableStateOf(state.setting.value) }
     val checkedValue = remember { mutableStateListOf(*state.entriesSelected?.toTypedArray() ?: emptyArray()) }
 
@@ -416,10 +417,10 @@ fun SensorDetailSettingDialog(
                         item {
                             SensorDetailSettingRow(
                                 label = entry,
-                                checked = if (state.setting.valueType == "list") inputValue.value == id else checkedValue.contains(id),
-                                multiple = state.setting.valueType != "list",
+                                checked = if (state.setting.valueType == SensorSettingType.LIST) inputValue.value == id else checkedValue.contains(id),
+                                multiple = state.setting.valueType != SensorSettingType.LIST,
                                 onClick = { isChecked ->
-                                    if (state.setting.valueType == "list") {
+                                    if (state.setting.valueType == SensorSettingType.LIST) {
                                         inputValue.value = id
                                         onSubmit(state.copy().apply { setting.value = inputValue.value })
                                     } else {
@@ -436,7 +437,7 @@ fun SensorDetailSettingDialog(
                     value = inputValue.value,
                     keyboardOptions = KeyboardOptions(
                         imeAction = ImeAction.Done,
-                        keyboardType = if (state.setting.valueType == "number") {
+                        keyboardType = if (state.setting.valueType == SensorSettingType.NUMBER) {
                             KeyboardType.Number
                         } else {
                             KeyboardType.Text
@@ -450,7 +451,7 @@ fun SensorDetailSettingDialog(
             }
         },
         onCancel = onDismiss,
-        onSave = if (state.setting.valueType != "list") {
+        onSave = if (state.setting.valueType != SensorSettingType.LIST) {
             {
                 if (listSettingDialog) {
                     inputValue.value = checkedValue.joinToString().replace("[", "").replace("]", "")

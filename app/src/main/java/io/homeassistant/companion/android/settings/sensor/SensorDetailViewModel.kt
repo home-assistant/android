@@ -19,6 +19,7 @@ import io.homeassistant.companion.android.common.sensors.NetworkSensorManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
+import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.database.sensor.SensorWithAttributes
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.sensors.LastAppSensorManager
@@ -149,20 +150,20 @@ class SensorDetailViewModel @Inject constructor(
     }
 
     fun onSettingWithDialogPressed(setting: SensorSetting) {
-        val listSetting = setting.valueType != "string" && setting.valueType != "number"
+        val listSetting = setting.valueType.listType
         val listEntries = getSettingEntries(setting)
         val state = SettingDialogState(
             setting = setting,
             entries = if (listSetting) listEntries else null,
             entriesIds = if (listSetting) {
-                if (setting.valueType == "list") setting.entries
+                if (setting.valueType == SensorSettingType.LIST) setting.entries
                 else listEntries
             } else {
                 null
             },
             entriesSelected = if (listSetting) {
                 setting.value.split(", ").filter {
-                    if (setting.valueType == "list") setting.entries.contains(it)
+                    if (setting.valueType == SensorSettingType.LIST) setting.entries.contains(it)
                     else listEntries.contains(it)
                 }
             } else {
@@ -269,17 +270,17 @@ class SensorDetailViewModel @Inject constructor(
 
     private fun getSettingEntries(setting: SensorSetting): List<String> {
         return when (setting.valueType) {
-            "list" ->
+            SensorSettingType.LIST ->
                 getSettingTranslatedEntries(setting.name, setting.entries)
-            "list-apps" ->
+            SensorSettingType.LIST_APPS ->
                 getApplication<Application>().packageManager
                     ?.getInstalledApplications(PackageManager.GET_META_DATA)
                     ?.map { packageItem -> packageItem.packageName }
                     ?.sorted()
                     .orEmpty()
-            "list-bluetooth" ->
+            SensorSettingType.LIST_BLUETOOTH ->
                 BluetoothUtils.getBluetoothDevices(getApplication()).map { it.name }
-            "list-zones" ->
+            SensorSettingType.LIST_ZONES ->
                 zones
             else ->
                 emptyList()
