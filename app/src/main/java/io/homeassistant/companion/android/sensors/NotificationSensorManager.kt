@@ -118,13 +118,12 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             default = ""
         ).split(", ").filter { it.isNotBlank() }
 
-        val disableAllowListRequirement = getSetting(
+        val disableAllowListRequirement = getToggleSetting(
             applicationContext,
             lastNotification,
             SETTING_DISABLE_ALLOW_LIST,
-            SensorSettingType.TOGGLE,
-            default = "false"
-        ).toBoolean()
+            default = false
+        )
 
         if (sbn.packageName == application.packageName ||
             (allowPackages.isNotEmpty() && sbn.packageName !in allowPackages) ||
@@ -172,13 +171,12 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             default = ""
         ).split(", ").filter { it.isNotBlank() }
 
-        val disableAllowListRequirement = getSetting(
+        val disableAllowListRequirement = getToggleSetting(
             applicationContext,
             lastRemovedNotification,
             SETTING_DISABLE_ALLOW_LIST,
-            SensorSettingType.TOGGLE,
-            "false"
-        ).toBoolean()
+            default = false
+        )
 
         if (sbn.packageName == application.packageName ||
             (allowPackages.isNotEmpty() && sbn.packageName !in allowPackages) ||

@@ -45,6 +45,9 @@ interface SensorManager {
         }
     }
 
+    /**
+     * URL to a documentation page that describes this sensor
+     */
     fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors"
     }
@@ -79,15 +82,20 @@ interface SensorManager {
         return sensor.enabled
     }
 
-    // Request to update a sensor, including any broadcast intent which may have triggered the request
-    // The intent will be null if the update is being done on a timer, rather than as a result
-    // of a broadcast being received.
+    /**
+     * Request to update a sensor, including any broadcast intent which may have triggered the request
+     * The intent will be null if the update is being done on a timer, rather than as a result
+     * of a broadcast being received.
+     */
     fun requestSensorUpdate(context: Context, intent: Intent?) {
         // Few sensors care about the intent, so allow them to just implement the interface that
         // does not get passed that parameter.
         requestSensorUpdate(context)
     }
 
+    /**
+     * Request to update a sensor, without a corresponding broadcast intent.
+     */
     fun requestSensorUpdate(context: Context)
 
     fun getAvailableSensors(context: Context): List<BasicSensor>
@@ -128,15 +136,24 @@ interface SensorManager {
         }
     }
 
-    fun getSetting(
+    fun getToggleSetting(
         context: Context,
         sensor: BasicSensor,
         settingName: String,
-        settingType: SensorSettingType,
-        default: String,
+        default: Boolean,
         enabled: Boolean = true
-    ): String {
-        return getSetting(context, sensor, settingName, settingType, arrayListOf(), default, enabled)
+    ): Boolean {
+        return getSetting(context, sensor, settingName, SensorSettingType.TOGGLE, default.toString(), enabled).toBoolean()
+    }
+
+    fun getNumberSetting(
+        context: Context,
+        sensor: BasicSensor,
+        settingName: String,
+        default: Int,
+        enabled: Boolean = true
+    ): Int {
+        return getSetting(context, sensor, settingName, SensorSettingType.NUMBER, default.toString(), enabled).toIntOrNull() ?: default
     }
 
     /**
@@ -148,9 +165,9 @@ interface SensorManager {
         sensor: BasicSensor,
         settingName: String,
         settingType: SensorSettingType,
-        entries: List<String> = arrayListOf(),
         default: String,
-        enabled: Boolean = true
+        enabled: Boolean = true,
+        entries: List<String> = arrayListOf(),
     ): String {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val setting = sensorDao

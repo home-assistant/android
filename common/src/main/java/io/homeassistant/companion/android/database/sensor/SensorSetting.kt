@@ -26,7 +26,7 @@ data class SensorSetting(
     @ColumnInfo(name = "value_type")
     val valueType: SensorSettingType,
     @ColumnInfo(name = "enabled")
-    var enabled: Boolean = true,
+    val enabled: Boolean = true,
     @ColumnInfo(name = "entries")
     val entries: List<String> = arrayListOf(),
 )

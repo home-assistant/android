@@ -49,9 +49,10 @@ class SensorDetailViewModel @Inject constructor(
         )
         data class SettingDialogState(
             val setting: SensorSetting,
-            val entries: List<String>? = null,
-            val entriesIds: List<String>? = null,
-            val entriesSelected: List<String>? = null
+            /** List of entity ID to entity pairs */
+            val entries: List<Pair<String, String>>,
+            /** List of selected entity ID */
+            val entriesSelected: List<String>
         )
     }
 
@@ -149,17 +150,20 @@ class SensorDetailViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Builds a SettingDialogState based on the given Sensor Setting.
+     * Should trigger a dialog open in view.
+     */
     fun onSettingWithDialogPressed(setting: SensorSetting) {
         val listSetting = setting.valueType.listType
         val listEntries = getSettingEntries(setting)
         val state = SettingDialogState(
             setting = setting,
-            entries = if (listSetting) listEntries else null,
-            entriesIds = if (listSetting) {
-                if (setting.valueType == SensorSettingType.LIST) setting.entries
-                else listEntries
+            entries = if (listSetting) {
+                if (setting.valueType == SensorSettingType.LIST) setting.entries.zip(listEntries)
+                else listEntries.map { it to it }
             } else {
-                null
+                emptyList()
             },
             entriesSelected = if (listSetting) {
                 setting.value.split(", ").filter {
@@ -167,7 +171,7 @@ class SensorDetailViewModel @Inject constructor(
                     else listEntries.contains(it)
                 }
             } else {
-                null
+                emptyList()
             }
         )
         sensorSettingsDialog = state

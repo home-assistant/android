@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -404,7 +405,7 @@ fun SensorDetailSettingDialog(
     val keyboardController = LocalSoftwareKeyboardController.current
     val listSettingDialog = state.setting.valueType.listType
     val inputValue = remember { mutableStateOf(state.setting.value) }
-    val checkedValue = remember { mutableStateListOf(*state.entriesSelected?.toTypedArray() ?: emptyArray()) }
+    val checkedValue = remember { mutableStateListOf<String>().also { it.addAll(state.entriesSelected) } }
 
     MdcAlertDialog(
         onDismissRequest = onDismiss,
@@ -412,24 +413,21 @@ fun SensorDetailSettingDialog(
         content = {
             if (listSettingDialog) {
                 LazyColumn {
-                    state.entries?.forEachIndexed { index, entry ->
-                        val id = state.entriesIds?.get(index)!!
-                        item {
-                            SensorDetailSettingRow(
-                                label = entry,
-                                checked = if (state.setting.valueType == SensorSettingType.LIST) inputValue.value == id else checkedValue.contains(id),
-                                multiple = state.setting.valueType != SensorSettingType.LIST,
-                                onClick = { isChecked ->
-                                    if (state.setting.valueType == SensorSettingType.LIST) {
-                                        inputValue.value = id
-                                        onSubmit(state.copy().apply { setting.value = inputValue.value })
-                                    } else {
-                                        if (checkedValue.contains(id) && !isChecked) checkedValue.remove(id)
-                                        else if (!checkedValue.contains(id) && isChecked) checkedValue.add(id)
-                                    }
+                    items(state.entries, key = { (id) -> id }) { (id, entry) ->
+                        SensorDetailSettingRow(
+                            label = entry,
+                            checked = if (state.setting.valueType == SensorSettingType.LIST) inputValue.value == id else checkedValue.contains(id),
+                            multiple = state.setting.valueType != SensorSettingType.LIST,
+                            onClick = { isChecked ->
+                                if (state.setting.valueType == SensorSettingType.LIST) {
+                                    inputValue.value = id
+                                    onSubmit(state.copy().apply { setting.value = inputValue.value })
+                                } else {
+                                    if (checkedValue.contains(id) && !isChecked) checkedValue.remove(id)
+                                    else if (!checkedValue.contains(id) && isChecked) checkedValue.add(id)
                                 }
-                            )
-                        }
+                            }
+                        )
                     }
                 }
             } else {
