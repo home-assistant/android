@@ -21,7 +21,6 @@ class BluetoothSensorManager : SensorManager {
         const val SETTING_BLE_TRANSMIT_POWER = "ble_transmit_power"
         const val SETTING_BLE_ADVERTISE_MODE = "ble_advertise_mode"
         private const val SETTING_BLE_TRANSMIT_ENABLED = "ble_transmit_enabled"
-        private const val SETTING_BEACON_MONITOR_ENABLED = "beacon_monitor_enabled"
         const val SETTING_BLE_MEASURED_POWER = "ble_measured_power_at_1m"
         const val BLE_ADVERTISE_LOW_LATENCY = "lowLatency"
         const val BLE_ADVERTISE_BALANCED = "balanced"
@@ -30,6 +29,11 @@ class BluetoothSensorManager : SensorManager {
         const val BLE_TRANSMIT_MEDIUM = "medium"
         const val BLE_TRANSMIT_LOW = "low"
         const val BLE_TRANSMIT_ULTRA_LOW = "ultraLow"
+        private const val SETTING_BEACON_MONITOR_ENABLED = "beacon_monitor_enabled"
+        private const val SETTING_BEACON_MONITOR_SCAN_PERIOD = "beacon_monitor_scan_period"
+        private const val SETTING_BEACON_MONITOR_SCAN_INTERVAL = "beacon_monitor_scan_interval"
+        private const val SETTING_BEACON_MONITOR_FILTER_ITERATIONS = "beacon_monitor_filter_iterations"
+        private const val SETTING_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER = "beacon_monitor_filter_rssi_multiplier"
 
         private const val DEFAULT_BLE_TRANSMIT_POWER = "ultraLow"
         private const val DEFAULT_BLE_ADVERTISE_MODE = "lowPower"
@@ -37,6 +41,12 @@ class BluetoothSensorManager : SensorManager {
         private const val DEFAULT_BLE_MINOR = "1"
         private const val DEFAULT_MEASURED_POWER_AT_1M = "-59"
         private var priorBluetoothStateEnabled = false
+
+        private const val DEFAULT_BEACON_MONITOR_SCAN_PERIOD = "1100"
+        private const val DEFAULT_BEACON_MONITOR_SCAN_INTERVAL = "500"
+        private const val DEFAULT_BEACON_MONITOR_FILTER_ITERATIONS = "10"
+        private const val DEFAULT_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER = "1.05"
+
 
         // private const val TAG = "BluetoothSM"
         private var bleTransmitterDevice = IBeaconTransmitter("", "", "", transmitPowerSetting = "", measuredPowerSetting = 0, advertiseModeSetting = "", transmitting = false, state = "", restartRequired = false)
@@ -256,13 +266,22 @@ class BluetoothSensorManager : SensorManager {
         beaconMonitoringDevice.sensorManager = this
 
         val monitoringActive = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_ENABLED, "toggle", "true").toBoolean()
+        val scanPeriod = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_SCAN_PERIOD, "number", DEFAULT_BEACON_MONITOR_SCAN_PERIOD).toLongOrNull() ?: DEFAULT_BEACON_MONITOR_SCAN_PERIOD.toLong()
+        val scanInterval = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_SCAN_INTERVAL, "number", DEFAULT_BEACON_MONITOR_SCAN_INTERVAL).toLongOrNull() ?: DEFAULT_BEACON_MONITOR_SCAN_INTERVAL.toLong()
+        KalmanFilter.maxIterations = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_FILTER_ITERATIONS, "number", DEFAULT_BEACON_MONITOR_FILTER_ITERATIONS).toIntOrNull() ?: DEFAULT_BEACON_MONITOR_FILTER_ITERATIONS.toInt()
+        KalmanFilter.rssiMultiplier = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER, "number", DEFAULT_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER).toDoubleOrNull() ?: DEFAULT_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER.toDouble()
 
         priorBluetoothStateEnabled = isBtOn(context)
 
-        if (isEnabled(context, beaconMonitor.id) && monitoringActive && isBtOn(context)) {
-            MonitoringManager.startMonitoring(context, beaconMonitoringDevice)
-        } else {
+        var restart = beaconMonitoringDevice.monitoring &&
+                (MonitoringManager.scanPeriod != scanPeriod || MonitoringManager.scanInterval != scanInterval)
+        MonitoringManager.scanPeriod = scanPeriod
+        MonitoringManager.scanInterval = scanInterval
+
+        if (!isEnabled(context, beaconMonitor.id) || ! monitoringActive || !isBtOn(context) || restart) {
             MonitoringManager.stopMonitoring(beaconMonitoringDevice)
+        } else {
+            MonitoringManager.startMonitoring(context, beaconMonitoringDevice)
         }
     }
 
@@ -309,10 +328,12 @@ class BluetoothSensorManager : SensorManager {
         var state = 0.0
         var attr: Map<String, Any?> = mapOf()
         if (beaconMonitoringDevice.beacons.count() >= 1) {
-            attr += Pair("Beacon ID", beaconMonitoringDevice.beacons[0].first)
-            state = beaconMonitoringDevice.beacons[0].second
+            attr += Pair("Beacon ID", beaconMonitoringDevice.beacons[0].uuid)
+            state = beaconMonitoringDevice.beacons[0].distance
         }
-        attr += beaconMonitoringDevice.beacons
+        for (beacon: IBeacon in beaconMonitoringDevice.beacons) {
+            attr += Pair(beacon.uuid, beacon.distance)
+        }
 
         onSensorUpdated(
             context,

@@ -547,8 +547,12 @@
     <string name="sensor_setting_ble_transmit_power_medium_label">Medium</string>
     <string name="sensor_setting_ble_transmit_power_title">Transmitter power</string>
     <string name="sensor_setting_ble_transmit_power_ultraLow_label">Ultra Low</string>
-    <string name="sensor_setting_beacon_monitor_enabled_title">Enable Beacon Monitor</string>
     <string name="sensor_setting_ble_uuid_title">UUID</string>
+    <string name="sensor_setting_beacon_monitor_enabled_title">Enable Beacon Monitor</string>
+    <string name="sensor_setting_beacon_monitor_scan_period_title">Scan Period</string>
+    <string name="sensor_setting_beacon_monitor_scan_interval_title">Scan Interval</string>
+    <string name="sensor_setting_beacon_monitor_filter_iterations_title">Filter Iterations</string>
+    <string name="sensor_setting_beacon_monitor_filter_rssi_multiplier_title">Filter RSSI Multiplier</string>
     <string name="sensor_setting_geocode_minimum_accuracy_title">Minimum Accuracy</string>
     <string name="sensor_setting_lastreboot_deadband_title">Deadband</string>
     <string name="sensor_setting_lastupdate_add_new_intent_title">Add New Intent</string>
