@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.home
 import android.app.Application
 import android.util.Log
 import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -21,7 +20,6 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.En
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.wear.getAllFlow
 import io.homeassistant.companion.android.util.RegistriesDataHandler
@@ -274,15 +272,7 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
         basicSensor: SensorManager.BasicSensor,
         isEnabled: Boolean
     ) {
-        var sensorEntity = sensorDao.get(basicSensor.id)
-        if (sensorEntity != null) {
-            sensorEntity.enabled = isEnabled
-            sensorEntity.lastSentState = ""
-            sensorDao.update(sensorEntity)
-        } else {
-            sensorEntity = Sensor(basicSensor.id, isEnabled, false, "")
-            sensorDao.add(sensorEntity)
-        }
+        sensorDao.setSensorsEnabled(listOf(basicSensor.id), isEnabled)
     }
 
     fun getAreaForEntity(entityId: String): AreaRegistryResponse? =

@@ -9,7 +9,6 @@ import android.os.Process.myUid
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
-import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import java.util.Locale
 import io.homeassistant.companion.android.common.R as commonR
@@ -71,21 +70,8 @@ interface SensorManager {
 
     fun isEnabled(context: Context, sensorId: String): Boolean {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
-        var sensor = sensorDao.get(sensorId)
         val permission = checkPermission(context, sensorId)
-
-        // If we haven't created the entity yet do so and default to enabled if required
-        if (sensor == null) {
-            sensor = Sensor(sensorId, permission && enabledByDefault, false, "")
-            sensorDao.add(sensor)
-        }
-
-        // If we don't have permission but we are still enabled then we aren't really enabled.
-        if (sensor.enabled && !permission) {
-            sensor.enabled = false
-            sensorDao.update(sensor)
-        }
-
+        val sensor = sensorDao.getOrDefault(sensorId, permission, enabledByDefault)
         return sensor.enabled
     }
 
@@ -174,45 +160,44 @@ interface SensorManager {
         attributes: Map<String, Any?>
     ) {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
-        val sensor = sensorDao.get(basicSensor.id) ?: return
-        sensor.id = basicSensor.id
-        sensor.state = state.toString()
-        sensor.stateType = when (state) {
-            is Boolean -> "boolean"
-            is Int -> "int"
-            is Number -> "float"
-            is String -> "string"
-            else -> throw IllegalArgumentException("Unknown Sensor State Type")
-        }
-        sensor.type = basicSensor.type
-        sensor.icon = mdiIcon
-        sensor.name = basicSensor.name.toString()
-        sensor.deviceClass = basicSensor.deviceClass
-        sensor.unitOfMeasurement = basicSensor.unitOfMeasurement
-        sensor.stateClass = basicSensor.stateClass
-        sensor.entityCategory = basicSensor.entityCategory
-
-        sensorDao.update(sensor)
-        sensorDao.clearAttributes(basicSensor.id)
-
-        for (item in attributes) {
-            val valueType = when (item.value) {
+        val sensor = sensorDao.get(basicSensor.id)?.copy(
+            state = state.toString(),
+            stateType = when (state) {
                 is Boolean -> "boolean"
                 is Int -> "int"
-                is Long -> "long"
                 is Number -> "float"
-                else -> "string" // Always default to String for attributes
-            }
+                is String -> "string"
+                else -> throw IllegalArgumentException("Unknown Sensor State Type")
+            },
+            type = basicSensor.type,
+            icon = mdiIcon,
+            name = basicSensor.name.toString(),
+            deviceClass = basicSensor.deviceClass,
+            unitOfMeasurement = basicSensor.unitOfMeasurement,
+            stateClass = basicSensor.stateClass,
+            entityCategory = basicSensor.entityCategory
+        ) ?: return
 
-            sensorDao.add(
+        sensorDao.update(sensor)
+        sensorDao.replaceAllAttributes(
+            basicSensor.id,
+            attributes = attributes.map { item ->
+                val valueType = when (item.value) {
+                    is Boolean -> "boolean"
+                    is Int -> "int"
+                    is Long -> "long"
+                    is Number -> "float"
+                    else -> "string" // Always default to String for attributes
+                }
+
                 Attribute(
                     basicSensor.id,
                     item.key,
                     item.value.toString(),
                     valueType
                 )
-            )
-        }
+            }
+        )
     }
 }
 
