@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.home.views
 
+import android.content.Context
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,6 +11,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.hapticfeedback.HapticFeedback
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.InlineSlider
@@ -30,6 +34,8 @@ import io.homeassistant.companion.android.common.data.integration.supportsLightC
 import io.homeassistant.companion.android.home.HomePresenterImpl
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.util.getColorTemperature
+import io.homeassistant.companion.android.util.onEntityClickedFeedback
+import io.homeassistant.companion.android.util.onEntityFeedback
 import java.text.DateFormat
 
 @Composable
@@ -38,8 +44,13 @@ fun DetailsPanelView(
     onEntityToggled: (String, String) -> Unit,
     onFanSpeedChanged: (Float) -> Unit,
     onBrightnessChanged: (Float) -> Unit,
-    onColorTempChanged: (Float) -> Unit
+    onColorTempChanged: (Float) -> Unit,
+    isToastEnabled: Boolean,
+    isHapticEnabled: Boolean
 ) {
+    val haptic = LocalHapticFeedback.current
+    val context = LocalContext.current
+
     WearAppTheme {
         ThemeLazyColumn {
             val attributes = entity.attributes as Map<*, *>
@@ -55,7 +66,16 @@ fun DetailsPanelView(
                         val isChecked = entity.state in listOf("on", "locked", "open", "opening")
                         ToggleButton(
                             checked = isChecked,
-                            onCheckedChange = { onEntityToggled(entity.entityId, entity.state) },
+                            onCheckedChange = {
+                                onEntityToggled(entity.entityId, entity.state)
+                                onEntityClickedFeedback(
+                                    isToastEnabled,
+                                    isHapticEnabled,
+                                    context,
+                                    friendlyName,
+                                    haptic
+                                )
+                            },
                             modifier = Modifier
                                 .padding(start = 16.dp)
                                 .size(ToggleButtonDefaults.SmallToggleButtonSize)
@@ -69,20 +89,20 @@ fun DetailsPanelView(
             if (entity.domain == "fan") {
                 if (entity.supportsFanSetSpeed()) {
                     item {
-                        FanSpeedSlider(attributes, onFanSpeedChanged)
+                        FanSpeedSlider(attributes, onFanSpeedChanged, isToastEnabled, isHapticEnabled)
                     }
                 }
             }
             if (entity.domain == "light") {
                 if (entity.supportsLightBrightness()) {
                     item {
-                        BrightnessSlider(attributes, onBrightnessChanged)
+                        BrightnessSlider(attributes, onBrightnessChanged, isToastEnabled, isHapticEnabled)
                     }
                 }
 
                 if (entity.supportsLightColorTemperature() && attributes["color_mode"] == EntityExt.LIGHT_MODE_COLOR_TEMP) {
                     item {
-                        ColorTempSlider(attributes, onColorTempChanged)
+                        ColorTempSlider(attributes, onColorTempChanged, isToastEnabled, isHapticEnabled)
                     }
                 }
             }
@@ -129,7 +149,15 @@ fun DetailsPanelView(
 }
 
 @Composable
-fun FanSpeedSlider(attributes: Map<*, *>, onFanSpeedChanged: (Float) -> Unit) {
+fun FanSpeedSlider(
+    attributes: Map<*, *>,
+    onFanSpeedChanged: (Float) -> Unit,
+    isToastEnabled: Boolean,
+    isHapticEnabled: Boolean
+) {
+    val haptic = LocalHapticFeedback.current
+    val context = LocalContext.current
+
     val minValue = 0f
     val maxValue = 100f
     var currentValue = (attributes["percentage"] as? Number)?.toFloat() ?: 0f
@@ -147,7 +175,17 @@ fun FanSpeedSlider(attributes: Map<*, *>, onFanSpeedChanged: (Float) -> Unit) {
         )
         InlineSlider(
             value = currentValue,
-            onValueChange = onFanSpeedChanged,
+            onValueChange = {
+                onFanSpeedChanged(it)
+                onSliderChangedFeedback(
+                    isToastEnabled,
+                    isHapticEnabled,
+                    it > currentValue,
+                    context.getString(R.string.slider_fan_speed),
+                    context,
+                    haptic
+                )
+            },
             steps = 9,
             valueRange = minValue..maxValue,
             decreaseIcon = {
@@ -168,7 +206,15 @@ fun FanSpeedSlider(attributes: Map<*, *>, onFanSpeedChanged: (Float) -> Unit) {
 }
 
 @Composable
-fun BrightnessSlider(attributes: Map<*, *>, onBrightnessChanged: (Float) -> Unit) {
+fun BrightnessSlider(
+    attributes: Map<*, *>,
+    onBrightnessChanged: (Float) -> Unit,
+    isToastEnabled: Boolean,
+    isHapticEnabled: Boolean
+) {
+    val haptic = LocalHapticFeedback.current
+    val context = LocalContext.current
+
     val minValue = 0f
     val maxValue = 100f
     var currentValue =
@@ -190,6 +236,14 @@ fun BrightnessSlider(attributes: Map<*, *>, onBrightnessChanged: (Float) -> Unit
             value = currentValue,
             onValueChange = { brightness ->
                 onBrightnessChanged(brightness.div(100).times(255))
+                onSliderChangedFeedback(
+                    isToastEnabled,
+                    isHapticEnabled,
+                    brightness > currentValue,
+                    context.getString(R.string.slider_light_brightness),
+                    context,
+                    haptic
+                )
             },
             steps = 20,
             valueRange = minValue..maxValue,
@@ -211,7 +265,15 @@ fun BrightnessSlider(attributes: Map<*, *>, onBrightnessChanged: (Float) -> Unit
 }
 
 @Composable
-fun ColorTempSlider(attributes: Map<*, *>, onColorTempChanged: (Float) -> Unit) {
+fun ColorTempSlider(
+    attributes: Map<*, *>,
+    onColorTempChanged: (Float) -> Unit,
+    isToastEnabled: Boolean,
+    isHapticEnabled: Boolean
+) {
+    val haptic = LocalHapticFeedback.current
+    val context = LocalContext.current
+
     val minValue = (attributes["min_mireds"] as? Number)?.toFloat() ?: 0f
     val maxValue = (attributes["max_mireds"] as? Number)?.toFloat() ?: 0f
     var currentValue = (attributes["color_temp"] as? Number)?.toFloat() ?: 0f
@@ -229,7 +291,17 @@ fun ColorTempSlider(attributes: Map<*, *>, onColorTempChanged: (Float) -> Unit) 
         )
         InlineSlider(
             value = currentValue,
-            onValueChange = onColorTempChanged,
+            onValueChange = {
+                onColorTempChanged(it)
+                onSliderChangedFeedback(
+                    isToastEnabled,
+                    isHapticEnabled,
+                    it > currentValue,
+                    context.getString(R.string.slider_light_colortemp),
+                    context,
+                    haptic
+                )
+            },
             steps = 20,
             valueRange = minValue..maxValue,
             decreaseIcon = {
@@ -252,4 +324,24 @@ fun ColorTempSlider(attributes: Map<*, *>, onColorTempChanged: (Float) -> Unit) 
             modifier = Modifier.padding(bottom = 8.dp)
         )
     }
+}
+
+private fun onSliderChangedFeedback(
+    isToastEnabled: Boolean,
+    isHapticEnabled: Boolean,
+    increase: Boolean,
+    sliderName: String,
+    context: Context,
+    haptic: HapticFeedback
+) {
+    val fullMessage =
+        if (increase) context.getString(R.string.slider_increased, sliderName)
+        else context.getString(R.string.slider_decreased, sliderName)
+    onEntityFeedback(
+        isToastEnabled,
+        isHapticEnabled,
+        fullMessage,
+        context,
+        haptic
+    )
 }

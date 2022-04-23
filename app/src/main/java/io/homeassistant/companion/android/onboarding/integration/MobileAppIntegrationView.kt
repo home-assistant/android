@@ -70,7 +70,7 @@ fun MobileAppIntegrationView(
                         .weight(1f)
                 )
                 Switch(
-                    checked = onboardingViewModel.locationTrackingEnabled.value,
+                    checked = onboardingViewModel.locationTrackingEnabled,
                     onCheckedChange = onLocationTrackingChanged,
                     colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(commonR.color.colorSwitchUncheckedThumb))
                 )

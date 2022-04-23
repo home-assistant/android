@@ -10,11 +10,15 @@ import androidx.compose.runtime.setValue
 import androidx.core.content.getSystemService
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
+import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.onboarding.discovery.HomeAssistantInstance
 import io.homeassistant.companion.android.onboarding.discovery.HomeAssistantSearcher
+import io.homeassistant.companion.android.sensors.LocationSensorManager
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -22,6 +26,8 @@ class OnboardingViewModel @Inject constructor(
     app: Application,
     val authenticationRepository: AuthenticationRepository
 ) : AndroidViewModel(app) {
+
+    private val sensorDao = AppDatabase.getInstance(app).sensorDao()
 
     private val _homeAssistantSearcher = HomeAssistantSearcher(
         nsdManager = app.getSystemService()!!,
@@ -45,7 +51,7 @@ class OnboardingViewModel @Inject constructor(
         private set
     val deviceName = mutableStateOf("")
     val locationTrackingPossible = mutableStateOf(false)
-    val locationTrackingEnabled = mutableStateOf(false)
+    var locationTrackingEnabled by mutableStateOf(false)
 
     fun onManualUrlUpdated(url: String) {
         manualUrl.value = url
@@ -58,6 +64,20 @@ class OnboardingViewModel @Inject constructor(
 
     fun onDeviceNameUpdated(name: String) {
         deviceName.value = name
+    }
+
+    fun setLocationTracking(enabled: Boolean) {
+        viewModelScope.launch {
+            sensorDao.setSensorsEnabled(
+                sensorIds = listOf(
+                    LocationSensorManager.backgroundLocation.id,
+                    LocationSensorManager.zoneLocation.id,
+                    LocationSensorManager.singleAccurateLocation.id
+                ),
+                enabled = enabled
+            )
+        }
+        locationTrackingEnabled = enabled
     }
 
     override fun onCleared() {

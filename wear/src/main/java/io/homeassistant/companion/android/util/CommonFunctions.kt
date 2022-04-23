@@ -124,8 +124,13 @@ private fun coverIcon(state: String?, entity: Entity<Map<String, Any>>?): IIcon?
 }
 
 fun onEntityClickedFeedback(isToastEnabled: Boolean, isHapticEnabled: Boolean, context: Context, friendlyName: String, haptic: HapticFeedback) {
+    val message = context.getString(commonR.string.toast_message, friendlyName)
+    onEntityFeedback(isToastEnabled, isHapticEnabled, message, context, haptic)
+}
+
+fun onEntityFeedback(isToastEnabled: Boolean, isHapticEnabled: Boolean, message: String, context: Context, haptic: HapticFeedback) {
     if (isToastEnabled)
-        Toast.makeText(context, context.getString(commonR.string.toast_message, friendlyName), Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     if (isHapticEnabled)
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
 }
