@@ -124,7 +124,9 @@ fun LoadHomePage(
                                     entity.entityId,
                                     colorTemp
                                 )
-                            }
+                            },
+                            isToastEnabled = mainViewModel.isToastEnabled.value,
+                            isHapticEnabled = mainViewModel.isHapticEnabled.value
                         )
                     }
                 }
