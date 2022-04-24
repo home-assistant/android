@@ -18,7 +18,6 @@ class IBeaconMonitor {
     var monitoring: Boolean = false
     lateinit var sensorManager: BluetoothSensorManager
     var beacons: List<IBeacon> = listOf()
-    private var skippedUpdates: Int = 0
 
     fun sort(tmp: Collection<IBeacon>): Collection<IBeacon> {
         return tmp.sortedBy { it.distance }
@@ -72,7 +71,6 @@ class IBeaconMonitor {
 
     private fun sendUpdate(context: Context, tmp: List<IBeacon>) {
         beacons = tmp
-        skippedUpdates = 0
         sensorManager!!.updateBeaconMonitoringSensor(context)
     }
 }
