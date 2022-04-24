@@ -7,7 +7,7 @@ import kotlin.math.round
 
 const val MAX_SKIPPED_UPDATED = 10
 
-data class IBeacon (
+data class IBeacon(
     var uuid: String,
     var distance: Double,
     var rssi: Double,
@@ -58,7 +58,7 @@ class IBeaconMonitor {
         beacons.forEachIndexed foreach@{ i, existingBeacon ->
             if (sorted[i].uuid != existingBeacon.uuid || // the distance order switched
                 kotlin.math.abs(sorted[i].distance - existingBeacon.distance) > 0.5 // the distance difference is greater than 0.5m
-            ){
+            ) {
                 requireUpdate = true
                 return@foreach
             }
@@ -74,5 +74,3 @@ class IBeaconMonitor {
         sensorManager!!.updateBeaconMonitoringSensor(context)
     }
 }
-
-

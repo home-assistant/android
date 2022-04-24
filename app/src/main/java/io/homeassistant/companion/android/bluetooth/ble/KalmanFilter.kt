@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.bluetooth.ble
 import org.altbeacon.beacon.service.RssiFilter
 import kotlin.math.pow
 
-class KalmanFilter: RssiFilter {
+class KalmanFilter : RssiFilter {
     companion object {
         var maxIterations = 10
         var rssiMultiplier: Double = 1.05
@@ -11,7 +11,6 @@ class KalmanFilter: RssiFilter {
 
     private var predictedValue: Double = 0.0
     private var numIterations: Int = 0
-
 
     override fun addMeasurement(rssi: Int) {
         if (numIterations == 0) {

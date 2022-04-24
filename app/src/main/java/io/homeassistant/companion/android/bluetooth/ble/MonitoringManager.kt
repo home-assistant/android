@@ -3,10 +3,12 @@ package io.homeassistant.companion.android.bluetooth.ble
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import androidx.core.content.getSystemService
-import org.altbeacon.beacon.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.altbeacon.beacon.BeaconManager
+import org.altbeacon.beacon.BeaconParser
+import org.altbeacon.beacon.Region
 
 object MonitoringManager {
     private lateinit var beaconManager: BeaconManager
@@ -32,8 +34,9 @@ object MonitoringManager {
 
             // find iBeacons
             beaconManager.beaconParsers.add(
-                BeaconParser().
-                setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"))
+                BeaconParser()
+                    .setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24")
+            )
 
             BeaconManager.setRssiFilterImplClass(KalmanFilter::class.java)
         }
@@ -58,7 +61,6 @@ object MonitoringManager {
         if (bluetoothOn) {
             beaconManager.startRangingBeacons(region)
             haMonitor.monitoring = true
-
         } else {
             stopMonitoring(haMonitor)
         }

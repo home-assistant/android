@@ -3,7 +3,12 @@ package io.homeassistant.companion.android.sensors
 import android.Manifest
 import android.content.Context
 import android.os.Build
-import io.homeassistant.companion.android.bluetooth.ble.*
+import io.homeassistant.companion.android.bluetooth.ble.IBeacon
+import io.homeassistant.companion.android.bluetooth.ble.IBeaconMonitor
+import io.homeassistant.companion.android.bluetooth.ble.IBeaconTransmitter
+import io.homeassistant.companion.android.bluetooth.ble.KalmanFilter
+import io.homeassistant.companion.android.bluetooth.ble.MonitoringManager
+import io.homeassistant.companion.android.bluetooth.ble.TransmitterManager
 import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
@@ -46,7 +51,6 @@ class BluetoothSensorManager : SensorManager {
         private const val DEFAULT_BEACON_MONITOR_SCAN_INTERVAL = "500"
         private const val DEFAULT_BEACON_MONITOR_FILTER_ITERATIONS = "10"
         private const val DEFAULT_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER = "1.05"
-
 
         // private const val TAG = "BluetoothSM"
         private var bleTransmitterDevice = IBeaconTransmitter("", "", "", transmitPowerSetting = "", measuredPowerSetting = 0, advertiseModeSetting = "", transmitting = false, state = "", restartRequired = false)
@@ -113,7 +117,7 @@ class BluetoothSensorManager : SensorManager {
             if (!sensorEnabled)
                 return
 
-            if (monitorEnabled){
+            if (monitorEnabled) {
                 MonitoringManager.startMonitoring(context, beaconMonitoringDevice)
             } else {
                 MonitoringManager.stopMonitoring(beaconMonitoringDevice)
@@ -274,7 +278,7 @@ class BluetoothSensorManager : SensorManager {
         priorBluetoothStateEnabled = isBtOn(context)
 
         var restart = beaconMonitoringDevice.monitoring &&
-                (MonitoringManager.scanPeriod != scanPeriod || MonitoringManager.scanInterval != scanInterval)
+            (MonitoringManager.scanPeriod != scanPeriod || MonitoringManager.scanInterval != scanInterval)
         MonitoringManager.scanPeriod = scanPeriod
         MonitoringManager.scanInterval = scanInterval
 
