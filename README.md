@@ -1,4 +1,6 @@
-# 官方app高德定位版![Deploy](https://github.com/nesror/android/workflows/Build%20and%20Release%20apk/badge.svg)
+# 官方app高德定位版! 
+
+[![Build and Release apk](https://github.com/nesror/android/workflows/Build%20and%20Release%20apk/badge.svg)](https://github.com/nesror/Home-Assistant-Companion-for-Android/actions/workflows/main.yml)
 
 （适合没有gms服务或谷歌服务受限的用）
 
