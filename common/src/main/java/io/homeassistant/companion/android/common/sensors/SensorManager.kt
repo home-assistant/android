@@ -189,6 +189,7 @@ interface SensorManager {
                     is Number -> "float"
                     is List<*> -> {
                         when {
+                            (item.value as List<*>).any { it is String && it.contains(", ") } -> "string"
                             (item.value as List<*>).all { it is Boolean } -> "listboolean"
                             (item.value as List<*>).all { it is Int } -> "listint"
                             (item.value as List<*>).all { it is Long } -> "listlong"
