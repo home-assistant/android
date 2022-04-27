@@ -132,9 +132,16 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             return
         }
 
-        val attr = sbn.notification.extras.keySet()
-            .map { it to sbn.notification.extras.get(it) }
-            .toMap()
+        val attr = sbn.notification.extras.keySet().associateWith { key ->
+            when (val value = sbn.notification.extras.get(key)) {
+                is Array<*> -> value.toList()
+                is ByteArray -> value.toList()
+                is CharArray -> value.toList()
+                is FloatArray -> value.toList()
+                is ShortArray -> value.toList()
+                else -> value
+            }
+        }
             .plus("package" to sbn.packageName)
             .plus("post_time" to sbn.postTime)
             .plus("is_clearable" to sbn.isClearable)
@@ -186,9 +193,16 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             return
         }
 
-        val attr = sbn.notification.extras.keySet()
-            .map { it to sbn.notification.extras.get(it) }
-            .toMap()
+        val attr = sbn.notification.extras.keySet().associateWith { key ->
+            when (val value = sbn.notification.extras.get(key)) {
+                is Array<*> -> value.toList()
+                is ByteArray -> value.toList()
+                is CharArray -> value.toList()
+                is FloatArray -> value.toList()
+                is ShortArray -> value.toList()
+                else -> value
+            }
+        }
             .plus("package" to sbn.packageName)
             .plus("post_time" to sbn.postTime)
             .plus("is_clearable" to sbn.isClearable)
@@ -216,9 +230,17 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         try {
             val attr: MutableMap<String, Any?> = mutableMapOf()
             for (item in activeNotifications) {
-                attr += item.notification.extras.keySet()
-                    .map { it + "_" + item.packageName to item.notification.extras.get(it) }
-                    .toMap()
+                attr += item.notification.extras.keySet().associate { key ->
+                    val keyValue = when (val value = item.notification.extras.get(key)) {
+                        is Array<*> -> value.toList()
+                        is ByteArray -> value.toList()
+                        is CharArray -> value.toList()
+                        is FloatArray -> value.toList()
+                        is ShortArray -> value.toList()
+                        else -> value
+                    }
+                    "${key}_${item.packageName}" to keyValue
+                }
                     .plus(item.packageName + "_" + item.id + "_post_time" to item.postTime)
                     .plus(item.packageName + "_" + item.id + "_is_ongoing" to item.isOngoing)
                     .plus(item.packageName + "_" + item.id + "_is_clearable" to item.isClearable)
