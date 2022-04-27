@@ -283,12 +283,17 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
     /**
      * Returns the values of a bundle as a key/value map for use as a sensor's attributes.
      * Arrays are converted to lists to make them human readable.
+     * Bundles inside the given bundle will also be mapped as a key/value map.
      */
     private fun mappedBundle(bundle: Bundle, keySuffix: String = ""): Map<String, Any?> {
         return bundle.keySet().associate { key ->
             val keyValue = when (val value = bundle.get(key)) {
-                is Array<*> -> value.toList()
+                is Array<*> -> {
+                    if (value.all { it is Bundle }) value.map { mappedBundle(it as Bundle) }
+                    else value.toList()
+                }
                 is BooleanArray -> value.toList()
+                is Bundle -> mappedBundle(value)
                 is ByteArray -> value.toList()
                 is CharArray -> value.toList()
                 is DoubleArray -> value.toList()
