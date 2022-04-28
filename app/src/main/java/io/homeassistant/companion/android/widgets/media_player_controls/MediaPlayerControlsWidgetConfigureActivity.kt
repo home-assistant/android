@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.widgets.media_player_controls
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -14,43 +13,41 @@ import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.Toast
 import androidx.core.content.getSystemService
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetMediaControlsConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
+import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
-class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
+class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
     companion object {
         private const val TAG: String = "MediaWidgetConfigAct"
         private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
     }
 
-    private var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
     private var requestLauncherSetup = false
 
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
 
-    private lateinit var binding: WidgetMediaControlsConfigureBinding
+    private lateinit var mediaPlayerControlsWidgetDao: MediaPlayerControlsWidgetDao
+    override val dao get() = mediaPlayerControlsWidgetDao
 
-    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
+    private lateinit var binding: WidgetMediaControlsConfigureBinding
 
     private var entities = LinkedHashMap<String, Entity<Any>>()
     private var selectedEntity: Entity<Any>? = null
@@ -102,7 +99,7 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
             return
         }
 
-        val mediaPlayerControlsWidgetDao = AppDatabase.getInstance(applicationContext).mediaPlayCtrlWidgetDao()
+        mediaPlayerControlsWidgetDao = AppDatabase.getInstance(applicationContext).mediaPlayCtrlWidgetDao()
         val mediaPlayerWidget = mediaPlayerControlsWidgetDao.get(appWidgetId)
 
         val backgroundTypeValues = mutableListOf(
@@ -153,7 +150,7 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
         binding.widgetTextConfigEntityId.onFocusChangeListener = dropDownOnFocus
         binding.widgetTextConfigEntityId.onItemClickListener = entityDropDownOnItemClick
 
-        mainScope.launch {
+        lifecycleScope.launch {
             try {
                 // Fetch entities
                 val fetchedEntities = integrationUseCase.getEntities()
@@ -244,15 +241,6 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
         }
     }
 
-    private fun showAddWidgetError() {
-        Toast.makeText(applicationContext, commonR.string.widget_creation_error, Toast.LENGTH_LONG).show()
-    }
-
-    override fun onDestroy() {
-        mainScope.cancel()
-        super.onDestroy()
-    }
-
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         if (intent != null && intent.extras != null && intent.hasExtra(PIN_WIDGET_CALLBACK)) {
@@ -261,36 +249,5 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
             )
             onAddWidget()
         }
-    }
-
-    private var onDeleteWidget = View.OnClickListener {
-        val context = this@MediaPlayerControlsWidgetConfigureActivity
-        deleteConfirmation(context)
-    }
-
-    private fun deleteConfirmation(context: Context) {
-        val mediaPlayerControlsWidgetDao = AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao()
-
-        val builder: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(context)
-
-        builder.setTitle(commonR.string.confirm_delete_this_widget_title)
-        builder.setMessage(commonR.string.confirm_delete_this_widget_message)
-
-        builder.setPositiveButton(
-            commonR.string.confirm_positive
-        ) { dialog, _ ->
-            mediaPlayerControlsWidgetDao.delete(appWidgetId)
-            dialog.dismiss()
-            finish()
-        }
-
-        builder.setNegativeButton(
-            commonR.string.confirm_negative
-        ) { dialog, _ -> // Do nothing
-            dialog.dismiss()
-        }
-
-        val alert: android.app.AlertDialog? = builder.create()
-        alert?.show()
     }
 }
