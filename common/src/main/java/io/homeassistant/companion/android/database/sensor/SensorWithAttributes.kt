@@ -2,6 +2,9 @@ package io.homeassistant.companion.android.database.sensor
 
 import androidx.room.Embedded
 import androidx.room.Relation
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
 
 data class SensorWithAttributes(
@@ -14,17 +17,20 @@ data class SensorWithAttributes(
     val attributes: List<Attribute>
 ) {
     fun toSensorRegistration(): SensorRegistration<Any> {
+        var objectMapper: ObjectMapper? = null
         val attributes = attributes.map {
             val attributeValue = when (it.valueType) {
                 "listboolean", "listfloat", "listlong", "listint", "liststring" -> {
-                    val list = it.value.removeSurrounding("[", "]").split(", ")
-                    when (it.valueType) {
-                        "listboolean" -> list.map { item -> item.toBoolean() }
-                        "listfloat" -> list.map { item -> item.toFloat() }
-                        "listlong" -> list.map { item -> item.toLong() }
-                        "listint" -> list.map { item -> item.toInt() }
-                        else -> list
-                    }
+                    if (objectMapper == null) objectMapper = jacksonObjectMapper()
+                    objectMapper?.let { mapper ->
+                        when (it.valueType) {
+                            "listboolean" -> mapper.readValue<List<Boolean>>(it.value)
+                            "listfloat" -> mapper.readValue<List<Number>>(it.value)
+                            "listlong" -> mapper.readValue<List<Long>>(it.value)
+                            "listint" -> mapper.readValue<List<Int>>(it.value)
+                            else -> mapper.readValue<List<String>>(it.value)
+                        }
+                    } ?: it.value // Fallback: provide JSON string, but shouldn't happen
                 }
                 "boolean" -> it.value.toBoolean()
                 "float" -> it.value.toFloat()

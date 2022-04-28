@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.os.Process.myPid
 import android.os.Process.myUid
 import androidx.core.content.getSystemService
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.SensorSetting
@@ -189,7 +190,6 @@ interface SensorManager {
                     is Number -> "float"
                     is List<*> -> {
                         when {
-                            (item.value as List<*>).any { it.toString().contains(", ") } -> "string"
                             (item.value as List<*>).all { it is Boolean } -> "listboolean"
                             (item.value as List<*>).all { it is Int } -> "listint"
                             (item.value as List<*>).all { it is Long } -> "listlong"
@@ -199,11 +199,20 @@ interface SensorManager {
                     }
                     else -> "string" // Always default to String for attributes
                 }
+                val value =
+                    when {
+                        valueType == "liststring" ->
+                            jacksonObjectMapper().writeValueAsString((item.value as List<*>).map { it.toString() })
+                        valueType.startsWith("list") ->
+                            jacksonObjectMapper().writeValueAsString(item.value)
+                        else ->
+                            item.value.toString()
+                    }
 
                 Attribute(
                     basicSensor.id,
                     item.key,
-                    item.value.toString(),
+                    value,
                     valueType
                 )
             }
