@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.bluetooth.ble
 
 import android.content.Context
 import io.homeassistant.companion.android.sensors.BluetoothSensorManager
+import io.homeassistant.companion.android.sensors.SensorWorker
 import org.altbeacon.beacon.Beacon
 import kotlin.math.round
 
@@ -15,7 +16,6 @@ data class IBeacon(
 )
 
 class IBeaconMonitor {
-    var monitoring: Boolean = false
     lateinit var sensorManager: BluetoothSensorManager
     var beacons: List<IBeacon> = listOf()
 
@@ -72,5 +72,6 @@ class IBeaconMonitor {
     private fun sendUpdate(context: Context, tmp: List<IBeacon>) {
         beacons = tmp
         sensorManager!!.updateBeaconMonitoringSensor(context)
+        SensorWorker.start(context)
     }
 }

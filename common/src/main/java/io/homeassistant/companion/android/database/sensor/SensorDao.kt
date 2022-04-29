@@ -72,6 +72,9 @@ interface SensorDao {
     @Query("UPDATE sensors SET last_sent_state = :state WHERE id = :sensorId")
     suspend fun updateLastSendState(sensorId: String, state: String)
 
+    @Query("UPDATE sensors SET last_sent_state = :state WHERE id = :sensorId")
+    fun updateLastSendStateSync(sensorId: String, state: String)
+
     @Query("SELECT COUNT(id) FROM sensors WHERE enabled = 1")
     suspend fun getEnabledCount(): Int?
 

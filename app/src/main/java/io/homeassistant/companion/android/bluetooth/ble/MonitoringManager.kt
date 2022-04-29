@@ -1,8 +1,6 @@
 package io.homeassistant.companion.android.bluetooth.ble
 
-import android.bluetooth.BluetoothManager
 import android.content.Context
-import androidx.core.content.getSystemService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -20,13 +18,13 @@ object MonitoringManager {
         return Region("all-beacons", null, null, null)
     }
 
-    private fun shouldStartMonitoring(): Boolean {
-        return !this::beaconManager.isInitialized || !beaconManager.isAnyConsumerBound
+    fun isMonitoring(): Boolean {
+        return this::beaconManager.isInitialized && beaconManager.isAnyConsumerBound
     }
 
     @Synchronized
     fun startMonitoring(context: Context, haMonitor: IBeaconMonitor) {
-        if (!shouldStartMonitoring()) {
+        if (isMonitoring()) {
             return
         }
         if (!this::beaconManager.isInitialized) {
@@ -56,20 +54,15 @@ object MonitoringManager {
                 }
             }
         }
-        val bluetoothAdapter = context.getSystemService<BluetoothManager>()?.adapter
-        val bluetoothOn = bluetoothAdapter?.isEnabled == true
-        if (bluetoothOn) {
-            beaconManager.startRangingBeacons(region)
-            haMonitor.monitoring = true
-        } else {
-            stopMonitoring(haMonitor)
-        }
+
+        beaconManager.startRangingBeacons(region)
+        haMonitor.sensorManager.updateBeaconMonitoringSensor(context)
     }
 
-    fun stopMonitoring(haMonitor: IBeaconMonitor) {
-        if (this::beaconManager.isInitialized && haMonitor.monitoring) {
+    fun stopMonitoring(context: Context, haMonitor: IBeaconMonitor) {
+        if (isMonitoring()) {
             beaconManager.stopRangingBeacons(region)
+            haMonitor.sensorManager.updateBeaconMonitoringSensor(context)
         }
-        haMonitor.monitoring = false
     }
 }
