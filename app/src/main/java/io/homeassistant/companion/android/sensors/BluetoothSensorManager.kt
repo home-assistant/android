@@ -143,14 +143,19 @@ class BluetoothSensorManager : SensorManager {
                     Manifest.permission.BLUETOOTH_CONNECT
                 )
             }
-            (sensorId == beaconMonitor.id) -> {
+            (sensorId == beaconMonitor.id && Build.VERSION.SDK_INT <= Build.VERSION_CODES.R) -> {
                 arrayOf(
                     Manifest.permission.BLUETOOTH,
                     Manifest.permission.BLUETOOTH_ADMIN,
-                    Manifest.permission.BLUETOOTH_SCAN,
                     Manifest.permission.ACCESS_FINE_LOCATION,
                     Manifest.permission.ACCESS_BACKGROUND_LOCATION,
                     Manifest.permission.ACCESS_COARSE_LOCATION,
+                )
+            }
+            (sensorId == beaconMonitor.id && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) -> {
+                arrayOf(
+                    Manifest.permission.BLUETOOTH_SCAN,
+                    Manifest.permission.ACCESS_FINE_LOCATION,
                 )
             }
             (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) -> {
@@ -329,7 +334,7 @@ class BluetoothSensorManager : SensorManager {
         var state = if (!isBtOn(context)) "Bluetooth is turned off" else if (MonitoringManager.isMonitoring()) "Monitoring" else "Stopped"
 
         var attr: Map<String, Any?> = mapOf()
-        if (isBtOn(context) && MonitoringManager.isMonitoring()){
+        if (isBtOn(context) && MonitoringManager.isMonitoring()) {
             for (beacon: IBeacon in beaconMonitoringDevice.beacons) {
                 attr += Pair(beacon.uuid, beacon.distance)
             }
