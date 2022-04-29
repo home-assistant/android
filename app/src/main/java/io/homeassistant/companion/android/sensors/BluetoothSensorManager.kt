@@ -147,6 +147,7 @@ class BluetoothSensorManager : SensorManager {
                 arrayOf(
                     Manifest.permission.BLUETOOTH,
                     Manifest.permission.BLUETOOTH_ADMIN,
+                    Manifest.permission.BLUETOOTH_SCAN,
                     Manifest.permission.ACCESS_FINE_LOCATION,
                     Manifest.permission.ACCESS_BACKGROUND_LOCATION,
                     Manifest.permission.ACCESS_COARSE_LOCATION,
@@ -326,10 +327,12 @@ class BluetoothSensorManager : SensorManager {
         val icon = if (MonitoringManager.isMonitoring()) "mdi:bluetooth" else "mdi:bluetooth-off"
 
         var state = if (!isBtOn(context)) "Bluetooth is turned off" else if (MonitoringManager.isMonitoring()) "Monitoring" else "Stopped"
-        var attr: Map<String, Any?> = mapOf()
 
-        for (beacon: IBeacon in beaconMonitoringDevice.beacons) {
-            attr += Pair(beacon.uuid, beacon.distance)
+        var attr: Map<String, Any?> = mapOf()
+        if (isBtOn(context) && MonitoringManager.isMonitoring()){
+            for (beacon: IBeacon in beaconMonitoringDevice.beacons) {
+                attr += Pair(beacon.uuid, beacon.distance)
+            }
         }
 
         // reset the last_sent_state of the sensor so it won't skip the update of attributes
