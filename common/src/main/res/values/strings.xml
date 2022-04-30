@@ -732,6 +732,9 @@
     <string name="what_is_this_crash">Unable to load Home Assistant home page, do you have a browser installed?</string>
     <string name="what_is_this">What is this?</string>
     <string name="widget_attribute_separator_label">Separator between attributes:</string>
+    <string name="widget_background_type_label">Widget background:</string>
+    <string name="widget_background_type_daynight">Light/dark theme</string>
+    <string name="widget_background_type_transparent">Transparent</string>
     <string name="widget_button_image_description">Service Button</string>
     <string name="widget_camera_description">Camera Widget</string>
     <string name="widget_config_service_error">A custom component is preventing service data from loading.</string>
@@ -763,6 +766,10 @@
     <string name="widget_text_hint_service_service">Service</string>
     <string name="widget_text_size_default">30</string>
     <string name="widget_text_size_label">Widget text size:</string>
+    <string name="widget_text_color_black">Black</string>
+    <string name="widget_text_color_label">Widget text color:</string>
+    <string name="widget_text_color_label_icon">Widget text/icon color:</string>
+    <string name="widget_text_color_white">White</string>
     <string name="widgets">Widgets</string>
     <string name="zone_event_failure">Unable to send zone event to Home Assistant</string>
     <string name="failed_wear_config_request">Failed to send config request to wear device</string>

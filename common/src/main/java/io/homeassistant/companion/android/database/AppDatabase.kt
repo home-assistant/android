@@ -50,6 +50,7 @@ import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
+import io.homeassistant.companion.android.database.widget.WidgetBackgroundTypeConverter
 import kotlinx.coroutines.runBlocking
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -69,16 +70,18 @@ import io.homeassistant.companion.android.common.R as commonR
         Favorites::class,
         Setting::class
     ],
-    version = 25,
+    version = 26,
     autoMigrations = [
-        AutoMigration(from = 24, to = 25)
+        AutoMigration(from = 24, to = 25),
+        AutoMigration(from = 25, to = 26)
     ]
 )
 @TypeConverters(
     LocalNotificationSettingConverter::class,
     LocalSensorSettingConverter::class,
     EntriesTypeConverter::class,
-    SensorSettingTypeConverter::class
+    SensorSettingTypeConverter::class,
+    WidgetBackgroundTypeConverter::class
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun authenticationDao(): AuthenticationDao

@@ -17,9 +17,11 @@ import android.widget.AutoCompleteTextView
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
+import androidx.core.graphics.toColorInt
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -31,13 +33,14 @@ import com.maltaisn.icondialog.pack.IconPackLoader
 import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.Service
 import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetButtonConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
+import io.homeassistant.companion.android.util.getHexForColor
 import io.homeassistant.companion.android.widgets.common.ServiceFieldBinder
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetDynamicFieldAdapter
@@ -200,6 +203,15 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
             serviceText = "${buttonWidget.domain}.${buttonWidget.service}"
             binding.widgetTextConfigService.setText(serviceText)
             binding.label.setText(buttonWidget.label)
+
+            binding.backgroundTypeDaynight.isChecked = buttonWidget.backgroundType == WidgetBackgroundType.DAYNIGHT
+            binding.backgroundTypeTransparent.isChecked = buttonWidget.backgroundType == WidgetBackgroundType.TRANSPARENT
+            binding.textColor.visibility = if (buttonWidget.backgroundType == WidgetBackgroundType.TRANSPARENT) View.VISIBLE else View.GONE
+            binding.textColorWhite.isChecked =
+                buttonWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, android.R.color.white) } ?: true
+            binding.textColorBlack.isChecked =
+                buttonWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, commonR.color.colorWidgetButtonLabelBlack) } ?: false
+
             binding.addButton.setText(commonR.string.update_widget)
             binding.deleteButton.visibility = VISIBLE
             binding.deleteButton.setOnClickListener(onDeleteWidget)
@@ -282,6 +294,10 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
         }
 
         binding.widgetTextConfigService.addTextChangedListener(serviceTextWatcher)
+
+        binding.backgroundTypeTransparent.setOnCheckedChangeListener { _, isChecked ->
+            binding.textColor.visibility = if (isChecked) View.VISIBLE else View.GONE
+        }
 
         binding.addFieldButton.setOnClickListener(onAddFieldListener)
         binding.addButton.setOnClickListener {
@@ -416,6 +432,18 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
             intent.putExtra(
                 ButtonWidget.EXTRA_SERVICE_DATA,
                 jacksonObjectMapper().writeValueAsString(serviceDataMap)
+            )
+
+            intent.putExtra(
+                ButtonWidget.EXTRA_BACKGROUND_TYPE,
+                if (binding.backgroundTypeDaynight.isChecked) WidgetBackgroundType.DAYNIGHT
+                else WidgetBackgroundType.TRANSPARENT
+            )
+
+            intent.putExtra(
+                ButtonWidget.EXTRA_TEXT_COLOR,
+                if (binding.backgroundTypeDaynight.isChecked) null
+                else getHexForColor(if (binding.textColorWhite.isChecked) android.R.color.white else commonR.color.colorWidgetButtonLabelBlack)
             )
 
             context.sendBroadcast(intent)

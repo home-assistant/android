@@ -15,15 +15,19 @@ import android.widget.AutoCompleteTextView
 import android.widget.LinearLayout.VISIBLE
 import android.widget.MultiAutoCompleteTextView.CommaTokenizer
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
+import androidx.core.graphics.toColorInt
 import androidx.core.view.isVisible
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetStaticConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
+import io.homeassistant.companion.android.util.getHexForColor
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import kotlinx.coroutines.CoroutineScope
@@ -138,6 +142,15 @@ class EntityWidgetConfigureActivity : BaseActivity() {
                 selectedEntity = entity as Entity<Any>?
                 setupAttributes()
             }
+
+            binding.backgroundTypeDaynight.isChecked = staticWidget.backgroundType == WidgetBackgroundType.DAYNIGHT
+            binding.backgroundTypeTransparent.isChecked = staticWidget.backgroundType == WidgetBackgroundType.TRANSPARENT
+            binding.textColor.visibility = if (staticWidget.backgroundType == WidgetBackgroundType.TRANSPARENT) View.VISIBLE else View.GONE
+            binding.textColorWhite.isChecked =
+                staticWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, android.R.color.white) } ?: true
+            binding.textColorBlack.isChecked =
+                staticWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, commonR.color.colorWidgetButtonLabelBlack) } ?: false
+
             binding.addButton.setText(commonR.string.update_widget)
             binding.deleteButton.visibility = VISIBLE
             binding.deleteButton.setOnClickListener(onDeleteWidget)
@@ -156,6 +169,10 @@ class EntityWidgetConfigureActivity : BaseActivity() {
         binding.appendAttributeValueCheckbox.setOnCheckedChangeListener { _, isChecked ->
             binding.attributeValueLinearLayout.isVisible = isChecked
             appendAttributes = isChecked
+        }
+
+        binding.backgroundTypeTransparent.setOnCheckedChangeListener { _, isChecked ->
+            binding.textColor.visibility = if (isChecked) View.VISIBLE else View.GONE
         }
 
         mainScope.launch {
@@ -261,6 +278,18 @@ class EntityWidgetConfigureActivity : BaseActivity() {
                     binding.attributeSeparator.text.toString()
                 )
             }
+
+            intent.putExtra(
+                EntityWidget.EXTRA_BACKGROUND_TYPE,
+                if (binding.backgroundTypeDaynight.isChecked) WidgetBackgroundType.DAYNIGHT
+                else WidgetBackgroundType.TRANSPARENT
+            )
+
+            intent.putExtra(
+                EntityWidget.EXTRA_TEXT_COLOR,
+                if (binding.backgroundTypeDaynight.isChecked) null
+                else getHexForColor(if (binding.textColorWhite.isChecked) android.R.color.white else commonR.color.colorWidgetButtonLabelBlack)
+            )
 
             context.sendBroadcast(intent)
 

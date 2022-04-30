@@ -184,7 +184,7 @@ open class HomeAssistantApplication : Application() {
                 IntentFilter(Intent.ACTION_TIME_TICK)
             )
 
-        // Update widgets when the screen turns on, updates are skipped if widgets were not added
+        // Update widgets when the screen turns on or configuration changes, updates are skipped if widgets were not added
         val buttonWidget = ButtonWidget()
         val entityWidget = EntityWidget()
         val mediaPlayerWidget = MediaPlayerControlsWidget()
@@ -193,6 +193,7 @@ open class HomeAssistantApplication : Application() {
         val screenIntentFilter = IntentFilter()
         screenIntentFilter.addAction(Intent.ACTION_SCREEN_ON)
         screenIntentFilter.addAction(Intent.ACTION_SCREEN_OFF)
+        screenIntentFilter.addAction(Intent.ACTION_CONFIGURATION_CHANGED)
 
         registerReceiver(buttonWidget, screenIntentFilter)
         registerReceiver(entityWidget, screenIntentFilter)

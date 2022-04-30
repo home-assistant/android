@@ -11,14 +11,18 @@ import android.text.Html.fromHtml
 import android.view.View
 import android.view.View.VISIBLE
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
+import androidx.core.graphics.toColorInt
 import androidx.core.widget.doAfterTextChanged
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetTemplateConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
+import io.homeassistant.companion.android.util.getHexForColor
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -85,6 +89,15 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
                 binding.renderedTemplate.text = getString(commonR.string.empty_template)
                 binding.addButton.isEnabled = false
             }
+
+            binding.backgroundTypeDaynight.isChecked = templateWidget.backgroundType == WidgetBackgroundType.DAYNIGHT
+            binding.backgroundTypeTransparent.isChecked = templateWidget.backgroundType == WidgetBackgroundType.TRANSPARENT
+            binding.textColor.visibility = if (templateWidget.backgroundType == WidgetBackgroundType.TRANSPARENT) View.VISIBLE else View.GONE
+            binding.textColorWhite.isChecked =
+                templateWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, android.R.color.white) } ?: true
+            binding.textColorBlack.isChecked =
+                templateWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, commonR.color.colorWidgetButtonLabelBlack) } ?: false
+
             binding.deleteButton.visibility = VISIBLE
             binding.deleteButton.setOnClickListener(onDeleteWidget)
         }
@@ -99,6 +112,10 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
                 binding.renderedTemplate.text = getString(commonR.string.empty_template)
                 binding.addButton.isEnabled = false
             }
+        }
+
+        binding.backgroundTypeTransparent.setOnCheckedChangeListener { _, isChecked ->
+            binding.textColor.visibility = if (isChecked) View.VISIBLE else View.GONE
         }
 
         binding.addButton.setOnClickListener {
@@ -132,6 +149,16 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
             component = ComponentName(applicationContext, TemplateWidget::class.java)
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             putExtra(TemplateWidget.EXTRA_TEMPLATE, binding.templateText.text.toString())
+            putExtra(
+                TemplateWidget.EXTRA_BACKGROUND_TYPE,
+                if (binding.backgroundTypeDaynight.isChecked) WidgetBackgroundType.DAYNIGHT
+                else WidgetBackgroundType.TRANSPARENT
+            )
+            putExtra(
+                TemplateWidget.EXTRA_TEXT_COLOR,
+                if (binding.backgroundTypeDaynight.isChecked) null
+                else getHexForColor(if (binding.textColorWhite.isChecked) android.R.color.white else commonR.color.colorWidgetButtonLabelBlack)
+            )
         }
         applicationContext.sendBroadcast(createIntent)
 

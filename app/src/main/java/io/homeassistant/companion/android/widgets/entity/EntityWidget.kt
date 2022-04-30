@@ -4,18 +4,23 @@ import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.toColorInt
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
+import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import kotlinx.coroutines.launch
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class EntityWidget : BaseWidgetProvider() {
@@ -29,6 +34,8 @@ class EntityWidget : BaseWidgetProvider() {
         internal const val EXTRA_TEXT_SIZE = "EXTRA_TEXT_SIZE"
         internal const val EXTRA_STATE_SEPARATOR = "EXTRA_STATE_SEPARATOR"
         internal const val EXTRA_ATTRIBUTE_SEPARATOR = "EXTRA_ATTRIBUTE_SEPARATOR"
+        internal const val EXTRA_BACKGROUND_TYPE = "EXTRA_BACKGROUND_TYPE"
+        internal const val EXTRA_TEXT_COLOR = "EXTRA_TEXT_COLOR"
 
         private data class ResolvedText(val text: CharSequence?, val exception: Boolean = false)
     }
@@ -48,6 +55,22 @@ class EntityWidget : BaseWidgetProvider() {
                 val textSize: Float = widget.textSize
                 val stateSeparator: String = widget.stateSeparator
                 val attributeSeparator: String = widget.attributeSeparator
+
+                // Theming
+                var textColor = ContextCompat.getColor(context, commonR.color.colorWidgetButtonLabel)
+                when (widget.backgroundType) {
+                    WidgetBackgroundType.DAYNIGHT -> {
+                        setInt(R.id.widgetLayout, "setBackgroundResource", R.drawable.widget_button_background)
+                    }
+                    WidgetBackgroundType.TRANSPARENT -> {
+                        setInt(R.id.widgetLayout, "setBackgroundColor", Color.TRANSPARENT)
+                        widget.textColor?.let { textColor = it.toColorInt() }
+                    }
+                }
+                setTextColor(R.id.widgetText, textColor)
+                setTextColor(R.id.widgetLabel, textColor)
+
+                // Content
                 val resolvedText = resolveTextToShow(
                     context,
                     entityId,
@@ -149,6 +172,8 @@ class EntityWidget : BaseWidgetProvider() {
         val textSizeSelection: String? = extras.getString(EXTRA_TEXT_SIZE)
         val stateSeparatorSelection: String? = extras.getString(EXTRA_STATE_SEPARATOR)
         val attributeSeparatorSelection: String? = extras.getString(EXTRA_ATTRIBUTE_SEPARATOR)
+        val backgroundTypeSelection: WidgetBackgroundType = extras.getSerializable(EXTRA_BACKGROUND_TYPE) as WidgetBackgroundType
+        val textColorSelection: String? = extras.getString(EXTRA_TEXT_COLOR)
 
         if (entitySelection == null) {
             Log.e(TAG, "Did not receive complete service call data")
@@ -172,7 +197,9 @@ class EntityWidget : BaseWidgetProvider() {
                     textSizeSelection?.toFloatOrNull() ?: 30F,
                     stateSeparatorSelection ?: "",
                     attributeSeparatorSelection ?: "",
-                    staticWidgetDao.get(appWidgetId)?.lastUpdate ?: ""
+                    staticWidgetDao.get(appWidgetId)?.lastUpdate ?: "",
+                    backgroundTypeSelection,
+                    textColorSelection
                 )
             )
 

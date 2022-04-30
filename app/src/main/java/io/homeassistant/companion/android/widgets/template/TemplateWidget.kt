@@ -4,17 +4,22 @@ import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.text.Html.fromHtml
 import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.toColorInt
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
+import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
+import io.homeassistant.companion.android.widgets.entity.EntityWidget
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -22,6 +27,8 @@ class TemplateWidget : BaseWidgetProvider() {
     companion object {
         private const val TAG = "TemplateWidget"
         internal const val EXTRA_TEMPLATE = "extra_template"
+        internal const val EXTRA_BACKGROUND_TYPE = "EXTRA_BACKGROUND_TYPE"
+        internal const val EXTRA_TEXT_COLOR = "EXTRA_TEXT_COLOR"
     }
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
@@ -52,7 +59,6 @@ class TemplateWidget : BaseWidgetProvider() {
         val widget = templateWidgetDao.get(appWidgetId)
 
         return RemoteViews(context.packageName, R.layout.widget_template).apply {
-
             setOnClickPendingIntent(
                 R.id.widgetLayout,
                 PendingIntent.getBroadcast(
@@ -63,6 +69,23 @@ class TemplateWidget : BaseWidgetProvider() {
                 )
             )
             if (widget != null) {
+                // Theming
+                var textColor: Int = ContextCompat.getColor(context, io.homeassistant.companion.android.common.R.color.colorWidgetButtonLabel)
+                when (widget.backgroundType) {
+                    WidgetBackgroundType.DAYNIGHT -> {
+                        setInt(R.id.widgetLayout, "setBackgroundResource", R.drawable.widget_button_background)
+                    }
+                    WidgetBackgroundType.TRANSPARENT -> {
+                        setInt(R.id.widgetLayout, "setBackgroundColor", Color.TRANSPARENT)
+                        widget.textColor?.let { textColor = it.toColorInt() }
+                    }
+                }
+                setTextColor(
+                    R.id.widgetTemplateText,
+                    textColor
+                )
+
+                // Content
                 var renderedTemplate = templateWidgetDao.get(appWidgetId)?.lastUpdate ?: "Loading"
                 try {
                     renderedTemplate = integrationUseCase.renderTemplate(widget.template, mapOf())
@@ -84,6 +107,8 @@ class TemplateWidget : BaseWidgetProvider() {
         if (extras == null) return
 
         val template: String? = extras.getString(EXTRA_TEMPLATE)
+        val backgroundTypeSelection: WidgetBackgroundType = extras.getSerializable(EntityWidget.EXTRA_BACKGROUND_TYPE) as WidgetBackgroundType
+        val textColorSelection: String? = extras.getString(EntityWidget.EXTRA_TEXT_COLOR)
 
         if (template == null) {
             Log.e(TAG, "Did not receive complete widget data")
@@ -96,7 +121,9 @@ class TemplateWidget : BaseWidgetProvider() {
                 TemplateWidgetEntity(
                     appWidgetId,
                     template,
-                    templateWidgetDao.get(appWidgetId)?.lastUpdate ?: "Loading"
+                    templateWidgetDao.get(appWidgetId)?.lastUpdate ?: "Loading",
+                    backgroundTypeSelection,
+                    textColorSelection
                 )
             )
             onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
