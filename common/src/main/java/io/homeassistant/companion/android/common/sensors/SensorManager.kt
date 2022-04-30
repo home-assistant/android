@@ -10,6 +10,7 @@ import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.SensorSetting
+import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import java.util.Locale
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -44,10 +45,16 @@ interface SensorManager {
         }
     }
 
+    /**
+     * URL to a documentation page that describes this sensor
+     */
     fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors"
     }
 
+    /**
+     * Get list of Android permissions that are required to use this sensor
+     */
     fun requiredPermissions(sensorId: String): Array<String>
 
     fun checkPermission(context: Context, sensorId: String): Boolean {
@@ -75,19 +82,27 @@ interface SensorManager {
         return sensor.enabled
     }
 
-    // Request to update a sensor, including any broadcast intent which may have triggered the request
-    // The intent will be null if the update is being done on a timer, rather than as a result
-    // of a broadcast being received.
+    /**
+     * Request to update a sensor, including any broadcast intent which may have triggered the request
+     * The intent will be null if the update is being done on a timer, rather than as a result
+     * of a broadcast being received.
+     */
     fun requestSensorUpdate(context: Context, intent: Intent?) {
         // Few sensors care about the intent, so allow them to just implement the interface that
         // does not get passed that parameter.
         requestSensorUpdate(context)
     }
 
+    /**
+     * Request to update a sensor, without a corresponding broadcast intent.
+     */
     fun requestSensorUpdate(context: Context)
 
     fun getAvailableSensors(context: Context): List<BasicSensor>
 
+    /**
+     * Check if the user's device supports this type of sensor
+     */
     fun hasSensor(context: Context): Boolean {
         return true
     }
@@ -96,7 +111,7 @@ interface SensorManager {
         context: Context,
         sensor: BasicSensor,
         settingName: String,
-        settingType: String,
+        settingType: SensorSettingType,
         default: String,
         enabled: Boolean = true
     ) {
@@ -121,25 +136,38 @@ interface SensorManager {
         }
     }
 
-    fun getSetting(
+    fun getToggleSetting(
         context: Context,
         sensor: BasicSensor,
         settingName: String,
-        settingType: String,
-        default: String,
+        default: Boolean,
         enabled: Boolean = true
-    ): String {
-        return getSetting(context, sensor, settingName, settingType, arrayListOf(), default, enabled)
+    ): Boolean {
+        return getSetting(context, sensor, settingName, SensorSettingType.TOGGLE, default.toString(), enabled).toBoolean()
     }
 
+    fun getNumberSetting(
+        context: Context,
+        sensor: BasicSensor,
+        settingName: String,
+        default: Int,
+        enabled: Boolean = true
+    ): Int {
+        return getSetting(context, sensor, settingName, SensorSettingType.NUMBER, default.toString(), enabled).toIntOrNull() ?: default
+    }
+
+    /**
+     * Get the stored setting value for...
+     * @param default Value to use if the setting does not exist
+     */
     fun getSetting(
         context: Context,
         sensor: BasicSensor,
         settingName: String,
-        settingType: String,
-        entries: List<String> = arrayListOf(),
+        settingType: SensorSettingType,
         default: String,
-        enabled: Boolean = true
+        enabled: Boolean = true,
+        entries: List<String> = arrayListOf(),
     ): String {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val setting = sensorDao
@@ -147,7 +175,7 @@ interface SensorManager {
             .firstOrNull { it.name == settingName }
             ?.value
         if (setting == null)
-            sensorDao.add(SensorSetting(sensor.id, settingName, default, settingType, entries, enabled))
+            sensorDao.add(SensorSetting(sensor.id, settingName, default, settingType, enabled, entries = entries))
 
         return setting ?: default
     }
