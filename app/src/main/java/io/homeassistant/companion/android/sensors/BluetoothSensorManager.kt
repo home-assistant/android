@@ -130,12 +130,12 @@ class BluetoothSensorManager : SensorManager {
         var totalConnectedDevices = 0
         var connectedPairedDevices: List<String> = ArrayList()
         var connectedNotPairedDevices: List<String> = ArrayList()
-        var bondedString = ""
+        var pairedDevices: List<String> = ArrayList()
 
         if (checkPermission(context, bluetoothConnection.id)) {
 
             val bluetoothDevices = BluetoothUtils.getBluetoothDevices(context)
-            bondedString = bluetoothDevices.filter { b -> b.paired }.map { it.address }.toString()
+            pairedDevices = bluetoothDevices.filter { b -> b.paired }.map { it.address }
             connectedPairedDevices = bluetoothDevices.filter { b -> b.paired && b.connected }.map { it.address }
             connectedNotPairedDevices = bluetoothDevices.filter { b -> !b.paired && b.connected }.map { it.address }
             totalConnectedDevices = bluetoothDevices.filter { b -> b.connected }.count()
@@ -148,7 +148,7 @@ class BluetoothSensorManager : SensorManager {
             mapOf(
                 "connected_paired_devices" to connectedPairedDevices,
                 "connected_not_paired_devices" to connectedNotPairedDevices,
-                "paired_devices" to bondedString
+                "paired_devices" to pairedDevices
             )
         )
     }

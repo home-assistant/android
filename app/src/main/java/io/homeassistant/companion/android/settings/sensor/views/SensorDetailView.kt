@@ -55,6 +55,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
@@ -78,6 +80,7 @@ fun SensorDetailView(
 ) {
     val context = LocalContext.current
     var sensorUpdateTypeInfo by remember { mutableStateOf(false) }
+    val jsonMapper by lazy { jacksonObjectMapper() }
 
     val sensorEnabled = viewModel.sensor?.sensor?.enabled
         ?: (
@@ -145,9 +148,17 @@ fun SensorDetailView(
                     }
                     sensor.attributes.forEach { attribute ->
                         item {
+                            val summary = when (attribute.valueType) {
+                                "listboolean" -> jsonMapper.readValue<List<Boolean>>(attribute.value).toString()
+                                "listfloat" -> jsonMapper.readValue<List<Number>>(attribute.value).toString()
+                                "listlong" -> jsonMapper.readValue<List<Long>>(attribute.value).toString()
+                                "listint" -> jsonMapper.readValue<List<Int>>(attribute.value).toString()
+                                "liststring" -> jsonMapper.readValue<List<String>>(attribute.value).toString()
+                                else -> attribute.value
+                            }
                             SensorDetailRow(
                                 title = attribute.name,
-                                summary = attribute.value,
+                                summary = summary,
                                 clickable = false,
                                 selectingEnabled = true
                             )
