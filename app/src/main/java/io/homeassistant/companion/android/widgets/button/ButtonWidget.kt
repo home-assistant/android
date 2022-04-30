@@ -19,6 +19,7 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.toColorInt
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.google.android.material.color.DynamicColors
 import com.maltaisn.icondialog.pack.IconPack
 import com.maltaisn.icondialog.pack.IconPackLoader
 import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
@@ -29,6 +30,7 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
+import io.homeassistant.companion.android.util.getAttribute
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -160,21 +162,25 @@ class ButtonWidget : AppWidgetProvider() {
             iconPack = createMaterialDesignIconPack(loader)
             iconPack!!.loadDrawables(loader.drawableLoader)
         }
-        return RemoteViews(context.packageName, R.layout.widget_button).apply {
+        val useDynamicColors = widget?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
+        return RemoteViews(context.packageName, if (useDynamicColors) R.layout.widget_button_wrapper_dynamiccolor else R.layout.widget_button_wrapper_default).apply {
             // Theming
-            var textColor: Int = ContextCompat.getColor(context, commonR.color.colorWidgetButtonLabel)
+            var textColor = context.getAttribute(R.attr.colorWidgetOnBackground, ContextCompat.getColor(context, commonR.color.colorWidgetButtonLabel))
             if (widget?.backgroundType == WidgetBackgroundType.TRANSPARENT) {
                 widget.textColor?.let { textColor = it.toColorInt() }
+                setTextColor(R.id.widgetLabel, textColor)
             }
             setWidgetBackground(this, widget)
-            setTextColor(R.id.widgetLabel, textColor)
 
             // Content
             val iconId = widget?.iconId ?: 988171 // Lightning bolt
 
             val iconDrawable = iconPack?.icons?.get(iconId)?.drawable
             if (iconDrawable != null) {
-                val icon = DrawableCompat.wrap(iconDrawable).apply { setTint(textColor) }
+                val icon = DrawableCompat.wrap(iconDrawable)
+                if (widget?.backgroundType == WidgetBackgroundType.TRANSPARENT) {
+                    setInt(R.id.widgetImageButton, "setColorFilter", textColor)
+                }
                 setImageViewBitmap(R.id.widgetImageButton, icon.toBitmap())
             }
 
@@ -199,7 +205,7 @@ class ButtonWidget : AppWidgetProvider() {
             WidgetBackgroundType.TRANSPARENT -> {
                 views.setInt(R.id.widgetLayout, "setBackgroundColor", Color.TRANSPARENT)
             }
-            else -> { // WidgetBackgroundType.DAYNIGHT and null widget
+            else -> {
                 views.setInt(R.id.widgetLayout, "setBackgroundResource", R.drawable.widget_button_background)
             }
         }

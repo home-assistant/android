@@ -12,12 +12,14 @@ import android.view.View
 import android.widget.RemoteViews
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
+import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
+import io.homeassistant.companion.android.util.getAttribute
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import kotlinx.coroutines.launch
 import io.homeassistant.companion.android.common.R as commonR
@@ -46,8 +48,9 @@ class EntityWidget : BaseWidgetProvider() {
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         }
 
-        val views = RemoteViews(context.packageName, R.layout.widget_static).apply {
-            val widget = AppDatabase.getInstance(context).staticWidgetDao().get(appWidgetId)
+        val widget = AppDatabase.getInstance(context).staticWidgetDao().get(appWidgetId)
+        val useDynamicColors = widget?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
+        val views = RemoteViews(context.packageName, if (useDynamicColors) R.layout.widget_static_wrapper_dynamiccolor else R.layout.widget_static_wrapper_default).apply {
             if (widget != null) {
                 val entityId: String = widget.entityId
                 val attributeIds: String? = widget.attributeIds
@@ -57,18 +60,14 @@ class EntityWidget : BaseWidgetProvider() {
                 val attributeSeparator: String = widget.attributeSeparator
 
                 // Theming
-                var textColor = ContextCompat.getColor(context, commonR.color.colorWidgetButtonLabel)
-                when (widget.backgroundType) {
-                    WidgetBackgroundType.DAYNIGHT -> {
-                        setInt(R.id.widgetLayout, "setBackgroundResource", R.drawable.widget_button_background)
-                    }
-                    WidgetBackgroundType.TRANSPARENT -> {
-                        setInt(R.id.widgetLayout, "setBackgroundColor", Color.TRANSPARENT)
-                        widget.textColor?.let { textColor = it.toColorInt() }
-                    }
+                if (widget.backgroundType == WidgetBackgroundType.TRANSPARENT) {
+                    var textColor = context.getAttribute(R.attr.colorWidgetOnBackground, ContextCompat.getColor(context, commonR.color.colorWidgetButtonLabel))
+                    widget.textColor?.let { textColor = it.toColorInt() }
+
+                    setInt(R.id.widgetLayout, "setBackgroundColor", Color.TRANSPARENT)
+                    setTextColor(R.id.widgetText, textColor)
+                    setTextColor(R.id.widgetLabel, textColor)
                 }
-                setTextColor(R.id.widgetText, textColor)
-                setTextColor(R.id.widgetLabel, textColor)
 
                 // Content
                 val resolvedText = resolveTextToShow(

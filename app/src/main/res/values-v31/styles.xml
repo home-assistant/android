@@ -7,4 +7,10 @@
         <item name="android:statusBarColor">@color/colorLaunchScreenBackground</item>
         <item name="android:navigationBarColor">@color/colorLaunchScreenBackground</item>
     </style>
+
+    <style name="Theme.HomeAssistant.DynamicColorWidget">
+        <item name="colorWidgetPrimary">@color/colorDynamicWidgetPrimary</item>
+        <item name="colorWidgetBackground">@color/colorDynamicWidgetBackground</item>
+        <item name="colorWidgetOnBackground">@color/colorDynamicWidgetOnBackground</item>
+    </style>
 </resources>

@@ -25,6 +25,7 @@ import androidx.core.graphics.toColorInt
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.google.android.material.color.DynamicColors
 import com.maltaisn.icondialog.IconDialog
 import com.maltaisn.icondialog.IconDialogSettings
 import com.maltaisn.icondialog.data.Icon
@@ -44,6 +45,7 @@ import io.homeassistant.companion.android.util.getHexForColor
 import io.homeassistant.companion.android.widgets.common.ServiceFieldBinder
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetDynamicFieldAdapter
+import io.homeassistant.companion.android.widgets.entity.EntityWidget
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -199,11 +201,16 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
         val buttonWidgetDao = AppDatabase.getInstance(applicationContext).buttonWidgetDao()
         val buttonWidget = buttonWidgetDao.get(appWidgetId)
         var serviceText = ""
+
+        binding.backgroundTypeDynamiccolor.isChecked = buttonWidget == null && DynamicColors.isDynamicColorAvailable()
+        binding.backgroundTypeDynamiccolor.visibility = if (DynamicColors.isDynamicColorAvailable()) View.VISIBLE else View.GONE
+
         if (buttonWidget != null) {
             serviceText = "${buttonWidget.domain}.${buttonWidget.service}"
             binding.widgetTextConfigService.setText(serviceText)
             binding.label.setText(buttonWidget.label)
 
+            binding.backgroundTypeDynamiccolor.isChecked = buttonWidget.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
             binding.backgroundTypeDaynight.isChecked = buttonWidget.backgroundType == WidgetBackgroundType.DAYNIGHT
             binding.backgroundTypeTransparent.isChecked = buttonWidget.backgroundType == WidgetBackgroundType.TRANSPARENT
             binding.textColor.visibility = if (buttonWidget.backgroundType == WidgetBackgroundType.TRANSPARENT) View.VISIBLE else View.GONE
@@ -436,14 +443,18 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
 
             intent.putExtra(
                 ButtonWidget.EXTRA_BACKGROUND_TYPE,
-                if (binding.backgroundTypeDaynight.isChecked) WidgetBackgroundType.DAYNIGHT
-                else WidgetBackgroundType.TRANSPARENT
+                when {
+                    binding.backgroundTypeDynamiccolor.isChecked -> WidgetBackgroundType.DYNAMICCOLOR
+                    binding.backgroundTypeTransparent.isChecked -> WidgetBackgroundType.TRANSPARENT
+                    else -> WidgetBackgroundType.DAYNIGHT
+                }
             )
 
             intent.putExtra(
                 ButtonWidget.EXTRA_TEXT_COLOR,
-                if (binding.backgroundTypeDaynight.isChecked) null
-                else getHexForColor(if (binding.textColorWhite.isChecked) android.R.color.white else commonR.color.colorWidgetButtonLabelBlack)
+                if (binding.backgroundTypeTransparent.isChecked)
+                    getHexForColor(if (binding.textColorWhite.isChecked) android.R.color.white else commonR.color.colorWidgetButtonLabelBlack)
+                else null
             )
 
             context.sendBroadcast(intent)

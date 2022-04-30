@@ -12,15 +12,18 @@ import android.view.View
 import android.widget.RemoteViews
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
+import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
+import io.homeassistant.companion.android.util.getAttribute
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.entity.EntityWidget
 import kotlinx.coroutines.launch
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class TemplateWidget : BaseWidgetProvider() {
@@ -58,7 +61,8 @@ class TemplateWidget : BaseWidgetProvider() {
         val templateWidgetDao = AppDatabase.getInstance(context).templateWidgetDao()
         val widget = templateWidgetDao.get(appWidgetId)
 
-        return RemoteViews(context.packageName, R.layout.widget_template).apply {
+        val useDynamicColors = widget?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
+        return RemoteViews(context.packageName, if (useDynamicColors) R.layout.widget_template_wrapper_dynamiccolor else R.layout.widget_template_wrapper_default).apply {
             setOnClickPendingIntent(
                 R.id.widgetLayout,
                 PendingIntent.getBroadcast(
@@ -70,20 +74,13 @@ class TemplateWidget : BaseWidgetProvider() {
             )
             if (widget != null) {
                 // Theming
-                var textColor: Int = ContextCompat.getColor(context, io.homeassistant.companion.android.common.R.color.colorWidgetButtonLabel)
-                when (widget.backgroundType) {
-                    WidgetBackgroundType.DAYNIGHT -> {
-                        setInt(R.id.widgetLayout, "setBackgroundResource", R.drawable.widget_button_background)
-                    }
-                    WidgetBackgroundType.TRANSPARENT -> {
-                        setInt(R.id.widgetLayout, "setBackgroundColor", Color.TRANSPARENT)
-                        widget.textColor?.let { textColor = it.toColorInt() }
-                    }
+                if (widget.backgroundType == WidgetBackgroundType.TRANSPARENT) {
+                    var textColor = context.getAttribute(R.attr.colorWidgetOnBackground, ContextCompat.getColor(context, commonR.color.colorWidgetButtonLabel))
+                    widget.textColor?.let { textColor = it.toColorInt() }
+
+                    setInt(R.id.widgetLayout, "setBackgroundColor", Color.TRANSPARENT)
+                    setTextColor(R.id.widgetTemplateText, textColor)
                 }
-                setTextColor(
-                    R.id.widgetTemplateText,
-                    textColor
-                )
 
                 // Content
                 var renderedTemplate = templateWidgetDao.get(appWidgetId)?.lastUpdate ?: "Loading"

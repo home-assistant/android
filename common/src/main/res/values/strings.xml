@@ -732,8 +732,9 @@
     <string name="what_is_this_crash">Unable to load Home Assistant home page, do you have a browser installed?</string>
     <string name="what_is_this">What is this?</string>
     <string name="widget_attribute_separator_label">Separator between attributes:</string>
-    <string name="widget_background_type_label">Widget background:</string>
+    <string name="widget_background_type_label">Widget theme:</string>
     <string name="widget_background_type_daynight">Light/dark theme</string>
+    <string name="widget_background_type_dynamiccolor">Dynamic color</string>
     <string name="widget_background_type_transparent">Transparent</string>
     <string name="widget_button_image_description">Service Button</string>
     <string name="widget_camera_description">Camera Widget</string>

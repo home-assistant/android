@@ -23,7 +23,7 @@
             android:gravity="center"
             android:textStyle="bold"
             android:textSize="30sp"
-            android:textColor="@color/colorWidgetButtonLabel"
+            android:textColor="?colorWidgetPrimary"
             />
 
         <LinearLayout
@@ -50,7 +50,7 @@
                 android:text="@string/widget_label_placeholder_text"
                 android:textSize="12sp"
                 android:textAlignment="center"
-                android:textColor="@color/colorWidgetButtonLabel"
+                android:textColor="?colorWidgetOnBackground"
                 android:gravity="center"
                 android:minLines="1"
                 android:maxLines="2"

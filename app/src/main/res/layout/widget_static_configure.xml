@@ -192,6 +192,13 @@
                 android:layout_height="wrap_content"
                 android:gravity="end">
                 <RadioButton
+                    android:id="@+id/background_type_dynamiccolor"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/widget_background_type_dynamiccolor"
+                    android:visibility="gone"
+                    tools:visibility="visible"/>
+                <RadioButton
                     android:id="@+id/background_type_daynight"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

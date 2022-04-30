@@ -15,7 +15,7 @@
         android:layout_gravity="center"
         android:gravity="center"
         android:textAlignment="center"
-        android:textColor="@color/colorWidgetButtonLabel"
+        android:textColor="?colorWidgetOnBackground"
         android:textSize="12sp" />
 
     <ImageView

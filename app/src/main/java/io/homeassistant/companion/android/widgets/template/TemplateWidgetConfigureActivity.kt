@@ -15,6 +15,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.core.graphics.toColorInt
 import androidx.core.widget.doAfterTextChanged
+import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -80,6 +81,10 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
 
         val templateWidgetDao = AppDatabase.getInstance(applicationContext).templateWidgetDao()
         val templateWidget = templateWidgetDao.get(appWidgetId)
+
+        binding.backgroundTypeDynamiccolor.isChecked = templateWidget == null && DynamicColors.isDynamicColorAvailable()
+        binding.backgroundTypeDynamiccolor.visibility = if (DynamicColors.isDynamicColorAvailable()) View.VISIBLE else View.GONE
+
         if (templateWidget != null) {
             binding.templateText.setText(templateWidget.template)
             binding.addButton.setText(commonR.string.update_widget)
@@ -90,6 +95,7 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
                 binding.addButton.isEnabled = false
             }
 
+            binding.backgroundTypeDynamiccolor.isChecked = templateWidget.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
             binding.backgroundTypeDaynight.isChecked = templateWidget.backgroundType == WidgetBackgroundType.DAYNIGHT
             binding.backgroundTypeTransparent.isChecked = templateWidget.backgroundType == WidgetBackgroundType.TRANSPARENT
             binding.textColor.visibility = if (templateWidget.backgroundType == WidgetBackgroundType.TRANSPARENT) View.VISIBLE else View.GONE
@@ -151,13 +157,17 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
             putExtra(TemplateWidget.EXTRA_TEMPLATE, binding.templateText.text.toString())
             putExtra(
                 TemplateWidget.EXTRA_BACKGROUND_TYPE,
-                if (binding.backgroundTypeDaynight.isChecked) WidgetBackgroundType.DAYNIGHT
-                else WidgetBackgroundType.TRANSPARENT
+                when {
+                    binding.backgroundTypeDynamiccolor.isChecked -> WidgetBackgroundType.DYNAMICCOLOR
+                    binding.backgroundTypeTransparent.isChecked -> WidgetBackgroundType.TRANSPARENT
+                    else -> WidgetBackgroundType.DAYNIGHT
+                }
             )
             putExtra(
                 TemplateWidget.EXTRA_TEXT_COLOR,
-                if (binding.backgroundTypeDaynight.isChecked) null
-                else getHexForColor(if (binding.textColorWhite.isChecked) android.R.color.white else commonR.color.colorWidgetButtonLabelBlack)
+                if (binding.backgroundTypeTransparent.isChecked)
+                    getHexForColor(if (binding.textColorWhite.isChecked) android.R.color.white else commonR.color.colorWidgetButtonLabelBlack)
+                else null
             )
         }
         applicationContext.sendBroadcast(createIntent)
