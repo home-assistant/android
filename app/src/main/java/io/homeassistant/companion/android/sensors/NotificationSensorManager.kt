@@ -8,6 +8,7 @@ import android.content.res.Configuration
 import android.media.MediaMetadata
 import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
+import android.os.Bundle
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
@@ -132,9 +133,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             return
         }
 
-        val attr = sbn.notification.extras.keySet()
-            .map { it to sbn.notification.extras.get(it) }
-            .toMap()
+        val attr = mappedBundle(sbn.notification.extras)
             .plus("package" to sbn.packageName)
             .plus("post_time" to sbn.postTime)
             .plus("is_clearable" to sbn.isClearable)
@@ -185,9 +184,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             return
         }
 
-        val attr = sbn.notification.extras.keySet()
-            .map { it to sbn.notification.extras.get(it) }
-            .toMap()
+        val attr = mappedBundle(sbn.notification.extras)
             .plus("package" to sbn.packageName)
             .plus("post_time" to sbn.postTime)
             .plus("is_clearable" to sbn.isClearable)
@@ -215,9 +212,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         try {
             val attr: MutableMap<String, Any?> = mutableMapOf()
             for (item in activeNotifications) {
-                attr += item.notification.extras.keySet()
-                    .map { it + "_" + item.packageName to item.notification.extras.get(it) }
-                    .toMap()
+                attr += mappedBundle(item.notification.extras, "_${item.packageName}")
                     .plus(item.packageName + "_" + item.id + "_post_time" to item.postTime)
                     .plus(item.packageName + "_" + item.id + "_is_ongoing" to item.isOngoing)
                     .plus(item.packageName + "_" + item.id + "_is_clearable" to item.isClearable)
@@ -281,6 +276,33 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             PlaybackState.STATE_SKIPPING_TO_PREVIOUS -> "Skip to Previous"
             PlaybackState.STATE_SKIPPING_TO_QUEUE_ITEM -> "Skip to Queue Item"
             else -> "Unknown"
+        }
+    }
+
+    /**
+     * Returns the values of a bundle as a key/value map for use as a sensor's attributes.
+     * Arrays are converted to lists to make them human readable.
+     * Bundles inside the given bundle will also be mapped as a key/value map.
+     */
+    private fun mappedBundle(bundle: Bundle, keySuffix: String = ""): Map<String, Any?> {
+        return bundle.keySet().associate { key ->
+            val keyValue = when (val value = bundle.get(key)) {
+                is Array<*> -> {
+                    if (value.all { it is Bundle }) value.map { mappedBundle(it as Bundle) }
+                    else value.toList()
+                }
+                is BooleanArray -> value.toList()
+                is Bundle -> mappedBundle(value)
+                is ByteArray -> value.toList()
+                is CharArray -> value.toList()
+                is DoubleArray -> value.toList()
+                is FloatArray -> value.toList()
+                is IntArray -> value.toList()
+                is LongArray -> value.toList()
+                is ShortArray -> value.toList()
+                else -> value
+            }
+            "${key}$keySuffix" to keyValue
         }
     }
 }
