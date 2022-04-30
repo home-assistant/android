@@ -102,6 +102,17 @@ class LocationSensorManager : LocationSensorManagerBase() {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
+
+        val highAccuracyUpdateInterval = SensorManager.BasicSensor(
+            "high_accuracy_update_interval",
+            "sensor",
+            commonR.string.basic_sensor_name_high_accuracy_interval,
+            commonR.string.sensor_description_high_accuracy_interval,
+            "mdi:timer",
+            unitOfMeasurement = "seconds",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+        )
         internal const val TAG = "LocBroadcastReceiver"
 
         private var geofencingClient: GeofencingClient? = null
@@ -279,6 +290,14 @@ class LocationSensorManager : LocationSensorManagerBase() {
     }
 
     private fun restartHighAccuracyService(intervalInSeconds: Int) {
+        onSensorUpdated(
+            latestContext,
+            highAccuracyUpdateInterval,
+            intervalInSeconds,
+            highAccuracyUpdateInterval.statelessIcon,
+            mapOf()
+        )
+        SensorWorker.start(latestContext)
         HighAccuracyLocationService.restartService(latestContext, intervalInSeconds)
     }
 
@@ -288,6 +307,13 @@ class LocationSensorManager : LocationSensorManagerBase() {
             highAccuracyMode,
             true,
             highAccuracyMode.statelessIcon,
+            mapOf()
+        )
+        onSensorUpdated(
+            latestContext,
+            highAccuracyUpdateInterval,
+            intervalInSeconds,
+            highAccuracyUpdateInterval.statelessIcon,
             mapOf()
         )
         SensorWorker.start(latestContext)
@@ -518,9 +544,9 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return if (DisabledLocationHandler.hasGPS(context)) {
-            listOf(singleAccurateLocation, backgroundLocation, zoneLocation, highAccuracyMode)
+            listOf(singleAccurateLocation, backgroundLocation, zoneLocation, highAccuracyMode, highAccuracyUpdateInterval)
         } else {
-            listOf(backgroundLocation, zoneLocation, highAccuracyMode)
+            listOf(backgroundLocation, zoneLocation, highAccuracyMode, highAccuracyUpdateInterval)
         }
     }
 

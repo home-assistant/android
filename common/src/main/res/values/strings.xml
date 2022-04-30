@@ -832,4 +832,6 @@
     <string name="sensor_description_volume_accessibility">Volume level for accessibility prompts on the device</string>
     <string name="sensor_name_volume_dtmf">Volume Level DTMF</string>
     <string name="sensor_description_volume_dtmf">Volume level for DTMF tones on the device</string>
+    <string name="basic_sensor_name_high_accuracy_interval">High Accuracy Update Interval</string>
+    <string name="sensor_description_high_accuracy_interval">The update interval set for high accuracy mode</string>
 </resources>
