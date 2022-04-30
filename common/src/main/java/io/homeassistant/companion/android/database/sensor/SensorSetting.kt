@@ -46,7 +46,7 @@ class EntriesTypeConverter {
 class SensorSettingTypeConverter {
     @TypeConverter
     fun fromStringToEnum(value: String): SensorSettingType {
-        return enumValues<SensorSettingType>().find { it.string === value }
+        return enumValues<SensorSettingType>().find { it.string == value }
             ?: SensorSettingType.STRING
     }
 
