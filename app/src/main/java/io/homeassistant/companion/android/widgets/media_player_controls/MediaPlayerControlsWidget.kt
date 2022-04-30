@@ -159,18 +159,19 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                     )
                 }
 
-                var artist = entity?.attributes?.get("media_artist")?.toString()
+                val artist = (entity?.attributes?.get("media_artist") ?: entity?.attributes?.get("media_album_artist"))?.toString()
                 val title = entity?.attributes?.get("media_title")?.toString()
                 val album = entity?.attributes?.get("media_album_name")?.toString()
                 val icon = entity?.attributes?.get("icon")?.toString()
 
-                if (artist != null && title != null) {
-                    if (album != null) {
-                        artist = "$artist - $album"
-                    }
+                if ((artist != null || album != null) && title != null) {
                     setTextViewText(
                         R.id.widgetMediaInfoArtist,
-                        artist
+                        when {
+                            artist != null && album != null -> "$artist - $album"
+                            album != null -> album
+                            else -> artist
+                        }
                     )
                     setTextViewText(
                         R.id.widgetMediaInfoTitle,
