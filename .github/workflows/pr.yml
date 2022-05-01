@@ -101,4 +101,4 @@ jobs:
       run: if git diff --name-only --diff-filter=DMR origin/master... | grep "^common/schemas"; then exit 1; fi
 
     - name: Check for missing DB migrations
-      run: test -n "$(git status --porcelain)"
+      run: if ! git diff-files --quiet --; then exit 1; fi
