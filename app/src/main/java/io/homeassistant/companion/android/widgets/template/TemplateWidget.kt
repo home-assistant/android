@@ -8,6 +8,7 @@ import android.graphics.Color
 import android.os.Bundle
 import android.text.Html.fromHtml
 import android.util.Log
+import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
 import androidx.core.content.ContextCompat
@@ -21,7 +22,6 @@ import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.util.getAttribute
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
-import io.homeassistant.companion.android.widgets.entity.EntityWidget
 import kotlinx.coroutines.launch
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -30,6 +30,7 @@ class TemplateWidget : BaseWidgetProvider() {
     companion object {
         private const val TAG = "TemplateWidget"
         internal const val EXTRA_TEMPLATE = "extra_template"
+        internal const val EXTRA_TEXT_SIZE = "EXTRA_TEXT_SIZE"
         internal const val EXTRA_BACKGROUND_TYPE = "EXTRA_BACKGROUND_TYPE"
         internal const val EXTRA_TEXT_COLOR = "EXTRA_TEXT_COLOR"
     }
@@ -96,6 +97,11 @@ class TemplateWidget : BaseWidgetProvider() {
                     R.id.widgetTemplateText,
                     fromHtml(renderedTemplate)
                 )
+                setTextViewTextSize(
+                    R.id.widgetTemplateText,
+                    TypedValue.COMPLEX_UNIT_SP,
+                    widget.textSize
+                )
             }
         }
     }
@@ -104,8 +110,9 @@ class TemplateWidget : BaseWidgetProvider() {
         if (extras == null) return
 
         val template: String? = extras.getString(EXTRA_TEMPLATE)
-        val backgroundTypeSelection: WidgetBackgroundType = extras.getSerializable(EntityWidget.EXTRA_BACKGROUND_TYPE) as WidgetBackgroundType
-        val textColorSelection: String? = extras.getString(EntityWidget.EXTRA_TEXT_COLOR)
+        val textSize: Float = extras.getFloat(EXTRA_TEXT_SIZE)
+        val backgroundTypeSelection: WidgetBackgroundType = extras.getSerializable(EXTRA_BACKGROUND_TYPE) as WidgetBackgroundType
+        val textColorSelection: String? = extras.getString(EXTRA_TEXT_COLOR)
 
         if (template == null) {
             Log.e(TAG, "Did not receive complete widget data")
@@ -118,6 +125,7 @@ class TemplateWidget : BaseWidgetProvider() {
                 TemplateWidgetEntity(
                     appWidgetId,
                     template,
+                    textSize,
                     templateWidgetDao.get(appWidgetId)?.lastUpdate ?: "Loading",
                     backgroundTypeSelection,
                     textColorSelection

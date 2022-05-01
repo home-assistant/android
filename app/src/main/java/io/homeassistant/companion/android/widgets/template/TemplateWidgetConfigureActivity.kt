@@ -87,6 +87,7 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
 
         if (templateWidget != null) {
             binding.templateText.setText(templateWidget.template)
+            binding.textSize.setText(templateWidget.textSize.toInt().toString())
             binding.addButton.setText(commonR.string.update_widget)
             if (templateWidget.template.isNotEmpty())
                 renderTemplateText(templateWidget.template)
@@ -155,6 +156,7 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
             component = ComponentName(applicationContext, TemplateWidget::class.java)
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             putExtra(TemplateWidget.EXTRA_TEMPLATE, binding.templateText.text.toString())
+            putExtra(TemplateWidget.EXTRA_TEXT_SIZE, binding.textSize.text.toString().toFloat())
             putExtra(
                 TemplateWidget.EXTRA_BACKGROUND_TYPE,
                 when {

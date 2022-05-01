@@ -767,6 +767,7 @@
     <string name="widget_text_hint_service_service">Service</string>
     <string name="widget_text_size_default">30</string>
     <string name="widget_text_size_label">Widget text size:</string>
+    <string name="widget_text_size_template">12</string>
     <string name="widget_text_color_black">Black</string>
     <string name="widget_text_color_label">Widget text color:</string>
     <string name="widget_text_color_label_icon">Widget text/icon color:</string>

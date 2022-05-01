@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 26,
-    "identityHash": "a3bde7b3862bff358bfa363a76510d21",
+    "identityHash": "e2fbc1aa21f36bfb07234f8fd52506bc",
     "entities": [
       {
         "tableName": "sensor_attributes",
@@ -459,7 +459,7 @@
       },
       {
         "tableName": "template_widgets",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `template` TEXT NOT NULL, `last_update` TEXT NOT NULL, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `template` TEXT NOT NULL, `text_size` REAL NOT NULL DEFAULT 12.0, `last_update` TEXT NOT NULL, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -472,6 +472,13 @@
             "columnName": "template",
             "affinity": "TEXT",
             "notNull": true
+          },
+          {
+            "fieldPath": "textSize",
+            "columnName": "text_size",
+            "affinity": "REAL",
+            "notNull": true,
+            "defaultValue": "12.0"
           },
           {
             "fieldPath": "lastUpdate",
@@ -658,7 +665,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a3bde7b3862bff358bfa363a76510d21')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e2fbc1aa21f36bfb07234f8fd52506bc')"
     ]
   }
 }
