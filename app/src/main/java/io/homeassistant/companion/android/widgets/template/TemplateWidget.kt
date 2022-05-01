@@ -65,7 +65,7 @@ class TemplateWidget : BaseWidgetProvider() {
             if (widget != null) {
                 var renderedTemplate = templateWidgetDao.get(appWidgetId)?.lastUpdate ?: "Loading"
                 try {
-                    renderedTemplate = integrationUseCase.renderTemplate(widget.template, mapOf()) ?: "Error"
+                    renderedTemplate = integrationUseCase.renderTemplate(widget.template, mapOf()) ?: throw Exception("No template received.")
                     templateWidgetDao.updateTemplateWidgetLastUpdate(appWidgetId, renderedTemplate)
                     setViewVisibility(R.id.widgetTemplateError, View.GONE)
                 } catch (e: Exception) {

@@ -257,7 +257,7 @@ class WebSocketRepositoryImpl @Inject constructor(
 
     private suspend fun connect(): Boolean {
         connectedMutex.withLock {
-            if (connection != null && connected.isCompleted) {
+            if (connection != null && connected.isCompleted && connected.await()) {
                 return !connected.isCancelled
             }
 
