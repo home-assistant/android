@@ -34,7 +34,6 @@ import io.homeassistant.companion.android.util.getAttribute
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.regex.Pattern
 import javax.inject.Inject
@@ -134,12 +133,6 @@ class ButtonWidget : AppWidgetProvider() {
             CALL_SERVICE -> callConfiguredService(context, appWidgetId)
             RECEIVE_DATA -> saveServiceCallConfiguration(context, intent.extras, appWidgetId)
             Intent.ACTION_SCREEN_ON -> updateAllWidgets(context, buttonWidgetDao.getAll())
-            Intent.ACTION_CONFIGURATION_CHANGED -> {
-                mainScope.launch {
-                    delay(300L) // delay to ensure new colors are loaded
-                    updateAllWidgets(context, buttonWidgetDao.getAll())
-                }
-            }
         }
     }
 

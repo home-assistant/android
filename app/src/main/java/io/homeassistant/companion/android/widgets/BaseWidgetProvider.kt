@@ -12,7 +12,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -64,12 +63,6 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             }
             Intent.ACTION_SCREEN_ON -> onScreenOn(context)
             Intent.ACTION_SCREEN_OFF -> onScreenOff()
-            Intent.ACTION_CONFIGURATION_CHANGED -> {
-                mainScope.launch {
-                    delay(300L) // delay to ensure new colors are loaded
-                    updateAllWidgets(context)
-                }
-            }
         }
     }
 
