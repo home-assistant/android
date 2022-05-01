@@ -13,12 +13,14 @@ import android.widget.AdapterView
 import android.widget.AutoCompleteTextView
 import android.widget.Toast
 import androidx.core.content.getSystemService
+import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetMediaControlsConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
@@ -101,6 +103,9 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
 
         val mediaPlayerControlsWidgetDao = AppDatabase.getInstance(applicationContext).mediaPlayCtrlWidgetDao()
         val mediaPlayerWidget = mediaPlayerControlsWidgetDao.get(appWidgetId)
+
+        binding.backgroundType.visibility = if (DynamicColors.isDynamicColorAvailable()) View.VISIBLE else View.GONE
+
         if (mediaPlayerWidget != null) {
             binding.label.setText(mediaPlayerWidget.label)
             binding.widgetTextConfigEntityId.setText(mediaPlayerWidget.entityId)
@@ -117,6 +122,8 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
                     null
                 }
             }
+            binding.backgroundTypeDynamiccolor.isChecked = mediaPlayerWidget.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
+            binding.backgroundTypeDaynight.isChecked = mediaPlayerWidget.backgroundType == WidgetBackgroundType.DAYNIGHT
             if (entity != null)
                 selectedEntity = entity as Entity<Any>?
             binding.addButton.setText(commonR.string.update_widget)
@@ -197,6 +204,13 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
             intent.putExtra(
                 MediaPlayerControlsWidget.EXTRA_SHOW_SEEK,
                 binding.widgetShowSeekButtonsCheckbox.isChecked
+            )
+            intent.putExtra(
+                MediaPlayerControlsWidget.EXTRA_BACKGROUND_TYPE,
+                when {
+                    binding.backgroundTypeDynamiccolor.isChecked && DynamicColors.isDynamicColorAvailable() -> WidgetBackgroundType.DYNAMICCOLOR
+                    else -> WidgetBackgroundType.DAYNIGHT
+                }
             )
 
             context.sendBroadcast(intent)

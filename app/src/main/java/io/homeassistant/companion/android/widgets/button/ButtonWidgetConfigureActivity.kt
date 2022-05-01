@@ -45,7 +45,6 @@ import io.homeassistant.companion.android.util.getHexForColor
 import io.homeassistant.companion.android.widgets.common.ServiceFieldBinder
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetDynamicFieldAdapter
-import io.homeassistant.companion.android.widgets.entity.EntityWidget
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job

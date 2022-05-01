@@ -10,6 +10,7 @@
 
     <style name="Theme.HomeAssistant.DynamicColorWidget">
         <item name="colorWidgetPrimary">@color/colorDynamicWidgetPrimary</item>
+        <item name="colorWidgetButton">@color/colorDynamicWidgetPrimary</item>
         <item name="colorWidgetBackground">@color/colorDynamicWidgetBackground</item>
         <item name="colorWidgetOnBackground">@color/colorDynamicWidgetOnBackground</item>
     </style>
