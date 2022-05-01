@@ -9,5 +9,6 @@
         <attr name="colorWidgetButton" format="color" />
         <attr name="colorWidgetBackground" format="color" />
         <attr name="colorWidgetOnBackground" format="color" />
+        <attr name="dimenWidgetCornerRadius" format="dimension" />
     </declare-styleable>
 </resources>

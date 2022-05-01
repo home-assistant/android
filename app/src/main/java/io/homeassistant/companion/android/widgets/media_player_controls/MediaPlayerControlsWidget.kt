@@ -382,6 +382,8 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                     setViewVisibility(R.id.widgetRewindButton, View.GONE)
                     setViewVisibility(R.id.widgetFastForwardButton, View.GONE)
                 }
+            } else {
+                setTextViewText(R.id.widgetLabel, "")
             }
         }
     }

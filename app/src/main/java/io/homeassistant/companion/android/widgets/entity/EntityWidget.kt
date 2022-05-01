@@ -105,6 +105,9 @@ class EntityWidget : BaseWidgetProvider() {
                         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                     )
                 )
+            } else {
+                setTextViewText(R.id.widgetText, "")
+                setTextViewText(R.id.widgetLabel, "")
             }
         }
 

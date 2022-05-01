@@ -102,6 +102,8 @@ class TemplateWidget : BaseWidgetProvider() {
                     TypedValue.COMPLEX_UNIT_SP,
                     widget.textSize
                 )
+            } else {
+                setTextViewText(R.id.widgetTemplateText, "")
             }
         }
     }

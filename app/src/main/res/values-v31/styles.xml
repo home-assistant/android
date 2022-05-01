@@ -13,5 +13,6 @@
         <item name="colorWidgetButton">@color/colorDynamicWidgetPrimary</item>
         <item name="colorWidgetBackground">@color/colorDynamicWidgetBackground</item>
         <item name="colorWidgetOnBackground">@color/colorDynamicWidgetOnBackground</item>
+        <item name="dimenWidgetCornerRadius">@android:dimen/system_app_widget_background_radius</item>
     </style>
 </resources>

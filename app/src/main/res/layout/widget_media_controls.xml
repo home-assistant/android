@@ -7,6 +7,7 @@
     android:minHeight="40dp"
     android:minWidth="40dp"
     android:background="@drawable/widget_button_background"
+    android:clipToOutline="true"
     tools:ignore="UseAppTint">
 
     <LinearLayout
@@ -80,7 +81,7 @@
                     android:gravity="center"
                     android:maxLines="2"
                     android:minLines="1"
-                    android:text="@string/widget_label_placeholder_text"
+                    android:text="@string/widget_label_placeholder_text_media_player"
                     android:textAlignment="center"
                     android:textColor="?colorWidgetOnBackground"
                     android:textSize="24sp" />
@@ -93,7 +94,6 @@
                     android:maxLines="1"
                     android:minLines="1"
                     android:visibility="gone"
-                    android:text="@string/widget_label_placeholder_text"
                     android:textAlignment="textStart"
                     android:textColor="?colorWidgetOnBackground"
                     android:textSize="18sp" />
@@ -106,7 +106,6 @@
                     android:maxLines="1"
                     android:minLines="1"
                     android:visibility="gone"
-                    android:text="@string/widget_label_placeholder_text"
                     android:textAlignment="textStart"
                     android:textColor="?colorWidgetOnBackground"
                     android:textSize="14sp" />
@@ -129,6 +128,7 @@
                     android:padding="4dp"
                     android:scaleType="fitCenter"
                     android:src="@drawable/ic_volume_down"
+                    android:visibility="gone"
                     android:tint="?colorWidgetButton" />
 
                 <ImageButton
@@ -141,6 +141,7 @@
                     android:padding="4dp"
                     android:scaleType="fitCenter"
                     android:src="@drawable/ic_volume_up"
+                    android:visibility="gone"
                     android:tint="?colorWidgetButton" />
 
                 <ImageButton
