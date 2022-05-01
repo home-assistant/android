@@ -3,6 +3,9 @@
     tools:ignore="MissingDefaultResource">
     <release version="2022.4">
         <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Updated User Agent String format to also include the WebView User Agent</change>
+        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Send sensor attributes as a list instead of string when possible</change>
+        <change>Add a sensor for high accuracy update interval</change>
+        <change>Suggest or highlight current SSID in home SSID dialog</change>
         <change>Add new notification command to allow for changing Persistent Connection setting</change>
         <change>Allow persistent connection to work when the device has no internet</change>
         <change>Migrate Manage Sensors screen to Compose, small design tweaks and speed improvements</change>
