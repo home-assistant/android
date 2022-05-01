@@ -64,7 +64,7 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
                     var searchList: Array<NotificationItem> = emptyArray()
                     if (!query.isNullOrEmpty()) {
                         for (item in allNotifications) {
-                            if (item.message.contains(query, true))
+                            if (item.message?.contains(query, true))
                                 searchList += item
                         }
                         prefCategory?.title = getString(commonR.string.search_results)
