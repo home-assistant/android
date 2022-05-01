@@ -89,8 +89,8 @@ class EntityWidget : BaseWidgetProvider() {
         return views
     }
 
-    override fun getAllWidgetIds(context: Context): List<Int> {
-        return AppDatabase.getInstance(context).staticWidgetDao().getAll()?.map { it.id }.orEmpty()
+    override suspend fun getAllWidgetIds(context: Context): List<Int> {
+        return AppDatabase.getInstance(context).staticWidgetDao().getAll().map { it.id }
     }
 
     private suspend fun resolveTextToShow(
@@ -180,8 +180,8 @@ class EntityWidget : BaseWidgetProvider() {
         }
     }
 
-    override fun onEntityStateChanged(context: Context, entity: Entity<*>) {
-        AppDatabase.getInstance(context).staticWidgetDao().getAll().orEmpty().forEach {
+    override suspend fun onEntityStateChanged(context: Context, entity: Entity<*>) {
+        AppDatabase.getInstance(context).staticWidgetDao().getAll().forEach {
             if (it.entityId == entity.entityId) {
                 mainScope.launch {
                     val views = getWidgetRemoteViews(context, it.id, entity as Entity<Map<String, Any>>)
@@ -193,8 +193,8 @@ class EntityWidget : BaseWidgetProvider() {
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
         val staticWidgetDao = AppDatabase.getInstance(context).staticWidgetDao()
-        appWidgetIds.forEach { appWidgetId ->
-            staticWidgetDao.delete(appWidgetId)
+        mainScope.launch {
+            staticWidgetDao.deleteAll(appWidgetIds)
         }
     }
 }

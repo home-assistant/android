@@ -53,9 +53,9 @@ android {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.10")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.10")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.21")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.21")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
 
     implementation("com.google.dagger:hilt-android:2.41")
     kapt("com.google.dagger:hilt-android-compiler:2.41")
@@ -70,6 +70,7 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-jackson:2.9.0")
     implementation("com.squareup.okhttp3:okhttp:4.9.3")
     implementation("com.squareup.okhttp3:logging-interceptor:4.9.3")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.2.2") // remove when jackson-module-kotlin version is higher
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.2")
     implementation("org.altbeacon:android-beacon-library:2.19.4")
 }

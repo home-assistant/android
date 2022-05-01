@@ -56,12 +56,14 @@ import io.homeassistant.companion.android.common.util.generalChannel
 import io.homeassistant.companion.android.common.util.getActiveNotification
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.notification.NotificationItem
+import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.NotificationSensorManager
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.UrlHandler
+import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -139,6 +141,7 @@ class MessagingManager @Inject constructor(
         const val COMMAND_WEBVIEW = "command_webview"
         const val COMMAND_KEEP_SCREEN_ON = "keep_screen_on"
         const val COMMAND_LAUNCH_APP = "command_launch_app"
+        const val COMMAND_PERSISTENT_CONNECTION = "command_persistent_connection"
 
         // DND commands
         const val DND_PRIORITY_ONLY = "priority_only"
@@ -203,7 +206,8 @@ class MessagingManager @Inject constructor(
             COMMAND_SCREEN_ON,
             COMMAND_MEDIA,
             COMMAND_UPDATE_SENSORS,
-            COMMAND_LAUNCH_APP
+            COMMAND_LAUNCH_APP,
+            COMMAND_PERSISTENT_CONNECTION
         )
         val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
         val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
@@ -420,9 +424,9 @@ class MessagingManager @Inject constructor(
                     }
                     COMMAND_UPDATE_SENSORS -> SensorWorker.start(context)
                     COMMAND_LAUNCH_APP -> {
-                        if (!jsonData[PACKAGE_NAME].isNullOrEmpty())
+                        if (!jsonData[PACKAGE_NAME].isNullOrEmpty()) {
                             handleDeviceCommands(jsonData)
-                        else {
+                        } else {
                             mainScope.launch {
                                 Log.d(
                                     TAG,
@@ -430,6 +434,31 @@ class MessagingManager @Inject constructor(
                                 )
                                 sendNotification(jsonData)
                             }
+                        }
+                    }
+                    COMMAND_PERSISTENT_CONNECTION -> {
+                        val validPersistentTypes = WebsocketSetting.values().map { setting -> setting.name }
+
+                        when {
+                            jsonData[PERSISTENT].isNullOrEmpty() -> {
+                                mainScope.launch {
+                                    Log.d(
+                                        TAG,
+                                        "Missing persistent modifier, posting notification to device"
+                                    )
+                                    sendNotification(jsonData)
+                                }
+                            }
+                            jsonData[PERSISTENT]!!.uppercase() !in validPersistentTypes -> {
+                                mainScope.launch {
+                                    Log.d(
+                                        TAG,
+                                        "Persistent modifier is not one of $validPersistentTypes"
+                                    )
+                                    sendNotification(jsonData)
+                                }
+                            }
+                            else -> handleDeviceCommands(jsonData)
                         }
                     }
                     else -> Log.d(TAG, "No command received")
@@ -750,6 +779,9 @@ class MessagingManager @Inject constructor(
                         launchApp(data)
                 } else
                     launchApp(data)
+            }
+            COMMAND_PERSISTENT_CONNECTION -> {
+                togglePersistentConnection(data[PERSISTENT].toString())
             }
             else -> Log.d(TAG, "No command received")
         }
@@ -1743,6 +1775,39 @@ class MessagingManager @Inject constructor(
             Log.e(TAG, "Unable to launch app", e)
             mainScope.launch { sendNotification(data) }
         }
+    }
+
+    private fun togglePersistentConnection(mode: String) {
+        val settingsDao = AppDatabase.getInstance(context).settingsDao()
+
+        when (mode.uppercase()) {
+            WebsocketSetting.NEVER.name -> {
+                settingsDao.get(0)?.let {
+                    it.websocketSetting = WebsocketSetting.NEVER
+                    settingsDao.update(it)
+                }
+            }
+            WebsocketSetting.ALWAYS.name -> {
+                settingsDao.get(0)?.let {
+                    it.websocketSetting = WebsocketSetting.ALWAYS
+                    settingsDao.update(it)
+                }
+            }
+            WebsocketSetting.HOME_WIFI.name -> {
+                settingsDao.get(0)?.let {
+                    it.websocketSetting = WebsocketSetting.HOME_WIFI
+                    settingsDao.update(it)
+                }
+            }
+            WebsocketSetting.SCREEN_ON.name -> {
+                settingsDao.get(0)?.let {
+                    it.websocketSetting = WebsocketSetting.SCREEN_ON
+                    settingsDao.update(it)
+                }
+            }
+        }
+
+        WebsocketManager.start(context)
     }
 
     private fun notifyMissingPermission(type: String) {

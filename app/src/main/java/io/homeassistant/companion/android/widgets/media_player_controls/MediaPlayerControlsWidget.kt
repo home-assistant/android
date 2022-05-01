@@ -159,18 +159,19 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                     )
                 }
 
-                var artist = entity?.attributes?.get("media_artist")?.toString()
+                val artist = (entity?.attributes?.get("media_artist") ?: entity?.attributes?.get("media_album_artist"))?.toString()
                 val title = entity?.attributes?.get("media_title")?.toString()
                 val album = entity?.attributes?.get("media_album_name")?.toString()
                 val icon = entity?.attributes?.get("icon")?.toString()
 
-                if (artist != null && title != null) {
-                    if (album != null) {
-                        artist = "$artist - $album"
-                    }
+                if ((artist != null || album != null) && title != null) {
                     setTextViewText(
                         R.id.widgetMediaInfoArtist,
-                        artist
+                        when {
+                            artist != null && album != null -> "$artist - $album"
+                            album != null -> album
+                            else -> artist
+                        }
                     )
                     setTextViewText(
                         R.id.widgetMediaInfoTitle,
@@ -381,8 +382,8 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         }
     }
 
-    override fun getAllWidgetIds(context: Context): List<Int> {
-        return AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao().getAll()?.map { it.id }.orEmpty()
+    override suspend fun getAllWidgetIds(context: Context): List<Int> {
+        return AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao().getAll().map { it.id }
     }
 
     private suspend fun getEntity(context: Context, entityId: String, suggestedEntity: Entity<Map<String, Any>>?): Entity<Map<String, Any>>? {
@@ -472,8 +473,8 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         }
     }
 
-    override fun onEntityStateChanged(context: Context, entity: Entity<*>) {
-        AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao().getAll().orEmpty().forEach {
+    override suspend fun onEntityStateChanged(context: Context, entity: Entity<*>) {
+        AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao().getAll().forEach {
             if (it.entityId == entity.entityId) {
                 mainScope.launch {
                     val views = getWidgetRemoteViews(context, it.id, entity as Entity<Map<String, Any>>)
@@ -699,8 +700,8 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
         mediaPlayCtrlWidgetDao = AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao()
         // When the user deletes the widget, delete the preference associated with it.
-        for (appWidgetId in appWidgetIds) {
-            mediaPlayCtrlWidgetDao.delete(appWidgetId)
+        mainScope.launch {
+            mediaPlayCtrlWidgetDao.deleteAll(appWidgetIds)
         }
     }
 

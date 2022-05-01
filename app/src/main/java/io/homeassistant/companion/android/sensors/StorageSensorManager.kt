@@ -18,6 +18,7 @@ class StorageSensorManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_internal_storage,
             commonR.string.sensor_description_internal_storage,
+            "mdi:harddisk",
             unitOfMeasurement = "%",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
@@ -27,6 +28,7 @@ class StorageSensorManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_external_storage,
             commonR.string.sensor_description_external_storage,
+            "mdi:micro-sd",
             unitOfMeasurement = "%",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
@@ -95,13 +97,11 @@ class StorageSensorManager : SensorManager {
         val freeInternalStorage = getAvailableInternalMemorySize()
         val percentageFreeInternalStorage = getPercentageInternal()
 
-        val icon = "mdi:harddisk"
-
         onSensorUpdated(
             context,
             storageSensor,
             percentageFreeInternalStorage,
-            icon,
+            storageSensor.statelessIcon,
             mapOf(
                 "Free internal storage" to freeInternalStorage,
                 "Total internal storage" to totalInternalStorage
@@ -128,13 +128,11 @@ class StorageSensorManager : SensorManager {
             percentFreeExternal = ((availableBlocksSD.toDouble() / totalBlocksSD.toDouble()) * 100).roundToInt()
         }
 
-        val icon = "mdi:micro-sd"
-
         onSensorUpdated(
             context,
             externalStorage,
             percentFreeExternal,
-            icon,
+            externalStorage.statelessIcon,
             mapOf(
                 "free_external_storage" to freeExternalStorage,
                 "total_external_storage" to totalExternalStorage

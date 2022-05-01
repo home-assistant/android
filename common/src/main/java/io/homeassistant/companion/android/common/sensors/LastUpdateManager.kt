@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
+import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.common.R as commonR
 
 class LastUpdateManager : SensorManager {
@@ -16,7 +17,9 @@ class LastUpdateManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_last_update,
             commonR.string.sensor_description_last_update,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            "mdi:update",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
     }
 
@@ -50,15 +53,13 @@ class LastUpdateManager : SensorManager {
         if (intentAction.isNullOrEmpty())
             return
 
-        val icon = "mdi:update"
-
         Log.d(TAG, "Last update is $intentAction")
 
         onSensorUpdated(
             context,
             lastUpdate,
             intentAction,
-            icon,
+            lastUpdate.statelessIcon,
             mapOf()
         )
 
@@ -69,11 +70,11 @@ class LastUpdateManager : SensorManager {
         val intentSetting = allSettings.firstOrNull { it.name == intentSettingName }?.value ?: ""
         if (addNewIntent == "true") {
             if (intentSetting == "") {
-                sensorDao.add(SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", "toggle"))
-                sensorDao.add(SensorSetting(lastUpdate.id, intentSettingName, intentAction, "string"))
+                sensorDao.add(SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", SensorSettingType.TOGGLE))
+                sensorDao.add(SensorSetting(lastUpdate.id, intentSettingName, intentAction, SensorSettingType.STRING))
             }
         } else {
-            sensorDao.add(SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", "toggle"))
+            sensorDao.add(SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", SensorSettingType.TOGGLE))
         }
         for (setting in allSettings) {
             if (setting.value == "")

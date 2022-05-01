@@ -54,5 +54,5 @@ interface HaControl {
 
     fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String
 
-    fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean
+    suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean
 }

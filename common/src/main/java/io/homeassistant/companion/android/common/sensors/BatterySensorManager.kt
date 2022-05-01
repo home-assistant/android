@@ -15,8 +15,9 @@ class BatterySensorManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_battery_level,
             commonR.string.sensor_description_battery_level,
-            "battery",
-            "%",
+            "mdi:battery",
+            deviceClass = "battery",
+            unitOfMeasurement = "%",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
@@ -25,28 +26,35 @@ class BatterySensorManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_battery_state,
             commonR.string.sensor_description_battery_state,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            "mdi:battery-charging",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         val isChargingState = SensorManager.BasicSensor(
             "is_charging",
             "binary_sensor",
             commonR.string.basic_sensor_name_charging,
             commonR.string.sensor_description_charging,
-            "plug",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            "mdi:power-plug",
+            deviceClass = "plug",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         private val chargerTypeState = SensorManager.BasicSensor(
             "charger_type",
             "sensor",
             commonR.string.basic_sensor_name_charger_type,
             commonR.string.sensor_description_charger_type,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            "mdi:power-plug",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         private val batteryHealthState = SensorManager.BasicSensor(
             "battery_health",
             "sensor",
             commonR.string.basic_sensor_name_battery_health,
             commonR.string.sensor_description_battery_health,
+            "mdi:battery-heart-variant",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
 
@@ -55,8 +63,9 @@ class BatterySensorManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_battery_temperature,
             commonR.string.sensor_description_battery_temperature,
-            "temperature",
-            "°C",
+            "mdi:battery",
+            deviceClass = "temperature",
+            unitOfMeasurement = "°C",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
@@ -225,7 +234,7 @@ class BatterySensorManager : SensorManager {
             context,
             batteryTemperature,
             batteryTemp,
-            "mdi:battery",
+            batteryTemperature.statelessIcon,
             mapOf()
         )
     }

@@ -22,6 +22,7 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
             "sensor",
             commonR.string.sensor_name_proximity,
             commonR.string.sensor_description_proximity_sensor,
+            "mdi:leak",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
     }
@@ -93,7 +94,7 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
                 latestContext,
                 proximitySensor,
                 state,
-                "mdi:leak",
+                proximitySensor.statelessIcon,
                 mapOf()
             )
         }

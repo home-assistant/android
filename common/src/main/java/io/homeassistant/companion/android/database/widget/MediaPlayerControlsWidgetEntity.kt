@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "mediaplayctrls_widgets")
 data class MediaPlayerControlsWidgetEntity(
     @PrimaryKey
-    val id: Int,
+    override val id: Int,
     @ColumnInfo(name = "entityId")
     val entityId: String,
     @ColumnInfo(name = "label")
@@ -18,4 +18,4 @@ data class MediaPlayerControlsWidgetEntity(
     val showSeek: Boolean,
     @ColumnInfo(name = "showVolume")
     val showVolume: Boolean
-)
+) : WidgetEntity
