@@ -92,10 +92,9 @@
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/background_type"
+            android:id="@+id/background_type_parent"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:minHeight="50dp"
+            android:layout_height="50dp"
             android:gravity="center"
             android:orientation="horizontal"
             android:visibility="gone"
@@ -104,25 +103,14 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
                 android:padding="5dp"
                 android:text="@string/widget_background_type_label" />
 
-            <RadioGroup
+            <Spinner
+                android:id="@+id/background_type"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="end">
-                <RadioButton
-                    android:id="@+id/background_type_dynamiccolor"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/widget_background_type_dynamiccolor"
-                    android:checked="true"/>
-                <RadioButton
-                    android:id="@+id/background_type_daynight"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/widget_background_type_daynight"/>
-            </RadioGroup>
+                android:layout_height="wrap_content" />
         </LinearLayout>
 
         <androidx.appcompat.widget.AppCompatButton

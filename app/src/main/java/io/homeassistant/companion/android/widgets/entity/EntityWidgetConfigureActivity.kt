@@ -114,8 +114,13 @@ class EntityWidgetConfigureActivity : BaseActivity() {
         val staticWidgetDao = AppDatabase.getInstance(applicationContext).staticWidgetDao()
         val staticWidget = staticWidgetDao.get(appWidgetId)
 
-        binding.backgroundTypeDynamiccolor.isChecked = staticWidget == null && DynamicColors.isDynamicColorAvailable()
-        binding.backgroundTypeDynamiccolor.visibility = if (DynamicColors.isDynamicColorAvailable()) View.VISIBLE else View.GONE
+        val backgroundTypeValues = mutableListOf(
+            getString(commonR.string.widget_background_type_daynight),
+            getString(commonR.string.widget_background_type_transparent)
+        )
+        if (DynamicColors.isDynamicColorAvailable())
+            backgroundTypeValues.add(0, getString(commonR.string.widget_background_type_dynamiccolor))
+        binding.backgroundType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
 
         if (staticWidget != null) {
             binding.widgetTextConfigEntityId.setText(staticWidget.entityId)
@@ -148,9 +153,16 @@ class EntityWidgetConfigureActivity : BaseActivity() {
                 setupAttributes()
             }
 
-            binding.backgroundTypeDynamiccolor.isChecked = staticWidget.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
-            binding.backgroundTypeDaynight.isChecked = staticWidget.backgroundType == WidgetBackgroundType.DAYNIGHT
-            binding.backgroundTypeTransparent.isChecked = staticWidget.backgroundType == WidgetBackgroundType.TRANSPARENT
+            binding.backgroundType.setSelection(
+                when {
+                    staticWidget.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable() ->
+                        backgroundTypeValues.indexOf(getString(commonR.string.widget_background_type_dynamiccolor))
+                    staticWidget.backgroundType == WidgetBackgroundType.TRANSPARENT ->
+                        backgroundTypeValues.indexOf(getString(commonR.string.widget_background_type_transparent))
+                    else ->
+                        backgroundTypeValues.indexOf(getString(commonR.string.widget_background_type_daynight))
+                }
+            )
             binding.textColor.visibility = if (staticWidget.backgroundType == WidgetBackgroundType.TRANSPARENT) View.VISIBLE else View.GONE
             binding.textColorWhite.isChecked =
                 staticWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, android.R.color.white) } ?: true
@@ -160,6 +172,8 @@ class EntityWidgetConfigureActivity : BaseActivity() {
             binding.addButton.setText(commonR.string.update_widget)
             binding.deleteButton.visibility = VISIBLE
             binding.deleteButton.setOnClickListener(onDeleteWidget)
+        } else {
+            binding.backgroundType.setSelection(0)
         }
         val entityAdapter = SingleItemArrayAdapter<Entity<Any>>(this) { it?.entityId ?: "" }
 
@@ -177,8 +191,16 @@ class EntityWidgetConfigureActivity : BaseActivity() {
             appendAttributes = isChecked
         }
 
-        binding.backgroundTypeTransparent.setOnCheckedChangeListener { _, isChecked ->
-            binding.textColor.visibility = if (isChecked) View.VISIBLE else View.GONE
+        binding.backgroundType.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                binding.textColor.visibility =
+                    if (parent?.adapter?.getItem(position) == getString(commonR.string.widget_background_type_transparent)) View.VISIBLE
+                    else View.GONE
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                binding.textColor.visibility = View.GONE
+            }
         }
 
         mainScope.launch {
@@ -287,16 +309,16 @@ class EntityWidgetConfigureActivity : BaseActivity() {
 
             intent.putExtra(
                 EntityWidget.EXTRA_BACKGROUND_TYPE,
-                when {
-                    binding.backgroundTypeDynamiccolor.isChecked -> WidgetBackgroundType.DYNAMICCOLOR
-                    binding.backgroundTypeTransparent.isChecked -> WidgetBackgroundType.TRANSPARENT
+                when (binding.backgroundType.selectedItem as String?) {
+                    getString(commonR.string.widget_background_type_dynamiccolor) -> WidgetBackgroundType.DYNAMICCOLOR
+                    getString(commonR.string.widget_background_type_transparent) -> WidgetBackgroundType.TRANSPARENT
                     else -> WidgetBackgroundType.DAYNIGHT
                 }
             )
 
             intent.putExtra(
                 EntityWidget.EXTRA_TEXT_COLOR,
-                if (binding.backgroundTypeTransparent.isChecked)
+                if (binding.backgroundType.selectedItem as String? == getString(commonR.string.widget_background_type_transparent))
                     getHexForColor(if (binding.textColorWhite.isChecked) android.R.color.white else commonR.color.colorWidgetButtonLabelBlack)
                 else null
             )

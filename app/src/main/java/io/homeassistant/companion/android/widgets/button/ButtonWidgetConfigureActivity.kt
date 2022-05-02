@@ -13,6 +13,8 @@ import android.util.Log
 import android.view.View
 import android.view.View.VISIBLE
 import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.EditText
 import android.widget.Toast
@@ -201,17 +203,29 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
         val buttonWidget = buttonWidgetDao.get(appWidgetId)
         var serviceText = ""
 
-        binding.backgroundTypeDynamiccolor.isChecked = buttonWidget == null && DynamicColors.isDynamicColorAvailable()
-        binding.backgroundTypeDynamiccolor.visibility = if (DynamicColors.isDynamicColorAvailable()) View.VISIBLE else View.GONE
+        val backgroundTypeValues = mutableListOf(
+            getString(commonR.string.widget_background_type_daynight),
+            getString(commonR.string.widget_background_type_transparent)
+        )
+        if (DynamicColors.isDynamicColorAvailable())
+            backgroundTypeValues.add(0, getString(commonR.string.widget_background_type_dynamiccolor))
+        binding.backgroundType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
 
         if (buttonWidget != null) {
             serviceText = "${buttonWidget.domain}.${buttonWidget.service}"
             binding.widgetTextConfigService.setText(serviceText)
             binding.label.setText(buttonWidget.label)
 
-            binding.backgroundTypeDynamiccolor.isChecked = buttonWidget.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
-            binding.backgroundTypeDaynight.isChecked = buttonWidget.backgroundType == WidgetBackgroundType.DAYNIGHT
-            binding.backgroundTypeTransparent.isChecked = buttonWidget.backgroundType == WidgetBackgroundType.TRANSPARENT
+            binding.backgroundType.setSelection(
+                when {
+                    buttonWidget.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable() ->
+                        backgroundTypeValues.indexOf(getString(commonR.string.widget_background_type_dynamiccolor))
+                    buttonWidget.backgroundType == WidgetBackgroundType.TRANSPARENT ->
+                        backgroundTypeValues.indexOf(getString(commonR.string.widget_background_type_transparent))
+                    else ->
+                        backgroundTypeValues.indexOf(getString(commonR.string.widget_background_type_daynight))
+                }
+            )
             binding.textColor.visibility = if (buttonWidget.backgroundType == WidgetBackgroundType.TRANSPARENT) View.VISIBLE else View.GONE
             binding.textColorWhite.isChecked =
                 buttonWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, android.R.color.white) } ?: true
@@ -221,6 +235,8 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
             binding.addButton.setText(commonR.string.update_widget)
             binding.deleteButton.visibility = VISIBLE
             binding.deleteButton.setOnClickListener(onDeleteWidget)
+        } else {
+            binding.backgroundType.setSelection(0)
         }
         // Create an icon pack loader with application context.
         val loader = IconPackLoader(this)
@@ -301,8 +317,16 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
 
         binding.widgetTextConfigService.addTextChangedListener(serviceTextWatcher)
 
-        binding.backgroundTypeTransparent.setOnCheckedChangeListener { _, isChecked ->
-            binding.textColor.visibility = if (isChecked) View.VISIBLE else View.GONE
+        binding.backgroundType.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                binding.textColor.visibility =
+                    if (parent?.adapter?.getItem(position) == getString(commonR.string.widget_background_type_transparent)) View.VISIBLE
+                    else View.GONE
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                binding.textColor.visibility = View.GONE
+            }
         }
 
         binding.addFieldButton.setOnClickListener(onAddFieldListener)
@@ -442,16 +466,16 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
 
             intent.putExtra(
                 ButtonWidget.EXTRA_BACKGROUND_TYPE,
-                when {
-                    binding.backgroundTypeDynamiccolor.isChecked -> WidgetBackgroundType.DYNAMICCOLOR
-                    binding.backgroundTypeTransparent.isChecked -> WidgetBackgroundType.TRANSPARENT
+                when (binding.backgroundType.selectedItem as String?) {
+                    getString(commonR.string.widget_background_type_dynamiccolor) -> WidgetBackgroundType.DYNAMICCOLOR
+                    getString(commonR.string.widget_background_type_transparent) -> WidgetBackgroundType.TRANSPARENT
                     else -> WidgetBackgroundType.DAYNIGHT
                 }
             )
 
             intent.putExtra(
                 ButtonWidget.EXTRA_TEXT_COLOR,
-                if (binding.backgroundTypeTransparent.isChecked)
+                if (binding.backgroundType.selectedItem as String? == getString(commonR.string.widget_background_type_transparent))
                     getHexForColor(if (binding.textColorWhite.isChecked) android.R.color.white else commonR.color.colorWidgetButtonLabelBlack)
                 else null
             )

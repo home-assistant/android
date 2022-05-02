@@ -176,47 +176,28 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:minHeight="50dp"
+            android:layout_height="50dp"
             android:gravity="center"
             android:orientation="horizontal">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
                 android:padding="5dp"
                 android:text="@string/widget_background_type_label" />
 
-            <RadioGroup
+            <Spinner
+                android:id="@+id/background_type"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="end">
-                <RadioButton
-                    android:id="@+id/background_type_dynamiccolor"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/widget_background_type_dynamiccolor"
-                    android:visibility="gone"
-                    tools:visibility="visible"/>
-                <RadioButton
-                    android:id="@+id/background_type_daynight"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/widget_background_type_daynight"
-                    android:checked="true"/>
-                <RadioButton
-                    android:id="@+id/background_type_transparent"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/widget_background_type_transparent"/>
-            </RadioGroup>
+                android:layout_gravity="center_vertical" />
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/text_color"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:minHeight="50dp"
+            android:layout_height="50dp"
             android:gravity="center"
             android:orientation="horizontal"
             android:visibility="gone"
@@ -225,14 +206,14 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
                 android:padding="5dp"
                 android:text="@string/widget_text_color_label" />
 
             <RadioGroup
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="end">
+                android:orientation="horizontal">
                 <RadioButton
                     android:id="@+id/text_color_white"
                     android:layout_width="wrap_content"
