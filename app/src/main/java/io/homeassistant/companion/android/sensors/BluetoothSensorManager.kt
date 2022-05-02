@@ -6,6 +6,7 @@ import android.os.Build
 import io.homeassistant.companion.android.bluetooth.ble.IBeaconTransmitter
 import io.homeassistant.companion.android.bluetooth.ble.TransmitterManager
 import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils
+import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils.supportsTransmitter
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
@@ -93,7 +94,8 @@ class BluetoothSensorManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_bluetooth
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        return listOf(bluetoothConnection, bluetoothState, bleTransmitter)
+        val list = listOf(bluetoothConnection, bluetoothState)
+        return if (supportsTransmitter(context)) list.plus(bleTransmitter) else list
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
