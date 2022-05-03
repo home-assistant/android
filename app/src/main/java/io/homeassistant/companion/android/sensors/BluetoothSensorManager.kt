@@ -244,12 +244,13 @@ class BluetoothSensorManager : SensorManager {
             TransmitterManager.stopTransmitting(bleTransmitterDevice)
         }
 
+        val lastState = AppDatabase.getInstance(context).sensorDao().get(bleTransmitter.id)?.state ?: "unknown"
         val state = if (isBtOn(context)) bleTransmitterDevice.state else "Bluetooth is turned off"
         val icon = if (bleTransmitterDevice.transmitting) "mdi:bluetooth" else "mdi:bluetooth-off"
         onSensorUpdated(
             context,
             bleTransmitter,
-            state,
+            if (state != "") state else lastState,
             icon,
             mapOf(
                 "id" to bleTransmitterDevice.uuid + "-" + bleTransmitterDevice.major + "-" + bleTransmitterDevice.minor,
