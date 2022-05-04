@@ -94,8 +94,7 @@ class BluetoothSensorManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_bluetooth
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        val list = listOf(bluetoothConnection, bluetoothState)
-        return if (supportsTransmitter(context)) list.plus(bleTransmitter) else list
+        return listOf(bluetoothConnection, bluetoothState, bleTransmitter)
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
@@ -256,7 +255,8 @@ class BluetoothSensorManager : SensorManager {
                 "id" to bleTransmitterDevice.uuid + "-" + bleTransmitterDevice.major + "-" + bleTransmitterDevice.minor,
                 "Transmitting power" to bleTransmitterDevice.transmitPowerSetting,
                 "Advertise mode" to bleTransmitterDevice.advertiseModeSetting,
-                "Measured power" to bleTransmitterDevice.measuredPowerSetting
+                "Measured power" to bleTransmitterDevice.measuredPowerSetting,
+                "Supports transmitter" to supportsTransmitter(context)
             )
         )
     }
