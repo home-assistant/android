@@ -7,6 +7,7 @@ import android.util.Log
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
+import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -69,7 +70,7 @@ class LastRebootSensorManager : SensorManager {
         val sensorSetting = sensorDao.getSettings(lastRebootSensor.id)
         val lastTimeMillis = fullSensor?.attributes?.firstOrNull { it.name == TIME_MILLISECONDS }?.value?.toLongOrNull() ?: 0L
         val settingDeadband = sensorSetting.firstOrNull { it.name == SETTING_DEADBAND }?.value?.toIntOrNull() ?: 60000
-        sensorDao.add(SensorSetting(lastRebootSensor.id, SETTING_DEADBAND, settingDeadband.toString(), "number"))
+        sensorDao.add(SensorSetting(lastRebootSensor.id, SETTING_DEADBAND, settingDeadband.toString(), SensorSettingType.NUMBER))
         try {
             timeInMillis = System.currentTimeMillis() - SystemClock.elapsedRealtime()
             val diffMillis = (timeInMillis - lastTimeMillis).absoluteValue

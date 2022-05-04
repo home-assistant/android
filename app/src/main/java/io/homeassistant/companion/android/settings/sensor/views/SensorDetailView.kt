@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -54,12 +55,15 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorSetting
+import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.settings.sensor.SensorDetailViewModel
 import io.homeassistant.companion.android.util.compose.MdcAlertDialog
@@ -76,6 +80,7 @@ fun SensorDetailView(
 ) {
     val context = LocalContext.current
     var sensorUpdateTypeInfo by remember { mutableStateOf(false) }
+    val jsonMapper by lazy { jacksonObjectMapper() }
 
     val sensorEnabled = viewModel.sensor?.sensor?.enabled
         ?: (
@@ -143,9 +148,17 @@ fun SensorDetailView(
                     }
                     sensor.attributes.forEach { attribute ->
                         item {
+                            val summary = when (attribute.valueType) {
+                                "listboolean" -> jsonMapper.readValue<List<Boolean>>(attribute.value).toString()
+                                "listfloat" -> jsonMapper.readValue<List<Number>>(attribute.value).toString()
+                                "listlong" -> jsonMapper.readValue<List<Long>>(attribute.value).toString()
+                                "listint" -> jsonMapper.readValue<List<Int>>(attribute.value).toString()
+                                "liststring" -> jsonMapper.readValue<List<String>>(attribute.value).toString()
+                                else -> attribute.value
+                            }
                             SensorDetailRow(
                                 title = attribute.name,
-                                summary = attribute.value,
+                                summary = summary,
                                 clickable = false,
                                 selectingEnabled = true
                             )
@@ -159,7 +172,7 @@ fun SensorDetailView(
                     viewModel.sensorSettings.value.forEach { setting ->
                         item {
                             when (setting.valueType) {
-                                "toggle" -> {
+                                SensorSettingType.TOGGLE -> {
                                     SensorDetailRow(
                                         title = viewModel.getSettingTranslatedTitle(setting.name),
                                         switch = setting.value == "true",
@@ -167,12 +180,12 @@ fun SensorDetailView(
                                         clickable = setting.enabled,
                                         onClick = { isEnabled ->
                                             onToggleSettingSubmitted(
-                                                SensorSetting(viewModel.basicSensor.id, setting.name, isEnabled.toString(), "toggle", setting.enabled)
+                                                SensorSetting(viewModel.basicSensor.id, setting.name, isEnabled.toString(), SensorSettingType.TOGGLE, setting.enabled)
                                             )
                                         }
                                     )
                                 }
-                                "list" -> {
+                                SensorSettingType.LIST -> {
                                     SensorDetailRow(
                                         title = viewModel.getSettingTranslatedTitle(setting.name),
                                         summary = viewModel.getSettingTranslatedEntry(setting.name, setting.value),
@@ -181,7 +194,7 @@ fun SensorDetailView(
                                         onClick = { onDialogSettingClicked(setting) }
                                     )
                                 }
-                                "list-apps", "list-bluetooth", "list-zones" -> {
+                                SensorSettingType.LIST_APPS, SensorSettingType.LIST_BLUETOOTH, SensorSettingType.LIST_ZONES -> {
                                     val summaryValues = setting.value.split(", ").mapNotNull { it.ifBlank { null } }
                                     SensorDetailRow(
                                         title = viewModel.getSettingTranslatedTitle(setting.name),
@@ -193,7 +206,7 @@ fun SensorDetailView(
                                         onClick = { onDialogSettingClicked(setting) }
                                     )
                                 }
-                                "string", "number" -> {
+                                SensorSettingType.STRING, SensorSettingType.NUMBER -> {
                                     SensorDetailRow(
                                         title = viewModel.getSettingTranslatedTitle(setting.name),
                                         summary = setting.value,
@@ -401,9 +414,9 @@ fun SensorDetailSettingDialog(
     onSubmit: (SensorDetailViewModel.Companion.SettingDialogState) -> Unit
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
-    val listSettingDialog = state.setting.valueType != "string" && state.setting.valueType != "number"
+    val listSettingDialog = state.setting.valueType.listType
     val inputValue = remember { mutableStateOf(state.setting.value) }
-    val checkedValue = remember { mutableStateListOf(*state.entriesSelected?.toTypedArray() ?: emptyArray()) }
+    val checkedValue = remember { mutableStateListOf<String>().also { it.addAll(state.entriesSelected) } }
 
     MdcAlertDialog(
         onDismissRequest = onDismiss,
@@ -411,24 +424,21 @@ fun SensorDetailSettingDialog(
         content = {
             if (listSettingDialog) {
                 LazyColumn {
-                    state.entries?.forEachIndexed { index, entry ->
-                        val id = state.entriesIds?.get(index)!!
-                        item {
-                            SensorDetailSettingRow(
-                                label = entry,
-                                checked = if (state.setting.valueType == "list") inputValue.value == id else checkedValue.contains(id),
-                                multiple = state.setting.valueType != "list",
-                                onClick = { isChecked ->
-                                    if (state.setting.valueType == "list") {
-                                        inputValue.value = id
-                                        onSubmit(state.copy().apply { setting.value = inputValue.value })
-                                    } else {
-                                        if (checkedValue.contains(id) && !isChecked) checkedValue.remove(id)
-                                        else if (!checkedValue.contains(id) && isChecked) checkedValue.add(id)
-                                    }
+                    items(state.entries, key = { (id) -> id }) { (id, entry) ->
+                        SensorDetailSettingRow(
+                            label = entry,
+                            checked = if (state.setting.valueType == SensorSettingType.LIST) inputValue.value == id else checkedValue.contains(id),
+                            multiple = state.setting.valueType != SensorSettingType.LIST,
+                            onClick = { isChecked ->
+                                if (state.setting.valueType == SensorSettingType.LIST) {
+                                    inputValue.value = id
+                                    onSubmit(state.copy().apply { setting.value = inputValue.value })
+                                } else {
+                                    if (checkedValue.contains(id) && !isChecked) checkedValue.remove(id)
+                                    else if (!checkedValue.contains(id) && isChecked) checkedValue.add(id)
                                 }
-                            )
-                        }
+                            }
+                        )
                     }
                 }
             } else {
@@ -436,7 +446,7 @@ fun SensorDetailSettingDialog(
                     value = inputValue.value,
                     keyboardOptions = KeyboardOptions(
                         imeAction = ImeAction.Done,
-                        keyboardType = if (state.setting.valueType == "number") {
+                        keyboardType = if (state.setting.valueType == SensorSettingType.NUMBER) {
                             KeyboardType.Number
                         } else {
                             KeyboardType.Text
@@ -450,7 +460,7 @@ fun SensorDetailSettingDialog(
             }
         },
         onCancel = onDismiss,
-        onSave = if (state.setting.valueType != "list") {
+        onSave = if (state.setting.valueType != SensorSettingType.LIST) {
             {
                 if (listSettingDialog) {
                     inputValue.value = checkedValue.joinToString().replace("[", "").replace("]", "")

@@ -49,11 +49,9 @@ class StepsSensorManager : SensorManager, SensorEventListener {
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            arrayOf(
-                Manifest.permission.ACTIVITY_RECOGNITION
-            )
+            arrayOf(Manifest.permission.ACTIVITY_RECOGNITION)
         } else {
-            arrayOf()
+            emptyArray()
         }
     }
 

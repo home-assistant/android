@@ -19,6 +19,7 @@ import io.homeassistant.companion.android.common.sensors.NetworkSensorManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
+import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.database.sensor.SensorWithAttributes
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.sensors.LastAppSensorManager
@@ -48,9 +49,10 @@ class SensorDetailViewModel @Inject constructor(
         )
         data class SettingDialogState(
             val setting: SensorSetting,
-            val entries: List<String>? = null,
-            val entriesIds: List<String>? = null,
-            val entriesSelected: List<String>? = null
+            /** List of entity ID to entity pairs */
+            val entries: List<Pair<String, String>>,
+            /** List of selected entity ID */
+            val entriesSelected: List<String>
         )
     }
 
@@ -148,25 +150,28 @@ class SensorDetailViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Builds a SettingDialogState based on the given Sensor Setting.
+     * Should trigger a dialog open in view.
+     */
     fun onSettingWithDialogPressed(setting: SensorSetting) {
-        val listSetting = setting.valueType != "string" && setting.valueType != "number"
+        val listSetting = setting.valueType.listType
         val listEntries = getSettingEntries(setting)
         val state = SettingDialogState(
             setting = setting,
-            entries = if (listSetting) listEntries else null,
-            entriesIds = if (listSetting) {
-                if (setting.valueType == "list") setting.entries
-                else listEntries
+            entries = if (listSetting) {
+                if (setting.valueType == SensorSettingType.LIST) setting.entries.zip(listEntries)
+                else listEntries.map { it to it }
             } else {
-                null
+                emptyList()
             },
             entriesSelected = if (listSetting) {
                 setting.value.split(", ").filter {
-                    if (setting.valueType == "list") setting.entries.contains(it)
+                    if (setting.valueType == SensorSettingType.LIST) setting.entries.contains(it)
                     else listEntries.contains(it)
                 }
             } else {
-                null
+                emptyList()
             }
         )
         sensorSettingsDialog = state
@@ -269,17 +274,17 @@ class SensorDetailViewModel @Inject constructor(
 
     private fun getSettingEntries(setting: SensorSetting): List<String> {
         return when (setting.valueType) {
-            "list" ->
+            SensorSettingType.LIST ->
                 getSettingTranslatedEntries(setting.name, setting.entries)
-            "list-apps" ->
+            SensorSettingType.LIST_APPS ->
                 getApplication<Application>().packageManager
                     ?.getInstalledApplications(PackageManager.GET_META_DATA)
                     ?.map { packageItem -> packageItem.packageName }
                     ?.sorted()
                     .orEmpty()
-            "list-bluetooth" ->
+            SensorSettingType.LIST_BLUETOOTH ->
                 BluetoothUtils.getBluetoothDevices(getApplication()).map { it.name }
-            "list-zones" ->
+            SensorSettingType.LIST_ZONES ->
                 zones
             else ->
                 emptyList()

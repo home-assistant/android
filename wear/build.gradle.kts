@@ -101,6 +101,7 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.41")
     kapt("com.google.dagger:hilt-android-compiler:2.41")
 
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.2.2") // remove when jackson-module-kotlin version is higher
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.2")
     implementation("com.squareup.okhttp3:okhttp:4.9.3")
 

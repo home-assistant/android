@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
+import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.common.R as commonR
 
 class LastUpdateManager : SensorManager {
@@ -69,11 +70,11 @@ class LastUpdateManager : SensorManager {
         val intentSetting = allSettings.firstOrNull { it.name == intentSettingName }?.value ?: ""
         if (addNewIntent == "true") {
             if (intentSetting == "") {
-                sensorDao.add(SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", "toggle"))
-                sensorDao.add(SensorSetting(lastUpdate.id, intentSettingName, intentAction, "string"))
+                sensorDao.add(SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", SensorSettingType.TOGGLE))
+                sensorDao.add(SensorSetting(lastUpdate.id, intentSettingName, intentAction, SensorSettingType.STRING))
             }
         } else {
-            sensorDao.add(SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", "toggle"))
+            sensorDao.add(SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", SensorSettingType.TOGGLE))
         }
         for (setting in allSettings) {
             if (setting.value == "")

@@ -13,6 +13,7 @@ import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
+import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.OkHttpClient
@@ -230,8 +231,8 @@ class NetworkSensorManager : SensorManager {
         val currentSetting = sensorSettings.firstOrNull { it.name == settingName }?.value ?: ""
         if (getCurrentBSSID == "true") {
             if (currentSetting == "") {
-                sensorDao.add(SensorSetting(bssidState.id, SETTING_GET_CURRENT_BSSID, "false", "toggle"))
-                sensorDao.add(SensorSetting(bssidState.id, settingName, bssid, "string"))
+                sensorDao.add(SensorSetting(bssidState.id, SETTING_GET_CURRENT_BSSID, "false", SensorSettingType.TOGGLE))
+                sensorDao.add(SensorSetting(bssidState.id, settingName, bssid, SensorSettingType.STRING))
             }
         } else {
             if (currentSetting != "")
@@ -239,7 +240,7 @@ class NetworkSensorManager : SensorManager {
             else
                 sensorDao.removeSetting(bssidState.id, settingName)
 
-            sensorDao.add(SensorSetting(bssidState.id, SETTING_GET_CURRENT_BSSID, "false", "toggle"))
+            sensorDao.add(SensorSetting(bssidState.id, SETTING_GET_CURRENT_BSSID, "false", SensorSettingType.TOGGLE))
         }
 
         val icon = if (bssid != "<not connected>") "mdi:wifi" else "mdi:wifi-off"
