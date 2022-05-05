@@ -120,7 +120,7 @@ class BluetoothSensorManager : SensorManager {
             } else {
                 MonitoringManager.stopMonitoring(context, beaconMonitoringDevice)
             }
-            sensorDao.add(SensorSetting(beaconMonitor.id, SETTING_BEACON_MONITOR_ENABLED, monitorEnabled.toString(), "toggle"))
+            sensorDao.add(SensorSetting(beaconMonitor.id, SETTING_BEACON_MONITOR_ENABLED, monitorEnabled.toString(), SensorSettingType.TOGGLE))
         }
     }
 
@@ -155,6 +155,7 @@ class BluetoothSensorManager : SensorManager {
             }
             (sensorId == beaconMonitor.id && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) -> {
                 arrayOf(
+                    Manifest.permission.BLUETOOTH,
                     Manifest.permission.BLUETOOTH_SCAN,
                     Manifest.permission.ACCESS_FINE_LOCATION,
                 )
@@ -280,11 +281,11 @@ class BluetoothSensorManager : SensorManager {
     private fun updateBeaconMonitoringDevice(context: Context) {
         beaconMonitoringDevice.sensorManager = this
 
-        val monitoringActive = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_ENABLED, "toggle", "true").toBoolean()
-        val scanPeriod = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_SCAN_PERIOD, "number", DEFAULT_BEACON_MONITOR_SCAN_PERIOD).toLongOrNull() ?: DEFAULT_BEACON_MONITOR_SCAN_PERIOD.toLong()
-        val scanInterval = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_SCAN_INTERVAL, "number", DEFAULT_BEACON_MONITOR_SCAN_INTERVAL).toLongOrNull() ?: DEFAULT_BEACON_MONITOR_SCAN_INTERVAL.toLong()
-        KalmanFilter.maxIterations = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_FILTER_ITERATIONS, "number", DEFAULT_BEACON_MONITOR_FILTER_ITERATIONS).toIntOrNull() ?: DEFAULT_BEACON_MONITOR_FILTER_ITERATIONS.toInt()
-        KalmanFilter.rssiMultiplier = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER, "number", DEFAULT_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER).toDoubleOrNull() ?: DEFAULT_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER.toDouble()
+        val monitoringActive = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_ENABLED, SensorSettingType.TOGGLE, "true").toBoolean()
+        val scanPeriod = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_SCAN_PERIOD, SensorSettingType.NUMBER, DEFAULT_BEACON_MONITOR_SCAN_PERIOD).toLongOrNull() ?: DEFAULT_BEACON_MONITOR_SCAN_PERIOD.toLong()
+        val scanInterval = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_SCAN_INTERVAL, SensorSettingType.NUMBER, DEFAULT_BEACON_MONITOR_SCAN_INTERVAL).toLongOrNull() ?: DEFAULT_BEACON_MONITOR_SCAN_INTERVAL.toLong()
+        KalmanFilter.maxIterations = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_FILTER_ITERATIONS, SensorSettingType.NUMBER, DEFAULT_BEACON_MONITOR_FILTER_ITERATIONS).toIntOrNull() ?: DEFAULT_BEACON_MONITOR_FILTER_ITERATIONS.toInt()
+        KalmanFilter.rssiMultiplier = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER, SensorSettingType.NUMBER, DEFAULT_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER).toDoubleOrNull() ?: DEFAULT_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER.toDouble()
 
         var restart = MonitoringManager.isMonitoring() &&
             (MonitoringManager.scanPeriod != scanPeriod || MonitoringManager.scanInterval != scanInterval)
@@ -338,10 +339,10 @@ class BluetoothSensorManager : SensorManager {
     fun updateBeaconMonitoringSensor(context: Context) {
         val icon = if (MonitoringManager.isMonitoring()) "mdi:bluetooth" else "mdi:bluetooth-off"
 
-        var state = if (!isBtOn(context)) "Bluetooth is turned off" else if (MonitoringManager.isMonitoring()) "Monitoring" else "Stopped"
+        var state = if (!BluetoothUtils.isOn(context)) "Bluetooth is turned off" else if (MonitoringManager.isMonitoring()) "Monitoring" else "Stopped"
 
         var attr: Map<String, Any?> = mapOf()
-        if (isBtOn(context) && MonitoringManager.isMonitoring()) {
+        if (BluetoothUtils.isOn(context) && MonitoringManager.isMonitoring()) {
             for (beacon: IBeacon in beaconMonitoringDevice.beacons) {
                 attr += Pair(beacon.uuid, beacon.distance)
             }
