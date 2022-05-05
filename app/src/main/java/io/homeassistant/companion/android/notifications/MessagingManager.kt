@@ -105,6 +105,7 @@ class MessagingManager @Inject constructor(
         const val IMAGE_URL = "image"
         const val ICON_URL = "icon_url"
         const val VIDEO_URL = "video"
+        const val VISIBILITY = "visibility"
         const val LED_COLOR = "ledColor"
         const val VIBRATION_PATTERN = "vibrationPattern"
         const val PERSISTENT = "persistent"
@@ -893,6 +894,8 @@ class MessagingManager @Inject constructor(
 
         handleVideo(notificationBuilder, data)
 
+        handleVisibility(notificationBuilder, data)
+
         handleActions(notificationBuilder, tag, messageId, data)
 
         handleDeleteIntent(notificationBuilder, data, messageId, group, groupId)
@@ -1346,6 +1349,21 @@ class MessagingManager @Inject constructor(
         val newHeight = height / 4
         val newWidth = width / 4
         return Bitmap.createScaledBitmap(this, newWidth, newHeight, false)
+    }
+
+    private fun handleVisibility(
+        builder: NotificationCompat.Builder,
+        data: Map<String, String>
+    ) {
+        data[VISIBILITY]?.let {
+            builder.setVisibility(
+                when (it) {
+                    "public" -> NotificationCompat.VISIBILITY_PUBLIC
+                    "secret" -> NotificationCompat.VISIBILITY_SECRET
+                    else -> NotificationCompat.VISIBILITY_PRIVATE
+                }
+            )
+        }
     }
 
     private fun handleActions(
