@@ -128,18 +128,7 @@ class TemplateTile : TileService() {
                                 .setResourceId("refresh")
                                 .setWidth(dp(24f))
                                 .setHeight(dp(24f))
-                                .setModifiers(
-                                    ModifiersBuilders.Modifiers.Builder()
-                                        .setClickable(
-                                            ModifiersBuilders.Clickable.Builder()
-                                                .setOnClick(
-                                                    ActionBuilders.LoadAction.Builder().build()
-                                                )
-                                                .setId("refresh")
-                                                .build()
-                                        )
-                                        .build()
-                                )
+                                .setModifiers(getRefreshModifiers())
                                 .build()
                         )
                         .setRotateContents(false)
@@ -147,6 +136,20 @@ class TemplateTile : TileService() {
                 )
                 .build()
         )
+        setModifiers(getRefreshModifiers())
     }
         .build()
+
+    private fun getRefreshModifiers(): ModifiersBuilders.Modifiers {
+        return ModifiersBuilders.Modifiers.Builder()
+            .setClickable(
+                ModifiersBuilders.Clickable.Builder()
+                    .setOnClick(
+                        ActionBuilders.LoadAction.Builder().build()
+                    )
+                    .setId("refresh")
+                    .build()
+            )
+            .build()
+    }
 }
