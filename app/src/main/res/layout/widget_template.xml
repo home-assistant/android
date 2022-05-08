@@ -14,8 +14,9 @@
         android:layout_height="match_parent"
         android:layout_gravity="center"
         android:gravity="center"
+        android:text="@string/widget_label_placeholder_text_template"
         android:textAlignment="center"
-        android:textColor="@color/colorWidgetButtonLabel"
+        android:textColor="?colorWidgetOnBackground"
         android:textSize="12sp" />
 
     <ImageView

@@ -10,15 +10,22 @@ import android.os.Bundle
 import android.text.Html.fromHtml
 import android.view.View
 import android.view.View.VISIBLE
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
+import androidx.core.graphics.toColorInt
 import androidx.core.widget.doAfterTextChanged
+import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetTemplateConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
+import io.homeassistant.companion.android.util.getHexForColor
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -76,8 +83,18 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
 
         val templateWidgetDao = AppDatabase.getInstance(applicationContext).templateWidgetDao()
         val templateWidget = templateWidgetDao.get(appWidgetId)
+
+        val backgroundTypeValues = mutableListOf(
+            getString(commonR.string.widget_background_type_daynight),
+            getString(commonR.string.widget_background_type_transparent)
+        )
+        if (DynamicColors.isDynamicColorAvailable())
+            backgroundTypeValues.add(0, getString(commonR.string.widget_background_type_dynamiccolor))
+        binding.backgroundType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
+
         if (templateWidget != null) {
             binding.templateText.setText(templateWidget.template)
+            binding.textSize.setText(templateWidget.textSize.toInt().toString())
             binding.addButton.setText(commonR.string.update_widget)
             if (templateWidget.template.isNotEmpty())
                 renderTemplateText(templateWidget.template)
@@ -85,8 +102,27 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
                 binding.renderedTemplate.text = getString(commonR.string.empty_template)
                 binding.addButton.isEnabled = false
             }
+
+            binding.backgroundType.setSelection(
+                when {
+                    templateWidget.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable() ->
+                        backgroundTypeValues.indexOf(getString(commonR.string.widget_background_type_dynamiccolor))
+                    templateWidget.backgroundType == WidgetBackgroundType.TRANSPARENT ->
+                        backgroundTypeValues.indexOf(getString(commonR.string.widget_background_type_transparent))
+                    else ->
+                        backgroundTypeValues.indexOf(getString(commonR.string.widget_background_type_daynight))
+                }
+            )
+            binding.textColor.visibility = if (templateWidget.backgroundType == WidgetBackgroundType.TRANSPARENT) View.VISIBLE else View.GONE
+            binding.textColorWhite.isChecked =
+                templateWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, android.R.color.white) } ?: true
+            binding.textColorBlack.isChecked =
+                templateWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, commonR.color.colorWidgetButtonLabelBlack) } ?: false
+
             binding.deleteButton.visibility = VISIBLE
             binding.deleteButton.setOnClickListener(onDeleteWidget)
+        } else {
+            binding.backgroundType.setSelection(0)
         }
 
         binding.templateText.doAfterTextChanged { editableText ->
@@ -98,6 +134,18 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
             } else {
                 binding.renderedTemplate.text = getString(commonR.string.empty_template)
                 binding.addButton.isEnabled = false
+            }
+        }
+
+        binding.backgroundType.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                binding.textColor.visibility =
+                    if (parent?.adapter?.getItem(position) == getString(commonR.string.widget_background_type_transparent)) View.VISIBLE
+                    else View.GONE
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                binding.textColor.visibility = View.GONE
             }
         }
 
@@ -132,6 +180,21 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
             component = ComponentName(applicationContext, TemplateWidget::class.java)
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             putExtra(TemplateWidget.EXTRA_TEMPLATE, binding.templateText.text.toString())
+            putExtra(TemplateWidget.EXTRA_TEXT_SIZE, binding.textSize.text.toString().toFloat())
+            putExtra(
+                TemplateWidget.EXTRA_BACKGROUND_TYPE,
+                when (binding.backgroundType.selectedItem as String?) {
+                    getString(commonR.string.widget_background_type_dynamiccolor) -> WidgetBackgroundType.DYNAMICCOLOR
+                    getString(commonR.string.widget_background_type_transparent) -> WidgetBackgroundType.TRANSPARENT
+                    else -> WidgetBackgroundType.DAYNIGHT
+                }
+            )
+            putExtra(
+                TemplateWidget.EXTRA_TEXT_COLOR,
+                if (binding.backgroundType.selectedItem as String? == getString(commonR.string.widget_background_type_transparent))
+                    getHexForColor(if (binding.textColorWhite.isChecked) android.R.color.white else commonR.color.colorWidgetButtonLabelBlack)
+                else null
+            )
         }
         applicationContext.sendBroadcast(createIntent)
 

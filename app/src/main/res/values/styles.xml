@@ -72,6 +72,14 @@
         <item name="colorControlNormal">@color/colorDialogMessage</item>
     </style>
 
+    <style name="Theme.HomeAssistant.Widget">
+        <item name="colorWidgetPrimary">@color/colorWidgetButtonLabel</item>
+        <item name="colorWidgetButton">@color/colorIcon</item>
+        <item name="colorWidgetBackground">@color/colorWidgetButtonBackground</item>
+        <item name="colorWidgetOnBackground">@color/colorWidgetButtonLabel</item>
+        <item name="dimenWidgetCornerRadius">@dimen/widget_corner_radius</item>
+    </style>
+
     <style name="Authentication_Dialog" parent="Theme.MaterialComponents.Light.Dialog">
         <item name="android:textColor">@color/colorDialogTitle</item>
         <item name="buttonBarPositiveButtonStyle">@style/Alert.Button.Positive</item>
