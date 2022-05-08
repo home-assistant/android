@@ -33,4 +33,11 @@ object RegistriesDataHandler {
     ): String? {
         return entityRegistry?.firstOrNull { it.entityId == entityId }?.entityCategory
     }
+
+    fun getHiddenByForEntity(
+        entityId: String,
+        entityRegistry: List<EntityRegistryResponse>?
+    ): String? {
+        return entityRegistry?.firstOrNull { it.entityId == entityId }?.hiddenBy
+    }
 }

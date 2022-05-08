@@ -281,6 +281,9 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
     fun getCategoryForEntity(entityId: String): String? =
         RegistriesDataHandler.getCategoryForEntity(entityId, entityRegistry)
 
+    fun getHiddenByForEntity(entityId: String): String? =
+        RegistriesDataHandler.getHiddenByForEntity(entityId, entityRegistry)
+
     /**
      * Clears all favorites in the database.
      */
