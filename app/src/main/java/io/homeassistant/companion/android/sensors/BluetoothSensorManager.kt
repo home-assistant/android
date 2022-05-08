@@ -6,6 +6,7 @@ import android.os.Build
 import io.homeassistant.companion.android.bluetooth.ble.IBeaconTransmitter
 import io.homeassistant.companion.android.bluetooth.ble.TransmitterManager
 import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils
+import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils.supportsTransmitter
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
@@ -242,18 +243,20 @@ class BluetoothSensorManager : SensorManager {
             TransmitterManager.stopTransmitting(bleTransmitterDevice)
         }
 
+        val lastState = AppDatabase.getInstance(context).sensorDao().get(bleTransmitter.id)?.state ?: "unknown"
         val state = if (isBtOn(context)) bleTransmitterDevice.state else "Bluetooth is turned off"
         val icon = if (bleTransmitterDevice.transmitting) "mdi:bluetooth" else "mdi:bluetooth-off"
         onSensorUpdated(
             context,
             bleTransmitter,
-            state,
+            if (state != "") state else lastState,
             icon,
             mapOf(
                 "id" to bleTransmitterDevice.uuid + "-" + bleTransmitterDevice.major + "-" + bleTransmitterDevice.minor,
                 "Transmitting power" to bleTransmitterDevice.transmitPowerSetting,
                 "Advertise mode" to bleTransmitterDevice.advertiseModeSetting,
-                "Measured power" to bleTransmitterDevice.measuredPowerSetting
+                "Measured power" to bleTransmitterDevice.measuredPowerSetting,
+                "Supports transmitter" to supportsTransmitter(context)
             )
         )
     }
