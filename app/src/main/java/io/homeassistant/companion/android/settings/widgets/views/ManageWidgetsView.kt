@@ -106,7 +106,10 @@ fun ManageWidgetsView(
                 contentPadding = PaddingValues(all = 0.dp)
             )
         }
-        LazyColumn(modifier = Modifier.padding(all = 16.dp)) {
+        LazyColumn(
+            contentPadding = PaddingValues(all = 16.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
             if (viewModel.buttonWidgetList.value.isEmpty() && viewModel.staticWidgetList.value.isEmpty() &&
                 viewModel.mediaWidgetList.value.isEmpty() && viewModel.templateWidgetList.value.isEmpty() &&
                 viewModel.cameraWidgetList.value.isEmpty()
