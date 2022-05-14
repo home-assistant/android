@@ -92,7 +92,9 @@ open class TLSWebViewClient @Inject constructor(private var keyChainRepository: 
                     request.proceed(key, chain)
                 }
             } else {
+                // Either the user didn't choose a key or no key was available
                 hasUserDeniedAccess = true
+                request.proceed(null, null)
             }
         }
     }
@@ -105,7 +107,7 @@ open class TLSWebViewClient @Inject constructor(private var keyChainRepository: 
 
         // wait on the user to select a key
         while (!kcac.ready) {
-            Thread.sleep(500)
+            Thread.sleep(200)
         }
 
         // load the key and the cert chain
