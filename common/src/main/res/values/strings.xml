@@ -273,6 +273,8 @@
     <string name="lockscreen_title">App Locked !</string>
     <string name="log_file_not_created">Log file could not be created.</string>
     <string name="log_loader_text">Collecting logs…</string>
+    <string name="log_loader_process">Current log</string>
+    <string name="log_loader_crash">Recent crash</string>
     <string name="log">Log</string>
     <string name="logbook">Logbook</string>
     <string name="login">Login</string>
