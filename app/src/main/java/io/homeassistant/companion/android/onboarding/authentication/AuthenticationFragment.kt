@@ -9,11 +9,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.webkit.SslErrorHandler
-import android.webkit.WebResourceError
-import android.webkit.WebResourceRequest
-import android.webkit.WebView
-import android.webkit.WebViewClient
+import android.webkit.*
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.compose.ui.platform.ComposeView
@@ -31,6 +27,7 @@ import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegr
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.TLSWebViewClient
 import io.homeassistant.companion.android.util.isStarted
+import io.homeassistant.companion.android.webview.WebViewActivity
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
@@ -78,6 +75,15 @@ class AuthenticationFragment : Fragment() {
                                 ) {
                                     super.onReceivedError(view, request, error)
                                     showError(commonR.string.webview_error, null, error)
+                                }
+
+                                override fun onReceivedHttpError(
+                                    view: WebView?,
+                                    request: WebResourceRequest?,
+                                    errorResponse: WebResourceResponse?
+                                ) {
+                                    super.onReceivedHttpError(view, request, errorResponse)
+                                    showError(commonR.string.error_ssl, null, null)
                                 }
 
                                 override fun onReceivedSslError(
