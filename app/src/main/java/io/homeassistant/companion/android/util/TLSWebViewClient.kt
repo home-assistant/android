@@ -78,24 +78,22 @@ open class TLSWebViewClient @Inject constructor(private var keyChainRepository: 
             // see: https://developer.android.com/reference/android/security/KeyChain#getPrivateKey(android.content.Context,%20java.lang.String)
             // Also from now on displaying error message on the UI is more tricky (not on main thread)
 
-            //Executors.newSingleThreadExecutor().execute {
-                val alias = selectClientCert(activity!!, request.principals)
-                // null if the user denied access to the key
-                if (alias != null) {
-                    // The key should be available now
-                    runBlocking {
-                        key = keyChainRepository.getPrivateKey()
-                        chain = keyChainRepository.getCertificateChain()
-                    }
-
-                    // If we got the key and the chain, then proceed with the request
-                    if (key != null && chain != null) {
-                        request.proceed(key, chain)
-                    }
-                } else {
-                    hasUserDeniedAccess = true
+            val alias = selectClientCert(activity, request.principals)
+            // null if the user denied access to the key
+            if (alias != null) {
+                // The key should be available now
+                runBlocking {
+                    key = keyChainRepository.getPrivateKey()
+                    chain = keyChainRepository.getCertificateChain()
                 }
-            //}
+
+                // If we got the key and the chain, then proceed with the request
+                if (key != null && chain != null) {
+                    request.proceed(key, chain)
+                }
+            } else {
+                hasUserDeniedAccess = true
+            }
         }
     }
 

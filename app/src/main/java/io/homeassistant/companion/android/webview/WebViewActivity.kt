@@ -84,7 +84,6 @@ import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.ChangeLog
 import io.homeassistant.companion.android.util.OnSwipeListener
-import io.homeassistant.companion.android.util.DisabledLocationHandler
 import io.homeassistant.companion.android.util.TLSWebViewClient
 import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.websocket.WebsocketManager
