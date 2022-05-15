@@ -9,7 +9,10 @@ import java.security.Principal
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import javax.inject.Inject
-import javax.net.ssl.*
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManagerFactory
+import javax.net.ssl.X509ExtendedKeyManager
+import javax.net.ssl.X509TrustManager
 
 class TLSHelper @Inject constructor(private val keyChainRepository: KeyChainRepository) {
 
@@ -60,7 +63,7 @@ class TLSHelper @Inject constructor(private val keyChainRepository: KeyChainRepo
                 var chain: Array<X509Certificate>?
 
                 // block until a chain is provided via the TLSWebView
-                while(true) {
+                while (true) {
                     runBlocking {
                         chain = keyChainRepository.getCertificateChain()
                     }
