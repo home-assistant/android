@@ -6,6 +6,7 @@
         <item name="android:colorBackground">@color/colorLaunchScreenBackground</item>
         <item name="android:statusBarColor">@color/colorLaunchScreenBackground</item>
         <item name="android:navigationBarColor">@color/colorLaunchScreenBackground</item>
+        <item name="alertDialogTheme">@style/Theme.HomeAssistant.Dialog.Alert.Launch</item>
     </style>
 
     <style name="Theme.HomeAssistant.DynamicColorWidget">
