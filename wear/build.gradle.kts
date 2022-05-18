@@ -85,9 +85,9 @@ play {
 dependencies {
     implementation(project(":common"))
 
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.10")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.6.0")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.21")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.6.1")
 
     implementation("com.google.android.material:material:1.5.0")
 
@@ -101,6 +101,7 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.41")
     kapt("com.google.dagger:hilt-android-compiler:2.41")
 
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.2.2") // remove when jackson-module-kotlin version is higher
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.2")
     implementation("com.squareup.okhttp3:okhttp:4.9.3")
 

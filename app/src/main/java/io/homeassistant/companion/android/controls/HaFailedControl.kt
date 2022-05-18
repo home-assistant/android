@@ -13,35 +13,33 @@ import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 
 @RequiresApi(Build.VERSION_CODES.R)
-class HaFailedControl {
-    companion object : HaControl {
-        override fun provideControlFeatures(
-            context: Context,
-            control: Control.StatefulBuilder,
-            entity: Entity<Map<String, Any>>,
-            area: AreaRegistryResponse?
-        ): Control.StatefulBuilder {
-            control.setStatus(if (entity.state == "notfound") Control.STATUS_NOT_FOUND else Control.STATUS_ERROR)
-            control.setStatusText("")
-            control.setControlTemplate(
-                StatelessTemplate(
-                    entity.entityId
-                )
+object HaFailedControl : HaControl {
+    override fun provideControlFeatures(
+        context: Context,
+        control: Control.StatefulBuilder,
+        entity: Entity<Map<String, Any>>,
+        area: AreaRegistryResponse?
+    ): Control.StatefulBuilder {
+        control.setStatus(if (entity.state == "notfound") Control.STATUS_NOT_FOUND else Control.STATUS_ERROR)
+        control.setStatusText("")
+        control.setControlTemplate(
+            StatelessTemplate(
+                entity.entityId
             )
-            return control
-        }
+        )
+        return control
+    }
 
-        override fun getDeviceType(entity: Entity<Map<String, Any>>): Int =
-            DeviceTypes.TYPE_UNKNOWN
+    override fun getDeviceType(entity: Entity<Map<String, Any>>): Int =
+        DeviceTypes.TYPE_UNKNOWN
 
-        override fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String =
-            entity.domain.capitalize()
+    override fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String =
+        entity.domain.replaceFirstChar { it.titlecase() }
 
-        override fun performAction(
-            integrationRepository: IntegrationRepository,
-            action: ControlAction
-        ): Boolean {
-            return false
-        }
+    override suspend fun performAction(
+        integrationRepository: IntegrationRepository,
+        action: ControlAction
+    ): Boolean {
+        return false
     }
 }

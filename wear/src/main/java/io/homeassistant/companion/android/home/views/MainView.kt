@@ -174,7 +174,10 @@ fun MainView(
                 }
 
                 if (mainViewModel.entitiesByArea.values.any {
-                    it.isNotEmpty() && it.any { entity -> mainViewModel.getCategoryForEntity(entity.entityId) == null }
+                    it.isNotEmpty() && it.any { entity ->
+                        mainViewModel.getCategoryForEntity(entity.entityId) == null &&
+                            mainViewModel.getHiddenByForEntity(entity.entityId) == null
+                    }
                 }
                 ) {
                     item {
@@ -182,7 +185,10 @@ fun MainView(
                     }
                     for (id in mainViewModel.entitiesByAreaOrder) {
                         val entities = mainViewModel.entitiesByArea[id]
-                        val entitiesToShow = entities?.filter { mainViewModel.getCategoryForEntity(it.entityId) == null }
+                        val entitiesToShow = entities?.filter {
+                            mainViewModel.getCategoryForEntity(it.entityId) == null &&
+                                mainViewModel.getHiddenByForEntity(it.entityId) == null
+                        }
                         if (!entitiesToShow.isNullOrEmpty()) {
                             val area = mainViewModel.areas.first { it.areaId == id }
                             item {
@@ -195,7 +201,10 @@ fun MainView(
                                         onTestClicked(
                                             mapOf(area.name to entities),
                                             listOf(area.name)
-                                        ) { mainViewModel.getCategoryForEntity(it.entityId) == null }
+                                        ) {
+                                            mainViewModel.getCategoryForEntity(it.entityId) == null &&
+                                                mainViewModel.getHiddenByForEntity(it.entityId) == null
+                                        }
                                     },
                                     colors = ChipDefaults.primaryChipColors()
                                 )
@@ -205,7 +214,11 @@ fun MainView(
                 }
 
                 val domainEntitiesFilter: (entity: Entity<*>) -> Boolean =
-                    { mainViewModel.getAreaForEntity(it.entityId) == null && mainViewModel.getCategoryForEntity(it.entityId) == null }
+                    {
+                        mainViewModel.getAreaForEntity(it.entityId) == null &&
+                            mainViewModel.getCategoryForEntity(it.entityId) == null &&
+                            mainViewModel.getHiddenByForEntity(it.entityId) == null
+                    }
                 if (mainViewModel.entities.values.any(domainEntitiesFilter)) {
                     item {
                         ListHeader(id = commonR.string.more_entities)

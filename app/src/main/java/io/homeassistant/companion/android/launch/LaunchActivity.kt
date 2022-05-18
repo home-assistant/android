@@ -18,7 +18,6 @@ import io.homeassistant.companion.android.common.data.integration.DeviceRegistra
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.onboarding.getMessagingToken
 import io.homeassistant.companion.android.sensors.LocationSensorManager
@@ -142,22 +141,15 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
         displayWebview()
     }
 
-    private fun setLocationTracking(enabled: Boolean) {
+    private suspend fun setLocationTracking(enabled: Boolean) {
         val sensorDao = AppDatabase.getInstance(applicationContext).sensorDao()
-        arrayOf(
-            LocationSensorManager.backgroundLocation,
-            LocationSensorManager.zoneLocation,
-            LocationSensorManager.singleAccurateLocation
-        ).forEach { basicSensor ->
-            var sensorEntity = sensorDao.get(basicSensor.id)
-            if (sensorEntity != null) {
-                sensorEntity.enabled = enabled
-                sensorEntity.lastSentState = ""
-                sensorDao.update(sensorEntity)
-            } else {
-                sensorEntity = Sensor(basicSensor.id, enabled, false, "")
-                sensorDao.add(sensorEntity)
-            }
-        }
+        sensorDao.setSensorsEnabled(
+            sensorIds = listOf(
+                LocationSensorManager.backgroundLocation.id,
+                LocationSensorManager.zoneLocation.id,
+                LocationSensorManager.singleAccurateLocation.id
+            ),
+            enabled = enabled
+        )
     }
 }

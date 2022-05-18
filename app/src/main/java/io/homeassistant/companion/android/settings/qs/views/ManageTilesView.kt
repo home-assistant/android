@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.settings.qs.views
 
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -35,7 +33,6 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.fragment.app.FragmentManager
 import com.maltaisn.icondialog.IconDialog
 import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.qs.TileEntity
 import io.homeassistant.companion.android.settings.qs.ManageTilesViewModel
 
@@ -46,7 +43,6 @@ fun ManageTilesView(
     childFragment: FragmentManager
 ) {
     val scrollState = rememberScrollState()
-    val context = LocalContext.current
     var expandedTile by remember { mutableStateOf(false) }
     var expandedEntity by remember { mutableStateOf(false) }
     Box(modifier = Modifier.verticalScroll(scrollState)) {
@@ -157,8 +153,7 @@ fun ManageTilesView(
                         viewModel.tileLabel.value.toString(),
                         viewModel.tileSubtitle.value
                     )
-                    AppDatabase.getInstance(context).tileDao().add(tileData)
-                    Toast.makeText(context, R.string.tile_updated, Toast.LENGTH_SHORT).show()
+                    viewModel.addTile(tileData)
                 },
                 enabled = !viewModel.tileLabel.value.isNullOrEmpty() && viewModel.selectedEntityId.value.isNotEmpty()
             ) {

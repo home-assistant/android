@@ -20,7 +20,6 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.En
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.wear.getAllFlow
 import io.homeassistant.companion.android.util.RegistriesDataHandler
@@ -52,7 +51,6 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
         this.homePresenter = homePresenter
         loadSettings()
         loadEntities()
-        getSensors()
     }
 
     // entities
@@ -62,7 +60,7 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
     /**
      * IDs of favorites in the Favorites database.
      */
-    val favoriteEntityIds = favoritesDao.getAllFlow().collectAsState(initial = emptyList())
+    val favoriteEntityIds = favoritesDao.getAllFlow().collectAsState()
 
     var shortcutEntities = mutableStateListOf<SimplifiedEntity>()
         private set
@@ -97,14 +95,12 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
     var templateTileRefreshInterval = mutableStateOf(0)
         private set
 
-    private fun sensors(): Flow<List<Sensor>>? = sensorsDao.getAllFlow()
-
     fun supportedDomains(): List<String> = HomePresenterImpl.supportedDomains
 
     fun stringForDomain(domain: String): String? =
         HomePresenterImpl.domainsWithNames[domain]?.let { app.applicationContext.getString(it) }
 
-    var sensors = mutableStateListOf<Sensor>()
+    val sensors = sensorsDao.getAllFlow().collectAsState()
 
     private fun loadSettings() {
         viewModelScope.launch {
@@ -271,21 +267,12 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
         }
     }
 
-    private fun updateSensorEntity(
+    private suspend fun updateSensorEntity(
         sensorDao: SensorDao,
         basicSensor: SensorManager.BasicSensor,
         isEnabled: Boolean
     ) {
-
-        var sensorEntity = sensorDao.get(basicSensor.id)
-        if (sensorEntity != null) {
-            sensorEntity.enabled = isEnabled
-            sensorEntity.lastSentState = ""
-            sensorDao.update(sensorEntity)
-        } else {
-            sensorEntity = Sensor(basicSensor.id, isEnabled, false, "")
-            sensorDao.add(sensorEntity)
-        }
+        sensorDao.setSensorsEnabled(listOf(basicSensor.id), isEnabled)
     }
 
     fun getAreaForEntity(entityId: String): AreaRegistryResponse? =
@@ -294,23 +281,15 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
     fun getCategoryForEntity(entityId: String): String? =
         RegistriesDataHandler.getCategoryForEntity(entityId, entityRegistry)
 
+    fun getHiddenByForEntity(entityId: String): String? =
+        RegistriesDataHandler.getHiddenByForEntity(entityId, entityRegistry)
+
     /**
      * Clears all favorites in the database.
      */
     fun clearFavorites() {
         viewModelScope.launch {
             favoritesDao.deleteAll()
-        }
-    }
-
-    private fun getSensors() {
-        viewModelScope.launch {
-            sensors()?.collect {
-                sensors.clear()
-                for (sensor in it) {
-                    sensors.add(sensor)
-                }
-            }
         }
     }
 
@@ -397,4 +376,5 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
         }
         return state
     }
+    private fun <T> Flow<List<T>>.collectAsState(): State<List<T>> = collectAsState(initial = emptyList())
 }

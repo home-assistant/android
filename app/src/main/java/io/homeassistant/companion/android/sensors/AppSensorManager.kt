@@ -24,6 +24,7 @@ class AppSensorManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_current_version,
             commonR.string.sensor_description_current_version,
+            "mdi:android",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#current-version-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
@@ -33,6 +34,7 @@ class AppSensorManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_app_rx_gb,
             commonR.string.sensor_description_app_rx_gb,
+            "mdi:radio-tower",
             unitOfMeasurement = "GB",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-data-sensors",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
@@ -44,6 +46,7 @@ class AppSensorManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_app_tx_gb,
             commonR.string.sensor_description_app_tx_gb,
+            "mdi:radio-tower",
             unitOfMeasurement = "GB",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-data-sensors",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
@@ -55,6 +58,7 @@ class AppSensorManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_app_memory,
             commonR.string.sensor_description_app_memory,
+            "mdi:memory",
             unitOfMeasurement = "GB",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-memory-sensor",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
@@ -66,6 +70,7 @@ class AppSensorManager : SensorManager {
             "binary_sensor",
             commonR.string.basic_sensor_name_app_inactive,
             commonR.string.sensor_description_app_inactive,
+            "mdi:timer-outline",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-usage-sensors",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
@@ -75,6 +80,7 @@ class AppSensorManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_app_standby,
             commonR.string.sensor_description_app_standby,
+            "mdi:android",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-usage-sensors",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
@@ -84,6 +90,7 @@ class AppSensorManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_app_importance,
             commonR.string.sensor_description_app_importance,
+            "mdi:android",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-importance-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
@@ -137,13 +144,12 @@ class AppSensorManager : SensorManager {
             return
 
         val state = BuildConfig.VERSION_NAME
-        val icon = "mdi:android"
 
         onSensorUpdated(
             context,
             currentVersion,
             state,
-            icon,
+            currentVersion.statelessIcon,
             mapOf()
         )
     }
@@ -159,13 +165,12 @@ class AppSensorManager : SensorManager {
             Log.e(TAG, "Error getting app rx bytes", e)
             return
         }
-        val icon = "mdi:radio-tower"
 
         onSensorUpdated(
             context,
             app_rx_gb,
             appRx.toBigDecimal().setScale(4, RoundingMode.HALF_EVEN),
-            icon,
+            app_rx_gb.statelessIcon,
             mapOf()
         )
     }
@@ -181,13 +186,12 @@ class AppSensorManager : SensorManager {
             Log.e(TAG, "Error getting app tx bytes", e)
             return
         }
-        val icon = "mdi:radio-tower"
 
         onSensorUpdated(
             context,
             app_tx_gb,
             appTx.toBigDecimal().setScale(4, RoundingMode.HALF_EVEN),
-            icon,
+            app_tx_gb.statelessIcon,
             mapOf()
         )
     }
@@ -202,13 +206,11 @@ class AppSensorManager : SensorManager {
         val totalSize = runTime.totalMemory().toFloat() / GB
         val usedSize = totalSize - freeSize
 
-        val icon = "mdi:memory"
-
         onSensorUpdated(
             context,
             app_memory,
             usedSize.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN),
-            icon,
+            app_memory.statelessIcon,
             mapOf(
                 "free_memory" to freeSize.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN),
                 "total_memory" to totalSize.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN)
@@ -248,13 +250,11 @@ class AppSensorManager : SensorManager {
             else -> "never"
         }
 
-        val icon = "mdi:android"
-
         onSensorUpdated(
             context,
             app_standby_bucket,
             appStandbyBucket,
-            icon,
+            app_standby_bucket.statelessIcon,
             mapOf()
         )
     }
@@ -302,13 +302,12 @@ class AppSensorManager : SensorManager {
                 }
             }
         }
-        val icon = "mdi:android"
 
         onSensorUpdated(
             context,
             app_importance,
             importance,
-            icon,
+            app_importance.statelessIcon,
             mapOf()
         )
     }

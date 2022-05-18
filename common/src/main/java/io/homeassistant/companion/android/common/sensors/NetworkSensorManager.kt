@@ -13,6 +13,7 @@ import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
+import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.OkHttpClient
@@ -31,62 +32,77 @@ class NetworkSensorManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_wifi,
             commonR.string.sensor_description_wifi_connection,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            "mdi:wifi",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         val bssidState = SensorManager.BasicSensor(
             "wifi_bssid",
             "sensor",
             commonR.string.basic_sensor_name_wifi_bssid,
             commonR.string.sensor_description_wifi_bssid,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            "mdi:wifi",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         val wifiIp = SensorManager.BasicSensor(
             "wifi_ip_address",
             "sensor",
             commonR.string.basic_sensor_name_wifi_ip,
             commonR.string.sensor_description_wifi_ip,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            "mdi:ip",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         val wifiLinkSpeed = SensorManager.BasicSensor(
             "wifi_link_speed",
             "sensor",
             commonR.string.basic_sensor_name_wifi_link_speed,
             commonR.string.sensor_description_wifi_link_speed,
+            "mdi:wifi-strength-3",
             unitOfMeasurement = "Mbps",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         val wifiState = SensorManager.BasicSensor(
             "wifi_state",
             "binary_sensor",
             commonR.string.basic_sensor_name_wifi_state,
             commonR.string.sensor_description_wifi_state,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            "mdi:wifi",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         val wifiFrequency = SensorManager.BasicSensor(
             "wifi_frequency",
             "sensor",
             commonR.string.basic_sensor_name_wifi_frequency,
             commonR.string.sensor_description_wifi_frequency,
+            "mdi:wifi",
             unitOfMeasurement = "MHz",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         val wifiSignalStrength = SensorManager.BasicSensor(
             "wifi_signal_strength",
             "sensor",
             commonR.string.basic_sensor_name_wifi_signal,
             commonR.string.sensor_description_wifi_signal,
-            "signal_strength",
+            "mdi:wifi-strength-3",
+            deviceClass = "signal_strength",
             unitOfMeasurement = "dBm",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         val publicIp = SensorManager.BasicSensor(
             "public_ip_address",
             "sensor",
             commonR.string.basic_sensor_name_public_ip,
             commonR.string.sensor_description_public_ip,
+            "mdi:ip",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#public-ip-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
@@ -95,8 +111,10 @@ class NetworkSensorManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_network_type,
             commonR.string.sensor_description_network_type,
+            "mdi:network",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#network-type-sensor",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         private const val SETTING_GET_CURRENT_BSSID = "network_get_current_bssid"
     }
@@ -213,8 +231,8 @@ class NetworkSensorManager : SensorManager {
         val currentSetting = sensorSettings.firstOrNull { it.name == settingName }?.value ?: ""
         if (getCurrentBSSID == "true") {
             if (currentSetting == "") {
-                sensorDao.add(SensorSetting(bssidState.id, SETTING_GET_CURRENT_BSSID, "false", "toggle"))
-                sensorDao.add(SensorSetting(bssidState.id, settingName, bssid, "string"))
+                sensorDao.add(SensorSetting(bssidState.id, SETTING_GET_CURRENT_BSSID, "false", SensorSettingType.TOGGLE))
+                sensorDao.add(SensorSetting(bssidState.id, settingName, bssid, SensorSettingType.STRING))
             }
         } else {
             if (currentSetting != "")
@@ -222,7 +240,7 @@ class NetworkSensorManager : SensorManager {
             else
                 sensorDao.removeSetting(bssidState.id, settingName)
 
-            sensorDao.add(SensorSetting(bssidState.id, SETTING_GET_CURRENT_BSSID, "false", "toggle"))
+            sensorDao.add(SensorSetting(bssidState.id, SETTING_GET_CURRENT_BSSID, "false", SensorSettingType.TOGGLE))
         }
 
         val icon = if (bssid != "<not connected>") "mdi:wifi" else "mdi:wifi-off"
@@ -253,13 +271,11 @@ class NetworkSensorManager : SensorManager {
             }
         }
 
-        val icon = "mdi:ip"
-
         onSensorUpdated(
             context,
             wifiIp,
             deviceIp,
-            icon,
+            wifiIp.statelessIcon,
             mapOf()
         )
     }
@@ -348,13 +364,11 @@ class NetworkSensorManager : SensorManager {
             }
         }
 
-        val icon = "mdi:wifi"
-
         onSensorUpdated(
             context,
             wifiFrequency,
             frequency,
-            icon,
+            wifiFrequency.statelessIcon,
             mapOf()
         )
     }
@@ -428,7 +442,7 @@ class NetworkSensorManager : SensorManager {
                     context,
                     publicIp,
                     ip,
-                    "mdi:ip",
+                    publicIp.statelessIcon,
                     mapOf()
                 )
             }

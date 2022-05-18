@@ -15,6 +15,8 @@ import com.google.android.gms.location.SleepSegmentEvent
 import com.google.android.gms.location.SleepSegmentRequest
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
+import java.util.concurrent.TimeUnit
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
@@ -35,7 +37,8 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
             "detected_activity",
             "sensor",
             commonR.string.basic_sensor_name_activity,
-            commonR.string.sensor_description_detected_activity
+            commonR.string.sensor_description_detected_activity,
+            "mdi:walk"
         )
 
         private val sleepConfidence = SensorManager.BasicSensor(
@@ -43,8 +46,10 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_sleep_confidence,
             commonR.string.sensor_description_sleep_confidence,
+            "mdi:sleep",
             unitOfMeasurement = "%",
-            stateClass = SensorManager.STATE_CLASS_MEASUREMENT
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
+            updateType = SensorManager.BasicSensor.UpdateType.CUSTOM
         )
 
         private val sleepSegment = SensorManager.BasicSensor(
@@ -52,7 +57,9 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_sleep_segment,
             commonR.string.sensor_description_sleep_segment,
-            unitOfMeasurement = "ms"
+            "mdi:sleep",
+            unitOfMeasurement = "ms",
+            updateType = SensorManager.BasicSensor.UpdateType.CUSTOM
         )
     }
 
@@ -119,7 +126,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
                     context,
                     sleepConfidence,
                     sleepClassifyEvent.last().confidence,
-                    "mdi:sleep",
+                    sleepConfidence.statelessIcon,
                     mapOf(
                         "light" to sleepClassifyEvent.last().light,
                         "motion" to sleepClassifyEvent.last().motion,
@@ -140,7 +147,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
                     context,
                     sleepSegment,
                     sleepSegmentEvent.last().segmentDurationMillis,
-                    "mdi:sleep",
+                    sleepSegment.statelessIcon,
                     mapOf(
                         "start" to sleepSegmentEvent.last().startTimeMillis,
                         "end" to sleepSegmentEvent.last().endTimeMillis,
@@ -211,7 +218,8 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
             actReg.removeActivityUpdates(pendingIntent)
 
             Log.d(TAG, "Registering for activity updates.")
-            actReg.requestActivityUpdates(120000, pendingIntent)
+            val fastUpdate = SensorReceiverBase.shouldDoFastUpdates(context)
+            actReg.requestActivityUpdates(TimeUnit.MINUTES.toMillis(if (fastUpdate) 1 else 2), pendingIntent)
         }
         if ((
             isEnabled(context, sleepConfidence.id) || isEnabled(

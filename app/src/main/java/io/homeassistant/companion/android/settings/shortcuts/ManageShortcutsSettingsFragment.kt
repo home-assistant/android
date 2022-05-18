@@ -15,6 +15,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.composethemeadapter.MdcTheme
 import com.maltaisn.icondialog.IconDialog
 import com.maltaisn.icondialog.IconDialogSettings
@@ -25,9 +26,13 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.settings.shortcuts.views.ManageShortcutsView
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
+@RequiresApi(Build.VERSION_CODES.N_MR1)
 @AndroidEntryPoint
 class ManageShortcutsSettingsFragment : Fragment(), IconDialog.Callback {
 
@@ -43,6 +48,14 @@ class ManageShortcutsSettingsFragment : Fragment(), IconDialog.Callback {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
+
+        lifecycleScope.launch {
+            withContext(Dispatchers.IO) {
+                val loader = IconPackLoader(requireContext())
+                iconPack = createMaterialDesignIconPack(loader)
+                iconPack.loadDrawables(loader.drawableLoader)
+            }
+        }
     }
 
     override fun onPrepareOptionsMenu(menu: Menu) {
@@ -56,7 +69,6 @@ class ManageShortcutsSettingsFragment : Fragment(), IconDialog.Callback {
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
 
-    @RequiresApi(Build.VERSION_CODES.N_MR1)
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -79,10 +91,6 @@ class ManageShortcutsSettingsFragment : Fragment(), IconDialog.Callback {
     @RequiresApi(Build.VERSION_CODES.N_MR1)
     override fun onResume() {
         super.onResume()
-
-        val loader = IconPackLoader(requireContext())
-        iconPack = createMaterialDesignIconPack(loader)
-        iconPack.loadDrawables(loader.drawableLoader)
 
         viewModel.updatePinnedShortcuts()
         activity?.title = getString(commonR.string.shortcuts)

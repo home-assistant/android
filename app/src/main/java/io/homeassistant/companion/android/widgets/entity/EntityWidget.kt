@@ -4,18 +4,25 @@ import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.toColorInt
+import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
+import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
+import io.homeassistant.companion.android.util.getAttribute
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import kotlinx.coroutines.launch
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class EntityWidget : BaseWidgetProvider() {
@@ -29,6 +36,8 @@ class EntityWidget : BaseWidgetProvider() {
         internal const val EXTRA_TEXT_SIZE = "EXTRA_TEXT_SIZE"
         internal const val EXTRA_STATE_SEPARATOR = "EXTRA_STATE_SEPARATOR"
         internal const val EXTRA_ATTRIBUTE_SEPARATOR = "EXTRA_ATTRIBUTE_SEPARATOR"
+        internal const val EXTRA_BACKGROUND_TYPE = "EXTRA_BACKGROUND_TYPE"
+        internal const val EXTRA_TEXT_COLOR = "EXTRA_TEXT_COLOR"
 
         private data class ResolvedText(val text: CharSequence?, val exception: Boolean = false)
     }
@@ -39,8 +48,9 @@ class EntityWidget : BaseWidgetProvider() {
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         }
 
-        val views = RemoteViews(context.packageName, R.layout.widget_static).apply {
-            val widget = AppDatabase.getInstance(context).staticWidgetDao().get(appWidgetId)
+        val widget = AppDatabase.getInstance(context).staticWidgetDao().get(appWidgetId)
+        val useDynamicColors = widget?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
+        val views = RemoteViews(context.packageName, if (useDynamicColors) R.layout.widget_static_wrapper_dynamiccolor else R.layout.widget_static_wrapper_default).apply {
             if (widget != null) {
                 val entityId: String = widget.entityId
                 val attributeIds: String? = widget.attributeIds
@@ -48,6 +58,18 @@ class EntityWidget : BaseWidgetProvider() {
                 val textSize: Float = widget.textSize
                 val stateSeparator: String = widget.stateSeparator
                 val attributeSeparator: String = widget.attributeSeparator
+
+                // Theming
+                if (widget.backgroundType == WidgetBackgroundType.TRANSPARENT) {
+                    var textColor = context.getAttribute(R.attr.colorWidgetOnBackground, ContextCompat.getColor(context, commonR.color.colorWidgetButtonLabel))
+                    widget.textColor?.let { textColor = it.toColorInt() }
+
+                    setInt(R.id.widgetLayout, "setBackgroundColor", Color.TRANSPARENT)
+                    setTextColor(R.id.widgetText, textColor)
+                    setTextColor(R.id.widgetLabel, textColor)
+                }
+
+                // Content
                 val resolvedText = resolveTextToShow(
                     context,
                     entityId,
@@ -83,14 +105,17 @@ class EntityWidget : BaseWidgetProvider() {
                         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                     )
                 )
+            } else {
+                setTextViewText(R.id.widgetText, "")
+                setTextViewText(R.id.widgetLabel, "")
             }
         }
 
         return views
     }
 
-    override fun getAllWidgetIds(context: Context): List<Int> {
-        return AppDatabase.getInstance(context).staticWidgetDao().getAll()?.map { it.id }.orEmpty()
+    override suspend fun getAllWidgetIds(context: Context): List<Int> {
+        return AppDatabase.getInstance(context).staticWidgetDao().getAll().map { it.id }
     }
 
     private suspend fun resolveTextToShow(
@@ -149,6 +174,8 @@ class EntityWidget : BaseWidgetProvider() {
         val textSizeSelection: String? = extras.getString(EXTRA_TEXT_SIZE)
         val stateSeparatorSelection: String? = extras.getString(EXTRA_STATE_SEPARATOR)
         val attributeSeparatorSelection: String? = extras.getString(EXTRA_ATTRIBUTE_SEPARATOR)
+        val backgroundTypeSelection: WidgetBackgroundType = extras.getSerializable(EXTRA_BACKGROUND_TYPE) as WidgetBackgroundType
+        val textColorSelection: String? = extras.getString(EXTRA_TEXT_COLOR)
 
         if (entitySelection == null) {
             Log.e(TAG, "Did not receive complete service call data")
@@ -172,7 +199,9 @@ class EntityWidget : BaseWidgetProvider() {
                     textSizeSelection?.toFloatOrNull() ?: 30F,
                     stateSeparatorSelection ?: "",
                     attributeSeparatorSelection ?: "",
-                    staticWidgetDao.get(appWidgetId)?.lastUpdate ?: ""
+                    staticWidgetDao.get(appWidgetId)?.lastUpdate ?: "",
+                    backgroundTypeSelection,
+                    textColorSelection
                 )
             )
 
@@ -180,8 +209,8 @@ class EntityWidget : BaseWidgetProvider() {
         }
     }
 
-    override fun onEntityStateChanged(context: Context, entity: Entity<*>) {
-        AppDatabase.getInstance(context).staticWidgetDao().getAll().orEmpty().forEach {
+    override suspend fun onEntityStateChanged(context: Context, entity: Entity<*>) {
+        AppDatabase.getInstance(context).staticWidgetDao().getAll().forEach {
             if (it.entityId == entity.entityId) {
                 mainScope.launch {
                     val views = getWidgetRemoteViews(context, it.id, entity as Entity<Map<String, Any>>)
@@ -193,8 +222,8 @@ class EntityWidget : BaseWidgetProvider() {
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
         val staticWidgetDao = AppDatabase.getInstance(context).staticWidgetDao()
-        appWidgetIds.forEach { appWidgetId ->
-            staticWidgetDao.delete(appWidgetId)
+        mainScope.launch {
+            staticWidgetDao.deleteAll(appWidgetIds)
         }
     }
 }

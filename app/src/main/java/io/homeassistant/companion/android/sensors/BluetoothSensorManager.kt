@@ -6,9 +6,11 @@ import android.os.Build
 import io.homeassistant.companion.android.bluetooth.ble.IBeaconTransmitter
 import io.homeassistant.companion.android.bluetooth.ble.TransmitterManager
 import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils
+import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils.supportsTransmitter
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
+import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import java.util.UUID
 import kotlin.collections.ArrayList
 import io.homeassistant.companion.android.common.R as commonR
@@ -35,7 +37,7 @@ class BluetoothSensorManager : SensorManager {
         private const val DEFAULT_BLE_ADVERTISE_MODE = "lowPower"
         private const val DEFAULT_BLE_MAJOR = "100"
         private const val DEFAULT_BLE_MINOR = "1"
-        private const val DEFAULT_MEASURED_POWER_AT_1M = "-59"
+        private const val DEFAULT_MEASURED_POWER_AT_1M = -59
         private var priorBluetoothStateEnabled = false
 
         // private const val TAG = "BluetoothSM"
@@ -45,22 +47,28 @@ class BluetoothSensorManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_bluetooth,
             commonR.string.sensor_description_bluetooth_connection,
+            "mdi:bluetooth",
             unitOfMeasurement = "connection(s)",
-            stateClass = SensorManager.STATE_CLASS_MEASUREMENT
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         val bluetoothState = SensorManager.BasicSensor(
             "bluetooth_state",
             "binary_sensor",
             commonR.string.basic_sensor_name_bluetooth_state,
             commonR.string.sensor_description_bluetooth_state,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            "mdi:bluetooth",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         val bleTransmitter = SensorManager.BasicSensor(
             "ble_emitter",
             "sensor",
             commonR.string.basic_sensor_name_bluetooth_ble_emitter,
             commonR.string.sensor_description_bluetooth_ble_emitter,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            "mdi:bluetooth",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
 
         fun enableDisableBLETransmitter(context: Context, transmitEnabled: Boolean) {
@@ -74,7 +82,7 @@ class BluetoothSensorManager : SensorManager {
             if (transmitEnabled) {
                 TransmitterManager.startTransmitting(context, bleTransmitterDevice)
             }
-            sensorDao.add(SensorSetting(bleTransmitter.id, SETTING_BLE_TRANSMIT_ENABLED, transmitEnabled.toString(), "toggle"))
+            sensorDao.add(SensorSetting(bleTransmitter.id, SETTING_BLE_TRANSMIT_ENABLED, transmitEnabled.toString(), SensorSettingType.TOGGLE))
         }
     }
 
@@ -121,15 +129,14 @@ class BluetoothSensorManager : SensorManager {
             return
 
         var totalConnectedDevices = 0
-        val icon = "mdi:bluetooth"
         var connectedPairedDevices: List<String> = ArrayList()
         var connectedNotPairedDevices: List<String> = ArrayList()
-        var bondedString = ""
+        var pairedDevices: List<String> = ArrayList()
 
         if (checkPermission(context, bluetoothConnection.id)) {
 
             val bluetoothDevices = BluetoothUtils.getBluetoothDevices(context)
-            bondedString = bluetoothDevices.filter { b -> b.paired }.map { it.address }.toString()
+            pairedDevices = bluetoothDevices.filter { b -> b.paired }.map { it.address }
             connectedPairedDevices = bluetoothDevices.filter { b -> b.paired && b.connected }.map { it.address }
             connectedNotPairedDevices = bluetoothDevices.filter { b -> !b.paired && b.connected }.map { it.address }
             totalConnectedDevices = bluetoothDevices.filter { b -> b.connected }.count()
@@ -138,11 +145,11 @@ class BluetoothSensorManager : SensorManager {
             context,
             bluetoothConnection,
             totalConnectedDevices,
-            icon,
+            bluetoothConnection.statelessIcon,
             mapOf(
                 "connected_paired_devices" to connectedPairedDevices,
                 "connected_not_paired_devices" to connectedNotPairedDevices,
-                "paired_devices" to bondedString
+                "paired_devices" to pairedDevices
             )
         )
     }
@@ -169,24 +176,30 @@ class BluetoothSensorManager : SensorManager {
     }
 
     private fun updateBLEDevice(context: Context) {
-        val transmitActive = getSetting(context, bleTransmitter, SETTING_BLE_TRANSMIT_ENABLED, "toggle", "true").toBoolean()
-        val uuid = getSetting(context, bleTransmitter, SETTING_BLE_ID1, "string", UUID.randomUUID().toString())
-        val major = getSetting(context, bleTransmitter, SETTING_BLE_ID2, "string", DEFAULT_BLE_MAJOR)
-        val minor = getSetting(context, bleTransmitter, SETTING_BLE_ID3, "string", DEFAULT_BLE_MINOR)
-        val measuredPower = getSetting(context, bleTransmitter, SETTING_BLE_MEASURED_POWER, "number", DEFAULT_MEASURED_POWER_AT_1M).toIntOrNull() ?: DEFAULT_MEASURED_POWER_AT_1M.toInt()
+        val transmitActive = getToggleSetting(context, bleTransmitter, SETTING_BLE_TRANSMIT_ENABLED, default = true)
+        val uuid = getSetting(context, bleTransmitter, SETTING_BLE_ID1, SensorSettingType.STRING, default = UUID.randomUUID().toString())
+        val major = getSetting(context, bleTransmitter, SETTING_BLE_ID2, SensorSettingType.STRING, default = DEFAULT_BLE_MAJOR)
+        val minor = getSetting(context, bleTransmitter, SETTING_BLE_ID3, SensorSettingType.STRING, default = DEFAULT_BLE_MINOR)
+        val measuredPower = getNumberSetting(context, bleTransmitter, SETTING_BLE_MEASURED_POWER, default = DEFAULT_MEASURED_POWER_AT_1M)
         val transmitPower = getSetting(
-            context, bleTransmitter, SETTING_BLE_TRANSMIT_POWER, "list",
-            listOf(
+            context = context,
+            sensor = bleTransmitter,
+            settingName = SETTING_BLE_TRANSMIT_POWER,
+            settingType = SensorSettingType.LIST,
+            entries = listOf(
                 BLE_TRANSMIT_ULTRA_LOW, BLE_TRANSMIT_LOW, BLE_TRANSMIT_MEDIUM, BLE_TRANSMIT_HIGH
             ),
-            DEFAULT_BLE_TRANSMIT_POWER
+            default = DEFAULT_BLE_TRANSMIT_POWER
         )
         val advertiseMode = getSetting(
-            context, bleTransmitter, SETTING_BLE_ADVERTISE_MODE, "list",
-            listOf(
+            context = context,
+            sensor = bleTransmitter,
+            settingName = SETTING_BLE_ADVERTISE_MODE,
+            settingType = SensorSettingType.LIST,
+            entries = listOf(
                 BLE_ADVERTISE_LOW_POWER, BLE_ADVERTISE_BALANCED, BLE_ADVERTISE_LOW_LATENCY
             ),
-            DEFAULT_BLE_ADVERTISE_MODE
+            default = DEFAULT_BLE_ADVERTISE_MODE
         )
 
         bleTransmitterDevice.restartRequired = false
@@ -230,18 +243,20 @@ class BluetoothSensorManager : SensorManager {
             TransmitterManager.stopTransmitting(bleTransmitterDevice)
         }
 
+        val lastState = AppDatabase.getInstance(context).sensorDao().get(bleTransmitter.id)?.state ?: "unknown"
         val state = if (isBtOn(context)) bleTransmitterDevice.state else "Bluetooth is turned off"
         val icon = if (bleTransmitterDevice.transmitting) "mdi:bluetooth" else "mdi:bluetooth-off"
         onSensorUpdated(
             context,
             bleTransmitter,
-            state,
+            if (state != "") state else lastState,
             icon,
             mapOf(
                 "id" to bleTransmitterDevice.uuid + "-" + bleTransmitterDevice.major + "-" + bleTransmitterDevice.minor,
                 "Transmitting power" to bleTransmitterDevice.transmitPowerSetting,
                 "Advertise mode" to bleTransmitterDevice.advertiseModeSetting,
-                "Measured power" to bleTransmitterDevice.measuredPowerSetting
+                "Measured power" to bleTransmitterDevice.measuredPowerSetting,
+                "Supports transmitter" to supportsTransmitter(context)
             )
         )
     }

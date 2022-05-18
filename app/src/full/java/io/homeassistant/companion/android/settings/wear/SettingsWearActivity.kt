@@ -97,6 +97,7 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
 
     override fun onResume() {
         super.onResume()
+        title = getString(commonR.string.wear_os_settings_title)
         capabilityClient.addListener(this, CAPABILITY_WEAR_APP)
     }
 
@@ -162,7 +163,7 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
             }
             allConnectedNodes.isEmpty() -> {
                 Log.d(TAG, "No devices")
-                binding.informationTextView.text = getString(commonR.string.message_checking)
+                binding.informationTextView.text = getString(commonR.string.message_no_connected_nodes)
                 binding.remoteOpenButton.isInvisible = true
             }
             wearNodesWithApp.isEmpty() -> {

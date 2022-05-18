@@ -10,6 +10,7 @@ import com.google.android.gms.location.LocationServices
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
+import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.location.HighAccuracyLocationService
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -23,7 +24,8 @@ class GeocodeSensorManager : SensorManager {
             "geocoded_location",
             "sensor",
             commonR.string.basic_sensor_name_geolocation,
-            commonR.string.sensor_description_geocoded_location
+            commonR.string.sensor_description_geocoded_location,
+            "mdi:map"
         )
     }
 
@@ -72,7 +74,7 @@ class GeocodeSensorManager : SensorManager {
                 val minAccuracy = sensorSettings
                     .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
                     ?: DEFAULT_MINIMUM_ACCURACY
-                sensorDao.add(SensorSetting(geocodedLocation.id, SETTING_ACCURACY, minAccuracy.toString(), "number"))
+                sensorDao.add(SensorSetting(geocodedLocation.id, SETTING_ACCURACY, minAccuracy.toString(), SensorSettingType.NUMBER))
 
                 if (location.accuracy <= minAccuracy)
                     address = Geocoder(context)
@@ -105,7 +107,7 @@ class GeocodeSensorManager : SensorManager {
                 context,
                 geocodedLocation,
                 if (!prettyAddress.isNullOrEmpty()) prettyAddress else "Unknown",
-                "mdi:map",
+                geocodedLocation.statelessIcon,
                 attributes
             )
         }

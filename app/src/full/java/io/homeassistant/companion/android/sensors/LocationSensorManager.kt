@@ -31,6 +31,7 @@ import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.SensorSetting
+import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.location.HighAccuracyLocationService
 import io.homeassistant.companion.android.notifications.MessagingManager
 import kotlinx.coroutines.CoroutineScope
@@ -71,19 +72,25 @@ class LocationSensorManager : LocationSensorManagerBase() {
             "location_background",
             "",
             commonR.string.basic_sensor_name_location_background,
-            commonR.string.sensor_description_location_background
+            commonR.string.sensor_description_location_background,
+            "mdi:map-marker-multiple",
+            updateType = SensorManager.BasicSensor.UpdateType.LOCATION
         )
         val zoneLocation = SensorManager.BasicSensor(
             "zone_background",
             "",
             commonR.string.basic_sensor_name_location_zone,
-            commonR.string.sensor_description_location_zone
+            commonR.string.sensor_description_location_zone,
+            "mdi:map-marker-radius",
+            updateType = SensorManager.BasicSensor.UpdateType.LOCATION
         )
         val singleAccurateLocation = SensorManager.BasicSensor(
             "accurate_location",
             "",
             commonR.string.basic_sensor_name_location_accurate,
-            commonR.string.sensor_description_location_accurate
+            commonR.string.sensor_description_location_accurate,
+            "mdi:crosshairs-gps",
+            updateType = SensorManager.BasicSensor.UpdateType.LOCATION
         )
 
         val highAccuracyMode = SensorManager.BasicSensor(
@@ -91,7 +98,20 @@ class LocationSensorManager : LocationSensorManagerBase() {
             "binary_sensor",
             commonR.string.basic_sensor_name_high_accuracy_mode,
             commonR.string.sensor_description_high_accuracy_mode,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            "mdi:crosshairs-gps",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+        )
+
+        val highAccuracyUpdateInterval = SensorManager.BasicSensor(
+            "high_accuracy_update_interval",
+            "sensor",
+            commonR.string.basic_sensor_name_high_accuracy_interval,
+            commonR.string.sensor_description_high_accuracy_interval,
+            "mdi:timer",
+            unitOfMeasurement = "seconds",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         internal const val TAG = "LocBroadcastReceiver"
 
@@ -119,7 +139,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
         fun setHighAccuracyModeSetting(context: Context, enabled: Boolean) {
             val sensorDao = AppDatabase.getInstance(context).sensorDao()
-            sensorDao.add(SensorSetting(backgroundLocation.id, SETTING_HIGH_ACCURACY_MODE, enabled.toString(), "toggle"))
+            sensorDao.add(SensorSetting(backgroundLocation.id, SETTING_HIGH_ACCURACY_MODE, enabled.toString(), SensorSettingType.TOGGLE))
         }
 
         fun getHighAccuracyModeIntervalSetting(context: Context): Int {
@@ -130,7 +150,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
         fun setHighAccuracyModeIntervalSetting(context: Context, updateInterval: Int) {
             val sensorDao = AppDatabase.getInstance(context).sensorDao()
-            sensorDao.add(SensorSetting(backgroundLocation.id, SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL, updateInterval.toString(), "number"))
+            sensorDao.add(SensorSetting(backgroundLocation.id, SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL, updateInterval.toString(), SensorSettingType.NUMBER))
         }
     }
 
@@ -270,6 +290,14 @@ class LocationSensorManager : LocationSensorManagerBase() {
     }
 
     private fun restartHighAccuracyService(intervalInSeconds: Int) {
+        onSensorUpdated(
+            latestContext,
+            highAccuracyUpdateInterval,
+            intervalInSeconds,
+            highAccuracyUpdateInterval.statelessIcon,
+            mapOf()
+        )
+        SensorWorker.start(latestContext)
         HighAccuracyLocationService.restartService(latestContext, intervalInSeconds)
     }
 
@@ -278,7 +306,14 @@ class LocationSensorManager : LocationSensorManagerBase() {
             latestContext,
             highAccuracyMode,
             true,
-            "mdi:crosshairs-gps",
+            highAccuracyMode.statelessIcon,
+            mapOf()
+        )
+        onSensorUpdated(
+            latestContext,
+            highAccuracyUpdateInterval,
+            intervalInSeconds,
+            highAccuracyUpdateInterval.statelessIcon,
             mapOf()
         )
         SensorWorker.start(latestContext)
@@ -290,7 +325,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             latestContext,
             highAccuracyMode,
             false,
-            "mdi:crosshairs-gps",
+            highAccuracyMode.statelessIcon,
             mapOf()
         )
         SensorWorker.start(latestContext)
@@ -302,7 +337,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             latestContext,
             LocationSensorManager.backgroundLocation,
             SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL,
-            "number",
+            SensorSettingType.NUMBER,
             DEFAULT_UPDATE_INTERVAL_HA_SECONDS.toString()
         )
 
@@ -343,7 +378,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             latestContext,
             LocationSensorManager.backgroundLocation,
             SETTING_HIGH_ACCURACY_MODE_BLUETOOTH_DEVICES,
-            "list-bluetooth",
+            SensorSettingType.LIST_BLUETOOTH,
             ""
         )
 
@@ -407,7 +442,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             latestContext,
             backgroundLocation,
             SETTING_HIGH_ACCURACY_MODE,
-            "toggle",
+            SensorSettingType.TOGGLE,
             "false"
         ).toBoolean()
     }
@@ -487,7 +522,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             val minAccuracy = sensorSettings
                 .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
                 ?: DEFAULT_MINIMUM_ACCURACY
-            sensorDao.add(SensorSetting(backgroundLocation.id, SETTING_ACCURACY, minAccuracy.toString(), "number"))
+            sensorDao.add(SensorSetting(backgroundLocation.id, SETTING_ACCURACY, minAccuracy.toString(), SensorSettingType.NUMBER))
             if (location.accuracy > minAccuracy) {
                 Log.w(TAG, "Location accuracy didn't meet requirements, disregarding: $location")
             } else {
@@ -509,9 +544,9 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return if (DisabledLocationHandler.hasGPS(context)) {
-            listOf(singleAccurateLocation, backgroundLocation, zoneLocation, highAccuracyMode)
+            listOf(singleAccurateLocation, backgroundLocation, zoneLocation, highAccuracyMode, highAccuracyUpdateInterval)
         } else {
-            listOf(backgroundLocation, zoneLocation, highAccuracyMode)
+            listOf(backgroundLocation, zoneLocation, highAccuracyMode, highAccuracyUpdateInterval)
         }
     }
 
@@ -586,7 +621,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
         val minAccuracy = sensorSettings
             .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
             ?: DEFAULT_MINIMUM_ACCURACY
-        sensorDao.add(SensorSetting(zoneLocation.id, SETTING_ACCURACY, minAccuracy.toString(), "number"))
+        sensorDao.add(SensorSetting(zoneLocation.id, SETTING_ACCURACY, minAccuracy.toString(), SensorSettingType.NUMBER))
 
         if (geofencingEvent.triggeringLocation.accuracy > minAccuracy) {
             Log.w(
@@ -749,7 +784,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             latestContext,
             backgroundLocation,
             SETTING_HIGH_ACCURACY_MODE_TRIGGER_RANGE_ZONE,
-            "number",
+            SensorSettingType.NUMBER,
             DEFAULT_TRIGGER_RANGE_METERS.toString()
         )
 
@@ -758,7 +793,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             highAccuracyTriggerRangeInt = DEFAULT_TRIGGER_RANGE_METERS
 
             val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
-            sensorDao.add(SensorSetting(backgroundLocation.id, SETTING_HIGH_ACCURACY_MODE_TRIGGER_RANGE_ZONE, highAccuracyTriggerRangeInt.toString(), "number"))
+            sensorDao.add(SensorSetting(backgroundLocation.id, SETTING_HIGH_ACCURACY_MODE_TRIGGER_RANGE_ZONE, highAccuracyTriggerRangeInt.toString(), SensorSettingType.NUMBER))
         }
 
         return highAccuracyTriggerRangeInt
@@ -773,7 +808,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             latestContext,
             backgroundLocation,
             SETTING_HIGH_ACCURACY_MODE_ZONE,
-            "list-zones",
+            SensorSettingType.LIST_ZONES,
             ""
         )
 
@@ -804,11 +839,11 @@ class LocationSensorManager : LocationSensorManagerBase() {
         val minAccuracy = sensorSettings
             .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
             ?: DEFAULT_MINIMUM_ACCURACY
-        sensorDao.add(SensorSetting(singleAccurateLocation.id, SETTING_ACCURACY, minAccuracy.toString(), "number"))
+        sensorDao.add(SensorSetting(singleAccurateLocation.id, SETTING_ACCURACY, minAccuracy.toString(), SensorSettingType.NUMBER))
         val minTimeBetweenUpdates = sensorSettings
             .firstOrNull { it.name == SETTING_ACCURATE_UPDATE_TIME }?.value?.toIntOrNull()
             ?: 60000
-        sensorDao.add(SensorSetting(singleAccurateLocation.id, SETTING_ACCURATE_UPDATE_TIME, minTimeBetweenUpdates.toString(), "number"))
+        sensorDao.add(SensorSetting(singleAccurateLocation.id, SETTING_ACCURATE_UPDATE_TIME, minTimeBetweenUpdates.toString(), SensorSettingType.NUMBER))
 
         // Only update accurate location at most once a minute
         if (now < latestAccurateLocation + minTimeBetweenUpdates) {
@@ -930,6 +965,6 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 )
             }
         } else
-            sensorDao.add(SensorSetting(singleAccurateLocation.id, SETTING_INCLUDE_SENSOR_UPDATE, "false", "toggle"))
+            sensorDao.add(SensorSetting(singleAccurateLocation.id, SETTING_INCLUDE_SENSOR_UPDATE, "false", SensorSettingType.TOGGLE))
     }
 }

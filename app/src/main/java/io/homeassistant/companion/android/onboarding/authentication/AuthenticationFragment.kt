@@ -22,8 +22,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.google.android.material.composethemeadapter.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
 import io.homeassistant.companion.android.onboarding.OnboardingViewModel
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationFragment
@@ -38,7 +38,6 @@ class AuthenticationFragment : Fragment() {
 
     companion object {
         private const val TAG = "AuthenticationFragment"
-        private const val USER_AGENT_STRING = "HomeAssistant/Android"
         private const val AUTH_CALLBACK = "homeassistant://auth-callback"
     }
 
@@ -61,8 +60,7 @@ class AuthenticationFragment : Fragment() {
                             themesManager.setThemeForWebView(requireContext(), settings)
                             settings.javaScriptEnabled = true
                             settings.domStorageEnabled = true
-                            settings.userAgentString =
-                                USER_AGENT_STRING + " ${Build.MODEL} ${BuildConfig.VERSION_NAME}"
+                            settings.userAgentString = settings.userAgentString + " ${HomeAssistantApis.USER_AGENT_STRING}"
                             webViewClient = object : WebViewClient() {
                                 override fun shouldOverrideUrlLoading(view: WebView?, url: String): Boolean {
                                     return onRedirect(url)

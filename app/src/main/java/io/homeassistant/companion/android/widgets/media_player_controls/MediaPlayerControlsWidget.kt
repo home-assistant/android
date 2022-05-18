@@ -14,6 +14,7 @@ import android.view.View
 import android.widget.RemoteViews
 import android.widget.Toast
 import androidx.core.content.getSystemService
+import com.google.android.material.color.DynamicColors
 import com.mikepenz.iconics.IconicsDrawable
 import com.squareup.picasso.Picasso
 import dagger.hilt.android.AndroidEntryPoint
@@ -24,6 +25,7 @@ import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
+import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -58,6 +60,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         internal const val EXTRA_SHOW_VOLUME = "EXTRA_SHOW_VOLUME"
         internal const val EXTRA_SHOW_SKIP = "EXTRA_INCLUDE_SKIP"
         internal const val EXTRA_SHOW_SEEK = "EXTRA_INCLUDE_SEEK"
+        internal const val EXTRA_BACKGROUND_TYPE = "EXTRA_BACKGROUND_TYPE"
     }
 
     @Inject
@@ -137,8 +140,9 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         }
 
-        return RemoteViews(context.packageName, R.layout.widget_media_controls).apply {
-            val widget = mediaPlayCtrlWidgetDao.get(appWidgetId)
+        val widget = mediaPlayCtrlWidgetDao.get(appWidgetId)
+        val useDynamicColors = widget?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
+        return RemoteViews(context.packageName, if (useDynamicColors) R.layout.widget_media_controls_wrapper_dynamiccolor else R.layout.widget_media_controls_wrapper_default).apply {
             if (widget != null) {
                 val entityId: String = widget.entityId
                 var label: String? = widget.label
@@ -159,18 +163,19 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                     )
                 }
 
-                var artist = entity?.attributes?.get("media_artist")?.toString()
+                val artist = (entity?.attributes?.get("media_artist") ?: entity?.attributes?.get("media_album_artist"))?.toString()
                 val title = entity?.attributes?.get("media_title")?.toString()
                 val album = entity?.attributes?.get("media_album_name")?.toString()
                 val icon = entity?.attributes?.get("icon")?.toString()
 
-                if (artist != null && title != null) {
-                    if (album != null) {
-                        artist = "$artist - $album"
-                    }
+                if ((artist != null || album != null) && title != null) {
                     setTextViewText(
                         R.id.widgetMediaInfoArtist,
-                        artist
+                        when {
+                            artist != null && album != null -> "$artist - $album"
+                            album != null -> album
+                            else -> artist
+                        }
                     )
                     setTextViewText(
                         R.id.widgetMediaInfoTitle,
@@ -377,12 +382,14 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                     setViewVisibility(R.id.widgetRewindButton, View.GONE)
                     setViewVisibility(R.id.widgetFastForwardButton, View.GONE)
                 }
+            } else {
+                setTextViewText(R.id.widgetLabel, "")
             }
         }
     }
 
-    override fun getAllWidgetIds(context: Context): List<Int> {
-        return AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao().getAll()?.map { it.id }.orEmpty()
+    override suspend fun getAllWidgetIds(context: Context): List<Int> {
+        return AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao().getAll().map { it.id }
     }
 
     private suspend fun getEntity(context: Context, entityId: String, suggestedEntity: Entity<Map<String, Any>>?): Entity<Map<String, Any>>? {
@@ -445,6 +452,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         val showSkip: Boolean? = extras.getBoolean(EXTRA_SHOW_SKIP)
         val showSeek: Boolean? = extras.getBoolean(EXTRA_SHOW_SEEK)
         val showVolume: Boolean? = extras.getBoolean(EXTRA_SHOW_VOLUME)
+        val backgroundType: WidgetBackgroundType = extras.getSerializable(EXTRA_BACKGROUND_TYPE) as WidgetBackgroundType
 
         if (entitySelection == null || showSkip == null || showSeek == null || showVolume == null) {
             Log.e(TAG, "Did not receive complete configuration data")
@@ -464,7 +472,8 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                     labelSelection,
                     showSkip,
                     showSeek,
-                    showVolume
+                    showVolume,
+                    backgroundType
                 )
             )
 
@@ -472,8 +481,8 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         }
     }
 
-    override fun onEntityStateChanged(context: Context, entity: Entity<*>) {
-        AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao().getAll().orEmpty().forEach {
+    override suspend fun onEntityStateChanged(context: Context, entity: Entity<*>) {
+        AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao().getAll().forEach {
             if (it.entityId == entity.entityId) {
                 mainScope.launch {
                     val views = getWidgetRemoteViews(context, it.id, entity as Entity<Map<String, Any>>)
@@ -699,8 +708,8 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
         mediaPlayCtrlWidgetDao = AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao()
         // When the user deletes the widget, delete the preference associated with it.
-        for (appWidgetId in appWidgetIds) {
-            mediaPlayCtrlWidgetDao.delete(appWidgetId)
+        mainScope.launch {
+            mediaPlayCtrlWidgetDao.deleteAll(appWidgetIds)
         }
     }
 

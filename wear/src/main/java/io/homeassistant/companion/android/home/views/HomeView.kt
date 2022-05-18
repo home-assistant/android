@@ -124,7 +124,9 @@ fun LoadHomePage(
                                     entity.entityId,
                                     colorTemp
                                 )
-                            }
+                            },
+                            isToastEnabled = mainViewModel.isToastEnabled.value,
+                            isHapticEnabled = mainViewModel.isHapticEnabled.value
                         )
                     }
                 }
@@ -248,7 +250,7 @@ fun LoadHomePage(
                         sensorManager.id() == sensorManagerId
                     }
                     SensorManagerUi(
-                        allSensors = mainViewModel.sensors,
+                        allSensors = mainViewModel.sensors.value,
                         sensorManager = sensorManager,
                     ) { sensorId, isEnabled ->
                         mainViewModel.enableDisableSensor(sensorManager, sensorId, isEnabled)

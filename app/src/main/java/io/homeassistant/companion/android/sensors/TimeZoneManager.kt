@@ -16,6 +16,7 @@ class TimeZoneManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_current_time_zone,
             commonR.string.sensor_description_current_time_zone,
+            "mdi:map-clock",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
     }
@@ -51,13 +52,11 @@ class TimeZoneManager : SensorManager {
         val currentZone = timeZone.getDisplayName(Locale.ENGLISH)
         val date = Date()
 
-        val icon = "mdi:map-clock"
-
         onSensorUpdated(
             context,
             currentTimeZone,
             currentZone,
-            icon,
+            currentTimeZone.statelessIcon,
             mapOf(
                 "in_daylight_time" to timeZone.inDaylightTime(date),
                 "time_zone_id" to timeZone.id,

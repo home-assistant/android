@@ -19,6 +19,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 import java.util.Calendar
 import java.util.concurrent.Flow
@@ -71,19 +72,23 @@ class HaControlsProviderService : ControlsProviderService() {
                     val entityRegistry = webSocketRepository.getEntityRegistry()
 
                     val entities = integrationRepository.getEntities()
-                    val areaForEntity = mutableMapOf<String, AreaRegistryResponse?>()
-                    entities?.forEach {
-                        areaForEntity[it.entityId] = RegistriesDataHandler.getAreaForEntity(it.entityId, areaRegistry, deviceRegistry, entityRegistry)
+                    val areaForEntity = entities.orEmpty().associate {
+                        it.entityId to RegistriesDataHandler.getAreaForEntity(it.entityId, areaRegistry, deviceRegistry, entityRegistry)
                     }
 
                     entities
                         ?.sortedWith(compareBy(nullsLast()) { areaForEntity[it.entityId]?.name })
                         ?.mapNotNull {
-                            domainToHaControl[it.domain]?.createControl(
-                                applicationContext,
-                                it as Entity<Map<String, Any>>,
-                                areaForEntity[it.entityId]
-                            )
+                            try {
+                                domainToHaControl[it.domain]?.createControl(
+                                    applicationContext,
+                                    it as Entity<Map<String, Any>>,
+                                    areaForEntity[it.entityId]
+                                )
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Unable to create control for ${it.domain} entity, skipping", e)
+                                null
+                            }
                         }
                         ?.forEach {
                             subscriber.onNext(it)
@@ -124,14 +129,7 @@ class HaControlsProviderService : ControlsProviderService() {
                                     Log.e(TAG, "Unable to get $it from Home Assistant, null response.")
                                 }
                             } catch (e: Exception) {
-                                entities["ha_failed.$it"] = Entity(
-                                    entityId = it,
-                                    state = if (e is HttpException && e.code() == 404) "notfound" else "exception",
-                                    attributes = mapOf<String, String>(),
-                                    lastChanged = Calendar.getInstance(),
-                                    lastUpdated = Calendar.getInstance(),
-                                    context = null
-                                )
+                                entities["ha_failed.$it"] = getFailedEntity(it, e)
                                 Log.e(TAG, "Unable to get $it from Home Assistant, caught exception.", e)
                             }
                         }
@@ -190,18 +188,23 @@ class HaControlsProviderService : ControlsProviderService() {
         val domain = controlId.split(".")[0]
         val haControl = domainToHaControl[domain]
 
-        var actionSuccess = false
-        if (haControl != null) {
-            try {
-                actionSuccess = haControl.performAction(integrationRepository, action)
-            } catch (e: Exception) {
-                Log.e(TAG, "Unable to control or get entity information", e)
+        ioScope.launch {
+            var actionSuccess = false
+            if (haControl != null) {
+                try {
+                    actionSuccess = haControl.performAction(integrationRepository, action)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unable to control or get entity information", e)
+                }
             }
-        }
-        if (actionSuccess) {
-            consumer.accept(ControlAction.RESPONSE_OK)
-        } else {
-            consumer.accept(ControlAction.RESPONSE_UNKNOWN)
+
+            withContext(Dispatchers.Main) {
+                if (actionSuccess) {
+                    consumer.accept(ControlAction.RESPONSE_OK)
+                } else {
+                    consumer.accept(ControlAction.RESPONSE_UNKNOWN)
+                }
+            }
         }
     }
 
@@ -213,12 +216,35 @@ class HaControlsProviderService : ControlsProviderService() {
         entityRegistry: List<EntityRegistryResponse>?
     ) {
         entities.forEach {
-            val control = domainToHaControl[it.value.domain]?.createControl(
-                applicationContext,
-                it.value,
-                RegistriesDataHandler.getAreaForEntity(it.key, areaRegistry, deviceRegistry, entityRegistry)
-            )
+            val control = try {
+                domainToHaControl[it.value.domain]?.createControl(
+                    applicationContext,
+                    it.value,
+                    RegistriesDataHandler.getAreaForEntity(it.key, areaRegistry, deviceRegistry, entityRegistry)
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to create control for ${it.value.domain} entity, sending error entity", e)
+                domainToHaControl["ha_failed"]?.createControl(
+                    applicationContext,
+                    getFailedEntity(it.value.entityId, e),
+                    RegistriesDataHandler.getAreaForEntity(it.key, areaRegistry, deviceRegistry, entityRegistry)
+                )
+            }
             subscriber.onNext(control)
         }
+    }
+
+    private fun getFailedEntity(
+        entityId: String,
+        exception: Exception
+    ): Entity<Map<String, Any>> {
+        return Entity(
+            entityId = entityId,
+            state = if (exception is HttpException && exception.code() == 404) "notfound" else "exception",
+            attributes = mapOf<String, String>(),
+            lastChanged = Calendar.getInstance(),
+            lastUpdated = Calendar.getInstance(),
+            context = null
+        )
     }
 }
