@@ -9,9 +9,9 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
+import android.widget.MultiAutoCompleteTextView
 import android.widget.Toast
 import androidx.core.content.getSystemService
 import com.google.android.material.color.DynamicColors
@@ -31,7 +31,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import java.util.LinkedList
 import javax.inject.Inject
+import kotlin.collections.LinkedHashMap
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
@@ -53,7 +55,7 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     private var entities = LinkedHashMap<String, Entity<Any>>()
-    private var selectedEntity: Entity<Any>? = null
+    private var selectedEntities: LinkedList<Entity<*>?> = LinkedList()
 
     public override fun onCreate(icicle: Bundle?) {
         super.onCreate(icicle)
@@ -67,7 +69,7 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
 
         binding.addButton.setOnClickListener {
             if (requestLauncherSetup) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && selectedEntity != null) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && selectedEntities.size > 0) {
                     getSystemService<AppWidgetManager>()?.requestPinAppWidget(
                         ComponentName(this, MediaPlayerControlsWidget::class.java),
                         null,
@@ -123,9 +125,10 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
             binding.widgetShowVolumeButtonCheckbox.isChecked = mediaPlayerWidget.showVolume
             binding.widgetShowSeekButtonsCheckbox.isChecked = mediaPlayerWidget.showSeek
             binding.widgetShowSkipButtonsCheckbox.isChecked = mediaPlayerWidget.showSkip
-            val entity = runBlocking {
+            binding.widgetShowMediaPlayerSource.isChecked = mediaPlayerWidget.showSource
+            val entities = runBlocking {
                 try {
-                    integrationUseCase.getEntity(mediaPlayerWidget.entityId)
+                    mediaPlayerWidget.entityId.split(",").map { s -> integrationUseCase.getEntity(s.trim()) }
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to get entity information", e)
                     Toast.makeText(applicationContext, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
@@ -141,8 +144,8 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
                         backgroundTypeValues.indexOf(getString(commonR.string.widget_background_type_daynight))
                 }
             )
-            if (entity != null)
-                selectedEntity = entity as Entity<Any>?
+            if (entities != null)
+                selectedEntities.addAll(entities)
             binding.addButton.setText(commonR.string.update_widget)
             binding.deleteButton.visibility = View.VISIBLE
             binding.deleteButton.setOnClickListener(onDeleteWidget)
@@ -150,8 +153,8 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
         val entityAdapter = SingleItemArrayAdapter<Entity<Any>>(this) { it?.entityId ?: "" }
 
         binding.widgetTextConfigEntityId.setAdapter(entityAdapter)
+        binding.widgetTextConfigEntityId.setTokenizer(MultiAutoCompleteTextView.CommaTokenizer())
         binding.widgetTextConfigEntityId.onFocusChangeListener = dropDownOnFocus
-        binding.widgetTextConfigEntityId.onItemClickListener = entityDropDownOnItemClick
 
         mainScope.launch {
             try {
@@ -182,10 +185,10 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
         }
     }
 
-    private val entityDropDownOnItemClick =
+    /*private val entityDropDownOnItemClick =
         AdapterView.OnItemClickListener { parent, _, position, _ ->
-            selectedEntity = parent.getItemAtPosition(position) as Entity<Any>?
-        }
+            selectedEntities.add(parent.getItemAtPosition(position) as Entity<*>?)
+        }*/
 
     private fun onAddWidget() {
         if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
@@ -202,9 +205,16 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
 
             intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
 
+            selectedEntities = LinkedList()
+            val se = binding.widgetTextConfigEntityId.text.split(",")
+            se.forEach {
+                val e = entities[it.trim()]
+                if (e != null) selectedEntities.add(e)
+            }
+
             intent.putExtra(
                 MediaPlayerControlsWidget.EXTRA_ENTITY_ID,
-                selectedEntity!!.entityId
+                selectedEntities.map { e -> e?.entityId }.reduce { a, b -> "$a,$b" }
             )
             intent.putExtra(
                 MediaPlayerControlsWidget.EXTRA_LABEL,
@@ -221,6 +231,10 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
             intent.putExtra(
                 MediaPlayerControlsWidget.EXTRA_SHOW_SEEK,
                 binding.widgetShowSeekButtonsCheckbox.isChecked
+            )
+            intent.putExtra(
+                MediaPlayerControlsWidget.EXTRA_SHOW_SOURCE,
+                binding.widgetShowMediaPlayerSource.isChecked
             )
             intent.putExtra(
                 MediaPlayerControlsWidget.EXTRA_BACKGROUND_TYPE,

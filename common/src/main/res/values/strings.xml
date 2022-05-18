@@ -761,6 +761,7 @@
     <string name="widget_media_show_volume">Show Volume Buttons</string>
     <string name="widget_media_show_seek">Show Seek Buttons</string>
     <string name="widget_media_show_skip">Show Skip Buttons</string>
+    <string name="widget_media_show_source">Show Source Label</string>
     <string name="widget_separator_input_hint">No separator</string>
     <string name="widget_separator_label">State and attribute separator:</string>
     <string name="widget_spinner_icon">Icon:</string>
