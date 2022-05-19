@@ -57,8 +57,7 @@
                 android:layout_alignParentTop="true"
                 android:layout_alignParentEnd="true"
                 android:padding="8dp"
-                android:tint="?colorWidgetOnBackground"
-                android:src="@drawable/app_icon_round" />
+                android:tint="?colorWidgetOnBackground" />
 
             <TextView
                 android:id="@+id/widgetSourceLabel"
