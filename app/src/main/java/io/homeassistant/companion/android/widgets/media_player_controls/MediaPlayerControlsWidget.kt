@@ -411,11 +411,13 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
             entity = if (suggestedEntity != null && entityIds.contains(suggestedEntity.entityId)) {
                 suggestedEntity
             } else {
-                val entities = entityIds
-                    .map { integrationUseCase.getEntity(it) }
-                entity = entities.firstOrNull { it?.state == "playing" }
-                if (entity == null) return entities[0]
-                return entity
+                val entities: LinkedList<Entity<Map<String, Any>>?> = LinkedList()
+                entityIds.forEach {
+                    val e = integrationUseCase.getEntity(it)
+                    if (e?.state == "playing") return e
+                    entities.add(e)
+                }
+                return entities[0]
             }
         } catch (e: Exception) {
             Log.d(TAG, "Failed to fetch entity or entity does not exist")

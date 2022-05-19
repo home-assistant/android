@@ -185,11 +185,6 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
         }
     }
 
-    /*private val entityDropDownOnItemClick =
-        AdapterView.OnItemClickListener { parent, _, position, _ ->
-            selectedEntities.add(parent.getItemAtPosition(position) as Entity<*>?)
-        }*/
-
     private fun onAddWidget() {
         if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
             showAddWidgetError()

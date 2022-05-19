@@ -70,6 +70,7 @@
                 android:singleLine="true"
                 android:ellipsize="marquee"
                 android:visibility="invisible"
+                android:textColor="?colorWidgetOnBackground"
                 android:layout_toStartOf="@id/widgetSourceIcon"
                 tools:text="Media player Source" />
 
