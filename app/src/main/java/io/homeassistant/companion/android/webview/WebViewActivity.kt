@@ -270,7 +270,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     description: String?,
                     failingUrl: String?
                 ) {
-                    Log.e(TAG, "onReceivedHttpError: errorCode: $errorCode url:$failingUrl")
+                    Log.e(TAG, "onReceivedError: errorCode: $errorCode url:$failingUrl")
                     if (failingUrl == loadedUrl) {
                         showError()
                     }
@@ -323,8 +323,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     handler: SslErrorHandler?,
                     error: SslError?
                 ) {
-                    Log.e(TAG, "onReceivedHttpError: $error")
-                    showError()
+                    Log.e(TAG, "onReceivedSslError: $error")
+                    showError(
+                        io.homeassistant.companion.android.webview.WebView.ErrorType.SSL,
+                        error,
+                        null
+                    )
                 }
 
                 override fun onLoadResource(
@@ -517,6 +521,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     fun getExternalAuth(payload: String) {
                         JSONObject(payload).let {
                             presenter.onGetExternalAuth(
+                                this@WebViewActivity,
                                 it.getString("callback"),
                                 it.has("force") && it.getBoolean("force")
                             )
