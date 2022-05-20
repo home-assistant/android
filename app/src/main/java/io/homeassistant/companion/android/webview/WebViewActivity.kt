@@ -1106,7 +1106,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         if (tlsWebViewclient != null &&
             tlsWebViewclient.isTLSClientAuthNeeded &&
             !tlsWebViewclient.hasUserDeniedAccess &&
-            errorType == io.homeassistant.companion.android.webview.WebView.ErrorType.TIMEOUT) {
+            errorType == io.homeassistant.companion.android.webview.WebView.ErrorType.TIMEOUT
+        ) {
             return
         }
 

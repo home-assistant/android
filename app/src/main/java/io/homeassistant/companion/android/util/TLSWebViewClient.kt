@@ -10,15 +10,12 @@ import android.webkit.ClientCertRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.annotation.RequiresApi
-import androidx.appcompat.app.AlertDialog
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import kotlinx.coroutines.runBlocking
 import java.security.Principal
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
-import java.util.concurrent.Executors
 import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 open class TLSWebViewClient @Inject constructor(private var keyChainRepository: KeyChainRepository) : WebViewClient() {
 
