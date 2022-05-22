@@ -55,7 +55,6 @@ class ManageTilesViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             sortedEntities = integrationUseCase.getEntities().orEmpty()
                 .filter { it.domain in ManageTilesFragment.validDomains }
-                .sortedBy { it.entityId }
         }
 
         viewModelScope.launch(Dispatchers.IO) {
