@@ -65,9 +65,10 @@ class ManageTilesViewModel @Inject constructor(
     }
 
     fun selectTile(index: Int) {
-        selectedTile = slots[index]
+        val tile = slots[index]
+        selectedTile = tile
         viewModelScope.launch(Dispatchers.IO) {
-            tileDao.get(selectedTile.id)?.let { updateExistingTileFields(it) }
+            tileDao.get(tile.id)?.let { updateExistingTileFields(it) }
         }
     }
 
