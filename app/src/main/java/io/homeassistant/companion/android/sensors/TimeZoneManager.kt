@@ -54,12 +54,12 @@ class TimeZoneManager : SensorManager {
         onSensorUpdated(
             context,
             currentTimeZone,
-            timeZone.getDisplayName(currentlyInDst, TimeZone.LONG, Locale.getDefault()),
+            timeZone.getDisplayName(currentlyInDst, TimeZone.LONG, Locale.ENGLISH),
             currentTimeZone.statelessIcon,
             mapOf(
                 "in_daylight_time" to currentlyInDst,
                 "time_zone_id" to timeZone.id,
-                "time_zone_short" to timeZone.getDisplayName(currentlyInDst, TimeZone.SHORT, Locale.getDefault()),
+                "time_zone_short" to timeZone.getDisplayName(currentlyInDst, TimeZone.SHORT, Locale.ENGLISH),
                 "uses_daylight_time" to timeZone.useDaylightTime(),
                 "utc_offset" to timeZone.getOffset(System.currentTimeMillis())
             )
