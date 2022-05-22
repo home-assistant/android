@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -24,14 +25,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
-import androidx.fragment.app.FragmentManager
-import com.maltaisn.icondialog.IconDialog
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.database.qs.TileEntity
 import io.homeassistant.companion.android.settings.qs.ManageTilesViewModel
@@ -39,12 +36,12 @@ import io.homeassistant.companion.android.settings.qs.ManageTilesViewModel
 @Composable
 fun ManageTilesView(
     viewModel: ManageTilesViewModel,
-    iconDialog: IconDialog,
-    childFragment: FragmentManager
+    onShowIconDialog: (tag: String?) -> Unit
 ) {
     val scrollState = rememberScrollState()
     var expandedTile by remember { mutableStateOf(false) }
     var expandedEntity by remember { mutableStateOf(false) }
+
     Box(modifier = Modifier.verticalScroll(scrollState)) {
         Column(modifier = Modifier.padding(all = 16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -55,25 +52,16 @@ fun ManageTilesView(
                 )
                 Box {
                     OutlinedButton(onClick = { expandedTile = true }) {
-                        Text(
-                            viewModel.selectedTileName.value
-                        )
+                        Text(viewModel.selectedTile.name)
                     }
 
                     DropdownMenu(expanded = expandedTile, onDismissRequest = { expandedTile = false }) {
-                        val tileNameArray =
-                            stringArrayResource(id = io.homeassistant.companion.android.R.array.tile_name)
-                        val tileIdArray =
-                            stringArrayResource(id = io.homeassistant.companion.android.R.array.tile_ids)
-                        for ((tileName, tileId) in tileNameArray.zip(tileIdArray)) {
+                        for ((index, slot) in viewModel.slots.withIndex()) {
                             DropdownMenuItem(onClick = {
-                                viewModel.selectedTile.value = tileId
-                                viewModel.selectedTileName.value = tileName
+                                viewModel.selectTile(index)
                                 expandedTile = false
-                                if (viewModel.currentTile() != null)
-                                    viewModel.updateExistingTileFields()
                             }) {
-                                Text(tileName)
+                                Text(slot.name)
                             }
                         }
                     }
@@ -82,25 +70,21 @@ fun ManageTilesView(
 
             Divider()
             TextField(
-                value = viewModel.tileLabel.value ?: "",
-                onValueChange = { viewModel.tileLabel.value = it },
+                value = viewModel.tileLabel,
+                onValueChange = { viewModel.tileLabel = it },
                 label = {
-                    Text(
-                        text = stringResource(id = R.string.tile_label)
-                    )
+                    Text(text = stringResource(id = R.string.tile_label))
                 },
-                modifier = Modifier.padding(10.dp)
+                modifier = Modifier.padding(10.dp).fillMaxWidth()
             )
 
             TextField(
-                value = viewModel.tileSubtitle.value ?: "",
-                onValueChange = { viewModel.tileSubtitle.value = it },
+                value = viewModel.tileSubtitle.orEmpty(),
+                onValueChange = { viewModel.tileSubtitle = it },
                 label = {
-                    Text(
-                        text = stringResource(id = R.string.tile_subtitle)
-                    )
+                    Text(text = stringResource(id = R.string.tile_subtitle))
                 },
-                modifier = Modifier.padding(10.dp)
+                modifier = Modifier.padding(10.dp).fillMaxWidth()
             )
 
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -109,18 +93,19 @@ fun ManageTilesView(
                     fontSize = 15.sp,
                     modifier = Modifier.padding(end = 10.dp)
                 )
-                OutlinedButton(onClick = {
-                    iconDialog.show(childFragment, viewModel.selectedTile.value)
-                }) {
-                    val icon = viewModel.drawableIcon.value?.let { DrawableCompat.wrap(it) }
-                    icon?.toBitmap()?.asImageBitmap()
-                        ?.let {
-                            Image(
-                                it,
-                                contentDescription = stringResource(id = R.string.tile_icon),
-                                colorFilter = ColorFilter.tint(colorResource(R.color.colorAccent))
-                            )
-                        }
+                OutlinedButton(
+                    onClick = { onShowIconDialog(viewModel.selectedTile.id) }
+                ) {
+                    val iconBitmap = remember(viewModel.selectedIconDrawable) {
+                        viewModel.selectedIconDrawable?.toBitmap()?.asImageBitmap()
+                    }
+                    iconBitmap?.let {
+                        Image(
+                            iconBitmap,
+                            contentDescription = stringResource(id = R.string.tile_icon),
+                            colorFilter = ColorFilter.tint(colorResource(R.color.colorAccent))
+                        )
+                    }
                 }
             }
 
@@ -129,14 +114,13 @@ fun ManageTilesView(
                 fontSize = 15.sp
             )
             OutlinedButton(onClick = { expandedEntity = true }) {
-                Text(text = viewModel.selectedEntityId.value)
+                Text(text = viewModel.selectedEntityId)
             }
 
             DropdownMenu(expanded = expandedEntity, onDismissRequest = { expandedEntity = false }) {
-                val sortedEntities = viewModel.entities.values.sortedBy { it.entityId }
-                for (item in sortedEntities) {
+                for (item in viewModel.sortedEntities) {
                     DropdownMenuItem(onClick = {
-                        viewModel.selectedEntityId.value = item.entityId
+                        viewModel.selectedEntityId = item.entityId
                         expandedEntity = false
                     }) {
                         Text(text = item.entityId, fontSize = 15.sp)
@@ -146,16 +130,15 @@ fun ManageTilesView(
             Button(
                 onClick = {
                     val tileData = TileEntity(
-                        if (viewModel.currentTile() == null) 0 else viewModel.currentTile()!!.id,
-                        viewModel.selectedTile.value,
-                        viewModel.selectedIcon.value,
-                        viewModel.selectedEntityId.value,
-                        viewModel.tileLabel.value.toString(),
-                        viewModel.tileSubtitle.value
+                        tileId = viewModel.selectedTile.id,
+                        iconId = viewModel.selectedIcon,
+                        entityId = viewModel.selectedEntityId,
+                        label = viewModel.tileLabel,
+                        subtitle = viewModel.tileSubtitle
                     )
                     viewModel.addTile(tileData)
                 },
-                enabled = !viewModel.tileLabel.value.isNullOrEmpty() && viewModel.selectedEntityId.value.isNotEmpty()
+                enabled = viewModel.tileLabel.isNotEmpty() && viewModel.selectedEntityId.isNotEmpty()
             ) {
                 Text(stringResource(id = R.string.tile_save))
             }

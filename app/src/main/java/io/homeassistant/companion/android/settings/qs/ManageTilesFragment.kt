@@ -9,23 +9,16 @@ import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
-import androidx.core.graphics.drawable.DrawableCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
 import com.google.android.material.composethemeadapter.MdcTheme
 import com.maltaisn.icondialog.IconDialog
 import com.maltaisn.icondialog.IconDialogSettings
 import com.maltaisn.icondialog.pack.IconPack
-import com.maltaisn.icondialog.pack.IconPackLoader
-import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.settings.qs.views.ManageTilesView
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
@@ -42,19 +35,10 @@ class ManageTilesFragment constructor(
     }
 
     val viewModel: ManageTilesViewModel by viewModels()
-    private lateinit var iconPack: IconPack
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
-
-        lifecycleScope.launch {
-            withContext(Dispatchers.IO) {
-                val loader = IconPackLoader(requireContext())
-                iconPack = createMaterialDesignIconPack(loader)
-                iconPack.loadDrawables(loader.drawableLoader)
-            }
-        }
     }
 
     override fun onPrepareOptionsMenu(menu: Menu) {
@@ -79,7 +63,12 @@ class ManageTilesFragment constructor(
 
             setContent {
                 MdcTheme {
-                    ManageTilesView(viewModel = viewModel, iconDialog = iconDialog, childFragment = childFragmentManager)
+                    ManageTilesView(
+                        viewModel = viewModel,
+                        onShowIconDialog = { tag ->
+                            iconDialog.show(childFragmentManager, tag)
+                        }
+                    )
                 }
             }
         }
@@ -91,18 +80,13 @@ class ManageTilesFragment constructor(
     }
 
     override val iconDialogIconPack: IconPack
-        get() = iconPack
+        get() = viewModel.iconPack
 
     override fun onIconDialogIconsSelected(dialog: IconDialog, icons: List<com.maltaisn.icondialog.data.Icon>) {
         Log.d(TAG, "Selected icon: ${icons.firstOrNull()}")
         val selectedIcon = icons.firstOrNull()
         if (selectedIcon != null) {
-            val iconDrawable = selectedIcon.drawable
-            if (iconDrawable != null) {
-                val icon = DrawableCompat.wrap(iconDrawable)
-                viewModel.selectedIcon.value = selectedIcon.id
-                viewModel.drawableIcon.value = icon
-            }
+            viewModel.selectIcon(selectedIcon)
         }
     }
 }
