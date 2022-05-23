@@ -4,6 +4,7 @@
 
     <style name="Theme.LaunchScreen" parent="Theme.LaunchScreen.Base">
         <item name="android:background">@drawable/launch_screen_background</item>
+        <item name="alertDialogTheme">@style/Theme.HomeAssistant.Dialog.Alert.Launch</item>
     </style>
 
     <style name="Theme.HomeAssistant" parent="Theme.MaterialComponents.DayNight.NoActionBar">
@@ -59,6 +60,10 @@
         <item name="android:textColorPrimary">@color/colorOnBackground</item>
         <item name="colorControlNormal">@color/colorOnBackground</item>
         <item name="popupTheme">@style/Theme.HomeAssistant.PopupTheme</item>
+    </style>
+
+    <style name="Theme.HomeAssistant.Dialog.Alert.Launch" parent="Theme.HomeAssistant.Dialog.Alert">
+        <item name="android:background">@null</item>
     </style>
 
     <style name="Theme.HomeAssistant.Dialog.Alert" parent="Theme.MaterialComponents.Light.Dialog.Alert">
