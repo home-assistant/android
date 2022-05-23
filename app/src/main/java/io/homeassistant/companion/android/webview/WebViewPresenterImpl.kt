@@ -17,10 +17,14 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import java.net.SocketTimeoutException
 import java.net.URL
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 import javax.inject.Inject
+import javax.net.ssl.SSLException
+import javax.net.ssl.SSLHandshakeException
+import io.homeassistant.companion.android.common.R as commonR
 
 class WebViewPresenterImpl @Inject constructor(
     @ActivityContext context: Context,
@@ -89,18 +93,26 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
-    override fun onGetExternalAuth(callback: String, force: Boolean) {
+    override fun onGetExternalAuth(context: Context, callback: String, force: Boolean) {
         mainScope.launch {
             try {
                 view.setExternalAuth("$callback(true, ${authenticationUseCase.retrieveExternalAuthentication(force)})")
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to retrieve external auth", e)
+                val anonymousSession = authenticationUseCase.getSessionState() == SessionState.ANONYMOUS
                 view.setExternalAuth("$callback(false)")
                 view.showError(
-                    if (authenticationUseCase.getSessionState() == SessionState.ANONYMOUS)
-                        WebView.ErrorType.AUTHENTICATION
-                    else
-                        WebView.ErrorType.TIMEOUT
+                    errorType = when {
+                        anonymousSession -> WebView.ErrorType.AUTHENTICATION
+                        e is SSLException || (e is SocketTimeoutException && e.suppressed.any { it is SSLException }) -> WebView.ErrorType.SSL
+                        else -> WebView.ErrorType.TIMEOUT
+                    },
+                    description = when {
+                        anonymousSession -> null
+                        e is SSLHandshakeException || (e is SocketTimeoutException && e.suppressed.any { it is SSLHandshakeException }) -> context.getString(commonR.string.webview_error_FAILED_SSL_HANDSHAKE)
+                        e is SSLException || (e is SocketTimeoutException && e.suppressed.any { it is SSLException }) -> context.getString(commonR.string.webview_error_SSL_INVALID)
+                        else -> null
+                    }
                 )
             }
         }
