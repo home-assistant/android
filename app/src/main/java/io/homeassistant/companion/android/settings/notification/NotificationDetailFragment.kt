@@ -11,17 +11,23 @@ import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import com.google.android.material.composethemeadapter.MdcTheme
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.settings.notification.views.LoadNotification
+import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
+@AndroidEntryPoint
 class NotificationDetailFragment : Fragment() {
 
     companion object {
         val ARG_NOTIF = "notification"
     }
+
+    @Inject
+    lateinit var notificationDao: NotificationDao
 
     private lateinit var notification: NotificationItem
 
@@ -64,8 +70,6 @@ class NotificationDetailFragment : Fragment() {
     }
 
     private fun deleteConfirmation() {
-        val notificationDao = AppDatabase.getInstance(requireContext()).notificationDao()
-
         val builder: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(requireContext())
 
         builder.setTitle(commonR.string.confirm_delete_this_notification_title)
