@@ -17,12 +17,13 @@ import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.util.getAttribute
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
@@ -35,8 +36,10 @@ class TemplateWidget : BaseWidgetProvider() {
         internal const val EXTRA_TEXT_COLOR = "EXTRA_TEXT_COLOR"
     }
 
+    @Inject
+    lateinit var templateWidgetDao: TemplateWidgetDao
+
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
-        val templateWidgetDao = AppDatabase.getInstance(context).templateWidgetDao()
         // When the user deletes the widget, delete the preference associated with it.
         mainScope.launch {
             templateWidgetDao.deleteAll(appWidgetIds)
@@ -44,7 +47,6 @@ class TemplateWidget : BaseWidgetProvider() {
     }
 
     override suspend fun getAllWidgetIds(context: Context): List<Int> {
-        val templateWidgetDao = AppDatabase.getInstance(context).templateWidgetDao()
         return templateWidgetDao.getAll().map { it.id }
     }
 
@@ -59,7 +61,6 @@ class TemplateWidget : BaseWidgetProvider() {
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         }
 
-        val templateWidgetDao = AppDatabase.getInstance(context).templateWidgetDao()
         val widget = templateWidgetDao.get(appWidgetId)
 
         val useDynamicColors = widget?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
@@ -120,7 +121,6 @@ class TemplateWidget : BaseWidgetProvider() {
             Log.e(TAG, "Did not receive complete widget data")
             return
         }
-        val templateWidgetDao = AppDatabase.getInstance(context).templateWidgetDao()
 
         mainScope.launch {
             templateWidgetDao.add(

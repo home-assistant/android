@@ -24,7 +24,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetStaticConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
@@ -50,6 +50,9 @@ class EntityWidgetConfigureActivity : BaseActivity() {
 
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
+
+    @Inject
+    lateinit var staticWidgetDao: StaticWidgetDao
 
     private var entities = LinkedHashMap<String, Entity<Any>>()
 
@@ -111,7 +114,6 @@ class EntityWidgetConfigureActivity : BaseActivity() {
             return
         }
 
-        val staticWidgetDao = AppDatabase.getInstance(applicationContext).staticWidgetDao()
         val staticWidget = staticWidgetDao.get(appWidgetId)
 
         val backgroundTypeValues = mutableListOf(
@@ -362,8 +364,6 @@ class EntityWidgetConfigureActivity : BaseActivity() {
     }
 
     private fun deleteConfirmation(context: Context) {
-        val staticWidgetDao = AppDatabase.getInstance(context).staticWidgetDao()
-
         val builder: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(context)
 
         builder.setTitle(commonR.string.confirm_delete_this_widget_title)

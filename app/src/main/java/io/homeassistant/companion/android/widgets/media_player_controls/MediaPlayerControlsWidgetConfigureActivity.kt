@@ -20,7 +20,7 @@ import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
-import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetMediaControlsConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
@@ -47,6 +47,9 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
 
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
+
+    @Inject
+    lateinit var mediaPlayerControlsWidgetDao: MediaPlayerControlsWidgetDao
 
     private lateinit var binding: WidgetMediaControlsConfigureBinding
 
@@ -102,7 +105,6 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
             return
         }
 
-        val mediaPlayerControlsWidgetDao = AppDatabase.getInstance(applicationContext).mediaPlayCtrlWidgetDao()
         val mediaPlayerWidget = mediaPlayerControlsWidgetDao.get(appWidgetId)
 
         val backgroundTypeValues = mutableListOf(
@@ -269,8 +271,6 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
     }
 
     private fun deleteConfirmation(context: Context) {
-        val mediaPlayerControlsWidgetDao = AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao()
-
         val builder: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(context)
 
         builder.setTitle(commonR.string.confirm_delete_this_widget_title)

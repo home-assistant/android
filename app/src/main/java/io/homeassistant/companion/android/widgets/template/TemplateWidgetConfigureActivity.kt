@@ -21,7 +21,7 @@ import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetTemplateConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
@@ -44,6 +44,9 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
 
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
+
+    @Inject
+    lateinit var templateWidgetDao: TemplateWidgetDao
 
     private lateinit var binding: WidgetTemplateConfigureBinding
 
@@ -81,7 +84,6 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
             return
         }
 
-        val templateWidgetDao = AppDatabase.getInstance(applicationContext).templateWidgetDao()
         val templateWidget = templateWidgetDao.get(appWidgetId)
 
         val backgroundTypeValues = mutableListOf(
@@ -248,8 +250,6 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
     }
 
     private fun deleteConfirmation(context: Context) {
-        val templateWidgetDao = AppDatabase.getInstance(context).templateWidgetDao()
-
         val builder: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(context)
 
         builder.setTitle(commonR.string.confirm_delete_this_widget_title)

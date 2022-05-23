@@ -39,7 +39,7 @@ import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.Service
-import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetButtonConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
@@ -65,6 +65,9 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
 
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
+
+    @Inject
+    lateinit var buttonWidgetDao: ButtonWidgetDao
 
     private lateinit var iconPack: IconPack
 
@@ -199,7 +202,6 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
             return
         }
 
-        val buttonWidgetDao = AppDatabase.getInstance(applicationContext).buttonWidgetDao()
         val buttonWidget = buttonWidgetDao.get(appWidgetId)
         var serviceText = ""
 
@@ -499,8 +501,6 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
     }
 
     private fun deleteConfirmation(context: Context) {
-        val buttonWidgetDao = AppDatabase.getInstance(context).buttonWidgetDao()
-
         val builder: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(context)
 
         builder.setTitle(commonR.string.confirm_delete_this_widget_title)

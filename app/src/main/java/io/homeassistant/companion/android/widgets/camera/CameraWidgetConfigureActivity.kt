@@ -18,7 +18,7 @@ import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
-import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.databinding.WidgetCameraConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
@@ -44,6 +44,10 @@ class CameraWidgetConfigureActivity : BaseActivity() {
 
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
+
+    @Inject
+    lateinit var cameraWidgetDao: CameraWidgetDao
+
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     private var entities = LinkedHashMap<String, Entity<Any>>()
@@ -96,7 +100,6 @@ class CameraWidgetConfigureActivity : BaseActivity() {
             return
         }
 
-        val cameraWidgetDao = AppDatabase.getInstance(this).cameraWidgetDao()
         val cameraWidget = cameraWidgetDao.get(appWidgetId)
         if (cameraWidget != null) {
             binding.widgetTextConfigEntityId.setText(cameraWidget.entityId)
@@ -217,8 +220,6 @@ class CameraWidgetConfigureActivity : BaseActivity() {
     }
 
     private fun deleteConfirmation(context: Context) {
-        val cameraWidgetDao = AppDatabase.getInstance(context).cameraWidgetDao()
-
         val builder: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(context)
 
         builder.setTitle(commonR.string.confirm_delete_this_widget_title)
