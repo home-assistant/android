@@ -197,7 +197,7 @@ dependencies {
     implementation("com.mikepenz:iconics-core:5.3.3")
     implementation("com.mikepenz:iconics-compose:5.3.3")
     implementation("com.mikepenz:community-material-typeface:6.4.95.0-kotlin@aar")
-    implementation("org.burnoutcrew.composereorderable:reorderable:0.7.4")
+    implementation("org.burnoutcrew.composereorderable:reorderable:0.8.1")
     implementation("com.github.AppDevNext:ChangeLog:3.4")
 }
 
