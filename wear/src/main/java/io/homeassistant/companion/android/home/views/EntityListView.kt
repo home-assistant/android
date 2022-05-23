@@ -10,6 +10,9 @@ import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.Text
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.theme.WearAppTheme
+import io.homeassistant.companion.android.util.playPreviewEntityScene1
+import io.homeassistant.companion.android.util.playPreviewEntityScene2
+import io.homeassistant.companion.android.util.playPreviewEntityScene3
 import io.homeassistant.companion.android.util.previewEntity1
 import io.homeassistant.companion.android.util.previewEntity2
 import io.homeassistant.companion.android.common.R as commonR
@@ -83,6 +86,20 @@ private fun PreviewEntityListView() {
     EntityViewList(
         entityLists = mapOf(stringResource(commonR.string.lights) to listOf(previewEntity1, previewEntity2)),
         entityListsOrder = listOf(stringResource(commonR.string.lights)),
+        entityListFilter = { true },
+        onEntityClicked = { _, _ -> },
+        onEntityLongClicked = { _ -> },
+        isHapticEnabled = false,
+        isToastEnabled = false
+    )
+}
+
+@Preview
+@Composable
+private fun PreviewEntityListScenes() {
+    EntityViewList(
+        entityLists = mapOf(stringResource(commonR.string.scenes) to listOf(playPreviewEntityScene1, playPreviewEntityScene2, playPreviewEntityScene3)),
+        entityListsOrder = listOf(stringResource(commonR.string.scenes)),
         entityListFilter = { true },
         onEntityClicked = { _, _ -> },
         onEntityLongClicked = { _ -> },
