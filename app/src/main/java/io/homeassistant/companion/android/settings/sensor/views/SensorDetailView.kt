@@ -146,75 +146,71 @@ fun SensorDetailView(
                     item {
                         SensorDetailHeader(stringResource(commonR.string.attributes))
                     }
-                    sensor.attributes.forEach { attribute ->
-                        item {
-                            val summary = when (attribute.valueType) {
-                                "listboolean" -> jsonMapper.readValue<List<Boolean>>(attribute.value).toString()
-                                "listfloat" -> jsonMapper.readValue<List<Number>>(attribute.value).toString()
-                                "listlong" -> jsonMapper.readValue<List<Long>>(attribute.value).toString()
-                                "listint" -> jsonMapper.readValue<List<Int>>(attribute.value).toString()
-                                "liststring" -> jsonMapper.readValue<List<String>>(attribute.value).toString()
-                                else -> attribute.value
-                            }
-                            SensorDetailRow(
-                                title = attribute.name,
-                                summary = summary,
-                                clickable = false,
-                                selectingEnabled = true
-                            )
+                    items(sensor.attributes, key = { "${it.sensorId}-${it.name}" }) { attribute ->
+                        val summary = when (attribute.valueType) {
+                            "listboolean" -> jsonMapper.readValue<List<Boolean>>(attribute.value).toString()
+                            "listfloat" -> jsonMapper.readValue<List<Number>>(attribute.value).toString()
+                            "listlong" -> jsonMapper.readValue<List<Long>>(attribute.value).toString()
+                            "listint" -> jsonMapper.readValue<List<Int>>(attribute.value).toString()
+                            "liststring" -> jsonMapper.readValue<List<String>>(attribute.value).toString()
+                            else -> attribute.value
                         }
+                        SensorDetailRow(
+                            title = attribute.name,
+                            summary = summary,
+                            clickable = false,
+                            selectingEnabled = true
+                        )
                     }
                 }
                 if (sensor.sensor.enabled && viewModel.sensorSettings.value.isNotEmpty()) {
                     item {
                         SensorDetailHeader(stringResource(commonR.string.sensor_settings))
                     }
-                    viewModel.sensorSettings.value.forEach { setting ->
-                        item {
-                            when (setting.valueType) {
-                                SensorSettingType.TOGGLE -> {
-                                    SensorDetailRow(
-                                        title = viewModel.getSettingTranslatedTitle(setting.name),
-                                        switch = setting.value == "true",
-                                        enabled = setting.enabled,
-                                        clickable = setting.enabled,
-                                        onClick = { isEnabled ->
-                                            onToggleSettingSubmitted(
-                                                SensorSetting(viewModel.basicSensor.id, setting.name, isEnabled.toString(), SensorSettingType.TOGGLE, setting.enabled)
-                                            )
-                                        }
-                                    )
-                                }
-                                SensorSettingType.LIST -> {
-                                    SensorDetailRow(
-                                        title = viewModel.getSettingTranslatedTitle(setting.name),
-                                        summary = viewModel.getSettingTranslatedEntry(setting.name, setting.value),
-                                        enabled = setting.enabled,
-                                        clickable = setting.enabled,
-                                        onClick = { onDialogSettingClicked(setting) }
-                                    )
-                                }
-                                SensorSettingType.LIST_APPS, SensorSettingType.LIST_BLUETOOTH, SensorSettingType.LIST_ZONES -> {
-                                    val summaryValues = setting.value.split(", ").mapNotNull { it.ifBlank { null } }
-                                    SensorDetailRow(
-                                        title = viewModel.getSettingTranslatedTitle(setting.name),
-                                        summary =
-                                        if (summaryValues.any()) summaryValues.toString()
-                                        else stringResource(commonR.string.none_selected),
-                                        enabled = setting.enabled,
-                                        clickable = setting.enabled,
-                                        onClick = { onDialogSettingClicked(setting) }
-                                    )
-                                }
-                                SensorSettingType.STRING, SensorSettingType.NUMBER -> {
-                                    SensorDetailRow(
-                                        title = viewModel.getSettingTranslatedTitle(setting.name),
-                                        summary = setting.value,
-                                        enabled = setting.enabled,
-                                        clickable = setting.enabled,
-                                        onClick = { onDialogSettingClicked(setting) }
-                                    )
-                                }
+                    items(viewModel.sensorSettings.value, key = { "${it.sensorId}-${it.name}" }) { setting ->
+                        when (setting.valueType) {
+                            SensorSettingType.TOGGLE -> {
+                                SensorDetailRow(
+                                    title = viewModel.getSettingTranslatedTitle(setting.name),
+                                    switch = setting.value == "true",
+                                    enabled = setting.enabled,
+                                    clickable = setting.enabled,
+                                    onClick = { isEnabled ->
+                                        onToggleSettingSubmitted(
+                                            SensorSetting(viewModel.basicSensor.id, setting.name, isEnabled.toString(), SensorSettingType.TOGGLE, setting.enabled)
+                                        )
+                                    }
+                                )
+                            }
+                            SensorSettingType.LIST -> {
+                                SensorDetailRow(
+                                    title = viewModel.getSettingTranslatedTitle(setting.name),
+                                    summary = viewModel.getSettingTranslatedEntry(setting.name, setting.value),
+                                    enabled = setting.enabled,
+                                    clickable = setting.enabled,
+                                    onClick = { onDialogSettingClicked(setting) }
+                                )
+                            }
+                            SensorSettingType.LIST_APPS, SensorSettingType.LIST_BLUETOOTH, SensorSettingType.LIST_ZONES -> {
+                                val summaryValues = setting.value.split(", ").mapNotNull { it.ifBlank { null } }
+                                SensorDetailRow(
+                                    title = viewModel.getSettingTranslatedTitle(setting.name),
+                                    summary =
+                                    if (summaryValues.any()) summaryValues.toString()
+                                    else stringResource(commonR.string.none_selected),
+                                    enabled = setting.enabled,
+                                    clickable = setting.enabled,
+                                    onClick = { onDialogSettingClicked(setting) }
+                                )
+                            }
+                            SensorSettingType.STRING, SensorSettingType.NUMBER -> {
+                                SensorDetailRow(
+                                    title = viewModel.getSettingTranslatedTitle(setting.name),
+                                    summary = setting.value,
+                                    enabled = setting.enabled,
+                                    clickable = setting.enabled,
+                                    onClick = { onDialogSettingClicked(setting) }
+                                )
                             }
                         }
                     }
