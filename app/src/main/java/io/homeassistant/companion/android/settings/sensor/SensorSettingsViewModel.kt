@@ -14,7 +14,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SensorSettingsViewModel @Inject constructor(
-    private val sensorDao: SensorDao,
+    private val sensorsDao: SensorDao,
     application: Application
 ) :
     AndroidViewModel(application) {
