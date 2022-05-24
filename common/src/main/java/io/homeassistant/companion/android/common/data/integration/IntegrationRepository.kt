@@ -54,6 +54,7 @@ interface IntegrationRepository {
     suspend fun setShowShortcutTextEnabled(enabled: Boolean)
 
     suspend fun getHomeAssistantVersion(): String
+    suspend fun isHomeAssistantVersionAtLeast(year: Int, month: Int, release: Int): Boolean
 
     suspend fun getServices(): List<Service>?
 

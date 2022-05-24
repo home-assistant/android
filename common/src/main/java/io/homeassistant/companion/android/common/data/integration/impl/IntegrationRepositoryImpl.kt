@@ -475,6 +475,24 @@ class IntegrationRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun isHomeAssistantVersionAtLeast(
+        year: Int,
+        month: Int,
+        release: Int
+    ): Boolean {
+        val version = getHomeAssistantVersion()
+        val matches = VERSION_PATTERN.matcher(version)
+        var result = false
+        if (matches.find() && matches.matches()) {
+            val coreYear = matches.group(1)?.toIntOrNull() ?: 0
+            val coreMonth = matches.group(2)?.toIntOrNull() ?: 0
+            val coreRelease = matches.group(3)?.toIntOrNull() ?: 0
+            result =
+                coreYear > year || (coreYear == year && (coreMonth > month || (coreMonth == month && coreRelease >= release)))
+        }
+        return result
+    }
+
     override suspend fun getServices(): List<Service>? {
         val response = webSocketRepository.getServices()
 
@@ -538,23 +556,9 @@ class IntegrationRepositoryImpl @Inject constructor(
             }
     }
 
-    private suspend fun canRegisterEntityCategoryStateClass(): Boolean {
-        val version = getHomeAssistantVersion()
-        val matches = VERSION_PATTERN.matcher(version)
-        var canRegisterCategoryStateClass = false
-        if (matches.find() && matches.matches()) {
-            val year = Integer.parseInt(matches.group(1) ?: "0")
-            val month = Integer.parseInt(matches.group(2) ?: "0")
-            val release = Integer.parseInt(matches.group(3) ?: "0")
-            canRegisterCategoryStateClass =
-                year > 2021 || (year == 2021 && month >= 11 && release >= 0)
-        }
-        return canRegisterCategoryStateClass
-    }
-
     override suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>) {
-
-        val canRegisterCategoryStateClass = canRegisterEntityCategoryStateClass()
+        val canRegisterCategoryStateClass = isHomeAssistantVersionAtLeast(2021, 11, 0)
+        val canRegisterEntityDisabledState = isHomeAssistantVersionAtLeast(2022, 6, 0)
         val integrationRequest = IntegrationRequest(
             "register_sensor",
             SensorRequest(
@@ -567,7 +571,8 @@ class IntegrationRepositoryImpl @Inject constructor(
                 sensorRegistration.deviceClass,
                 sensorRegistration.unitOfMeasurement,
                 if (canRegisterCategoryStateClass) sensorRegistration.stateClass else null,
-                if (canRegisterCategoryStateClass) sensorRegistration.entityCategory else null
+                if (canRegisterCategoryStateClass) sensorRegistration.entityCategory else null,
+                if (canRegisterEntityDisabledState) sensorRegistration.disabled else null
             )
         )
 
