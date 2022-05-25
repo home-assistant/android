@@ -85,6 +85,8 @@ class BluetoothSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
+
+        val monitoringManager = MonitoringManager()
         val beaconMonitor = SensorManager.BasicSensor(
             "beacon_monitor",
             "sensor",
@@ -117,9 +119,9 @@ class BluetoothSensorManager : SensorManager {
                 return
 
             if (monitorEnabled) {
-                MonitoringManager.startMonitoring(context, beaconMonitoringDevice)
+                monitoringManager.startMonitoring(context, beaconMonitoringDevice)
             } else {
-                MonitoringManager.stopMonitoring(context, beaconMonitoringDevice)
+                monitoringManager.stopMonitoring(context, beaconMonitoringDevice)
             }
             sensorDao.add(SensorSetting(beaconMonitor.id, SETTING_BEACON_MONITOR_ENABLED, monitorEnabled.toString(), SensorSettingType.TOGGLE))
         }
@@ -288,15 +290,15 @@ class BluetoothSensorManager : SensorManager {
         KalmanFilter.maxIterations = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_FILTER_ITERATIONS, SensorSettingType.NUMBER, DEFAULT_BEACON_MONITOR_FILTER_ITERATIONS).toIntOrNull() ?: DEFAULT_BEACON_MONITOR_FILTER_ITERATIONS.toInt()
         KalmanFilter.rssiMultiplier = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER, SensorSettingType.NUMBER, DEFAULT_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER).toDoubleOrNull() ?: DEFAULT_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER.toDouble()
 
-        var restart = MonitoringManager.isMonitoring() &&
-            (MonitoringManager.scanPeriod != scanPeriod || MonitoringManager.scanInterval != scanInterval)
-        MonitoringManager.scanPeriod = scanPeriod
-        MonitoringManager.scanInterval = scanInterval
+        var restart = monitoringManager.isMonitoring() &&
+            (monitoringManager.scanPeriod != scanPeriod || monitoringManager.scanInterval != scanInterval)
+        monitoringManager.scanPeriod = scanPeriod
+        monitoringManager.scanInterval = scanInterval
 
         if (!isEnabled(context, beaconMonitor.id) || ! monitoringActive || restart) {
-            MonitoringManager.stopMonitoring(context, beaconMonitoringDevice)
+            monitoringManager.stopMonitoring(context, beaconMonitoringDevice)
         } else {
-            MonitoringManager.startMonitoring(context, beaconMonitoringDevice)
+            monitoringManager.startMonitoring(context, beaconMonitoringDevice)
         }
     }
 
@@ -340,12 +342,12 @@ class BluetoothSensorManager : SensorManager {
     }
 
     fun updateBeaconMonitoringSensor(context: Context) {
-        val icon = if (MonitoringManager.isMonitoring()) "mdi:bluetooth" else "mdi:bluetooth-off"
+        val icon = if (monitoringManager.isMonitoring()) "mdi:bluetooth" else "mdi:bluetooth-off"
 
-        var state = if (!BluetoothUtils.isOn(context)) "Bluetooth is turned off" else if (MonitoringManager.isMonitoring()) "Monitoring" else "Stopped"
+        var state = if (!BluetoothUtils.isOn(context)) "Bluetooth is turned off" else if (monitoringManager.isMonitoring()) "Monitoring" else "Stopped"
 
         var attr: Map<String, Any?> = mapOf()
-        if (BluetoothUtils.isOn(context) && MonitoringManager.isMonitoring()) {
+        if (BluetoothUtils.isOn(context) && monitoringManager.isMonitoring()) {
             for (beacon: IBeacon in beaconMonitoringDevice.beacons) {
                 attr += Pair(beacon.uuid, beacon.distance)
             }

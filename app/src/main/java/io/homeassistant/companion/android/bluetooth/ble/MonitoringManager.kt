@@ -8,7 +8,7 @@ import org.altbeacon.beacon.BeaconManager
 import org.altbeacon.beacon.BeaconParser
 import org.altbeacon.beacon.Region
 
-object MonitoringManager {
+class MonitoringManager {
     private lateinit var beaconManager: BeaconManager
     private lateinit var region: Region
     var scanPeriod: Long = 1100
