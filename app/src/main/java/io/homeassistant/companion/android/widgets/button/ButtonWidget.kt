@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -12,10 +13,13 @@ import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
+import androidx.core.graphics.toColorInt
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.google.android.material.color.DynamicColors
 import com.maltaisn.icondialog.pack.IconPack
 import com.maltaisn.icondialog.pack.IconPackLoader
 import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
@@ -25,6 +29,8 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
+import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
+import io.homeassistant.companion.android.util.getAttribute
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -47,6 +53,8 @@ class ButtonWidget : AppWidgetProvider() {
         internal const val EXTRA_SERVICE_DATA = "EXTRA_SERVICE_DATA"
         internal const val EXTRA_LABEL = "EXTRA_LABEL"
         internal const val EXTRA_ICON = "EXTRA_ICON"
+        internal const val EXTRA_BACKGROUND_TYPE = "EXTRA_BACKGROUND_TYPE"
+        internal const val EXTRA_TEXT_COLOR = "EXTRA_TEXT_COLOR"
     }
 
     @Inject
@@ -86,11 +94,6 @@ class ButtonWidget : AppWidgetProvider() {
                 views.setViewVisibility(R.id.widgetProgressBar, View.INVISIBLE)
                 views.setViewVisibility(R.id.widgetImageButtonLayout, View.VISIBLE)
                 views.setViewVisibility(R.id.widgetLabelLayout, View.VISIBLE)
-                views.setInt(
-                    R.id.widgetLayout,
-                    "setBackgroundResource",
-                    R.drawable.widget_button_background
-                )
                 appWidgetManager.updateAppWidget(item.id, views)
             }
         }
@@ -152,12 +155,25 @@ class ButtonWidget : AppWidgetProvider() {
             iconPack = createMaterialDesignIconPack(loader)
             iconPack!!.loadDrawables(loader.drawableLoader)
         }
-        return RemoteViews(context.packageName, R.layout.widget_button).apply {
+        val useDynamicColors = widget?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
+        return RemoteViews(context.packageName, if (useDynamicColors) R.layout.widget_button_wrapper_dynamiccolor else R.layout.widget_button_wrapper_default).apply {
+            // Theming
+            var textColor = context.getAttribute(R.attr.colorWidgetOnBackground, ContextCompat.getColor(context, commonR.color.colorWidgetButtonLabel))
+            if (widget?.backgroundType == WidgetBackgroundType.TRANSPARENT) {
+                widget.textColor?.let { textColor = it.toColorInt() }
+                setTextColor(R.id.widgetLabel, textColor)
+            }
+            setWidgetBackground(this, widget)
+
+            // Content
             val iconId = widget?.iconId ?: 988171 // Lightning bolt
 
             val iconDrawable = iconPack?.icons?.get(iconId)?.drawable
             if (iconDrawable != null) {
                 val icon = DrawableCompat.wrap(iconDrawable)
+                if (widget?.backgroundType == WidgetBackgroundType.TRANSPARENT) {
+                    setInt(R.id.widgetImageButton, "setColorFilter", textColor)
+                }
                 setImageViewBitmap(R.id.widgetImageButton, icon.toBitmap())
             }
 
@@ -174,6 +190,17 @@ class ButtonWidget : AppWidgetProvider() {
                 R.id.widgetLabel,
                 widget?.label ?: ""
             )
+        }
+    }
+
+    private fun setWidgetBackground(views: RemoteViews, widget: ButtonWidgetEntity?) {
+        when (widget?.backgroundType) {
+            WidgetBackgroundType.TRANSPARENT -> {
+                views.setInt(R.id.widgetLayout, "setBackgroundColor", Color.TRANSPARENT)
+            }
+            else -> {
+                views.setInt(R.id.widgetLayout, "setBackgroundResource", R.drawable.widget_button_background)
+            }
         }
     }
 
@@ -265,11 +292,7 @@ class ButtonWidget : AppWidgetProvider() {
             Handler(Looper.getMainLooper()).postDelayed(
                 {
                     views.setViewVisibility(R.id.widgetLabelLayout, View.VISIBLE)
-                    views.setInt(
-                        R.id.widgetLayout,
-                        "setBackgroundResource",
-                        R.drawable.widget_button_background
-                    )
+                    setWidgetBackground(views, widget)
                     appWidgetManager.updateAppWidget(appWidgetId, views)
                 },
                 1000
@@ -285,6 +308,8 @@ class ButtonWidget : AppWidgetProvider() {
         val serviceData: String? = extras.getString(EXTRA_SERVICE_DATA)
         val label: String? = extras.getString(EXTRA_LABEL)
         val icon: Int = extras.getInt(EXTRA_ICON)
+        val backgroundType: WidgetBackgroundType = extras.getSerializable(EXTRA_BACKGROUND_TYPE) as WidgetBackgroundType
+        val textColor: String? = extras.getString(EXTRA_TEXT_COLOR)
 
         if (domain == null || service == null || serviceData == null) {
             Log.e(TAG, "Did not receive complete service call data")
@@ -301,7 +326,7 @@ class ButtonWidget : AppWidgetProvider() {
                     "label: " + label
             )
 
-            val widget = ButtonWidgetEntity(appWidgetId, icon, domain, service, serviceData, label)
+            val widget = ButtonWidgetEntity(appWidgetId, icon, domain, service, serviceData, label, backgroundType, textColor)
             buttonWidgetDao.add(widget)
 
             // It is the responsibility of the configuration activity to update the app widget

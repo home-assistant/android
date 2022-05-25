@@ -65,4 +65,11 @@ object BluetoothUtils {
             throw IllegalStateException(e)
         }
     }
+    fun supportsTransmitter(context: Context): Boolean {
+        val bluetoothManager =
+            context.applicationContext.getSystemService<BluetoothManager>()!!
+        val adapter = bluetoothManager.adapter
+
+        return adapter?.isMultipleAdvertisementSupported ?: false
+    }
 }

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -88,6 +89,28 @@
                 android:hint="@string/widget_text_hint_label"
                 android:imeOptions="actionDone"
                 android:inputType="text" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/background_type_parent"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:padding="5dp"
+                android:text="@string/widget_background_type_label" />
+
+            <Spinner
+                android:id="@+id/background_type"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
         </LinearLayout>
 
         <androidx.appcompat.widget.AppCompatButton

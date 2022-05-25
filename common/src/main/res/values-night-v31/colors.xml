@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorDynamicWidgetBackground">@android:color/system_accent2_800</color> <!-- M3 colorSecondaryContainer + 1 level-->
+    <color name="colorDynamicWidgetOnBackground">@android:color/system_accent2_100</color> <!-- M3 colorOnSecondaryContainer -->
+    <color name="colorDynamicWidgetPrimary">@android:color/system_accent1_100</color> <!-- M3 colorPrimary - 1 level -->
+</resources>

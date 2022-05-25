@@ -18,7 +18,7 @@
     <color name="colorSensorTopEnabled">#192d36</color>
     <color name="colorSwitchUncheckedThumb">#b9b9b9</color>
     <color name="colorWidgetButtonBackground">#1c1c1c</color>
-    <color name="colorWidgetButtonLabel">#E6E6E6</color>
+    <color name="colorWidgetButtonLabel">@color/colorWidgetButtonLabelWhite</color>
     <color name="colorActionBarPopupBackground">#2B2B2B</color>
     <color name="colorLaunchScreenBackground">#111111</color>
     <color name="colorCodeBackground">#282828</color>
