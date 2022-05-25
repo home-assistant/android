@@ -131,8 +131,8 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
             return
         }
 
-        val currentCoreVersion = integrationUseCase.getHomeAssistantVersion()
-        val currentCoreSupportsDisabledSensors = integrationUseCase.isHomeAssistantVersionAtLeast(2022, 6, 0)
+        val currentHAversion = integrationUseCase.getHomeAssistantVersion()
+        val supportsDisabledSensors = integrationUseCase.isHomeAssistantVersionAtLeast(2022, 6, 0)
 
         managers.forEach { manager ->
 
@@ -141,6 +141,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
             if (manager is LocationSensorManagerBase)
                 manager.integrationUseCase = integrationUseCase
 
+            val hasSensor = manager.hasSensor(context)
             try {
                 manager.requestSensorUpdate(context, intent)
             } catch (e: Exception) {
@@ -152,17 +153,22 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                 val sensorCoreRegistration = sensor?.coreRegistration
                 val sensorAppRegistration = sensor?.appRegistration
 
-                // The app should (re)register sensors with core when:
-                // - sensor isn't registered but is enabled or the user is on core 2022.6 and newer
-                // - sensor enabled state doesn't match registered enabled state on core 2022.6 and newer
-                // - app version change is detected
-                // - core version change is detected (checked every 4 hours)
-                if (sensor != null && basicSensor.type.isNotBlank() && basicSensor.statelessIcon.isNotBlank() &&
+                // The app should (re)register available sensors with core when possible (supported/type/icon) and:
+                // - sensor isn't registered, but is enabled or on core >=2022.6
+                // - sensor enabled state doesn't match registered enabled state on core >=2022.6
+                // - sensor is enabled or on core >=2022.6, and app or core version change is detected
+                if (
+                    sensor != null &&
+                    hasSensor &&
+                    basicSensor.type.isNotBlank() &&
+                    basicSensor.statelessIcon.isNotBlank() &&
                     (
-                        (sensor.registered == null && (sensor.enabled || currentCoreSupportsDisabledSensors)) ||
-                            (sensor.enabled != sensor.registered && currentCoreSupportsDisabledSensors) ||
-                            currentAppVersion != sensorAppRegistration ||
-                            currentCoreVersion != sensorCoreRegistration
+                        (sensor.registered == null && (sensor.enabled || supportsDisabledSensors)) ||
+                            (sensor.enabled != sensor.registered && supportsDisabledSensors) ||
+                            (
+                                (sensor.enabled || supportsDisabledSensors) &&
+                                    (currentAppVersion != sensorAppRegistration || currentHAversion != sensorCoreRegistration)
+                                )
                         )
                 ) {
                     val reg = fullSensor.toSensorRegistration(basicSensor)
@@ -173,12 +179,23 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                     try {
                         integrationUseCase.registerSensor(reg)
                         sensor.registered = sensor.enabled
-                        sensor.coreRegistration = currentCoreVersion
+                        sensor.coreRegistration = currentHAversion
                         sensor.appRegistration = currentAppVersion
                         sensorDao.update(sensor)
                     } catch (e: Exception) {
                         Log.e(tag, "Issue registering sensor: ${reg.uniqueId}", e)
                     }
+                } else if (
+                    supportsDisabledSensors &&
+                    sensor != null &&
+                    sensor.enabled != sensor.registered &&
+                    (!hasSensor || basicSensor.type.isBlank())
+                ) {
+                    // Unsupported sensors or sensors without a type (= location sensors) in the database shouldn't/can't
+                    // be registered but they will have a 'registered' state. Manually update when on core >=2022.6 by
+                    // setting it to the enabled state to stop the app from continuing to do updates because of these sensors.
+                    sensor.registered = sensor.enabled
+                    sensorDao.update(sensor)
                 }
                 if (sensor?.enabled == true && sensor.registered != null && sensor.state != sensor.lastSentState) {
                     enabledRegistrations.add(fullSensor.toSensorRegistration(basicSensor))
