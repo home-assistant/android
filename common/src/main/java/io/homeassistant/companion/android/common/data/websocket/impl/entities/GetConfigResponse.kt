@@ -12,4 +12,5 @@ data class GetConfigResponse(
     val timeZone: String,
     val components: List<String>,
     val version: String,
+    val entities: Map<String, Map<String, Any>>? // only on core >= 2022.6 when using webhook
 )

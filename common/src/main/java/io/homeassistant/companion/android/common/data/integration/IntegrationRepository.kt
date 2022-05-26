@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.data.integration
 
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import kotlinx.coroutines.flow.Flow
 
 interface IntegrationRepository {
@@ -56,6 +57,7 @@ interface IntegrationRepository {
     suspend fun getHomeAssistantVersion(): String
     suspend fun isHomeAssistantVersionAtLeast(year: Int, month: Int, release: Int): Boolean
 
+    suspend fun getConfig(): GetConfigResponse
     suspend fun getServices(): List<Service>?
 
     suspend fun getEntities(): List<Entity<Any>>?

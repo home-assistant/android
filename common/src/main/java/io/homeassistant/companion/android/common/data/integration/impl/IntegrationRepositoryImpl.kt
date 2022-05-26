@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.json.JSONArray
+import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 import javax.inject.Inject
 import javax.inject.Named
@@ -480,6 +481,8 @@ class IntegrationRepositoryImpl @Inject constructor(
         month: Int,
         release: Int
     ): Boolean {
+        if (!isRegistered()) return false
+
         val version = getHomeAssistantVersion()
         val matches = VERSION_PATTERN.matcher(version)
         var result = false
@@ -491,6 +494,38 @@ class IntegrationRepositoryImpl @Inject constructor(
                 coreYear > year || (coreYear == year && (coreMonth > month || (coreMonth == month && coreRelease >= release)))
         }
         return result
+    }
+
+    override suspend fun getConfig(): GetConfigResponse {
+        val getConfigRequest =
+            IntegrationRequest(
+                "get_config",
+                null
+            )
+        var response: GetConfigResponse? = null
+        var causeException: Exception? = null
+
+        for (it in urlRepository.getApiUrls()) {
+            try {
+                response = integrationService.getConfig(it.toHttpUrlOrNull()!!, getConfigRequest)
+            } catch (e: Exception) {
+                if (causeException == null) causeException = e
+                // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
+            }
+
+            if (response != null) {
+                // If we have a valid response, also update the cached version
+                localStorage.putString(PREF_HA_VERSION, response.version)
+                localStorage.putLong(
+                    PREF_CHECK_SENSOR_REGISTRATION_NEXT,
+                    System.currentTimeMillis() + TimeUnit.HOURS.toMillis(4)
+                )
+                return response
+            }
+        }
+
+        if (causeException != null) throw IntegrationException(causeException)
+        else throw IntegrationException("Error calling integration request get_config")
     }
 
     override suspend fun getServices(): List<Service>? {
@@ -563,7 +598,7 @@ class IntegrationRepositoryImpl @Inject constructor(
             "register_sensor",
             SensorRequest(
                 sensorRegistration.uniqueId,
-                sensorRegistration.state,
+                if (canRegisterEntityDisabledState && sensorRegistration.disabled) null else sensorRegistration.state,
                 sensorRegistration.type,
                 sensorRegistration.icon,
                 sensorRegistration.attributes,
