@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Application
 import android.content.pm.PackageManager
 import android.util.Log
+import androidx.annotation.StringRes
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,9 +27,12 @@ import io.homeassistant.companion.android.sensors.LastAppSensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 @HiltViewModel
 class SensorDetailViewModel @Inject constructor(
@@ -47,6 +51,10 @@ class SensorDetailViewModel @Inject constructor(
             val sensors: Array<String>,
             val permissions: Array<String>? = null
         )
+        data class PermissionSnackbar(
+            @StringRes val message: Int,
+            val actionOpensSettings: Boolean
+        )
         data class SettingDialogState(
             val setting: SensorSetting,
             /** List of entity ID to entity pairs */
@@ -60,6 +68,9 @@ class SensorDetailViewModel @Inject constructor(
 
     val permissionRequests = MutableLiveData<Array<String>>()
     val locationPermissionRequests = MutableLiveData<LocationPermissionsDialog?>()
+
+    private val _permissionSnackbar = MutableSharedFlow<PermissionSnackbar>()
+    var permissionSnackbar = _permissionSnackbar.asSharedFlow()
 
     val sensorManager = SensorReceiver.MANAGERS
         .find { it.getAvailableSensors(getApplication()).any { sensor -> sensor.id == sensorId } }
@@ -295,7 +306,11 @@ class SensorDetailViewModel @Inject constructor(
         viewModelScope.launch {
             // This is only called when we requested permissions to enable a sensor, so check if
             // we have all permissions and should enable the sensor.
-            updateSensorEntity(sensorManager?.checkPermission(getApplication(), sensorId) == true)
+            val hasPermission = sensorManager?.checkPermission(getApplication(), sensorId) == true
+            if (!hasPermission) {
+                _permissionSnackbar.emit(PermissionSnackbar(commonR.string.enable_sensor_missing_permission_general, false))
+            }
+            updateSensorEntity(hasPermission)
             permissionRequests.value = emptyArray()
         }
     }
@@ -311,9 +326,30 @@ class SensorDetailViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            updateSensorEntity(
-                results.values.all { it } && sensorManager?.checkPermission(getApplication(), sensorId) == true
-            )
+            val hasPermission = results.values.all { it } && sensorManager?.checkPermission(getApplication(), sensorId) == true
+            if (!hasPermission) {
+                _permissionSnackbar.emit(
+                    PermissionSnackbar(
+                        when (results.entries.firstOrNull { !it.value }?.key) {
+                            Manifest.permission.ACTIVITY_RECOGNITION ->
+                                commonR.string.enable_sensor_missing_permission_activity_recognition
+                            Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+                            Manifest.permission.ACCESS_COARSE_LOCATION,
+                            Manifest.permission.ACCESS_FINE_LOCATION ->
+                                commonR.string.enable_sensor_missing_permission_location
+                            Manifest.permission.BLUETOOTH_ADVERTISE,
+                            Manifest.permission.BLUETOOTH_CONNECT ->
+                                commonR.string.enable_sensor_missing_permission_nearby_devices
+                            Manifest.permission.READ_PHONE_STATE ->
+                                commonR.string.enable_sensor_missing_permission_phone
+                            else ->
+                                commonR.string.enable_sensor_missing_permission_general
+                        },
+                        true
+                    )
+                )
+            }
+            updateSensorEntity(hasPermission)
             permissionRequests.value = emptyArray()
         }
     }

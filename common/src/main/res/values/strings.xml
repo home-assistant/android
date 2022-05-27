@@ -165,6 +165,11 @@
     <string name="enable_location_tracking">Enable Location Tracking</string>
     <string name="enable_remaining_sensors">Enable %1$d Sensors</string>
     <string name="enable_sensor">Enable sensor</string>
+    <string name="enable_sensor_missing_permission_activity_recognition">Requires \'Physical activity\' permission</string>
+    <string name="enable_sensor_missing_permission_general">Missing required permission</string>
+    <string name="enable_sensor_missing_permission_location">Requires \'Location\' permission</string>
+    <string name="enable_sensor_missing_permission_nearby_devices">Requires \'Nearby devices\' permission</string>
+    <string name="enable_sensor_missing_permission_phone">Requires \'Phone\' permission</string>
     <string name="enabled">Enabled</string>
     <plurals name="entities_found">
         <item quantity="one">%d entity found</item>
