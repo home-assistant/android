@@ -457,7 +457,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             latestContext,
             backgroundLocation,
             SETTING_HIGH_ACCURACY_BT_ZONE_COMBINED,
-            "toggle",
+            SensorSettingType.TOGGLE,
             "false"
         ).toBoolean()
     }
