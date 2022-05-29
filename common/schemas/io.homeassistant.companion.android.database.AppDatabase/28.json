@@ -1,8 +1,8 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 27,
-    "identityHash": "3761a46a6cfa6a15c9d8ed4935f0beb7",
+    "version": 28,
+    "identityHash": "dbee144b17c2b37aba9ab9701ea0e715",
     "entities": [
       {
         "tableName": "sensor_attributes",
@@ -77,7 +77,7 @@
       },
       {
         "tableName": "sensors",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, `last_sent_state` TEXT NOT NULL, `state_type` TEXT NOT NULL, `type` TEXT NOT NULL, `icon` TEXT NOT NULL, `name` TEXT NOT NULL, `device_class` TEXT, `unit_of_measurement` TEXT, `state_class` TEXT, `entity_category` TEXT, `core_registration` TEXT, `app_registration` TEXT, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER DEFAULT NULL, `state` TEXT NOT NULL, `last_sent_state` TEXT NOT NULL, `state_type` TEXT NOT NULL, `type` TEXT NOT NULL, `icon` TEXT NOT NULL, `name` TEXT NOT NULL, `device_class` TEXT, `unit_of_measurement` TEXT, `state_class` TEXT, `entity_category` TEXT, `core_registration` TEXT, `app_registration` TEXT, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -95,7 +95,8 @@
             "fieldPath": "registered",
             "columnName": "registered",
             "affinity": "INTEGER",
-            "notNull": true
+            "notNull": false,
+            "defaultValue": "NULL"
           },
           {
             "fieldPath": "state",
@@ -672,7 +673,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3761a46a6cfa6a15c9d8ed4935f0beb7')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'dbee144b17c2b37aba9ab9701ea0e715')"
     ]
   }
 }

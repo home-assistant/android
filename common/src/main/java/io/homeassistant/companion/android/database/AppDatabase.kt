@@ -71,11 +71,12 @@ import io.homeassistant.companion.android.common.R as commonR
         Favorites::class,
         Setting::class
     ],
-    version = 27,
+    version = 28,
     autoMigrations = [
         AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
-        AutoMigration(from = 26, to = 27, spec = AppDatabase.Companion.Migration26to27::class)
+        AutoMigration(from = 26, to = 27),
+        AutoMigration(from = 27, to = 28, spec = AppDatabase.Companion.Migration27to28::class)
     ]
 )
 @TypeConverters(
@@ -502,7 +503,7 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        class Migration26to27 : AutoMigrationSpec {
+        class Migration27to28 : AutoMigrationSpec {
             override fun onPostMigrate(db: SupportSQLiteDatabase) {
                 // Update 'registered' in the sensors table to set the value to null instead of the previous default of 0
                 // This will force an update to indicate whether a sensor is not registered (null) or registered as disabled (0)

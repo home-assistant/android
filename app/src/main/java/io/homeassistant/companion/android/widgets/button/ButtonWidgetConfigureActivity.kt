@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.widgets.button
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -17,13 +16,13 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.EditText
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.toColorInt
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -35,28 +34,25 @@ import com.maltaisn.icondialog.pack.IconPack
 import com.maltaisn.icondialog.pack.IconPackLoader
 import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.Service
 import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetButtonConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.util.getHexForColor
+import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.common.ServiceFieldBinder
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetDynamicFieldAdapter
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
-class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
+class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.Callback {
     companion object {
         private const val TAG: String = "ButtonWidgetConfigAct"
         private const val ICON_DIALOG_TAG = "icon-dialog"
@@ -65,6 +61,9 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
 
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
+
+    private lateinit var buttonWidgetDao: ButtonWidgetDao
+    override val dao get() = buttonWidgetDao
 
     private lateinit var iconPack: IconPack
 
@@ -75,15 +74,7 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
 
     private lateinit var binding: WidgetButtonConfigureBinding
 
-    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
-
-    private var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
     private var requestLauncherSetup = false
-
-    private var onDeleteWidget = View.OnClickListener {
-        val context = this@ButtonWidgetConfigureActivity
-        deleteConfirmation(context)
-    }
 
     private val onAddFieldListener = View.OnClickListener {
         val context = this@ButtonWidgetConfigureActivity
@@ -199,7 +190,7 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
             return
         }
 
-        val buttonWidgetDao = AppDatabase.getInstance(applicationContext).buttonWidgetDao()
+        buttonWidgetDao = AppDatabase.getInstance(applicationContext).buttonWidgetDao()
         val buttonWidget = buttonWidgetDao.get(appWidgetId)
         var serviceText = ""
 
@@ -247,7 +238,7 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
         binding.widgetTextConfigService.setAdapter(serviceAdapter)
         binding.widgetTextConfigService.onFocusChangeListener = dropDownOnFocus
 
-        mainScope.launch {
+        lifecycleScope.launch {
             try {
                 // Fetch services
                 integrationUseCase.getServices()?.forEach {
@@ -373,11 +364,6 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
         }
     }
 
-    override fun onDestroy() {
-        mainScope.cancel()
-        super.onDestroy()
-    }
-
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         if (intent != null && intent.extras != null && intent.hasExtra(PIN_WIDGET_CALLBACK)) {
@@ -492,35 +478,5 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
             Log.e(TAG, "Issue configuring widget", e)
             showAddWidgetError()
         }
-    }
-
-    private fun showAddWidgetError() {
-        Toast.makeText(applicationContext, commonR.string.widget_creation_error, Toast.LENGTH_LONG).show()
-    }
-
-    private fun deleteConfirmation(context: Context) {
-        val buttonWidgetDao = AppDatabase.getInstance(context).buttonWidgetDao()
-
-        val builder: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(context)
-
-        builder.setTitle(commonR.string.confirm_delete_this_widget_title)
-        builder.setMessage(commonR.string.confirm_delete_this_widget_message)
-
-        builder.setPositiveButton(
-            commonR.string.confirm_positive
-        ) { dialog, _ ->
-            buttonWidgetDao.delete(appWidgetId)
-            dialog.dismiss()
-            finish()
-        }
-
-        builder.setNegativeButton(
-            commonR.string.confirm_negative
-        ) { dialog, _ -> // Do nothing
-            dialog.dismiss()
-        }
-
-        val alert: android.app.AlertDialog? = builder.create()
-        alert?.show()
     }
 }
