@@ -11,9 +11,6 @@ interface TileDao {
     @Query("SELECT * FROM qs_tiles WHERE tileId = :tileId")
     suspend fun get(tileId: String): TileEntity?
 
-    @Query("SELECT * FROM qs_tiles WHERE tileId = :tileId")
-    fun getSync(tileId: String): TileEntity?
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun add(tileEntity: TileEntity)
 

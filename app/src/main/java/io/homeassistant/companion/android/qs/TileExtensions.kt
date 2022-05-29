@@ -17,6 +17,9 @@ import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.qs.TileDao
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
@@ -35,26 +38,41 @@ abstract class TileExtensions : TileService() {
     @Inject
     lateinit var tileDao: TileDao
 
+    private val mainScope = MainScope()
+
     override fun onClick() {
         super.onClick()
-        if (getTile() != null) {
-            setTileData(getTileId(), getTile()!!)
-            tileClicked(getTileId(), getTile()!!)
+        getTile()?.let { tile ->
+            mainScope.launch {
+                setTileData(getTileId(), tile)
+                tileClicked(getTileId(), tile)
+            }
         }
     }
 
     override fun onTileAdded() {
         super.onTileAdded()
         Log.d(TAG, "Tile: ${getTileId()} added")
-        if (getTile() != null)
-            setTileData(getTileId(), getTile()!!)
+        getTile()?.let { tile ->
+            mainScope.launch {
+                setTileData(getTileId(), tile)
+            }
+        }
     }
 
     override fun onStartListening() {
         super.onStartListening()
         Log.d(TAG, "Tile: ${getTileId()} is in view")
-        if (getTile() != null)
-            setTileData(getTileId(), getTile()!!)
+        getTile()?.let { tile ->
+            mainScope.launch {
+                setTileData(getTileId(), tile)
+            }
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mainScope.cancel()
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
