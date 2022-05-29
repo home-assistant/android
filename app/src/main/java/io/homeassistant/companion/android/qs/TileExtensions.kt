@@ -66,7 +66,7 @@ abstract class TileExtensions : TileService() {
         fun setTileData(context: Context, tileId: String, tile: Tile, integrationUseCase: IntegrationRepository): Boolean {
             Log.d(TAG, "Attempting to set tile data for tile ID: $tileId")
             val tileDao = AppDatabase.getInstance(context).tileDao()
-            val tileData = tileDao.get(tileId)
+            val tileData = tileDao.getSync(tileId)
             try {
                 return if (tileData != null) {
                     tile.label = tileData.label
@@ -112,7 +112,7 @@ abstract class TileExtensions : TileService() {
         ) {
             Log.d(TAG, "Click detected for tile ID: $tileId")
             val tileDao = AppDatabase.getInstance(context).tileDao()
-            val tileData = tileDao.get(tileId)
+            val tileData = tileDao.getSync(tileId)
             val hasTile = setTileData(context, tileId, tile, integrationUseCase)
             if (hasTile) {
                 tile.state = Tile.STATE_ACTIVE

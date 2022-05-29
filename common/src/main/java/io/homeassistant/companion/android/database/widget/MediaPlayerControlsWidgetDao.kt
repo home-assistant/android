@@ -7,7 +7,7 @@ import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface MediaPlayerControlsWidgetDao {
+interface MediaPlayerControlsWidgetDao : WidgetDao {
 
     @Query("SELECT * FROM mediaplayctrls_widgets WHERE id = :id")
     fun get(id: Int): MediaPlayerControlsWidgetEntity?
@@ -16,7 +16,7 @@ interface MediaPlayerControlsWidgetDao {
     suspend fun add(mediaPlayCtrlWidgetEntity: MediaPlayerControlsWidgetEntity)
 
     @Query("DELETE FROM mediaplayctrls_widgets WHERE id = :id")
-    fun delete(id: Int)
+    override suspend fun delete(id: Int)
 
     @Query("DELETE FROM mediaplayctrls_widgets WHERE id IN (:ids)")
     suspend fun deleteAll(ids: IntArray)
