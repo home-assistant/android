@@ -38,11 +38,10 @@ class ManageWidgetsViewModel @Inject constructor(
     val staticWidgetList = staticWidgetDao.getAllFlow().collectAsState()
     val mediaWidgetList = mediaPlayerControlsWidgetDao.getAllFlow().collectAsState()
     val templateWidgetList = templateWidgetDao.getAllFlow().collectAsState()
-    var supportsAddingWidgets = mutableStateOf(false)
-        private set
+    val supportsAddingWidgets: Boolean
 
     init {
-        supportsAddingWidgets.value = checkSupportsAddingWidgets()
+        supportsAddingWidgets = checkSupportsAddingWidgets()
     }
 
     private fun checkSupportsAddingWidgets(): Boolean {
