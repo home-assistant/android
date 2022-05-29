@@ -51,6 +51,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
         private const val SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL = "location_ham_update_interval"
         private const val SETTING_HIGH_ACCURACY_MODE_BLUETOOTH_DEVICES = "location_ham_only_bt_dev"
         private const val SETTING_HIGH_ACCURACY_MODE_ZONE = "location_ham_only_enter_zone"
+        private const val SETTING_HIGH_ACCURACY_BT_ZONE_COMBINED = "location_ham_zone_bt_combined"
         private const val SETTING_HIGH_ACCURACY_MODE_TRIGGER_RANGE_ZONE = "location_ham_trigger_range"
 
         private const val DEFAULT_MINIMUM_ACCURACY = 200
@@ -281,6 +282,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             enableDisableSetting(latestContext, backgroundLocation, SETTING_HIGH_ACCURACY_MODE_BLUETOOTH_DEVICES, highAccuracyModeSettingEnabled)
             enableDisableSetting(latestContext, backgroundLocation, SETTING_HIGH_ACCURACY_MODE_ZONE, highAccuracyModeSettingEnabled && isZoneEnable)
             enableDisableSetting(latestContext, backgroundLocation, SETTING_HIGH_ACCURACY_MODE_TRIGGER_RANGE_ZONE, highAccuracyModeSettingEnabled && isZoneEnable)
+            enableDisableSetting(latestContext, backgroundLocation, SETTING_HIGH_ACCURACY_BT_ZONE_COMBINED, highAccuracyModeSettingEnabled && isZoneEnable)
 
             lastHighAccuracyZones = highAccuracyZones
             lastHighAccuracyTriggerRange = highAccuracyTriggerRange
@@ -381,6 +383,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             SensorSettingType.LIST_BLUETOOTH,
             ""
         )
+        val highAccuracyBtZoneCombined = getHighAccuracyBTZoneCombinedSetting()
 
         val useTriggerRange = getHighAccuracyModeTriggerRange() > 0
         val highAccuracyZones = getHighAccuracyModeZones(false)
@@ -427,13 +430,15 @@ class LocationSensorManager : LocationSensorManagerBase() {
         // true = High accuracy mode enabled
         // false = High accuracy mode disabled
         //
-        // if either BT Device is connected or in Zone -> High accuracy mode enabled (true)
+        // if BT device and zone are combined and BT device is connected AND in zone -> High accuracy mode enabled (true)
+        // if BT device and zone are NOT combined and either BT Device is connected OR in Zone -> High accuracy mode enabled (true)
         // Else (NO BT dev connected and NOT in Zone), if min. one constraint is used ->  High accuracy mode disabled (false)
         //                                             if no constraint is used ->  High accuracy mode enabled (true)
-        return if (btDevConnected || inZone) {
-            true
-        } else {
-            !constraintsUsed
+        return when {
+            highAccuracyBtZoneCombined && btDevConnected && inZone -> true
+            !highAccuracyBtZoneCombined && (btDevConnected || inZone) -> true
+            highAccuracyBtZoneCombined && !constraintsUsed -> false
+            else -> !constraintsUsed
         }
     }
 
@@ -443,6 +448,16 @@ class LocationSensorManager : LocationSensorManagerBase() {
             backgroundLocation,
             SETTING_HIGH_ACCURACY_MODE,
             SensorSettingType.TOGGLE,
+            "false"
+        ).toBoolean()
+    }
+
+    private fun getHighAccuracyBTZoneCombinedSetting(): Boolean {
+        return getSetting(
+            latestContext,
+            backgroundLocation,
+            SETTING_HIGH_ACCURACY_BT_ZONE_COMBINED,
+            "toggle",
             "false"
         ).toBoolean()
     }
