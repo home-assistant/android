@@ -1,25 +1,26 @@
 package io.homeassistant.companion.android.settings.qs
 
 import android.app.Application
-import android.graphics.PorterDuff
 import android.widget.Toast
 import androidx.appcompat.content.res.AppCompatResources
-import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.maltaisn.icondialog.data.Icon
 import com.maltaisn.icondialog.pack.IconPack
 import com.maltaisn.icondialog.pack.IconPackLoader
 import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.qs.TileEntity
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -29,51 +30,58 @@ class ManageTilesViewModel @Inject constructor(
     application: Application
 ) : AndroidViewModel(application) {
 
-    private lateinit var iconPack: IconPack
-
+    lateinit var iconPack: IconPack
     private val tileDao = AppDatabase.getInstance(application).tileDao()
-    fun currentTile() = tileDao.get(selectedTile.value)
-    var entities = mutableStateMapOf<String, Entity<*>>()
+
+    val slots = loadTileSlots(application.resources)
+
+    var selectedTile by mutableStateOf(slots[0])
         private set
-    var selectedTile = mutableStateOf("tile_1")
+
+    var sortedEntities by mutableStateOf<List<Entity<*>>>(emptyList())
         private set
-    var selectedTileName = mutableStateOf(application.getString(R.string.tile_1))
+    var selectedIcon by mutableStateOf<Int?>(null)
         private set
-    var selectedIcon = mutableStateOf(currentTile()?.iconId)
+    var selectedIconDrawable by mutableStateOf(AppCompatResources.getDrawable(application, R.drawable.ic_stat_ic_notification))
         private set
-    var drawableIcon = mutableStateOf(AppCompatResources.getDrawable(application, R.drawable.ic_stat_ic_notification))
-        private set
-    var selectedEntityId = mutableStateOf(currentTile()?.entityId ?: "")
-        private set
-    var tileLabel = mutableStateOf(currentTile()?.label)
-        private set
-    var tileSubtitle = mutableStateOf(currentTile()?.subtitle)
-        private set
+    var selectedEntityId by mutableStateOf("")
+    var tileLabel by mutableStateOf("")
+    var tileSubtitle by mutableStateOf<String?>(null)
 
     init {
-        viewModelScope.launch {
-            integrationUseCase.getEntities()?.forEach {
-                if (it.domain in ManageTilesFragment.validDomains)
-                    entities[it.entityId] = it
-            }
+        // Initialize fields based on the tile_1 TileEntity
+        selectTile(0)
+
+        viewModelScope.launch(Dispatchers.IO) {
+            sortedEntities = integrationUseCase.getEntities().orEmpty()
+                .filter { it.domain in ManageTilesFragment.validDomains }
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val loader = IconPackLoader(getApplication())
+            iconPack = createMaterialDesignIconPack(loader)
+            iconPack.loadDrawables(loader.drawableLoader)
         }
     }
 
-    fun updateExistingTileFields() {
-        val currentTile = currentTile()!!
-        tileLabel.value = currentTile.label
-        tileSubtitle.value = currentTile.subtitle
-        selectedEntityId.value = currentTile.entityId
-        selectedIcon.value = currentTile.iconId
-        val loader = IconPackLoader(getApplication())
-        iconPack = createMaterialDesignIconPack(loader)
-        iconPack.loadDrawables(loader.drawableLoader)
-        val iconDrawable = selectedIcon.value?.let { iconPack.getIcon(it)?.drawable }
-        if (iconDrawable != null) {
-            val icon = DrawableCompat.wrap(iconDrawable)
-            icon.setColorFilter(getApplication<HomeAssistantApplication>().resources.getColor(R.color.colorAccent), PorterDuff.Mode.SRC_IN)
-            drawableIcon.value = icon
+    fun selectTile(index: Int) {
+        val tile = slots[index]
+        selectedTile = tile
+        viewModelScope.launch(Dispatchers.IO) {
+            tileDao.get(tile.id)?.let { updateExistingTileFields(it) }
         }
+    }
+
+    fun selectIcon(icon: Icon?) {
+        selectedIcon = icon?.id
+        selectedIconDrawable = icon?.drawable?.let { DrawableCompat.wrap(it) }
+    }
+
+    private fun updateExistingTileFields(currentTile: TileEntity) {
+        tileLabel = currentTile.label
+        tileSubtitle = currentTile.subtitle
+        selectedEntityId = currentTile.entityId
+        selectIcon(currentTile.iconId?.let { iconPack.getIcon(it) })
     }
 
     fun addTile(tileData: TileEntity) {
