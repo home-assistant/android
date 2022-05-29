@@ -35,7 +35,9 @@ abstract class SensorWorkerBase(
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         val sensorDao = AppDatabase.getInstance(applicationContext).sensorDao()
         val enabledSensorCount = sensorDao.getEnabledCount() ?: 0
-        if (enabledSensorCount > 0) {
+        val currentCoreSupportsDisabledSensors = integrationUseCase.isHomeAssistantVersionAtLeast(2022, 6, 0)
+        val enabledNotInSyncSensorCount = sensorDao.getEnabledNotInSyncCount() ?: 0
+        if (enabledSensorCount > 0 || (currentCoreSupportsDisabledSensors && enabledNotInSyncSensorCount > 0)) {
             Log.d(TAG, "Updating all Sensors.")
             createNotificationChannel()
             val notification = NotificationCompat.Builder(applicationContext, sensorWorkerChannel)

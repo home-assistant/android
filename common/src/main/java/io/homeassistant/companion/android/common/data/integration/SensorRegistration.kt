@@ -10,6 +10,6 @@ data class SensorRegistration<T>(
     val deviceClass: String? = null,
     val unitOfMeasurement: String? = null,
     val stateClass: String? = null,
-    val entityCategory: String? = null
-
+    val entityCategory: String? = null,
+    val disabled: Boolean
 )

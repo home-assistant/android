@@ -3,20 +3,19 @@ package io.homeassistant.companion.android.widgets.media_player_controls
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
+import android.widget.MultiAutoCompleteTextView
 import android.widget.Toast
 import androidx.core.content.getSystemService
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
@@ -24,25 +23,23 @@ import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWid
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetMediaControlsConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
+import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import java.util.LinkedList
 import javax.inject.Inject
+import kotlin.collections.LinkedHashMap
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
-class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
+class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
     companion object {
         private const val TAG: String = "MediaWidgetConfigAct"
         private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
     }
 
-    private var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
     private var requestLauncherSetup = false
 
     @Inject
@@ -50,13 +47,12 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
 
     @Inject
     lateinit var mediaPlayerControlsWidgetDao: MediaPlayerControlsWidgetDao
+    override val dao get() = mediaPlayerControlsWidgetDao
 
     private lateinit var binding: WidgetMediaControlsConfigureBinding
 
-    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
-
     private var entities = LinkedHashMap<String, Entity<Any>>()
-    private var selectedEntity: Entity<Any>? = null
+    private var selectedEntities: LinkedList<Entity<*>?> = LinkedList()
 
     public override fun onCreate(icicle: Bundle?) {
         super.onCreate(icicle)
@@ -70,7 +66,7 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
 
         binding.addButton.setOnClickListener {
             if (requestLauncherSetup) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && selectedEntity != null) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && selectedEntities.size > 0) {
                     getSystemService<AppWidgetManager>()?.requestPinAppWidget(
                         ComponentName(this, MediaPlayerControlsWidget::class.java),
                         null,
@@ -125,9 +121,10 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
             binding.widgetShowVolumeButtonCheckbox.isChecked = mediaPlayerWidget.showVolume
             binding.widgetShowSeekButtonsCheckbox.isChecked = mediaPlayerWidget.showSeek
             binding.widgetShowSkipButtonsCheckbox.isChecked = mediaPlayerWidget.showSkip
-            val entity = runBlocking {
+            binding.widgetShowMediaPlayerSource.isChecked = mediaPlayerWidget.showSource
+            val entities = runBlocking {
                 try {
-                    integrationUseCase.getEntity(mediaPlayerWidget.entityId)
+                    mediaPlayerWidget.entityId.split(",").map { s -> integrationUseCase.getEntity(s.trim()) }
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to get entity information", e)
                     Toast.makeText(applicationContext, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
@@ -143,8 +140,8 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
                         backgroundTypeValues.indexOf(getString(commonR.string.widget_background_type_daynight))
                 }
             )
-            if (entity != null)
-                selectedEntity = entity as Entity<Any>?
+            if (entities != null)
+                selectedEntities.addAll(entities)
             binding.addButton.setText(commonR.string.update_widget)
             binding.deleteButton.visibility = View.VISIBLE
             binding.deleteButton.setOnClickListener(onDeleteWidget)
@@ -152,10 +149,10 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
         val entityAdapter = SingleItemArrayAdapter<Entity<Any>>(this) { it?.entityId ?: "" }
 
         binding.widgetTextConfigEntityId.setAdapter(entityAdapter)
+        binding.widgetTextConfigEntityId.setTokenizer(MultiAutoCompleteTextView.CommaTokenizer())
         binding.widgetTextConfigEntityId.onFocusChangeListener = dropDownOnFocus
-        binding.widgetTextConfigEntityId.onItemClickListener = entityDropDownOnItemClick
 
-        mainScope.launch {
+        lifecycleScope.launch {
             try {
                 // Fetch entities
                 val fetchedEntities = integrationUseCase.getEntities()
@@ -184,11 +181,6 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
         }
     }
 
-    private val entityDropDownOnItemClick =
-        AdapterView.OnItemClickListener { parent, _, position, _ ->
-            selectedEntity = parent.getItemAtPosition(position) as Entity<Any>?
-        }
-
     private fun onAddWidget() {
         if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
             showAddWidgetError()
@@ -204,9 +196,16 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
 
             intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
 
+            selectedEntities = LinkedList()
+            val se = binding.widgetTextConfigEntityId.text.split(",")
+            se.forEach {
+                val e = entities[it.trim()]
+                if (e != null) selectedEntities.add(e)
+            }
+
             intent.putExtra(
                 MediaPlayerControlsWidget.EXTRA_ENTITY_ID,
-                selectedEntity!!.entityId
+                selectedEntities.map { e -> e?.entityId }.reduce { a, b -> "$a,$b" }
             )
             intent.putExtra(
                 MediaPlayerControlsWidget.EXTRA_LABEL,
@@ -223,6 +222,10 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
             intent.putExtra(
                 MediaPlayerControlsWidget.EXTRA_SHOW_SEEK,
                 binding.widgetShowSeekButtonsCheckbox.isChecked
+            )
+            intent.putExtra(
+                MediaPlayerControlsWidget.EXTRA_SHOW_SOURCE,
+                binding.widgetShowMediaPlayerSource.isChecked
             )
             intent.putExtra(
                 MediaPlayerControlsWidget.EXTRA_BACKGROUND_TYPE,
@@ -246,15 +249,6 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
         }
     }
 
-    private fun showAddWidgetError() {
-        Toast.makeText(applicationContext, commonR.string.widget_creation_error, Toast.LENGTH_LONG).show()
-    }
-
-    override fun onDestroy() {
-        mainScope.cancel()
-        super.onDestroy()
-    }
-
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         if (intent != null && intent.extras != null && intent.hasExtra(PIN_WIDGET_CALLBACK)) {
@@ -263,34 +257,5 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
             )
             onAddWidget()
         }
-    }
-
-    private var onDeleteWidget = View.OnClickListener {
-        val context = this@MediaPlayerControlsWidgetConfigureActivity
-        deleteConfirmation(context)
-    }
-
-    private fun deleteConfirmation(context: Context) {
-        val builder: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(context)
-
-        builder.setTitle(commonR.string.confirm_delete_this_widget_title)
-        builder.setMessage(commonR.string.confirm_delete_this_widget_message)
-
-        builder.setPositiveButton(
-            commonR.string.confirm_positive
-        ) { dialog, _ ->
-            mediaPlayerControlsWidgetDao.delete(appWidgetId)
-            dialog.dismiss()
-            finish()
-        }
-
-        builder.setNegativeButton(
-            commonR.string.confirm_negative
-        ) { dialog, _ -> // Do nothing
-            dialog.dismiss()
-        }
-
-        val alert: android.app.AlertDialog? = builder.create()
-        alert?.show()
     }
 }

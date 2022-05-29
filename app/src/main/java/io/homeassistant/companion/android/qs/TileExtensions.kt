@@ -58,7 +58,7 @@ abstract class TileExtensions : TileService() {
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    private fun setTileData(tileId: String, tile: Tile): Boolean {
+    private suspend fun setTileData(tileId: String, tile: Tile): Boolean {
         Log.d(TAG, "Attempting to set tile data for tile ID: $tileId")
         val context = applicationContext
         val tileData = tileDao.get(tileId)
@@ -99,7 +99,7 @@ abstract class TileExtensions : TileService() {
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    private fun tileClicked(
+    private suspend fun tileClicked(
         tileId: String,
         tile: Tile
     ) {

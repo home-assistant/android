@@ -7,7 +7,7 @@ import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface ButtonWidgetDao {
+interface ButtonWidgetDao : WidgetDao {
 
     @Query("SELECT * FROM button_widgets WHERE id = :id")
     fun get(id: Int): ButtonWidgetEntity?
@@ -16,7 +16,7 @@ interface ButtonWidgetDao {
     suspend fun add(buttonWidgetEntity: ButtonWidgetEntity)
 
     @Query("DELETE FROM button_widgets WHERE id = :id")
-    fun delete(id: Int)
+    override suspend fun delete(id: Int)
 
     @Query("DELETE FROM button_widgets WHERE id IN (:ids)")
     suspend fun deleteAll(ids: IntArray)

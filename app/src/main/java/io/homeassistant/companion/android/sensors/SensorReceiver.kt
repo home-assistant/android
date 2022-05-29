@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.sensors
 import android.annotation.SuppressLint
 import android.app.NotificationManager
 import android.bluetooth.BluetoothAdapter
+import android.content.Context
 import android.content.Intent
 import android.media.AudioManager
 import android.net.wifi.WifiManager
@@ -14,6 +15,7 @@ import io.homeassistant.companion.android.common.sensors.LastUpdateManager
 import io.homeassistant.companion.android.common.sensors.NetworkSensorManager
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
+import io.homeassistant.companion.android.settings.SettingsActivity
 
 @AndroidEntryPoint
 class SensorReceiver : SensorReceiverBase() {
@@ -83,4 +85,12 @@ class SensorReceiver : SensorReceiverBase() {
         Intent.ACTION_MANAGED_PROFILE_AVAILABLE to DevicePolicyManager.isWorkProfile.id,
         WifiManager.WIFI_STATE_CHANGED_ACTION to NetworkSensorManager.wifiState.id,
     )
+
+    override fun getSensorSettingsIntent(context: Context, id: String): Intent? {
+        return SettingsActivity.newInstance(context).apply {
+            putExtra("fragment", "sensors/$id")
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+        }
+    }
 }

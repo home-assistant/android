@@ -7,7 +7,7 @@ import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface StaticWidgetDao {
+interface StaticWidgetDao : WidgetDao {
 
     @Query("SELECT * FROM static_widget WHERE id = :id")
     fun get(id: Int): StaticWidgetEntity?
@@ -16,7 +16,7 @@ interface StaticWidgetDao {
     suspend fun add(staticWidgetEntity: StaticWidgetEntity)
 
     @Query("DELETE FROM static_widget WHERE id = :id")
-    fun delete(id: Int)
+    override suspend fun delete(id: Int)
 
     @Query("DELETE FROM static_widget WHERE id IN (:ids)")
     suspend fun deleteAll(ids: IntArray)
