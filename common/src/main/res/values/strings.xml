@@ -105,6 +105,9 @@
     <string name="choose_server">Choose server</string>
     <string name="clear_favorites">Clear Favorites</string>
     <string name="color_temp">Color temperature: %1$d</string>
+    <string name="complication_entity_state_content_description">Description</string>
+    <string name="complication_entity_state_label">Complication</string>
+    <string name="complication_entity_state_preview">preview</string>
     <string name="config">Configuration</string>
     <string name="configure_service_call">Configure Service Call</string>
     <string name="configure_widget_label">Widget Label</string>
@@ -166,6 +169,7 @@
     <string name="enable_remaining_sensors">Enable %1$d Sensors</string>
     <string name="enable_sensor">Enable sensor</string>
     <string name="enabled">Enabled</string>
+    <string name="entity">Entity</string>
     <plurals name="entities_found">
         <item quantity="one">%d entity found</item>
         <item quantity="other">%d entities found</item>
