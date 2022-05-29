@@ -57,58 +57,82 @@
                 android:layout_alignParentTop="true"
                 android:layout_alignParentEnd="true"
                 android:padding="8dp"
+                android:tint="?colorWidgetOnBackground" />
+
+            <TextView
+                android:id="@+id/widgetSourceLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="6dp"
+                android:paddingStart="0dp"
+                android:paddingEnd="0dp"
+                android:singleLine="true"
+                android:ellipsize="marquee"
                 android:visibility="invisible"
-                android:tint="?colorWidgetOnBackground"
-                android:src="@drawable/app_icon_round" />
+                android:textColor="?colorWidgetOnBackground"
+                android:layout_toStartOf="@id/widgetSourceIcon"
+                tools:text="Media player Source" />
 
             <LinearLayout
                 android:id="@+id/widgetMediaInfolayout"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_alignParentStart="true"
-                android:layout_alignParentTop="true"
-                android:layout_alignParentEnd="true"
                 android:layout_above="@id/widgetMediaButtonlayout"
-                android:layout_margin="4dp"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentEnd="true"
+                android:layout_marginStart="0dp"
+                android:layout_marginTop="24dp"
+                android:layout_marginEnd="0dp"
+                android:layout_marginBottom="0dp"
                 android:gravity="center"
                 android:orientation="vertical"
-                android:padding="4dp">
+                android:padding="0dp"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp">
 
                 <TextView
                     android:id="@+id/widgetLabel"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:maxLines="2"
-                    android:minLines="1"
+                    android:singleLine="true"
+                    android:ellipsize="marquee"
+                    android:padding="0dp"
                     android:text="@string/widget_label_placeholder_text_media_player"
                     android:textAlignment="center"
                     android:textColor="?colorWidgetOnBackground"
-                    android:textSize="24sp" />
+                    android:textSize="20sp" />
 
                 <TextView
                     android:id="@+id/widgetMediaInfoTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="start"
-                    android:maxLines="1"
-                    android:minLines="1"
-                    android:visibility="gone"
+                    android:singleLine="true"
+                    android:ellipsize="marquee"
+                    android:padding="0dp"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
                     android:textAlignment="textStart"
                     android:textColor="?colorWidgetOnBackground"
-                    android:textSize="18sp" />
+                    android:textSize="16sp"
+                    android:visibility="gone" />
 
                 <TextView
                     android:id="@+id/widgetMediaInfoArtist"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="start"
-                    android:maxLines="1"
-                    android:minLines="1"
-                    android:visibility="gone"
+                    android:singleLine="true"
+                    android:ellipsize="marquee"
+                    android:padding="0dp"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
                     android:textAlignment="textStart"
                     android:textColor="?colorWidgetOnBackground"
-                    android:textSize="14sp" />
+                    android:textSize="12sp"
+                    android:visibility="gone" />
             </LinearLayout>
 
             <LinearLayout

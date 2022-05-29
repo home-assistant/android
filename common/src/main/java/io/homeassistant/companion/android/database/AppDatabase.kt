@@ -70,10 +70,11 @@ import io.homeassistant.companion.android.common.R as commonR
         Favorites::class,
         Setting::class
     ],
-    version = 26,
+    version = 27,
     autoMigrations = [
         AutoMigration(from = 24, to = 25),
-        AutoMigration(from = 25, to = 26)
+        AutoMigration(from = 25, to = 26),
+        AutoMigration(from = 26, to = 27)
     ]
 )
 @TypeConverters(

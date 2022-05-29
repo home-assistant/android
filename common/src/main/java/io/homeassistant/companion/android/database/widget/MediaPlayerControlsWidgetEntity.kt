@@ -18,6 +18,8 @@ data class MediaPlayerControlsWidgetEntity(
     val showSeek: Boolean,
     @ColumnInfo(name = "showVolume")
     val showVolume: Boolean,
+    @ColumnInfo(name = "showSource", defaultValue = "false")
+    val showSource: Boolean,
     @ColumnInfo(name = "background_type", defaultValue = "DAYNIGHT")
     override val backgroundType: WidgetBackgroundType = WidgetBackgroundType.DAYNIGHT,
     @ColumnInfo(name = "text_color")
