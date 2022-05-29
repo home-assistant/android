@@ -15,6 +15,7 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
+import kotlinx.coroutines.runBlocking
 import java.util.UUID
 import kotlin.collections.ArrayList
 import io.homeassistant.companion.android.common.R as commonR
@@ -355,7 +356,9 @@ class BluetoothSensorManager : SensorManager {
 
         // reset the last_sent_state of the sensor so it won't skip the update of attributes
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
-        sensorDao.updateLastSendStateSync(beaconMonitor.id, "")
+        runBlocking {
+            sensorDao.updateLastSendState(beaconMonitor.id, "")
+        }
 
         onSensorUpdated(
             context,
