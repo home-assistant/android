@@ -72,19 +72,12 @@ class WebViewPresenterImpl @Inject constructor(
 
     override fun checkSecurityVersion() {
         mainScope.launch {
-
             try {
-                val version = integrationUseCase.getHomeAssistantVersion().split(".")
-                if (version.size >= 3) {
-                    val year = Integer.parseInt(version[0])
-                    val month = Integer.parseInt(version[1])
-                    val release = Integer.parseInt(version[2])
-                    if (year < 2021 || (year == 2021 && month == 1 && release < 5)) {
-                        if (integrationUseCase.shouldNotifySecurityWarning()) {
-                            view.showError(WebView.ErrorType.SECURITY_WARNING)
-                        } else {
-                            Log.w(TAG, "Still not updated but have already notified.")
-                        }
+                if (!integrationUseCase.isHomeAssistantVersionAtLeast(2021, 1, 5)) {
+                    if (integrationUseCase.shouldNotifySecurityWarning()) {
+                        view.showError(WebView.ErrorType.SECURITY_WARNING)
+                    } else {
+                        Log.w(TAG, "Still not updated but have already notified.")
                     }
                 }
             } catch (e: Exception) {

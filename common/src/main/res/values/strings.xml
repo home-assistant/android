@@ -817,6 +817,7 @@
     <string name="sensor_update_frequency_fast_always">Fast Always\n\nSensors will update every minute, always.</string>
     <string name="sensor_update_notification">In order for the app to send sensor updates in the background a notification will be created during the update. You may use the button below to manage the appearance of this notification. It is recommended to minimize the notification to hide the icon.</string>
     <string name="sensor_worker_notification_channel">Manage Sensor Worker Notification</string>
+    <string name="sensor_worker_sync_missing_permissions">To enable this sensor, turn it on in the app settings</string>
     <string name="sensor_update_frequency_summary">Change the frequency of updates for sensors that do not update instantly.</string>
     <string name="sensor_update_type_chip_intent">Updates instantly</string>
     <string name="sensor_update_type_chip_worker_fast_always">Updates every minute</string>
