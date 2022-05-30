@@ -19,7 +19,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
-import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetMediaControlsConfigureBinding
@@ -46,7 +45,8 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
 
-    private lateinit var mediaPlayerControlsWidgetDao: MediaPlayerControlsWidgetDao
+    @Inject
+    lateinit var mediaPlayerControlsWidgetDao: MediaPlayerControlsWidgetDao
     override val dao get() = mediaPlayerControlsWidgetDao
 
     private lateinit var binding: WidgetMediaControlsConfigureBinding
@@ -101,7 +101,6 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
             return
         }
 
-        mediaPlayerControlsWidgetDao = AppDatabase.getInstance(applicationContext).mediaPlayCtrlWidgetDao()
         val mediaPlayerWidget = mediaPlayerControlsWidgetDao.get(appWidgetId)
 
         val backgroundTypeValues = mutableListOf(

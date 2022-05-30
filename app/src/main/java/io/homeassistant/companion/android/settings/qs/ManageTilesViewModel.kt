@@ -18,7 +18,7 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
-import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.TileEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -27,11 +27,11 @@ import javax.inject.Inject
 @HiltViewModel
 class ManageTilesViewModel @Inject constructor(
     private val integrationUseCase: IntegrationRepository,
+    private val tileDao: TileDao,
     application: Application
 ) : AndroidViewModel(application) {
 
     lateinit var iconPack: IconPack
-    private val tileDao = AppDatabase.getInstance(application).tileDao()
 
     val slots = loadTileSlots(application.resources)
 

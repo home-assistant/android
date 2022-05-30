@@ -17,6 +17,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
 import io.homeassistant.companion.android.common.util.sensorCoreSyncChannel
 import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.sensor.SensorWithAttributes
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import kotlinx.coroutines.CoroutineScope
@@ -52,6 +53,9 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
 
+    @Inject
+    lateinit var sensorDao: SensorDao
+
     private val chargingActions = listOf(
         Intent.ACTION_BATTERY_LOW,
         Intent.ACTION_BATTERY_OKAY,
@@ -67,7 +71,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         Log.d(tag, "Received intent: ${intent.action}")
         if (skippableActions.containsKey(intent.action)) {
             val sensor = skippableActions[intent.action]
-            if (!isSensorEnabled(context, sensor!!)) {
+            if (!isSensorEnabled(sensor!!)) {
                 Log.d(
                     tag,
                     String.format
@@ -81,9 +85,8 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
             }
         }
 
-        if (isSensorEnabled(context, LastUpdateManager.lastUpdate.id)) {
+        if (isSensorEnabled(LastUpdateManager.lastUpdate.id)) {
             LastUpdateManager().sendLastUpdate(context, intent.action)
-            val sensorDao = AppDatabase.getInstance(context).sensorDao()
             val allSettings = sensorDao.getSettings(LastUpdateManager.lastUpdate.id)
             for (setting in allSettings) {
                 if (setting.value != "" && intent.action == setting.value) {
@@ -124,8 +127,8 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         }
     }
 
-    protected fun isSensorEnabled(context: Context, id: String): Boolean {
-        return AppDatabase.getInstance(context).sensorDao().get(id)?.enabled == true
+    private fun isSensorEnabled(id: String): Boolean {
+        return sensorDao.get(id)?.enabled == true
     }
 
     suspend fun updateSensors(
@@ -133,7 +136,6 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         integrationUseCase: IntegrationRepository,
         intent: Intent?
     ) {
-        val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val enabledRegistrations = mutableListOf<SensorRegistration<Any>>()
 
         val checkDeviceRegistration = integrationUseCase.getRegistration()

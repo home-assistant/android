@@ -23,7 +23,6 @@ import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetStaticConfigureBinding
@@ -48,7 +47,8 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
 
-    private lateinit var staticWidgetDao: StaticWidgetDao
+    @Inject
+    lateinit var staticWidgetDao: StaticWidgetDao
     override val dao get() = staticWidgetDao
 
     private var entities = LinkedHashMap<String, Entity<Any>>()
@@ -108,7 +108,6 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             return
         }
 
-        staticWidgetDao = AppDatabase.getInstance(applicationContext).staticWidgetDao()
         val staticWidget = staticWidgetDao.get(appWidgetId)
 
         val backgroundTypeValues = mutableListOf(

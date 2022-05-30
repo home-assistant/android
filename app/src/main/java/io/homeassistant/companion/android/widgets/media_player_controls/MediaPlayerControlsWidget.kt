@@ -22,7 +22,6 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.url.UrlRepository
-import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -69,6 +68,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     @Inject
     lateinit var urlUseCase: UrlRepository
 
+    @Inject
     lateinit var mediaPlayCtrlWidgetDao: MediaPlayerControlsWidgetDao
 
     override fun onUpdate(
@@ -76,7 +76,6 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray
     ) {
-        mediaPlayCtrlWidgetDao = AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao()
         // There may be multiple widgets active, so update all of them
         appWidgetIds.forEach { appWidgetId ->
             updateView(
@@ -402,7 +401,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     }
 
     override suspend fun getAllWidgetIds(context: Context): List<Int> {
-        return AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao().getAll().map { it.id }
+        return mediaPlayCtrlWidgetDao.getAll().map { it.id }
     }
 
     private suspend fun getEntity(context: Context, entityIds: List<String>, suggestedEntity: Entity<Map<String, Any>>?): Entity<Map<String, Any>>? {
@@ -439,8 +438,6 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                 "Broadcast action: " + lastIntent + System.lineSeparator() +
                 "AppWidgetId: " + appWidgetId
         )
-
-        mediaPlayCtrlWidgetDao = AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao()
 
         super.onReceive(context, intent)
         when (lastIntent) {
@@ -503,7 +500,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     }
 
     override suspend fun onEntityStateChanged(context: Context, entity: Entity<*>) {
-        AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao().getAll().forEach {
+        mediaPlayCtrlWidgetDao.getAll().forEach {
             val entityIds = it.entityId.split(",")
             if (entityIds.contains(entity.entityId)) {
                 mainScope.launch {
@@ -735,7 +732,6 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     }
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
-        mediaPlayCtrlWidgetDao = AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao()
         // When the user deletes the widget, delete the preference associated with it.
         mainScope.launch {
             mediaPlayCtrlWidgetDao.deleteAll(appWidgetIds)

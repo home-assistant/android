@@ -26,7 +26,6 @@ import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -60,6 +59,7 @@ class ButtonWidget : AppWidgetProvider() {
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
 
+    @Inject
     lateinit var buttonWidgetDao: ButtonWidgetDao
 
     private var iconPack: IconPack? = null
@@ -71,7 +71,6 @@ class ButtonWidget : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray
     ) {
-        buttonWidgetDao = AppDatabase.getInstance(context).buttonWidgetDao()
         // There may be multiple widgets active, so update all of them
         for (appWidgetId in appWidgetIds) {
             mainScope.launch {
@@ -100,7 +99,6 @@ class ButtonWidget : AppWidgetProvider() {
     }
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
-        buttonWidgetDao = AppDatabase.getInstance(context).buttonWidgetDao()
         // When the user deletes the widget, delete the preference associated with it.
         mainScope.launch {
             buttonWidgetDao.deleteAll(appWidgetIds)
@@ -125,8 +123,6 @@ class ButtonWidget : AppWidgetProvider() {
                 "Broadcast action: " + action + System.lineSeparator() +
                 "AppWidgetId: " + appWidgetId
         )
-
-        buttonWidgetDao = AppDatabase.getInstance(context).buttonWidgetDao()
 
         super.onReceive(context, intent)
         when (action) {

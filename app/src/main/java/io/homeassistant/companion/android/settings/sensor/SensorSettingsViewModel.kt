@@ -5,16 +5,20 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import io.homeassistant.companion.android.database.AppDatabase
+import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.database.sensor.Sensor
+import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class SensorSettingsViewModel @Inject constructor(application: Application) :
+@HiltViewModel
+class SensorSettingsViewModel @Inject constructor(
+    private val sensorsDao: SensorDao,
+    application: Application
+) :
     AndroidViewModel(application) {
 
-    private val sensorsDao = AppDatabase.getInstance(getApplication()).sensorDao()
     private var sensorsList = emptyList<Sensor>()
     var sensors = mutableStateListOf<Sensor>()
 

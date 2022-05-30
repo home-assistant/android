@@ -37,7 +37,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.Service
-import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetButtonConfigureBinding
@@ -62,7 +61,8 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
 
-    private lateinit var buttonWidgetDao: ButtonWidgetDao
+    @Inject
+    lateinit var buttonWidgetDao: ButtonWidgetDao
     override val dao get() = buttonWidgetDao
 
     private lateinit var iconPack: IconPack
@@ -190,7 +190,6 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
             return
         }
 
-        buttonWidgetDao = AppDatabase.getInstance(applicationContext).buttonWidgetDao()
         val buttonWidget = buttonWidgetDao.get(appWidgetId)
         var serviceText = ""
 

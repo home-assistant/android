@@ -17,7 +17,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
-import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.databinding.WidgetCameraConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
@@ -44,7 +43,8 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     private var entities = LinkedHashMap<String, Entity<Any>>()
     private var selectedEntity: Entity<Any>? = null
 
-    private lateinit var cameraWidgetDao: CameraWidgetDao
+    @Inject
+    lateinit var cameraWidgetDao: CameraWidgetDao
     override val dao get() = cameraWidgetDao
 
     public override fun onCreate(icicle: Bundle?) {
@@ -94,7 +94,6 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             return
         }
 
-        cameraWidgetDao = AppDatabase.getInstance(applicationContext).cameraWidgetDao()
         val cameraWidget = cameraWidgetDao.get(appWidgetId)
         if (cameraWidget != null) {
             binding.widgetTextConfigEntityId.setText(cameraWidget.entityId)

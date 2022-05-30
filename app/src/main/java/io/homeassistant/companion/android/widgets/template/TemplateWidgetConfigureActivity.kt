@@ -19,7 +19,6 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetTemplateConfigureBinding
@@ -43,7 +42,8 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
 
-    private lateinit var templateWidgetDao: TemplateWidgetDao
+    @Inject
+    lateinit var templateWidgetDao: TemplateWidgetDao
     override val dao get() = templateWidgetDao
 
     private lateinit var binding: WidgetTemplateConfigureBinding
@@ -78,7 +78,6 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             return
         }
 
-        templateWidgetDao = AppDatabase.getInstance(applicationContext).templateWidgetDao()
         val templateWidget = templateWidgetDao.get(appWidgetId)
 
         val backgroundTypeValues = mutableListOf(

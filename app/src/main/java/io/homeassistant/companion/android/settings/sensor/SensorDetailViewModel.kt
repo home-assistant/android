@@ -18,11 +18,12 @@ import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.sensors.NetworkSensorManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
-import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.database.sensor.SensorWithAttributes
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
+import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.sensors.LastAppSensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
@@ -38,6 +39,8 @@ import io.homeassistant.companion.android.common.R as commonR
 class SensorDetailViewModel @Inject constructor(
     state: SavedStateHandle,
     private val integrationUseCase: IntegrationRepository,
+    private val sensorDao: SensorDao,
+    private val settingsDao: SettingsDao,
     application: Application
 ) : AndroidViewModel(application) {
 
@@ -77,7 +80,6 @@ class SensorDetailViewModel @Inject constructor(
     val basicSensor = sensorManager?.getAvailableSensors(getApplication())
         ?.find { it.id == sensorId }
 
-    private val sensorDao = AppDatabase.getInstance(application).sensorDao()
     var sensor by mutableStateOf<SensorWithAttributes?>(null)
         private set
     private var sensorCheckedEnabled = false
@@ -85,7 +87,6 @@ class SensorDetailViewModel @Inject constructor(
     var sensorSettingsDialog by mutableStateOf<SettingDialogState?>(null)
         private set
 
-    private val settingsDao = AppDatabase.getInstance(application).settingsDao()
     val settingUpdateFrequency by lazy {
         settingsDao.get(0)?.sensorUpdateFrequency ?: SensorUpdateFrequencySetting.NORMAL
     }
