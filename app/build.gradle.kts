@@ -143,15 +143,15 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.1")
 
-    implementation("com.google.dagger:hilt-android:2.41")
-    kapt("com.google.dagger:hilt-android-compiler:2.41")
+    implementation("com.google.dagger:hilt-android:2.42")
+    kapt("com.google.dagger:hilt-android-compiler:2.42")
 
     implementation("androidx.appcompat:appcompat:1.4.1")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.4.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.3")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.4.1")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.recyclerview:recyclerview:1.2.1")
-    implementation("androidx.preference:preference-ktx:1.1.1")
-    implementation("com.google.android.material:material:1.5.0")
+    implementation("androidx.preference:preference-ktx:1.2.0")
+    implementation("com.google.android.material:material:1.6.0")
 
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.13.2.2") // remove when jackson-module-kotlin version is higher
@@ -160,9 +160,9 @@ dependencies {
     implementation("com.squareup.picasso:picasso:2.8")
 
     "fullImplementation"("com.google.android.gms:play-services-location:19.0.1")
-    "fullImplementation"("com.google.firebase:firebase-core:20.0.2")
+    "fullImplementation"("com.google.firebase:firebase-core:21.0.0")
     "fullImplementation"("com.google.firebase:firebase-iid:21.1.0")
-    "fullImplementation"("com.google.firebase:firebase-messaging:23.0.0")
+    "fullImplementation"("com.google.firebase:firebase-messaging:23.0.5")
     "fullImplementation"("io.sentry:sentry-android:5.7.3")
     "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.1")
     "fullImplementation"("com.google.android.gms:play-services-wearable:17.1.0")
@@ -171,14 +171,14 @@ dependencies {
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.webkit:webkit:1.4.0")
 
-    implementation("com.google.android.exoplayer:exoplayer-core:2.15.1")
-    implementation("com.google.android.exoplayer:exoplayer-hls:2.15.1")
-    implementation("com.google.android.exoplayer:exoplayer-ui:2.15.1")
-    "fullImplementation"("com.google.android.exoplayer:extension-cronet:2.15.1")
+    implementation("com.google.android.exoplayer:exoplayer-core:2.17.1")
+    implementation("com.google.android.exoplayer:exoplayer-hls:2.17.1")
+    implementation("com.google.android.exoplayer:exoplayer-ui:2.17.1")
+    "fullImplementation"("com.google.android.exoplayer:extension-cronet:2.17.1")
     "minimalImplementation"("com.google.android.exoplayer:extension-cronet:2.15.1") {
         exclude(group = "com.google.android.gms", module = "play-services-cronet")
     }
-    "minimalImplementation"("org.chromium.net:cronet-embedded:95.4638.50")
+    "minimalImplementation"("org.chromium.net:cronet-embedded:101.4951.41")
 
     implementation("androidx.compose.animation:animation:1.1.1")
     implementation("androidx.compose.compiler:compiler:1.1.1")
@@ -191,7 +191,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling:1.1.1")
     implementation("androidx.activity:activity-compose:1.4.0")
     implementation("androidx.navigation:navigation-compose:2.4.2")
-    implementation("com.google.android.material:compose-theme-adapter:1.1.3")
+    implementation("com.google.android.material:compose-theme-adapter:1.1.10")
     implementation("com.google.accompanist:accompanist-appcompat-theme:0.23.1")
 
     implementation("com.mikepenz:iconics-core:5.3.3")
