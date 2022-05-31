@@ -45,6 +45,8 @@ class ManageTilesViewModel @Inject constructor(
         private set
     var selectedIconDrawable by mutableStateOf(AppCompatResources.getDrawable(application, R.drawable.ic_stat_ic_notification))
         private set
+    var selectedTileId by mutableStateOf(0)
+        private set
     var selectedEntityId by mutableStateOf("")
     var tileLabel by mutableStateOf("")
     var tileSubtitle by mutableStateOf<String?>(null)
@@ -73,7 +75,10 @@ class ManageTilesViewModel @Inject constructor(
         val tile = slots[index]
         selectedTile = tile
         viewModelScope.launch {
-            tileDao.get(tile.id)?.let { updateExistingTileFields(it) }
+            tileDao.get(tile.id).also {
+                selectedTileId = it?.id ?: 0
+                it?.let { updateExistingTileFields(it) }
+            }
         }
     }
 

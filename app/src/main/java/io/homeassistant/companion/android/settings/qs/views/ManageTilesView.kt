@@ -130,6 +130,7 @@ fun ManageTilesView(
             Button(
                 onClick = {
                     val tileData = TileEntity(
+                        id = viewModel.selectedTileId,
                         tileId = viewModel.selectedTile.id,
                         iconId = viewModel.selectedIcon,
                         entityId = viewModel.selectedEntityId,
