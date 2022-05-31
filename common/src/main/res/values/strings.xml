@@ -102,10 +102,12 @@
     <string name="cancel">Cancel</string>
     <string name="changelog">View Full Change Log</string>
     <string name="checking_with_home_assistant">Checking with Home Assistant</string>
+    <string name="choose_entity">Choose entity</string>
     <string name="choose_server">Choose server</string>
     <string name="clear_favorites">Clear Favorites</string>
     <string name="color_temp">Color temperature: %1$d</string>
-    <string name="complication_entity_state_content_description">Description</string>
+    <string name="complication_entity_invalid">Invalid entity</string>
+    <string name="complication_entity_state_content_description">Entity state</string>
     <string name="complication_entity_state_label">Complication</string>
     <string name="complication_entity_state_preview">preview</string>
     <string name="config">Configuration</string>

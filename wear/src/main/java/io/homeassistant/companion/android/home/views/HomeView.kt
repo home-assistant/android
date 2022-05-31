@@ -198,19 +198,18 @@ fun LoadHomePage(
                     )
                 }
                 composable(SCREEN_SELECT_TILE_SHORTCUT) {
-                    ChooseEntityView(
-                        mainViewModel,
+                    ChooseEntityView(context,
+                        mainViewModel.entitiesByDomainOrder,
+                        mainViewModel.entitiesByDomain,
                         {
                             mainViewModel.clearTileShortcut(shortcutEntitySelectionIndex)
                             TileService.getUpdater(context).requestUpdate(ShortcutsTile::class.java)
                             swipeDismissableNavController.navigateUp()
-                        },
-                        { entity ->
+                        }, { entity ->
                             mainViewModel.setTileShortcut(shortcutEntitySelectionIndex, entity)
                             TileService.getUpdater(context).requestUpdate(ShortcutsTile::class.java)
                             swipeDismissableNavController.navigateUp()
-                        }
-                    )
+                        })
                 }
                 composable(SCREEN_SET_TILE_TEMPLATE) {
                     TemplateTileSettingsView(

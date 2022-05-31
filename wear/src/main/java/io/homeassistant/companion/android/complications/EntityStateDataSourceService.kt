@@ -1,10 +1,12 @@
 package io.homeassistant.companion.android.complications
 
-import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.drawable.Icon
-import androidx.core.graphics.drawable.toBitmap
-import androidx.wear.watchface.complications.data.*
+import androidx.wear.watchface.complications.data.ComplicationData
+import androidx.wear.watchface.complications.data.ComplicationType
+import androidx.wear.watchface.complications.data.MonochromaticImage
+import androidx.wear.watchface.complications.data.PlainComplicationText
+import androidx.wear.watchface.complications.data.ShortTextComplicationData
 import androidx.wear.watchface.complications.datasource.ComplicationRequest
 import androidx.wear.watchface.complications.datasource.SuspendingComplicationDataSourceService
 import com.mikepenz.iconics.IconicsColor
@@ -12,14 +14,14 @@ import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import com.mikepenz.iconics.utils.backgroundColor
 import com.mikepenz.iconics.utils.colorInt
-import com.mikepenz.iconics.utils.sizeDp
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
+import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.util.getIcon
 import javax.inject.Inject
-import kotlin.math.roundToInt
 
 @AndroidEntryPoint
 class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
@@ -31,7 +33,18 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
         if (request.complicationType != ComplicationType.SHORT_TEXT)
             return null
 
-        val entity = integrationUseCase.getEntity("light.keuken_lampen")
+        val id = request.complicationInstanceId
+
+        val entityStateComplicationsDao = AppDatabase.getInstance(application.applicationContext).entityStateComplicationsDao()
+
+        val entityId = entityStateComplicationsDao.get(id)?.entityId
+            ?: return ShortTextComplicationData.Builder(
+                text = PlainComplicationText.Builder(getText(R.string.complication_entity_invalid)).build(),
+                contentDescription = PlainComplicationText.Builder(getText(R.string.complication_entity_state_content_description))
+                    .build()
+            ).build()
+
+        val entity = integrationUseCase.getEntity(entityId)
             ?: return ShortTextComplicationData.Builder(
                 text = PlainComplicationText.Builder(getText(R.string.state_unknown)).build(),
                 contentDescription = PlainComplicationText.Builder(getText(R.string.complication_entity_state_content_description))

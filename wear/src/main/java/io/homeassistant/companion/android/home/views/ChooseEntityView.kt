@@ -1,8 +1,11 @@
 package io.homeassistant.companion.android.home.views
 
+import android.content.Context
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -21,41 +24,48 @@ import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.util.getIcon
+import io.homeassistant.companion.android.util.stringForDomain
+import io.homeassistant.companion.android.util.supportedDomains
 import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun ChooseEntityView(
-    mainViewModel: MainViewModel,
+    context: Context,
+    entitiesByDomainOrder: SnapshotStateList<String>,
+    entitiesByDomain: SnapshotStateMap<String, SnapshotStateList<Entity<*>>>,
     onNoneClicked: () -> Unit,
-    onEntitySelected: (entity: SimplifiedEntity) -> Unit
+    onEntitySelected: (entity: SimplifiedEntity) -> Unit,
+    allowNone: Boolean = true
 ) {
     // Remember expanded state of each header
-    val expandedStates = rememberExpandedStates(mainViewModel.supportedDomains())
+    val expandedStates = rememberExpandedStates(supportedDomains)
 
     WearAppTheme {
         ThemeLazyColumn {
             item {
                 ListHeader(id = commonR.string.shortcuts_choose)
             }
-            item {
-                Chip(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp),
-                    icon = { Image(asset = CommunityMaterial.Icon.cmd_delete) },
-                    label = { Text(stringResource(id = commonR.string.none)) },
-                    onClick = onNoneClicked,
-                    colors = ChipDefaults.primaryChipColors(
-                        contentColor = Color.Black
+            if (allowNone) {
+                item {
+                    Chip(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp),
+                        icon = { Image(asset = CommunityMaterial.Icon.cmd_delete) },
+                        label = { Text(stringResource(id = commonR.string.none)) },
+                        onClick = onNoneClicked,
+                        colors = ChipDefaults.primaryChipColors(
+                            contentColor = Color.Black
+                        )
                     )
-                )
+                }
             }
-            for (domain in mainViewModel.entitiesByDomainOrder) {
-                val entities = mainViewModel.entitiesByDomain[domain]
+            for (domain in entitiesByDomainOrder) {
+                val entities = entitiesByDomain[domain]
                 if (!entities.isNullOrEmpty()) {
                     item {
                         ExpandableListHeader(
-                            string = mainViewModel.stringForDomain(domain)!!,
+                            string = stringForDomain(domain, context)!!,
                             key = domain,
                             expandedStates = expandedStates
                         )

@@ -38,6 +38,8 @@ import io.homeassistant.companion.android.database.settings.LocalNotificationSet
 import io.homeassistant.companion.android.database.settings.LocalSensorSettingConverter
 import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
+import io.homeassistant.companion.android.database.wear.EntityStateComplications
+import io.homeassistant.companion.android.database.wear.EntityStateComplicationsDao
 import io.homeassistant.companion.android.database.wear.Favorites
 import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
@@ -68,12 +70,14 @@ import io.homeassistant.companion.android.common.R as commonR
         NotificationItem::class,
         TileEntity::class,
         Favorites::class,
+        EntityStateComplications::class,
         Setting::class
     ],
-    version = 26,
+    version = 27,
     autoMigrations = [
         AutoMigration(from = 24, to = 25),
-        AutoMigration(from = 25, to = 26)
+        AutoMigration(from = 25, to = 26),
+        AutoMigration(from = 26, to = 27)
     ]
 )
 @TypeConverters(
@@ -94,6 +98,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun notificationDao(): NotificationDao
     abstract fun tileDao(): TileDao
     abstract fun favoritesDao(): FavoritesDao
+    abstract fun entityStateComplicationsDao(): EntityStateComplicationsDao
     abstract fun settingsDao(): SettingsDao
 
     companion object {
@@ -497,6 +502,12 @@ abstract class AppDatabase : RoomDatabase() {
         private val MIGRATION_23_24 = object : Migration(23, 24) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE `settings` ADD `sensorUpdateFrequency` TEXT NOT NULL DEFAULT 'NORMAL'")
+            }
+        }
+
+        private val MIGRATION_26_27 = object : Migration(26, 27) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("CREATE TABLE IF NOT EXISTS `entityStateComplications` (`id` INTEGER PRIMARY KEY NOT NULL, `entityId` TEXT)")
             }
         }
 

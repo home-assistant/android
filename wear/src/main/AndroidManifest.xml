@@ -53,6 +53,14 @@
         <activity android:name=".onboarding.integration.MobileAppIntegrationActivity" />
         <activity android:name=".onboarding.authentication.AuthenticationActivity" />
         <activity android:name=".onboarding.manual_setup.ManualSetupActivity" />
+        <activity android:name=".complications.ComplicationConfigActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="io.homeassistant.companion.android.ENTITY_STATE_COMPLICATION_CONFIG" />
+                <category android:name="android.support.wearable.complications.category.PROVIDER_CONFIG" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
 
         <!-- To show confirmations and failures -->
         <activity android:name="androidx.wear.activity.ConfirmationActivity" />
@@ -107,6 +115,9 @@
             <meta-data
                 android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
                 android:value="60" />
+            <meta-data
+                android:name="android.support.wearable.complications.PROVIDER_CONFIG_ACTION"
+                android:value="io.homeassistant.companion.android.ENTITY_STATE_COMPLICATION_CONFIG" />
         </service>
         <receiver android:name=".complications.ComplicationReceiver" />
 
