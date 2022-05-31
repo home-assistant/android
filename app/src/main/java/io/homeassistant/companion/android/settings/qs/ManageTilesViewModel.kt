@@ -22,6 +22,7 @@ import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.TileEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -61,13 +62,17 @@ class ManageTilesViewModel @Inject constructor(
             val loader = IconPackLoader(getApplication())
             iconPack = createMaterialDesignIconPack(loader)
             iconPack.loadDrawables(loader.drawableLoader)
+            withContext(Dispatchers.Main) {
+                // The icon pack might not have been initialized when the tile data was loaded
+                selectTile(slots.indexOf(selectedTile))
+            }
         }
     }
 
     fun selectTile(index: Int) {
         val tile = slots[index]
         selectedTile = tile
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             tileDao.get(tile.id)?.let { updateExistingTileFields(it) }
         }
     }
@@ -77,11 +82,18 @@ class ManageTilesViewModel @Inject constructor(
         selectedIconDrawable = icon?.drawable?.let { DrawableCompat.wrap(it) }
     }
 
-    private fun updateExistingTileFields(currentTile: TileEntity) {
+    private suspend fun updateExistingTileFields(currentTile: TileEntity) {
         tileLabel = currentTile.label
         tileSubtitle = currentTile.subtitle
         selectedEntityId = currentTile.entityId
-        selectIcon(currentTile.iconId?.let { iconPack.getIcon(it) })
+        selectIcon(
+            withContext(Dispatchers.IO) {
+                return@withContext currentTile.iconId?.let {
+                    if (::iconPack.isInitialized) iconPack.getIcon(it)
+                    else null
+                }
+            }
+        )
     }
 
     fun addTile(tileData: TileEntity) {
