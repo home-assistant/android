@@ -117,12 +117,12 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                 Log.i(tag, "Skipping faster update because not charging/different preference")
                 return@launch
             }
-            updateSensors(context, integrationUseCase, intent)
+            updateSensors(context, integrationUseCase, sensorDao, intent)
             if (chargingActions.contains(intent.action)) {
                 // Add a 5 second delay to perform another update so charging state updates completely.
                 // This is necessary as the system needs a few seconds to verify the charger.
                 delay(5000L)
-                updateSensors(context, integrationUseCase, intent)
+                updateSensors(context, integrationUseCase, sensorDao, intent)
             }
         }
     }
@@ -134,6 +134,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
     suspend fun updateSensors(
         context: Context,
         integrationUseCase: IntegrationRepository,
+        sensorDao: SensorDao,
         intent: Intent?
     ) {
         val enabledRegistrations = mutableListOf<SensorRegistration<Any>>()

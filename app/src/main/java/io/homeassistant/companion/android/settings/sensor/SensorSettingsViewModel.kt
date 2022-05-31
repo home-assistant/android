@@ -6,15 +6,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Sensor
-import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class SensorSettingsViewModel @Inject constructor(
-    private val sensorsDao: SensorDao,
     application: Application
 ) :
     AndroidViewModel(application) {
@@ -28,7 +27,8 @@ class SensorSettingsViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            sensorsDao.getAllFlow().collect {
+            // TODO: For some reason we can't inject the sensor dao into this view model.
+            AppDatabase.getInstance(getApplication()).sensorDao().getAllFlow().collect {
                 sensorsList = it
                 filterSensorsList()
             }
