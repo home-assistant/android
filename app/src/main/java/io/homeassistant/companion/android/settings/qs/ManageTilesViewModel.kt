@@ -87,16 +87,14 @@ class ManageTilesViewModel @Inject constructor(
         selectedIconDrawable = icon?.drawable?.let { DrawableCompat.wrap(it) }
     }
 
-    private suspend fun updateExistingTileFields(currentTile: TileEntity) {
+    private fun updateExistingTileFields(currentTile: TileEntity) {
         tileLabel = currentTile.label
         tileSubtitle = currentTile.subtitle
         selectedEntityId = currentTile.entityId
         selectIcon(
-            withContext(Dispatchers.IO) {
-                return@withContext currentTile.iconId?.let {
-                    if (::iconPack.isInitialized) iconPack.getIcon(it)
-                    else null
-                }
+            currentTile.iconId?.let {
+                if (::iconPack.isInitialized) iconPack.getIcon(it)
+                else null
             }
         )
     }
