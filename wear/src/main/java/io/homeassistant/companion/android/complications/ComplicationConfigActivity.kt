@@ -42,20 +42,15 @@ class ComplicationConfigActivity : ComponentActivity() {
 
         setContent {
             LoadConfigView(
-                complicationConfigViewModel,
-                {
-                    setResult(Activity.RESULT_OK)
-                    complicationConfigViewModel.addEntityStateComplication(
-                        id,
-                        complicationConfigViewModel.selectedEntity.value
-                    )
-                    finish()
-                },
-                {
-                    setResult(Activity.RESULT_CANCELED)
-                    finish()
-                }
-            )
+                complicationConfigViewModel
+            ) {
+                setResult(Activity.RESULT_OK)
+                complicationConfigViewModel.addEntityStateComplication(
+                    id,
+                    complicationConfigViewModel.selectedEntity.value
+                )
+                finish()
+            }
         }
 
         complicationConfigViewModel.init(presenter)

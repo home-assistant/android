@@ -1,8 +1,7 @@
 package io.homeassistant.companion.android.complications.views
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
@@ -26,7 +25,7 @@ import io.homeassistant.companion.android.complications.ComplicationConfigViewMo
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.home.views.ChooseEntityView
 import io.homeassistant.companion.android.home.views.ListHeader
-import io.homeassistant.companion.android.home.views.ThemeColumn
+import io.homeassistant.companion.android.home.views.ThemeLazyColumn
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.getIcon
@@ -38,8 +37,7 @@ private const val SCREEN_CHOOSE_ENTITY = "choose_entity"
 @Composable
 fun LoadConfigView(
     complicationConfigViewModel: ComplicationConfigViewModel,
-    onAcceptClicked: () -> Unit,
-    onCancelClicked: () -> Unit
+    onAcceptClicked: () -> Unit
 ) {
     WearAppTheme {
         val swipeDismissableNavController = rememberSwipeDismissableNavController()
@@ -56,8 +54,7 @@ fun LoadConfigView(
                     onChooseEntityClicked = {
                         swipeDismissableNavController.navigate(SCREEN_CHOOSE_ENTITY)
                     },
-                    onAcceptClicked = onAcceptClicked,
-                    onCancelClicked = onCancelClicked
+                    onAcceptClicked = onAcceptClicked
                 )
             }
             composable(SCREEN_CHOOSE_ENTITY) {
@@ -84,48 +81,42 @@ fun MainConfigView(
     loaded: Boolean,
     error: Boolean,
     onChooseEntityClicked: () -> Unit,
-    onAcceptClicked: () -> Unit,
-    onCancelClicked: () -> Unit
+    onAcceptClicked: () -> Unit
 ) {
-    ThemeColumn {
-        ListHeader(id = R.string.complication_entity_state_label)
+    ThemeLazyColumn {
+        item {
+            ListHeader(id = R.string.complication_entity_state_label)
+        }
         if (!error) {
-            val iconBitmap = getIcon(
-                entity.icon,
-                entity.domain,
-                LocalContext.current
-            )
-            Chip(
-                modifier = Modifier.fillMaxWidth(),
-                icon = {
-                    Image(
-                        asset = iconBitmap ?: CommunityMaterial.Icon2.cmd_lightbulb,
-                        colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
-                    )
-                },
-                colors = ChipDefaults.secondaryChipColors(),
-                label = {
-                    Text(
-                        text = stringResource(id = R.string.choose_entity)
-                    )
-                },
-                secondaryLabel = { Text(if (loaded) entity.friendlyName else stringResource(R.string.loading)) },
-                enabled = loaded,
-                onClick = onChooseEntityClicked
-            )
+            item {
+                val iconBitmap = getIcon(
+                    entity.icon,
+                    entity.domain,
+                    LocalContext.current
+                )
+                Chip(
+                    modifier = Modifier.fillMaxWidth(),
+                    icon = {
+                        Image(
+                            asset = iconBitmap ?: CommunityMaterial.Icon2.cmd_lightbulb,
+                            colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                        )
+                    },
+                    colors = ChipDefaults.secondaryChipColors(),
+                    label = {
+                        Text(
+                            text = stringResource(id = R.string.choose_entity)
+                        )
+                    },
+                    secondaryLabel = { Text(if (loaded) entity.friendlyName else stringResource(R.string.loading)) },
+                    enabled = loaded,
+                    onClick = onChooseEntityClicked
+                )
+            }
 
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
+            item {
                 Button(
-                    onClick = { onCancelClicked() },
-                    colors = ButtonDefaults.secondaryButtonColors()
-                ) {
-                    Image(
-                        CommunityMaterial.Icon.cmd_close
-                    )
-                }
-                Button(
+                    modifier = Modifier.padding(top = 8.dp),
                     onClick = { onAcceptClicked() },
                     colors = ButtonDefaults.primaryButtonColors(),
                     enabled = loaded && hasSelected
@@ -136,7 +127,9 @@ fun MainConfigView(
                 }
             }
         } else {
-            Text(text = stringResource(R.string.error_connection_failed))
+            item {
+                Text(text = stringResource(R.string.error_connection_failed))
+            }
         }
     }
 }
