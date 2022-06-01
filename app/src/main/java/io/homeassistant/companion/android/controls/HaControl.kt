@@ -17,13 +17,14 @@ import io.homeassistant.companion.android.webview.WebViewActivity
 interface HaControl {
 
     fun createControl(context: Context, entity: Entity<Map<String, Any>>, area: AreaRegistryResponse?): Control {
+        val controlPath = "entityId:${entity.entityId}"
         val control = Control.StatefulBuilder(
             entity.entityId,
             PendingIntent.getActivity(
                 context,
-                0,
-                WebViewActivity.newInstance(context.applicationContext, "entityId:${entity.entityId}").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                controlPath.hashCode(),
+                WebViewActivity.newInstance(context.applicationContext, controlPath).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_MUTABLE
             )
         )
         control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)

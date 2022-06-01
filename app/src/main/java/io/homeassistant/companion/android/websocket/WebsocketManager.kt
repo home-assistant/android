@@ -27,7 +27,7 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.util.websocketChannel
-import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.notifications.MessagingManager
 import io.homeassistant.companion.android.settings.SettingsActivity
@@ -82,8 +82,7 @@ class WebsocketManager(
     private val websocketRepository: WebSocketRepository = entryPoint.websocketRepository()
     private val messagingManager: MessagingManager = entryPoint.messagingManager()
     private val urlRepository: UrlRepository = entryPoint.urlRepository()
-
-    private val settingsDao = AppDatabase.getInstance(appContext).settingsDao()
+    private val settingsDao: SettingsDao = entryPoint.settingsDao()
 
     @EntryPoint
     @InstallIn(SingletonComponent::class)
@@ -91,6 +90,7 @@ class WebsocketManager(
         fun websocketRepository(): WebSocketRepository
         fun messagingManager(): MessagingManager
         fun urlRepository(): UrlRepository
+        fun settingsDao(): SettingsDao
     }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {

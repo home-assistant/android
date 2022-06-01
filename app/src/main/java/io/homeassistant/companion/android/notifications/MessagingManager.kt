@@ -54,8 +54,10 @@ import io.homeassistant.companion.android.common.util.cancel
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.generalChannel
 import io.homeassistant.companion.android.common.util.getActiveNotification
-import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
+import io.homeassistant.companion.android.database.sensor.SensorDao
+import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.sensors.LocationSensorManager
@@ -79,15 +81,16 @@ import java.net.URL
 import java.net.URLDecoder
 import java.util.Locale
 import javax.inject.Inject
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 import io.homeassistant.companion.android.common.R as commonR
 
 class MessagingManager @Inject constructor(
     @ApplicationContext val context: Context,
     private val integrationUseCase: IntegrationRepository,
     private val urlUseCase: UrlRepository,
-    private val authenticationUseCase: AuthenticationRepository
+    private val authenticationUseCase: AuthenticationRepository,
+    private val notificationDao: NotificationDao,
+    private val sensorDao: SensorDao,
+    private val settingsDao: SettingsDao
 ) {
     companion object {
         const val TAG = "MessagingService"
@@ -238,7 +241,6 @@ class MessagingManager @Inject constructor(
     fun handleMessage(jsonData: Map<String, String>, source: String) {
 
         val jsonObject = JSONObject(jsonData)
-        val notificationDao = AppDatabase.getInstance(context).notificationDao()
         val now = System.currentTimeMillis()
         val notificationRow =
             NotificationItem(0, now, jsonData[MESSAGE].toString(), jsonObject.toString(), source)
@@ -671,7 +673,6 @@ class MessagingManager @Inject constructor(
                     bluetoothAdapter?.enable()
             }
             COMMAND_BLE_TRANSMITTER -> {
-                val sensorDao = AppDatabase.getInstance(context).sensorDao()
                 if (title == TURN_OFF)
                     BluetoothSensorManager.enableDisableBLETransmitter(context, false)
                 if (title == TURN_ON)
@@ -1796,8 +1797,6 @@ class MessagingManager @Inject constructor(
     }
 
     private fun togglePersistentConnection(mode: String) {
-        val settingsDao = AppDatabase.getInstance(context).settingsDao()
-
         when (mode.uppercase()) {
             WebsocketSetting.NEVER.name -> {
                 settingsDao.get(0)?.let {

@@ -18,6 +18,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -73,11 +74,13 @@ import io.homeassistant.companion.android.common.R as commonR
         EntityStateComplications::class,
         Setting::class
     ],
-    version = 27,
+    version = 29,
     autoMigrations = [
         AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
-        AutoMigration(from = 26, to = 27)
+        AutoMigration(from = 26, to = 27),
+        AutoMigration(from = 27, to = 28, spec = AppDatabase.Companion.Migration27to28::class),
+        AutoMigration(from = 28, to = 29)
     ]
 )
 @TypeConverters(
@@ -505,9 +508,11 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        private val MIGRATION_26_27 = object : Migration(26, 27) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("CREATE TABLE IF NOT EXISTS `entityStateComplications` (`id` INTEGER PRIMARY KEY NOT NULL, `entityId` TEXT)")
+        class Migration27to28 : AutoMigrationSpec {
+            override fun onPostMigrate(db: SupportSQLiteDatabase) {
+                // Update 'registered' in the sensors table to set the value to null instead of the previous default of 0
+                // This will force an update to indicate whether a sensor is not registered (null) or registered as disabled (0)
+                db.execSQL("UPDATE `sensors` SET `registered` = NULL")
             }
         }
 

@@ -75,6 +75,9 @@ interface SensorDao {
     @Query("SELECT COUNT(id) FROM sensors WHERE enabled = 1")
     suspend fun getEnabledCount(): Int?
 
+    @Query("SELECT COUNT(id) FROM sensors WHERE enabled != registered")
+    suspend fun getEnabledNotInSyncCount(): Int?
+
     @Transaction
     suspend fun setSensorsEnabled(sensorIds: List<String>, enabled: Boolean) {
         coroutineScope {
@@ -84,7 +87,7 @@ interface SensorDao {
                     if (sensorEntity != null) {
                         update(sensorEntity.copy(enabled = enabled, lastSentState = ""))
                     } else {
-                        add(Sensor(sensorId, enabled, registered = false, state = ""))
+                        add(Sensor(sensorId, enabled, state = ""))
                     }
                 }
             }.awaitAll()
@@ -97,7 +100,7 @@ interface SensorDao {
 
         if (sensor == null) {
             // If we haven't created the entity yet do so and default to enabled if required
-            sensor = Sensor(sensorId, enabled = permission && enabledByDefault, registered = false, state = "")
+            sensor = Sensor(sensorId, enabled = permission && enabledByDefault, state = "")
             add(sensor)
         } else if (sensor.enabled && !permission) {
             // If we don't have permission but we are still enabled then we aren't really enabled.

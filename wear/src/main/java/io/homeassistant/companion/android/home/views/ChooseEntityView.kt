@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.Text
+import androidx.wear.compose.material.items
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -69,10 +70,9 @@ fun ChooseEntityView(
                         )
                     }
                     if (expandedStates[domain] == true) {
-                        items(entities.size) { index ->
+                        items(entities, key = { it.entityId }) { entity ->
                             ChooseEntityChip(
-                                entityList = entities,
-                                index = index,
+                                entity = entity,
                                 onEntitySelected = onEntitySelected
                             )
                         }
@@ -85,14 +85,13 @@ fun ChooseEntityView(
 
 @Composable
 private fun ChooseEntityChip(
-    entityList: List<Entity<*>>,
-    index: Int,
+    entity: Entity<*>,
     onEntitySelected: (entity: SimplifiedEntity) -> Unit
 ) {
-    val attributes = entityList[index].attributes as Map<*, *>
+    val attributes = entity.attributes as Map<*, *>
     val iconBitmap = getIcon(
-        entityList[index] as Entity<Map<String, Any>>,
-        entityList[index].domain,
+        entity as Entity<Map<String, Any>>,
+        entity.domain,
         LocalContext.current
     )
     Chip(
@@ -111,12 +110,12 @@ private fun ChooseEntityChip(
                 overflow = TextOverflow.Ellipsis
             )
         },
-        enabled = entityList[index].state != "unavailable",
+        enabled = entity.state != "unavailable",
         onClick = {
             onEntitySelected(
                 SimplifiedEntity(
-                    entityList[index].entityId,
-                    attributes["friendly_name"] as String? ?: entityList[index].entityId,
+                    entity.entityId,
+                    attributes["friendly_name"] as String? ?: entity.entityId,
                     attributes["icon"] as String? ?: ""
                 )
             )

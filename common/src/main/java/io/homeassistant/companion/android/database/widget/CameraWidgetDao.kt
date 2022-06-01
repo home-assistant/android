@@ -7,7 +7,7 @@ import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface CameraWidgetDao {
+interface CameraWidgetDao : WidgetDao {
 
     @Query("SELECT * FROM camera_widgets WHERE id = :id")
     fun get(id: Int): CameraWidgetEntity?
@@ -16,7 +16,7 @@ interface CameraWidgetDao {
     suspend fun add(cameraWidgetEntity: CameraWidgetEntity)
 
     @Query("DELETE FROM camera_widgets WHERE id = :id")
-    fun delete(id: Int)
+    override suspend fun delete(id: Int)
 
     @Query("DELETE FROM camera_widgets WHERE id IN (:ids)")
     suspend fun deleteAll(ids: IntArray)
