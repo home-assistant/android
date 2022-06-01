@@ -22,6 +22,7 @@ import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.TileEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -44,6 +45,8 @@ class ManageTilesViewModel @Inject constructor(
         private set
     var selectedIconDrawable by mutableStateOf(AppCompatResources.getDrawable(application, R.drawable.ic_stat_ic_notification))
         private set
+    var selectedTileId by mutableStateOf(0)
+        private set
     var selectedEntityId by mutableStateOf("")
     var tileLabel by mutableStateOf("")
     var tileSubtitle by mutableStateOf<String?>(null)
@@ -61,14 +64,21 @@ class ManageTilesViewModel @Inject constructor(
             val loader = IconPackLoader(getApplication())
             iconPack = createMaterialDesignIconPack(loader)
             iconPack.loadDrawables(loader.drawableLoader)
+            withContext(Dispatchers.Main) {
+                // The icon pack might not have been initialized when the tile data was loaded
+                selectTile(slots.indexOf(selectedTile))
+            }
         }
     }
 
     fun selectTile(index: Int) {
         val tile = slots[index]
         selectedTile = tile
-        viewModelScope.launch(Dispatchers.IO) {
-            tileDao.get(tile.id)?.let { updateExistingTileFields(it) }
+        viewModelScope.launch {
+            tileDao.get(tile.id).also {
+                selectedTileId = it?.id ?: 0
+                it?.let { updateExistingTileFields(it) }
+            }
         }
     }
 
@@ -81,7 +91,12 @@ class ManageTilesViewModel @Inject constructor(
         tileLabel = currentTile.label
         tileSubtitle = currentTile.subtitle
         selectedEntityId = currentTile.entityId
-        selectIcon(currentTile.iconId?.let { iconPack.getIcon(it) })
+        selectIcon(
+            currentTile.iconId?.let {
+                if (::iconPack.isInitialized) iconPack.getIcon(it)
+                else null
+            }
+        )
     }
 
     fun addTile(tileData: TileEntity) {
