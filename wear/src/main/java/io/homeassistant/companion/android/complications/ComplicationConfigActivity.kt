@@ -17,7 +17,7 @@ import io.homeassistant.companion.android.complications.views.LoadConfigView
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class ComplicationConfigActivity: ComponentActivity() {
+class ComplicationConfigActivity : ComponentActivity() {
 
     @Inject
     lateinit var presenter: ComplicationConfigPresenter

@@ -16,7 +16,6 @@ import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.wear.EntityStateComplications
-import io.homeassistant.companion.android.util.supportedDomains
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -64,9 +63,7 @@ class ComplicationConfigViewModel @Inject constructor(application: Application) 
                 // Load initial state
                 loadingState.value = LoadingState.LOADING
                 presenter.getEntities()?.forEach {
-                    if (supportedDomains.contains(it.domain)) {
-                        entities[it.entityId] = it
-                    }
+                    entities[it.entityId] = it
                 }
                 updateEntityDomains()
 
@@ -85,10 +82,8 @@ class ComplicationConfigViewModel @Inject constructor(application: Application) 
                 // Listen for updates
                 viewModelScope.launch {
                     presenter.getEntityUpdates()?.collect {
-                        if (supportedDomains.contains(it.domain)) {
-                            entities[it.entityId] = it
-                            updateEntityDomains()
-                        }
+                        entities[it.entityId] = it
+                        updateEntityDomains()
                     }
                 }
             } catch (e: Exception) {
@@ -125,12 +120,6 @@ class ComplicationConfigViewModel @Inject constructor(application: Application) 
     fun addEntityStateComplication(id: Int, entity: SimplifiedEntity) {
         viewModelScope.launch {
             entityStateComplicationsDao.add(EntityStateComplications(id, entity.entityId))
-        }
-    }
-
-    fun removeEntityStateComplication(id: Int) {
-        viewModelScope.launch {
-            entityStateComplicationsDao.delete(id)
         }
     }
 }

@@ -21,11 +21,9 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.data.SimplifiedEntity
-import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.stringForDomain
-import io.homeassistant.companion.android.util.supportedDomains
 import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
@@ -38,7 +36,7 @@ fun ChooseEntityView(
     allowNone: Boolean = true
 ) {
     // Remember expanded state of each header
-    val expandedStates = rememberExpandedStates(supportedDomains)
+    val expandedStates = rememberExpandedStates(entitiesByDomainOrder)
 
     WearAppTheme {
         ThemeLazyColumn {
@@ -65,7 +63,7 @@ fun ChooseEntityView(
                 if (!entities.isNullOrEmpty()) {
                     item {
                         ExpandableListHeader(
-                            string = stringForDomain(domain, context)!!,
+                            string = stringForDomain(domain, context) ?: domain,
                             key = domain,
                             expandedStates = expandedStates
                         )

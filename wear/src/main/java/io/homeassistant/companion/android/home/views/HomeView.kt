@@ -198,7 +198,8 @@ fun LoadHomePage(
                     )
                 }
                 composable(SCREEN_SELECT_TILE_SHORTCUT) {
-                    ChooseEntityView(context,
+                    ChooseEntityView(
+                        context,
                         mainViewModel.entitiesByDomainOrder,
                         mainViewModel.entitiesByDomain,
                         {
@@ -206,10 +207,11 @@ fun LoadHomePage(
                             TileService.getUpdater(context).requestUpdate(ShortcutsTile::class.java)
                             swipeDismissableNavController.navigateUp()
                         }, { entity ->
-                            mainViewModel.setTileShortcut(shortcutEntitySelectionIndex, entity)
-                            TileService.getUpdater(context).requestUpdate(ShortcutsTile::class.java)
-                            swipeDismissableNavController.navigateUp()
-                        })
+                        mainViewModel.setTileShortcut(shortcutEntitySelectionIndex, entity)
+                        TileService.getUpdater(context).requestUpdate(ShortcutsTile::class.java)
+                        swipeDismissableNavController.navigateUp()
+                    }
+                    )
                 }
                 composable(SCREEN_SET_TILE_TEMPLATE) {
                     TemplateTileSettingsView(

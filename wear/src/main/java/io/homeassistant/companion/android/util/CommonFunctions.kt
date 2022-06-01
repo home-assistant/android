@@ -7,29 +7,11 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.home.HomePresenterImpl
 import java.util.Calendar
 import io.homeassistant.companion.android.common.R as commonR
 
-val toggleDomains = listOf(
-    "cover", "fan", "humidifier", "input_boolean", "light", "lock",
-    "media_player", "remote", "siren", "switch"
-)
-val domainsWithNames = mapOf(
-    "button" to commonR.string.buttons,
-    "cover" to commonR.string.covers,
-    "fan" to commonR.string.fans,
-    "input_boolean" to commonR.string.input_booleans,
-    "input_button" to commonR.string.input_buttons,
-    "light" to commonR.string.lights,
-    "lock" to commonR.string.locks,
-    "switch" to commonR.string.switches,
-    "script" to commonR.string.scripts,
-    "scene" to commonR.string.scenes
-)
-val supportedDomains = domainsWithNames.keys.toList()
 fun stringForDomain(domain: String, context: Context): String? =
     HomePresenterImpl.domainsWithNames[domain]?.let { context.getString(it) }
 

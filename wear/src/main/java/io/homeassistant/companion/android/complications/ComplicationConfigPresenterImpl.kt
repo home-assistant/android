@@ -4,7 +4,6 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
-import io.homeassistant.companion.android.home.HomeView
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 

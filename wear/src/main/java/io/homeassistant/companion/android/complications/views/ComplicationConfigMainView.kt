@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.complications.views
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
@@ -63,13 +62,14 @@ fun LoadConfigView(
             }
             composable(SCREEN_CHOOSE_ENTITY) {
                 val app = complicationConfigViewModel.getApplication<HomeAssistantApplication>()
-                ChooseEntityView(app.applicationContext,
+                ChooseEntityView(
+                    app.applicationContext,
                     complicationConfigViewModel.entitiesByDomainOrder,
                     complicationConfigViewModel.entitiesByDomain,
                     {}, { entity ->
-                        complicationConfigViewModel.setEntity(entity)
-                        swipeDismissableNavController.navigateUp()
-                    },
+                    complicationConfigViewModel.setEntity(entity)
+                    swipeDismissableNavController.navigateUp()
+                },
                     false
                 )
             }
