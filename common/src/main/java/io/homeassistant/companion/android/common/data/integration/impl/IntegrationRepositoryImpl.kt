@@ -454,7 +454,6 @@ class IntegrationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getHomeAssistantVersion(): String {
-
         val current = System.currentTimeMillis()
         val next = localStorage.getLong(PREF_CHECK_SENSOR_REGISTRATION_NEXT) ?: 0
         if (current <= next)
@@ -462,14 +461,17 @@ class IntegrationRepositoryImpl @Inject constructor(
                 ?: "" // Skip checking HA version as it has not been 4 hours yet
 
         return try {
-            val response: GetConfigResponse? = webSocketRepository.getConfig()
-
-            localStorage.putString(PREF_HA_VERSION, response?.version)
-            localStorage.putLong(
-                PREF_CHECK_SENSOR_REGISTRATION_NEXT,
-                current + (14400000)
-            ) // 4 hours
-            response?.version.toString()
+            webSocketRepository.getConfig()?.let { response ->
+                localStorage.putString(PREF_HA_VERSION, response.version)
+                localStorage.putLong(
+                    PREF_CHECK_SENSOR_REGISTRATION_NEXT,
+                    current + TimeUnit.HOURS.toMillis(4)
+                )
+                response.version
+            } ?: run {
+                Log.e(TAG, "Issue getting config from core.")
+                localStorage.getString(PREF_HA_VERSION) ?: ""
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Issue getting new version from core.", e)
             localStorage.getString(PREF_HA_VERSION) ?: ""
