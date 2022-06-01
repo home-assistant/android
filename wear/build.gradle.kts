@@ -119,7 +119,7 @@ dependencies {
     implementation("androidx.wear.compose:compose-navigation:1.0.0-alpha14")
 
     implementation("com.google.guava:guava:31.1-android")
-    implementation("androidx.wear.tiles:tiles:1.0.1")
+    implementation("androidx.wear.tiles:tiles:1.0.0")
 
     implementation("androidx.wear.watchface:watchface-complications-data-source-ktx:1.1.0-rc01")
 }
