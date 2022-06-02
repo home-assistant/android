@@ -372,7 +372,6 @@
     <string name="none">None</string>
     <string name="none_selected">None selected</string>
     <string name="not_private">Your connection to this site is not private.</string>
-    <string name="notification_clear_failure">Failed to send event on notification cleared</string>
     <string name="notification_data">Full Notification Data</string>
     <string name="notification_dismiss_failure">Failed to send event on notification dismissed</string>
     <string name="notification_history_summary">History of Notifications (currently displays the last 25 notifications received)</string>

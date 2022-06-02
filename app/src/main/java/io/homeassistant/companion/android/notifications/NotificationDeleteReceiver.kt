@@ -4,14 +4,12 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import android.widget.Toast
 import androidx.core.app.NotificationManagerCompat
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class NotificationDeleteReceiver : BroadcastReceiver() {
@@ -44,11 +42,6 @@ class NotificationDeleteReceiver : BroadcastReceiver() {
                 Log.d(TAG, "Notification cleared event successful!")
             } catch (e: Exception) {
                 Log.e(TAG, "Issue sending event to Home Assistant", e)
-                Toast.makeText(
-                    context,
-                    commonR.string.notification_clear_failure,
-                    Toast.LENGTH_LONG
-                ).show()
             }
         }
     }
