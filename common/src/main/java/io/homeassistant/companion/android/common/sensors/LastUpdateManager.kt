@@ -11,6 +11,7 @@ class LastUpdateManager : SensorManager {
     companion object {
         private const val TAG = "LastUpdate"
         private const val SETTING_ADD_NEW_INTENT = "lastupdate_add_new_intent"
+        private const val INTENT_SETTING_PREFIX = "lastupdate_intent_var1:"
 
         val lastUpdate = SensorManager.BasicSensor(
             "last_update",
@@ -73,10 +74,10 @@ class LastUpdateManager : SensorManager {
         var isSequenceContinuous = true
         var currentHighestIntentSettingOrdinal = 0
         val intentSettings = allSettings.filter {
-            it.name.startsWith("lastupdate_intent_var1:")
+            it.name.startsWith(INTENT_SETTING_PREFIX)
         }
         intentSettings.forEachIndexed { index, setting ->
-            val currentOrdinal = setting.name.removePrefix("lastupdate_intent_var1:").removeSuffix(":").toInt()
+            val currentOrdinal = setting.name.removePrefix(INTENT_SETTING_PREFIX).removeSuffix(":").toInt()
             if (currentOrdinal != index + 1) {
                 isSequenceContinuous = false
             }
@@ -87,7 +88,7 @@ class LastUpdateManager : SensorManager {
         if (!isSequenceContinuous) {
             // create new settings with sequential IDs:
             val newIntentSettings = intentSettings.mapIndexed { index, it ->
-                it.copy(name = "lastupdate_intent_var1:${index + 1}:")
+                it.copy(name = "$INTENT_SETTING_PREFIX${index + 1}:")
             }
             // delete old settings from DB:
             sensorDao.removeSettings(lastUpdate.id, intentSettings.map { it.name })
@@ -97,7 +98,7 @@ class LastUpdateManager : SensorManager {
         val shouldAddNewIntent = allSettings.firstOrNull { it.name == SETTING_ADD_NEW_INTENT }?.value == "true"
         if (shouldAddNewIntent) {
             val newIntentSettingOrdinal = currentHighestIntentSettingOrdinal + 1
-            val newIntentSettingName = "lastupdate_intent_var1:$newIntentSettingOrdinal:"
+            val newIntentSettingName = "$INTENT_SETTING_PREFIX$newIntentSettingOrdinal:"
             val intentSettingAlreadyExists = allSettings.any { it.name == newIntentSettingName }
             check(!intentSettingAlreadyExists)
             // turn off the toggle:
