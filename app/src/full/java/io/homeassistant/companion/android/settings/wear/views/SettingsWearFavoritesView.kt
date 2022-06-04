@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.settings.wear.views
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -24,9 +23,9 @@ import androidx.compose.ui.unit.sp
 import com.mikepenz.iconics.IconicsDrawable
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.settings.wear.SettingsWearViewModel
+import org.burnoutcrew.reorderable.ReorderableItem
 import org.burnoutcrew.reorderable.detectReorderAfterLongPress
-import org.burnoutcrew.reorderable.draggedItem
-import org.burnoutcrew.reorderable.rememberReorderState
+import org.burnoutcrew.reorderable.rememberReorderableLazyListState
 import org.burnoutcrew.reorderable.reorderable
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -35,7 +34,13 @@ fun LoadWearFavoritesSettings(
     settingsWearViewModel: SettingsWearViewModel,
     onBackClicked: () -> Unit
 ) {
-    val reorderState = rememberReorderState()
+    val reorderState = rememberReorderableLazyListState(
+        onMove = { from, to -> settingsWearViewModel.onMove(from, to) },
+        canDragOver = { settingsWearViewModel.canDragOver(it) },
+        onDragEnd = { _, _ ->
+            settingsWearViewModel.sendHomeFavorites(settingsWearViewModel.favoriteEntityIds.toList())
+        }
+    )
 
     val validEntities = settingsWearViewModel.entities.filter { it.key.split(".")[0] in settingsWearViewModel.supportedDomains }.values.sortedBy { it.entityId }.toList()
     val favoriteEntities = settingsWearViewModel.favoriteEntityIds
@@ -52,14 +57,7 @@ fun LoadWearFavoritesSettings(
             state = reorderState.listState,
             verticalArrangement = Arrangement.Center,
             contentPadding = PaddingValues(all = 16.dp),
-            modifier = Modifier.reorderable(
-                reorderState,
-                { from, to -> settingsWearViewModel.onMove(from, to) },
-                canDragOver = { settingsWearViewModel.canDragOver(it) },
-                onDragEnd = { _, _ ->
-                    settingsWearViewModel.sendHomeFavorites(settingsWearViewModel.favoriteEntityIds.toList())
-                }
-            )
+            modifier = Modifier.reorderable(reorderState)
         ) {
             item {
                 Text(
@@ -73,41 +71,45 @@ fun LoadWearFavoritesSettings(
                     if (entity.entityId == favoriteEntityID) {
                         val favoriteAttributes = entity.attributes as Map<*, *>
                         val favoriteFriendlyName = favoriteAttributes["friendly_name"].toString()
-                        Row(
-                            modifier = Modifier
-                                .padding(12.dp)
-                                .clickable {
-                                    settingsWearViewModel.onEntitySelected(
-                                        false,
-                                        favoriteEntities[index]
+                        ReorderableItem(reorderableState = reorderState, key = favoriteEntities[index]) {
+                            Row(
+                                modifier = Modifier
+                                    .padding(12.dp)
+                                    .clickable {
+                                        settingsWearViewModel.onEntitySelected(
+                                            false,
+                                            favoriteEntities[index]
+                                        )
+                                    }
+                                    .detectReorderAfterLongPress(reorderState)
+                            ) {
+                                val iconBitmap =
+                                    IconicsDrawable(
+                                        LocalContext.current,
+                                        "cmd-drag_vertical"
+                                    ).toBitmap()
+                                        .asImageBitmap()
+                                Icon(iconBitmap, "", modifier = Modifier.padding(top = 13.dp))
+                                Checkbox(
+                                    checked = favoriteEntities.contains(favoriteEntities[index]),
+                                    onCheckedChange = {
+                                        settingsWearViewModel.onEntitySelected(
+                                            it,
+                                            favoriteEntities[index]
+                                        )
+                                    },
+                                    modifier = Modifier.padding(end = 5.dp)
+                                )
+                                Column {
+                                    Text(
+                                        text = favoriteFriendlyName,
+                                        modifier = Modifier.padding(top = 10.dp)
+                                    )
+                                    Text(
+                                        text = getDomainString(favoriteEntityID.split('.')[0]),
+                                        fontSize = 11.sp
                                     )
                                 }
-                                .draggedItem(
-                                    reorderState.offsetByKey(favoriteEntities[index]),
-                                    Orientation.Vertical
-                                )
-                                .detectReorderAfterLongPress(reorderState)
-                        ) {
-                            val iconBitmap =
-                                IconicsDrawable(LocalContext.current, "cmd-drag_vertical").toBitmap()
-                                    .asImageBitmap()
-                            Icon(iconBitmap, "", modifier = Modifier.padding(top = 13.dp))
-                            Checkbox(
-                                checked = favoriteEntities.contains(favoriteEntities[index]),
-                                onCheckedChange = {
-                                    settingsWearViewModel.onEntitySelected(it, favoriteEntities[index])
-                                },
-                                modifier = Modifier.padding(end = 5.dp)
-                            )
-                            Column {
-                                Text(
-                                    text = favoriteFriendlyName,
-                                    modifier = Modifier.padding(top = 10.dp)
-                                )
-                                Text(
-                                    text = getDomainString(favoriteEntityID.split('.')[0]),
-                                    fontSize = 11.sp
-                                )
                             }
                         }
                     }
