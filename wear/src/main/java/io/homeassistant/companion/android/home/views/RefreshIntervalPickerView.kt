@@ -17,6 +17,7 @@ import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.IntervalToString
+import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.common.R as R
 
 @Composable

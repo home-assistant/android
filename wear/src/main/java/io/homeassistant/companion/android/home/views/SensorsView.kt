@@ -18,6 +18,8 @@ import androidx.wear.compose.material.rememberScalingLazyListState
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.theme.WearAppTheme
+import io.homeassistant.companion.android.views.ListHeader
+import io.homeassistant.companion.android.views.ThemeLazyColumn
 import io.homeassistant.companion.android.common.R as commonR
 
 @Composable

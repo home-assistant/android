@@ -12,15 +12,9 @@ import androidx.activity.viewModels
 import androidx.wear.watchface.complications.datasource.ComplicationDataSourceService.Companion.EXTRA_CONFIG_COMPLICATION_ID
 import androidx.wear.watchface.complications.datasource.ComplicationDataSourceService.Companion.EXTRA_CONFIG_COMPLICATION_TYPE
 import androidx.wear.watchface.complications.datasource.ComplicationDataSourceService.Companion.EXTRA_CONFIG_DATA_SOURCE_COMPONENT
-import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.complications.views.LoadConfigView
-import javax.inject.Inject
 
-@AndroidEntryPoint
 class ComplicationConfigActivity : ComponentActivity() {
-
-    @Inject
-    lateinit var presenter: ComplicationConfigPresenter
 
     private val complicationConfigViewModel by viewModels<ComplicationConfigViewModel>()
 
@@ -45,14 +39,16 @@ class ComplicationConfigActivity : ComponentActivity() {
                 complicationConfigViewModel
             ) {
                 setResult(Activity.RESULT_OK)
-                complicationConfigViewModel.addEntityStateComplication(
-                    id,
-                    complicationConfigViewModel.selectedEntity.value
-                )
+                complicationConfigViewModel.selectedEntity?.let {
+                    complicationConfigViewModel.addEntityStateComplication(
+                        id,
+                        it
+                    )
+                }
                 finish()
             }
         }
 
-        complicationConfigViewModel.init(presenter)
+        complicationConfigViewModel.loadEntities()
     }
 }

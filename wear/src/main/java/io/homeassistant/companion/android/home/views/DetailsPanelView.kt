@@ -36,6 +36,8 @@ import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.util.getColorTemperature
 import io.homeassistant.companion.android.util.onEntityClickedFeedback
 import io.homeassistant.companion.android.util.onEntityFeedback
+import io.homeassistant.companion.android.views.ListHeader
+import io.homeassistant.companion.android.views.ThemeLazyColumn
 import java.text.DateFormat
 
 @Composable

@@ -2,16 +2,20 @@ package io.homeassistant.companion.android.complications
 
 import android.app.Application
 import android.util.Log
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
+import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.database.AppDatabase
@@ -20,7 +24,11 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class ComplicationConfigViewModel @Inject constructor(application: Application) : AndroidViewModel(application) {
+class ComplicationConfigViewModel @Inject constructor(
+    application: Application,
+    private val integrationUseCase: IntegrationRepository,
+    private val webSocketUseCase: WebSocketRepository
+) : AndroidViewModel(application) {
     companion object {
         const val TAG = "ComplicationConfigViewModel"
     }
@@ -29,15 +37,8 @@ class ComplicationConfigViewModel @Inject constructor(application: Application) 
         LOADING, READY, ERROR
     }
 
-    private lateinit var presenter: ComplicationConfigPresenter
     val app = getApplication<HomeAssistantApplication>()
     private val entityStateComplicationsDao = AppDatabase.getInstance(app.applicationContext).entityStateComplicationsDao()
-
-    // TODO: This is bad, do this instead: https://stackoverflow.com/questions/46283981/android-viewmodel-additional-arguments
-    fun init(complicationConfigPresenter: ComplicationConfigPresenter) {
-        presenter = complicationConfigPresenter
-        loadEntities()
-    }
 
     var entities = mutableStateMapOf<String, Entity<*>>()
         private set
@@ -46,34 +47,32 @@ class ComplicationConfigViewModel @Inject constructor(application: Application) 
     var entitiesByDomainOrder = mutableStateListOf<String>()
         private set
 
-    var loadingState = mutableStateOf(LoadingState.LOADING)
+    var loadingState by mutableStateOf(LoadingState.LOADING)
         private set
-    var selectedEntity = mutableStateOf(SimplifiedEntity("", "", ""))
-        private set
-    var hasSelected = mutableStateOf(false)
+    var selectedEntity: SimplifiedEntity? by mutableStateOf(null)
         private set
 
-    private fun loadEntities() {
+    fun loadEntities() {
         viewModelScope.launch {
-            if (!presenter.isConnected()) {
-                loadingState.value = LoadingState.ERROR
+            if (!integrationUseCase.isRegistered()) {
+                loadingState = LoadingState.ERROR
                 return@launch
             }
             try {
                 // Load initial state
-                loadingState.value = LoadingState.LOADING
-                presenter.getEntities()?.forEach {
+                loadingState = LoadingState.LOADING
+                integrationUseCase.getEntities()?.forEach {
                     entities[it.entityId] = it
                 }
                 updateEntityDomains()
 
                 // Finished initial load, update state
-                val webSocketState = presenter.getWebSocketState()
+                val webSocketState = webSocketUseCase.getConnectionState()
                 if (webSocketState == WebSocketState.CLOSED_AUTH) {
-                    loadingState.value = LoadingState.ERROR
+                    loadingState = LoadingState.ERROR
                     return@launch
                 }
-                loadingState.value = if (webSocketState == WebSocketState.ACTIVE) {
+                loadingState = if (webSocketState == WebSocketState.ACTIVE) {
                     LoadingState.READY
                 } else {
                     LoadingState.ERROR
@@ -81,14 +80,14 @@ class ComplicationConfigViewModel @Inject constructor(application: Application) 
 
                 // Listen for updates
                 viewModelScope.launch {
-                    presenter.getEntityUpdates()?.collect {
+                    integrationUseCase.getEntityUpdates()?.collect {
                         entities[it.entityId] = it
                         updateEntityDomains()
                     }
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Exception while loading entities", e)
-                loadingState.value = LoadingState.ERROR
+                loadingState = LoadingState.ERROR
             }
         }
     }
@@ -113,8 +112,7 @@ class ComplicationConfigViewModel @Inject constructor(application: Application) 
     }
 
     fun setEntity(entity: SimplifiedEntity) {
-        selectedEntity.value = entity
-        hasSelected.value = true
+        selectedEntity = entity
     }
 
     fun addEntityStateComplication(id: Int, entity: SimplifiedEntity) {

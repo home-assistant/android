@@ -1,6 +1,5 @@
-package io.homeassistant.companion.android.home.views
+package io.homeassistant.companion.android.views
 
-import android.content.Context
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -29,7 +28,6 @@ import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun ChooseEntityView(
-    context: Context,
     entitiesByDomainOrder: SnapshotStateList<String>,
     entitiesByDomain: SnapshotStateMap<String, SnapshotStateList<Entity<*>>>,
     onNoneClicked: () -> Unit,
@@ -42,7 +40,7 @@ fun ChooseEntityView(
     WearAppTheme {
         ThemeLazyColumn {
             item {
-                ListHeader(id = commonR.string.shortcuts_choose)
+                ListHeader(id = commonR.string.choose_entity)
             }
             if (allowNone) {
                 item {
@@ -64,7 +62,7 @@ fun ChooseEntityView(
                 if (!entities.isNullOrEmpty()) {
                     item {
                         ExpandableListHeader(
-                            string = stringForDomain(domain, context) ?: domain,
+                            string = stringForDomain(domain, LocalContext.current) ?: domain,
                             key = domain,
                             expandedStates = expandedStates
                         )

@@ -13,7 +13,23 @@ import java.util.Calendar
 import io.homeassistant.companion.android.common.R as commonR
 
 fun stringForDomain(domain: String, context: Context): String? =
-    HomePresenterImpl.domainsWithNames[domain]?.let { context.getString(it) }
+    (
+        HomePresenterImpl.domainsWithNames + mapOf(
+            "automation" to commonR.string.automation,
+            "binary_sensor" to commonR.string.binary_sensor,
+            "device_tracker" to commonR.string.device_tracker,
+            "input_number" to commonR.string.domain_input_number,
+            "media_player" to commonR.string.media_player,
+            "persistent_notification" to commonR.string.persistent_notification,
+            "person" to commonR.string.person,
+            "select" to commonR.string.select,
+            "sensor" to commonR.string.sensor,
+            "sun" to commonR.string.sun,
+            "update" to commonR.string.update,
+            "weather" to commonR.string.weather,
+            "zone" to commonR.string.zone
+        )
+        )[domain]?.let { context.getString(it) }
 
 fun getIcon(icon: String?, domain: String, context: Context): IIcon? {
     val simpleEntity = Entity(

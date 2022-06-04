@@ -31,7 +31,6 @@ open class HomeAssistantApplication : Application() {
 
         val screenIntentFilter = IntentFilter()
         screenIntentFilter.addAction(Intent.ACTION_SCREEN_ON)
-        screenIntentFilter.addAction(Intent.ACTION_SCREEN_OFF)
 
         registerReceiver(complicationReceiver, screenIntentFilter)
     }

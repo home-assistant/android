@@ -18,7 +18,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
-import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.wear.EntityStateComplicationsDao
 import io.homeassistant.companion.android.util.getIcon
 import javax.inject.Inject
 
@@ -27,14 +27,14 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
 
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
+    @Inject
+    lateinit var entityStateComplicationsDao: EntityStateComplicationsDao
 
     override suspend fun onComplicationRequest(request: ComplicationRequest): ComplicationData? {
         if (request.complicationType != ComplicationType.SHORT_TEXT)
             return null
 
         val id = request.complicationInstanceId
-
-        val entityStateComplicationsDao = AppDatabase.getInstance(application.applicationContext).entityStateComplicationsDao()
 
         val entityId = entityStateComplicationsDao.get(id)?.entityId
             ?: return ShortTextComplicationData.Builder(
