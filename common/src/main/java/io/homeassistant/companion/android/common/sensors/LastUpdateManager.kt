@@ -67,12 +67,19 @@ class LastUpdateManager : SensorManager {
         val allSettings = sensorDao.getSettings(lastUpdate.id)
         val shouldAddNewIntent = allSettings.firstOrNull { it.name == SETTING_ADD_NEW_INTENT }?.value == "true"
         if (shouldAddNewIntent) {
-            val newIntentSettingName = "lastupdate_intent_var1:${allSettings.size}:"
+            val currentHighestIntentSettingOrdinal = allSettings.filter {
+                it.name.startsWith("lastupdate_intent_var1:")
+            }.maxOfOrNull {
+                it.name.removePrefix("lastupdate_intent_var1:").removeSuffix(":").toInt()
+            } ?: 0
+            val newIntentSettingOrdinal = currentHighestIntentSettingOrdinal + 1
+            val newIntentSettingName = "lastupdate_intent_var1:$newIntentSettingOrdinal:"
             val intentSettingAlreadyExists = allSettings.any { it.name == newIntentSettingName }
-            if (!intentSettingAlreadyExists) {
-                sensorDao.add(SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", SensorSettingType.TOGGLE))
-                sensorDao.add(SensorSetting(lastUpdate.id, newIntentSettingName, intentAction, SensorSettingType.STRING))
-            }
+            check(!intentSettingAlreadyExists)
+            // turn off the toggle:
+            sensorDao.add(SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", SensorSettingType.TOGGLE))
+            // add the new Intent:
+            sensorDao.add(SensorSetting(lastUpdate.id, newIntentSettingName, intentAction, SensorSettingType.STRING))
         }
 
         val settingsToRemove = allSettings
