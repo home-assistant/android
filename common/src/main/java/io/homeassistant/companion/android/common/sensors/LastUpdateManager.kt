@@ -65,13 +65,13 @@ class LastUpdateManager : SensorManager {
 
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val allSettings = sensorDao.getSettings(lastUpdate.id)
-        val intentSettingName = "lastupdate_intent_var1:${allSettings.size}:"
-        val addNewIntent = allSettings.firstOrNull { it.name == SETTING_ADD_NEW_INTENT }?.value ?: "false"
-        val intentSetting = allSettings.firstOrNull { it.name == intentSettingName }?.value ?: ""
-        if (addNewIntent == "true") {
-            if (intentSetting == "") {
+        val shouldAddNewIntent = allSettings.firstOrNull { it.name == SETTING_ADD_NEW_INTENT }?.value == "true"
+        if (shouldAddNewIntent) {
+            val newIntentSettingName = "lastupdate_intent_var1:${allSettings.size}:"
+            val intentSettingAlreadyExists = allSettings.any { it.name == newIntentSettingName }
+            if (!intentSettingAlreadyExists) {
                 sensorDao.add(SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", SensorSettingType.TOGGLE))
-                sensorDao.add(SensorSetting(lastUpdate.id, intentSettingName, intentAction, SensorSettingType.STRING))
+                sensorDao.add(SensorSetting(lastUpdate.id, newIntentSettingName, intentAction, SensorSettingType.STRING))
             }
         } else {
             sensorDao.add(SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", SensorSettingType.TOGGLE))
