@@ -107,8 +107,8 @@ fun MainConfigView(
                     },
                     secondaryLabel = {
                         Text(
-                            if (loaded && entity != null)
-                                entity.friendlyName
+                            if (loaded)
+                                entity?.friendlyName ?: ""
                             else
                                 stringResource(R.string.loading)
                         )

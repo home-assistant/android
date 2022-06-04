@@ -12,8 +12,10 @@ import androidx.activity.viewModels
 import androidx.wear.watchface.complications.datasource.ComplicationDataSourceService.Companion.EXTRA_CONFIG_COMPLICATION_ID
 import androidx.wear.watchface.complications.datasource.ComplicationDataSourceService.Companion.EXTRA_CONFIG_COMPLICATION_TYPE
 import androidx.wear.watchface.complications.datasource.ComplicationDataSourceService.Companion.EXTRA_CONFIG_DATA_SOURCE_COMPONENT
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.complications.views.LoadConfigView
 
+@AndroidEntryPoint
 class ComplicationConfigActivity : ComponentActivity() {
 
     private val complicationConfigViewModel by viewModels<ComplicationConfigViewModel>()

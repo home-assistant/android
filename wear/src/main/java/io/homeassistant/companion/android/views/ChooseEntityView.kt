@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Chip
@@ -24,6 +25,7 @@ import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.stringForDomain
+import java.util.Locale
 import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
@@ -62,7 +64,8 @@ fun ChooseEntityView(
                 if (!entities.isNullOrEmpty()) {
                     item {
                         ExpandableListHeader(
-                            string = stringForDomain(domain, LocalContext.current) ?: domain,
+                            string = stringForDomain(domain, LocalContext.current)
+                                ?: domain.replace('_', ' ').capitalize(Locale.getDefault()),
                             key = domain,
                             expandedStates = expandedStates
                         )
