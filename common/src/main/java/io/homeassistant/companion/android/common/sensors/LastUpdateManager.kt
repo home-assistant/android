@@ -70,13 +70,25 @@ class LastUpdateManager : SensorManager {
         if (settingsToRemove.isNotEmpty()) {
             sensorDao.removeSettings(lastUpdate.id, settingsToRemove.map { it.name })
         }
+        var isSequenceContinuous = true
+        var currentHighestIntentSettingOrdinal = 0
+        val intentSettings = allSettings.filter {
+            it.name.startsWith("lastupdate_intent_var1:")
+        }
+        intentSettings.forEachIndexed { index, setting ->
+            val currentOrdinal = setting.name.removePrefix("lastupdate_intent_var1:").removeSuffix(":").toInt()
+            if (currentOrdinal != index + 1) {
+                isSequenceContinuous = false
+            }
+            if (currentOrdinal > currentHighestIntentSettingOrdinal) {
+                currentHighestIntentSettingOrdinal = currentOrdinal
+            }
+        }
+        if (!isSequenceContinuous) {
+            // TODO fix the DB entries to make their IDs a continuous sequence
+        }
         val shouldAddNewIntent = allSettings.firstOrNull { it.name == SETTING_ADD_NEW_INTENT }?.value == "true"
         if (shouldAddNewIntent) {
-            val currentHighestIntentSettingOrdinal = allSettings.filter {
-                it.name.startsWith("lastupdate_intent_var1:")
-            }.maxOfOrNull {
-                it.name.removePrefix("lastupdate_intent_var1:").removeSuffix(":").toInt()
-            } ?: 0
             val newIntentSettingOrdinal = currentHighestIntentSettingOrdinal + 1
             val newIntentSettingName = "lastupdate_intent_var1:$newIntentSettingOrdinal:"
             val intentSettingAlreadyExists = allSettings.any { it.name == newIntentSettingName }
