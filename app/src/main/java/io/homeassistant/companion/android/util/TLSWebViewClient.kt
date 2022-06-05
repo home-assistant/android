@@ -11,7 +11,9 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.runInterruptible
 import java.security.Principal
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
@@ -24,16 +26,6 @@ open class TLSWebViewClient @Inject constructor(private var keyChainRepository: 
 
     var hasUserDeniedAccess = false
         private set
-
-    class MyKeyChainCallbackAlias(var context: Context) : KeyChainAliasCallback {
-        var alias: String? = null
-        var ready: Boolean = false
-
-        override fun alias(alias: String?) {
-            this.alias = alias
-            ready = true
-        }
-    }
 
     private fun getActivity(context: Context?): Activity? {
         if (context == null) {
@@ -60,60 +52,51 @@ open class TLSWebViewClient @Inject constructor(private var keyChainRepository: 
         var key: PrivateKey?
         var chain: Array<X509Certificate>?
 
-        // Get the key and the chain (if the user previously chose)
         runBlocking {
-            key = keyChainRepository.getPrivateKey()
-            chain = keyChainRepository.getCertificateChain()
-        }
+            launch {
+                // Get the key and the chain (if the user previously chose)
+                key = keyChainRepository.getPrivateKey()
+                chain = keyChainRepository.getCertificateChain()
 
-        // If the key is available, process the request
-        if (key != null && chain != null) {
-            request.proceed(key, chain)
-        } else {
-            // If not, then the user must be prompt for a key
-            // The whole operation is wrapped in the selectPrivateKey method but caution as it must occurs outside of the main thread
-            // see: https://developer.android.com/reference/android/security/KeyChain#getPrivateKey(android.content.Context,%20java.lang.String)
-            // Also from now on displaying error message on the UI is more tricky (not on main thread)
-
-            val alias = selectClientCert(activity, request.principals)
-            // null if the user denied access to the key
-            if (alias != null) {
-                // The key should be available now
-                runBlocking {
-                    key = keyChainRepository.getPrivateKey()
-                    chain = keyChainRepository.getCertificateChain()
-                }
-
-                // If we got the key and the chain, then proceed with the request
+                // If the key is available, process the request
                 if (key != null && chain != null) {
                     request.proceed(key, chain)
+                } else {
+                    // If not, then the user must be prompt for a key
+                    // The whole operation is wrapped in the selectPrivateKey method but caution as it must occurs outside of the main thread
+                    // see: https://developer.android.com/reference/android/security/KeyChain#getPrivateKey(android.content.Context,%20java.lang.String)
+                    selectClientCert(activity, request.principals, request)
                 }
-            } else {
-                // Either the user didn't choose a key or no key was available
-                hasUserDeniedAccess = true
-                request.proceed(null, null)
             }
         }
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
-    private fun selectClientCert(activity: Activity, principals: Array<Principal>?): String? {
-        // prompt the user for a key
-        val kcac = MyKeyChainCallbackAlias(activity.applicationContext)
-        KeyChain.choosePrivateKeyAlias(activity, kcac, arrayOf<String>(), principals, null, null)
+    private fun selectClientCert(activity: Activity, principals: Array<Principal>?, request: ClientCertRequest) {
+        var kcac = KeyChainAliasCallback { alias ->
+            var key: PrivateKey? = null
+            var chain: Array<X509Certificate>? = null
 
-        // wait on the user to select a key
-        while (!kcac.ready) {
-            Thread.sleep(200)
-        }
+            if (alias != null) {
+                runBlocking {
+                    // Load the key and the chain
+                    keyChainRepository.load(activity.applicationContext, alias!!)
 
-        // load the key and the cert chain
-        runBlocking {
-            if (kcac.alias != null) {
-                keyChainRepository.load(activity.applicationContext, kcac.alias!!)
+                    key = keyChainRepository.getPrivateKey()
+                    chain = keyChainRepository.getCertificateChain()
+
+                    // If we got the key and the cert
+                    if (key == null || chain == null) {
+                        // Either the user didn't choose a key or no key was available
+                        hasUserDeniedAccess = true
+                    }
+                }
             }
+
+            request.proceed(key, chain)
         }
 
-        return kcac.alias
+        // prompt the user for a key
+        KeyChain.choosePrivateKeyAlias(activity, kcac, arrayOf<String>(), principals, null, null)
     }
 }
