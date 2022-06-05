@@ -2,16 +2,19 @@ package io.homeassistant.companion.android.common.data.keychain
 
 import android.content.Context
 import android.security.KeyChain
+import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import java.util.concurrent.Executors
 import javax.inject.Inject
 
-class KeyChainRepositoryImpl@Inject constructor() : KeyChainRepository {
+class KeyChainRepositoryImpl @Inject constructor(
+    private val prefsRepository: PrefsRepository
+) : KeyChainRepository {
 
-    @Inject
-    lateinit var prefsRepository: PrefsRepository
+    //@Inject
+    //lateinit var prefsRepository: PrefsRepository
 
     private var alias: String? = null
     private var key: PrivateKey? = null
