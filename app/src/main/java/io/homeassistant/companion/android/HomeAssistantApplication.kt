@@ -62,7 +62,7 @@ open class HomeAssistantApplication : Application() {
             }
         )
 
-        runBlocking {
+        ioScope.launch {
             keyChainRepository.load(applicationContext)
         }
 
