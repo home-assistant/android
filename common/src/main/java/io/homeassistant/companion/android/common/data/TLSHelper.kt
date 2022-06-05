@@ -63,12 +63,8 @@ class TLSHelper @Inject constructor(private val keyChainRepository: KeyChainRepo
                 var chain: Array<X509Certificate>?
 
                 // block until a chain is provided via the TLSWebView
-                while (true) {
-                    runBlocking {
-                        chain = keyChainRepository.getCertificateChain()
-                    }
-
-                    if (chain != null) break
+                runBlocking {
+                    chain = keyChainRepository.getCertificateChain()
                 }
 
                 return chain
@@ -78,14 +74,8 @@ class TLSHelper @Inject constructor(private val keyChainRepository: KeyChainRepo
                 var key: PrivateKey?
 
                 // block until a key is provided via the TLSWebView
-                while (true) {
-                    runBlocking {
-                        key = keyChainRepository.getPrivateKey()
-                    }
-
-                    if (key != null) break
-
-                    Thread.sleep(100)
+                runBlocking {
+                    key = keyChainRepository.getPrivateKey()
                 }
 
                 return key
