@@ -27,6 +27,9 @@ open class TLSWebViewClient @Inject constructor(private var keyChainRepository: 
     var hasUserDeniedAccess = false
         private set
 
+    private var key: PrivateKey? = null
+    private var chain: Array<X509Certificate>? = null
+
     private fun getActivity(context: Context?): Activity? {
         if (context == null) {
             return null
@@ -49,23 +52,24 @@ open class TLSWebViewClient @Inject constructor(private var keyChainRepository: 
         val activity = getActivity(view.context)
         if (activity == null) return
 
-        var key: PrivateKey?
-        var chain: Array<X509Certificate>?
-
         runBlocking {
             launch {
-                // Get the key and the chain (if the user previously chose)
-                key = keyChainRepository.getPrivateKey()
-                chain = keyChainRepository.getCertificateChain()
-
                 // If the key is available, process the request
                 if (key != null && chain != null) {
                     request.proceed(key, chain)
                 } else {
-                    // If not, then the user must be prompt for a key
-                    // The whole operation is wrapped in the selectPrivateKey method but caution as it must occurs outside of the main thread
-                    // see: https://developer.android.com/reference/android/security/KeyChain#getPrivateKey(android.content.Context,%20java.lang.String)
-                    selectClientCert(activity, request.principals, request)
+                    // Get the key and the chain from the repo (if the user previously chose)
+                    key = keyChainRepository.getPrivateKey()
+                    chain = keyChainRepository.getCertificateChain()
+
+                    if (key != null && chain != null) {
+                        request.proceed(key, chain)
+                    } else {
+                        // If no key is available, then the user must be prompt for a key
+                        // The whole operation is wrapped in the selectPrivateKey method but caution as it must occurs outside of the main thread
+                        // see: https://developer.android.com/reference/android/security/KeyChain#getPrivateKey(android.content.Context,%20java.lang.String)
+                        selectClientCert(activity, request.principals, request)
+                    }
                 }
             }
         }
@@ -74,9 +78,6 @@ open class TLSWebViewClient @Inject constructor(private var keyChainRepository: 
     @RequiresApi(Build.VERSION_CODES.M)
     private fun selectClientCert(activity: Activity, principals: Array<Principal>?, request: ClientCertRequest) {
         var kcac = KeyChainAliasCallback { alias ->
-            var key: PrivateKey? = null
-            var chain: Array<X509Certificate>? = null
-
             if (alias != null) {
                 runBlocking {
                     // Load the key and the chain
