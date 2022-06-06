@@ -7,6 +7,7 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class KeyChainRepositoryImpl @Inject constructor(
@@ -41,7 +42,8 @@ class KeyChainRepositoryImpl @Inject constructor(
 
         if (alias != null && !isLoading && (key == null || chain == null)) {
             isLoading = true // TODO: need proper sync
-            Executors.newSingleThreadExecutor().execute {
+            var executor = Executors.newSingleThreadExecutor()
+            executor.execute {
                 if (chain == null) {
                     chain = KeyChain.getCertificateChain(context, alias!!)
                 }
@@ -50,6 +52,8 @@ class KeyChainRepositoryImpl @Inject constructor(
                 }
                 isLoading = false
             }
+            executor.shutdown()
+            executor.awaitTermination(5, TimeUnit.SECONDS)
         }
 
         return isLoading
