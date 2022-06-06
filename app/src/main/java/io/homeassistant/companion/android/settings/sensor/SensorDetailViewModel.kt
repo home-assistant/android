@@ -167,23 +167,27 @@ class SensorDetailViewModel @Inject constructor(
      * Should trigger a dialog open in view.
      */
     fun onSettingWithDialogPressed(setting: SensorSetting) {
-        val listSetting = setting.valueType.listType
+        val listKeys = getSettingKeys(setting)
         val listEntries = getSettingEntries(setting)
         val state = SettingDialogState(
             setting = setting,
-            entries = if (listSetting) {
-                if (setting.valueType == SensorSettingType.LIST) setting.entries.zip(listEntries)
-                else listEntries.map { it to it }
-            } else {
-                emptyList()
+            entries = when {
+                setting.valueType == SensorSettingType.LIST ||
+                    setting.valueType == SensorSettingType.LIST_BLUETOOTH ->
+                    listKeys.zip(listEntries)
+                setting.valueType.listType ->
+                    listEntries.map { it to it }
+                else ->
+                    emptyList()
             },
-            entriesSelected = if (listSetting) {
-                setting.value.split(", ").filter {
-                    if (setting.valueType == SensorSettingType.LIST) setting.entries.contains(it)
-                    else listEntries.contains(it)
-                }
-            } else {
-                emptyList()
+            entriesSelected = when {
+                setting.valueType == SensorSettingType.LIST ||
+                    setting.valueType == SensorSettingType.LIST_BLUETOOTH ->
+                    setting.value.split(", ").filter { listKeys.contains(it) }
+                setting.valueType.listType ->
+                    setting.value.split(", ").filter { listEntries.contains(it) }
+                else ->
+                    emptyList()
             }
         )
         sensorSettingsDialog = state
@@ -282,6 +286,17 @@ class SensorDetailViewModel @Inject constructor(
             Log.d(TAG, "Converted raw vars to string vars \"$stringVars\"")
         }
         return stringVars.toTypedArray()
+    }
+
+    private fun getSettingKeys(setting: SensorSetting): List<String> {
+        return when (setting.valueType) {
+            SensorSettingType.LIST ->
+                setting.entries
+            SensorSettingType.LIST_BLUETOOTH ->
+                BluetoothUtils.getBluetoothDevices(getApplication()).map { it.address }
+            else ->
+                emptyList()
+        }
     }
 
     private fun getSettingEntries(setting: SensorSetting): List<String> {

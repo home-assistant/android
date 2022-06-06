@@ -376,13 +376,16 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
     private fun shouldEnableHighAccuracyMode(): Boolean {
 
-        val highAccuracyModeBTDevices = getSetting(
+        val highAccuracyModeBTDevicesSetting = getSetting(
             latestContext,
             LocationSensorManager.backgroundLocation,
             SETTING_HIGH_ACCURACY_MODE_BLUETOOTH_DEVICES,
             SensorSettingType.LIST_BLUETOOTH,
             ""
         )
+        val highAccuracyModeBTDevices = highAccuracyModeBTDevicesSetting
+            .split(", ")
+            .mapNotNull { it.trim().ifBlank { null } }
         val highAccuracyBtZoneCombined = getHighAccuracyBTZoneCombinedSetting()
 
         val useTriggerRange = getHighAccuracyModeTriggerRange() > 0
@@ -397,11 +400,11 @@ class LocationSensorManager : LocationSensorManagerBase() {
         var inZone = false
         var constraintsUsed = false
 
-        if (!highAccuracyModeBTDevices.isNullOrEmpty()) {
+        if (highAccuracyModeBTDevices.isNotEmpty()) {
             constraintsUsed = true
 
             val bluetoothDevices = BluetoothUtils.getBluetoothDevices(latestContext)
-            btDevConnected = bluetoothDevices.any { it.connected && highAccuracyModeBTDevices.contains(it.name) }
+            btDevConnected = bluetoothDevices.any { it.connected && highAccuracyModeBTDevices.contains(it.address) }
 
             if (!forceHighAccuracyModeOn) {
                 if (!btDevConnected) Log.d(TAG, "High accuracy mode disabled, because defined ($highAccuracyModeBTDevices) bluetooth device(s) not connected (Connected devices: $bluetoothDevices)")

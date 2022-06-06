@@ -112,7 +112,7 @@ fun SensorDetailView(
         }.launchIn(this)
     }
 
-    Scaffold(scaffoldState = scaffoldState) {
+    Scaffold(scaffoldState = scaffoldState) { contentPadding ->
         if (sensorUpdateTypeInfo && viewModel.basicSensor != null) {
             SensorDetailUpdateInfoDialog(
                 basicSensor = viewModel.basicSensor,
@@ -128,7 +128,7 @@ fun SensorDetailView(
                 onSubmit = { state -> onDialogSettingSubmitted(state) }
             )
         }
-        LazyColumn {
+        LazyColumn(modifier = Modifier.padding(contentPadding)) {
             if (viewModel.sensorManager != null && viewModel.basicSensor != null) {
                 item {
                     SensorDetailTopPanel(
