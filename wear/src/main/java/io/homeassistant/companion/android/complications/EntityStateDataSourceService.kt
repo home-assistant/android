@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.complications
 
 import android.graphics.Color
 import android.graphics.drawable.Icon
+import android.util.Log
 import androidx.wear.watchface.complications.data.ComplicationData
 import androidx.wear.watchface.complications.data.ComplicationType
 import androidx.wear.watchface.complications.data.MonochromaticImage
@@ -9,10 +10,8 @@ import androidx.wear.watchface.complications.data.PlainComplicationText
 import androidx.wear.watchface.complications.data.ShortTextComplicationData
 import androidx.wear.watchface.complications.datasource.ComplicationRequest
 import androidx.wear.watchface.complications.datasource.SuspendingComplicationDataSourceService
-import com.mikepenz.iconics.IconicsColor
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import com.mikepenz.iconics.utils.backgroundColor
 import com.mikepenz.iconics.utils.colorInt
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R
@@ -30,6 +29,10 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
     @Inject
     lateinit var entityStateComplicationsDao: EntityStateComplicationsDao
 
+    companion object {
+        const val TAG = "EntityStateDataSourceService"
+    }
+
     override suspend fun onComplicationRequest(request: ComplicationRequest): ComplicationData? {
         if (request.complicationType != ComplicationType.SHORT_TEXT)
             return null
@@ -43,20 +46,25 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
                     .build()
             ).build()
 
-        val entity = integrationUseCase.getEntity(entityId)
-            ?: return ShortTextComplicationData.Builder(
-                text = PlainComplicationText.Builder(getText(R.string.state_unknown)).build(),
-                contentDescription = PlainComplicationText.Builder(getText(R.string.complication_entity_state_content_description))
-                    .build()
-            ).build()
+        val entity = try {
+            (
+                integrationUseCase.getEntity(entityId)
+                    ?: return ShortTextComplicationData.Builder(
+                        text = PlainComplicationText.Builder(getText(R.string.state_unknown)).build(),
+                        contentDescription = PlainComplicationText.Builder(getText(R.string.complication_entity_state_content_description))
+                            .build()
+                    ).build()
+                )
+        } catch (t: Throwable) {
+            Log.e(TAG, "Unable to get entity state for $entityId: ${t.message}")
+            return null
+        }
 
         val attributes = entity.attributes as Map<*, *>
         val icon = getIcon(entity, entity.domain, applicationContext) ?: CommunityMaterial.Icon.cmd_cellphone
         val iconBitmap = IconicsDrawable(this, icon).apply {
             colorInt = Color.WHITE
-            backgroundColor = IconicsColor.colorRes(io.homeassistant.companion.android.R.color.colorOverlay)
         }.toBitmap()
-
         return ShortTextComplicationData.Builder(
             text = PlainComplicationText.Builder(entity.state).build(),
             contentDescription = PlainComplicationText.Builder(getText(R.string.complication_entity_state_content_description))

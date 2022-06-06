@@ -50,7 +50,5 @@ class ComplicationConfigActivity : ComponentActivity() {
                 finish()
             }
         }
-
-        complicationConfigViewModel.loadEntities()
     }
 }

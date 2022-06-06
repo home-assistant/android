@@ -52,6 +52,10 @@ class ComplicationConfigViewModel @Inject constructor(
     var selectedEntity: SimplifiedEntity? by mutableStateOf(null)
         private set
 
+    init {
+        loadEntities()
+    }
+
     fun loadEntities() {
         viewModelScope.launch {
             if (!integrationUseCase.isRegistered()) {
