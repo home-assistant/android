@@ -13,7 +13,6 @@ import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.runInterruptible
 import java.security.Principal
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
