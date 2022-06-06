@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.sensors
 
 import android.Manifest
 import android.app.PendingIntent
+import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.content.Intent
 import android.location.Location
@@ -378,7 +379,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
         val highAccuracyModeBTDevicesSetting = getSetting(
             latestContext,
-            LocationSensorManager.backgroundLocation,
+            backgroundLocation,
             SETTING_HIGH_ACCURACY_MODE_BLUETOOTH_DEVICES,
             SensorSettingType.LIST_BLUETOOTH,
             ""
@@ -386,6 +387,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
         val highAccuracyModeBTDevices = highAccuracyModeBTDevicesSetting
             .split(", ")
             .mapNotNull { it.trim().ifBlank { null } }
+            .toMutableList()
         val highAccuracyBtZoneCombined = getHighAccuracyBTZoneCombinedSetting()
 
         val useTriggerRange = getHighAccuracyModeTriggerRange() > 0
@@ -404,6 +406,32 @@ class LocationSensorManager : LocationSensorManagerBase() {
             constraintsUsed = true
 
             val bluetoothDevices = BluetoothUtils.getBluetoothDevices(latestContext)
+
+            // If any of the stored devices aren't a Bluetooth device address, try to match them to a device
+            var updatedBtDeviceNames = false
+            highAccuracyModeBTDevices.filter { !BluetoothAdapter.checkBluetoothAddress(it) }.forEach {
+                val foundDevices = bluetoothDevices.filter { btDevice -> btDevice.name == it }
+                if (foundDevices.isNotEmpty()) {
+                    highAccuracyModeBTDevices.remove(it)
+                    foundDevices.forEach { btDevice ->
+                        if (!highAccuracyModeBTDevices.contains(btDevice.address))
+                            highAccuracyModeBTDevices.add(btDevice.address)
+                    }
+                    updatedBtDeviceNames = true
+                }
+            }
+            if (updatedBtDeviceNames) {
+                val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
+                sensorDao.add(
+                    SensorSetting(
+                        backgroundLocation.id,
+                        SETTING_HIGH_ACCURACY_MODE_BLUETOOTH_DEVICES,
+                        highAccuracyModeBTDevices.joinToString().replace("[", "").replace("]", ""),
+                        SensorSettingType.LIST_BLUETOOTH
+                    )
+                )
+            }
+
             btDevConnected = bluetoothDevices.any { it.connected && highAccuracyModeBTDevices.contains(it.address) }
 
             if (!forceHighAccuracyModeOn) {
