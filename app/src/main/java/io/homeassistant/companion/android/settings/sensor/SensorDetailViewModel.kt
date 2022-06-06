@@ -311,10 +311,14 @@ class SensorDetailViewModel @Inject constructor(
                     ?.map { packageItem -> packageItem.packageName }
                     ?.sorted()
                     .orEmpty()
-            SensorSettingType.LIST_BLUETOOTH ->
-                BluetoothUtils.getBluetoothDevices(getApplication())
+            SensorSettingType.LIST_BLUETOOTH -> {
+                val devices = BluetoothUtils.getBluetoothDevices(getApplication())
                     .filter { entries == null || entries.contains(it.address) }
-                    .map { it.name }
+                val entriesNotInDevices = entries
+                    ?.filter { entry -> !devices.any { it.address == entry } }
+                    .orEmpty()
+                devices.map { it.name }.plus(entriesNotInDevices)
+            }
             SensorSettingType.LIST_ZONES ->
                 entries ?: zones
             else ->
