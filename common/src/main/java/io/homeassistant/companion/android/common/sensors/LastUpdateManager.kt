@@ -76,9 +76,12 @@ class LastUpdateManager : SensorManager {
         } else {
             sensorDao.add(SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", SensorSettingType.TOGGLE))
         }
-        for (setting in allSettings) {
-            if (setting.value == "")
-                sensorDao.removeSetting(lastUpdate.id, setting.name)
+
+        val settingsToRemove = allSettings
+            .filter { setting -> setting.value == "" }
+            .map { setting -> setting.name }
+        if (settingsToRemove.isNotEmpty()) {
+            sensorDao.removeSettings(lastUpdate.id, settingsToRemove)
         }
     }
 }

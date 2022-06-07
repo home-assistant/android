@@ -10,12 +10,14 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.composethemeadapter.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.settings.notification.views.LoadNotification
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -78,9 +80,11 @@ class NotificationDetailFragment : Fragment() {
         builder.setPositiveButton(
             commonR.string.confirm_positive
         ) { dialog, _ ->
-            notificationDao.delete(notification.id)
-            dialog.dismiss()
-            parentFragmentManager.popBackStack()
+            lifecycleScope.launch {
+                notificationDao.delete(notification.id)
+                dialog.dismiss()
+                parentFragmentManager.popBackStack()
+            }
         }
 
         builder.setNegativeButton(

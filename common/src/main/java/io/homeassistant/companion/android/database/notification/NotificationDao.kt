@@ -21,8 +21,8 @@ interface NotificationDao {
     fun getLastItems(amount: Int): Array<NotificationItem>?
 
     @Query("DELETE FROM notification_history WHERE id = :id")
-    fun delete(id: Int)
+    suspend fun delete(id: Int)
 
     @Query("DELETE FROM notification_history")
-    fun deleteAll()
+    suspend fun deleteAll()
 }
