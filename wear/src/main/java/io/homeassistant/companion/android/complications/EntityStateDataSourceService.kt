@@ -47,14 +47,12 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
             ).build()
 
         val entity = try {
-            (
-                integrationUseCase.getEntity(entityId)
-                    ?: return ShortTextComplicationData.Builder(
-                        text = PlainComplicationText.Builder(getText(R.string.state_unknown)).build(),
-                        contentDescription = PlainComplicationText.Builder(getText(R.string.complication_entity_state_content_description))
-                            .build()
-                    ).build()
-                )
+            integrationUseCase.getEntity(entityId)
+                ?: return ShortTextComplicationData.Builder(
+                    text = PlainComplicationText.Builder(getText(R.string.state_unknown)).build(),
+                    contentDescription = PlainComplicationText.Builder(getText(R.string.complication_entity_state_content_description))
+                        .build()
+                ).build()
         } catch (t: Throwable) {
             Log.e(TAG, "Unable to get entity state for $entityId: ${t.message}")
             return null

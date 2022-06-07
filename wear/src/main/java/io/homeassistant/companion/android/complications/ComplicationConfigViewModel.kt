@@ -18,8 +18,8 @@ import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.data.SimplifiedEntity
-import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.wear.EntityStateComplications
+import io.homeassistant.companion.android.database.wear.EntityStateComplicationsDao
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -27,7 +27,8 @@ import javax.inject.Inject
 class ComplicationConfigViewModel @Inject constructor(
     application: Application,
     private val integrationUseCase: IntegrationRepository,
-    private val webSocketUseCase: WebSocketRepository
+    private val webSocketUseCase: WebSocketRepository,
+    private val entityStateComplicationsDao: EntityStateComplicationsDao
 ) : AndroidViewModel(application) {
     companion object {
         const val TAG = "ComplicationConfigViewModel"
@@ -38,7 +39,6 @@ class ComplicationConfigViewModel @Inject constructor(
     }
 
     val app = getApplication<HomeAssistantApplication>()
-    private val entityStateComplicationsDao = AppDatabase.getInstance(app.applicationContext).entityStateComplicationsDao()
 
     var entities = mutableStateMapOf<String, Entity<*>>()
         private set
@@ -56,7 +56,7 @@ class ComplicationConfigViewModel @Inject constructor(
         loadEntities()
     }
 
-    fun loadEntities() {
+    private fun loadEntities() {
         viewModelScope.launch {
             if (!integrationUseCase.isRegistered()) {
                 loadingState = LoadingState.ERROR
