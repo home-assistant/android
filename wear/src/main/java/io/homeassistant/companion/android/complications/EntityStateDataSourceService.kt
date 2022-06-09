@@ -59,7 +59,7 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
         }
 
         val attributes = entity.attributes as Map<*, *>
-        val icon = getIcon(entity, entity.domain, applicationContext) ?: CommunityMaterial.Icon.cmd_cellphone
+        val icon = getIcon(entity, entity.domain, applicationContext) ?: CommunityMaterial.Icon.cmd_bookmark
         val iconBitmap = IconicsDrawable(this, icon).apply {
             colorInt = Color.WHITE
         }.toBitmap()

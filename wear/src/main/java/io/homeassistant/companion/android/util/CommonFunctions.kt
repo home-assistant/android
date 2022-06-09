@@ -90,7 +90,12 @@ fun getIcon(entity: Entity<Map<String, Any>>?, domain: String, context: Context)
                 CommunityMaterial.Icon2.cmd_light_switch
             }
             "input_button" -> CommunityMaterial.Icon2.cmd_gesture_tap_button
-            "input_datetime" -> CommunityMaterial.Icon.cmd_calendar_clock
+            "input_datetime" -> if (entity?.attributes?.get("has_date") == false)
+                CommunityMaterial.Icon.cmd_clock
+            else if (entity?.attributes?.get("has_time") == false)
+                CommunityMaterial.Icon.cmd_calendar
+            else
+                CommunityMaterial.Icon.cmd_calendar_clock
             "input_select" -> CommunityMaterial.Icon2.cmd_format_list_bulleted
             "input_text" -> CommunityMaterial.Icon2.cmd_form_textbox
             "light" -> CommunityMaterial.Icon2.cmd_lightbulb
@@ -114,7 +119,10 @@ fun getIcon(entity: Entity<Map<String, Any>>?, domain: String, context: Context)
             "sensor" -> CommunityMaterial.Icon.cmd_eye
             "siren" -> CommunityMaterial.Icon.cmd_bullhorn
             "simple_alarm" -> CommunityMaterial.Icon.cmd_bell
-            "sun" -> CommunityMaterial.Icon3.cmd_white_balance_sunny
+            "sun" -> if (compareState == "above_horizon")
+                CommunityMaterial.Icon3.cmd_white_balance_sunny
+            else
+                CommunityMaterial.Icon3.cmd_weather_night
             "switch" -> if (entity?.entityId?.isNotBlank() == true) {
                 when (entity.attributes["device_class"]) {
                     "outlet" -> if (compareState == "on") CommunityMaterial.Icon3.cmd_power_plug else CommunityMaterial.Icon3.cmd_power_plug_off

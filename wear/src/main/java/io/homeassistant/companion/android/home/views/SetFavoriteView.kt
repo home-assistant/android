@@ -103,7 +103,7 @@ private fun FavoriteToggleChip(
             .fillMaxWidth(),
         appIcon = {
             Image(
-                asset = iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone,
+                asset = iconBitmap ?: CommunityMaterial.Icon.cmd_bookmark,
                 colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
             )
         },

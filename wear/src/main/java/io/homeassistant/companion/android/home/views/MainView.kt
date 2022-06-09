@@ -89,7 +89,7 @@ fun MainView(
                                         .fillMaxWidth(),
                                     icon = {
                                         Image(
-                                            asset = CommunityMaterial.Icon.cmd_cellphone,
+                                            asset = CommunityMaterial.Icon.cmd_bookmark,
                                             colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
                                         )
                                     },

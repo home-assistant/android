@@ -109,7 +109,7 @@ class ShortcutsTile : TileService() {
                             entity.icon,
                             entity.domain,
                             this@ShortcutsTile
-                        ) ?: CommunityMaterial.Icon.cmd_cellphone
+                        ) ?: CommunityMaterial.Icon.cmd_bookmark
                         val iconBitmap = IconicsDrawable(this@ShortcutsTile, iconIIcon).apply {
                             colorInt = Color.WHITE
                             sizeDp = iconSize.roundToInt()

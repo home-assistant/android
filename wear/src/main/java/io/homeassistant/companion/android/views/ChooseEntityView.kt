@@ -100,7 +100,7 @@ private fun ChooseEntityChip(
             .fillMaxWidth(),
         icon = {
             Image(
-                asset = iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone,
+                asset = iconBitmap ?: CommunityMaterial.Icon.cmd_bookmark,
                 colorFilter = ColorFilter.tint(Color.White)
             )
         },

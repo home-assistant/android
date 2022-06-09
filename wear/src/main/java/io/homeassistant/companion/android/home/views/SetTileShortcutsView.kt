@@ -77,7 +77,7 @@ fun SetTileShortcutsView(
                         .fillMaxWidth(),
                     icon = {
                         Image(
-                            iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone,
+                            iconBitmap ?: CommunityMaterial.Icon.cmd_bookmark,
                             colorFilter = ColorFilter.tint(Color.White)
                         )
                     },
