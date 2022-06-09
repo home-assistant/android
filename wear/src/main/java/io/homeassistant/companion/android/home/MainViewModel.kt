@@ -10,7 +10,6 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
@@ -19,8 +18,8 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.De
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.data.SimplifiedEntity
-import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorDao
+import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.wear.getAllFlow
 import io.homeassistant.companion.android.util.RegistriesDataHandler
 import kotlinx.coroutines.flow.Flow
@@ -28,7 +27,11 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class MainViewModel @Inject constructor(application: Application) : AndroidViewModel(application) {
+class MainViewModel @Inject constructor(
+    private val favoritesDao: FavoritesDao,
+    private val sensorsDao: SensorDao,
+    application: Application
+) : AndroidViewModel(application) {
 
     companion object {
         const val TAG = "MainViewModel"
@@ -39,9 +42,6 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
     }
 
     private lateinit var homePresenter: HomePresenter
-    val app = getApplication<HomeAssistantApplication>()
-    private val favoritesDao = AppDatabase.getInstance(app.applicationContext).favoritesDao()
-    private val sensorsDao = AppDatabase.getInstance(app.applicationContext).sensorDao()
     private var areaRegistry: List<AreaRegistryResponse>? = null
     private var deviceRegistry: List<DeviceRegistryResponse>? = null
     private var entityRegistry: List<EntityRegistryResponse>? = null
@@ -98,7 +98,7 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
     fun supportedDomains(): List<String> = HomePresenterImpl.supportedDomains
 
     fun stringForDomain(domain: String): String? =
-        HomePresenterImpl.domainsWithNames[domain]?.let { app.applicationContext.getString(it) }
+        HomePresenterImpl.domainsWithNames[domain]?.let { getApplication<Application>().getString(it) }
 
     val sensors = sensorsDao.getAllFlow().collectAsState()
 
@@ -255,12 +255,12 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
 
     fun enableDisableSensor(sensorManager: SensorManager, sensorId: String, isEnabled: Boolean) {
         viewModelScope.launch {
-            val basicSensor = sensorManager.getAvailableSensors(app)
+            val basicSensor = sensorManager.getAvailableSensors(getApplication())
                 .first { basicSensor -> basicSensor.id == sensorId }
             updateSensorEntity(sensorsDao, basicSensor, isEnabled)
 
             if (isEnabled) try {
-                sensorManager.requestSensorUpdate(app)
+                sensorManager.requestSensorUpdate(getApplication())
             } catch (e: Exception) {
                 Log.e(TAG, "Exception while requesting update for sensor $sensorId", e)
             }

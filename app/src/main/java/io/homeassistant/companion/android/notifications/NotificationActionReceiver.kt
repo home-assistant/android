@@ -63,7 +63,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
         if (notificationAction.key == "REPLY") {
             notificationAction.data += Pair(
                 "reply_text",
-                RemoteInput.getResultsFromIntent(intent).getCharSequence(KEY_TEXT_REPLY).toString()
+                RemoteInput.getResultsFromIntent(intent)?.getCharSequence(KEY_TEXT_REPLY).toString()
             )
         }
 

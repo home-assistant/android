@@ -28,9 +28,9 @@
                 android:layout_height="wrap_content"
                 android:labelFor="@id/widget_text_config_entity_id"
                 android:padding="5dp"
-                android:text="@string/label_entity_id" />
+                android:text="@string/label_entity_ids" />
 
-            <AutoCompleteTextView
+            <MultiAutoCompleteTextView
                 android:id="@+id/widget_text_config_entity_id"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -68,6 +68,16 @@
             android:layout_margin="5dp"
             android:checked="true"
             android:text="@string/widget_media_show_seek" />
+
+        <CheckBox
+            android:id="@+id/widget_show_media_player_source"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start"
+            android:layoutDirection="rtl"
+            android:layout_margin="5dp"
+            android:checked="true"
+            android:text="@string/widget_media_show_source" />
 
         <LinearLayout
             android:layout_width="match_parent"

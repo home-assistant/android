@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
+import io.homeassistant.companion.android.common.sensors.SensorManager
 
 data class SensorWithAttributes(
     @Embedded
@@ -16,7 +17,7 @@ data class SensorWithAttributes(
     )
     val attributes: List<Attribute>
 ) {
-    fun toSensorRegistration(): SensorRegistration<Any> {
+    fun toSensorRegistration(basicSensor: SensorManager.BasicSensor): SensorRegistration<Any> {
         var objectMapper: ObjectMapper? = null
         val attributes = attributes.map {
             val attributeValue = when (it.valueType) {
@@ -52,14 +53,15 @@ data class SensorWithAttributes(
         return SensorRegistration(
             sensor.id,
             state,
-            sensor.type,
-            sensor.icon,
+            sensor.type.ifBlank { basicSensor.type },
+            sensor.icon.ifBlank { basicSensor.statelessIcon },
             attributes,
             sensor.name,
-            sensor.deviceClass,
-            sensor.unitOfMeasurement,
-            sensor.stateClass,
-            sensor.entityCategory
+            sensor.deviceClass?.ifBlank { null } ?: basicSensor.deviceClass,
+            sensor.unitOfMeasurement?.ifBlank { null } ?: basicSensor.unitOfMeasurement,
+            sensor.stateClass?.ifBlank { null } ?: basicSensor.stateClass,
+            sensor.entityCategory?.ifBlank { null } ?: basicSensor.entityCategory,
+            !sensor.enabled
         )
     }
 }
