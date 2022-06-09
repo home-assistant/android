@@ -816,6 +816,7 @@
     <string name="remote_debugging">WebView Remote Debugging</string>
     <string name="remote_debugging_summary">Allow remote debugging of WebView to troubleshoot Home Assistant frontend issues</string>
     <string name="websocket_setting_home_wifi">On Home WiFi Only\n\nNotifications will be delivered by Google only when not on Home WiFi.</string>
+    <string name="websocket_setting_home_wifi_minimal">On Home WiFi Only\n\nNotifications will only be received when on Home WiFi.</string>
     <string name="sensor_update_frequency">Sensor Update Frequency</string>
     <string name="sensor_update_frequency_description">Sensors will update either instantly or on a defined interval. If the sensor supports instant updates then it will always receive instant updates. View the sensor details to learn which sensors update instantly.\n\nIf the sensor does not support instant updates then it will update based on one of the below selected options.\n\nYou must restart the application when you make any changes to this setting.</string>
     <string name="sensor_update_frequency_normal">Normal\n\nSensors will update on a 15 minute interval.</string>
