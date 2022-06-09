@@ -167,23 +167,27 @@ class SensorDetailViewModel @Inject constructor(
      * Should trigger a dialog open in view.
      */
     fun onSettingWithDialogPressed(setting: SensorSetting) {
-        val listSetting = setting.valueType.listType
-        val listEntries = getSettingEntries(setting)
+        val listKeys = getSettingKeys(setting)
+        val listEntries = getSettingEntries(setting, null)
         val state = SettingDialogState(
             setting = setting,
-            entries = if (listSetting) {
-                if (setting.valueType == SensorSettingType.LIST) setting.entries.zip(listEntries)
-                else listEntries.map { it to it }
-            } else {
-                emptyList()
+            entries = when {
+                setting.valueType == SensorSettingType.LIST ||
+                    setting.valueType == SensorSettingType.LIST_BLUETOOTH ->
+                    listKeys.zip(listEntries)
+                setting.valueType.listType ->
+                    listEntries.map { it to it }
+                else ->
+                    emptyList()
             },
-            entriesSelected = if (listSetting) {
-                setting.value.split(", ").filter {
-                    if (setting.valueType == SensorSettingType.LIST) setting.entries.contains(it)
-                    else listEntries.contains(it)
-                }
-            } else {
-                emptyList()
+            entriesSelected = when {
+                setting.valueType == SensorSettingType.LIST ||
+                    setting.valueType == SensorSettingType.LIST_BLUETOOTH ->
+                    setting.value.split(", ").filter { listKeys.contains(it) }
+                setting.valueType.listType ->
+                    setting.value.split(", ").filter { listEntries.contains(it) }
+                else ->
+                    emptyList()
             }
         )
         sensorSettingsDialog = state
@@ -222,11 +226,6 @@ class SensorDetailViewModel @Inject constructor(
     fun getSettingTranslatedTitle(key: String): String {
         val name = SENSOR_SETTING_TRANS_KEY_PREFIX + getCleanedKey(key) + "_title"
         return getStringFromIdentifierString(key, name) ?: key
-    }
-
-    fun getSettingTranslatedEntry(key: String, entry: String): String {
-        val name = SENSOR_SETTING_TRANS_KEY_PREFIX + getCleanedKey(key) + "_" + entry + "_label"
-        return getStringFromIdentifierString(entry, name) ?: entry
     }
 
     private fun getSettingTranslatedEntries(key: String, entries: List<String>): List<String> {
@@ -284,20 +283,44 @@ class SensorDetailViewModel @Inject constructor(
         return stringVars.toTypedArray()
     }
 
-    private fun getSettingEntries(setting: SensorSetting): List<String> {
+    private fun getSettingKeys(setting: SensorSetting): List<String> {
         return when (setting.valueType) {
             SensorSettingType.LIST ->
-                getSettingTranslatedEntries(setting.name, setting.entries)
+                setting.entries
+            SensorSettingType.LIST_BLUETOOTH ->
+                BluetoothUtils.getBluetoothDevices(getApplication()).map { it.address }
+            else ->
+                emptyList()
+        }
+    }
+
+    /**
+     * Returns a list of user-friendly labels for setting entries.
+     *
+     * @param setting The setting for which to return strings.
+     * @param entries The entries for which strings have to be returned. If set to null, strings
+     * for all entries are returned.
+     */
+    fun getSettingEntries(setting: SensorSetting, entries: List<String>?): List<String> {
+        return when (setting.valueType) {
+            SensorSettingType.LIST ->
+                getSettingTranslatedEntries(setting.name, entries ?: setting.entries)
             SensorSettingType.LIST_APPS ->
-                getApplication<Application>().packageManager
+                entries ?: getApplication<Application>().packageManager
                     ?.getInstalledApplications(PackageManager.GET_META_DATA)
                     ?.map { packageItem -> packageItem.packageName }
                     ?.sorted()
                     .orEmpty()
-            SensorSettingType.LIST_BLUETOOTH ->
-                BluetoothUtils.getBluetoothDevices(getApplication()).map { it.name }
+            SensorSettingType.LIST_BLUETOOTH -> {
+                val devices = BluetoothUtils.getBluetoothDevices(getApplication())
+                    .filter { entries == null || entries.contains(it.address) }
+                val entriesNotInDevices = entries
+                    ?.filter { entry -> !devices.any { it.address == entry } }
+                    .orEmpty()
+                devices.map { it.name }.plus(entriesNotInDevices)
+            }
             SensorSettingType.LIST_ZONES ->
-                zones
+                entries ?: zones
             else ->
                 emptyList()
         }

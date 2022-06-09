@@ -135,7 +135,7 @@ class BluetoothSensorManager : SensorManager {
 
         if (checkPermission(context, bluetoothConnection.id)) {
 
-            val bluetoothDevices = BluetoothUtils.getBluetoothDevices(context)
+            val bluetoothDevices = BluetoothUtils.getBluetoothDevices(context, true)
             pairedDevices = bluetoothDevices.filter { b -> b.paired }.map { it.address }
             connectedPairedDevices = bluetoothDevices.filter { b -> b.paired && b.connected }.map { it.address }
             connectedNotPairedDevices = bluetoothDevices.filter { b -> !b.paired && b.connected }.map { it.address }

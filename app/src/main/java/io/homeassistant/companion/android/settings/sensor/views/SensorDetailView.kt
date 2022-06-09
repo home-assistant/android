@@ -112,7 +112,7 @@ fun SensorDetailView(
         }.launchIn(this)
     }
 
-    Scaffold(scaffoldState = scaffoldState) {
+    Scaffold(scaffoldState = scaffoldState) { contentPadding ->
         if (sensorUpdateTypeInfo && viewModel.basicSensor != null) {
             SensorDetailUpdateInfoDialog(
                 basicSensor = viewModel.basicSensor,
@@ -128,7 +128,7 @@ fun SensorDetailView(
                 onSubmit = { state -> onDialogSettingSubmitted(state) }
             )
         }
-        LazyColumn {
+        LazyColumn(modifier = Modifier.padding(contentPadding)) {
             if (viewModel.sensorManager != null && viewModel.basicSensor != null) {
                 item {
                     SensorDetailTopPanel(
@@ -207,21 +207,12 @@ fun SensorDetailView(
                                         }
                                     )
                                 }
-                                SensorSettingType.LIST -> {
-                                    SensorDetailRow(
-                                        title = viewModel.getSettingTranslatedTitle(setting.name),
-                                        summary = viewModel.getSettingTranslatedEntry(setting.name, setting.value),
-                                        enabled = setting.enabled,
-                                        clickable = setting.enabled,
-                                        onClick = { onDialogSettingClicked(setting) }
-                                    )
-                                }
-                                SensorSettingType.LIST_APPS, SensorSettingType.LIST_BLUETOOTH, SensorSettingType.LIST_ZONES -> {
+                                SensorSettingType.LIST, SensorSettingType.LIST_APPS, SensorSettingType.LIST_BLUETOOTH, SensorSettingType.LIST_ZONES -> {
                                     val summaryValues = setting.value.split(", ").mapNotNull { it.ifBlank { null } }
                                     SensorDetailRow(
                                         title = viewModel.getSettingTranslatedTitle(setting.name),
                                         summary =
-                                        if (summaryValues.any()) summaryValues.toString()
+                                        if (summaryValues.any()) viewModel.getSettingEntries(setting, summaryValues).joinToString(", ")
                                         else stringResource(commonR.string.none_selected),
                                         enabled = setting.enabled,
                                         clickable = setting.enabled,
