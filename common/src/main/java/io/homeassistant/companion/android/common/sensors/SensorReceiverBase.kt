@@ -272,16 +272,6 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                     } catch (e: Exception) {
                         Log.e(tag, "Issue re-registering sensor ${basicSensor.id}", e)
                     }
-                } else if (
-                    supportsDisabledSensors &&
-                    sensor.enabled != sensor.registered &&
-                    (!hasSensor || basicSensor.type.isBlank())
-                ) {
-                    // Unsupported sensors or sensors without a type (= location sensors) in the database shouldn't/can't
-                    // be registered but they will have a 'registered' state. Manually update when on core >=2022.6 by
-                    // setting it to the enabled state to stop the app from continuing to do updates because of these sensors.
-                    sensor.registered = sensor.enabled
-                    sensorDao.update(sensor)
                 }
                 if (canBeRegistered && sensor.enabled && sensor.registered != null && sensor.state != sensor.lastSentState) {
                     enabledRegistrations.add(fullSensor.toSensorRegistration(basicSensor))

@@ -75,9 +75,6 @@ interface SensorDao {
     @Query("SELECT COUNT(id) FROM sensors WHERE enabled = 1")
     suspend fun getEnabledCount(): Int?
 
-    @Query("SELECT COUNT(id) FROM sensors WHERE enabled != registered")
-    suspend fun getEnabledNotInSyncCount(): Int?
-
     @Transaction
     suspend fun setSensorsEnabled(sensorIds: List<String>, enabled: Boolean) {
         coroutineScope {
