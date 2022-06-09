@@ -8,6 +8,8 @@
         <change>Add new notification parameter for notification visibility/sensitivity</change>
         <change>Add new high accuracy location setting to combine zone and bluetooth constraints</change>
         <change>Allow multiple media players per widget</change>
+        <change>Speed up service call widget execution</change>
+        <change>Register for shutdown intent to send one final sensor update before device turns off</change>
         <change>Sync sensors enabled state with Home Assistant core (requires: HA Core 2022.6+)</change>
         <change>Save last crash info and show it in Companion App Logs</change>
         <change>Improve time zone sensor state</change>
