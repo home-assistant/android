@@ -215,9 +215,6 @@ class ButtonWidget : AppWidgetProvider() {
         val widget = buttonWidgetDao.get(appWidgetId)
 
         mainScope.launch {
-            // Change color of background image for feedback
-            var views = getWidgetRemoteViews(context, appWidgetId)
-
             // Set default feedback as negative
             var feedbackColor = R.drawable.widget_button_background_red
             var feedbackIcon = R.drawable.ic_clear_black
@@ -274,6 +271,7 @@ class ButtonWidget : AppWidgetProvider() {
             }
 
             // Update widget and set visibilities for feedback
+            var views = getWidgetRemoteViews(context, appWidgetId)
             views.setInt(R.id.widgetLayout, "setBackgroundResource", feedbackColor)
             views.setImageViewResource(R.id.widgetImageButton, feedbackIcon)
             views.setViewVisibility(R.id.widgetProgressBar, View.INVISIBLE)
