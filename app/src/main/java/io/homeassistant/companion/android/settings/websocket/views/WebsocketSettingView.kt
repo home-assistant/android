@@ -43,7 +43,7 @@ fun WebsocketSettingView(
                 onClick = { onSettingChanged(WebsocketSetting.NEVER) }
             )
             RadioButtonRow(
-                text = stringResource(R.string.websocket_setting_home_wifi),
+                text = stringResource(if (BuildConfig.FLAVOR == "full") R.string.websocket_setting_home_wifi else R.string.websocket_setting_home_wifi_minimal),
                 selected = websocketSetting == WebsocketSetting.HOME_WIFI,
                 onClick = { onSettingChanged(WebsocketSetting.HOME_WIFI) }
             )

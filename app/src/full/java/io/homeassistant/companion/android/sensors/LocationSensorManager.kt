@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.sensors
 
 import android.Manifest
 import android.app.PendingIntent
+import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.content.Intent
 import android.location.Location
@@ -376,13 +377,17 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
     private fun shouldEnableHighAccuracyMode(): Boolean {
 
-        val highAccuracyModeBTDevices = getSetting(
+        val highAccuracyModeBTDevicesSetting = getSetting(
             latestContext,
-            LocationSensorManager.backgroundLocation,
+            backgroundLocation,
             SETTING_HIGH_ACCURACY_MODE_BLUETOOTH_DEVICES,
             SensorSettingType.LIST_BLUETOOTH,
             ""
         )
+        val highAccuracyModeBTDevices = highAccuracyModeBTDevicesSetting
+            .split(", ")
+            .mapNotNull { it.trim().ifBlank { null } }
+            .toMutableList()
         val highAccuracyBtZoneCombined = getHighAccuracyBTZoneCombinedSetting()
 
         val useTriggerRange = getHighAccuracyModeTriggerRange() > 0
@@ -397,11 +402,37 @@ class LocationSensorManager : LocationSensorManagerBase() {
         var inZone = false
         var constraintsUsed = false
 
-        if (!highAccuracyModeBTDevices.isNullOrEmpty()) {
+        if (highAccuracyModeBTDevices.isNotEmpty()) {
             constraintsUsed = true
 
             val bluetoothDevices = BluetoothUtils.getBluetoothDevices(latestContext)
-            btDevConnected = bluetoothDevices.any { it.connected && highAccuracyModeBTDevices.contains(it.name) }
+
+            // If any of the stored devices aren't a Bluetooth device address, try to match them to a device
+            var updatedBtDeviceNames = false
+            highAccuracyModeBTDevices.filter { !BluetoothAdapter.checkBluetoothAddress(it) }.forEach {
+                val foundDevices = bluetoothDevices.filter { btDevice -> btDevice.name == it }
+                if (foundDevices.isNotEmpty()) {
+                    highAccuracyModeBTDevices.remove(it)
+                    foundDevices.forEach { btDevice ->
+                        if (!highAccuracyModeBTDevices.contains(btDevice.address))
+                            highAccuracyModeBTDevices.add(btDevice.address)
+                    }
+                    updatedBtDeviceNames = true
+                }
+            }
+            if (updatedBtDeviceNames) {
+                val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
+                sensorDao.add(
+                    SensorSetting(
+                        backgroundLocation.id,
+                        SETTING_HIGH_ACCURACY_MODE_BLUETOOTH_DEVICES,
+                        highAccuracyModeBTDevices.joinToString().replace("[", "").replace("]", ""),
+                        SensorSettingType.LIST_BLUETOOTH
+                    )
+                )
+            }
+
+            btDevConnected = bluetoothDevices.any { it.connected && highAccuracyModeBTDevices.contains(it.address) }
 
             if (!forceHighAccuracyModeOn) {
                 if (!btDevConnected) Log.d(TAG, "High accuracy mode disabled, because defined ($highAccuracyModeBTDevices) bluetooth device(s) not connected (Connected devices: $bluetoothDevices)")
