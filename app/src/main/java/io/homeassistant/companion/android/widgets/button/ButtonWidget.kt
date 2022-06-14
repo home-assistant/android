@@ -271,16 +271,16 @@ class ButtonWidget : AppWidgetProvider() {
             }
 
             // Update widget and set visibilities for feedback
-            var views = getWidgetRemoteViews(context, appWidgetId)
-            views.setInt(R.id.widgetLayout, "setBackgroundResource", feedbackColor)
-            views.setImageViewResource(R.id.widgetImageButton, feedbackIcon)
-            views.setViewVisibility(R.id.widgetProgressBar, View.INVISIBLE)
-            views.setViewVisibility(R.id.widgetLabelLayout, View.GONE)
-            views.setViewVisibility(R.id.widgetImageButtonLayout, View.VISIBLE)
-            appWidgetManager.updateAppWidget(appWidgetId, views)
+            val feedbackViews = RemoteViews(context.packageName, R.layout.widget_button)
+            feedbackViews.setInt(R.id.widgetLayout, "setBackgroundResource", feedbackColor)
+            feedbackViews.setImageViewResource(R.id.widgetImageButton, feedbackIcon)
+            feedbackViews.setViewVisibility(R.id.widgetProgressBar, View.INVISIBLE)
+            feedbackViews.setViewVisibility(R.id.widgetLabelLayout, View.GONE)
+            feedbackViews.setViewVisibility(R.id.widgetImageButtonLayout, View.VISIBLE)
+            appWidgetManager.partiallyUpdateAppWidget(appWidgetId, feedbackViews)
 
             // Reload default views in the coroutine to pass to the post handler
-            views = getWidgetRemoteViews(context, appWidgetId)
+            val views = getWidgetRemoteViews(context, appWidgetId)
 
             // Set a timer to change it back after 1 second
             Handler(Looper.getMainLooper()).postDelayed(
