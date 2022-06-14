@@ -47,24 +47,26 @@ class SettingsActivity : BaseActivity() {
 
         setSupportActionBar(findViewById(R.id.toolbar))
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        val settingsNavigation = intent.getStringExtra("fragment")
 
-        supportFragmentManager
-            .beginTransaction()
-            .replace(
-                R.id.content,
-                when {
-                    settingsNavigation == "websocket" -> WebsocketSettingFragment::class.java
-                    settingsNavigation == "notification_history" -> NotificationHistoryFragment::class.java
-                    settingsNavigation?.startsWith("sensors/") == true -> SensorDetailFragment::class.java
-                    else -> SettingsFragment::class.java
-                },
-                if (settingsNavigation?.startsWith("sensors/") == true) {
-                    val sensorId = settingsNavigation.split("/")[1]
-                    SensorDetailFragment.newInstance(sensorId).arguments
-                } else null
-            )
-            .commit()
+        if (savedInstanceState == null) {
+            val settingsNavigation = intent.getStringExtra("fragment")
+            supportFragmentManager
+                .beginTransaction()
+                .replace(
+                    R.id.content,
+                    when {
+                        settingsNavigation == "websocket" -> WebsocketSettingFragment::class.java
+                        settingsNavigation == "notification_history" -> NotificationHistoryFragment::class.java
+                        settingsNavigation?.startsWith("sensors/") == true -> SensorDetailFragment::class.java
+                        else -> SettingsFragment::class.java
+                    },
+                    if (settingsNavigation?.startsWith("sensors/") == true) {
+                        val sensorId = settingsNavigation.split("/")[1]
+                        SensorDetailFragment.newInstance(sensorId).arguments
+                    } else null
+                )
+                .commit()
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
