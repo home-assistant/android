@@ -605,12 +605,12 @@ class LocationSensorManager : LocationSensorManagerBase() {
             return
         }
         val geofencingEvent = GeofencingEvent.fromIntent(intent)
-        if (geofencingEvent.hasError()) {
+        if (geofencingEvent?.hasError() == true) {
             Log.e(TAG, "Error getting geofence broadcast status code: ${geofencingEvent.errorCode}")
             return
         }
 
-        if (geofencingEvent.triggeringLocation == null) {
+        if (geofencingEvent?.triggeringLocation == null) {
             Log.d(TAG, "Geofence event is null")
             return
         }
@@ -623,7 +623,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 else -> ""
             }
 
-            for (triggeringGeofence in geofencingEvent.triggeringGeofences) {
+            for (triggeringGeofence in geofencingEvent.triggeringGeofences!!) {
                 val zone = triggeringGeofence.requestId
 
                 if (zoneStatusEvent == "android.zone_entered") {
@@ -639,14 +639,14 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 }
 
                 val zoneAttr = mapOf(
-                    "accuracy" to geofencingEvent.triggeringLocation.accuracy,
-                    "altitude" to geofencingEvent.triggeringLocation.altitude,
-                    "bearing" to geofencingEvent.triggeringLocation.bearing,
-                    "latitude" to geofencingEvent.triggeringLocation.latitude,
-                    "longitude" to geofencingEvent.triggeringLocation.longitude,
-                    "provider" to geofencingEvent.triggeringLocation.provider,
-                    "time" to geofencingEvent.triggeringLocation.time,
-                    "vertical_accuracy" to if (Build.VERSION.SDK_INT >= 26) geofencingEvent.triggeringLocation.verticalAccuracyMeters.toInt() else 0,
+                    "accuracy" to geofencingEvent.triggeringLocation!!.accuracy,
+                    "altitude" to geofencingEvent.triggeringLocation!!.altitude,
+                    "bearing" to geofencingEvent.triggeringLocation!!.bearing,
+                    "latitude" to geofencingEvent.triggeringLocation!!.latitude,
+                    "longitude" to geofencingEvent.triggeringLocation!!.longitude,
+                    "provider" to geofencingEvent.triggeringLocation!!.provider,
+                    "time" to geofencingEvent.triggeringLocation!!.time,
+                    "vertical_accuracy" to if (Build.VERSION.SDK_INT >= 26) geofencingEvent.triggeringLocation!!.verticalAccuracyMeters.toInt() else 0,
                     "zone" to zone
                 )
                 runBlocking {
@@ -669,14 +669,14 @@ class LocationSensorManager : LocationSensorManagerBase() {
             ?: DEFAULT_MINIMUM_ACCURACY
         sensorDao.add(SensorSetting(zoneLocation.id, SETTING_ACCURACY, minAccuracy.toString(), SensorSettingType.NUMBER))
 
-        if (geofencingEvent.triggeringLocation.accuracy > minAccuracy) {
+        if (geofencingEvent.triggeringLocation!!.accuracy > minAccuracy) {
             Log.w(
                 TAG,
                 "Geofence location accuracy didn't meet requirements, requesting new location."
             )
             requestSingleAccurateLocation()
         } else {
-            sendLocationUpdate(geofencingEvent.triggeringLocation, true)
+            sendLocationUpdate(geofencingEvent.triggeringLocation!!, true)
         }
 
         ioScope.launch {
@@ -928,9 +928,15 @@ class LocationSensorManager : LocationSensorManagerBase() {
                         }
 
                         when {
-                            locationResult.lastLocation.accuracy <= minAccuracy -> {
+                            locationResult.lastLocation!!.accuracy <= minAccuracy -> {
                                 Log.d(TAG, "Location accurate enough, all done with high accuracy.")
-                                runBlocking { sendLocationUpdate(locationResult.lastLocation) }
+                                runBlocking {
+                                    locationResult.lastLocation?.let {
+                                        sendLocationUpdate(
+                                            it
+                                        )
+                                    }
+                                }
                                 if (wakeLock?.isHeld == true) wakeLock.release()
                             }
                             numberCalls >= maxRetries -> {
@@ -938,8 +944,8 @@ class LocationSensorManager : LocationSensorManagerBase() {
                                     TAG,
                                     "No location was accurate enough, sending our last location anyway"
                                 )
-                                if (locationResult.lastLocation.accuracy <= minAccuracy * 2)
-                                    runBlocking { sendLocationUpdate(locationResult.lastLocation) }
+                                if (locationResult.lastLocation!!.accuracy <= minAccuracy * 2)
+                                    runBlocking { sendLocationUpdate(locationResult.lastLocation!!) }
                                 if (wakeLock?.isHeld == true) wakeLock.release()
                             }
                             else -> {
