@@ -80,20 +80,20 @@ class ButtonWidget : AppWidgetProvider() {
         }
     }
 
-    private fun updateAllWidgets(
-        context: Context,
-        buttonWidgetEntityList: List<ButtonWidgetEntity>
-    ) {
-        if (buttonWidgetEntityList.isNotEmpty()) {
-            Log.d(TAG, "Updating all widgets")
-            val appWidgetManager = AppWidgetManager.getInstance(context)
-            for (item in buttonWidgetEntityList) {
-                val views = getWidgetRemoteViews(context, item.id)
+    private fun updateAllWidgets(context: Context) {
+        mainScope.launch {
+            val buttonWidgetEntityList = buttonWidgetDao.getAll()
+            if (buttonWidgetEntityList.isNotEmpty()) {
+                Log.d(TAG, "Updating all widgets")
+                val appWidgetManager = AppWidgetManager.getInstance(context)
+                for (item in buttonWidgetEntityList) {
+                    val views = getWidgetRemoteViews(context, item.id)
 
-                views.setViewVisibility(R.id.widgetProgressBar, View.INVISIBLE)
-                views.setViewVisibility(R.id.widgetImageButtonLayout, View.VISIBLE)
-                views.setViewVisibility(R.id.widgetLabelLayout, View.VISIBLE)
-                appWidgetManager.updateAppWidget(item.id, views)
+                    views.setViewVisibility(R.id.widgetProgressBar, View.INVISIBLE)
+                    views.setViewVisibility(R.id.widgetImageButtonLayout, View.VISIBLE)
+                    views.setViewVisibility(R.id.widgetLabelLayout, View.VISIBLE)
+                    appWidgetManager.updateAppWidget(item.id, views)
+                }
             }
         }
     }
@@ -128,7 +128,7 @@ class ButtonWidget : AppWidgetProvider() {
         when (action) {
             CALL_SERVICE -> callConfiguredService(context, appWidgetId)
             RECEIVE_DATA -> saveServiceCallConfiguration(context, intent.extras, appWidgetId)
-            Intent.ACTION_SCREEN_ON -> updateAllWidgets(context, buttonWidgetDao.getAll())
+            Intent.ACTION_SCREEN_ON -> updateAllWidgets(context)
         }
     }
 

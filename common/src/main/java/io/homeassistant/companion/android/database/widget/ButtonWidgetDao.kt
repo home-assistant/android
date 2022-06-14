@@ -22,7 +22,7 @@ interface ButtonWidgetDao : WidgetDao {
     suspend fun deleteAll(ids: IntArray)
 
     @Query("SELECT * FROM button_widgets")
-    fun getAll(): List<ButtonWidgetEntity>
+    suspend fun getAll(): List<ButtonWidgetEntity>
 
     @Query("SELECT * FROM button_widgets")
     fun getAllFlow(): Flow<List<ButtonWidgetEntity>>

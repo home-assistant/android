@@ -13,7 +13,4 @@ interface TileDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun add(tileEntity: TileEntity)
-
-    @Query("DELETE FROM qs_tiles WHERE tileId = :id")
-    fun delete(id: String)
 }
