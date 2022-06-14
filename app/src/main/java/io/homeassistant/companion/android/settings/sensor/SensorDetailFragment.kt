@@ -21,11 +21,11 @@ import io.homeassistant.companion.android.common.util.LocationPermissionInfoHand
 import io.homeassistant.companion.android.settings.sensor.views.SensorDetailView
 
 @AndroidEntryPoint
-class SensorDetailFragment(val sensorId: String) : Fragment() {
+class SensorDetailFragment : Fragment() {
 
     companion object {
         fun newInstance(sensorId: String): SensorDetailFragment {
-            return SensorDetailFragment(sensorId).apply {
+            return SensorDetailFragment().apply {
                 arguments = Bundle().apply { putString("id", sensorId) }
             }
         }
