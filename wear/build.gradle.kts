@@ -102,7 +102,7 @@ dependencies {
     kapt("com.google.dagger:hilt-android-compiler:2.42")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.3")
-    implementation("com.squareup.okhttp3:okhttp:4.9.3")
+    implementation("com.squareup.okhttp3:okhttp:4.10.0")
 
     implementation("com.mikepenz:iconics-core:5.3.3")
     implementation("androidx.appcompat:appcompat:1.4.1")
