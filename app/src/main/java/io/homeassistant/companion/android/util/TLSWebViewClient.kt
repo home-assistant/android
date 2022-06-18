@@ -14,7 +14,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import java.security.Principal
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
