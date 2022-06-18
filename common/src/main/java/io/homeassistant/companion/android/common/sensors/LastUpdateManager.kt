@@ -11,6 +11,7 @@ class LastUpdateManager : SensorManager {
     companion object {
         private const val TAG = "LastUpdate"
         private const val SETTING_ADD_NEW_INTENT = "lastupdate_add_new_intent"
+        private const val INTENT_SETTING_PREFIX = "lastupdate_intent_var1:"
 
         val lastUpdate = SensorManager.BasicSensor(
             "last_update",
@@ -64,24 +65,39 @@ class LastUpdateManager : SensorManager {
         )
 
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
-        val allSettings = sensorDao.getSettings(lastUpdate.id)
-        val intentSettingName = "lastupdate_intent_var1:${allSettings.size}:"
-        val addNewIntent = allSettings.firstOrNull { it.name == SETTING_ADD_NEW_INTENT }?.value ?: "false"
-        val intentSetting = allSettings.firstOrNull { it.name == intentSettingName }?.value ?: ""
-        if (addNewIntent == "true") {
-            if (intentSetting == "") {
-                sensorDao.add(SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", SensorSettingType.TOGGLE))
-                sensorDao.add(SensorSetting(lastUpdate.id, intentSettingName, intentAction, SensorSettingType.STRING))
-            }
-        } else {
-            sensorDao.add(SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", SensorSettingType.TOGGLE))
+        val (settingsToRemove, allSettings) = sensorDao.getSettings(lastUpdate.id).partition { setting ->
+            setting.value.isEmpty()
         }
-
-        val settingsToRemove = allSettings
-            .filter { setting -> setting.value == "" }
-            .map { setting -> setting.name }
         if (settingsToRemove.isNotEmpty()) {
-            sensorDao.removeSettings(lastUpdate.id, settingsToRemove)
+            sensorDao.removeSettings(lastUpdate.id, settingsToRemove.map { it.name })
+        }
+        val intentSettings = allSettings.filter {
+            it.name.startsWith(INTENT_SETTING_PREFIX)
+        }
+        val isSequenceContinuous = intentSettings.withIndex().all { (index, setting) ->
+            val ordinal = setting.name.removePrefix(INTENT_SETTING_PREFIX).removeSuffix(":").toInt()
+            ordinal == index + 1
+        }
+        if (!isSequenceContinuous) {
+            // create new settings with sequential IDs:
+            val newIntentSettings = intentSettings.mapIndexed { index, it ->
+                it.copy(name = "$INTENT_SETTING_PREFIX${index + 1}:")
+            }
+            // delete old settings from DB:
+            sensorDao.removeSettings(lastUpdate.id, intentSettings.map { it.name })
+            // add new settings to DB:
+            newIntentSettings.forEach(sensorDao::add)
+        }
+        val shouldAddNewIntent = allSettings.firstOrNull { it.name == SETTING_ADD_NEW_INTENT }?.value == "true"
+        if (shouldAddNewIntent) {
+            val newIntentSettingOrdinal = intentSettings.size + 1
+            val newIntentSettingName = "$INTENT_SETTING_PREFIX$newIntentSettingOrdinal:"
+            if (allSettings.none { it.name == newIntentSettingName }) {
+                // turn off the toggle:
+                sensorDao.add(SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", SensorSettingType.TOGGLE))
+                // add the new Intent:
+                sensorDao.add(SensorSetting(lastUpdate.id, newIntentSettingName, intentAction, SensorSettingType.STRING))
+            }
         }
     }
 }
