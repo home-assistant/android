@@ -3,6 +3,8 @@ package io.homeassistant.companion.android.common.data.keychain
 import android.content.Context
 import android.security.KeyChain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import java.util.concurrent.Executors
@@ -18,48 +20,41 @@ class KeyChainRepositoryImpl @Inject constructor(
     private var chain: Array<X509Certificate>? = null
     private var isLoading: Boolean = false
 
-    override suspend fun getAlias(): String? {
-        return alias
-    }
-
-    override suspend fun load(context: Context, alias: String): Boolean {
-        if (alias == null) return isLoading
+    override suspend fun load(context: Context, alias: String) {
+        if (alias == null) return
 
         this.alias = alias
         prefsRepository.saveKeyAlias(alias)
 
-        return load(context)
+        load(context)
     }
 
-    override suspend fun load(context: Context): Boolean {
+    override suspend fun load(context: Context) = withContext(Dispatchers.IO)  {
         if (alias == null) {
             alias = prefsRepository.getKeyAlias()
         }
 
         if (alias != null && !isLoading && (key == null || chain == null)) {
-            isLoading = true // TODO: need proper sync
-            var executor = Executors.newSingleThreadExecutor()
-            executor.execute {
-                if (chain == null) {
-                    chain = KeyChain.getCertificateChain(context, alias!!)
-                }
-                if (key == null) {
-                    key = KeyChain.getPrivateKey(context, alias!!)
-                }
-                isLoading = false
+            isLoading = true
+            if (chain == null) {
+                chain = KeyChain.getCertificateChain(context, alias!!)
             }
-            executor.shutdown()
-            executor.awaitTermination(5, TimeUnit.SECONDS)
+            if (key == null) {
+                key = KeyChain.getPrivateKey(context, alias!!)
+            }
+            isLoading = false
         }
-
-        return isLoading
     }
 
-    override suspend fun getPrivateKey(): PrivateKey? {
+    override fun getAlias(): String? {
+        return alias
+    }
+
+    override fun getPrivateKey(): PrivateKey? {
         return key
     }
 
-    override suspend fun getCertificateChain(): Array<X509Certificate>? {
+    override fun getCertificateChain(): Array<X509Certificate>? {
         return chain
     }
 }
