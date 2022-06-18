@@ -87,7 +87,7 @@ class AuthenticationFragment : Fragment() {
                                     errorResponse: WebResourceResponse?
                                 ) {
                                     super.onReceivedHttpError(view, request, errorResponse)
-                                    if (isTLSClientAuthNeeded && errorResponse.statusCode == 400) {
+                                    if (isTLSClientAuthNeeded && errorResponse?.statusCode == 400) {
                                         showError(commonR.string.tls_cert_not_found_message, null, null)
                                     } else {
                                         showError(commonR.string.error_ssl, null, null)
