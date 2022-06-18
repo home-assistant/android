@@ -10,6 +10,8 @@ import android.webkit.ClientCertRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -36,7 +38,7 @@ open class TLSWebViewClient @Inject constructor(private var keyChainRepository: 
             return if (context is Activity) {
                 context
             } else {
-                getActivity((context).baseContext)
+                getActivity(context.baseContext)
             }
         }
         return null
@@ -49,26 +51,24 @@ open class TLSWebViewClient @Inject constructor(private var keyChainRepository: 
 
         // Aim to obtain the private key for the whole lifecycle of the WebViewActivity
         val activity = getActivity(view.context)
-        if (activity == null) return
+        if (activity == null || activity !is AppCompatActivity) return
 
-        runBlocking {
-            launch {
-                // If the key is available, process the request
+        activity.lifecycleScope.launch {
+            // If the key is available, process the request
+            if (key != null && chain != null) {
+                request.proceed(key, chain)
+            } else {
+                // Get the key and the chain from the repo (if the user previously chose)
+                key = keyChainRepository.getPrivateKey()
+                chain = keyChainRepository.getCertificateChain()
+
                 if (key != null && chain != null) {
                     request.proceed(key, chain)
                 } else {
-                    // Get the key and the chain from the repo (if the user previously chose)
-                    key = keyChainRepository.getPrivateKey()
-                    chain = keyChainRepository.getCertificateChain()
-
-                    if (key != null && chain != null) {
-                        request.proceed(key, chain)
-                    } else {
-                        // If no key is available, then the user must be prompt for a key
-                        // The whole operation is wrapped in the selectPrivateKey method but caution as it must occurs outside of the main thread
-                        // see: https://developer.android.com/reference/android/security/KeyChain#getPrivateKey(android.content.Context,%20java.lang.String)
-                        selectClientCert(activity, request.principals, request)
-                    }
+                    // If no key is available, then the user must be prompt for a key
+                    // The whole operation is wrapped in the selectPrivateKey method but caution as it must occurs outside of the main thread
+                    // see: https://developer.android.com/reference/android/security/KeyChain#getPrivateKey(android.content.Context,%20java.lang.String)
+                    selectClientCert(activity, request.principals, request)
                 }
             }
         }
@@ -76,11 +76,14 @@ open class TLSWebViewClient @Inject constructor(private var keyChainRepository: 
 
     @RequiresApi(Build.VERSION_CODES.M)
     private fun selectClientCert(activity: Activity, principals: Array<Principal>?, request: ClientCertRequest) {
+        if (activity !is AppCompatActivity) {
+            return
+        }
         var kcac = KeyChainAliasCallback { alias ->
             if (alias != null) {
-                runBlocking {
+                activity.lifecycleScope.launch {
                     // Load the key and the chain
-                    keyChainRepository.load(activity.applicationContext, alias!!)
+                    keyChainRepository.load(activity.applicationContext, alias)
 
                     key = keyChainRepository.getPrivateKey()
                     chain = keyChainRepository.getCertificateChain()
@@ -90,10 +93,12 @@ open class TLSWebViewClient @Inject constructor(private var keyChainRepository: 
                         // Either the user didn't choose a key or no key was available
                         hasUserDeniedAccess = true
                     }
-                }
-            }
 
-            request.proceed(key, chain)
+                    request.proceed(key, chain)
+                }
+            } else {
+                request.proceed(key, chain)
+            }
         }
 
         // prompt the user for a key
