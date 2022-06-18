@@ -5,13 +5,14 @@ import java.security.PrivateKey
 import java.security.cert.X509Certificate
 
 interface KeyChainRepository {
-    suspend fun getAlias(): String?
 
-    suspend fun load(context: Context, alias: String): Boolean
+    suspend fun load(context: Context, alias: String)
 
-    suspend fun load(context: Context): Boolean
+    suspend fun load(context: Context)
 
-    suspend fun getPrivateKey(): PrivateKey?
+    fun getAlias(): String?
 
-    suspend fun getCertificateChain(): Array<X509Certificate>?
+    fun getPrivateKey(): PrivateKey?
+
+    fun getCertificateChain(): Array<X509Certificate>?
 }
