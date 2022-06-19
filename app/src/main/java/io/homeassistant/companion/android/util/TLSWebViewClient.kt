@@ -50,9 +50,7 @@ open class TLSWebViewClient @Inject constructor(private var keyChainRepository: 
 
         // Aim to obtain the private key for the whole lifecycle of the WebViewActivity
         val activity = getActivity(view.context)
-        if (activity == null || activity !is AppCompatActivity) return
-
-        activity.lifecycleScope.launch {
+        if (activity != null) {
             // If the key is available, process the request
             if (key != null && chain != null) {
                 request.proceed(key, chain)
@@ -75,10 +73,9 @@ open class TLSWebViewClient @Inject constructor(private var keyChainRepository: 
 
     @RequiresApi(Build.VERSION_CODES.M)
     private fun selectClientCert(activity: Activity, principals: Array<Principal>?, request: ClientCertRequest) {
-        if (activity !is AppCompatActivity) {
-            return
-        }
-        var kcac = KeyChainAliasCallback { alias ->
+        require(activity is AppCompatActivity)
+
+        val kcac = KeyChainAliasCallback { alias ->
             if (alias != null) {
                 activity.lifecycleScope.launch {
                     // Load the key and the chain
