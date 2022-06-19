@@ -4,6 +4,7 @@ import android.content.Context
 import android.security.KeyChain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
@@ -16,14 +17,10 @@ class KeyChainRepositoryImpl @Inject constructor(
     private var alias: String? = null
     private var key: PrivateKey? = null
     private var chain: Array<X509Certificate>? = null
-    private var isLoading: Boolean = false
 
     override suspend fun load(context: Context, alias: String) {
-        if (alias == null) return
-
         this.alias = alias
         prefsRepository.saveKeyAlias(alias)
-
         load(context)
     }
 
@@ -32,15 +29,8 @@ class KeyChainRepositoryImpl @Inject constructor(
             alias = prefsRepository.getKeyAlias()
         }
 
-        if (alias != null && !isLoading && (key == null || chain == null)) {
-            isLoading = true
-            if (chain == null) {
-                chain = KeyChain.getCertificateChain(context, alias!!)
-            }
-            if (key == null) {
-                key = KeyChain.getPrivateKey(context, alias!!)
-            }
-            isLoading = false
+        runBlocking {
+            doLoad(context)
         }
     }
 
@@ -54,5 +44,15 @@ class KeyChainRepositoryImpl @Inject constructor(
 
     override fun getCertificateChain(): Array<X509Certificate>? {
         return chain
+    }
+
+    @Synchronized
+    private fun doLoad(context: Context) {
+        if (alias != null && chain == null) {
+            chain = KeyChain.getCertificateChain(context, alias!!)
+        }
+        if (alias != null && key == null) {
+            key = KeyChain.getPrivateKey(context, alias!!)
+        }
     }
 }
