@@ -196,7 +196,7 @@ private fun <T : WidgetEntity> LazyListScope.widgetItems(
         item {
             Text(stringResource(id = title))
         }
-        items(widgetList, key = { it.id }) { item ->
+        items(widgetList, key = { "$widgetType-${it.id}" }) { item ->
             WidgetRow(widgetLabel = widgetLabel(item), widgetId = item.id, widgetType = widgetType)
         }
     }
