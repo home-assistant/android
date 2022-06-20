@@ -50,7 +50,9 @@ import androidx.core.content.getSystemService
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
 import com.google.android.exoplayer2.DefaultLoadControl
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
@@ -101,6 +103,7 @@ import org.json.JSONObject
 import java.util.concurrent.Executors
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.webview.WebView.ErrorType
 
 @AndroidEntryPoint
 class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webview.WebView {
@@ -1092,24 +1095,13 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     }
 
     override fun showError(
-        errorType: io.homeassistant.companion.android.webview.WebView.ErrorType,
+        errorType: ErrorType,
         error: SslError?,
         description: String?
     ) {
         if (isShowingError || !isStarted)
             return
         isShowingError = true
-
-        // If the endpoint requires a TLS client certificate and we got a timeout, ignore the error
-        // It is likely due to the user not choosing a key yet
-        val tlsWebViewclient = webView.webViewClient as TLSWebViewClient
-        if (tlsWebViewclient != null &&
-            tlsWebViewclient.isTLSClientAuthNeeded &&
-            !tlsWebViewclient.hasUserDeniedAccess &&
-            errorType == io.homeassistant.companion.android.webview.WebView.ErrorType.TIMEOUT
-        ) {
-            return
-        }
 
         val alert = AlertDialog.Builder(this)
             .setTitle(commonR.string.error_connection_failed)
@@ -1119,23 +1111,49 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 waitForConnection()
             }
 
-        if (errorType == io.homeassistant.companion.android.webview.WebView.ErrorType.TIMEOUT && tlsWebViewclient.hasUserDeniedAccess) {
-            alert.setMessage(io.homeassistant.companion.android.common.R.string.tls_cert_not_found_message)
-            alert.setTitle(commonR.string.tls_cert_not_found_title)
-            alert.setPositiveButton(android.R.string.ok) { _, _ ->
-                presenter.clearKnownUrls()
-                relaunchApp()
+        var tlsWebViewClient: TLSWebViewClient?
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.GET_WEB_VIEW_CLIENT)) {
+            tlsWebViewClient = WebViewCompat.getWebViewClient(webView) as TLSWebViewClient
+
+            if (tlsWebViewClient.isTLSClientAuthNeeded) {
+                if (errorType == ErrorType.TIMEOUT &&
+                    !tlsWebViewClient.hasUserDeniedAccess) {
+                    // Ignore if a timeout occurs but the user has not denied access
+                    // It is likely due to the user not choosing a key yet
+                    return
+                } else if (errorType == ErrorType.AUTHENTICATION &&
+                           tlsWebViewClient.hasUserDeniedAccess) {
+                    // If no key is available to the app
+                    alert.setMessage(io.homeassistant.companion.android.common.R.string.tls_cert_not_found_message)
+                    alert.setTitle(commonR.string.tls_cert_title)
+                    alert.setPositiveButton(android.R.string.ok) { _, _ ->
+                        presenter.clearKnownUrls()
+                        relaunchApp()
+                    }
+                    alert.setNeutralButton(commonR.string.exit) { _, _ ->
+                        finishAffinity()
+                    }
+                } else if (!tlsWebViewClient.isCertificateChainValid) {
+                    // If the chain is no longer valid
+                    alert.setMessage(io.homeassistant.companion.android.common.R.string.tls_cert_expired_message)
+                    alert.setTitle(commonR.string.tls_cert_title)
+                    alert.setPositiveButton(android.R.string.ok) { _, _ ->
+                        ioScope.launch {
+                            keyChainRepository.clear()
+                        }
+                        relaunchApp()
+                    }
+                }
             }
-            alert.setNeutralButton(commonR.string.exit) { _, _ ->
-                finishAffinity()
-            }
-        } else if (errorType == io.homeassistant.companion.android.webview.WebView.ErrorType.AUTHENTICATION) {
+        }
+
+        if (errorType == ErrorType.AUTHENTICATION) {
             alert.setMessage(commonR.string.error_auth_revoked)
             alert.setPositiveButton(android.R.string.ok) { _, _ ->
                 presenter.clearKnownUrls()
                 relaunchApp()
             }
-        } else if (errorType == io.homeassistant.companion.android.webview.WebView.ErrorType.SSL) {
+        } else if (errorType == ErrorType.SSL) {
             if (description != null)
                 alert.setMessage(getString(commonR.string.webview_error_description) + " " + description)
             else if (error!!.primaryError == SslError.SSL_DATE_INVALID)
@@ -1156,7 +1174,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             alert.setNeutralButton(commonR.string.exit) { _, _ ->
                 finishAffinity()
             }
-        } else if (errorType == io.homeassistant.companion.android.webview.WebView.ErrorType.SECURITY_WARNING) {
+        } else if (errorType == ErrorType.SECURITY_WARNING) {
             alert.setTitle(commonR.string.security_vulnerably_title)
             alert.setMessage(commonR.string.security_vulnerably_message)
             alert.setPositiveButton(commonR.string.security_vulnerably_view) { _, _ ->
