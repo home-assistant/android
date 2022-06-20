@@ -6,6 +6,8 @@ import java.security.cert.X509Certificate
 
 interface KeyChainRepository {
 
+    suspend fun clear()
+
     suspend fun load(context: Context, alias: String)
 
     suspend fun load(context: Context)
