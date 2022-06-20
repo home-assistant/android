@@ -18,6 +18,10 @@ class KeyChainRepositoryImpl @Inject constructor(
     private var key: PrivateKey? = null
     private var chain: Array<X509Certificate>? = null
 
+    override suspend fun clear() {
+        prefsRepository.saveKeyAlias("")
+    }
+
     override suspend fun load(context: Context, alias: String) {
         this.alias = alias
         prefsRepository.saveKeyAlias(alias)
@@ -29,9 +33,7 @@ class KeyChainRepositoryImpl @Inject constructor(
             alias = prefsRepository.getKeyAlias()
         }
 
-        runBlocking {
-            doLoad(context)
-        }
+        doLoad(context)
     }
 
     override fun getAlias(): String? {
@@ -48,11 +50,13 @@ class KeyChainRepositoryImpl @Inject constructor(
 
     @Synchronized
     private fun doLoad(context: Context) {
-        if (alias != null && chain == null) {
-            chain = KeyChain.getCertificateChain(context, alias!!)
-        }
-        if (alias != null && key == null) {
-            key = KeyChain.getPrivateKey(context, alias!!)
+        if (alias != null && alias?.isNotEmpty() == true) {
+            if (chain == null) {
+                chain = KeyChain.getCertificateChain(context, alias!!)
+            }
+            if (key == null) {
+                key = KeyChain.getPrivateKey(context, alias!!)
+            }
         }
     }
 }
