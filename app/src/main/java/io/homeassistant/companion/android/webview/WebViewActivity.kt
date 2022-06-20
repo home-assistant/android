@@ -50,7 +50,6 @@ import androidx.core.content.getSystemService
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.lifecycle.lifecycleScope
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import com.google.android.exoplayer2.DefaultLoadControl
@@ -89,6 +88,7 @@ import io.homeassistant.companion.android.util.OnSwipeListener
 import io.homeassistant.companion.android.util.TLSWebViewClient
 import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.websocket.WebsocketManager
+import io.homeassistant.companion.android.webview.WebView.ErrorType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -103,7 +103,6 @@ import org.json.JSONObject
 import java.util.concurrent.Executors
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.webview.WebView.ErrorType
 
 @AndroidEntryPoint
 class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webview.WebView {
@@ -1111,43 +1110,45 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 waitForConnection()
             }
 
-        var tlsWebViewClient: TLSWebViewClient?
+        var tlsWebViewClient: TLSWebViewClient? = null
         if (WebViewFeature.isFeatureSupported(WebViewFeature.GET_WEB_VIEW_CLIENT)) {
             tlsWebViewClient = WebViewCompat.getWebViewClient(webView) as TLSWebViewClient
-
-            if (tlsWebViewClient.isTLSClientAuthNeeded) {
-                if (errorType == ErrorType.TIMEOUT &&
-                    !tlsWebViewClient.hasUserDeniedAccess) {
-                    // Ignore if a timeout occurs but the user has not denied access
-                    // It is likely due to the user not choosing a key yet
-                    return
-                } else if (errorType == ErrorType.AUTHENTICATION &&
-                           tlsWebViewClient.hasUserDeniedAccess) {
-                    // If no key is available to the app
-                    alert.setMessage(io.homeassistant.companion.android.common.R.string.tls_cert_not_found_message)
-                    alert.setTitle(commonR.string.tls_cert_title)
-                    alert.setPositiveButton(android.R.string.ok) { _, _ ->
-                        presenter.clearKnownUrls()
-                        relaunchApp()
-                    }
-                    alert.setNeutralButton(commonR.string.exit) { _, _ ->
-                        finishAffinity()
-                    }
-                } else if (!tlsWebViewClient.isCertificateChainValid) {
-                    // If the chain is no longer valid
-                    alert.setMessage(io.homeassistant.companion.android.common.R.string.tls_cert_expired_message)
-                    alert.setTitle(commonR.string.tls_cert_title)
-                    alert.setPositiveButton(android.R.string.ok) { _, _ ->
-                        ioScope.launch {
-                            keyChainRepository.clear()
-                        }
-                        relaunchApp()
-                    }
-                }
-            }
         }
 
-        if (errorType == ErrorType.AUTHENTICATION) {
+        if (tlsWebViewClient?.isTLSClientAuthNeeded == true &&
+            errorType == ErrorType.TIMEOUT &&
+            !tlsWebViewClient.hasUserDeniedAccess
+        ) {
+            // Ignore if a timeout occurs but the user has not denied access
+            // It is likely due to the user not choosing a key yet
+            return
+        } else if (tlsWebViewClient?.isTLSClientAuthNeeded == true &&
+            errorType == ErrorType.AUTHENTICATION &&
+            tlsWebViewClient.hasUserDeniedAccess
+        ) {
+            // If no key is available to the app
+            alert.setMessage(commonR.string.tls_cert_not_found_message)
+            alert.setTitle(commonR.string.tls_cert_title)
+            alert.setPositiveButton(android.R.string.ok) { _, _ ->
+                presenter.clearKnownUrls()
+                relaunchApp()
+            }
+            alert.setNeutralButton(commonR.string.exit) { _, _ ->
+                finishAffinity()
+            }
+        } else if (tlsWebViewClient?.isTLSClientAuthNeeded == true &&
+            !tlsWebViewClient.isCertificateChainValid
+        ) {
+            // If the chain is no longer valid
+            alert.setMessage(commonR.string.tls_cert_expired_message)
+            alert.setTitle(commonR.string.tls_cert_title)
+            alert.setPositiveButton(android.R.string.ok) { _, _ ->
+                ioScope.launch {
+                    keyChainRepository.clear()
+                }
+                relaunchApp()
+            }
+        } else if (errorType == ErrorType.AUTHENTICATION) {
             alert.setMessage(commonR.string.error_auth_revoked)
             alert.setPositiveButton(android.R.string.ok) { _, _ ->
                 presenter.clearKnownUrls()
