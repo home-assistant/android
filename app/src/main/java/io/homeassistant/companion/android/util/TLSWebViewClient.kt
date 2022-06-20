@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.common.data.keychain.KeyChainRepositor
 import kotlinx.coroutines.launch
 import java.security.Principal
 import java.security.PrivateKey
+import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
 import javax.inject.Inject
 
@@ -25,6 +26,9 @@ open class TLSWebViewClient @Inject constructor(private var keyChainRepository: 
         private set
 
     var hasUserDeniedAccess = false
+        private set
+
+    var isCertificateChainValid = false
         private set
 
     private var key: PrivateKey? = null
@@ -48,24 +52,30 @@ open class TLSWebViewClient @Inject constructor(private var keyChainRepository: 
         // Let the WebViewActivity know the endpoint requires TLS Client Auth
         isTLSClientAuthNeeded = true
 
-        // Aim to obtain the private key for the whole lifecycle of the WebViewActivity
-        val activity = getActivity(view.context)
-        if (activity != null) {
-            // If the key is available, process the request
-            if (key != null && chain != null) {
-                request.proceed(key, chain)
-            } else {
-                // Get the key and the chain from the repo (if the user previously chose)
-                key = keyChainRepository.getPrivateKey()
-                chain = keyChainRepository.getCertificateChain()
-
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            // Let the request flow so that the calling activity can catch the error
+            request.proceed(key, chain)
+        } else {
+            // Aim to obtain the private key for the whole lifecycle of the WebViewActivity
+            val activity = getActivity(view.context)
+            if (activity != null) {
+                // If the key is available, process the request
                 if (key != null && chain != null) {
                     request.proceed(key, chain)
                 } else {
-                    // If no key is available, then the user must be prompt for a key
-                    // The whole operation is wrapped in the selectPrivateKey method but caution as it must occurs outside of the main thread
-                    // see: https://developer.android.com/reference/android/security/KeyChain#getPrivateKey(android.content.Context,%20java.lang.String)
-                    selectClientCert(activity, request.principals, request)
+                    // Get the key and the chain from the repo (if the user previously chose)
+                    key = keyChainRepository.getPrivateKey()
+                    chain = keyChainRepository.getCertificateChain()
+
+                    if (key != null && chain != null) {
+                        checkChainValidity()
+                        request.proceed(key, chain)
+                    } else {
+                        // If no key is available, then the user must be prompt for a key
+                        // The whole operation is wrapped in the selectPrivateKey method but caution as it must occurs outside of the main thread
+                        // see: https://developer.android.com/reference/android/security/KeyChain#getPrivateKey(android.content.Context,%20java.lang.String)
+                        selectClientCert(activity, request.principals, request)
+                    }
                 }
             }
         }
@@ -90,6 +100,7 @@ open class TLSWebViewClient @Inject constructor(private var keyChainRepository: 
                         hasUserDeniedAccess = true
                     }
 
+                    checkChainValidity()
                     request.proceed(key, chain)
                 }
             } else {
@@ -99,5 +110,17 @@ open class TLSWebViewClient @Inject constructor(private var keyChainRepository: 
 
         // prompt the user for a key
         KeyChain.choosePrivateKeyAlias(activity, kcac, arrayOf<String>(), principals, null, null)
+    }
+
+    private fun checkChainValidity() {
+        if (chain != null) {
+            // Ensure the whole certificate chain is valid
+            isCertificateChainValid = true
+            try {
+                chain?.forEach { it.checkValidity() }
+            } catch (ex: CertificateException) {
+                isCertificateChainValid = false
+            }
+        }
     }
 }
