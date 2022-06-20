@@ -4,7 +4,6 @@ import android.content.Context
 import android.security.KeyChain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
@@ -28,7 +27,7 @@ class KeyChainRepositoryImpl @Inject constructor(
         load(context)
     }
 
-    override suspend fun load(context: Context) = withContext(Dispatchers.IO)  {
+    override suspend fun load(context: Context) = withContext(Dispatchers.IO) {
         if (alias == null) {
             alias = prefsRepository.getKeyAlias()
         }
