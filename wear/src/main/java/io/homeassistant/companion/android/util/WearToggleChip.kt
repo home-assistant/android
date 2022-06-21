@@ -3,8 +3,11 @@ package io.homeassistant.companion.android.util
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.painter.BrushPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -243,8 +246,6 @@ class WearToggleChipColors(
         ) return false
 
         return true
-
-        return true
     }
 
     override fun hashCode(): Int {
@@ -270,4 +271,48 @@ class WearToggleChipColors(
         result = 31 * result + disabledUncheckedSplitBackgroundOverlay.hashCode()
         return result
     }
+}
+
+/**
+ * A copy of [androidx.wear.compose.material.BrushPainter] because that class is marked as internal,
+ * but contains an important override of the `intrinsicSize` property to Size.Unspecified which allows
+ * it to work when using it with a Chip, which [androidx.compose.ui.graphics.painter.BrushPainter] does not.
+ */
+class WearBrushPainter(val brush: Brush) : Painter() {
+    private var alpha: Float = 1.0f
+
+    private var colorFilter: ColorFilter? = null
+
+    override fun DrawScope.onDraw() {
+        drawRect(brush = brush, alpha = alpha, colorFilter = colorFilter)
+    }
+
+    override fun applyAlpha(alpha: Float): Boolean {
+        this.alpha = alpha
+        return true
+    }
+
+    override fun applyColorFilter(colorFilter: ColorFilter?): Boolean {
+        this.colorFilter = colorFilter
+        return true
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is BrushPainter) return false
+
+        if (brush != other.brush) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return brush.hashCode()
+    }
+
+    override fun toString(): String {
+        return "ColorPainter(brush=$brush)"
+    }
+
+    override val intrinsicSize: Size = Size.Unspecified
 }

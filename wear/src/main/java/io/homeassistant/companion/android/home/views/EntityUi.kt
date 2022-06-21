@@ -8,7 +8,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.painter.BrushPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -35,6 +34,7 @@ import io.homeassistant.companion.android.common.data.integration.getLightBright
 import io.homeassistant.companion.android.common.data.integration.getLightColor
 import io.homeassistant.companion.android.home.HomePresenterImpl
 import io.homeassistant.companion.android.theme.wearColorPalette
+import io.homeassistant.companion.android.util.WearBrushPainter
 import io.homeassistant.companion.android.util.WearToggleChipDefaults
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.onEntityClickedFeedback
@@ -210,7 +210,6 @@ private fun entityToggleChipBackgroundColors(entity: Entity<*>, checked: Boolean
                     "light" -> entity.getLightBrightness()
                     else -> null
                 } ?: EntityPosition(value = 1f, min = 0f, max = 2f) // This should never happen
-                // TODO fix gradient stop should be vertical, not diagonal
                 // TODO stop positions for RTL languages
                 val checkedColorStops = checkedBackgroundColors.mapIndexed { index, color ->
                     when (index) {
@@ -228,15 +227,11 @@ private fun entityToggleChipBackgroundColors(entity: Entity<*>, checked: Boolean
                 }.toTypedArray()
 
                 // Painters that use the color stops
-                backgroundPainter = BrushPainter(
-                    Brush.linearGradient(
-                        colorStops = checkedColorStops
-                    )
+                backgroundPainter = WearBrushPainter(
+                    Brush.horizontalGradient(*checkedColorStops)
                 )
-                disabledBackgroundPainter = BrushPainter(
-                    Brush.linearGradient(
-                        colorStops = disabledCheckedColorStops
-                    )
+                disabledBackgroundPainter = WearBrushPainter(
+                    Brush.horizontalGradient(*disabledCheckedColorStops)
                 )
             } else {
                 // Color should be towards the end to match other enabled ToggleChips
@@ -244,8 +239,8 @@ private fun entityToggleChipBackgroundColors(entity: Entity<*>, checked: Boolean
                 disabledCheckedBackgroundColors = disabledCheckedBackgroundColors.reversed()
 
                 // Painters that match ToggleChipDefaults
-                backgroundPainter = BrushPainter(Brush.linearGradient(checkedBackgroundColors))
-                disabledBackgroundPainter = BrushPainter(Brush.linearGradient(disabledCheckedBackgroundColors))
+                backgroundPainter = WearBrushPainter(Brush.linearGradient(checkedBackgroundColors))
+                disabledBackgroundPainter = WearBrushPainter(Brush.linearGradient(disabledCheckedBackgroundColors))
             }
 
             WearToggleChipDefaults.defaultChipColors().apply {
