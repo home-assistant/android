@@ -1,9 +1,7 @@
 package io.homeassistant.companion.android.bluetooth.ble
 
 import android.content.Context
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.altbeacon.beacon.BeaconManager
 import org.altbeacon.beacon.BeaconParser
 import org.altbeacon.beacon.Region
@@ -13,6 +11,8 @@ class MonitoringManager {
     private lateinit var region: Region
     var scanPeriod: Long = 1100
     var scanInterval: Long = 500
+
+    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     private fun buildRegion(): Region {
         return Region("all-beacons", null, null, null)
@@ -45,7 +45,7 @@ class MonitoringManager {
             beaconManager.backgroundBetweenScanPeriod = scanInterval
 
             region = buildRegion()
-            GlobalScope.launch(Dispatchers.Main) {
+            scope.launch(Dispatchers.Main) {
                 beaconManager.getRegionViewModel(region).rangedBeacons.observeForever { beacons ->
                     haMonitor.setBeacons(
                         context,
