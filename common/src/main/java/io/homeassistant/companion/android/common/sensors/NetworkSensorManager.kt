@@ -460,6 +460,7 @@ class NetworkSensorManager : SensorManager {
         val capabilities = connectivityManager?.getNetworkCapabilities(activeNetwork)
 
         var networkCapability = "unavailable"
+        var metered = false
         if (capabilities != null) {
             networkCapability =
                 when {
@@ -473,6 +474,8 @@ class NetworkSensorManager : SensorManager {
                     (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI_AWARE)) -> "wifi_aware"
                     else -> "unknown"
                 }
+
+            metered = !capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED)
         }
 
         val icon = when (networkCapability) {
@@ -489,7 +492,9 @@ class NetworkSensorManager : SensorManager {
             networkType,
             networkCapability,
             icon,
-            mapOf()
+            mapOf(
+                "metered" to metered
+            )
         )
     }
 }

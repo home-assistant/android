@@ -12,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId = "io.homeassistant.companion.android"
-        minSdk = 25
+        minSdk = 26
         targetSdk = 30
 
         versionName = System.getenv("VERSION") ?: "LOCAL"
@@ -86,24 +86,22 @@ dependencies {
     implementation(project(":common"))
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.21")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.6.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.6.2")
 
-    implementation("com.google.android.material:material:1.5.0")
+    implementation("com.google.android.material:material:1.6.0")
 
     implementation("androidx.wear:wear:1.2.0")
-    implementation("com.google.android.support:wearable:2.8.1")
     implementation("com.google.android.gms:play-services-wearable:17.1.0")
     implementation("androidx.wear:wear-input:1.2.0-alpha02")
     implementation("androidx.wear:wear-remote-interactions:1.0.0")
-    compileOnly("com.google.android.wearable:wearable:2.8.1")
+    compileOnly("com.google.android.wearable:wearable:2.9.0")
 
-    implementation("com.google.dagger:hilt-android:2.41")
-    kapt("com.google.dagger:hilt-android-compiler:2.41")
+    implementation("com.google.dagger:hilt-android:2.42")
+    kapt("com.google.dagger:hilt-android-compiler:2.42")
 
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.2.2") // remove when jackson-module-kotlin version is higher
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.2")
-    implementation("com.squareup.okhttp3:okhttp:4.9.3")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.3")
+    implementation("com.squareup.okhttp3:okhttp:4.10.0")
 
     implementation("com.mikepenz:iconics-core:5.3.3")
     implementation("androidx.appcompat:appcompat:1.4.1")
@@ -120,5 +118,7 @@ dependencies {
     implementation("androidx.wear.compose:compose-navigation:1.0.0-alpha14")
 
     implementation("com.google.guava:guava:31.1-android")
-    implementation("androidx.wear.tiles:tiles:1.0.0")
+    implementation("androidx.wear.tiles:tiles:1.0.1")
+
+    implementation("androidx.wear.watchface:watchface-complications-data-source-ktx:1.1.0-rc01")
 }

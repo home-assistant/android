@@ -25,10 +25,12 @@ class OnboardingActivity : AppCompatActivity() {
         viewModel.deviceName.value = input.defaultDeviceName
         viewModel.locationTrackingPossible.value = input.locationTrackingPossible
 
-        supportFragmentManager
-            .beginTransaction()
-            .add(R.id.content, WelcomeFragment::class.java, null)
-            .commit()
+        if (savedInstanceState == null) {
+            supportFragmentManager
+                .beginTransaction()
+                .add(R.id.content, WelcomeFragment::class.java, null)
+                .commit()
+        }
     }
 
     override fun onBackPressed() {

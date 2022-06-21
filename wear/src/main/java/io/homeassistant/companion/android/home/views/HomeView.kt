@@ -27,6 +27,8 @@ import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.tiles.ShortcutsTile
 import io.homeassistant.companion.android.tiles.TemplateTile
+import io.homeassistant.companion.android.views.ChooseEntityView
+import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.common.R as commonR
 
 private const val ARG_SCREEN_SENSOR_MANAGER_ID = "sensorManagerId"
@@ -199,13 +201,14 @@ fun LoadHomePage(
                 }
                 composable(SCREEN_SELECT_TILE_SHORTCUT) {
                     ChooseEntityView(
-                        mainViewModel,
-                        {
+                        entitiesByDomainOrder = mainViewModel.entitiesByDomainOrder,
+                        entitiesByDomain = mainViewModel.entitiesByDomain,
+                        onNoneClicked = {
                             mainViewModel.clearTileShortcut(shortcutEntitySelectionIndex)
                             TileService.getUpdater(context).requestUpdate(ShortcutsTile::class.java)
                             swipeDismissableNavController.navigateUp()
                         },
-                        { entity ->
+                        onEntitySelected = { entity ->
                             mainViewModel.setTileShortcut(shortcutEntitySelectionIndex, entity)
                             TileService.getUpdater(context).requestUpdate(ShortcutsTile::class.java)
                             swipeDismissableNavController.navigateUp()

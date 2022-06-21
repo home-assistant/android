@@ -24,6 +24,8 @@ import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.simplifiedEntity
+import io.homeassistant.companion.android.views.ListHeader
+import io.homeassistant.companion.android.views.ThemeLazyColumn
 import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
@@ -75,7 +77,7 @@ fun SetTileShortcutsView(
                         .fillMaxWidth(),
                     icon = {
                         Image(
-                            iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone,
+                            iconBitmap ?: CommunityMaterial.Icon.cmd_bookmark,
                             colorFilter = ColorFilter.tint(Color.White)
                         )
                     },

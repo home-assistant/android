@@ -153,6 +153,12 @@ open class HomeAssistantApplication : Application() {
             )
         }
 
+        // Add a receiver for the shutdown event to attempt to send 1 final sensor update
+        registerReceiver(
+            sensorReceiver,
+            IntentFilter(Intent.ACTION_SHUTDOWN)
+        )
+
         // Register for all saved user intents
         val sensorDao = AppDatabase.getInstance(applicationContext).sensorDao()
         val allSettings = sensorDao.getSettings(LastUpdateManager.lastUpdate.id)

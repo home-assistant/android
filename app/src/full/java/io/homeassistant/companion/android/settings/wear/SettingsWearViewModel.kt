@@ -24,7 +24,6 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import kotlinx.coroutines.launch
 import org.burnoutcrew.reorderable.ItemPosition
-import org.burnoutcrew.reorderable.move
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -134,10 +133,12 @@ class SettingsWearViewModel @Inject constructor(
     }
 
     fun onMove(fromItem: ItemPosition, toItem: ItemPosition) {
-        favoriteEntityIds.move(
-            favoriteEntityIds.indexOfFirst { it == fromItem.key },
-            favoriteEntityIds.indexOfFirst { it == toItem.key }
-        )
+        favoriteEntityIds.apply {
+            add(
+                favoriteEntityIds.indexOfFirst { it == toItem.key },
+                removeAt(favoriteEntityIds.indexOfFirst { it == fromItem.key })
+            )
+        }
     }
 
     fun canDragOver(position: ItemPosition) = favoriteEntityIds.any { it == position.key }

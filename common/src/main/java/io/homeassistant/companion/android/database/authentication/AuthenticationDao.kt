@@ -16,7 +16,4 @@ interface AuthenticationDao {
 
     @Query("SELECT * from Authentication_List WHERE Host = :key")
     fun get(key: String): Authentication?
-
-    @Query("DELETE FROM Authentication_List")
-    fun clear()
 }

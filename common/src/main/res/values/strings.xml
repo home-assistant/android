@@ -20,6 +20,7 @@
     <string name="auth_error_message">The \'Username\' and \'Password\' fields must be completed</string>
     <string name="auth_error">Authentication Error</string>
     <string name="auth_request">Authentication Requested</string>
+    <string name="automation">Automation</string>
     <string name="autoplay_video_summary">Autoplay Videos when dashboard is active. Enabling this setting may increase data usage unexpectedly, proceed with caution.</string>
     <string name="autoplay_video">Autoplay Videos</string>
     <string name="background_access_disabled">Home Assistant does not have access to run in the background. Without this permission the app will not be able to reliably send data back to your server. Click here to request permissions.</string>
@@ -89,6 +90,7 @@
     <string name="basic_sensor_name_wifi">WiFi Connection</string>
     <string name="basic_sensor_sleep_events">Sleep Events</string>
     <string name="basic_sensor_sleep_tracking">Sleep Tracking</string>
+    <string name="binary_sensor">Binary Sensor</string>
     <string name="biometric_message">Unlock using your biometric or screenlock credential</string>
     <string name="biometric_set_title">Confirm to continue</string>
     <string name="biometric_title">Home Assistant is locked</string>
@@ -103,9 +105,14 @@
     <string name="cancel">Cancel</string>
     <string name="changelog">View Full Change Log</string>
     <string name="checking_with_home_assistant">Checking with Home Assistant</string>
+    <string name="choose_entity">Choose entity</string>
     <string name="choose_server">Choose server</string>
     <string name="clear_favorites">Clear Favorites</string>
     <string name="color_temp">Color temperature: %1$d</string>
+    <string name="complication_entity_invalid">Invalid entity</string>
+    <string name="complication_entity_state_content_description">Entity state</string>
+    <string name="complication_entity_state_label">Entity state</string>
+    <string name="complication_entity_state_preview">preview</string>
     <string name="config">Configuration</string>
     <string name="configure_service_call">Configure Service Call</string>
     <string name="configure_widget_label">Widget Label</string>
@@ -138,6 +145,7 @@
     <string name="developer_tools">Developer Tools</string>
     <string name="device_name">Device Name</string>
     <string name="device_registration">Device Registration</string>
+    <string name="device_tracker">Device tracker</string>
     <string name="dialog_add_panel_shortcut_content">Create a shortcut to this item?</string>
     <string name="dialog_add_panel_shortcut_title">Add Shortcut</string>
     <string name="disable_all_sensors">Disable All %1$d Sensors</string>
@@ -166,7 +174,13 @@
     <string name="enable_location_tracking">Enable Location Tracking</string>
     <string name="enable_remaining_sensors">Enable %1$d Sensors</string>
     <string name="enable_sensor">Enable sensor</string>
+    <string name="enable_sensor_missing_permission_activity_recognition">Requires \'Physical activity\' permission</string>
+    <string name="enable_sensor_missing_permission_general">Missing required permission</string>
+    <string name="enable_sensor_missing_permission_location">Requires \'Location\' permission</string>
+    <string name="enable_sensor_missing_permission_nearby_devices">Requires \'Nearby devices\' permission</string>
+    <string name="enable_sensor_missing_permission_phone">Requires \'Phone\' permission</string>
     <string name="enabled">Enabled</string>
+    <string name="entity">Entity</string>
     <plurals name="entities_found">
         <item quantity="one">%d entity found</item>
         <item quantity="other">%d entities found</item>
@@ -208,6 +222,7 @@
     <string name="high_accuracy_mode_channel_name">High accuracy location</string>
     <string name="high_accuracy_mode_notification_title">High accuracy (GPS) mode enabled</string>
     <string name="history">History</string>
+    <string name="hold_to_reorder">Tap and hold to reorder</string>
     <string name="home_assistant_not_discover">Unable to find your\nHome Assistant instance</string>
     <string name="icon">Icon</string>
     <string name="input_booleans">Input Booleans</string>
@@ -236,6 +251,7 @@
     <string name="label_attribute">Attribute:</string>
     <string name="label_dynamic_data">Data:</string>
     <string name="label_entity_id">Entity ID:</string>
+    <string name="label_entity_ids">Entity ID(s):</string>
     <string name="label_icon">Icon:</string>
     <string name="label_label">Label:</string>
     <string name="label_service">Service:</string>
@@ -303,6 +319,7 @@
     <string name="manual_title">What is your Home Assistant URL?</string>
     <string name="map">Map</string>
     <string name="maximum">Maximum</string>
+    <string name="media_player">Media player</string>
     <string name="media_player_widget_desc">Control any media player and see current now playing image</string>
     <string name="message_checking">Checking Wear Devices with App</string>
     <string name="message_missing_all">The Wear app is missing on your watch, click the button below to install the app.\n\nNote: Currently the Wear OS app requires you to be enrolled in the beta for the phone app. If the button does not work then please join the beta: https://play.google.com/apps/testing/io.homeassistant.companion.android</string>
@@ -364,6 +381,8 @@
     <string name="password">Password</string>
     <string name="permission_explanation_calls">In order to track incoming and outgoing call\'s occurrence we need access to your phone state. No phone numbers or other call details will be stored.</string>
     <string name="permission_explanation">In order to use location tracking features or different connection urls based on WiFi SSID we need access to your location. If you want consistent background updates you will also need to allow background processing</string>
+    <string name="persistent_notification">Persistent notification</string>
+    <string name="person">Person</string>
     <string name="pin_shortcut">Pin Shortcut</string>
     <string name="pref_call_tracking_summary">Allow application to detect call occurrence and notify server about it.</string>
     <string name="pref_call_tracking_title">Calls Tracking</string>
@@ -413,6 +432,7 @@
     <string name="security_vulnerably_understand">I Understand</string>
     <string name="security_vulnerably_view">View Bulletin</string>
     <string name="security">Security</string>
+    <string name="select">Select</string>
     <string name="select_entity_to_display">Select Entity to display</string>
     <string name="select_instance">Select the instance you would like to connect to:</string>
     <string name="sensor_description_active_notification_count">Total count of active notifications that are visible to the user including silent, persistent and the Sensor Worker notifications.</string>
@@ -560,6 +580,7 @@
     <string name="sensor_setting_lastupdate_add_new_intent_title">Add New Intent</string>
     <string name="sensor_setting_lastupdate_intent_title" translatable="false">Intent %1$1s</string>
     <string name="sensor_setting_location_ham_enabled_title">High accuracy mode (May drain battery fast)</string>
+    <string name="sensor_setting_location_ham_zone_bt_combined_title">High accuracy mode enabled only when in zone and BT device connected</string>
     <string name="sensor_setting_location_ham_only_bt_dev_title">High accuracy mode only when connected to BT devices</string>
     <string name="sensor_setting_location_ham_only_enter_zone_title">High accuracy mode only when entering zone</string>
     <string name="sensor_setting_location_ham_trigger_range_title">High accuracy mode trigger range for zone (meters)</string>
@@ -656,6 +677,7 @@
     <string name="store_request_successful">Request to install app on wear device sent successfully</string>
     <string name="store_request_unsuccessful">Play Store Request Failed. Wear device(s) may not support Play Store, that is, the Wear device may be version 1.0.</string>
     <string name="successful">Successful</string>
+    <string name="sun">Sun</string>
     <string name="switches">Switches</string>
     <string name="tag_reader_title">Processing Tag</string>
     <string name="template_tile">Template tile</string>
@@ -720,7 +742,7 @@
     <string name="wear_os_category">Wear OS</string>
     <string name="wear_os_settings_summary">Manage Wear OS App</string>
     <string name="wear_os_settings_title">Wear OS Settings</string>
-    <string name="wear_set_favorites">Select your favorite entities to appear at the top of the wear home screen. You can also drag and drop to change the order in which they appear.</string>
+    <string name="wear_set_favorites">Select your favorite entities to appear at the top of the Wear home screen. You can also drag and drop to change the order in which they appear.</string>
     <string name="wear_settings">Wear Device Settings</string>
     <string name="websocket_listening">Connected to Home Assistant</string>
     <string name="webview_error_AUTH_SCHEME">Unsupported authentication scheme (not basic or digest), please check network settings.</string>
@@ -768,6 +790,7 @@
     <string name="widget_media_show_volume">Show Volume Buttons</string>
     <string name="widget_media_show_seek">Show Seek Buttons</string>
     <string name="widget_media_show_skip">Show Skip Buttons</string>
+    <string name="widget_media_show_source">Show Source Label</string>
     <string name="widget_separator_input_hint">No separator</string>
     <string name="widget_separator_label">State and attribute separator:</string>
     <string name="widget_spinner_icon">Icon:</string>
@@ -814,6 +837,7 @@
     <string name="remote_debugging">WebView Remote Debugging</string>
     <string name="remote_debugging_summary">Allow remote debugging of WebView to troubleshoot Home Assistant frontend issues</string>
     <string name="websocket_setting_home_wifi">On Home WiFi Only\n\nNotifications will be delivered by Google only when not on Home WiFi.</string>
+    <string name="websocket_setting_home_wifi_minimal">On Home WiFi Only\n\nNotifications will only be received when on Home WiFi.</string>
     <string name="sensor_update_frequency">Sensor Update Frequency</string>
     <string name="sensor_update_frequency_description">Sensors will update either instantly or on a defined interval. If the sensor supports instant updates then it will always receive instant updates. View the sensor details to learn which sensors update instantly.\n\nIf the sensor does not support instant updates then it will update based on one of the below selected options.\n\nYou must restart the application when you make any changes to this setting.</string>
     <string name="sensor_update_frequency_normal">Normal\n\nSensors will update on a 15 minute interval.</string>
@@ -821,6 +845,7 @@
     <string name="sensor_update_frequency_fast_always">Fast Always\n\nSensors will update every minute, always.</string>
     <string name="sensor_update_notification">In order for the app to send sensor updates in the background a notification will be created during the update. You may use the button below to manage the appearance of this notification. It is recommended to minimize the notification to hide the icon.</string>
     <string name="sensor_worker_notification_channel">Manage Sensor Worker Notification</string>
+    <string name="sensor_worker_sync_missing_permissions">To enable this sensor, turn it on in the app settings</string>
     <string name="sensor_update_frequency_summary">Change the frequency of updates for sensors that do not update instantly.</string>
     <string name="sensor_update_type_chip_intent">Updates instantly</string>
     <string name="sensor_update_type_chip_worker_fast_always">Updates every minute</string>
@@ -856,4 +881,7 @@
     <string name="sensor_description_volume_dtmf">Volume level for DTMF tones on the device</string>
     <string name="basic_sensor_name_high_accuracy_interval">High Accuracy Update Interval</string>
     <string name="sensor_description_high_accuracy_interval">The update interval set for high accuracy mode</string>
+    <string name="update">Update</string>
+    <string name="weather">Weather</string>
+    <string name="zone">Zone</string>
 </resources>

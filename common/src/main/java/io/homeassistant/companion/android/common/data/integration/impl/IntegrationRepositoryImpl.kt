@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.json.JSONArray
+import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 import javax.inject.Inject
 import javax.inject.Named
@@ -453,7 +454,6 @@ class IntegrationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getHomeAssistantVersion(): String {
-
         val current = System.currentTimeMillis()
         val next = localStorage.getLong(PREF_CHECK_SENSOR_REGISTRATION_NEXT) ?: 0
         if (current <= next)
@@ -461,18 +461,73 @@ class IntegrationRepositoryImpl @Inject constructor(
                 ?: "" // Skip checking HA version as it has not been 4 hours yet
 
         return try {
-            val response: GetConfigResponse? = webSocketRepository.getConfig()
-
-            localStorage.putString(PREF_HA_VERSION, response?.version)
-            localStorage.putLong(
-                PREF_CHECK_SENSOR_REGISTRATION_NEXT,
-                current + (14400000)
-            ) // 4 hours
-            response?.version.toString()
+            webSocketRepository.getConfig()?.let { response ->
+                localStorage.putString(PREF_HA_VERSION, response.version)
+                localStorage.putLong(
+                    PREF_CHECK_SENSOR_REGISTRATION_NEXT,
+                    current + TimeUnit.HOURS.toMillis(4)
+                )
+                response.version
+            } ?: run {
+                Log.e(TAG, "Issue getting config from core.")
+                localStorage.getString(PREF_HA_VERSION) ?: ""
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Issue getting new version from core.", e)
             localStorage.getString(PREF_HA_VERSION) ?: ""
         }
+    }
+
+    override suspend fun isHomeAssistantVersionAtLeast(
+        year: Int,
+        month: Int,
+        release: Int
+    ): Boolean {
+        if (!isRegistered()) return false
+
+        val version = getHomeAssistantVersion()
+        val matches = VERSION_PATTERN.matcher(version)
+        var result = false
+        if (matches.find() && matches.matches()) {
+            val coreYear = matches.group(1)?.toIntOrNull() ?: 0
+            val coreMonth = matches.group(2)?.toIntOrNull() ?: 0
+            val coreRelease = matches.group(3)?.toIntOrNull() ?: 0
+            result =
+                coreYear > year || (coreYear == year && (coreMonth > month || (coreMonth == month && coreRelease >= release)))
+        }
+        return result
+    }
+
+    override suspend fun getConfig(): GetConfigResponse {
+        val getConfigRequest =
+            IntegrationRequest(
+                "get_config",
+                null
+            )
+        var response: GetConfigResponse? = null
+        var causeException: Exception? = null
+
+        for (it in urlRepository.getApiUrls()) {
+            try {
+                response = integrationService.getConfig(it.toHttpUrlOrNull()!!, getConfigRequest)
+            } catch (e: Exception) {
+                if (causeException == null) causeException = e
+                // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
+            }
+
+            if (response != null) {
+                // If we have a valid response, also update the cached version
+                localStorage.putString(PREF_HA_VERSION, response.version)
+                localStorage.putLong(
+                    PREF_CHECK_SENSOR_REGISTRATION_NEXT,
+                    System.currentTimeMillis() + TimeUnit.HOURS.toMillis(4)
+                )
+                return response
+            }
+        }
+
+        if (causeException != null) throw IntegrationException(causeException)
+        else throw IntegrationException("Error calling integration request get_config")
     }
 
     override suspend fun getServices(): List<Service>? {
@@ -538,28 +593,14 @@ class IntegrationRepositoryImpl @Inject constructor(
             }
     }
 
-    private suspend fun canRegisterEntityCategoryStateClass(): Boolean {
-        val version = getHomeAssistantVersion()
-        val matches = VERSION_PATTERN.matcher(version)
-        var canRegisterCategoryStateClass = false
-        if (matches.find() && matches.matches()) {
-            val year = Integer.parseInt(matches.group(1) ?: "0")
-            val month = Integer.parseInt(matches.group(2) ?: "0")
-            val release = Integer.parseInt(matches.group(3) ?: "0")
-            canRegisterCategoryStateClass =
-                year > 2021 || (year == 2021 && month >= 11 && release >= 0)
-        }
-        return canRegisterCategoryStateClass
-    }
-
     override suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>) {
-
-        val canRegisterCategoryStateClass = canRegisterEntityCategoryStateClass()
+        val canRegisterCategoryStateClass = isHomeAssistantVersionAtLeast(2021, 11, 0)
+        val canRegisterEntityDisabledState = isHomeAssistantVersionAtLeast(2022, 6, 0)
         val integrationRequest = IntegrationRequest(
             "register_sensor",
             SensorRequest(
                 sensorRegistration.uniqueId,
-                sensorRegistration.state,
+                if (canRegisterEntityDisabledState && sensorRegistration.disabled) null else sensorRegistration.state,
                 sensorRegistration.type,
                 sensorRegistration.icon,
                 sensorRegistration.attributes,
@@ -567,7 +608,8 @@ class IntegrationRepositoryImpl @Inject constructor(
                 sensorRegistration.deviceClass,
                 sensorRegistration.unitOfMeasurement,
                 if (canRegisterCategoryStateClass) sensorRegistration.stateClass else null,
-                if (canRegisterCategoryStateClass) sensorRegistration.entityCategory else null
+                if (canRegisterCategoryStateClass) sensorRegistration.entityCategory else null,
+                if (canRegisterEntityDisabledState) sensorRegistration.disabled else null
             )
         )
 

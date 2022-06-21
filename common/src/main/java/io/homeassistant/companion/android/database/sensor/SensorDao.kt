@@ -51,6 +51,9 @@ interface SensorDao {
     @Query("DELETE FROM sensor_settings WHERE sensor_id = :sensorId AND name = :settingName")
     fun removeSetting(sensorId: String, settingName: String)
 
+    @Query("DELETE FROM sensor_settings WHERE sensor_id = :sensorId AND name IN (:settingNames)")
+    fun removeSettings(sensorId: String, settingNames: List<String>)
+
     @Update
     fun update(sensor: Sensor)
 
@@ -84,7 +87,7 @@ interface SensorDao {
                     if (sensorEntity != null) {
                         update(sensorEntity.copy(enabled = enabled, lastSentState = ""))
                     } else {
-                        add(Sensor(sensorId, enabled, registered = false, state = ""))
+                        add(Sensor(sensorId, enabled, state = ""))
                     }
                 }
             }.awaitAll()
@@ -97,7 +100,7 @@ interface SensorDao {
 
         if (sensor == null) {
             // If we haven't created the entity yet do so and default to enabled if required
-            sensor = Sensor(sensorId, enabled = permission && enabledByDefault, registered = false, state = "")
+            sensor = Sensor(sensorId, enabled = permission && enabledByDefault, state = "")
             add(sensor)
         } else if (sensor.enabled && !permission) {
             // If we don't have permission but we are still enabled then we aren't really enabled.

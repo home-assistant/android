@@ -276,7 +276,7 @@
 
         <activity
             android:name=".onboarding.OnboardingActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden" />
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation" />
 
         <activity
             android:name=".settings.wear.SettingsWearActivity"
@@ -316,7 +316,7 @@
             android:supportsPictureInPicture="true"
             android:resizeableActivity="true"
             android:exported="false"
-            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout" />
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation" />
 
         <activity
             android:name=".settings.SettingsActivity"

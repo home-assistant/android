@@ -12,11 +12,13 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.google.android.material.composethemeadapter.MdcTheme
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.settings.SettingViewModel
 import io.homeassistant.companion.android.settings.websocket.views.WebsocketSettingView
 import io.homeassistant.companion.android.common.R as commonR
 
+@AndroidEntryPoint
 class WebsocketSettingFragment : Fragment() {
 
     val viewModel: SettingViewModel by viewModels()

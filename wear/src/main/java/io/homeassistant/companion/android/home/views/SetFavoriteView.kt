@@ -12,6 +12,7 @@ import androidx.wear.compose.material.ScalingLazyListState
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.ToggleChipDefaults
+import androidx.wear.compose.material.items
 import androidx.wear.compose.material.rememberScalingLazyListState
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
@@ -21,6 +22,10 @@ import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.getIcon
+import io.homeassistant.companion.android.views.ExpandableListHeader
+import io.homeassistant.companion.android.views.ListHeader
+import io.homeassistant.companion.android.views.ThemeLazyColumn
+import io.homeassistant.companion.android.views.rememberExpandedStates
 import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
@@ -59,10 +64,9 @@ fun SetFavoritesView(
                             )
                         }
                         if (expandedStates[domain] == true) {
-                            items(entities.size) { index ->
+                            items(entities, key = { it.entityId }) { entity ->
                                 FavoriteToggleChip(
-                                    entityList = entities,
-                                    index = index,
+                                    entity = entity,
                                     favoriteEntityIds = favoriteEntityIds,
                                     onFavoriteSelected = onFavoriteSelected
                                 )
@@ -77,19 +81,18 @@ fun SetFavoritesView(
 
 @Composable
 private fun FavoriteToggleChip(
-    entityList: List<Entity<*>>,
-    index: Int,
+    entity: Entity<*>,
     favoriteEntityIds: List<String>,
     onFavoriteSelected: (entityId: String, isSelected: Boolean) -> Unit
 ) {
-    val attributes = entityList[index].attributes as Map<*, *>
+    val attributes = entity.attributes as Map<*, *>
     val iconBitmap = getIcon(
-        entityList[index] as Entity<Map<String, Any>>,
-        entityList[index].domain,
+        entity as Entity<Map<String, Any>>,
+        entity.domain,
         LocalContext.current
     )
 
-    val entityId = entityList[index].entityId
+    val entityId = entity.entityId
     val checked = favoriteEntityIds.contains(entityId)
     ToggleChip(
         checked = checked,
@@ -100,7 +103,7 @@ private fun FavoriteToggleChip(
             .fillMaxWidth(),
         appIcon = {
             Image(
-                asset = iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone,
+                asset = iconBitmap ?: CommunityMaterial.Icon.cmd_bookmark,
                 colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
             )
         },

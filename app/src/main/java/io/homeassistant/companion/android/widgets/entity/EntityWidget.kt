@@ -16,12 +16,13 @@ import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.util.getAttribute
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
@@ -42,13 +43,16 @@ class EntityWidget : BaseWidgetProvider() {
         private data class ResolvedText(val text: CharSequence?, val exception: Boolean = false)
     }
 
+    @Inject
+    lateinit var staticWidgetDao: StaticWidgetDao
+
     override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity<Map<String, Any>>?): RemoteViews {
         val intent = Intent(context, EntityWidget::class.java).apply {
             action = UPDATE_VIEW
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         }
 
-        val widget = AppDatabase.getInstance(context).staticWidgetDao().get(appWidgetId)
+        val widget = staticWidgetDao.get(appWidgetId)
         val useDynamicColors = widget?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
         val views = RemoteViews(context.packageName, if (useDynamicColors) R.layout.widget_static_wrapper_dynamiccolor else R.layout.widget_static_wrapper_default).apply {
             if (widget != null) {
@@ -115,7 +119,7 @@ class EntityWidget : BaseWidgetProvider() {
     }
 
     override suspend fun getAllWidgetIds(context: Context): List<Int> {
-        return AppDatabase.getInstance(context).staticWidgetDao().getAll().map { it.id }
+        return staticWidgetDao.getAll().map { it.id }
     }
 
     private suspend fun resolveTextToShow(
@@ -127,7 +131,6 @@ class EntityWidget : BaseWidgetProvider() {
         attributeSeparator: String,
         appWidgetId: Int
     ): ResolvedText {
-        val staticWidgetDao = AppDatabase.getInstance(context).staticWidgetDao()
         var entity: Entity<Map<String, Any>>? = null
         var entityCaughtException = false
         try {
@@ -183,7 +186,6 @@ class EntityWidget : BaseWidgetProvider() {
         }
 
         mainScope.launch {
-            val staticWidgetDao = AppDatabase.getInstance(context).staticWidgetDao()
             Log.d(
                 TAG,
                 "Saving entity state config data:" + System.lineSeparator() +
@@ -210,7 +212,7 @@ class EntityWidget : BaseWidgetProvider() {
     }
 
     override suspend fun onEntityStateChanged(context: Context, entity: Entity<*>) {
-        AppDatabase.getInstance(context).staticWidgetDao().getAll().forEach {
+        staticWidgetDao.getAll().forEach {
             if (it.entityId == entity.entityId) {
                 mainScope.launch {
                     val views = getWidgetRemoteViews(context, it.id, entity as Entity<Map<String, Any>>)
@@ -221,7 +223,6 @@ class EntityWidget : BaseWidgetProvider() {
     }
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
-        val staticWidgetDao = AppDatabase.getInstance(context).staticWidgetDao()
         mainScope.launch {
             staticWidgetDao.deleteAll(appWidgetIds)
         }

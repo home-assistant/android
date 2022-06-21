@@ -7,7 +7,7 @@ import androidx.core.content.getSystemService
 import java.lang.reflect.Method
 
 object BluetoothUtils {
-    fun getBluetoothDevices(context: Context): List<BluetoothDevice> {
+    fun getBluetoothDevices(context: Context, allowDuplicates: Boolean = false): List<BluetoothDevice> {
         val devices: MutableList<BluetoothDevice> = ArrayList()
 
         val bluetoothManager =
@@ -33,6 +33,7 @@ object BluetoothUtils {
                 }
                 val btConnectedDevices = bluetoothManager.getConnectedDevices(BluetoothProfile.GATT)
                 for (btDev in btConnectedDevices) {
+                    if (!allowDuplicates && devices.any { it.address == btDev.address }) continue
                     val name = btDev.name ?: btDev.address
                     devices.add(
                         BluetoothDevice(

@@ -17,7 +17,7 @@ import io.homeassistant.companion.android.common.data.authentication.Authenticat
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
-import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.onboarding.getMessagingToken
 import io.homeassistant.companion.android.sensors.LocationSensorManager
@@ -49,6 +49,9 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
 
     @Inject
     lateinit var integrationRepository: IntegrationRepository
+
+    @Inject
+    lateinit var sensorDao: SensorDao
 
     private val mainScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -167,7 +170,6 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
     }
 
     private suspend fun setLocationTracking(enabled: Boolean) {
-        val sensorDao = AppDatabase.getInstance(applicationContext).sensorDao()
         sensorDao.setSensorsEnabled(
             sensorIds = listOf(
                 LocationSensorManager.backgroundLocation.id,
