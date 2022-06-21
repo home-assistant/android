@@ -53,7 +53,7 @@ fun EntityUi(
                 .fillMaxWidth(),
             appIcon = {
                 Image(
-                    asset = iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone,
+                    asset = iconBitmap ?: CommunityMaterial.Icon.cmd_bookmark,
                     colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
                 )
             },
@@ -90,7 +90,7 @@ fun EntityUi(
                 .fillMaxWidth(),
             icon = {
                 Image(
-                    asset = iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone,
+                    asset = iconBitmap ?: CommunityMaterial.Icon.cmd_bookmark,
                     colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
                 )
             },

@@ -12,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId = "io.homeassistant.companion.android"
-        minSdk = 25
+        minSdk = 26
         targetSdk = 30
 
         versionName = System.getenv("VERSION") ?: "LOCAL"
@@ -92,7 +92,6 @@ dependencies {
     implementation("com.google.android.material:material:1.6.0")
 
     implementation("androidx.wear:wear:1.2.0")
-    implementation("com.google.android.support:wearable:2.9.0")
     implementation("com.google.android.gms:play-services-wearable:17.1.0")
     implementation("androidx.wear:wear-input:1.2.0-alpha02")
     implementation("androidx.wear:wear-remote-interactions:1.0.0")
@@ -120,4 +119,6 @@ dependencies {
 
     implementation("com.google.guava:guava:31.1-android")
     implementation("androidx.wear.tiles:tiles:1.0.1")
+
+    implementation("androidx.wear.watchface:watchface-complications-data-source-ktx:1.1.0-rc01")
 }

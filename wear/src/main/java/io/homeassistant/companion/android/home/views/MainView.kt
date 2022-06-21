@@ -35,6 +35,9 @@ import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.onEntityClickedFeedback
+import io.homeassistant.companion.android.views.ExpandableListHeader
+import io.homeassistant.companion.android.views.ListHeader
+import io.homeassistant.companion.android.views.ThemeLazyColumn
 import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
@@ -86,7 +89,7 @@ fun MainView(
                                         .fillMaxWidth(),
                                     icon = {
                                         Image(
-                                            asset = CommunityMaterial.Icon.cmd_cellphone,
+                                            asset = CommunityMaterial.Icon.cmd_bookmark,
                                             colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
                                         )
                                     },

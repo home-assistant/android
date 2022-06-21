@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.home.views
+package io.homeassistant.companion.android.views
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
