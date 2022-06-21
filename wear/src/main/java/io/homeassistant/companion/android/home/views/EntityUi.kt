@@ -210,18 +210,22 @@ private fun entityToggleChipBackgroundColors(entity: Entity<*>, checked: Boolean
                     "light" -> entity.getLightBrightness()
                     else -> null
                 } ?: EntityPosition(value = 1f, min = 0f, max = 2f) // This should never happen
-                // TODO stop positions for RTL languages
+                val positionValueRelative = if (gradientDirection == LayoutDirection.Ltr) {
+                    ((position.value - position.min) / (position.max - position.min))
+                } else {
+                    1 - ((position.value - position.min) / (position.max - position.min))
+                }
                 val checkedColorStops = checkedBackgroundColors.mapIndexed { index, color ->
                     when (index) {
                         0 -> 0.025f to color
-                        1, 2 -> ((position.value - position.min) / (position.max - position.min)) to color
+                        1, 2 -> positionValueRelative to color
                         else -> 0.975f to color // index: 3
                     }
                 }.toTypedArray()
                 val disabledCheckedColorStops = disabledCheckedBackgroundColors.mapIndexed { index, color ->
                     when (index) {
                         0 -> 0.025f to color
-                        1, 2 -> ((position.value - position.min) / (position.max - position.min)) to color
+                        1, 2 -> positionValueRelative to color
                         else -> 0.975f to color // index: 3
                     }
                 }.toTypedArray()

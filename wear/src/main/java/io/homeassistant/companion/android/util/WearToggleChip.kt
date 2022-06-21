@@ -276,7 +276,9 @@ class WearToggleChipColors(
 /**
  * A copy of [androidx.wear.compose.material.BrushPainter] because that class is marked as internal,
  * but contains an important override of the `intrinsicSize` property to Size.Unspecified which allows
- * it to work when using it with a Chip, which [androidx.compose.ui.graphics.painter.BrushPainter] does not.
+ * it to work when using a horizontal gradient as the Chip background.
+ * [androidx.compose.ui.graphics.painter.BrushPainter] only works for gradients that do not specify
+ * offsets, so only linear gradients from top left to bottom right (= diagonal).
  */
 class WearBrushPainter(val brush: Brush) : Painter() {
     private var alpha: Float = 1.0f
