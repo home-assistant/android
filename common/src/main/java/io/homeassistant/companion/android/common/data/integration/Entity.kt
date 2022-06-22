@@ -32,6 +32,27 @@ object EntityExt {
 val <T> Entity<T>.domain: String
     get() = this.entityId.split(".")[0]
 
+fun <T> Entity<T>.getCoverPosition(): EntityPosition? {
+    // https://github.com/home-assistant/frontend/blob/dev/src/dialogs/more-info/controls/more-info-cover.ts#L33
+    return try {
+        if (domain != "cover" ||
+            (attributes as Map<*, *>)["current_position"] == null) return null
+
+        val minValue = 0f
+        val maxValue = 100f
+        val currentValue = (attributes["current_position"] as? Number)?.toFloat() ?: 0f
+
+        EntityPosition(
+            value = currentValue.coerceAtLeast(minValue).coerceAtMost(maxValue),
+            min = minValue,
+            max = maxValue
+        )
+    } catch (e: Exception) {
+        Log.e(EntityExt.TAG, "Unable to get getCoverPosition", e)
+        null
+    }
+}
+
 fun <T> Entity<T>.supportsFanSetSpeed(): Boolean {
     return try {
         if (domain != "fan") return false
