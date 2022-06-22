@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.home.views
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -28,12 +29,13 @@ fun RefreshIntervalPickerView(
     val options = listOf(0, 60, 2 * 60, 5 * 60, 10 * 60, 15 * 60, 30 * 60, 60 * 60, 5 * 60 * 60, 10 * 60 * 60, 24 * 60 * 60)
     val initialIndex = options.indexOf(currentInterval)
     val state = rememberPickerState(
-        options.size,
-        if (initialIndex != 1) initialIndex else 0,
-        false
+        initialNumberOfOptions = options.size,
+        initiallySelectedOption = if (initialIndex != -1) initialIndex else 0,
+        repeatItems = true
     )
 
     Column(
+        modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         ListHeader(R.string.refresh_interval)
