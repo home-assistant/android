@@ -15,6 +15,7 @@ import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
+import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.ToggleChipDefaults
@@ -60,7 +61,12 @@ fun SetTileShortcutsView(
                             colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
                         )
                     },
-                    toggleControl = { ToggleChipDefaults.checkboxIcon(isShowShortcutTextEnabled) }
+                    toggleControl = {
+                        Icon(
+                            imageVector = ToggleChipDefaults.checkboxIcon(isShowShortcutTextEnabled),
+                            contentDescription = if (isShowShortcutTextEnabled) "Show" else "Hide"
+                        )
+                    }
                 )
             }
             item {

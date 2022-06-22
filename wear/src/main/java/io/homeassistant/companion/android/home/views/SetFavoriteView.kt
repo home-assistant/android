@@ -6,6 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.ScalingLazyListState
@@ -114,6 +115,11 @@ private fun FavoriteToggleChip(
                 overflow = TextOverflow.Ellipsis
             )
         },
-        toggleControl = { ToggleChipDefaults.switchIcon(checked) }
+        toggleControl = {
+            Icon(
+                imageVector = ToggleChipDefaults.switchIcon(checked),
+                contentDescription = if (checked) "Selected" else "Not selected"
+            )
+        }
     )
 }

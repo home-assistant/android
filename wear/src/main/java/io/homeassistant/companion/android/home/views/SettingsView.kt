@@ -11,6 +11,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
+import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.ScalingLazyListState
@@ -127,7 +128,12 @@ fun SettingsView(
                                 colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
                             )
                         },
-                        toggleControl = { ToggleChipDefaults.checkboxIcon(isHapticEnabled) }
+                        toggleControl = {
+                            Icon(
+                                imageVector = ToggleChipDefaults.checkboxIcon(isHapticEnabled),
+                                contentDescription = if (isHapticEnabled) "Enabled" else "Disabled"
+                            )
+                        }
                     )
                 }
                 item {
@@ -148,7 +154,12 @@ fun SettingsView(
                                 colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
                             )
                         },
-                        toggleControl = { ToggleChipDefaults.checkboxIcon(isToastEnabled) }
+                        toggleControl = {
+                            Icon(
+                                imageVector = ToggleChipDefaults.checkboxIcon(isToastEnabled),
+                                contentDescription = if (isHapticEnabled) "Enabled" else "Disabled"
+                            )
+                        }
                     )
                 }
 

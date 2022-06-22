@@ -6,6 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.ToggleChipDefaults
@@ -36,6 +37,11 @@ fun SensorUi(
                 overflow = TextOverflow.Ellipsis
             )
         },
-        toggleControl = { ToggleChipDefaults.switchIcon(checked) }
+        toggleControl = {
+            Icon(
+                imageVector = ToggleChipDefaults.switchIcon(checked),
+                contentDescription = if (checked) "Enabled" else "Disabled"
+            )
+        }
     )
 }

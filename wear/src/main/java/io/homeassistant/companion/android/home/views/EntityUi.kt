@@ -13,6 +13,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
+import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.ToggleChipDefaults
@@ -82,7 +83,12 @@ fun EntityUi(
                 )
             },
             enabled = entity.state != "unavailable",
-            toggleControl = { ToggleChipDefaults.switchIcon(isChecked) }
+            toggleControl = {
+                Icon(
+                    imageVector = ToggleChipDefaults.switchIcon(isChecked),
+                    contentDescription = if (isChecked) "Enabled" else "Disabled"
+                )
+            }
         )
     } else {
         Chip(
