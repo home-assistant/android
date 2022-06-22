@@ -35,8 +35,10 @@ val <T> Entity<T>.domain: String
 fun <T> Entity<T>.getCoverPosition(): EntityPosition? {
     // https://github.com/home-assistant/frontend/blob/dev/src/dialogs/more-info/controls/more-info-cover.ts#L33
     return try {
-        if (domain != "cover" ||
-            (attributes as Map<*, *>)["current_position"] == null) return null
+        if (
+            domain != "cover" ||
+            (attributes as Map<*, *>)["current_position"] == null
+        ) return null
 
         val minValue = 0f
         val maxValue = 100f
