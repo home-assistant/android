@@ -15,16 +15,163 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.wear.compose.material.ContentAlpha
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.ToggleChipColors
+import androidx.wear.compose.material.ToggleChipDefaults
 import androidx.wear.compose.material.contentColorFor
+import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityPosition
+import io.homeassistant.companion.android.common.data.integration.domain
+import io.homeassistant.companion.android.common.data.integration.getCoverPosition
+import io.homeassistant.companion.android.common.data.integration.getFanSpeed
+import io.homeassistant.companion.android.common.data.integration.getLightBrightness
+import io.homeassistant.companion.android.common.data.integration.getLightColor
 
-object WearToggleChipDefaults {
+object WearToggleChip {
+    /**
+     * A function that provides chip colors that mostly follow the default toggle chip colors, but when supported
+     * provide a background for active entities that reflects their state (position and color). Gradient code
+     * is based on [androidx.wear.compose.material.ToggleChipDefaults.toggleChipColors].
+     *
+     * @param entity The entity state on which the background for the active state should be based
+     */
+    @Composable
+    fun EntityToggleChipBackgroundColors(entity: Entity<*>, checked: Boolean): ToggleChipColors {
+        // For a toggleable entity, a custom background should only be used if it has:
+        // a. a position (eg. fan speed, light brightness)
+        // b. a custom color (eg. light color)
+        // If there is a position (a) but no color (b), use the default (theme) color for the 'active' part.
+        // If there is a color (b) but no position (a), use a smooth gradient similar to ToggleChip.
+        // If it doesn't have either or is 'off', it should use the default chip background.
+
+        val hasPosition = when (entity.domain) {
+            "cover" -> entity.state != "closed" && entity.getCoverPosition() != null
+            "fan" -> checked && entity.getFanSpeed() != null
+            "light" -> checked && entity.getLightBrightness() != null
+            else -> false
+        }
+        val hasColor = entity.getLightColor() != null
+        val gradientDirection = LocalLayoutDirection.current
+
+        val contentBackgroundColor = if (hasColor) {
+            val entityColor = entity.getLightColor()
+            if (entityColor != null) Color(entityColor) else MaterialTheme.colors.primary
+        } else {
+            MaterialTheme.colors.primary
+        }
+
+        return when {
+            (hasPosition || hasColor) -> {
+                val checkedStartBackgroundColor = contentBackgroundColor.copy(alpha = 0.325f)
+                val checkedEndBackgroundColor = MaterialTheme.colors.surface
+                val uncheckedBackgroundColor = MaterialTheme.colors.surface
+
+                var checkedBackgroundColors = listOf(
+                    checkedStartBackgroundColor,
+                    checkedEndBackgroundColor
+                )
+                var disabledCheckedBackgroundColors = listOf(
+                    checkedStartBackgroundColor.copy(alpha = ContentAlpha.disabled),
+                    checkedEndBackgroundColor.copy(alpha = ContentAlpha.disabled)
+                )
+                val uncheckedBackgroundColors = listOf(
+                    uncheckedBackgroundColor,
+                    uncheckedBackgroundColor
+                )
+                val disabledUncheckedBackgroundColors = listOf(
+                    uncheckedBackgroundColor.copy(alpha = ContentAlpha.disabled),
+                    uncheckedBackgroundColor.copy(alpha = ContentAlpha.disabled)
+                )
+                if (gradientDirection != LayoutDirection.Ltr) {
+                    checkedBackgroundColors = checkedBackgroundColors.reversed()
+                    disabledCheckedBackgroundColors = disabledCheckedBackgroundColors.reversed()
+                    // No need to reverse unchecked
+                }
+
+                val checkedBackgroundPaint: Painter
+                val disabledCheckedBackgroundPaint: Painter
+                val uncheckedBackgroundPaint: Painter
+                val disabledUncheckedBackgroundPaint: Painter
+                if (hasPosition) {
+                    // Insert colors in the middle again to act as a 'hard stop'
+                    checkedBackgroundColors = checkedBackgroundColors.toMutableList().apply {
+                        addAll(1, checkedBackgroundColors)
+                    }
+                    disabledCheckedBackgroundColors = disabledCheckedBackgroundColors.toMutableList().apply {
+                        addAll(1, disabledCheckedBackgroundColors)
+                    }
+
+                    // Use position info to provide stop points
+                    // Minimum/maximum stops are not set to 0f/1f to make 1%/100% values visible
+                    val position = when (entity.domain) {
+                        "cover" -> entity.getCoverPosition()
+                        "fan" -> entity.getFanSpeed()
+                        "light" -> entity.getLightBrightness()
+                        else -> null
+                    } ?: EntityPosition(value = 1f, min = 0f, max = 2f) // This should never happen
+                    val positionValueRelative = if (gradientDirection == LayoutDirection.Ltr) {
+                        ((position.value - position.min) / (position.max - position.min))
+                    } else {
+                        1 - ((position.value - position.min) / (position.max - position.min))
+                    }
+                    val checkedColorStops = checkedBackgroundColors.mapIndexed { index, color ->
+                        when (index) {
+                            0 -> 0.025f to color
+                            1, 2 -> positionValueRelative to color
+                            else -> 0.975f to color // index: 3
+                        }
+                    }.toTypedArray()
+                    val disabledCheckedColorStops = disabledCheckedBackgroundColors.mapIndexed { index, color ->
+                        when (index) {
+                            0 -> 0.025f to color
+                            1, 2 -> positionValueRelative to color
+                            else -> 0.975f to color // index: 3
+                        }
+                    }.toTypedArray()
+
+                    // Painters that use the color stops
+                    // For unchecked with position, we can reuse the checked painter
+                    checkedBackgroundPaint = WearBrushPainter(
+                        Brush.horizontalGradient(*checkedColorStops)
+                    )
+                    disabledCheckedBackgroundPaint = WearBrushPainter(
+                        Brush.horizontalGradient(*disabledCheckedColorStops)
+                    )
+                    uncheckedBackgroundPaint = WearBrushPainter(
+                        Brush.horizontalGradient(*checkedColorStops)
+                    )
+                    disabledUncheckedBackgroundPaint = WearBrushPainter(
+                        Brush.horizontalGradient(*disabledCheckedColorStops)
+                    )
+                } else {
+                    // Color should be towards the end to match other enabled ToggleChips
+                    // No need to reverse unchecked because it is the same color
+                    checkedBackgroundColors = checkedBackgroundColors.reversed()
+                    disabledCheckedBackgroundColors = disabledCheckedBackgroundColors.reversed()
+
+                    // Painters that match ToggleChipDefaults
+                    checkedBackgroundPaint = WearBrushPainter(Brush.linearGradient(checkedBackgroundColors))
+                    disabledCheckedBackgroundPaint = WearBrushPainter(Brush.linearGradient(disabledCheckedBackgroundColors))
+                    uncheckedBackgroundPaint = WearBrushPainter(Brush.linearGradient(uncheckedBackgroundColors))
+                    disabledUncheckedBackgroundPaint = WearBrushPainter(Brush.linearGradient(disabledUncheckedBackgroundColors))
+                }
+
+                defaultChipColors().apply {
+                    checkedBackgroundPainter = checkedBackgroundPaint
+                    disabledCheckedBackgroundPainter = disabledCheckedBackgroundPaint
+                    uncheckedBackgroundPainter = uncheckedBackgroundPaint
+                    disabledUncheckedBackgroundPainter = disabledUncheckedBackgroundPaint
+                }
+            }
+            else -> ToggleChipDefaults.toggleChipColors()
+        }
+    }
+
     /**
      * A copy of [androidx.wear.compose.material.ToggleChipDefaults.toggleChipColors] that returns
      * [WearToggleChipColors] which allows the app to set the Painter for advanced use cases instead
      * of only providing a Color.
      */
     @Composable
-    fun defaultChipColors(
+    private fun defaultChipColors(
         checkedStartBackgroundColor: Color = MaterialTheme.colors.surface.copy(alpha = 0.75f),
         checkedEndBackgroundColor: Color = MaterialTheme.colors.primary.copy(alpha = 0.325f),
         checkedContentColor: Color = MaterialTheme.colors.onSurface,
