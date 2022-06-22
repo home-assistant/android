@@ -1,11 +1,19 @@
 package io.homeassistant.companion.android.home.views
 
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.rotary.onRotaryScrollEvent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -19,8 +27,11 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.IntervalToString
 import io.homeassistant.companion.android.views.ListHeader
+import kotlinx.coroutines.launch
+import kotlin.math.sign
 import io.homeassistant.companion.android.common.R as R
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun RefreshIntervalPickerView(
     currentInterval: Int,
@@ -33,6 +44,8 @@ fun RefreshIntervalPickerView(
         initiallySelectedOption = if (initialIndex != -1) initialIndex else 0,
         repeatItems = true
     )
+    val coroutineScope = rememberCoroutineScope()
+    val focusRequester = remember { FocusRequester() }
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -44,6 +57,16 @@ fun RefreshIntervalPickerView(
             modifier = Modifier
                 .weight(1f)
                 .padding(all = 8.dp)
+                .onRotaryScrollEvent {
+                    coroutineScope.launch {
+                        state.scrollToOption(
+                            state.selectedOption + it.verticalScrollPixels.sign.toInt()
+                        )
+                    }
+                    true
+                }
+                .focusRequester(focusRequester)
+                .focusable()
         ) {
             Text(
                 IntervalToString(LocalContext.current, options[it]),
@@ -60,5 +83,9 @@ fun RefreshIntervalPickerView(
                 CommunityMaterial.Icon.cmd_check
             )
         }
+    }
+
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
     }
 }
