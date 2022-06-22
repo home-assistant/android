@@ -84,7 +84,7 @@ fun EntityUi(
             },
             enabled = entity.state != "unavailable",
             toggleIcon = { ToggleChipDefaults.SwitchIcon(isChecked) },
-            colors = WearToggleChip.EntityToggleChipBackgroundColors(entity, isChecked)
+            colors = WearToggleChip.entityToggleChipBackgroundColors(entity, isChecked)
         )
     } else {
         Chip(

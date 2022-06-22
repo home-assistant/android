@@ -8,7 +8,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.painter.BrushPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
@@ -34,7 +33,7 @@ object WearToggleChip {
      * @param entity The entity state on which the background for the active state should be based
      */
     @Composable
-    fun EntityToggleChipBackgroundColors(entity: Entity<*>, checked: Boolean): ToggleChipColors {
+    fun entityToggleChipBackgroundColors(entity: Entity<*>, checked: Boolean): ToggleChipColors {
         // For a toggleable entity, a custom background should only be used if it has:
         // a. a position (eg. fan speed, light brightness)
         // b. a custom color (eg. light color)
@@ -229,19 +228,19 @@ object WearToggleChip {
         }
 
         return WearToggleChipColors(
-            checkedBackgroundPainter = BrushPainter(Brush.linearGradient(checkedBackgroundColors)),
+            checkedBackgroundPainter = WearBrushPainter(Brush.linearGradient(checkedBackgroundColors)),
             checkedContentColor = checkedContentColor,
             checkedSecondaryContentColor = checkedSecondaryContentColor,
             checkedIconTintColor = checkedToggleIconTintColor,
             checkedSplitBackgroundOverlay = splitBackgroundOverlayColor,
-            uncheckedBackgroundPainter = BrushPainter(
+            uncheckedBackgroundPainter = WearBrushPainter(
                 Brush.linearGradient(uncheckedBackgroundColors)
             ),
             uncheckedContentColor = uncheckedContentColor,
             uncheckedSecondaryContentColor = uncheckedSecondaryContentColor,
             uncheckedIconTintColor = uncheckedToggleIconTintColor,
             uncheckedSplitBackgroundOverlay = splitBackgroundOverlayColor,
-            disabledCheckedBackgroundPainter = BrushPainter(
+            disabledCheckedBackgroundPainter = WearBrushPainter(
                 Brush.linearGradient(disabledCheckedBackgroundColors)
             ),
             disabledCheckedContentColor = checkedContentColor.copy(alpha = ContentAlpha.disabled),
@@ -252,7 +251,7 @@ object WearToggleChip {
                 alpha = ContentAlpha.disabled
             ),
             disabledCheckedSplitBackgroundOverlay = splitBackgroundOverlayColor,
-            disabledUncheckedBackgroundPainter = BrushPainter(
+            disabledUncheckedBackgroundPainter = WearBrushPainter(
                 Brush.linearGradient(disabledUncheckedBackgroundColors)
             ),
             disabledUncheckedContentColor = uncheckedContentColor.copy(
@@ -448,7 +447,7 @@ class WearBrushPainter(val brush: Brush) : Painter() {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is BrushPainter) return false
+        if (other !is WearBrushPainter) return false
 
         if (brush != other.brush) return false
 
