@@ -1,7 +1,9 @@
 package io.homeassistant.companion.android.home.views
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -10,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -126,10 +129,15 @@ fun MainView(
                         }
                     }
                 }
-                item {
-                    Column {
-                        when (mainViewModel.loadingState.value) {
-                            MainViewModel.LoadingState.LOADING -> {
+
+                when (mainViewModel.loadingState.value) {
+                    MainViewModel.LoadingState.LOADING -> {
+                        item {
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
                                 ListHeader(id = commonR.string.loading)
                                 Chip(
                                     label = {
@@ -142,23 +150,41 @@ fun MainView(
                                     colors = ChipDefaults.primaryChipColors()
                                 )
                             }
-                            MainViewModel.LoadingState.READY -> {
-                                if (mainViewModel.entities.isEmpty()) {
+                        }
+                    }
+                    MainViewModel.LoadingState.READY -> {
+                        if (mainViewModel.entities.isEmpty()) {
+                            item {
+                                Column(
+                                    modifier = Modifier.fillMaxSize(),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
                                     Text(
                                         text = stringResource(commonR.string.no_supported_entities),
                                         textAlign = TextAlign.Center,
                                         style = MaterialTheme.typography.title3,
-                                        modifier = Modifier.fillMaxWidth().padding(top = 32.dp)
+                                        modifier = Modifier.fillMaxWidth()
+                                            .padding(top = 32.dp)
                                     )
                                     Text(
                                         text = stringResource(commonR.string.no_supported_entities_summary),
                                         textAlign = TextAlign.Center,
                                         style = MaterialTheme.typography.body2,
-                                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                                        modifier = Modifier.fillMaxWidth()
+                                            .padding(top = 8.dp)
                                     )
                                 }
                             }
-                            MainViewModel.LoadingState.ERROR -> {
+                        }
+                    }
+                    MainViewModel.LoadingState.ERROR -> {
+                        item {
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
                                 ListHeader(id = commonR.string.error_loading_entities)
                                 Chip(
                                     label = {
