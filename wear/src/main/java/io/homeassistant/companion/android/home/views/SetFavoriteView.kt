@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.PositionIndicator
@@ -118,7 +119,10 @@ private fun FavoriteToggleChip(
         toggleControl = {
             Icon(
                 imageVector = ToggleChipDefaults.switchIcon(checked),
-                contentDescription = if (checked) "Selected" else "Not selected"
+                contentDescription = if (checked)
+                    stringResource(commonR.string.enabled)
+                else
+                    stringResource(commonR.string.disabled)
             )
         }
     )

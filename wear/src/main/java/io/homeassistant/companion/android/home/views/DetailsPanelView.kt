@@ -85,7 +85,10 @@ fun DetailsPanelView(
                         ) {
                             Icon(
                                 imageVector = ToggleChipDefaults.switchIcon(isChecked),
-                                contentDescription = if (isChecked) "Enabled" else "Disabled"
+                                contentDescription = if (isChecked)
+                                    stringResource(R.string.enabled)
+                                else
+                                    stringResource(R.string.disabled)
                             )
                         }
                     }

@@ -218,6 +218,7 @@
     <string name="get_help">Get Help</string>
     <string name="grant_permission">Grant Permission</string>
     <string name="help">Help</string>
+    <string name="hide">Hide</string>
     <string name="high_accuracy_mode_channel_name">High accuracy location</string>
     <string name="high_accuracy_mode_notification_title">High accuracy (GPS) mode enabled</string>
     <string name="history">History</string>
@@ -628,6 +629,7 @@
     <string name="shortcuts_tile_empty">Choose entities in settings</string>
     <string name="shortcuts_tile_text_setting">Show names on shortcuts tile</string>
     <string name="shortcuts">Shortcuts</string>
+    <string name="show">Show</string>
     <string name="show_share_logs_summary">Sharing logs with the Home Assistant team will help to solve issues. Please share the logs only if you have been asked to do so by a Home Assistant developer</string>
     <string name="show_share_logs">Show and Share Logs</string>
     <string name="sign_in_on_phone">Sign in on phone</string>

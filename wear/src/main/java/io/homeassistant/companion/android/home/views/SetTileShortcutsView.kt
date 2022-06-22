@@ -64,7 +64,10 @@ fun SetTileShortcutsView(
                     toggleControl = {
                         Icon(
                             imageVector = ToggleChipDefaults.checkboxIcon(isShowShortcutTextEnabled),
-                            contentDescription = if (isShowShortcutTextEnabled) "Show" else "Hide"
+                            contentDescription = if (isShowShortcutTextEnabled)
+                                stringResource(commonR.string.show)
+                            else
+                                stringResource(commonR.string.hide)
                         )
                     }
                 )

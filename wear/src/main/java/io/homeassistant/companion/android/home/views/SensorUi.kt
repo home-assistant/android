@@ -10,6 +10,7 @@ import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.ToggleChipDefaults
+import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.sensor.Sensor
 
@@ -40,7 +41,10 @@ fun SensorUi(
         toggleControl = {
             Icon(
                 imageVector = ToggleChipDefaults.switchIcon(checked),
-                contentDescription = if (checked) "Enabled" else "Disabled"
+                contentDescription = if (checked)
+                    stringResource(R.string.enabled)
+                else
+                    stringResource(R.string.disabled)
             )
         }
     )

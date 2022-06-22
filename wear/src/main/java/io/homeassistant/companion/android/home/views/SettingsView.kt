@@ -131,7 +131,10 @@ fun SettingsView(
                         toggleControl = {
                             Icon(
                                 imageVector = ToggleChipDefaults.checkboxIcon(isHapticEnabled),
-                                contentDescription = if (isHapticEnabled) "Enabled" else "Disabled"
+                                contentDescription = if (isHapticEnabled)
+                                    stringResource(commonR.string.enabled)
+                                else
+                                    stringResource(commonR.string.disabled)
                             )
                         }
                     )
@@ -157,7 +160,10 @@ fun SettingsView(
                         toggleControl = {
                             Icon(
                                 imageVector = ToggleChipDefaults.checkboxIcon(isToastEnabled),
-                                contentDescription = if (isHapticEnabled) "Enabled" else "Disabled"
+                                contentDescription = if (isHapticEnabled)
+                                    stringResource(commonR.string.enabled)
+                                else
+                                    stringResource(commonR.string.disabled)
                             )
                         }
                     )
