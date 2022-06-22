@@ -1,23 +1,19 @@
 package io.homeassistant.companion.android.home.views
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
-import androidx.wear.compose.material.Chip
-import androidx.wear.compose.material.ChipDefaults
-import androidx.wear.compose.material.ExperimentalWearMaterialApi
-import androidx.wear.compose.material.Text
+import androidx.wear.compose.material.CircularProgressIndicator
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
@@ -45,7 +41,6 @@ private const val SCREEN_SELECT_TILE_SHORTCUT = "select_tile_shortcut"
 private const val SCREEN_SET_TILE_TEMPLATE = "set_tile_template"
 private const val SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL = "set_tile_template_refresh_interval"
 
-@OptIn(ExperimentalWearMaterialApi::class)
 @Composable
 fun LoadHomePage(
     mainViewModel: MainViewModel
@@ -57,20 +52,13 @@ fun LoadHomePage(
         if (mainViewModel.loadingState.value == MainViewModel.LoadingState.LOADING &&
             mainViewModel.favoriteEntityIds.value.isEmpty()
         ) {
-            Column {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
                 ListHeader(id = commonR.string.loading)
-                Chip(
-                    modifier = Modifier
-                        .padding(top = 30.dp, start = 10.dp, end = 10.dp),
-                    label = {
-                        Text(
-                            text = stringResource(commonR.string.loading_entities),
-                            textAlign = TextAlign.Center
-                        )
-                    },
-                    onClick = { /* No op */ },
-                    colors = ChipDefaults.primaryChipColors()
-                )
+                CircularProgressIndicator()
             }
         } else {
             val swipeDismissableNavController = rememberSwipeDismissableNavController()

@@ -82,7 +82,7 @@ fun DetailsPanelView(
                                 .padding(start = 16.dp)
                                 .size(ToggleButtonDefaults.SmallToggleButtonSize)
                         ) {
-                            ToggleChipDefaults.SwitchIcon(checked = isChecked)
+                            ToggleChipDefaults.switchIcon(checked = isChecked)
                         }
                     }
                 }

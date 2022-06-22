@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 
 private const val TAG = "RotaryEvent"
 
+// TODO replace with default Modifier.onRotaryScrollEvent()
 @OptIn(ExperimentalComposeUiApi::class)
 fun Modifier.rotaryEventHandler(scrollState: ScrollableState): Modifier = composed {
     val context = LocalContext.current

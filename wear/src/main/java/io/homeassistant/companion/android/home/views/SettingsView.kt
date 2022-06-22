@@ -16,6 +16,7 @@ import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.ScalingLazyListState
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
+import androidx.wear.compose.material.ToggleChipDefaults
 import androidx.wear.compose.material.rememberScalingLazyListState
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.IIcon
@@ -125,7 +126,8 @@ fun SettingsView(
                                     CommunityMaterial.Icon3.cmd_watch_vibrate_off,
                                 colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
                             )
-                        }
+                        },
+                        toggleControl = { ToggleChipDefaults.checkboxIcon(isHapticEnabled) }
                     )
                 }
                 item {
@@ -145,7 +147,8 @@ fun SettingsView(
                                     CommunityMaterial.Icon3.cmd_message_off,
                                 colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
                             )
-                        }
+                        },
+                        toggleControl = { ToggleChipDefaults.checkboxIcon(isToastEnabled) }
                     )
                 }
 

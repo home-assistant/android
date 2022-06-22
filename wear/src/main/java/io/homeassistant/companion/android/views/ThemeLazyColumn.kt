@@ -23,10 +23,8 @@ fun ThemeLazyColumn(
             .fillMaxSize()
             .rotaryEventHandler(state),
         contentPadding = PaddingValues(
-            top = 24.dp,
             start = 8.dp,
-            end = 8.dp,
-            bottom = 48.dp
+            end = 8.dp
         ),
         verticalArrangement = Arrangement.spacedBy(4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,

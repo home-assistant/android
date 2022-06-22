@@ -17,6 +17,7 @@ import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
+import androidx.wear.compose.material.ToggleChipDefaults
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.data.SimplifiedEntity
@@ -58,7 +59,8 @@ fun SetTileShortcutsView(
                                 CommunityMaterial.Icon.cmd_alphabetical_off,
                             colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
                         )
-                    }
+                    },
+                    toggleControl = { ToggleChipDefaults.checkboxIcon(isShowShortcutTextEnabled) }
                 )
             }
             item {

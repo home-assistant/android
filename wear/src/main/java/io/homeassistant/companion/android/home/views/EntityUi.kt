@@ -82,7 +82,7 @@ fun EntityUi(
                 )
             },
             enabled = entity.state != "unavailable",
-            toggleIcon = { ToggleChipDefaults.SwitchIcon(isChecked) }
+            toggleControl = { ToggleChipDefaults.switchIcon(isChecked) }
         )
     } else {
         Chip(

@@ -26,21 +26,22 @@ fun RefreshIntervalPickerView(
     onSelectInterval: (Int) -> Unit
 ) {
     val options = listOf(0, 60, 2 * 60, 5 * 60, 10 * 60, 15 * 60, 30 * 60, 60 * 60, 5 * 60 * 60, 10 * 60 * 60, 24 * 60 * 60)
-    val state = rememberPickerState()
-
-    // TODO use currentInterval. PickerState currently doesn't support changing the selectedOption
+    val initialIndex = options.indexOf(currentInterval)
+    val state = rememberPickerState(
+        options.size,
+        if (initialIndex != 1) initialIndex else 0,
+        false
+    )
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         ListHeader(R.string.refresh_interval)
         Picker(
-            options.size,
+            state = state,
             modifier = Modifier
                 .weight(1f)
-                .padding(all = 8.dp),
-            state = state,
-            repeatItems = true // Desire to set to false, but current implementation is faulty
+                .padding(all = 8.dp)
         ) {
             Text(
                 IntervalToString(LocalContext.current, options[it]),

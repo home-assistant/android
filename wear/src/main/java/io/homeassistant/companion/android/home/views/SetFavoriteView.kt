@@ -114,6 +114,6 @@ private fun FavoriteToggleChip(
                 overflow = TextOverflow.Ellipsis
             )
         },
-        toggleIcon = { ToggleChipDefaults.SwitchIcon(checked) }
+        toggleControl = { ToggleChipDefaults.switchIcon(checked) }
     )
 }
