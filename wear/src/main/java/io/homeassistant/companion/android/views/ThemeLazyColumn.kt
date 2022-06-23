@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.views
 
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -35,7 +35,7 @@ fun ThemeLazyColumn(
             .fillMaxSize()
             .onRotaryScrollEvent {
                 coroutineScope.launch {
-                    state.animateScrollBy(it.verticalScrollPixels)
+                    state.scrollBy(it.verticalScrollPixels)
                 }
                 true
             }
