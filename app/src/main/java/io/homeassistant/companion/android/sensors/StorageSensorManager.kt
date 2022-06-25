@@ -125,13 +125,13 @@ class StorageSensorManager : SensorManager {
         var suffix = ""
 
         var sizeLong = size
-        if (size >= 1024) {
+        if (sizeLong >= 1024) {
             suffix = "KB"
             sizeLong /= 1024
-            if (size >= 1024) {
+            if (sizeLong >= 1024) {
                 suffix = "MB"
                 sizeLong /= 1024
-                if (size >= 1024) {
+                if (sizeLong >= 1024) {
                     suffix = "GB"
                     sizeLong /= 1024
                 }
