@@ -138,16 +138,8 @@ class StorageSensorManager : SensorManager {
             }
         }
 
-        val resultBuffer = StringBuilder(sizeLong.toString())
-
-        var commaOffset = resultBuffer.length - 3
-        while (commaOffset > 0) {
-            resultBuffer.insert(commaOffset, ',')
-            commaOffset -= 3
-        }
-
-        resultBuffer.append(suffix)
-        return resultBuffer.toString()
+        val sizeWithThousandsSeparator = String.format("%,d", sizeLong)
+        return "$sizeWithThousandsSeparator$suffix"
     }
 
     private data class StorageStats(
