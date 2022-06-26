@@ -8,12 +8,12 @@ plugins {
 }
 
 android {
-    compileSdk = 31
+    compileSdk = 32
 
     defaultConfig {
         applicationId = "io.homeassistant.companion.android"
         minSdk = 26
-        targetSdk = 30
+        targetSdk = 32
 
         versionName = System.getenv("VERSION") ?: "LOCAL"
         // We add 1 because the app and wear versions need to have different version codes.
@@ -113,9 +113,9 @@ dependencies {
     implementation("androidx.compose.compiler:compiler:1.1.1")
     implementation("androidx.compose.foundation:foundation:1.1.1")
     implementation("androidx.compose.ui:ui-tooling:1.1.1")
-    implementation("androidx.wear.compose:compose-foundation:1.0.0-alpha14")
-    implementation("androidx.wear.compose:compose-material:1.0.0-alpha14")
-    implementation("androidx.wear.compose:compose-navigation:1.0.0-alpha14")
+    implementation("androidx.wear.compose:compose-foundation:1.0.0-rc02")
+    implementation("androidx.wear.compose:compose-material:1.0.0-rc02")
+    implementation("androidx.wear.compose:compose-navigation:1.0.0-rc02")
 
     implementation("com.google.guava:guava:31.1-android")
     implementation("androidx.wear.tiles:tiles:1.0.1")
