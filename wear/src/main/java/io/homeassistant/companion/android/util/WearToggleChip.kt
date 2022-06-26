@@ -7,6 +7,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -171,17 +172,20 @@ object WearToggleChip {
      */
     @Composable
     private fun defaultChipColors(
-        checkedStartBackgroundColor: Color = MaterialTheme.colors.surface.copy(alpha = 0.75f),
-        checkedEndBackgroundColor: Color = MaterialTheme.colors.primary.copy(alpha = 0.325f),
+        checkedStartBackgroundColor: Color =
+            MaterialTheme.colors.surface.copy(alpha = 0f)
+                .compositeOver(MaterialTheme.colors.surface),
+        checkedEndBackgroundColor: Color =
+            MaterialTheme.colors.primary.copy(alpha = 0.5f)
+                .compositeOver(MaterialTheme.colors.surface),
         checkedContentColor: Color = MaterialTheme.colors.onSurface,
         checkedSecondaryContentColor: Color = MaterialTheme.colors.onSurfaceVariant,
-        checkedToggleIconTintColor: Color = MaterialTheme.colors.secondary,
+        checkedToggleControlColor: Color = MaterialTheme.colors.secondary,
         uncheckedStartBackgroundColor: Color = MaterialTheme.colors.surface,
-        uncheckedEndBackgroundColor: Color = MaterialTheme.colors.surface,
+        uncheckedEndBackgroundColor: Color = uncheckedStartBackgroundColor,
         uncheckedContentColor: Color = contentColorFor(checkedEndBackgroundColor),
         uncheckedSecondaryContentColor: Color = uncheckedContentColor,
-        uncheckedToggleIconTintColor: Color = uncheckedContentColor,
-        splitBackgroundOverlayColor: Color = Color.White.copy(alpha = 0.05f),
+        uncheckedToggleControlColor: Color = uncheckedContentColor,
         gradientDirection: LayoutDirection = LocalLayoutDirection.current
     ): WearToggleChipColors {
         val checkedBackgroundColors: List<Color>
@@ -231,15 +235,13 @@ object WearToggleChip {
             checkedBackgroundPainter = WearBrushPainter(Brush.linearGradient(checkedBackgroundColors)),
             checkedContentColor = checkedContentColor,
             checkedSecondaryContentColor = checkedSecondaryContentColor,
-            checkedIconTintColor = checkedToggleIconTintColor,
-            checkedSplitBackgroundOverlay = splitBackgroundOverlayColor,
+            checkedIconColor = checkedToggleControlColor,
             uncheckedBackgroundPainter = WearBrushPainter(
                 Brush.linearGradient(uncheckedBackgroundColors)
             ),
             uncheckedContentColor = uncheckedContentColor,
             uncheckedSecondaryContentColor = uncheckedSecondaryContentColor,
-            uncheckedIconTintColor = uncheckedToggleIconTintColor,
-            uncheckedSplitBackgroundOverlay = splitBackgroundOverlayColor,
+            uncheckedIconColor = uncheckedToggleControlColor,
             disabledCheckedBackgroundPainter = WearBrushPainter(
                 Brush.linearGradient(disabledCheckedBackgroundColors)
             ),
@@ -247,10 +249,9 @@ object WearToggleChip {
             disabledCheckedSecondaryContentColor = checkedSecondaryContentColor.copy(
                 alpha = ContentAlpha.disabled
             ),
-            disabledCheckedIconTintColor = checkedToggleIconTintColor.copy(
+            disabledCheckedIconColor = checkedToggleControlColor.copy(
                 alpha = ContentAlpha.disabled
             ),
-            disabledCheckedSplitBackgroundOverlay = splitBackgroundOverlayColor,
             disabledUncheckedBackgroundPainter = WearBrushPainter(
                 Brush.linearGradient(disabledUncheckedBackgroundColors)
             ),
@@ -260,10 +261,9 @@ object WearToggleChip {
             disabledUncheckedSecondaryContentColor = uncheckedSecondaryContentColor.copy(
                 alpha = ContentAlpha.disabled
             ),
-            disabledUncheckedIconTintColor = uncheckedToggleIconTintColor.copy(
+            disabledUncheckedIconColor = uncheckedToggleControlColor.copy(
                 alpha = ContentAlpha.disabled
-            ),
-            disabledUncheckedSplitBackgroundOverlay = splitBackgroundOverlayColor
+            )
         )
     }
 }
@@ -276,23 +276,19 @@ class WearToggleChipColors(
     var checkedBackgroundPainter: Painter,
     var checkedContentColor: Color,
     var checkedSecondaryContentColor: Color,
-    var checkedIconTintColor: Color,
-    var checkedSplitBackgroundOverlay: Color,
+    var checkedIconColor: Color,
     var disabledCheckedBackgroundPainter: Painter,
     var disabledCheckedContentColor: Color,
     var disabledCheckedSecondaryContentColor: Color,
-    var disabledCheckedIconTintColor: Color,
-    var disabledCheckedSplitBackgroundOverlay: Color,
+    var disabledCheckedIconColor: Color,
     var uncheckedBackgroundPainter: Painter,
     var uncheckedContentColor: Color,
     var uncheckedSecondaryContentColor: Color,
-    var uncheckedIconTintColor: Color,
-    var uncheckedSplitBackgroundOverlay: Color,
+    var uncheckedIconColor: Color,
     var disabledUncheckedBackgroundPainter: Painter,
     var disabledUncheckedContentColor: Color,
     var disabledUncheckedSecondaryContentColor: Color,
-    var disabledUncheckedIconTintColor: Color,
-    var disabledUncheckedSplitBackgroundOverlay: Color,
+    var disabledUncheckedIconColor: Color,
 ) : ToggleChipColors {
 
     @Composable
@@ -331,24 +327,12 @@ class WearToggleChipColors(
     }
 
     @Composable
-    override fun toggleIconTintColor(enabled: Boolean, checked: Boolean): State<Color> {
+    override fun toggleControlColor(enabled: Boolean, checked: Boolean): State<Color> {
         return rememberUpdatedState(
             if (enabled) {
-                if (checked) checkedIconTintColor else uncheckedIconTintColor
+                if (checked) checkedIconColor else uncheckedIconColor
             } else {
-                if (checked) disabledCheckedIconTintColor else disabledUncheckedIconTintColor
-            }
-        )
-    }
-
-    @Composable
-    override fun splitBackgroundOverlay(enabled: Boolean, checked: Boolean): State<Color> {
-        return rememberUpdatedState(
-            if (enabled) {
-                if (checked) checkedSplitBackgroundOverlay else uncheckedSplitBackgroundOverlay
-            } else {
-                if (checked) disabledCheckedSplitBackgroundOverlay else
-                    disabledUncheckedSplitBackgroundOverlay
+                if (checked) disabledCheckedIconColor else disabledUncheckedIconColor
             }
         )
     }
@@ -362,33 +346,25 @@ class WearToggleChipColors(
 
         if (checkedBackgroundPainter != other.checkedBackgroundPainter) return false
         if (checkedContentColor != other.checkedContentColor) return false
-        if (checkedIconTintColor != other.checkedIconTintColor) return false
+        if (checkedIconColor != other.checkedIconColor) return false
         if (checkedSecondaryContentColor != other.checkedSecondaryContentColor) return false
-        if (checkedSplitBackgroundOverlay != other.checkedSplitBackgroundOverlay) return false
         if (uncheckedBackgroundPainter != other.uncheckedBackgroundPainter) return false
         if (uncheckedContentColor != other.uncheckedContentColor) return false
-        if (uncheckedIconTintColor != other.uncheckedIconTintColor) return false
+        if (uncheckedIconColor != other.uncheckedIconColor) return false
         if (uncheckedSecondaryContentColor != other.uncheckedSecondaryContentColor) return false
-        if (uncheckedSplitBackgroundOverlay != other.uncheckedSplitBackgroundOverlay) return false
         if (disabledCheckedBackgroundPainter != other.disabledCheckedBackgroundPainter) return false
         if (disabledCheckedContentColor != other.disabledCheckedContentColor) return false
-        if (disabledCheckedIconTintColor != other.disabledCheckedIconTintColor) return false
+        if (disabledCheckedIconColor != other.disabledCheckedIconColor) return false
         if (disabledCheckedSecondaryContentColor !=
             other.disabledCheckedSecondaryContentColor
-        ) return false
-        if (disabledCheckedSplitBackgroundOverlay !=
-            other.disabledCheckedSplitBackgroundOverlay
         ) return false
         if (disabledUncheckedBackgroundPainter !=
             other.disabledUncheckedBackgroundPainter
         ) return false
         if (disabledUncheckedContentColor != other.disabledUncheckedContentColor) return false
-        if (disabledUncheckedIconTintColor != other.disabledUncheckedIconTintColor) return false
+        if (disabledUncheckedIconColor != other.disabledUncheckedIconColor) return false
         if (disabledUncheckedSecondaryContentColor !=
             other.disabledUncheckedSecondaryContentColor
-        ) return false
-        if (disabledUncheckedSplitBackgroundOverlay !=
-            other.disabledUncheckedSplitBackgroundOverlay
         ) return false
 
         return true
@@ -398,23 +374,19 @@ class WearToggleChipColors(
         var result = checkedBackgroundPainter.hashCode()
         result = 31 * result + checkedContentColor.hashCode()
         result = 31 * result + checkedSecondaryContentColor.hashCode()
-        result = 31 * result + checkedIconTintColor.hashCode()
-        result = 31 * result + checkedSplitBackgroundOverlay.hashCode()
+        result = 31 * result + checkedIconColor.hashCode()
         result = 31 * result + uncheckedBackgroundPainter.hashCode()
         result = 31 * result + uncheckedContentColor.hashCode()
         result = 31 * result + uncheckedSecondaryContentColor.hashCode()
-        result = 31 * result + uncheckedIconTintColor.hashCode()
-        result = 31 * result + uncheckedSplitBackgroundOverlay.hashCode()
+        result = 31 * result + uncheckedIconColor.hashCode()
         result = 31 * result + disabledCheckedBackgroundPainter.hashCode()
         result = 31 * result + disabledCheckedContentColor.hashCode()
         result = 31 * result + disabledCheckedSecondaryContentColor.hashCode()
-        result = 31 * result + disabledCheckedIconTintColor.hashCode()
-        result = 31 * result + disabledCheckedSplitBackgroundOverlay.hashCode()
+        result = 31 * result + disabledCheckedIconColor.hashCode()
         result = 31 * result + disabledUncheckedBackgroundPainter.hashCode()
         result = 31 * result + disabledUncheckedContentColor.hashCode()
         result = 31 * result + disabledUncheckedSecondaryContentColor.hashCode()
-        result = 31 * result + disabledUncheckedIconTintColor.hashCode()
-        result = 31 * result + disabledUncheckedSplitBackgroundOverlay.hashCode()
+        result = 31 * result + disabledUncheckedIconColor.hashCode()
         return result
     }
 }
