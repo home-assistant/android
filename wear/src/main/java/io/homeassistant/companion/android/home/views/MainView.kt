@@ -1,7 +1,9 @@
 package io.homeassistant.companion.android.home.views
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -10,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -21,6 +24,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
+import androidx.wear.compose.material.CircularProgressIndicator
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
@@ -126,39 +130,27 @@ fun MainView(
                         }
                     }
                 }
-                item {
-                    Column {
-                        when (mainViewModel.loadingState.value) {
-                            MainViewModel.LoadingState.LOADING -> {
+
+                when (mainViewModel.loadingState.value) {
+                    MainViewModel.LoadingState.LOADING -> {
+                        item {
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
                                 ListHeader(id = commonR.string.loading)
-                                Chip(
-                                    label = {
-                                        Text(
-                                            text = stringResource(commonR.string.loading_entities),
-                                            textAlign = TextAlign.Center
-                                        )
-                                    },
-                                    onClick = { /* No op */ },
-                                    colors = ChipDefaults.primaryChipColors()
-                                )
+                                CircularProgressIndicator()
                             }
-                            MainViewModel.LoadingState.READY -> {
-                                if (mainViewModel.entities.isEmpty()) {
-                                    Text(
-                                        text = stringResource(commonR.string.no_supported_entities),
-                                        textAlign = TextAlign.Center,
-                                        style = MaterialTheme.typography.title3,
-                                        modifier = Modifier.fillMaxWidth().padding(top = 32.dp)
-                                    )
-                                    Text(
-                                        text = stringResource(commonR.string.no_supported_entities_summary),
-                                        textAlign = TextAlign.Center,
-                                        style = MaterialTheme.typography.body2,
-                                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-                                    )
-                                }
-                            }
-                            MainViewModel.LoadingState.ERROR -> {
+                        }
+                    }
+                    MainViewModel.LoadingState.ERROR -> {
+                        item {
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
                                 ListHeader(id = commonR.string.error_loading_entities)
                                 Chip(
                                     label = {
@@ -174,136 +166,162 @@ fun MainView(
                             }
                         }
                     }
-                }
-
-                if (mainViewModel.entitiesByArea.values.any {
-                    it.isNotEmpty() && it.any { entity ->
-                        mainViewModel.getCategoryForEntity(entity.entityId) == null &&
-                            mainViewModel.getHiddenByForEntity(entity.entityId) == null
-                    }
-                }
-                ) {
-                    item {
-                        ListHeader(id = commonR.string.areas)
-                    }
-                    for (id in mainViewModel.entitiesByAreaOrder) {
-                        val entities = mainViewModel.entitiesByArea[id]
-                        val entitiesToShow = entities?.filter {
-                            mainViewModel.getCategoryForEntity(it.entityId) == null &&
-                                mainViewModel.getHiddenByForEntity(it.entityId) == null
+                    MainViewModel.LoadingState.READY -> {
+                        if (mainViewModel.entities.isEmpty()) {
+                            item {
+                                Column(
+                                    modifier = Modifier.fillMaxSize(),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Text(
+                                        text = stringResource(commonR.string.no_supported_entities),
+                                        textAlign = TextAlign.Center,
+                                        style = MaterialTheme.typography.title3,
+                                        modifier = Modifier.fillMaxWidth()
+                                            .padding(top = 32.dp)
+                                    )
+                                    Text(
+                                        text = stringResource(commonR.string.no_supported_entities_summary),
+                                        textAlign = TextAlign.Center,
+                                        style = MaterialTheme.typography.body2,
+                                        modifier = Modifier.fillMaxWidth()
+                                            .padding(top = 8.dp)
+                                    )
+                                }
+                            }
                         }
-                        if (!entitiesToShow.isNullOrEmpty()) {
-                            val area = mainViewModel.areas.first { it.areaId == id }
+
+                        if (mainViewModel.entitiesByArea.values.any {
+                            it.isNotEmpty() && it.any { entity ->
+                                mainViewModel.getCategoryForEntity(entity.entityId) == null &&
+                                    mainViewModel.getHiddenByForEntity(entity.entityId) == null
+                            }
+                        }
+                        ) {
+                            item {
+                                ListHeader(id = commonR.string.areas)
+                            }
+                            for (id in mainViewModel.entitiesByAreaOrder) {
+                                val entities = mainViewModel.entitiesByArea[id]
+                                val entitiesToShow = entities?.filter {
+                                    mainViewModel.getCategoryForEntity(it.entityId) == null &&
+                                        mainViewModel.getHiddenByForEntity(it.entityId) == null
+                                }
+                                if (!entitiesToShow.isNullOrEmpty()) {
+                                    val area = mainViewModel.areas.first { it.areaId == id }
+                                    item {
+                                        Chip(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            label = {
+                                                Text(text = area.name)
+                                            },
+                                            onClick = {
+                                                onTestClicked(
+                                                    mapOf(area.name to entities),
+                                                    listOf(area.name)
+                                                ) {
+                                                    mainViewModel.getCategoryForEntity(it.entityId) == null &&
+                                                        mainViewModel.getHiddenByForEntity(it.entityId) == null
+                                                }
+                                            },
+                                            colors = ChipDefaults.primaryChipColors()
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        val domainEntitiesFilter: (entity: Entity<*>) -> Boolean =
+                            {
+                                mainViewModel.getAreaForEntity(it.entityId) == null &&
+                                    mainViewModel.getCategoryForEntity(it.entityId) == null &&
+                                    mainViewModel.getHiddenByForEntity(it.entityId) == null
+                            }
+                        if (mainViewModel.entities.values.any(domainEntitiesFilter)) {
+                            item {
+                                ListHeader(id = commonR.string.more_entities)
+                            }
+                        }
+                        // Buttons for each existing category
+                        for (domain in mainViewModel.entitiesByDomainOrder) {
+                            val domainEntities = mainViewModel.entitiesByDomain[domain]!!
+                            val domainEntitiesToShow = domainEntities.filter(domainEntitiesFilter)
+                            if (domainEntitiesToShow.isNotEmpty()) {
+                                item {
+                                    Chip(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        icon = {
+                                            getIcon("", domain, context)?.let { Image(asset = it) }
+                                        },
+                                        label = {
+                                            Text(text = mainViewModel.stringForDomain(domain)!!)
+                                        },
+                                        onClick = {
+                                            onTestClicked(
+                                                mapOf(
+                                                    mainViewModel.stringForDomain(domain)!! to domainEntities
+                                                ),
+                                                listOf(mainViewModel.stringForDomain(domain)!!),
+                                                domainEntitiesFilter
+                                            )
+                                        },
+                                        colors = ChipDefaults.primaryChipColors()
+                                    )
+                                }
+                            }
+                        }
+
+                        item {
+                            Spacer(modifier = Modifier.height(32.dp))
+                        }
+                        // All entities regardless of area
+                        if (mainViewModel.entities.isNotEmpty()) {
                             item {
                                 Chip(
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier
+                                        .fillMaxWidth(),
+                                    icon = {
+                                        Image(
+                                            asset = CommunityMaterial.Icon.cmd_animation,
+                                            colorFilter = ColorFilter.tint(Color.White)
+                                        )
+                                    },
                                     label = {
-                                        Text(text = area.name)
+                                        Text(text = stringResource(commonR.string.all_entities))
                                     },
                                     onClick = {
                                         onTestClicked(
-                                            mapOf(area.name to entities),
-                                            listOf(area.name)
-                                        ) {
-                                            mainViewModel.getCategoryForEntity(it.entityId) == null &&
-                                                mainViewModel.getHiddenByForEntity(it.entityId) == null
-                                        }
+                                            mainViewModel.entitiesByDomain.mapKeys { mainViewModel.stringForDomain(it.key)!! },
+                                            mainViewModel.entitiesByDomain.keys.map { mainViewModel.stringForDomain(it)!! }.sorted()
+                                        ) { true }
                                     },
-                                    colors = ChipDefaults.primaryChipColors()
+                                    colors = ChipDefaults.secondaryChipColors()
                                 )
                             }
                         }
-                    }
-                }
 
-                val domainEntitiesFilter: (entity: Entity<*>) -> Boolean =
-                    {
-                        mainViewModel.getAreaForEntity(it.entityId) == null &&
-                            mainViewModel.getCategoryForEntity(it.entityId) == null &&
-                            mainViewModel.getHiddenByForEntity(it.entityId) == null
-                    }
-                if (mainViewModel.entities.values.any(domainEntitiesFilter)) {
-                    item {
-                        ListHeader(id = commonR.string.more_entities)
-                    }
-                }
-                // Buttons for each existing category
-                for (domain in mainViewModel.entitiesByDomainOrder) {
-                    val domainEntities = mainViewModel.entitiesByDomain[domain]!!
-                    val domainEntitiesToShow = domainEntities.filter(domainEntitiesFilter)
-                    if (domainEntitiesToShow.isNotEmpty()) {
+                        // Settings
                         item {
                             Chip(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth(),
                                 icon = {
-                                    getIcon("", domain, context)?.let { Image(asset = it) }
-                                },
-                                label = {
-                                    Text(text = mainViewModel.stringForDomain(domain)!!)
-                                },
-                                onClick = {
-                                    onTestClicked(
-                                        mapOf(
-                                            mainViewModel.stringForDomain(domain)!! to domainEntities
-                                        ),
-                                        listOf(mainViewModel.stringForDomain(domain)!!),
-                                        domainEntitiesFilter
+                                    Image(
+                                        asset = CommunityMaterial.Icon.cmd_cog,
+                                        colorFilter = ColorFilter.tint(Color.White)
                                     )
                                 },
-                                colors = ChipDefaults.primaryChipColors()
+                                label = {
+                                    Text(
+                                        text = stringResource(id = commonR.string.settings)
+                                    )
+                                },
+                                onClick = onSettingsClicked,
+                                colors = ChipDefaults.secondaryChipColors()
                             )
                         }
                     }
-                }
-
-                item {
-                    Spacer(modifier = Modifier.height(32.dp))
-                }
-                // All entities regardless of area
-                if (mainViewModel.entities.isNotEmpty()) {
-                    item {
-                        Chip(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            icon = {
-                                Image(
-                                    asset = CommunityMaterial.Icon.cmd_animation,
-                                    colorFilter = ColorFilter.tint(Color.White)
-                                )
-                            },
-                            label = {
-                                Text(text = stringResource(commonR.string.all_entities))
-                            },
-                            onClick = {
-                                onTestClicked(
-                                    mainViewModel.entitiesByDomain.mapKeys { mainViewModel.stringForDomain(it.key)!! },
-                                    mainViewModel.entitiesByDomain.keys.map { mainViewModel.stringForDomain(it)!! }.sorted()
-                                ) { true }
-                            },
-                            colors = ChipDefaults.secondaryChipColors()
-                        )
-                    }
-                }
-
-                // Settings
-                item {
-                    Chip(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        icon = {
-                            Image(
-                                asset = CommunityMaterial.Icon.cmd_cog,
-                                colorFilter = ColorFilter.tint(Color.White)
-                            )
-                        },
-                        label = {
-                            Text(
-                                text = stringResource(id = commonR.string.settings)
-                            )
-                        },
-                        onClick = onSettingsClicked,
-                        colors = ChipDefaults.secondaryChipColors()
-                    )
                 }
             }
         }

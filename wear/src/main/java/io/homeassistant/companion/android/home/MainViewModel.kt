@@ -22,6 +22,7 @@ import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.wear.getAllFlow
 import io.homeassistant.companion.android.util.RegistriesDataHandler
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -124,13 +125,17 @@ class MainViewModel @Inject constructor(
             try {
                 // Load initial state
                 loadingState.value = LoadingState.LOADING
-                homePresenter.getAreaRegistry()?.let {
-                    areaRegistry = it
+                val getAreaRegistry = async { homePresenter.getAreaRegistry() }
+                val getDeviceRegistry = async { homePresenter.getDeviceRegistry() }
+                val getEntityRegistry = async { homePresenter.getEntityRegistry() }
+                val getEntities = async { homePresenter.getEntities() }
+
+                areaRegistry = getAreaRegistry.await()?.also {
                     areas.addAll(it)
                 }
-                deviceRegistry = homePresenter.getDeviceRegistry()
-                entityRegistry = homePresenter.getEntityRegistry()
-                homePresenter.getEntities()?.forEach {
+                deviceRegistry = getDeviceRegistry.await()
+                entityRegistry = getEntityRegistry.await()
+                getEntities.await()?.forEach {
                     if (supportedDomains().contains(it.domain)) {
                         entities[it.entityId] = it
                     }

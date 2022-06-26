@@ -8,12 +8,12 @@ plugins {
 }
 
 android {
-    compileSdk = 31
+    compileSdk = 32
 
     defaultConfig {
         applicationId = "io.homeassistant.companion.android"
         minSdk = 26
-        targetSdk = 30
+        targetSdk = 32
 
         versionName = System.getenv("VERSION") ?: "LOCAL"
         // We add 1 because the app and wear versions need to have different version codes.
@@ -86,8 +86,8 @@ dependencies {
     implementation(project(":common"))
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.21")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.6.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.6.3")
 
     implementation("com.google.android.material:material:1.6.0")
 
@@ -103,19 +103,19 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.3")
     implementation("com.squareup.okhttp3:okhttp:4.10.0")
 
-    implementation("com.mikepenz:iconics-core:5.3.3")
+    implementation("com.mikepenz:iconics-core:5.3.4")
     implementation("androidx.appcompat:appcompat:1.4.1")
     implementation("com.mikepenz:community-material-typeface:6.4.95.0-kotlin@aar")
-    implementation("com.mikepenz:iconics-compose:5.3.3")
+    implementation("com.mikepenz:iconics-compose:5.3.4")
 
     implementation("androidx.activity:activity-ktx:1.4.0")
     implementation("androidx.activity:activity-compose:1.4.0")
     implementation("androidx.compose.compiler:compiler:1.1.1")
     implementation("androidx.compose.foundation:foundation:1.1.1")
     implementation("androidx.compose.ui:ui-tooling:1.1.1")
-    implementation("androidx.wear.compose:compose-foundation:1.0.0-alpha14")
-    implementation("androidx.wear.compose:compose-material:1.0.0-alpha14")
-    implementation("androidx.wear.compose:compose-navigation:1.0.0-alpha14")
+    implementation("androidx.wear.compose:compose-foundation:1.0.0-rc02")
+    implementation("androidx.wear.compose:compose-material:1.0.0-rc02")
+    implementation("androidx.wear.compose:compose-navigation:1.0.0-rc02")
 
     implementation("com.google.guava:guava:31.1-android")
     implementation("androidx.wear.tiles:tiles:1.0.1")

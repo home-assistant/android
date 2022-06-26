@@ -11,11 +11,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
+import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.ScalingLazyListState
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
+import androidx.wear.compose.material.ToggleChipDefaults
 import androidx.wear.compose.material.rememberScalingLazyListState
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.IIcon
@@ -125,6 +127,15 @@ fun SettingsView(
                                     CommunityMaterial.Icon3.cmd_watch_vibrate_off,
                                 colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
                             )
+                        },
+                        toggleControl = {
+                            Icon(
+                                imageVector = ToggleChipDefaults.checkboxIcon(isHapticEnabled),
+                                contentDescription = if (isHapticEnabled)
+                                    stringResource(commonR.string.enabled)
+                                else
+                                    stringResource(commonR.string.disabled)
+                            )
                         }
                     )
                 }
@@ -144,6 +155,15 @@ fun SettingsView(
                                 else
                                     CommunityMaterial.Icon3.cmd_message_off,
                                 colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                            )
+                        },
+                        toggleControl = {
+                            Icon(
+                                imageVector = ToggleChipDefaults.checkboxIcon(isToastEnabled),
+                                contentDescription = if (isHapticEnabled)
+                                    stringResource(commonR.string.enabled)
+                                else
+                                    stringResource(commonR.string.disabled)
                             )
                         }
                     )
