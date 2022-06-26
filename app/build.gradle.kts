@@ -140,7 +140,7 @@ dependencies {
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.21")
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.21")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.2")
 
     implementation("com.google.dagger:hilt-android:2.42")
@@ -163,7 +163,7 @@ dependencies {
     "fullImplementation"("com.google.firebase:firebase-iid:21.1.0")
     "fullImplementation"("com.google.firebase:firebase-messaging:23.0.5")
     "fullImplementation"("io.sentry:sentry-android:6.1.2")
-    "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.2")
+    "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.3")
     "fullImplementation"("com.google.android.gms:play-services-wearable:17.1.0")
     "fullImplementation"("androidx.wear:wear-remote-interactions:1.0.0")
 

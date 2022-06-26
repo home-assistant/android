@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.InlineSlider
 import androidx.wear.compose.material.InlineSliderDefaults
 import androidx.wear.compose.material.Text
@@ -82,7 +83,13 @@ fun DetailsPanelView(
                                 .padding(start = 16.dp)
                                 .size(ToggleButtonDefaults.SmallToggleButtonSize)
                         ) {
-                            ToggleChipDefaults.SwitchIcon(checked = isChecked)
+                            Icon(
+                                imageVector = ToggleChipDefaults.switchIcon(isChecked),
+                                contentDescription = if (isChecked)
+                                    stringResource(R.string.enabled)
+                                else
+                                    stringResource(R.string.disabled)
+                            )
                         }
                     }
                 }

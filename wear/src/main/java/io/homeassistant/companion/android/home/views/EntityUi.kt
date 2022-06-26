@@ -9,15 +9,18 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
+import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.ToggleChipDefaults
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.home.HomePresenterImpl
@@ -82,7 +85,15 @@ fun EntityUi(
                 )
             },
             enabled = entity.state != "unavailable",
-            toggleIcon = { ToggleChipDefaults.SwitchIcon(isChecked) }
+            toggleControl = {
+                Icon(
+                    imageVector = ToggleChipDefaults.switchIcon(isChecked),
+                    contentDescription = if (isChecked)
+                        stringResource(R.string.enabled)
+                    else
+                        stringResource(R.string.disabled)
+                )
+            }
         )
     } else {
         Chip(
