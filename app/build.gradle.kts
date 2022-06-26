@@ -163,7 +163,7 @@ dependencies {
     "fullImplementation"("com.google.firebase:firebase-iid:21.1.0")
     "fullImplementation"("com.google.firebase:firebase-messaging:23.0.5")
     "fullImplementation"("io.sentry:sentry-android:6.1.2")
-    "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.2")
+    "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.3")
     "fullImplementation"("com.google.android.gms:play-services-wearable:17.1.0")
     "fullImplementation"("androidx.wear:wear-remote-interactions:1.0.0")
 
@@ -193,7 +193,7 @@ dependencies {
     implementation("com.google.android.material:compose-theme-adapter:1.1.10")
     implementation("com.google.accompanist:accompanist-appcompat-theme:0.23.1")
 
-    implementation("com.mikepenz:iconics-core:5.3.3")
+    implementation("com.mikepenz:iconics-core:5.3.4")
     implementation("com.mikepenz:iconics-compose:5.3.3")
     implementation("com.mikepenz:community-material-typeface:6.4.95.0-kotlin@aar")
     "fullImplementation"("org.burnoutcrew.composereorderable:reorderable:0.9.2")
