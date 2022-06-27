@@ -60,8 +60,10 @@ object WearToggleChip {
 
         return when {
             (hasPosition || hasColor) -> {
-                val checkedStartBackgroundColor = contentBackgroundColor.copy(alpha = 0.325f)
-                val checkedEndBackgroundColor = MaterialTheme.colors.surface
+                val checkedStartBackgroundColor = contentBackgroundColor.copy(alpha = 0.5f)
+                    .compositeOver(MaterialTheme.colors.surface)
+                val checkedEndBackgroundColor = MaterialTheme.colors.surface.copy(alpha = 0f)
+                    .compositeOver(MaterialTheme.colors.surface)
                 val uncheckedBackgroundColor = MaterialTheme.colors.surface
 
                 var checkedBackgroundColors = listOf(
