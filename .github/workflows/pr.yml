@@ -100,5 +100,6 @@ jobs:
     - name: Check for modified DB migrations
       run: if git diff --name-only --diff-filter=DMR origin/master... | grep "^common/schemas"; then exit 1; fi
 
-    - name: Check for missing DB migrations
-      run: if ! git diff-files --quiet --; then exit 1; fi
+    - name: Check for missing/modified DB migrations
+      run: |
+        [[ -n $(git status -s) ]] && exit 1
