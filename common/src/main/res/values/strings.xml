@@ -193,7 +193,7 @@
     <string name="error_loading_entities">Error loading entities</string>
     <string name="error_onboarding_connection_failed">Unable to connect to Home Assistant.</string>
     <string name="error_ssl">Unable to communicate with Home Assistant because of a SSL error.  Please ensure your certificate is valid.</string>
-    <string name="error_with_registration">Please check to ensure you have the mobile_app\nintegration enabled on your home assistant instance.</string>
+    <string name="error_with_registration">The \'Mobile App\' integration is required to use the app, but it is not available on your Home Assistant server. Please check your server configuration and try again.</string>
     <string name="errors">Errors</string>
     <string name="event_error">Failed to notify HA of picked option.</string>
     <string name="exit">Exit</string>

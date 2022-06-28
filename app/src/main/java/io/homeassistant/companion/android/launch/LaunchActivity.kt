@@ -26,6 +26,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 import javax.inject.Inject
 import javax.net.ssl.SSLException
 import javax.net.ssl.SSLHandshakeException
@@ -145,15 +146,24 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
             )
         } catch (e: Exception) {
             // Fatal errors: if one of these calls fail, the app cannot proceed.
-            // Because this runs after the webview, the only expected errors are system
-            // version related in OkHttp (cryptography), or general connection issues (offline/unknown).
+            // Show an error, clean up the session and require new registration.
+            // Because this runs after the webview, the only expected errors are:
+            // - missing mobile_app integration
+            // - system version related in OkHttp (cryptography)
+            // - general connection issues (offline/unknown)
             Log.e(TAG, "Exception while registering", e)
+            try {
+                authenticationRepository.revokeSession()
+            } catch (e: Exception) {
+                Log.e(TAG, "Can't revoke session", e)
+            }
             AlertDialog.Builder(this@LaunchActivity)
                 .setTitle(commonR.string.error_connection_failed)
                 .setMessage(
-                    when (e) {
-                        is SSLHandshakeException -> commonR.string.webview_error_FAILED_SSL_HANDSHAKE
-                        is SSLException -> commonR.string.webview_error_SSL_INVALID
+                    when {
+                        e is HttpException && e.code() == 404 -> commonR.string.error_with_registration
+                        e is SSLHandshakeException -> commonR.string.webview_error_FAILED_SSL_HANDSHAKE
+                        e is SSLException -> commonR.string.webview_error_SSL_INVALID
                         else -> commonR.string.webview_error
                     }
                 )
