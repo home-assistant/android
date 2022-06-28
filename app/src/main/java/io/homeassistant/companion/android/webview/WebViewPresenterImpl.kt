@@ -9,6 +9,7 @@ import io.homeassistant.companion.android.common.data.authentication.Authenticat
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.util.UrlHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -46,7 +47,7 @@ class WebViewPresenterImpl @Inject constructor(
     override fun onViewReady(path: String?) {
         mainScope.launch {
             val oldUrl = url
-            url = urlUseCase.getUrl(urlUseCase.isInternal() || urlUseCase.isPrioritizeInternal())
+            url = urlUseCase.getUrl(urlUseCase.isInternal() || (urlUseCase.isPrioritizeInternal() && !DisabledLocationHandler.isLocationEnabled(view as Context)))
 
             if (path != null && !path.startsWith("entityId:")) {
                 url = UrlHandler.handle(url, path)

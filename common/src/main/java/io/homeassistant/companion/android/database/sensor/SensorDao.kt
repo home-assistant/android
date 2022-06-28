@@ -51,6 +51,9 @@ interface SensorDao {
     @Query("DELETE FROM sensor_settings WHERE sensor_id = :sensorId AND name = :settingName")
     fun removeSetting(sensorId: String, settingName: String)
 
+    @Query("DELETE FROM sensor_settings WHERE sensor_id = :sensorId AND name IN (:settingNames)")
+    fun removeSettings(sensorId: String, settingNames: List<String>)
+
     @Update
     fun update(sensor: Sensor)
 

@@ -39,6 +39,8 @@ import io.homeassistant.companion.android.database.settings.LocalNotificationSet
 import io.homeassistant.companion.android.database.settings.LocalSensorSettingConverter
 import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
+import io.homeassistant.companion.android.database.wear.EntityStateComplications
+import io.homeassistant.companion.android.database.wear.EntityStateComplicationsDao
 import io.homeassistant.companion.android.database.wear.Favorites
 import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
@@ -69,14 +71,16 @@ import io.homeassistant.companion.android.common.R as commonR
         NotificationItem::class,
         TileEntity::class,
         Favorites::class,
+        EntityStateComplications::class,
         Setting::class
     ],
-    version = 28,
+    version = 29,
     autoMigrations = [
         AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
         AutoMigration(from = 26, to = 27),
-        AutoMigration(from = 27, to = 28, spec = AppDatabase.Companion.Migration27to28::class)
+        AutoMigration(from = 27, to = 28, spec = AppDatabase.Companion.Migration27to28::class),
+        AutoMigration(from = 28, to = 29)
     ]
 )
 @TypeConverters(
@@ -97,6 +101,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun notificationDao(): NotificationDao
     abstract fun tileDao(): TileDao
     abstract fun favoritesDao(): FavoritesDao
+    abstract fun entityStateComplicationsDao(): EntityStateComplicationsDao
     abstract fun settingsDao(): SettingsDao
 
     companion object {

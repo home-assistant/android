@@ -15,8 +15,10 @@ import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
+import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
+import androidx.wear.compose.material.ToggleChipDefaults
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.data.SimplifiedEntity
@@ -24,6 +26,8 @@ import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.simplifiedEntity
+import io.homeassistant.companion.android.views.ListHeader
+import io.homeassistant.companion.android.views.ThemeLazyColumn
 import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
@@ -56,6 +60,15 @@ fun SetTileShortcutsView(
                                 CommunityMaterial.Icon.cmd_alphabetical_off,
                             colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
                         )
+                    },
+                    toggleControl = {
+                        Icon(
+                            imageVector = ToggleChipDefaults.checkboxIcon(isShowShortcutTextEnabled),
+                            contentDescription = if (isShowShortcutTextEnabled)
+                                stringResource(commonR.string.show)
+                            else
+                                stringResource(commonR.string.hide)
+                        )
                     }
                 )
             }
@@ -75,7 +88,7 @@ fun SetTileShortcutsView(
                         .fillMaxWidth(),
                     icon = {
                         Image(
-                            iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone,
+                            iconBitmap ?: CommunityMaterial.Icon.cmd_bookmark,
                             colorFilter = ColorFilter.tint(Color.White)
                         )
                     },

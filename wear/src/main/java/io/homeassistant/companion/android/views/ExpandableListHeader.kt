@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.home.views
+package io.homeassistant.companion.android.views
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row

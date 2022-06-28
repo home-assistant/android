@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Intent
 import android.content.IntentFilter
 import dagger.hilt.android.HiltAndroidApp
+import io.homeassistant.companion.android.complications.ComplicationReceiver
 import io.homeassistant.companion.android.sensors.SensorReceiver
 
 @HiltAndroidApp
@@ -24,5 +25,13 @@ open class HomeAssistantApplication : Application() {
                 addAction(Intent.ACTION_POWER_DISCONNECTED)
             }
         )
+
+        // Update complications when the screen is on
+        val complicationReceiver = ComplicationReceiver()
+
+        val screenIntentFilter = IntentFilter()
+        screenIntentFilter.addAction(Intent.ACTION_SCREEN_ON)
+
+        registerReceiver(complicationReceiver, screenIntentFilter)
     }
 }

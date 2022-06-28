@@ -5,7 +5,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.ScalingLazyListState
@@ -22,6 +24,10 @@ import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.getIcon
+import io.homeassistant.companion.android.views.ExpandableListHeader
+import io.homeassistant.companion.android.views.ListHeader
+import io.homeassistant.companion.android.views.ThemeLazyColumn
+import io.homeassistant.companion.android.views.rememberExpandedStates
 import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
@@ -99,7 +105,7 @@ private fun FavoriteToggleChip(
             .fillMaxWidth(),
         appIcon = {
             Image(
-                asset = iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone,
+                asset = iconBitmap ?: CommunityMaterial.Icon.cmd_bookmark,
                 colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
             )
         },
@@ -110,6 +116,14 @@ private fun FavoriteToggleChip(
                 overflow = TextOverflow.Ellipsis
             )
         },
-        toggleIcon = { ToggleChipDefaults.SwitchIcon(checked) }
+        toggleControl = {
+            Icon(
+                imageVector = ToggleChipDefaults.switchIcon(checked),
+                contentDescription = if (checked)
+                    stringResource(commonR.string.enabled)
+                else
+                    stringResource(commonR.string.disabled)
+            )
+        }
     )
 }

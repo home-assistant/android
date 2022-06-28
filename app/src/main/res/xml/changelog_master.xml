@@ -1,27 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2022.6">
-        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Updated User Agent String format to also include the WebView User Agent</change>
-        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Send sensor attributes as a list instead of string when possible</change>
-        <change>Add theming to widgets: Dynamic Color (Material You) and Transparent</change>
-        <change>Add new notification parameter for notification visibility/sensitivity</change>
-        <change>Add new high accuracy location setting to combine zone and bluetooth constraints</change>
-        <change>Allow multiple media players per widget</change>
-        <change>Speed up service call widget execution</change>
-        <change>Register for shutdown intent to send one final sensor update before device turns off</change>
-        <change>Sync sensors enabled state with Home Assistant core (requires: HA Core 2022.6+)</change>
-        <change>Save last crash info and show it in Companion App Logs</change>
-        <change>Improve time zone sensor state</change>
-        <change>Add a sensor for high accuracy update interval</change>
-        <change>Suggest or highlight current SSID in home SSID dialog</change>
-        <change>Add new notification command to allow for changing Persistent Connection setting</change>
-        <change>Allow persistent connection to work when the device has no internet</change>
-        <change>Migrate Manage Sensors screen to Compose, small design tweaks and speed improvements</change>
-        <change>Add a network transport sensor</change>
-        <change>Allow changing high accuracy update interval via notification command</change>
-        <change>Add a new notification command to launch an app with only the package name, if app is not installed user will be taken to install the app</change>
-        <change>Add missing volume level sensors and allow control via notification command for some of them</change>
+    <release version="2022.7">
         <change>Bug fixes, performance improvements, design tweaks and dependency updates</change>
     </release>
 </changelog>

@@ -8,6 +8,7 @@ import android.text.Html.fromHtml
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.widget.SearchView
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
@@ -15,6 +16,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
+import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.GregorianCalendar
 import javax.inject.Inject
@@ -132,9 +134,11 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
         builder.setPositiveButton(
             commonR.string.confirm_positive
         ) { dialog, _ ->
-            notificationDao.deleteAll()
-            dialog.dismiss()
-            parentFragmentManager.popBackStack()
+            lifecycleScope.launch {
+                notificationDao.deleteAll()
+                dialog.dismiss()
+                parentFragmentManager.popBackStack()
+            }
         }
 
         builder.setNegativeButton(

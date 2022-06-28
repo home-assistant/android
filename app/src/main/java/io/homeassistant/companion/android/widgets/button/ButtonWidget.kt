@@ -54,6 +54,9 @@ class ButtonWidget : AppWidgetProvider() {
         internal const val EXTRA_ICON = "EXTRA_ICON"
         internal const val EXTRA_BACKGROUND_TYPE = "EXTRA_BACKGROUND_TYPE"
         internal const val EXTRA_TEXT_COLOR = "EXTRA_TEXT_COLOR"
+
+        // Vector icon rendering resolution fallback (if we can't infer via AppWidgetManager for some reason)
+        private const val DEFAULT_MAX_ICON_SIZE = 512
     }
 
     @Inject
@@ -80,20 +83,20 @@ class ButtonWidget : AppWidgetProvider() {
         }
     }
 
-    private fun updateAllWidgets(
-        context: Context,
-        buttonWidgetEntityList: List<ButtonWidgetEntity>
-    ) {
-        if (buttonWidgetEntityList.isNotEmpty()) {
-            Log.d(TAG, "Updating all widgets")
-            val appWidgetManager = AppWidgetManager.getInstance(context)
-            for (item in buttonWidgetEntityList) {
-                val views = getWidgetRemoteViews(context, item.id)
+    private fun updateAllWidgets(context: Context) {
+        mainScope.launch {
+            val buttonWidgetEntityList = buttonWidgetDao.getAll()
+            if (buttonWidgetEntityList.isNotEmpty()) {
+                Log.d(TAG, "Updating all widgets")
+                val appWidgetManager = AppWidgetManager.getInstance(context)
+                for (item in buttonWidgetEntityList) {
+                    val views = getWidgetRemoteViews(context, item.id)
 
-                views.setViewVisibility(R.id.widgetProgressBar, View.INVISIBLE)
-                views.setViewVisibility(R.id.widgetImageButtonLayout, View.VISIBLE)
-                views.setViewVisibility(R.id.widgetLabelLayout, View.VISIBLE)
-                appWidgetManager.updateAppWidget(item.id, views)
+                    views.setViewVisibility(R.id.widgetProgressBar, View.INVISIBLE)
+                    views.setViewVisibility(R.id.widgetImageButtonLayout, View.VISIBLE)
+                    views.setViewVisibility(R.id.widgetLabelLayout, View.VISIBLE)
+                    appWidgetManager.updateAppWidget(item.id, views)
+                }
             }
         }
     }
@@ -128,7 +131,7 @@ class ButtonWidget : AppWidgetProvider() {
         when (action) {
             CALL_SERVICE -> callConfiguredService(context, appWidgetId)
             RECEIVE_DATA -> saveServiceCallConfiguration(context, intent.extras, appWidgetId)
-            Intent.ACTION_SCREEN_ON -> updateAllWidgets(context, buttonWidgetDao.getAll())
+            Intent.ACTION_SCREEN_ON -> updateAllWidgets(context)
         }
     }
 
@@ -170,7 +173,24 @@ class ButtonWidget : AppWidgetProvider() {
                 if (widget?.backgroundType == WidgetBackgroundType.TRANSPARENT) {
                     setInt(R.id.widgetImageButton, "setColorFilter", textColor)
                 }
-                setImageViewBitmap(R.id.widgetImageButton, icon.toBitmap())
+
+                // Determine reasonable dimensions for drawing vector icon as a bitmap
+                val aspectRatio = iconDrawable.intrinsicWidth / iconDrawable.intrinsicHeight.toDouble()
+                val awo = if (widget != null) AppWidgetManager.getInstance(context).getAppWidgetOptions(widget.id) else null
+                val maxWidth = awo?.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH) ?: DEFAULT_MAX_ICON_SIZE
+                val maxHeight = awo?.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT) ?: DEFAULT_MAX_ICON_SIZE
+                var width: Int
+                var height: Int
+                if (maxWidth > maxHeight) {
+                    width = maxWidth
+                    height = (maxWidth * (1 / aspectRatio)).toInt()
+                } else {
+                    width = (maxHeight * aspectRatio).toInt()
+                    height = maxHeight
+                }
+
+                // Render the icon into the Button's ImageView
+                setImageViewBitmap(R.id.widgetImageButton, icon.toBitmap(width, height))
             }
 
             setOnClickPendingIntent(
@@ -271,16 +291,16 @@ class ButtonWidget : AppWidgetProvider() {
             }
 
             // Update widget and set visibilities for feedback
-            var views = getWidgetRemoteViews(context, appWidgetId)
-            views.setInt(R.id.widgetLayout, "setBackgroundResource", feedbackColor)
-            views.setImageViewResource(R.id.widgetImageButton, feedbackIcon)
-            views.setViewVisibility(R.id.widgetProgressBar, View.INVISIBLE)
-            views.setViewVisibility(R.id.widgetLabelLayout, View.GONE)
-            views.setViewVisibility(R.id.widgetImageButtonLayout, View.VISIBLE)
-            appWidgetManager.updateAppWidget(appWidgetId, views)
+            val feedbackViews = RemoteViews(context.packageName, R.layout.widget_button)
+            feedbackViews.setInt(R.id.widgetLayout, "setBackgroundResource", feedbackColor)
+            feedbackViews.setImageViewResource(R.id.widgetImageButton, feedbackIcon)
+            feedbackViews.setViewVisibility(R.id.widgetProgressBar, View.INVISIBLE)
+            feedbackViews.setViewVisibility(R.id.widgetLabelLayout, View.GONE)
+            feedbackViews.setViewVisibility(R.id.widgetImageButtonLayout, View.VISIBLE)
+            appWidgetManager.partiallyUpdateAppWidget(appWidgetId, feedbackViews)
 
             // Reload default views in the coroutine to pass to the post handler
-            views = getWidgetRemoteViews(context, appWidgetId)
+            val views = getWidgetRemoteViews(context, appWidgetId)
 
             // Set a timer to change it back after 1 second
             Handler(Looper.getMainLooper()).postDelayed(
