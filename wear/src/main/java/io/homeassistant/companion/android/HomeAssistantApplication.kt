@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.Intent
 import android.content.IntentFilter
 import dagger.hilt.android.HiltAndroidApp
-import io.homeassistant.companion.android.common.data.TLSHelper
 import io.homeassistant.companion.android.complications.ComplicationReceiver
 import io.homeassistant.companion.android.sensors.SensorReceiver
 
