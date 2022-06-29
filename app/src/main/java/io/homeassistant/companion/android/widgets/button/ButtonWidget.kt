@@ -177,10 +177,16 @@ class ButtonWidget : AppWidgetProvider() {
                 // Determine reasonable dimensions for drawing vector icon as a bitmap
                 val aspectRatio = iconDrawable.intrinsicWidth / iconDrawable.intrinsicHeight.toDouble()
                 val awo = if (widget != null) AppWidgetManager.getInstance(context).getAppWidgetOptions(widget.id) else null
-                val maxWidth = awo?.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH) ?: DEFAULT_MAX_ICON_SIZE
-                val maxHeight = awo?.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT) ?: DEFAULT_MAX_ICON_SIZE
-                var width: Int
-                var height: Int
+                val maxWidth = (
+                    awo?.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, DEFAULT_MAX_ICON_SIZE)
+                        ?: DEFAULT_MAX_ICON_SIZE
+                    ).coerceAtLeast(16)
+                val maxHeight = (
+                    awo?.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, DEFAULT_MAX_ICON_SIZE)
+                        ?: DEFAULT_MAX_ICON_SIZE
+                    ).coerceAtLeast(16)
+                val width: Int
+                val height: Int
                 if (maxWidth > maxHeight) {
                     width = maxWidth
                     height = (maxWidth * (1 / aspectRatio)).toInt()
