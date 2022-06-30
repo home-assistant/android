@@ -167,7 +167,7 @@ class IntegrationRepositoryImpl @Inject constructor(
                         "render_template",
                         mapOf("template" to Template(template, variables))
                     )
-                ).getValue("template")
+                ).getValue("template") ?: throw NullPointerException("Null returned in template")
             } catch (e: Exception) {
                 if (causeException == null) causeException = e
                 // Ignore failure until we are out of URLS to try, but use the first exception as cause exception

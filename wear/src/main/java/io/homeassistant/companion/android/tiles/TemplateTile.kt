@@ -1,15 +1,26 @@
 package io.homeassistant.companion.android.tiles
 
+import android.graphics.Typeface
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.text.style.AbsoluteSizeSpan
+import android.text.style.CharacterStyle
+import android.text.style.ForegroundColorSpan
+import android.text.style.RelativeSizeSpan
+import android.text.style.StyleSpan
+import android.text.style.UnderlineSpan
 import androidx.core.content.getSystemService
+import androidx.core.text.HtmlCompat.FROM_HTML_MODE_LEGACY
+import androidx.core.text.HtmlCompat.fromHtml
 import androidx.wear.tiles.ActionBuilders
+import androidx.wear.tiles.ColorBuilders
 import androidx.wear.tiles.DimensionBuilders
 import androidx.wear.tiles.DimensionBuilders.dp
 import androidx.wear.tiles.LayoutElementBuilders
 import androidx.wear.tiles.LayoutElementBuilders.Box
+import androidx.wear.tiles.LayoutElementBuilders.FONT_WEIGHT_BOLD
 import androidx.wear.tiles.LayoutElementBuilders.Layout
 import androidx.wear.tiles.LayoutElementBuilders.LayoutElement
 import androidx.wear.tiles.ModifiersBuilders
@@ -102,18 +113,18 @@ class TemplateTile : TileService() {
     }
 
     fun layout(renderedText: String): LayoutElement = Box.Builder().apply {
-        addContent(
-            LayoutElementBuilders.Text.Builder()
-                .setText(
-                    if (renderedText.isEmpty()) {
-                        getString(commonR.string.template_tile_empty)
-                    } else {
-                        renderedText
-                    }
-                )
-                .setMaxLines(10)
-                .build()
-        )
+        if (renderedText.isEmpty()) {
+            addContent(
+                LayoutElementBuilders.Text.Builder()
+                    .setText(getString(commonR.string.template_tile_empty))
+                    .setMaxLines(10)
+                    .build()
+            )
+        } else {
+            addContent(
+                parseHtml(renderedText)
+            )
+        }
         addContent(
             LayoutElementBuilders.Arc.Builder()
                 .setAnchorAngle(
@@ -150,6 +161,62 @@ class TemplateTile : TileService() {
                     .setId("refresh")
                     .build()
             )
+            .build()
+    }
+
+    private fun parseHtml(renderedText: String): LayoutElementBuilders.Spannable {
+        val renderedSpanned = fromHtml(renderedText, FROM_HTML_MODE_LEGACY)
+        return LayoutElementBuilders.Spannable.Builder().apply {
+            var start = 0
+            var end = 0
+            while (end < renderedSpanned.length) {
+                end = renderedSpanned.nextSpanTransition(end, renderedSpanned.length, CharacterStyle::class.java)
+
+                val fontStyle = LayoutElementBuilders.FontStyle.Builder().apply {
+                    renderedSpanned.getSpans(start, end, CharacterStyle::class.java).forEach {
+                        when (it) {
+                            is AbsoluteSizeSpan -> setSize(
+                                DimensionBuilders.SpProp.Builder()
+                                    .setValue(it.size / applicationContext.resources.displayMetrics.scaledDensity)
+                                    .build()
+                            )
+                            is ForegroundColorSpan -> setColor(
+                                ColorBuilders.ColorProp.Builder()
+                                    .setArgb(it.foregroundColor)
+                                    .build()
+                            )
+                            is UnderlineSpan -> setUnderline(true)
+                            is StyleSpan -> {
+                                if (Typeface.BOLD and it.style != 0) {
+                                    setWeight(FONT_WEIGHT_BOLD)
+                                }
+                                if (Typeface.ITALIC and it.style != 0) {
+                                    setItalic(true)
+                                }
+                            }
+                            is RelativeSizeSpan -> {
+                                val defaultSize = 16 // https://developer.android.com/training/wearables/design/typography
+                                setSize(
+                                    DimensionBuilders.SpProp.Builder()
+                                        .setValue(it.sizeChange * defaultSize)
+                                        .build()
+                                )
+                            }
+                        }
+                    }
+                }.build()
+
+                addSpan(
+                    LayoutElementBuilders.SpanText.Builder()
+                        .setText(renderedSpanned.substring(start, end))
+                        .setFontStyle(fontStyle)
+                        .build()
+                )
+
+                start = end
+            }
+        }
+            .setMaxLines(10)
             .build()
     }
 }
