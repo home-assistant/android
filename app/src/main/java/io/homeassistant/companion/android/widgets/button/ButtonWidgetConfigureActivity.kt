@@ -244,8 +244,9 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
                     services[getServiceString(it)] = it
                 }
                 Log.d(TAG, "Services found: $services")
+                serviceAdapter.addAll(services.values)
+                serviceAdapter.sort()
                 if (buttonWidget != null) {
-                    serviceAdapter.add(services[serviceText])
                     val serviceData = services[serviceText]!!.serviceData
                     val target = serviceData.target
                     val fields = serviceData.fields
@@ -279,13 +280,12 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
                         entities[it.entityId] = it
                     }
                     dynamicFieldAdapter.notifyDataSetChanged()
-                } else
-                    serviceAdapter.addAll(services.values)
-                serviceAdapter.sort()
+                }
 
                 // Update service adapter
                 runOnUiThread {
                     serviceAdapter.notifyDataSetChanged()
+                    serviceAdapter.filter.filter(binding.widgetTextConfigService.text)
                 }
             } catch (e: Exception) {
                 // Custom components can cause services to not load
