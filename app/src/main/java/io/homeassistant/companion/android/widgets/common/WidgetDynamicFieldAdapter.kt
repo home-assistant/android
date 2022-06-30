@@ -79,6 +79,8 @@ class WidgetDynamicFieldAdapter(
             } catch (e: Exception) {
                 // Who knows what custom components will break here
             }
+        } else {
+            autoCompleteTextView.hint = null
         }
 
         // If field is looking for an entity_id,
@@ -121,6 +123,10 @@ class WidgetDynamicFieldAdapter(
             autoCompleteTextView.setAdapter(fieldAdapter)
             autoCompleteTextView.setTokenizer(CommaTokenizer())
             autoCompleteTextView.onFocusChangeListener = dropDownOnFocus
+        } else {
+            autoCompleteTextView.setAdapter(null)
+            autoCompleteTextView.setTokenizer(null)
+            autoCompleteTextView.onFocusChangeListener = null
         }
 
         // Populate textview with stored text for that field
