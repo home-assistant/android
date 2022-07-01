@@ -162,7 +162,7 @@ dependencies {
     "fullImplementation"("com.google.firebase:firebase-core:21.0.0")
     "fullImplementation"("com.google.firebase:firebase-iid:21.1.0")
     "fullImplementation"("com.google.firebase:firebase-messaging:23.0.5")
-    "fullImplementation"("io.sentry:sentry-android:6.1.3")
+    "fullImplementation"("io.sentry:sentry-android:6.1.4")
     "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.3")
     "fullImplementation"("com.google.android.gms:play-services-wearable:17.1.0")
     "fullImplementation"("androidx.wear:wear-remote-interactions:1.0.0")
