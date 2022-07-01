@@ -879,4 +879,7 @@
     <string name="update">Update</string>
     <string name="weather">Weather</string>
     <string name="zone">Zone</string>
+    <string name="tls_cert_title">TLS Client Certificate Error</string>
+    <string name="tls_cert_not_found_message">The remote site requires a client certificate.\nPlease install the required credential on your phone and try again.</string>
+    <string name="tls_cert_expired_message">The certificate is not yet or no longer valid.\nPlease install a new credential on your phone and try again.</string>
 </resources>

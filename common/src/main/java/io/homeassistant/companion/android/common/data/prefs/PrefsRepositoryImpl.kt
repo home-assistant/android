@@ -13,6 +13,7 @@ class PrefsRepositoryImpl @Inject constructor(
         private const val PREF_THEME = "theme"
         private const val PREF_LANG = "lang"
         private const val PREF_LOCALES = "locales"
+        private const val PREF_KEY_ALIAS = "key-alias"
         private const val PREF_CRASH_REPORTING_DISABLED = "crash_reporting"
     }
 
@@ -54,5 +55,13 @@ class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setCrashReporting(crashReportingEnabled: Boolean) {
         localStorage.putBoolean(PREF_CRASH_REPORTING_DISABLED, !crashReportingEnabled)
+    }
+
+    override suspend fun saveKeyAlias(alias: String) {
+        localStorage.putString(PREF_KEY_ALIAS, alias)
+    }
+
+    override suspend fun getKeyAlias(): String? {
+        return localStorage.getString(PREF_KEY_ALIAS)
     }
 }

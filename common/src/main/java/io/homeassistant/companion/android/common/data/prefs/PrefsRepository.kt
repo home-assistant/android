@@ -20,4 +20,8 @@ interface PrefsRepository {
     suspend fun isCrashReporting(): Boolean
 
     suspend fun setCrashReporting(crash: Boolean)
+
+    suspend fun saveKeyAlias(alias: String)
+
+    suspend fun getKeyAlias(): String?
 }
