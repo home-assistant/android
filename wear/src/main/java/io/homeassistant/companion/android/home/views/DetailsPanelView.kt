@@ -29,6 +29,8 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.domain
+import io.homeassistant.companion.android.common.data.integration.getFanSpeed
+import io.homeassistant.companion.android.common.data.integration.getLightBrightness
 import io.homeassistant.companion.android.common.data.integration.supportsFanSetSpeed
 import io.homeassistant.companion.android.common.data.integration.supportsLightBrightness
 import io.homeassistant.companion.android.common.data.integration.supportsLightColorTemperature
@@ -98,14 +100,14 @@ fun DetailsPanelView(
             if (entity.domain == "fan") {
                 if (entity.supportsFanSetSpeed()) {
                     item {
-                        FanSpeedSlider(attributes, onFanSpeedChanged, isToastEnabled, isHapticEnabled)
+                        FanSpeedSlider(entity, onFanSpeedChanged, isToastEnabled, isHapticEnabled)
                     }
                 }
             }
             if (entity.domain == "light") {
                 if (entity.supportsLightBrightness()) {
                     item {
-                        BrightnessSlider(attributes, onBrightnessChanged, isToastEnabled, isHapticEnabled)
+                        BrightnessSlider(entity, onBrightnessChanged, isToastEnabled, isHapticEnabled)
                     }
                 }
 
@@ -159,44 +161,37 @@ fun DetailsPanelView(
 
 @Composable
 fun FanSpeedSlider(
-    attributes: Map<*, *>,
+    entity: Entity<*>,
     onFanSpeedChanged: (Float) -> Unit,
     isToastEnabled: Boolean,
     isHapticEnabled: Boolean
 ) {
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
-
-    val minValue = 0f
-    val maxValue = 100f
-    var currentValue = (attributes["percentage"] as? Number)?.toFloat() ?: 0f
-    if (currentValue < minValue)
-        currentValue = minValue
-    if (currentValue > maxValue)
-        currentValue = maxValue
+    val position = entity.getFanSpeed() ?: return
 
     Column {
         Text(
-            stringResource(R.string.speed, currentValue.toInt()),
+            stringResource(R.string.speed, position.value.toInt()),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp)
         )
         InlineSlider(
-            value = currentValue,
+            value = position.value,
             onValueChange = {
                 onFanSpeedChanged(it)
                 onSliderChangedFeedback(
                     isToastEnabled,
                     isHapticEnabled,
-                    it > currentValue,
+                    it > position.value,
                     context.getString(R.string.slider_fan_speed),
                     context,
                     haptic
                 )
             },
             steps = 9,
-            valueRange = minValue..maxValue,
+            valueRange = position.min..position.max,
             decreaseIcon = {
                 Image(
                     asset = CommunityMaterial.Icon2.cmd_fan_minus,
@@ -216,46 +211,37 @@ fun FanSpeedSlider(
 
 @Composable
 fun BrightnessSlider(
-    attributes: Map<*, *>,
+    entity: Entity<*>,
     onBrightnessChanged: (Float) -> Unit,
     isToastEnabled: Boolean,
     isHapticEnabled: Boolean
 ) {
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
-
-    val minValue = 0f
-    val maxValue = 100f
-    var currentValue =
-        (attributes["brightness"] as? Number)?.toFloat()?.div(255f)?.times(100)
-            ?: 0f
-    if (currentValue < minValue)
-        currentValue = minValue
-    if (currentValue > maxValue)
-        currentValue = maxValue
+    val position = entity.getLightBrightness() ?: return
 
     Column {
         Text(
-            stringResource(R.string.brightness, currentValue.toInt()),
+            stringResource(R.string.brightness, position.value.toInt()),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp)
         )
         InlineSlider(
-            value = currentValue,
+            value = position.value,
             onValueChange = { brightness ->
                 onBrightnessChanged(brightness.div(100).times(255))
                 onSliderChangedFeedback(
                     isToastEnabled,
                     isHapticEnabled,
-                    brightness > currentValue,
+                    brightness > position.value,
                     context.getString(R.string.slider_light_brightness),
                     context,
                     haptic
                 )
             },
             steps = 20,
-            valueRange = minValue..maxValue,
+            valueRange = position.min..position.max,
             decreaseIcon = {
                 Image(
                     asset = CommunityMaterial.Icon.cmd_brightness_4,

@@ -25,6 +25,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.home.HomePresenterImpl
 import io.homeassistant.companion.android.theme.wearColorPalette
+import io.homeassistant.companion.android.util.WearToggleChip
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.onEntityClickedFeedback
 import io.homeassistant.companion.android.util.previewEntity1
@@ -93,7 +94,8 @@ fun EntityUi(
                     else
                         stringResource(R.string.disabled)
                 )
-            }
+            },
+            colors = WearToggleChip.entityToggleChipBackgroundColors(entity, isChecked)
         )
     } else {
         Chip(
