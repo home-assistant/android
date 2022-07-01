@@ -185,15 +185,6 @@ class TemplateTile : TileService() {
                                     .setArgb(it.foregroundColor)
                                     .build()
                             )
-                            is UnderlineSpan -> setUnderline(true)
-                            is StyleSpan -> {
-                                if (Typeface.BOLD and it.style != 0) {
-                                    setWeight(FONT_WEIGHT_BOLD)
-                                }
-                                if (Typeface.ITALIC and it.style != 0) {
-                                    setItalic(true)
-                                }
-                            }
                             is RelativeSizeSpan -> {
                                 val defaultSize = 16 // https://developer.android.com/training/wearables/design/typography
                                 setSize(
@@ -202,6 +193,15 @@ class TemplateTile : TileService() {
                                         .build()
                                 )
                             }
+                            is StyleSpan -> {
+                                if (Typeface.BOLD and it.style != 0) {
+                                    setWeight(FONT_WEIGHT_BOLD)
+                                }
+                                if (Typeface.ITALIC and it.style != 0) {
+                                    setItalic(true)
+                                }
+                            }
+                            is UnderlineSpan -> setUnderline(true)
                         }
                     }
                 }.build()
