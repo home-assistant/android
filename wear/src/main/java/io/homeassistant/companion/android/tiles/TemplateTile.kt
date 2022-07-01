@@ -69,9 +69,11 @@ class TemplateTile : TileService() {
 
             val template = integrationUseCase.getTemplateTileContent()
             val renderedText = try {
-                integrationUseCase.renderTemplate(template, mapOf())
+                integrationUseCase.renderTemplate(template, mapOf()) ?: getString(
+                    commonR.string.template_error
+                )
             } catch (e: Exception) {
-                getString(commonR.string.template_tile_error)
+                getString(commonR.string.error_connection_failed)
             }
 
             Tile.Builder()
