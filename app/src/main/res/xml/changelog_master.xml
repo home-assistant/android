@@ -3,6 +3,8 @@
     tools:ignore="MissingDefaultResource">
     <release version="2022.7">
         <change>&lt;b&gt;Breaking Change:&lt;/b&gt; TTS and notification commands have new formats, refer to the companion docs for updated format.</change>
+        <change>&lt;u&gt;Wear OS:&lt;/u&gt; Add support for entity states in complications</change>
+        <change>&lt;u&gt;Wear OS:&lt;/u&gt; Show entity state in chip background</change>
         <change>Add support for TLS client authentication, refer to the companion docs for setup instructions</change>
         <change>Only apply prioritize internal to WebView when location is disabled on the device</change>
         <change>Add themed icon for supported devices (Android 13+)</change>
