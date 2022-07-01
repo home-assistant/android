@@ -1,7 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2022.7">
+    <release version="2022.7 - Phone" versioncode="2">
+        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; TTS and notification commands have new formats, refer to the companion docs for updated format.</change>
+        <change>Add support for TLS client authentication, refer to the companion docs for setup instructions</change>
+        <change>Only apply prioritize internal to WebView when location is disabled on the device</change>
+        <change>Add themed icon for supported devices (Android 13+)</change>
+        <change>Add attribute to network type sensor to indicate if current network is a metered connection</change>
         <change>Bug fixes, performance improvements, design tweaks and dependency updates</change>
+    </release>
+    <release version="2022.7 - Wear" versioncode="1">
+        <change>Add support for entity states in complications</change>
+        <change>Show entity state in chip background</change>
     </release>
 </changelog>
