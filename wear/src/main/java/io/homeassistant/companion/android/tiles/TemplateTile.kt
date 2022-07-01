@@ -173,33 +173,30 @@ class TemplateTile : TileService() {
                 end = renderedSpanned.nextSpanTransition(end, renderedSpanned.length, CharacterStyle::class.java)
 
                 val fontStyle = LayoutElementBuilders.FontStyle.Builder().apply {
-                    renderedSpanned.getSpans(start, end, CharacterStyle::class.java).forEach {
-                        when (it) {
+                    renderedSpanned.getSpans(start, end, CharacterStyle::class.java).forEach { span ->
+                        when (span) {
                             is AbsoluteSizeSpan -> setSize(
                                 DimensionBuilders.SpProp.Builder()
-                                    .setValue(it.size / applicationContext.resources.displayMetrics.scaledDensity)
+                                    .setValue(span.size / applicationContext.resources.displayMetrics.scaledDensity)
                                     .build()
                             )
                             is ForegroundColorSpan -> setColor(
                                 ColorBuilders.ColorProp.Builder()
-                                    .setArgb(it.foregroundColor)
+                                    .setArgb(span.foregroundColor)
                                     .build()
                             )
                             is RelativeSizeSpan -> {
                                 val defaultSize = 16 // https://developer.android.com/training/wearables/design/typography
                                 setSize(
                                     DimensionBuilders.SpProp.Builder()
-                                        .setValue(it.sizeChange * defaultSize)
+                                        .setValue(span.sizeChange * defaultSize)
                                         .build()
                                 )
                             }
-                            is StyleSpan -> {
-                                if (Typeface.BOLD and it.style != 0) {
-                                    setWeight(FONT_WEIGHT_BOLD)
-                                }
-                                if (Typeface.ITALIC and it.style != 0) {
-                                    setItalic(true)
-                                }
+                            is StyleSpan -> when (span.style) {
+                                Typeface.BOLD -> setWeight(FONT_WEIGHT_BOLD)
+                                Typeface.ITALIC -> setItalic(true)
+                                Typeface.BOLD_ITALIC -> setWeight(FONT_WEIGHT_BOLD).setItalic(true)
                             }
                             is UnderlineSpan -> setUnderline(true)
                         }
