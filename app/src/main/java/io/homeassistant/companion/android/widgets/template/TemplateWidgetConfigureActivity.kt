@@ -219,7 +219,7 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                     templateText = integrationUseCase.renderTemplate(template, mapOf()) ?: getString(commonR.string.template_error)
                     enabled = true
                 } catch (e: Exception) {
-                    templateText = getString(commonR.string.error_connection_failed)
+                    templateText = getString(commonR.string.template_render_error)
                     enabled = false
                 }
             }

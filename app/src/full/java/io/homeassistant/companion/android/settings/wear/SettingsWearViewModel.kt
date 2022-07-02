@@ -117,7 +117,7 @@ class SettingsWearViewModel @Inject constructor(
                         )
                 } catch (e: Exception) {
                     templateTileContentRendered.value = getApplication<Application>().getString(
-                        commonR.string.error_connection_failed
+                        commonR.string.template_render_error
                     )
                 }
             }

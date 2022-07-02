@@ -73,7 +73,7 @@ class TemplateTile : TileService() {
                     commonR.string.template_error
                 )
             } catch (e: Exception) {
-                getString(commonR.string.error_connection_failed)
+                getString(commonR.string.template_render_error)
             }
 
             Tile.Builder()
