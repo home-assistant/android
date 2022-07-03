@@ -94,13 +94,13 @@ class IntegrationRepositoryImpl @Inject constructor(
             Log.e(TAG, "Unable to register device due to missing URL")
             return
         }
+        val response =
+            integrationService.registerDevice(
+                url.newBuilder().addPathSegments("api/mobile_app/registrations").build(),
+                authenticationRepository.buildBearerToken(),
+                request
+            )
         try {
-            val response =
-                integrationService.registerDevice(
-                    url.newBuilder().addPathSegments("api/mobile_app/registrations").build(),
-                    authenticationRepository.buildBearerToken(),
-                    request
-                )
             persistDeviceRegistration(deviceRegistration)
             urlRepository.saveRegistrationUrls(
                 response.cloudhookUrl,
@@ -109,7 +109,7 @@ class IntegrationRepositoryImpl @Inject constructor(
             )
             localStorage.putString(PREF_SECRET, response.secret)
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to register device", e)
+            Log.e(TAG, "Unable to save device registration", e)
         }
     }
 

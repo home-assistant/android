@@ -109,25 +109,29 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
     }
 
     private fun login(dataMap: DataMap) = mainScope.launch {
-        val url = dataMap.getString("URL")
-        val authCode = dataMap.getString("AuthCode")
-        val deviceName = dataMap.getString("DeviceName")
-        val deviceTrackingEnabled = dataMap.getString("LocationTracking")
+        try {
+            val url = dataMap.getString("URL")
+            val authCode = dataMap.getString("AuthCode")
+            val deviceName = dataMap.getString("DeviceName")
+            val deviceTrackingEnabled = dataMap.getString("LocationTracking")
 
-        urlRepository.saveUrl(url)
-        authenticationRepository.registerAuthorizationCode(authCode)
-        integrationUseCase.registerDevice(
-            DeviceRegistration(
-                "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-                deviceName
+            urlRepository.saveUrl(url)
+            authenticationRepository.registerAuthorizationCode(authCode)
+            integrationUseCase.registerDevice(
+                DeviceRegistration(
+                    "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                    deviceName
+                )
             )
-        )
+
+            val intent = HomeActivity.newInstance(applicationContext)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to login to Home Assistant", e)
+        }
 
         sendPhoneData()
-
-        val intent = HomeActivity.newInstance(applicationContext)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        startActivity(intent)
     }
 
     private fun saveFavorites(dataMap: DataMap) {

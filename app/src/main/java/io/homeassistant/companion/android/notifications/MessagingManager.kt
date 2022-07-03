@@ -125,6 +125,15 @@ class MessagingManager @Inject constructor(
         const val BLE_TRANSMIT = "ble_transmit"
         const val HIGH_ACCURACY_UPDATE_INTERVAL = "high_accuracy_update_interval"
         const val PACKAGE_NAME = "package_name"
+        const val COMMAND = "command"
+        const val TTS_TEXT = "tts_text"
+
+        // special intent constants
+        const val INTENT_PACKAGE_NAME = "intent_package_name"
+        const val INTENT_ACTION = "intent_action"
+        const val INTENT_EXTRAS = "intent_extras"
+        const val INTENT_URI = "intent_uri"
+        const val INTENT_TYPE = "intent_type"
 
         // special action constants
         const val REQUEST_LOCATION_UPDATE = "request_location_update"
@@ -181,6 +190,9 @@ class MessagingManager @Inject constructor(
         const val MEDIA_PREVIOUS = "previous"
         const val MEDIA_REWIND = "rewind"
         const val MEDIA_STOP = "stop"
+        const val MEDIA_PACKAGE_NAME = "media_package_name"
+        const val MEDIA_COMMAND = "media_command"
+        const val MEDIA_STREAM = "media_stream"
 
         // Ble Transmitter Commands
         const val BLE_SET_TRANSMIT_POWER = "ble_set_transmit_power"
@@ -267,7 +279,7 @@ class MessagingManager @Inject constructor(
                 Log.d(TAG, "Processing device command")
                 when (jsonData[MESSAGE]) {
                     COMMAND_DND -> {
-                        if (jsonData[TITLE] in DND_COMMANDS) {
+                        if (jsonData[COMMAND] in DND_COMMANDS) {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
                                 handleDeviceCommands(jsonData)
                             else {
@@ -290,7 +302,7 @@ class MessagingManager @Inject constructor(
                         }
                     }
                     COMMAND_RINGER_MODE -> {
-                        if (jsonData[TITLE] in RM_COMMANDS) {
+                        if (jsonData[COMMAND] in RM_COMMANDS) {
                             handleDeviceCommands(jsonData)
                         } else {
                             mainScope.launch {
@@ -303,7 +315,7 @@ class MessagingManager @Inject constructor(
                         }
                     }
                     COMMAND_BROADCAST_INTENT -> {
-                        if (!jsonData[TITLE].isNullOrEmpty() && !jsonData["channel"].isNullOrEmpty())
+                        if (!jsonData[INTENT_ACTION].isNullOrEmpty() && !jsonData[INTENT_PACKAGE_NAME].isNullOrEmpty())
                             handleDeviceCommands(jsonData)
                         else {
                             mainScope.launch {
@@ -316,8 +328,8 @@ class MessagingManager @Inject constructor(
                         }
                     }
                     COMMAND_VOLUME_LEVEL -> {
-                        if (!jsonData["channel"].isNullOrEmpty() && jsonData["channel"] in CHANNEL_VOLUME_STREAM &&
-                            !jsonData[TITLE].isNullOrEmpty() && jsonData[TITLE]?.toIntOrNull() != null
+                        if (!jsonData[MEDIA_STREAM].isNullOrEmpty() && jsonData[MEDIA_STREAM] in CHANNEL_VOLUME_STREAM &&
+                            !jsonData[COMMAND].isNullOrEmpty() && jsonData[COMMAND]?.toIntOrNull() != null
                         )
                             handleDeviceCommands(jsonData)
                         else {
@@ -331,7 +343,7 @@ class MessagingManager @Inject constructor(
                         }
                     }
                     COMMAND_BLUETOOTH -> {
-                        if (!jsonData[TITLE].isNullOrEmpty() && jsonData[TITLE] in ENABLE_COMMANDS)
+                        if (!jsonData[COMMAND].isNullOrEmpty() && jsonData[COMMAND] in ENABLE_COMMANDS)
                             handleDeviceCommands(jsonData)
                         else {
                             mainScope.launch {
@@ -345,9 +357,9 @@ class MessagingManager @Inject constructor(
                     }
                     COMMAND_BLE_TRANSMITTER -> {
                         if (
-                            (!jsonData[TITLE].isNullOrEmpty() && jsonData[TITLE] in ENABLE_COMMANDS) ||
+                            (!jsonData[COMMAND].isNullOrEmpty() && jsonData[COMMAND] in ENABLE_COMMANDS) ||
                             (
-                                (!jsonData[TITLE].isNullOrEmpty() && jsonData[TITLE] in BLE_COMMANDS) &&
+                                (!jsonData[COMMAND].isNullOrEmpty() && jsonData[COMMAND] in BLE_COMMANDS) &&
                                     (
                                         !jsonData[BLE_ADVERTISE].isNullOrEmpty() && jsonData[BLE_ADVERTISE] in BLE_ADVERTISE_COMMANDS ||
                                             !jsonData[BLE_TRANSMIT].isNullOrEmpty() && jsonData[BLE_TRANSMIT] in BLE_TRANSMIT_COMMANDS
@@ -366,9 +378,9 @@ class MessagingManager @Inject constructor(
                         }
                     }
                     COMMAND_HIGH_ACCURACY_MODE -> {
-                        if ((!jsonData[TITLE].isNullOrEmpty() && jsonData[TITLE] in ENABLE_COMMANDS) ||
+                        if ((!jsonData[COMMAND].isNullOrEmpty() && jsonData[COMMAND] in ENABLE_COMMANDS) ||
                             (
-                                !jsonData[TITLE].isNullOrEmpty() && jsonData[TITLE] == HIGH_ACCURACY_SET_UPDATE_INTERVAL &&
+                                !jsonData[COMMAND].isNullOrEmpty() && jsonData[COMMAND] == HIGH_ACCURACY_SET_UPDATE_INTERVAL &&
                                     jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toIntOrNull() != null && jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toInt()!! >= 5
                                 )
                         )
@@ -384,7 +396,7 @@ class MessagingManager @Inject constructor(
                         }
                     }
                     COMMAND_ACTIVITY -> {
-                        if (!jsonData["tag"].isNullOrEmpty())
+                        if (!jsonData[INTENT_ACTION].isNullOrEmpty())
                             handleDeviceCommands(jsonData)
                         else {
                             mainScope.launch {
@@ -403,7 +415,7 @@ class MessagingManager @Inject constructor(
                         handleDeviceCommands(jsonData)
                     }
                     COMMAND_MEDIA -> {
-                        if (!jsonData[TITLE].isNullOrEmpty() && jsonData[TITLE] in MEDIA_COMMANDS && !jsonData["channel"].isNullOrEmpty()) {
+                        if (!jsonData[COMMAND].isNullOrEmpty() && jsonData[COMMAND] in MEDIA_COMMANDS && !jsonData[MEDIA_PACKAGE_NAME].isNullOrEmpty()) {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
                                 handleDeviceCommands(jsonData)
                             } else {
@@ -502,7 +514,7 @@ class MessagingManager @Inject constructor(
 
     private fun speakNotification(data: Map<String, String>) {
         var textToSpeech: TextToSpeech? = null
-        var tts = data[TITLE]
+        var tts = data[TTS_TEXT]
         val audioManager = context.getSystemService<AudioManager>()
         val currentAlarmVolume = audioManager?.getStreamVolume(AudioManager.STREAM_ALARM)
         val maxAlarmVolume = audioManager?.getStreamMaxVolume(AudioManager.STREAM_ALARM)
@@ -514,7 +526,7 @@ class MessagingManager @Inject constructor(
             if (it == TextToSpeech.SUCCESS) {
                 val listener = object : UtteranceProgressListener() {
                     override fun onStart(p0: String?) {
-                        if (data["channel"] == ALARM_STREAM_MAX)
+                        if (data[MEDIA_STREAM] == ALARM_STREAM_MAX)
                             audioManager?.setStreamVolume(
                                 AudioManager.STREAM_ALARM,
                                 maxAlarmVolume!!,
@@ -525,7 +537,7 @@ class MessagingManager @Inject constructor(
                     override fun onDone(p0: String?) {
                         textToSpeech?.stop()
                         textToSpeech?.shutdown()
-                        if (data["channel"] == ALARM_STREAM_MAX)
+                        if (data[MEDIA_STREAM] == ALARM_STREAM_MAX)
                             audioManager?.setStreamVolume(
                                 AudioManager.STREAM_ALARM,
                                 currentAlarmVolume!!,
@@ -536,7 +548,7 @@ class MessagingManager @Inject constructor(
                     override fun onError(p0: String?) {
                         textToSpeech?.stop()
                         textToSpeech?.shutdown()
-                        if (data["channel"] == ALARM_STREAM_MAX)
+                        if (data[MEDIA_STREAM] == ALARM_STREAM_MAX)
                             audioManager?.setStreamVolume(
                                 AudioManager.STREAM_ALARM,
                                 currentAlarmVolume!!,
@@ -545,7 +557,7 @@ class MessagingManager @Inject constructor(
                     }
                 }
                 textToSpeech?.setOnUtteranceProgressListener(listener)
-                if (data["channel"] == ALARM_STREAM || data["channel"] == ALARM_STREAM_MAX) {
+                if (data[MEDIA_STREAM] == ALARM_STREAM || data[MEDIA_STREAM] == ALARM_STREAM_MAX) {
                     val audioAttributes = AudioAttributes.Builder()
                         .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                         .setUsage(AudioAttributes.USAGE_ALARM)
@@ -568,7 +580,7 @@ class MessagingManager @Inject constructor(
 
     private fun handleDeviceCommands(data: Map<String, String>) {
         val message = data[MESSAGE]
-        val title = data[TITLE]
+        val command = data[COMMAND]
         when (message) {
             COMMAND_DND -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -577,7 +589,7 @@ class MessagingManager @Inject constructor(
                     if (notificationManager?.isNotificationPolicyAccessGranted == false) {
                         notifyMissingPermission(data[MESSAGE].toString())
                     } else {
-                        when (title) {
+                        when (command) {
                             DND_ALARMS_ONLY -> notificationManager?.setInterruptionFilter(
                                 NotificationManager.INTERRUPTION_FILTER_ALARMS
                             )
@@ -601,17 +613,17 @@ class MessagingManager @Inject constructor(
                     if (notificationManager?.isNotificationPolicyAccessGranted == false) {
                         notifyMissingPermission(data[MESSAGE].toString())
                     } else {
-                        processRingerMode(audioManager!!, title)
+                        processRingerMode(audioManager!!, command)
                     }
                 } else {
-                    processRingerMode(audioManager!!, title)
+                    processRingerMode(audioManager!!, command)
                 }
             }
             COMMAND_BROADCAST_INTENT -> {
                 try {
-                    val packageName = data["channel"]
-                    val intent = Intent(title)
-                    val extras = data["group"]
+                    val packageName = data[INTENT_PACKAGE_NAME]
+                    val intent = Intent(data[INTENT_ACTION])
+                    val extras = data[INTENT_EXTRAS]
                     val className = data[INTENT_CLASS_NAME]
                     if (!extras.isNullOrEmpty()) {
                         addExtrasToIntent(intent, extras)
@@ -642,15 +654,15 @@ class MessagingManager @Inject constructor(
                     } else {
                         processStreamVolume(
                             audioManager!!,
-                            data["channel"].toString(),
-                            title!!.toInt()
+                            data[MEDIA_STREAM].toString(),
+                            command!!.toInt()
                         )
                     }
                 } else {
                     processStreamVolume(
                         audioManager!!,
-                        data["channel"].toString(),
-                        title!!.toInt()
+                        data[MEDIA_STREAM].toString(),
+                        command!!.toInt()
                     )
                 }
             }
@@ -667,24 +679,24 @@ class MessagingManager @Inject constructor(
                         }
                     }
                 }
-                if (title == TURN_OFF)
+                if (command == TURN_OFF)
                     bluetoothAdapter?.disable()
-                if (title == TURN_ON)
+                if (command == TURN_ON)
                     bluetoothAdapter?.enable()
             }
             COMMAND_BLE_TRANSMITTER -> {
-                if (title == TURN_OFF)
+                if (command == TURN_OFF)
                     BluetoothSensorManager.enableDisableBLETransmitter(context, false)
-                if (title == TURN_ON)
+                if (command == TURN_ON)
                     BluetoothSensorManager.enableDisableBLETransmitter(context, true)
-                if (title == BLE_SET_ADVERTISE_MODE || title == BLE_SET_TRANSMIT_POWER)
+                if (command == BLE_SET_ADVERTISE_MODE || command == BLE_SET_TRANSMIT_POWER)
                     sensorDao.updateSettingValue(
                         BluetoothSensorManager.bleTransmitter.id,
-                        if (title == BLE_SET_ADVERTISE_MODE)
+                        if (command == BLE_SET_ADVERTISE_MODE)
                             BluetoothSensorManager.SETTING_BLE_ADVERTISE_MODE
                         else
                             BluetoothSensorManager.SETTING_BLE_TRANSMIT_POWER,
-                        when (title) {
+                        when (command) {
                             BLE_SET_ADVERTISE_MODE -> {
                                 when (data[BLE_ADVERTISE]) {
                                     BLE_ADVERTISE_BALANCED -> BluetoothSensorManager.BLE_ADVERTISE_BALANCED
@@ -706,14 +718,14 @@ class MessagingManager @Inject constructor(
                     )
             }
             COMMAND_HIGH_ACCURACY_MODE -> {
-                when (title) {
+                when (command) {
                     TURN_OFF -> LocationSensorManager.setHighAccuracyModeSetting(context, false)
                     TURN_ON -> LocationSensorManager.setHighAccuracyModeSetting(context, true)
                     HIGH_ACCURACY_SET_UPDATE_INTERVAL -> LocationSensorManager.setHighAccuracyModeIntervalSetting(context, data[HIGH_ACCURACY_UPDATE_INTERVAL]!!.toInt())
                 }
                 val intent = Intent(context, LocationSensorManager::class.java)
                 intent.action = LocationSensorManager.ACTION_FORCE_HIGH_ACCURACY
-                intent.putExtra("command", title)
+                intent.putExtra("command", command)
                 context.sendBroadcast(intent)
             }
             COMMAND_ACTIVITY -> {
@@ -739,15 +751,15 @@ class MessagingManager @Inject constructor(
                     if (!Settings.canDrawOverlays(context))
                         notifyMissingPermission(data[MESSAGE].toString())
                     else
-                        openWebview(title)
+                        openWebview(command)
                 } else
-                    openWebview(title)
+                    openWebview(command)
             }
             COMMAND_SCREEN_ON -> {
-                if (!title.isNullOrEmpty()) {
+                if (!command.isNullOrEmpty()) {
                     mainScope.launch {
                         integrationUseCase.setKeepScreenOnEnabled(
-                            title == COMMAND_KEEP_SCREEN_ON
+                            command == COMMAND_KEEP_SCREEN_ON
                         )
                     }
                 }
@@ -1637,7 +1649,7 @@ class MessagingManager @Inject constructor(
     }
 
     private fun processMediaCommand(data: Map<String, String>) {
-        val title = data[TITLE]
+        val title = data[MEDIA_COMMAND]
         val mediaSessionManager = context.getSystemService<MediaSessionManager>()!!
         val mediaList = mediaSessionManager.getActiveSessions(
             ComponentName(
@@ -1648,7 +1660,7 @@ class MessagingManager @Inject constructor(
         var hasCorrectPackage = false
         if (mediaList.size > 0) {
             for (item in mediaList) {
-                if (item.packageName == data["channel"]) {
+                if (item.packageName == data[MEDIA_PACKAGE_NAME]) {
                     hasCorrectPackage = true
                     val mediaSessionController =
                         MediaController(context, item.sessionToken)
@@ -1723,17 +1735,17 @@ class MessagingManager @Inject constructor(
 
     private fun processActivityCommand(data: Map<String, String>) {
         try {
-            val packageName = data["channel"]
-            val action = data["tag"]
+            val packageName = data[INTENT_PACKAGE_NAME]
+            val action = data[INTENT_ACTION]
             val className = data[INTENT_CLASS_NAME]
-            val intentUri = if (!data[TITLE].isNullOrEmpty()) Uri.parse(data[TITLE]) else null
+            val intentUri = if (!data[INTENT_URI].isNullOrEmpty()) Uri.parse(data[INTENT_URI]) else null
             val intent = if (intentUri != null) Intent(action, intentUri) else Intent(action)
-            val type = data["subject"]
+            val type = data[INTENT_TYPE]
             if (!type.isNullOrEmpty())
                 intent.type = type
             if (!className.isNullOrEmpty() && !packageName.isNullOrEmpty())
                 intent.setClassName(packageName, className)
-            val extras = data["group"]
+            val extras = data[INTENT_EXTRAS]
             if (!extras.isNullOrEmpty()) {
                 addExtrasToIntent(intent, extras)
             }
