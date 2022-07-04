@@ -1339,7 +1339,7 @@ class MessagingManager @Inject constructor(
                     // Start at 100 milliseconds and get frames every 0.5 seconds until reaching the end
                     run frameLoop@{
                         for (timeInMicroSeconds in VIDEO_START_MICROSECONDS until durationInMicroSeconds step VIDEO_INCREMENT_MICROSECONDS) {
-                            if (processingFrames.size >= 5) {
+                            if (processingFrames.size >= 15) {
                                 return@frameLoop
                             }
 
