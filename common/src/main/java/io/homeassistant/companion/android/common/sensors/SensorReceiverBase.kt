@@ -273,7 +273,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                         Log.e(tag, "Issue re-registering sensor ${basicSensor.id}", e)
                     }
                 }
-                if (canBeRegistered && sensor.enabled && sensor.registered != null && sensor.state != sensor.lastSentState) {
+                if (canBeRegistered && sensor.enabled && sensor.registered != null && (sensor.state != sensor.lastSentState || sensor.icon != sensor.lastSentIcon)) {
                     enabledRegistrations.add(fullSensor.toSensorRegistration(basicSensor))
                 }
             }
@@ -284,7 +284,8 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
             try {
                 success = integrationUseCase.updateSensors(enabledRegistrations.toTypedArray())
                 enabledRegistrations.forEach {
-                    sensorDao.updateLastSendState(it.uniqueId, it.state.toString())
+                    sensorDao.updateLastSentState(it.uniqueId, it.state.toString())
+                    sensorDao.updateLastSentIcon(it.uniqueId, it.icon)
                 }
             } catch (e: Exception) {
                 Log.e(tag, "Exception while updating sensors.", e)
@@ -297,6 +298,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                     if (sensor != null) {
                         sensor.registered = null
                         sensor.lastSentState = ""
+                        sensor.lastSentIcon = ""
                         sensorDao.update(sensor)
                     }
                 }
