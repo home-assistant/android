@@ -284,8 +284,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
             try {
                 success = integrationUseCase.updateSensors(enabledRegistrations.toTypedArray())
                 enabledRegistrations.forEach {
-                    sensorDao.updateLastSentState(it.uniqueId, it.state.toString())
-                    sensorDao.updateLastSentIcon(it.uniqueId, it.icon)
+                    sensorDao.updateLastSentStateAndIcon(it.uniqueId, it.state.toString(), it.icon)
                 }
             } catch (e: Exception) {
                 Log.e(tag, "Exception while updating sensors.", e)
