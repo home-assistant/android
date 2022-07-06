@@ -5,7 +5,7 @@
     <string name="activity_intent_error">Unable to send activity intent, please check command format</string>
     <string name="add_service_data_field">Add Field</string>
     <string name="add_shortcut">Add Shortcut</string>
-    <string name="add_ssid">Add SSID</string>
+    <string name="add_ssid">Add</string>
     <string name="add_ssid_name_suggestion">Add %1$s</string>
     <string name="add_widget">Add widget</string>
     <string name="all_entities">All entities</string>
@@ -307,6 +307,7 @@
     <string name="manage_shortcuts">Manage Shortcuts</string>
     <string name="manage_ssids_input_exists">This SSID already exists.</string>
     <string name="manage_ssids_input">New WiFi SSID</string>
+    <string name="manage_ssids_introduction">The internal connection URL will be used when connected to one of the listed SSIDs.</string>
     <string name="manage_ssids">Manage SSID(s)</string>
     <string name="manage_this_notification">Manage This Notification</string>
     <string name="manage_tiles_summary">Setup and manage Quick Setting tiles here. They will not function until you set them up here.</string>
@@ -395,8 +396,10 @@
     <string name="pref_location_background_title">Background Location Tracking</string>
     <string name="pref_location_zone_summary">Import existing Home Assistant zones as geofences for zone based tracking.</string>
     <string name="pref_location_zone_title">Zone Based Tracking</string>
-    <string name="prioritize_internal_summary">Always try the internal URL first before the external URL. Enable this setting if you typically leave location off.</string>
-    <string name="prioritize_internal">Prioritize Internal URL</string>
+    <string name="prioritize_internal_title">When loading dashboard and unknown if connected to Home Network WiFi</string>
+    <string name="prioritize_internal_on">Use internal connection URL</string>
+    <string name="prioritize_internal_on_expanded">Use internal connection URL (use this if you typically turn location access off)</string>
+    <string name="prioritize_internal_off">Use Home Assistant URL (recommended)</string>
     <string name="privacy_policy">Privacy Policy</string>
     <string name="privacy_url">https://www.home-assistant.io/privacy</string>
     <string name="profile">Profile</string>

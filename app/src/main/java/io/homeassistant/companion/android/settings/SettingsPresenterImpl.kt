@@ -50,7 +50,6 @@ class SettingsPresenterImpl @Inject constructor(
                 "pinch_to_zoom" -> integrationUseCase.isPinchToZoomEnabled()
                 "app_lock" -> authenticationUseCase.isLockEnabled()
                 "crash_reporting" -> prefsRepository.isCrashReporting()
-                "prioritize_internal" -> urlUseCase.isPrioritizeInternal()
                 "autoplay_video" -> integrationUseCase.isAutoPlayVideoEnabled()
                 "webview_debug" -> integrationUseCase.isWebViewDebugEnabled()
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
@@ -66,7 +65,6 @@ class SettingsPresenterImpl @Inject constructor(
                 "pinch_to_zoom" -> integrationUseCase.setPinchToZoomEnabled(value)
                 "app_lock" -> authenticationUseCase.setLockEnabled(value)
                 "crash_reporting" -> prefsRepository.setCrashReporting(value)
-                "prioritize_internal" -> urlUseCase.setPrioritizeInternal(value)
                 "autoplay_video" -> integrationUseCase.setAutoPlayVideo(value)
                 "webview_debug" -> integrationUseCase.setWebViewDebugEnabled(value)
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
@@ -117,27 +115,6 @@ class SettingsPresenterImpl @Inject constructor(
         }
     }
 
-    override fun getStringSet(key: String, defValues: Set<String>?): Set<String> {
-        return runBlocking {
-            when (key) {
-                "connection_internal_ssids" -> urlUseCase.getHomeWifiSsids()
-                else -> throw IllegalArgumentException("No stringSet found by this key: $key")
-            }
-        }
-    }
-
-    override fun putStringSet(key: String, values: Set<String>?) {
-        mainScope.launch {
-            when (key) {
-                "connection_internal_ssids" -> {
-                    val ssids = values ?: emptySet()
-                    urlUseCase.saveHomeWifiSsids(ssids)
-                    handleInternalUrlStatus(ssids)
-                }
-            }
-        }
-    }
-
     override fun getInt(key: String, defValue: Int): Int {
         return runBlocking {
             when (key) {
@@ -170,6 +147,12 @@ class SettingsPresenterImpl @Inject constructor(
         mainScope.cancel()
     }
 
+    override fun updateInternalUrlStatus() {
+        mainScope.launch {
+            handleInternalUrlStatus(urlUseCase.getHomeWifiSsids())
+        }
+    }
+
     private suspend fun handleInternalUrlStatus(ssids: Set<String>) {
         if (ssids.isEmpty()) {
             settingsView.disableInternalConnection()
@@ -177,6 +160,7 @@ class SettingsPresenterImpl @Inject constructor(
         } else {
             settingsView.enableInternalConnection()
         }
+        settingsView.updateSsids(ssids)
     }
 
     override fun isLockEnabled(): Boolean {
