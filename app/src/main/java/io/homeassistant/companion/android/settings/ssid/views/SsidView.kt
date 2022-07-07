@@ -186,7 +186,6 @@ fun SsidView(
             Column {
                 Spacer(modifier = Modifier.height(48.dp))
                 Divider(modifier = Modifier.padding(horizontal = 16.dp))
-                Spacer(modifier = Modifier.height(0.dp))
                 Box {
                     Column(
                         modifier = Modifier
