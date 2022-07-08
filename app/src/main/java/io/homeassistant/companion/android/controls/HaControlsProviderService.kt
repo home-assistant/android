@@ -239,10 +239,10 @@ class HaControlsProviderService : ControlsProviderService() {
     ) {
         entities.forEach {
             val control = try {
-                domainToHaControl[it.value.domain]?.createControl(
+                domainToHaControl[it.key.split(".")[0]]?.createControl(
                     applicationContext,
                     it.value,
-                    RegistriesDataHandler.getAreaForEntity(it.key, areaRegistry, deviceRegistry, entityRegistry),
+                    RegistriesDataHandler.getAreaForEntity(it.value.entityId, areaRegistry, deviceRegistry, entityRegistry),
                     baseUrl
                 )
             } catch (e: Exception) {
@@ -250,7 +250,7 @@ class HaControlsProviderService : ControlsProviderService() {
                 domainToHaControl["ha_failed"]?.createControl(
                     applicationContext,
                     getFailedEntity(it.value.entityId, e),
-                    RegistriesDataHandler.getAreaForEntity(it.key, areaRegistry, deviceRegistry, entityRegistry),
+                    RegistriesDataHandler.getAreaForEntity(it.value.entityId, areaRegistry, deviceRegistry, entityRegistry),
                     baseUrl
                 )
             }
