@@ -244,7 +244,7 @@ class MessagingManager @Inject constructor(
 
         // Video Values
         const val VIDEO_START_MICROSECONDS = 100000L
-        const val VIDEO_INCREMENT_MICROSECONDS = 500000L
+        const val VIDEO_INCREMENT_MICROSECONDS = 1000000L
         const val VIDEO_GUESS_MILLISECONDS = 7000L
     }
 
@@ -1339,7 +1339,7 @@ class MessagingManager @Inject constructor(
                     // Start at 100 milliseconds and get frames every 0.5 seconds until reaching the end
                     run frameLoop@{
                         for (timeInMicroSeconds in VIDEO_START_MICROSECONDS until durationInMicroSeconds step VIDEO_INCREMENT_MICROSECONDS) {
-                            if (processingFrames.size >= 15) {
+                            if (processingFrames.size >= 5) {
                                 return@frameLoop
                             }
 
@@ -1359,8 +1359,8 @@ class MessagingManager @Inject constructor(
         }
 
     private fun Bitmap.getCompressedFrame(): Bitmap? {
-        val newHeight = height / 4
-        val newWidth = width / 4
+		val newHeight = 480 * width / height
+        val newWidth = 480
         return Bitmap.createScaledBitmap(this, newWidth, newHeight, false)
     }
 
