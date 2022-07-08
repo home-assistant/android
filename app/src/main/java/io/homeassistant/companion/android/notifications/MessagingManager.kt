@@ -380,7 +380,7 @@ class MessagingManager @Inject constructor(
                         }
                     }
                     COMMAND_BEACON_MONITOR -> {
-                        if (!jsonData[TITLE].isNullOrEmpty() && jsonData[TITLE] in ENABLE_COMMANDS)
+                        if (!jsonData[COMMAND].isNullOrEmpty() && jsonData[COMMAND] in ENABLE_COMMANDS)
                             handleDeviceCommands(jsonData)
                         else {
                             mainScope.launch {
@@ -733,9 +733,9 @@ class MessagingManager @Inject constructor(
                     )
             }
             COMMAND_BEACON_MONITOR -> {
-                if (title == TURN_OFF)
+                if (command == TURN_OFF)
                     BluetoothSensorManager.enableDisableBeaconMonitor(context, false)
-                if (title == TURN_ON)
+                if (command == TURN_ON)
                     BluetoothSensorManager.enableDisableBeaconMonitor(context, true)
             }
             COMMAND_HIGH_ACCURACY_MODE -> {
