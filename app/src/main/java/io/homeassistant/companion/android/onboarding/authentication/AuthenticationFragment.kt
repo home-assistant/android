@@ -12,6 +12,7 @@ import android.view.ViewGroup
 import android.webkit.SslErrorHandler
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
@@ -25,9 +26,11 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
+import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.onboarding.OnboardingViewModel
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationFragment
 import io.homeassistant.companion.android.themes.ThemesManager
+import io.homeassistant.companion.android.util.TLSWebViewClient
 import io.homeassistant.companion.android.util.isStarted
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import javax.inject.Inject
@@ -46,6 +49,9 @@ class AuthenticationFragment : Fragment() {
     @Inject
     lateinit var themesManager: ThemesManager
 
+    @Inject
+    lateinit var keyChainRepository: KeyChainRepository
+
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -61,7 +67,7 @@ class AuthenticationFragment : Fragment() {
                             settings.javaScriptEnabled = true
                             settings.domStorageEnabled = true
                             settings.userAgentString = settings.userAgentString + " ${HomeAssistantApis.USER_AGENT_STRING}"
-                            webViewClient = object : WebViewClient() {
+                            webViewClient = object : TLSWebViewClient(keyChainRepository) {
                                 override fun shouldOverrideUrlLoading(view: WebView?, url: String): Boolean {
                                     return onRedirect(url)
                                 }
@@ -73,6 +79,21 @@ class AuthenticationFragment : Fragment() {
                                 ) {
                                     super.onReceivedError(view, request, error)
                                     showError(commonR.string.webview_error, null, error)
+                                }
+
+                                override fun onReceivedHttpError(
+                                    view: WebView?,
+                                    request: WebResourceRequest?,
+                                    errorResponse: WebResourceResponse?
+                                ) {
+                                    super.onReceivedHttpError(view, request, errorResponse)
+                                    if (isTLSClientAuthNeeded && !isCertificateChainValid) {
+                                        showError(commonR.string.tls_cert_expired_message, null, null)
+                                    } else if (isTLSClientAuthNeeded && errorResponse?.statusCode == 400) {
+                                        showError(commonR.string.tls_cert_not_found_message, null, null)
+                                    } else {
+                                        showError(commonR.string.error_ssl, null, null)
+                                    }
                                 }
 
                                 override fun onReceivedSslError(

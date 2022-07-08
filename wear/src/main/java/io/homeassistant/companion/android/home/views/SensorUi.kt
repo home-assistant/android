@@ -6,9 +6,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.ToggleChipDefaults
+import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.sensor.Sensor
 
@@ -36,6 +38,14 @@ fun SensorUi(
                 overflow = TextOverflow.Ellipsis
             )
         },
-        toggleIcon = { ToggleChipDefaults.SwitchIcon(checked) }
+        toggleControl = {
+            Icon(
+                imageVector = ToggleChipDefaults.switchIcon(checked),
+                contentDescription = if (checked)
+                    stringResource(R.string.enabled)
+                else
+                    stringResource(R.string.disabled)
+            )
+        }
     )
 }

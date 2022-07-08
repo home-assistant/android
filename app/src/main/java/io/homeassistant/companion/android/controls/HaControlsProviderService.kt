@@ -17,6 +17,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.En
 import io.homeassistant.companion.android.util.RegistriesDataHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -67,11 +68,16 @@ class HaControlsProviderService : ControlsProviderService() {
         return Flow.Publisher { subscriber ->
             ioScope.launch {
                 try {
-                    val areaRegistry = webSocketRepository.getAreaRegistry()
-                    val deviceRegistry = webSocketRepository.getDeviceRegistry()
-                    val entityRegistry = webSocketRepository.getEntityRegistry()
+                    val getAreaRegistry = async { webSocketRepository.getAreaRegistry() }
+                    val getDeviceRegistry = async { webSocketRepository.getDeviceRegistry() }
+                    val getEntityRegistry = async { webSocketRepository.getEntityRegistry() }
+                    val getEntities = async { integrationRepository.getEntities() }
 
-                    val entities = integrationRepository.getEntities()
+                    val areaRegistry = getAreaRegistry.await()
+                    val deviceRegistry = getDeviceRegistry.await()
+                    val entityRegistry = getEntityRegistry.await()
+                    val entities = getEntities.await()
+
                     val areaForEntity = entities.orEmpty().associate {
                         it.entityId to RegistriesDataHandler.getAreaForEntity(it.entityId, areaRegistry, deviceRegistry, entityRegistry)
                     }
@@ -109,16 +115,12 @@ class HaControlsProviderService : ControlsProviderService() {
                 override fun request(n: Long) {
                     Log.d(TAG, "request $n")
                     ioScope.launch {
-                        val entityFlow = integrationRepository.getEntityUpdates()
-                        val areaRegistryFlow = webSocketRepository.getAreaRegistryUpdates()
-                        val deviceRegistryFlow = webSocketRepository.getDeviceRegistryUpdates()
-                        val entityRegistryFlow = webSocketRepository.getEntityRegistryUpdates()
                         // Load up initial values
                         // This should use the cached values that we should store in the DB.
                         // For now we'll use the rest API
-                        var areaRegistry = webSocketRepository.getAreaRegistry()
-                        var deviceRegistry = webSocketRepository.getDeviceRegistry()
-                        var entityRegistry = webSocketRepository.getEntityRegistry()
+                        val getAreaRegistry = async { webSocketRepository.getAreaRegistry() }
+                        val getDeviceRegistry = async { webSocketRepository.getDeviceRegistry() }
+                        val getEntityRegistry = async { webSocketRepository.getEntityRegistry() }
                         val entities = mutableMapOf<String, Entity<Map<String, Any>>>()
                         controlIds.forEach {
                             try {
@@ -133,11 +135,15 @@ class HaControlsProviderService : ControlsProviderService() {
                                 Log.e(TAG, "Unable to get $it from Home Assistant, caught exception.", e)
                             }
                         }
+                        var areaRegistry = getAreaRegistry.await()
+                        var deviceRegistry = getDeviceRegistry.await()
+                        var entityRegistry = getEntityRegistry.await()
+
                         sendEntitiesToSubscriber(subscriber, entities, areaRegistry, deviceRegistry, entityRegistry)
 
                         // Listen for the state changed events.
                         webSocketScope.launch {
-                            entityFlow?.collect {
+                            integrationRepository.getEntityUpdates()?.collect {
                                 if (controlIds.contains(it.entityId)) {
                                     val control = domainToHaControl[it.domain]?.createControl(
                                         applicationContext,
@@ -149,19 +155,19 @@ class HaControlsProviderService : ControlsProviderService() {
                             }
                         }
                         webSocketScope.launch {
-                            areaRegistryFlow?.collect {
+                            webSocketRepository.getAreaRegistryUpdates()?.collect {
                                 areaRegistry = webSocketRepository.getAreaRegistry()
                                 sendEntitiesToSubscriber(subscriber, entities, areaRegistry, deviceRegistry, entityRegistry)
                             }
                         }
                         webSocketScope.launch {
-                            deviceRegistryFlow?.collect {
+                            webSocketRepository.getDeviceRegistryUpdates()?.collect {
                                 deviceRegistry = webSocketRepository.getDeviceRegistry()
                                 sendEntitiesToSubscriber(subscriber, entities, areaRegistry, deviceRegistry, entityRegistry)
                             }
                         }
                         webSocketScope.launch {
-                            entityRegistryFlow?.collect { event ->
+                            webSocketRepository.getEntityRegistryUpdates()?.collect { event ->
                                 if (event.action == "update" && controlIds.contains(event.entityId)) {
                                     entityRegistry = webSocketRepository.getEntityRegistry()
                                     sendEntitiesToSubscriber(subscriber, entities, areaRegistry, deviceRegistry, entityRegistry)
