@@ -49,7 +49,7 @@ object CameraControl : HaControl {
         val icon = if (image != null) {
             Icon.createWithBitmap(image)
         } else {
-            Icon.createWithResource(context, R.drawable.ic_sync_problem)
+            Icon.createWithResource(context, R.drawable.control_camera_placeholder)
         }
         control.setControlTemplate(
             ThumbnailTemplate(
