@@ -153,6 +153,7 @@
     <string name="documentation">Documentation</string>
     <string name="domain_automation">Automation</string>
     <string name="domain_button">Button</string>
+    <string name="domain_camera">Camera</string>
     <string name="domain_climate">Climate</string>
     <string name="domain_cover">Cover</string>
     <string name="domain_fan">Fan</string>
@@ -668,6 +669,8 @@
     <string name="state_unknown">Unknown</string>
     <string name="state_unlocked">Unlocked</string>
     <string name="state_unlocking">Unlocking</string>
+    <string name="state_recording">Recording</string>
+    <string name="state_streaming">Streaming</string>
     <string name="state">State</string>
     <string name="state_name">State: %1$s</string>
     <string name="states">Overview</string>
@@ -767,6 +770,7 @@
     <string name="widget_background_type_transparent">Transparent</string>
     <string name="widget_button_image_description">Service Button</string>
     <string name="widget_camera_description">Camera Widget</string>
+    <string name="widget_camera_contentdescription">Camera image</string>
     <string name="widget_config_service_error">A custom component is preventing service data from loading.</string>
     <string name="widget_creation_error">Unable to create widget.</string>
     <string name="widget_entity_fetch_error">Unable to fetch data for configured entity.</string>
