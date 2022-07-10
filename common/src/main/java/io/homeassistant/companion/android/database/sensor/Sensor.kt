@@ -17,6 +17,8 @@ data class Sensor(
     var state: String,
     @ColumnInfo(name = "last_sent_state")
     var lastSentState: String = "",
+    @ColumnInfo(name = "last_sent_icon", defaultValue = "")
+    var lastSentIcon: String = "",
     @ColumnInfo(name = "state_type")
     var stateType: String = "",
     @ColumnInfo(name = "type")

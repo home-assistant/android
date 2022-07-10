@@ -6,5 +6,7 @@ interface SettingsView {
 
     fun enableInternalConnection()
 
+    fun updateSsids(ssids: Set<String>)
+
     fun onLangSettingsChanged()
 }
