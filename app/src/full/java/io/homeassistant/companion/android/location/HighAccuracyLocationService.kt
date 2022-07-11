@@ -18,6 +18,7 @@ import androidx.core.app.NotificationManagerCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import io.homeassistant.companion.android.common.util.highAccuracyChannel
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.util.ForegroundServiceLauncher
@@ -188,12 +189,12 @@ class HighAccuracyLocationService : Service() {
 
     @SuppressLint("MissingPermission")
     private fun requestLocationUpdates(intervalInSeconds: Int) {
-        val request = LocationRequest()
+        val request = LocationRequest.create()
 
         val intervalInMS = (intervalInSeconds * 1000).toLong()
         request.interval = intervalInMS
         request.fastestInterval = intervalInMS / 2
-        request.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        request.priority = Priority.PRIORITY_HIGH_ACCURACY
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
         fusedLocationProviderClient?.requestLocationUpdates(request, getLocationUpdateIntent())

@@ -21,6 +21,7 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -37,6 +38,7 @@ import io.homeassistant.companion.android.location.HighAccuracyLocationService
 import io.homeassistant.companion.android.notifications.MessagingManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import io.homeassistant.companion.android.common.R as commonR
@@ -265,6 +267,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                     } else {
                         Log.d(TAG, "High accuracy mode parameters changed. Disable high accuracy mode.")
                         stopHighAccuracyService()
+                        delay(500)
                         requestLocationUpdates()
                     }
                 }
@@ -764,13 +767,13 @@ class LocationSensorManager : LocationSensorManagerBase() {
     }
 
     private fun createLocationRequest(): LocationRequest {
-        val locationRequest = LocationRequest()
+        val locationRequest = LocationRequest.create()
 
         locationRequest.interval = 60000 // Every 60 seconds
         locationRequest.fastestInterval = 30000 // Every 30 seconds
         locationRequest.maxWaitTime = 200000 // Every 5 minutes
 
-        locationRequest.priority = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY
+        locationRequest.priority = Priority.PRIORITY_BALANCED_POWER_ACCURACY
 
         return locationRequest
     }
@@ -900,7 +903,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
         val maxRetries = 5
         val request = createLocationRequest().apply {
-            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+            priority = Priority.PRIORITY_HIGH_ACCURACY
             numUpdates = maxRetries
             interval = 10000
             fastestInterval = 5000
