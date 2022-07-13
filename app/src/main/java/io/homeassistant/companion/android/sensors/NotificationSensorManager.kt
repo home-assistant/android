@@ -140,10 +140,11 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             .plus("is_clearable" to sbn.isClearable)
             .plus("is_ongoing" to sbn.isOngoing)
             .plus("group_id" to sbn.notification.group)
-            .plus("category" to sbn.notification.category).toMutableMap()
+            .plus("category" to sbn.notification.category)
+            .toMutableMap()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-            attr += attr.plus("channel_id" to sbn.notification.channelId)
+            attr["channel_id"] = sbn.notification.channelId
 
         // Attempt to use the text of the notification but fallback to package name if all else fails.
         val state = attr["android.text"] ?: attr["android.title"] ?: sbn.packageName
@@ -196,10 +197,11 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             .plus("is_clearable" to sbn.isClearable)
             .plus("is_ongoing" to sbn.isOngoing)
             .plus("group_id" to sbn.notification.group)
-            .plus("category" to sbn.notification.category).toMutableMap()
+            .plus("category" to sbn.notification.category)
+            .toMutableMap()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-            attr += attr.plus("channel_id" to sbn.notification.channelId)
+            attr["channel_id"] = sbn.notification.channelId
 
         // Attempt to use the text of the notification but fallback to package name if all else fails.
         val state = attr["android.text"] ?: attr["android.title"] ?: sbn.packageName
@@ -231,7 +233,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
                     .plus(item.packageName + "_" + item.id + "_category" to item.notification.category)
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                    attr += attr.plus(item.packageName + "_" + item.id + "_channel_id" to item.notification.channelId)
+                    attr[item.packageName + "_" + item.id + "_channel_id"] = item.notification.channelId
             }
             onSensorUpdated(
                 applicationContext,
