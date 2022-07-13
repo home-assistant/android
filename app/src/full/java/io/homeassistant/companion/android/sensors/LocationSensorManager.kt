@@ -38,7 +38,6 @@ import io.homeassistant.companion.android.location.HighAccuracyLocationService
 import io.homeassistant.companion.android.notifications.MessagingManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import io.homeassistant.companion.android.common.R as commonR
@@ -67,6 +66,8 @@ class LocationSensorManager : LocationSensorManagerBase() {
             "io.homeassistant.companion.android.background.REQUEST_ACCURATE_UPDATE"
         const val ACTION_PROCESS_LOCATION =
             "io.homeassistant.companion.android.background.PROCESS_UPDATES"
+        const val ACTION_PROCESS_HIGH_ACCURACY_LOCATION =
+            "io.homeassistant.companion.android.background.PROCESS_HIGH_ACCURACY_UPDATES"
         const val ACTION_PROCESS_GEO =
             "io.homeassistant.companion.android.background.PROCESS_GEOFENCE"
         const val ACTION_FORCE_HIGH_ACCURACY =
@@ -168,7 +169,8 @@ class LocationSensorManager : LocationSensorManagerBase() {
         when (intent.action) {
             Intent.ACTION_BOOT_COMPLETED,
             ACTION_REQUEST_LOCATION_UPDATES -> setupLocationTracking()
-            ACTION_PROCESS_LOCATION -> handleLocationUpdate(intent)
+            ACTION_PROCESS_LOCATION,
+            ACTION_PROCESS_HIGH_ACCURACY_LOCATION -> handleLocationUpdate(intent)
             ACTION_PROCESS_GEO -> handleGeoUpdate(intent)
             ACTION_REQUEST_ACCURATE_LOCATION_UPDATE -> requestSingleAccurateLocation()
             ACTION_FORCE_HIGH_ACCURACY -> {
@@ -267,7 +269,6 @@ class LocationSensorManager : LocationSensorManagerBase() {
                     } else {
                         Log.d(TAG, "High accuracy mode parameters changed. Disable high accuracy mode.")
                         stopHighAccuracyService()
-                        delay(500)
                         requestLocationUpdates()
                     }
                 }

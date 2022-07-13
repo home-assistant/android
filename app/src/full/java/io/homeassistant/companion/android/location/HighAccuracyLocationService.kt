@@ -183,7 +183,7 @@ class HighAccuracyLocationService : Service() {
 
     private fun getLocationUpdateIntent(): PendingIntent {
         val intent = Intent(this, LocationSensorManager::class.java)
-        intent.action = LocationSensorManager.ACTION_PROCESS_LOCATION
+        intent.action = LocationSensorManager.ACTION_PROCESS_HIGH_ACCURACY_LOCATION
         return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
     }
 
