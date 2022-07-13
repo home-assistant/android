@@ -98,6 +98,9 @@ class LastUpdateManager : SensorManager {
                 // add the new Intent:
                 sensorDao.add(SensorSetting(lastUpdate.id, newIntentSettingName, intentAction, SensorSettingType.STRING))
             }
+        } else {
+            // add the toggle if it was not already added.
+            sensorDao.add(SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", SensorSettingType.TOGGLE))
         }
     }
 }
