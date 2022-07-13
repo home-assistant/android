@@ -92,16 +92,14 @@ class LastUpdateManager : SensorManager {
         if (addNewIntentToggle == null) {
             // add the toggle if it was not already added.
             sensorDao.add(SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", SensorSettingType.TOGGLE))
-        } else {
-            if (addNewIntentToggle.value == "true") {
-                val newIntentSettingOrdinal = intentSettings.size + 1
-                val newIntentSettingName = "$INTENT_SETTING_PREFIX$newIntentSettingOrdinal:"
-                if (allSettings.none { it.name == newIntentSettingName }) {
-                    // turn off the toggle:
-                    sensorDao.add(SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", SensorSettingType.TOGGLE))
-                    // add the new Intent:
-                    sensorDao.add(SensorSetting(lastUpdate.id, newIntentSettingName, intentAction, SensorSettingType.STRING))
-                }
+        } else if (addNewIntentToggle.value == "true") {
+            val newIntentSettingOrdinal = intentSettings.size + 1
+            val newIntentSettingName = "$INTENT_SETTING_PREFIX$newIntentSettingOrdinal:"
+            if (allSettings.none { it.name == newIntentSettingName }) {
+                // turn off the toggle:
+                sensorDao.add(SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", SensorSettingType.TOGGLE))
+                // add the new Intent:
+                sensorDao.add(SensorSetting(lastUpdate.id, newIntentSettingName, intentAction, SensorSettingType.STRING))
             }
         }
     }
