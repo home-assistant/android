@@ -204,6 +204,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
         // Full: this only refers to the system permission on Android 13+ so no changes are necessary.
         // Minimal: change persistent connection setting to reflect preference.
         if (BuildConfig.FLAVOR != "full") {
+            settingViewModel.getSetting(0) // Required to create initial value
             settingViewModel.updateWebsocketSetting(
                 0,
                 if (enabled) WebsocketSetting.ALWAYS else WebsocketSetting.NEVER
