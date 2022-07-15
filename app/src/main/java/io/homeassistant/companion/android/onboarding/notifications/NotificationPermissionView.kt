@@ -1,7 +1,5 @@
 package io.homeassistant.companion.android.onboarding.notifications
 
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
@@ -45,14 +44,14 @@ fun NotificationPermissionView(
     ) {
         Column(
             modifier = Modifier
-                .scrollable(scrollState, Orientation.Vertical)
+                .verticalScroll(scrollState)
                 .fillMaxWidth()
                 .padding(top = 32.dp)
                 .weight(1f)
         ) {
             Icon(
                 imageVector = Icons.Outlined.Notifications,
-                contentDescription = stringResource(id = commonR.string.notifications),
+                contentDescription = null,
                 tint = colorResource(id = commonR.color.colorAccent),
                 modifier = Modifier
                     .size(48.dp)
