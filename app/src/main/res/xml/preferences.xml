@@ -130,6 +130,12 @@
         android:key="notifications"
         app:isPreferenceVisible="false">
         <Preference
+            android:key="notification_permission"
+            android:title="@string/notification_permission"
+            android:summary="@string/notification_permission_summary"
+            app:isPreferenceVisible="false"
+            android:icon="@drawable/ic_notification_off" />
+        <Preference
             android:key="notification_channels"
             android:title="@string/notification_channels"
             android:summary="@string/notification_channels_summary"

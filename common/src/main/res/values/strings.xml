@@ -856,6 +856,8 @@
     <string name="websocket_notification_issues">Persistent Connection Issues</string>
     <string name="notification_channels">Notification Channels</string>
     <string name="notification_channels_summary">Manage all notification channels configured on the device. Channels control the behavior of its notifications including visibility and sound.</string>
+    <string name="notification_permission">Notification Permission</string>
+    <string name="notification_permission_summary">Home Assistant does not have permission to send you notifications. Click here to enable sending notifications.</string>
     <string name="info">Information</string>
     <string name="show_changelog">Show Change Log</string>
     <string name="show_changelog_summary">Show the change log dialog from when the app was updated</string>
