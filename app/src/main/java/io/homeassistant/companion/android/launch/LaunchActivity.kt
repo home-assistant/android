@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.launch
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.fragment.app.viewModels
 import com.google.android.material.composethemeadapter.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
@@ -18,9 +20,11 @@ import io.homeassistant.companion.android.common.data.integration.DeviceRegistra
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.database.sensor.SensorDao
+import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.onboarding.getMessagingToken
 import io.homeassistant.companion.android.sensors.LocationSensorManager
+import io.homeassistant.companion.android.settings.SettingViewModel
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -55,6 +59,8 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
     lateinit var sensorDao: SensorDao
 
     private val mainScope = CoroutineScope(Dispatchers.Main + Job())
+
+    private val settingViewModel: SettingViewModel by viewModels()
 
     private val registerActivityResult = registerForActivityResult(
         OnboardApp(),
@@ -95,7 +101,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
     private fun onOnboardingComplete(result: OnboardApp.Output?) {
         mainScope.launch {
             if (result != null) {
-                val (url, authCode, deviceName, deviceTrackingEnabled) = result
+                val (url, authCode, deviceName, deviceTrackingEnabled, notificationsEnabled) = result
                 val messagingToken = getMessagingToken()
                 if (messagingToken.isBlank() && BuildConfig.FLAVOR == "full") {
                     AlertDialog.Builder(this@LaunchActivity)
@@ -108,7 +114,8 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                                     authCode,
                                     deviceName,
                                     messagingToken,
-                                    deviceTrackingEnabled
+                                    deviceTrackingEnabled,
+                                    notificationsEnabled
                                 )
                             }
                         }
@@ -119,7 +126,8 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                         authCode,
                         deviceName,
                         messagingToken,
-                        deviceTrackingEnabled
+                        deviceTrackingEnabled,
+                        notificationsEnabled
                     )
                 }
             } else
@@ -132,7 +140,8 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
         authCode: String,
         deviceName: String,
         messagingToken: String,
-        deviceTrackingEnabled: Boolean
+        deviceTrackingEnabled: Boolean,
+        notificationsEnabled: Boolean
     ) {
         try {
             urlRepository.saveUrl(url)
@@ -176,6 +185,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
             return
         }
         setLocationTracking(deviceTrackingEnabled)
+        setNotifications(notificationsEnabled)
         displayWebview()
     }
 
@@ -188,5 +198,16 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
             ),
             enabled = enabled
         )
+    }
+
+    private fun setNotifications(enabled: Boolean) {
+        // Full: this only refers to the system permission on Android 13+ so no changes are necessary.
+        // Minimal: change persistent connection setting to reflect preference.
+        if (BuildConfig.FLAVOR != "full") {
+            settingViewModel.updateWebsocketSetting(
+                0,
+                if (enabled) WebsocketSetting.ALWAYS else WebsocketSetting.NEVER
+            )
+        }
     }
 }
