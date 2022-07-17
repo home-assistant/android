@@ -88,8 +88,11 @@ class LastUpdateManager : SensorManager {
             // add new settings to DB:
             newIntentSettings.forEach(sensorDao::add)
         }
-        val shouldAddNewIntent = allSettings.firstOrNull { it.name == SETTING_ADD_NEW_INTENT }?.value == "true"
-        if (shouldAddNewIntent) {
+        val addNewIntentToggle = allSettings.firstOrNull { it.name == SETTING_ADD_NEW_INTENT }
+        if (addNewIntentToggle == null) {
+            // add the toggle if it was not already added.
+            sensorDao.add(SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", SensorSettingType.TOGGLE))
+        } else if (addNewIntentToggle.value == "true") {
             val newIntentSettingOrdinal = intentSettings.size + 1
             val newIntentSettingName = "$INTENT_SETTING_PREFIX$newIntentSettingOrdinal:"
             if (allSettings.none { it.name == newIntentSettingName }) {
