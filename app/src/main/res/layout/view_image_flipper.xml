@@ -30,7 +30,7 @@
         android:layout_height="match_parent"
         android:layout_marginTop="4dp"
         android:autoStart="true"
-        android:flipInterval="400"
+        android:flipInterval="250"
         android:inAnimation="@null"
         android:outAnimation="@null" />
 
