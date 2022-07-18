@@ -244,7 +244,7 @@ class MessagingManager @Inject constructor(
 
         // Video Values
         const val VIDEO_START_MICROSECONDS = 100000L
-        const val VIDEO_INCREMENT_MICROSECONDS = 500000L
+        const val VIDEO_INCREMENT_MICROSECONDS = 750000L
         const val VIDEO_GUESS_MILLISECONDS = 7000L
     }
 
@@ -1361,6 +1361,7 @@ class MessagingManager @Inject constructor(
     private fun Bitmap.getCompressedFrame(): Bitmap? {
         var newWidth = 480
         var newHeight = 0
+        // If already smaller than 480p do not scale else scale
         if (width < newWidth) {
             newWidth = width
             newHeight = height
