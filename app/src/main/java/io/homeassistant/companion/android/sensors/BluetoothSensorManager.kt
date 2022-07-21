@@ -40,7 +40,6 @@ class BluetoothSensorManager : SensorManager {
         private const val DEFAULT_MEASURED_POWER_AT_1M = -59
         private var priorBluetoothStateEnabled = false
 
-        // private const val TAG = "BluetoothSM"
         private var bleTransmitterDevice = IBeaconTransmitter("", "", "", transmitPowerSetting = "", measuredPowerSetting = 0, advertiseModeSetting = "", transmitting = false, state = "", restartRequired = false)
         val bluetoothConnection = SensorManager.BasicSensor(
             "bluetooth_connection",
@@ -136,10 +135,10 @@ class BluetoothSensorManager : SensorManager {
         if (checkPermission(context, bluetoothConnection.id)) {
 
             val bluetoothDevices = BluetoothUtils.getBluetoothDevices(context, true)
-            pairedDevices = bluetoothDevices.filter { b -> b.paired }.map { it.address }
-            connectedPairedDevices = bluetoothDevices.filter { b -> b.paired && b.connected }.map { it.address }
-            connectedNotPairedDevices = bluetoothDevices.filter { b -> !b.paired && b.connected }.map { it.address }
-            totalConnectedDevices = bluetoothDevices.filter { b -> b.connected }.count()
+            pairedDevices = bluetoothDevices.filter { b -> b.paired }.map { "${it.address} (${it.name})" }
+            connectedPairedDevices = bluetoothDevices.filter { b -> b.paired && b.connected }.map { "${it.address} (${it.name})" }
+            connectedNotPairedDevices = bluetoothDevices.filter { b -> !b.paired && b.connected }.map { "${it.address} (${it.name})" }
+            totalConnectedDevices = bluetoothDevices.count { b -> b.connected }
         }
         onSensorUpdated(
             context,
