@@ -8,6 +8,7 @@ import android.content.res.Configuration
 import android.media.MediaMetadata
 import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
+import android.os.Build
 import android.os.Bundle
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
@@ -138,6 +139,12 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             .plus("post_time" to sbn.postTime)
             .plus("is_clearable" to sbn.isClearable)
             .plus("is_ongoing" to sbn.isOngoing)
+            .plus("group_id" to sbn.notification.group)
+            .plus("category" to sbn.notification.category)
+            .toMutableMap()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+            attr["channel_id"] = sbn.notification.channelId
 
         // Attempt to use the text of the notification but fallback to package name if all else fails.
         val state = attr["android.text"] ?: attr["android.title"] ?: sbn.packageName
@@ -189,6 +196,12 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             .plus("post_time" to sbn.postTime)
             .plus("is_clearable" to sbn.isClearable)
             .plus("is_ongoing" to sbn.isOngoing)
+            .plus("group_id" to sbn.notification.group)
+            .plus("category" to sbn.notification.category)
+            .toMutableMap()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+            attr["channel_id"] = sbn.notification.channelId
 
         // Attempt to use the text of the notification but fallback to package name if all else fails.
         val state = attr["android.text"] ?: attr["android.title"] ?: sbn.packageName
@@ -216,6 +229,11 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
                     .plus(item.packageName + "_" + item.id + "_post_time" to item.postTime)
                     .plus(item.packageName + "_" + item.id + "_is_ongoing" to item.isOngoing)
                     .plus(item.packageName + "_" + item.id + "_is_clearable" to item.isClearable)
+                    .plus(item.packageName + "_" + item.id + "_group_id" to item.notification.group)
+                    .plus(item.packageName + "_" + item.id + "_category" to item.notification.category)
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                    attr[item.packageName + "_" + item.id + "_channel_id"] = item.notification.channelId
             }
             onSensorUpdated(
                 applicationContext,
