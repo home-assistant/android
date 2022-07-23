@@ -59,6 +59,7 @@ class IntegrationRepositoryImpl @Inject constructor(
 
         private const val PREF_SECRET = "secret"
 
+        private const val PREF_NOTIFICATION_RECEIVED_EVENT = "notification_received_event"
         private const val PREF_CHECK_SENSOR_REGISTRATION_NEXT = "sensor_reg_last"
         private const val PREF_TILE_SHORTCUTS = "tile_shortcuts_list"
         private const val PREF_SHOW_TILE_SHORTCUTS_TEXT = "show_tile_shortcuts_text"
@@ -363,6 +364,14 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     override suspend fun setAutoPlayVideo(enabled: Boolean) {
         localStorage.putBoolean(PREF_AUTOPLAY_VIDEO, enabled)
+    }
+
+    override suspend fun getNotificationReceivedEvent(): Boolean {
+        return localStorage.getBoolean(PREF_NOTIFICATION_RECEIVED_EVENT)
+    }
+
+    override suspend fun setNotificationReceivedEvent(enabled: Boolean) {
+        localStorage.putBoolean(PREF_NOTIFICATION_RECEIVED_EVENT, enabled)
     }
 
     override suspend fun sessionTimeOut(value: Int) {

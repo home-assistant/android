@@ -52,6 +52,7 @@ class SettingsPresenterImpl @Inject constructor(
                 "crash_reporting" -> prefsRepository.isCrashReporting()
                 "autoplay_video" -> integrationUseCase.isAutoPlayVideoEnabled()
                 "webview_debug" -> integrationUseCase.isWebViewDebugEnabled()
+                "notification_received_event" -> integrationUseCase.getNotificationReceivedEvent()
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }
@@ -67,6 +68,7 @@ class SettingsPresenterImpl @Inject constructor(
                 "crash_reporting" -> prefsRepository.setCrashReporting(value)
                 "autoplay_video" -> integrationUseCase.setAutoPlayVideo(value)
                 "webview_debug" -> integrationUseCase.setWebViewDebugEnabled(value)
+                "notification_received_event" -> integrationUseCase.setNotificationReceivedEvent(value)
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }
