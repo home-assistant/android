@@ -21,6 +21,7 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -65,6 +66,8 @@ class LocationSensorManager : LocationSensorManagerBase() {
             "io.homeassistant.companion.android.background.REQUEST_ACCURATE_UPDATE"
         const val ACTION_PROCESS_LOCATION =
             "io.homeassistant.companion.android.background.PROCESS_UPDATES"
+        const val ACTION_PROCESS_HIGH_ACCURACY_LOCATION =
+            "io.homeassistant.companion.android.background.PROCESS_HIGH_ACCURACY_UPDATES"
         const val ACTION_PROCESS_GEO =
             "io.homeassistant.companion.android.background.PROCESS_GEOFENCE"
         const val ACTION_FORCE_HIGH_ACCURACY =
@@ -166,7 +169,8 @@ class LocationSensorManager : LocationSensorManagerBase() {
         when (intent.action) {
             Intent.ACTION_BOOT_COMPLETED,
             ACTION_REQUEST_LOCATION_UPDATES -> setupLocationTracking()
-            ACTION_PROCESS_LOCATION -> handleLocationUpdate(intent)
+            ACTION_PROCESS_LOCATION,
+            ACTION_PROCESS_HIGH_ACCURACY_LOCATION -> handleLocationUpdate(intent)
             ACTION_PROCESS_GEO -> handleGeoUpdate(intent)
             ACTION_REQUEST_ACCURATE_LOCATION_UPDATE -> requestSingleAccurateLocation()
             ACTION_FORCE_HIGH_ACCURACY -> {
@@ -764,13 +768,13 @@ class LocationSensorManager : LocationSensorManagerBase() {
     }
 
     private fun createLocationRequest(): LocationRequest {
-        val locationRequest = LocationRequest()
+        val locationRequest = LocationRequest.create()
 
         locationRequest.interval = 60000 // Every 60 seconds
         locationRequest.fastestInterval = 30000 // Every 30 seconds
         locationRequest.maxWaitTime = 200000 // Every 5 minutes
 
-        locationRequest.priority = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY
+        locationRequest.priority = Priority.PRIORITY_BALANCED_POWER_ACCURACY
 
         return locationRequest
     }
@@ -900,7 +904,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
         val maxRetries = 5
         val request = createLocationRequest().apply {
-            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+            priority = Priority.PRIORITY_HIGH_ACCURACY
             numUpdates = maxRetries
             interval = 10000
             fastestInterval = 5000

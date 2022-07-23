@@ -245,6 +245,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         webView = binding.webview
         webView.apply {
+            // TODO This quick bar workaround only works on Home Assistant core versions <2022.7
+            // If not 'fixed' or officially supported: should be removed in Android 2023.1 (GitHub: #2690)
             setOnTouchListener(object : OnSwipeListener() {
                 override fun onSwipe(
                     e1: MotionEvent,
