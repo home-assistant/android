@@ -114,9 +114,6 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 templateWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, android.R.color.white) } ?: true
             binding.textColorBlack.isChecked =
                 templateWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, commonR.color.colorWidgetButtonLabelBlack) } ?: false
-
-            binding.deleteButton.visibility = View.VISIBLE
-            binding.deleteButton.setOnClickListener(onDeleteWidget)
         } else {
             binding.backgroundType.setSelection(0)
         }

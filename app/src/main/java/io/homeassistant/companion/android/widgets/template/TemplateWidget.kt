@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.widgets.template
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
@@ -45,6 +46,9 @@ class TemplateWidget : BaseWidgetProvider() {
             templateWidgetDao.deleteAll(appWidgetIds)
         }
     }
+
+    override fun getWidgetProvider(context: Context): ComponentName =
+        ComponentName(context, TemplateWidget::class.java)
 
     override suspend fun getAllWidgetIds(context: Context): List<Int> {
         return templateWidgetDao.getAll().map { it.id }

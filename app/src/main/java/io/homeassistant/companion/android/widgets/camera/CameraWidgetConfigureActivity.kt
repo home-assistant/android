@@ -98,8 +98,6 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         if (cameraWidget != null) {
             binding.widgetTextConfigEntityId.setText(cameraWidget.entityId)
             binding.addButton.setText(commonR.string.update_widget)
-            binding.deleteButton.visibility = View.VISIBLE
-            binding.deleteButton.setOnClickListener(onDeleteWidget)
             val entity = runBlocking {
                 try {
                     integrationUseCase.getEntity(cameraWidget.entityId)

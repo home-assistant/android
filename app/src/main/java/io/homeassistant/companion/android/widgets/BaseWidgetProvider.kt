@@ -2,9 +2,11 @@ package io.homeassistant.companion.android.widgets
 
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.RemoteViews
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -92,7 +94,22 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     private suspend fun updateAllWidgets(
         context: Context
     ) {
-        getAllWidgetIds(context).forEach {
+        val widgetProvider = getWidgetProvider(context)
+        val systemWidgetIds = AppWidgetManager.getInstance(context)
+            .getAppWidgetIds(widgetProvider)
+            .toSet()
+        val dbWidgetIds = getAllWidgetIds(context)
+
+        val invalidWidgetIds = dbWidgetIds.minus(systemWidgetIds)
+        if (invalidWidgetIds.isNotEmpty()) {
+            Log.i(
+                widgetProvider.shortClassName,
+                "Found widgets $invalidWidgetIds in database, but not in AppWidgetManager - sending onDeleted"
+            )
+            onDeleted(context, invalidWidgetIds.toIntArray())
+        }
+
+        dbWidgetIds.filter { systemWidgetIds.contains(it) }.forEach {
             updateView(context, it)
         }
     }
@@ -108,6 +125,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         }
     }
 
+    abstract fun getWidgetProvider(context: Context): ComponentName
     abstract suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity<Map<String, Any>>? = null): RemoteViews
     abstract suspend fun getAllWidgetIds(context: Context): List<Int>
     abstract fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int)
