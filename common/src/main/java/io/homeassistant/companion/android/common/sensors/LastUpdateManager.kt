@@ -73,6 +73,8 @@ class LastUpdateManager : SensorManager {
         }
         val intentSettings = allSettings.filter {
             it.name.startsWith(INTENT_SETTING_PREFIX)
+        }.sortedBy {
+            it.name.removeSuffix(":").substringAfterLast(':').toInt()
         }
         val isSequenceContinuous = intentSettings.withIndex().all { (index, setting) ->
             val ordinal = setting.name.removePrefix(INTENT_SETTING_PREFIX).removeSuffix(":").toInt()
