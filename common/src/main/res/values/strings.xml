@@ -891,4 +891,5 @@
     <string name="tls_cert_expired_message">The certificate is not yet or no longer valid.\nPlease install a new credential on your phone and try again.</string>
     <string name="notification_received_event">Notification Received Event</string>
     <string name="notification_received_summary">Send an event each time any notification is received on the device</string>
+    <string name="notification_received_error">Unable to send notification received event</string>
 </resources>
