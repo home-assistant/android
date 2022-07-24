@@ -41,9 +41,6 @@ interface IntegrationRepository {
     suspend fun setSessionExpireMillis(value: Long)
     suspend fun getSessionExpireMillis(): Long
 
-    suspend fun setNotificationReceivedEvent(enabled: Boolean)
-    suspend fun getNotificationReceivedEvent(): Boolean
-
     suspend fun getTileShortcuts(): List<String>
     suspend fun setTileShortcuts(entities: List<String>)
     suspend fun getTemplateTileContent(): String

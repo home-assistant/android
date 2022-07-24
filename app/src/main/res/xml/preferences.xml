@@ -136,11 +136,6 @@
             android:title="@string/notification_history"
             android:icon="@drawable/ic_notification_history"
             android:summary="@string/notification_history_summary" />
-        <SwitchPreference
-            android:key="notification_received_event"
-            android:title="@string/notification_received_event"
-            android:icon="@drawable/ic_mail_left"
-            android:summary="@string/notification_received_summary" />
         <Preference
             android:key="notification_rate_limit"
             android:title="@string/rate_limit_title"

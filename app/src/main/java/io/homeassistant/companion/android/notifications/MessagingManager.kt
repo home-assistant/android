@@ -259,15 +259,10 @@ class MessagingManager @Inject constructor(
         notificationDao.add(notificationRow)
 
         mainScope.launch {
-            if (integrationUseCase.getNotificationReceivedEvent()) {
-                try {
-                    integrationUseCase.fireEvent("mobile_app_notification_received", jsonData)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Unable to send notification received event", e)
-                    Toast.makeText(context, commonR.string.notification_received_error, Toast.LENGTH_LONG).show()
-                }
-            } else {
-                // No op
+            try {
+                integrationUseCase.fireEvent("mobile_app_notification_received", jsonData)
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to send notification received event", e)
             }
         }
         when {
