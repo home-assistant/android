@@ -702,7 +702,7 @@ class MessagingManager @Inject constructor(
                     BluetoothSensorManager.enableDisableBLETransmitter(context, false)
                 if (command == TURN_ON)
                     BluetoothSensorManager.enableDisableBLETransmitter(context, true)
-                if (command in BLE_COMMANDS)
+                if (command in BLE_COMMANDS) {
                     sensorDao.updateSettingValue(
                         BluetoothSensorManager.bleTransmitter.id,
                         when (command) {
@@ -723,8 +723,10 @@ class MessagingManager @Inject constructor(
                                 }
                             }
                             BLE_SET_UUID -> data[BLE_UUID] ?: UUID.randomUUID().toString()
-                            BLE_SET_MAJOR -> data[BLE_MAJOR] ?: BluetoothSensorManager.DEFAULT_BLE_MAJOR
-                            BLE_SET_MINOR -> data[BLE_MINOR] ?: BluetoothSensorManager.DEFAULT_BLE_MINOR
+                            BLE_SET_MAJOR -> data[BLE_MAJOR]
+                                ?: BluetoothSensorManager.DEFAULT_BLE_MAJOR
+                            BLE_SET_MINOR -> data[BLE_MINOR]
+                                ?: BluetoothSensorManager.DEFAULT_BLE_MINOR
                             else -> {
                                 when (data[BLE_TRANSMIT]) {
                                     BLE_TRANSMIT_HIGH -> BluetoothSensorManager.BLE_TRANSMIT_HIGH
@@ -736,6 +738,18 @@ class MessagingManager @Inject constructor(
                             }
                         }
                     )
+
+                    // Force the transmitter to restart and send updated attributes
+                    mainScope.launch {
+                        sensorDao.updateLastSentStateAndIcon(
+                            BluetoothSensorManager.bleTransmitter.id,
+                            "",
+                            ""
+                        )
+                    }
+                    BluetoothSensorManager().requestSensorUpdate(context)
+                    SensorWorker.start(context)
+                }
             }
             COMMAND_HIGH_ACCURACY_MODE -> {
                 when (command) {
