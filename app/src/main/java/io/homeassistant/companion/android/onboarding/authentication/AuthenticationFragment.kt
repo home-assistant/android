@@ -82,7 +82,18 @@ class AuthenticationFragment : Fragment() {
                                 ) {
                                     super.onReceivedError(view, request, error)
                                     Log.e(TAG, "onReceivedError: Status Code: ${error?.errorCode} Description: ${error?.description}")
-                                    showError(requireContext().getString(commonR.string.webview_error), null, error)
+                                    showError(
+                                        requireContext().getString(
+                                            commonR.string.error_http_generic,
+                                            error?.errorCode,
+                                            if (error?.description.isNullOrBlank())
+                                                commonR.string.no_description
+                                            else
+                                                error?.description
+                                        ),
+                                        null,
+                                        error
+                                    )
                                 }
 
                                 override fun onReceivedHttpError(
