@@ -16,6 +16,7 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.viewinterop.AndroidView
@@ -68,20 +69,20 @@ class AuthenticationFragment : Fragment() {
                             settings.domStorageEnabled = true
                             settings.userAgentString = settings.userAgentString + " ${HomeAssistantApis.USER_AGENT_STRING}"
                             webViewClient = object : TLSWebViewClient(keyChainRepository) {
+                                @Deprecated("Deprecated in Java")
                                 override fun shouldOverrideUrlLoading(view: WebView?, url: String): Boolean {
                                     return onRedirect(url)
                                 }
 
+                                @RequiresApi(Build.VERSION_CODES.M)
                                 override fun onReceivedError(
                                     view: WebView?,
                                     request: WebResourceRequest?,
                                     error: WebResourceError?
                                 ) {
                                     super.onReceivedError(view, request, error)
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                        Log.e(TAG, "onReceivedError: Status Code: ${error?.errorCode} Description: ${error?.description}")
-                                    }
-                                    showError(commonR.string.webview_error, null, error)
+                                    Log.e(TAG, "onReceivedError: Status Code: ${error?.errorCode} Description: ${error?.description}")
+                                    showError(requireContext().getString(commonR.string.webview_error), null, error)
                                 }
 
                                 override fun onReceivedHttpError(
@@ -92,11 +93,21 @@ class AuthenticationFragment : Fragment() {
                                     super.onReceivedHttpError(view, request, errorResponse)
                                     Log.e(TAG, "onReceivedHttpError: Status Code: ${errorResponse?.statusCode} Description: ${errorResponse?.reasonPhrase}")
                                     if (isTLSClientAuthNeeded && !isCertificateChainValid) {
-                                        showError(commonR.string.tls_cert_expired_message, null, null)
+                                        showError(requireContext().getString(commonR.string.tls_cert_expired_message), null, null)
                                     } else if (isTLSClientAuthNeeded && errorResponse?.statusCode == 400) {
-                                        showError(commonR.string.tls_cert_not_found_message, null, null)
+                                        showError(requireContext().getString(commonR.string.tls_cert_not_found_message), null, null)
                                     } else {
-                                        showError(commonR.string.error_ssl, null, null)
+                                        showError(
+                                            requireContext().getString(
+                                                commonR.string.error_http_generic,
+                                                errorResponse?.statusCode,
+                                                if (errorResponse?.reasonPhrase.isNullOrBlank())
+                                                    requireContext().getString(commonR.string.no_description)
+                                                else
+                                                    errorResponse?.reasonPhrase
+                                            ),
+                                            null, null
+                                        )
                                     }
                                 }
 
@@ -107,7 +118,7 @@ class AuthenticationFragment : Fragment() {
                                 ) {
                                     super.onReceivedSslError(view, handler, error)
                                     Log.e(TAG, "onReceivedSslError: $error")
-                                    showError(commonR.string.error_ssl, error, null)
+                                    showError(requireContext().getString(commonR.string.error_ssl), error, null)
                                 }
                             }
                             loadUrl(buildAuthUrl(viewModel.manualUrl.value))
@@ -151,7 +162,7 @@ class AuthenticationFragment : Fragment() {
         }
     }
 
-    private fun showError(message: Int, sslError: SslError?, error: WebResourceError?) {
+    private fun showError(message: String, sslError: SslError?, error: WebResourceError?) {
         if (!isStarted) {
             // Fragment is at least paused, can't display alert
             return
@@ -160,21 +171,21 @@ class AuthenticationFragment : Fragment() {
             .setTitle(commonR.string.error_connection_failed)
             .setMessage(
                 when (sslError?.primaryError) {
-                    SslError.SSL_DATE_INVALID -> commonR.string.webview_error_SSL_DATE_INVALID
-                    SslError.SSL_EXPIRED -> commonR.string.webview_error_SSL_EXPIRED
-                    SslError.SSL_IDMISMATCH -> commonR.string.webview_error_SSL_IDMISMATCH
-                    SslError.SSL_INVALID -> commonR.string.webview_error_SSL_INVALID
-                    SslError.SSL_NOTYETVALID -> commonR.string.webview_error_SSL_NOTYETVALID
-                    SslError.SSL_UNTRUSTED -> commonR.string.webview_error_SSL_UNTRUSTED
+                    SslError.SSL_DATE_INVALID -> requireContext().getString(commonR.string.webview_error_SSL_DATE_INVALID)
+                    SslError.SSL_EXPIRED -> requireContext().getString(commonR.string.webview_error_SSL_EXPIRED)
+                    SslError.SSL_IDMISMATCH -> requireContext().getString(commonR.string.webview_error_SSL_IDMISMATCH)
+                    SslError.SSL_INVALID -> requireContext().getString(commonR.string.webview_error_SSL_INVALID)
+                    SslError.SSL_NOTYETVALID -> requireContext().getString(commonR.string.webview_error_SSL_NOTYETVALID)
+                    SslError.SSL_UNTRUSTED -> requireContext().getString(commonR.string.webview_error_SSL_UNTRUSTED)
                     else -> {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                             when (error?.errorCode) {
                                 WebViewClient.ERROR_FAILED_SSL_HANDSHAKE ->
-                                    commonR.string.webview_error_FAILED_SSL_HANDSHAKE
-                                WebViewClient.ERROR_AUTHENTICATION -> commonR.string.webview_error_AUTHENTICATION
-                                WebViewClient.ERROR_PROXY_AUTHENTICATION -> commonR.string.webview_error_PROXY_AUTHENTICATION
-                                WebViewClient.ERROR_UNSUPPORTED_AUTH_SCHEME -> commonR.string.webview_error_AUTH_SCHEME
-                                WebViewClient.ERROR_HOST_LOOKUP -> commonR.string.webview_error_HOST_LOOKUP
+                                    requireContext().getString(commonR.string.webview_error_FAILED_SSL_HANDSHAKE)
+                                WebViewClient.ERROR_AUTHENTICATION -> requireContext().getString(commonR.string.webview_error_AUTHENTICATION)
+                                WebViewClient.ERROR_PROXY_AUTHENTICATION -> requireContext().getString(commonR.string.webview_error_PROXY_AUTHENTICATION)
+                                WebViewClient.ERROR_UNSUPPORTED_AUTH_SCHEME -> requireContext().getString(commonR.string.webview_error_AUTH_SCHEME)
+                                WebViewClient.ERROR_HOST_LOOKUP -> requireContext().getString(commonR.string.webview_error_HOST_LOOKUP)
                             }
                         }
                         message
