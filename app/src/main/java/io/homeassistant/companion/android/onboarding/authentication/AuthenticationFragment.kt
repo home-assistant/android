@@ -197,9 +197,11 @@ class AuthenticationFragment : Fragment() {
                                 WebViewClient.ERROR_PROXY_AUTHENTICATION -> requireContext().getString(commonR.string.webview_error_PROXY_AUTHENTICATION)
                                 WebViewClient.ERROR_UNSUPPORTED_AUTH_SCHEME -> requireContext().getString(commonR.string.webview_error_AUTH_SCHEME)
                                 WebViewClient.ERROR_HOST_LOOKUP -> requireContext().getString(commonR.string.webview_error_HOST_LOOKUP)
+                                else -> message
                             }
+                        } else {
+                            message
                         }
-                        message
                     }
                 }
             )
