@@ -78,6 +78,7 @@ class AuthenticationFragment : Fragment() {
                                     error: WebResourceError?
                                 ) {
                                     super.onReceivedError(view, request, error)
+                                    Log.e(TAG, "onReceivedError: $error")
                                     showError(commonR.string.webview_error, null, error)
                                 }
 
@@ -87,6 +88,7 @@ class AuthenticationFragment : Fragment() {
                                     errorResponse: WebResourceResponse?
                                 ) {
                                     super.onReceivedHttpError(view, request, errorResponse)
+                                    Log.e(TAG, "onReceivedHttpError: $errorResponse")
                                     if (isTLSClientAuthNeeded && !isCertificateChainValid) {
                                         showError(commonR.string.tls_cert_expired_message, null, null)
                                     } else if (isTLSClientAuthNeeded && errorResponse?.statusCode == 400) {
@@ -102,6 +104,7 @@ class AuthenticationFragment : Fragment() {
                                     error: SslError?
                                 ) {
                                     super.onReceivedSslError(view, handler, error)
+                                    Log.e(TAG, "onReceivedSslError: $error")
                                     showError(commonR.string.error_ssl, error, null)
                                 }
                             }
