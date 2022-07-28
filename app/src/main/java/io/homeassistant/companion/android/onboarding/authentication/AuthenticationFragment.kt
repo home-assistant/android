@@ -47,6 +47,8 @@ class AuthenticationFragment : Fragment() {
 
     private val viewModel by activityViewModels<OnboardingViewModel>()
 
+    private var authUrl: String? = null
+
     @Inject
     lateinit var themesManager: ThemesManager
 
@@ -102,23 +104,36 @@ class AuthenticationFragment : Fragment() {
                                     errorResponse: WebResourceResponse?
                                 ) {
                                     super.onReceivedHttpError(view, request, errorResponse)
-                                    Log.e(TAG, "onReceivedHttpError: Status Code: ${errorResponse?.statusCode} Description: ${errorResponse?.reasonPhrase}")
-                                    if (isTLSClientAuthNeeded && !isCertificateChainValid) {
-                                        showError(requireContext().getString(commonR.string.tls_cert_expired_message), null, null)
-                                    } else if (isTLSClientAuthNeeded && errorResponse?.statusCode == 400) {
-                                        showError(requireContext().getString(commonR.string.tls_cert_not_found_message), null, null)
-                                    } else {
-                                        showError(
-                                            requireContext().getString(
-                                                commonR.string.error_http_generic,
-                                                errorResponse?.statusCode,
-                                                if (errorResponse?.reasonPhrase.isNullOrBlank())
-                                                    requireContext().getString(commonR.string.no_description)
-                                                else
-                                                    errorResponse?.reasonPhrase
-                                            ),
-                                            null, null
+                                    if (request?.url?.toString() == authUrl) {
+                                        Log.e(
+                                            TAG,
+                                            "onReceivedHttpError: Status Code: ${errorResponse?.statusCode} Description: ${errorResponse?.reasonPhrase}"
                                         )
+                                        if (isTLSClientAuthNeeded && !isCertificateChainValid) {
+                                            showError(
+                                                requireContext().getString(commonR.string.tls_cert_expired_message),
+                                                null,
+                                                null
+                                            )
+                                        } else if (isTLSClientAuthNeeded && errorResponse?.statusCode == 400) {
+                                            showError(
+                                                requireContext().getString(commonR.string.tls_cert_not_found_message),
+                                                null,
+                                                null
+                                            )
+                                        } else {
+                                            showError(
+                                                requireContext().getString(
+                                                    commonR.string.error_http_generic,
+                                                    errorResponse?.statusCode,
+                                                    if (errorResponse?.reasonPhrase.isNullOrBlank())
+                                                        requireContext().getString(commonR.string.no_description)
+                                                    else
+                                                        errorResponse?.reasonPhrase
+                                                ),
+                                                null, null
+                                            )
+                                        }
                                     }
                                 }
 
@@ -132,7 +147,8 @@ class AuthenticationFragment : Fragment() {
                                     showError(requireContext().getString(commonR.string.error_ssl), error, null)
                                 }
                             }
-                            loadUrl(buildAuthUrl(viewModel.manualUrl.value))
+                            authUrl = buildAuthUrl(viewModel.manualUrl.value)
+                            loadUrl(authUrl!!)
                         }
                     })
                 }
@@ -169,6 +185,8 @@ class AuthenticationFragment : Fragment() {
                 .commit()
             true
         } else {
+            // The WebViewClient should load this URL
+            authUrl = url
             false
         }
     }
