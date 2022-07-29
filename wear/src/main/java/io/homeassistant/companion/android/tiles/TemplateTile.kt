@@ -167,7 +167,7 @@ class TemplateTile : TileService() {
     }
 
     private fun parseHtml(renderedText: String): LayoutElementBuilders.Spannable {
-        val renderedSpanned = fromHtml(renderedText, FROM_HTML_MODE_LEGACY)
+        val renderedSpanned = fromHtml(renderedText.replace("\n", "<br>\n"), FROM_HTML_MODE_LEGACY)
         return LayoutElementBuilders.Spannable.Builder().apply {
             var start = 0
             var end = 0
