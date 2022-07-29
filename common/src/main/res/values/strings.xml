@@ -197,6 +197,7 @@
     <string name="error_ssl">Unable to communicate with Home Assistant because of a SSL error.  Please ensure your certificate is valid.</string>
     <string name="error_with_registration">The \'Mobile App\' integration is required to use the app, but it is not available on your Home Assistant server. Please check your server configuration and try again.</string>
     <string name="errors">Errors</string>
+    <string name="error_http_generic">There was an error loading Home Assistant. Please review the connection settings and try again.\n\nError Code: %d \nDescription: %s</string>
     <string name="event_error">Failed to notify HA of picked option.</string>
     <string name="exit">Exit</string>
     <string name="failed_authentication">Could not authenticate</string>
@@ -366,6 +367,7 @@
     <string name="no_supported_entities_summary">Check the documentation for more information</string>
     <string name="no_widgets_summary">When you add a widget to your home screen, you will see it here</string>
     <string name="no_widgets">No Widgets Found</string>
+    <string name="no_description">No description provided</string>
     <string name="none">None</string>
     <string name="none_selected">None selected</string>
     <string name="not_private">Your connection to this site is not private.</string>
