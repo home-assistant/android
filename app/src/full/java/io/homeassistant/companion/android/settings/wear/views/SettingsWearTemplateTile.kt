@@ -119,7 +119,8 @@ fun SettingsWearTemplateTile(
 }
 
 private fun parseHtml(renderedText: String) = buildAnnotatedString {
-    val renderedSpanned = fromHtml(renderedText.replace("\n", "<br>\n"), FROM_HTML_MODE_LEGACY)
+    // Replace control char \r\n, \r, \n and also \r\n, \r, \n as text literals in strings to <br>
+    val renderedSpanned = fromHtml(renderedText.replace("(\r\n|\r|\n)|(\\\\r\\\\n|\\\\r|\\\\n)".toRegex(), "<br>"), FROM_HTML_MODE_LEGACY)
     append(renderedSpanned.toString())
     renderedSpanned.getSpans(0, renderedSpanned.length, CharacterStyle::class.java).forEach { span ->
         val start = renderedSpanned.getSpanStart(span)

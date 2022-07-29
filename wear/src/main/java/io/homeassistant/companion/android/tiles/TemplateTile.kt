@@ -167,7 +167,8 @@ class TemplateTile : TileService() {
     }
 
     private fun parseHtml(renderedText: String): LayoutElementBuilders.Spannable {
-        val renderedSpanned = fromHtml(renderedText.replace("\n", "<br>\n"), FROM_HTML_MODE_LEGACY)
+        // Replace control char \r\n, \r, \n and also \r\n, \r, \n as text literals in strings to <br>
+        val renderedSpanned = fromHtml(renderedText.replace("(\r\n|\r|\n)|(\\\\r\\\\n|\\\\r|\\\\n)".toRegex(), "<br>"), FROM_HTML_MODE_LEGACY)
         return LayoutElementBuilders.Spannable.Builder().apply {
             var start = 0
             var end = 0
