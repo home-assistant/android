@@ -686,8 +686,9 @@
     <string name="template_tile_content">Template tile content</string>
     <string name="template_tile_desc">Renders and displays a template</string>
     <string name="template_tile_empty">Set template in the phone settings</string>
-    <string name="template_tile_error">Error in template</string>
-    <string name="template_tile_help">Provide a template below that will be displayed on the Wear OS template tile.</string>
+    <string name="template_error">Error in template</string>
+    <string name="template_render_error">Error rendering template</string>
+    <string name="template_tile_help">Provide a template below that will be displayed on the Wear OS template tile. See help for markup options.</string>
     <string name="template_widget_default">Enter Template Here</string>
     <string name="template_widget_desc">Render any template with HTML formatting</string>
     <string name="template_widget">Template Widget</string>

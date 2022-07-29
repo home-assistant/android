@@ -216,10 +216,10 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             var enabled: Boolean
             withContext(Dispatchers.IO) {
                 try {
-                    templateText = integrationUseCase.renderTemplate(template, mapOf())
+                    templateText = integrationUseCase.renderTemplate(template, mapOf()) ?: getString(commonR.string.template_error)
                     enabled = true
                 } catch (e: Exception) {
-                    templateText = "Error in template"
+                    templateText = getString(commonR.string.template_render_error)
                     enabled = false
                 }
             }

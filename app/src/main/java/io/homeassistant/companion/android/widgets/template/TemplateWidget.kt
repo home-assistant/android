@@ -85,11 +85,19 @@ class TemplateWidget : BaseWidgetProvider() {
                 }
 
                 // Content
-                var renderedTemplate = templateWidgetDao.get(appWidgetId)?.lastUpdate ?: "Loading"
+                var renderedTemplate: String? = templateWidgetDao.get(appWidgetId)?.lastUpdate ?: "Loading"
                 try {
                     renderedTemplate = integrationUseCase.renderTemplate(widget.template, mapOf())
-                    templateWidgetDao.updateTemplateWidgetLastUpdate(appWidgetId, renderedTemplate)
-                    setViewVisibility(R.id.widgetTemplateError, View.GONE)
+                    if (renderedTemplate != null) {
+                        templateWidgetDao.updateTemplateWidgetLastUpdate(
+                            appWidgetId,
+                            renderedTemplate
+                        )
+                        setViewVisibility(R.id.widgetTemplateError, View.GONE)
+                    } else {
+                        Log.e(TAG, "Template returned null: ${widget.template}")
+                        setViewVisibility(R.id.widgetTemplateError, View.VISIBLE)
+                    }
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to render template: ${widget.template}", e)
                     setViewVisibility(R.id.widgetTemplateError, View.VISIBLE)
