@@ -163,6 +163,10 @@
     <string name="domain_script">Script</string>
     <string name="domain_switch">Switch</string>
     <string name="domain_vacuum">Vacuum</string>
+    <string name="downloads">Downloads</string>
+    <string name="downloads_unnamed_file">Unnamed file</string>
+    <string name="downloads_complete">Download complete.</string>
+    <string name="downloads_failed">Download failed.</string>
     <string name="empty_template">Template value must not be blank</string>
     <string name="enable_all_sensors_summary">All required permissions will be requested upon enabling</string>
     <string name="enable_all_sensors">Enable All Sensors</string>
