@@ -258,6 +258,13 @@ class MessagingManager @Inject constructor(
             NotificationItem(0, now, jsonData[MESSAGE].toString(), jsonObject.toString(), source)
         notificationDao.add(notificationRow)
 
+        mainScope.launch {
+            try {
+                integrationUseCase.fireEvent("mobile_app_notification_received", jsonData)
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to send notification received event", e)
+            }
+        }
         when {
             jsonData[MESSAGE] == REQUEST_LOCATION_UPDATE -> {
                 Log.d(TAG, "Request location update")
