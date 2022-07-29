@@ -132,7 +132,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
         private var geofenceRegistered = false
 
         private var lastHighAccuracyMode = false
-        private var lastHighAccuracyUpdateInterval = DEFAULT_MINIMUM_ACCURACY
+        private var lastHighAccuracyUpdateInterval = DEFAULT_UPDATE_INTERVAL_HA_SECONDS
         private var forceHighAccuracyModeOn = false
         private var highAccuracyModeEnabled = false
 
