@@ -147,19 +147,18 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
 
         val currentHAversion = integrationUseCase.getHomeAssistantVersion()
         val supportsDisabledSensors = integrationUseCase.isHomeAssistantVersionAtLeast(2022, 6, 0)
-        val coreSensorStatus: Map<String, Boolean> = if (supportsDisabledSensors) {
+        val coreSensorStatus: Map<String, Boolean>? = if (supportsDisabledSensors) {
             try {
                 val config = integrationUseCase.getConfig().entities
                 config
                     ?.filter { it.value["disabled"] != null }
-                    ?.mapValues { !(it.value["disabled"] as Boolean) }
-                    .orEmpty() // Map to sensor id -> enabled
+                    ?.mapValues { !(it.value["disabled"] as Boolean) } // Map to sensor id -> enabled
             } catch (e: Exception) {
                 Log.e(tag, "Error while getting core config to sync sensor status", e)
-                emptyMap()
+                null
             }
         } else {
-            emptyMap()
+            null
         }
 
         managers.forEach { manager ->
@@ -180,7 +179,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
             manager.getAvailableSensors(context).forEach sensorForEach@{ basicSensor ->
                 val fullSensor = sensorDao.getFull(basicSensor.id)
                 val sensor = fullSensor?.sensor ?: return@sensorForEach
-                val sensorCoreEnabled = coreSensorStatus[basicSensor.id]
+                val sensorCoreEnabled = coreSensorStatus?.get(basicSensor.id)
                 val sensorCoreRegistration = sensor.coreRegistration
                 val sensorAppRegistration = sensor.appRegistration
 
@@ -197,12 +196,14 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                     canBeRegistered &&
                     (
                         (sensor.registered == null && (sensor.enabled || supportsDisabledSensors)) ||
-                            (sensor.enabled != sensor.registered && supportsDisabledSensors)
+                            (sensor.enabled != sensor.registered && supportsDisabledSensors) ||
+                            (sensor.registered != null && coreSensorStatus != null && sensorCoreEnabled == null)
                         )
                 ) {
                     // 1. (Re-)register sensors with core when they can be registered and:
                     // - sensor isn't registered, but is enabled or on core >=2022.6
                     // - sensor enabled has changed from registered enabled state on core >=2022.6
+                    // - sensor is registered according to database, but core >=2022.6 doesn't know about it
                     try {
                         registerSensor(context, integrationUseCase, fullSensor, basicSensor)
                         sensor.registered = sensor.enabled
