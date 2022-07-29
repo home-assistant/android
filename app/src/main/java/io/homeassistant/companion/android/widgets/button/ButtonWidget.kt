@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.widgets.button
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
@@ -85,10 +86,21 @@ class ButtonWidget : AppWidgetProvider() {
 
     private fun updateAllWidgets(context: Context) {
         mainScope.launch {
-            val buttonWidgetEntityList = buttonWidgetDao.getAll()
+            val appWidgetManager = AppWidgetManager.getInstance(context)
+            val systemWidgetIds = appWidgetManager.getAppWidgetIds(ComponentName(context, ButtonWidget::class.java))
+            val dbWidgetList = buttonWidgetDao.getAll()
+
+            val invalidWidgetIds = dbWidgetList
+                .filter { !systemWidgetIds.contains(it.id) }
+                .map { it.id }
+            if (invalidWidgetIds.isNotEmpty()) {
+                Log.i(TAG, "Found widgets $invalidWidgetIds in database, but not in AppWidgetManager - sending onDeleted")
+                onDeleted(context, invalidWidgetIds.toIntArray())
+            }
+
+            val buttonWidgetEntityList = dbWidgetList.filter { systemWidgetIds.contains(it.id) }
             if (buttonWidgetEntityList.isNotEmpty()) {
                 Log.d(TAG, "Updating all widgets")
-                val appWidgetManager = AppWidgetManager.getInstance(context)
                 for (item in buttonWidgetEntityList) {
                     val views = getWidgetRemoteViews(context, item.id)
 

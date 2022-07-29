@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.widgets.entity
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
@@ -45,6 +46,9 @@ class EntityWidget : BaseWidgetProvider() {
 
     @Inject
     lateinit var staticWidgetDao: StaticWidgetDao
+
+    override fun getWidgetProvider(context: Context): ComponentName =
+        ComponentName(context, EntityWidget::class.java)
 
     override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity<Map<String, Any>>?): RemoteViews {
         val intent = Intent(context, EntityWidget::class.java).apply {

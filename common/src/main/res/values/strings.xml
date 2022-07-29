@@ -119,8 +119,6 @@
     <string name="confirm_delete_all_notification_title">Confirm deleting all notifications</string>
     <string name="confirm_delete_this_notification_message">Are you sure? This cannot be undone</string>
     <string name="confirm_delete_this_notification_title">Confirm deleting this notification</string>
-    <string name="confirm_delete_this_widget_message">Are you sure? This cannot be undone. If you accidentally deleted the wrong widget you will need to remove the bad widget from the home screen and create a new one.</string>
-    <string name="confirm_delete_this_widget_title">Confirm deleting this widget</string>
     <string name="confirm_negative">NO</string>
     <string name="confirm_positive">YES</string>
     <string name="continue_on_phone">Continue on your phone</string>
@@ -138,7 +136,6 @@
     <string name="delete_all_notifications">Delete all notifications from history</string>
     <string name="delete_shortcut">Delete Shortcut</string>
     <string name="delete_this_notification">Delete this notification from history</string>
-    <string name="delete_widget">Delete Widget</string>
     <string name="description">Description</string>
     <string name="details">Details</string>
     <string name="developer_tools">Developer Tools</string>

@@ -143,8 +143,6 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
             if (entities != null)
                 selectedEntities.addAll(entities)
             binding.addButton.setText(commonR.string.update_widget)
-            binding.deleteButton.visibility = View.VISIBLE
-            binding.deleteButton.setOnClickListener(onDeleteWidget)
         }
         val entityAdapter = SingleItemArrayAdapter<Entity<Any>>(this) { it?.entityId ?: "" }
 
