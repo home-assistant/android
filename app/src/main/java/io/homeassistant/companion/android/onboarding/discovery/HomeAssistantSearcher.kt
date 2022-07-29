@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.onboarding.discovery
 
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
+import android.net.wifi.WifiManager
 import android.util.Log
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -11,6 +12,7 @@ import java.util.concurrent.locks.ReentrantLock
 
 class HomeAssistantSearcher constructor(
     private val nsdManager: NsdManager,
+    private val wifiManager: WifiManager?,
     private val onInstanceFound: (instance: HomeAssistantInstance) -> Unit,
     private val onError: () -> Unit
 ) : NsdManager.DiscoveryListener, DefaultLifecycleObserver {
@@ -25,6 +27,8 @@ class HomeAssistantSearcher constructor(
 
     private var isSearching = false
 
+    private var multicastLock: WifiManager.MulticastLock? = null
+
     fun beginSearch() {
         if (isSearching)
             return
@@ -35,6 +39,17 @@ class HomeAssistantSearcher constructor(
             Log.e(TAG, "Issue starting discover.", e)
             isSearching = false
             onError()
+            return
+        }
+        try {
+            if (wifiManager != null && multicastLock == null) {
+                multicastLock = wifiManager.createMulticastLock(TAG)
+                multicastLock?.setReferenceCounted(true)
+                multicastLock?.acquire()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Issue acquiring multicast lock", e)
+            // Discovery might still work so continue
         }
     }
 
@@ -44,6 +59,8 @@ class HomeAssistantSearcher constructor(
         isSearching = false
         try {
             nsdManager.stopServiceDiscovery(this)
+            multicastLock?.release()
+            multicastLock = null
         } catch (e: Exception) {
             Log.e(TAG, "Issue stopping discovery", e)
         }
