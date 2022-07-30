@@ -60,6 +60,10 @@ class LocationSensorManager : LocationSensorManagerBase() {
         private const val DEFAULT_UPDATE_INTERVAL_HA_SECONDS = 5
         private const val DEFAULT_TRIGGER_RANGE_METERS = 300
 
+        private const val DEFAULT_LOCATION_INTERVAL: Long = 60000
+        private const val DEFAULT_LOCATION_FAST_INTERVAL: Long = 30000
+        private const val DEFAULT_LOCATION_MAX_WAIT_TIME: Long = 200000
+
         const val ACTION_REQUEST_LOCATION_UPDATES =
             "io.homeassistant.companion.android.background.REQUEST_UPDATES"
         const val ACTION_REQUEST_ACCURATE_LOCATION_UPDATE =
@@ -227,6 +231,21 @@ class LocationSensorManager : LocationSensorManagerBase() {
                     requestZoneUpdates()
                 }
 
+                val now = System.currentTimeMillis()
+                if (
+                    (!highAccuracyModeEnabled && isBackgroundLocationSetup) &&
+                    ((lastLocationSend + (DEFAULT_LOCATION_MAX_WAIT_TIME * 2)) < now)
+                ) {
+                    Log.d(TAG, "Background location updates appear to have stopped, restarting location updates")
+                    removeBackgroundUpdateRequests()
+                } else if (
+                    highAccuracyModeEnabled &&
+                    ((lastLocationSend + (getHighAccuracyModeUpdateInterval() * 2000)) < now)
+                ) {
+                    Log.d(TAG, "Location updates with high accuracy mode appear to have stopped, restarting high accuracy mode")
+                    stopHighAccuracyService()
+                }
+
                 setupBackgroundLocation(backgroundEnabled, zoneEnabled)
             } catch (e: Exception) {
                 Log.e(TAG, "Issue setting up location tracking", e)
@@ -328,6 +347,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
     }
 
     private fun stopHighAccuracyService() {
+        isBackgroundLocationSetup = false
         onSensorUpdated(
             latestContext,
             highAccuracyMode,
@@ -504,6 +524,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
     }
 
     private fun removeBackgroundUpdateRequests() {
+        isBackgroundLocationSetup = false
         if (fusedLocationProviderClient != null) {
             Log.d(TAG, "Removing background location requests.")
             val backgroundIntent = getLocationUpdateIntent(false)
@@ -770,9 +791,9 @@ class LocationSensorManager : LocationSensorManagerBase() {
     private fun createLocationRequest(): LocationRequest {
         val locationRequest = LocationRequest.create()
 
-        locationRequest.interval = 60000 // Every 60 seconds
-        locationRequest.fastestInterval = 30000 // Every 30 seconds
-        locationRequest.maxWaitTime = 200000 // Every 5 minutes
+        locationRequest.interval = DEFAULT_LOCATION_INTERVAL // Every 60 seconds
+        locationRequest.fastestInterval = DEFAULT_LOCATION_FAST_INTERVAL // Every 30 seconds
+        locationRequest.maxWaitTime = DEFAULT_LOCATION_MAX_WAIT_TIME // Every ~3.5 minutes
 
         locationRequest.priority = Priority.PRIORITY_BALANCED_POWER_ACCURACY
 
