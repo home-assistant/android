@@ -131,6 +131,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
         private var isZoneLocationSetup = false
 
         private var lastLocationSend = 0L
+        private var lastLocationReceived = 0L
         private var lastUpdateLocation = ""
 
         private var geofenceRegistered = false
@@ -234,15 +235,15 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 val now = System.currentTimeMillis()
                 if (
                     (!highAccuracyModeEnabled && isBackgroundLocationSetup) &&
-                    ((lastLocationSend + (DEFAULT_LOCATION_MAX_WAIT_TIME * 2)) < now)
+                    ((lastLocationReceived + (DEFAULT_LOCATION_MAX_WAIT_TIME * 2L)) < now)
                 ) {
                     Log.d(TAG, "Background location updates appear to have stopped, restarting location updates")
                     removeBackgroundUpdateRequests()
                 } else if (
                     highAccuracyModeEnabled &&
-                    ((lastLocationSend + (getHighAccuracyModeUpdateInterval() * 2000)) < now)
+                    ((lastLocationReceived + (getHighAccuracyModeUpdateInterval().toLong() * 2000L)) < now)
                 ) {
-                    Log.d(TAG, "Location updates with high accuracy mode appear to have stopped, restarting high accuracy mode")
+                    Log.d(TAG, "High accuracy mode appears to have stopped, restarting high accuracy mode")
                     stopHighAccuracyService()
                 }
 
@@ -587,6 +588,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
     private fun handleLocationUpdate(intent: Intent) {
         Log.d(TAG, "Received location update.")
+        lastLocationReceived = System.currentTimeMillis()
         LocationResult.extractResult(intent)?.lastLocation?.let { location ->
             val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
             val sensorSettings = sensorDao.getSettings(backgroundLocation.id)
