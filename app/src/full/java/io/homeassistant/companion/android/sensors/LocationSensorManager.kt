@@ -409,7 +409,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
         if (highAccuracyModeBTDevices.isNotEmpty()) {
             constraintsUsed = true
 
-            val bluetoothDevices = BluetoothUtils.getBluetoothDevices(latestContext)
+            val bluetoothDevices = BluetoothUtils.getBluetoothDevices(latestContext, true)
 
             // If any of the stored devices aren't a Bluetooth device address, try to match them to a device
             var updatedBtDeviceNames = false
