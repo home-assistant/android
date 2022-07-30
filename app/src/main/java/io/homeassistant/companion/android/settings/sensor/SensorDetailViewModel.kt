@@ -288,7 +288,7 @@ class SensorDetailViewModel @Inject constructor(
             SensorSettingType.LIST ->
                 setting.entries
             SensorSettingType.LIST_BLUETOOTH ->
-                BluetoothUtils.getBluetoothDevices(getApplication()).map { it.address }
+                BluetoothUtils.getBluetoothDevices(getApplication(), true).map { it.address }
             else ->
                 emptyList()
         }
