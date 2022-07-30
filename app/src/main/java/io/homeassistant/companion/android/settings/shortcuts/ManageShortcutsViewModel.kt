@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.Intent
 import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
-import android.graphics.Bitmap
 import android.graphics.PorterDuff
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.Icon
@@ -12,7 +11,6 @@ import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -26,6 +24,9 @@ import androidx.lifecycle.viewModelScope
 import com.maltaisn.icondialog.pack.IconPack
 import com.maltaisn.icondialog.pack.IconPackLoader
 import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
+import com.mikepenz.iconics.IconicsDrawable
+import com.mikepenz.iconics.typeface.IIcon
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -64,12 +65,11 @@ class ManageShortcutsViewModel @Inject constructor(
     data class Shortcut(
         var id: MutableState<String?>,
         var serverId: MutableState<Int>,
-        var selectedIcon: MutableState<Int>,
+        var selectedIcon: MutableState<IIcon?>,
         var label: MutableState<String>,
         var desc: MutableState<String>,
         var path: MutableState<String>,
         var type: MutableState<String>,
-        var drawable: MutableState<Drawable?>,
         var delete: MutableState<Boolean>
     )
 
@@ -102,12 +102,12 @@ class ManageShortcutsViewModel @Inject constructor(
                 Shortcut(
                     mutableStateOf(""),
                     mutableStateOf(currentServerId),
-                    mutableStateOf(0),
+                    mutableStateOf(null),
                     mutableStateOf(""),
                     mutableStateOf(""),
                     mutableStateOf(""),
                     mutableStateOf("lovelace"),
-                    mutableStateOf(AppCompatResources.getDrawable(application, R.drawable.ic_stat_ic_notification_blue)),
+                    // mutableStateOf(AppCompatResources.getDrawable(application, R.drawable.ic_stat_ic_notification_blue)),
                     mutableStateOf(false)
                 )
             )
@@ -119,7 +119,7 @@ class ManageShortcutsViewModel @Inject constructor(
         }
     }
 
-    fun createShortcut(shortcutId: String, serverId: Int, shortcutLabel: String, shortcutDesc: String, shortcutPath: String, bitmap: Bitmap? = null, iconId: Int) {
+    fun createShortcut(shortcutId: String, serverId: Int, shortcutLabel: String, shortcutDesc: String, shortcutPath: String, icon: IIcon?) {
         Log.d(TAG, "Attempt to add shortcut $shortcutId")
         val intent = Intent(
             WebViewActivity.newInstance(getApplication(), shortcutPath, serverId).addFlags(
@@ -129,16 +129,20 @@ class ManageShortcutsViewModel @Inject constructor(
         intent.action = shortcutPath
         intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
-        intent.putExtra("iconId", iconId)
+        icon?.let { intent.putExtra("iconName", icon.name) }
 
         val shortcut = ShortcutInfo.Builder(getApplication(), shortcutId)
             .setShortLabel(shortcutLabel)
             .setLongLabel(shortcutDesc)
             .setIcon(
-                if (bitmap != null) {
+                if (icon != null) {
+                    val bitmap = IconicsDrawable(getApplication(), icon).toBitmap()
                     Icon.createWithBitmap(bitmap)
                 } else {
-                    Icon.createWithResource(getApplication(), R.drawable.ic_stat_ic_notification_blue)
+                    Icon.createWithResource(
+                        getApplication(),
+                        R.drawable.ic_stat_ic_notification_blue
+                    )
                 }
             )
             .setIntent(intent)
@@ -180,11 +184,8 @@ class ManageShortcutsViewModel @Inject constructor(
                 shortcuts.last().label.value = item.shortLabel.toString()
                 shortcuts.last().desc.value = item.longLabel.toString()
                 shortcuts.last().path.value = item.intent?.action.toString()
-                shortcuts.last().selectedIcon.value = item.intent?.extras?.getInt("iconId").toString().toIntOrNull() ?: 0
-                if (shortcuts.last().selectedIcon.value != 0) {
-                    shortcuts.last().drawable.value = getTileIcon(shortcuts.last().selectedIcon.value)
-                }
-                if (shortcuts.last().path.value.startsWith("entityId:")) {
+                shortcuts.last().selectedIcon.value = item.intent?.extras?.getString("iconName")?.let { CommunityMaterial.getIcon(it) }
+                if (shortcuts.last().path.value.startsWith("entityId:"))
                     shortcuts.last().type.value = "entityId"
                 } else {
                     shortcuts.last().type.value = "lovelace"
@@ -202,11 +203,8 @@ class ManageShortcutsViewModel @Inject constructor(
                     shortcuts[index].label.value = item.shortLabel.toString()
                     shortcuts[index].desc.value = item.longLabel.toString()
                     shortcuts[index].path.value = item.intent?.action.toString()
-                    shortcuts[index].selectedIcon.value = item.intent?.extras?.getInt("iconId").toString().toIntOrNull() ?: 0
-                    if (shortcuts[index].selectedIcon.value != 0) {
-                        shortcuts[index].drawable.value = getTileIcon(shortcuts[index].selectedIcon.value)
-                    }
-                    if (shortcuts[index].path.value.startsWith("entityId:")) {
+                    shortcuts[index].selectedIcon.value = item.intent?.extras?.getString("iconName")?.let { CommunityMaterial.getIcon(it) }
+                    if (shortcuts[index].path.value.startsWith("entityId:"))
                         shortcuts[index].type.value = "entityId"
                     } else {
                         shortcuts[index].type.value = "lovelace"
@@ -214,19 +212,6 @@ class ManageShortcutsViewModel @Inject constructor(
                 }
             }
         }
-    }
-
-    private fun getTileIcon(tileIconId: Int): Drawable? {
-        val loader = IconPackLoader(getApplication())
-        iconPack = createMaterialDesignIconPack(loader)
-        iconPack.loadDrawables(loader.drawableLoader)
-        val iconDrawable = iconPack.icons[tileIconId]?.drawable
-        if (iconDrawable != null) {
-            val icon = DrawableCompat.wrap(iconDrawable)
-            icon.setColorFilter(app.resources.getColor(R.color.colorAccent), PorterDuff.Mode.SRC_IN)
-            return icon
-        }
-        return null
     }
 
     fun updatePinnedShortcuts() {
