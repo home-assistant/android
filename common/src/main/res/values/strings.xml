@@ -106,6 +106,7 @@
     <string name="choose_entity">Choose entity</string>
     <string name="choose_server">Choose server</string>
     <string name="clear_favorites">Clear Favorites</string>
+    <string name="clear_search">Clear search</string>
     <string name="color_temp">Color temperature: %1$d</string>
     <string name="collapse">Collapse</string>
     <string name="complication_entity_invalid">Invalid entity</string>
@@ -447,6 +448,7 @@
     <string name="scene">Scene</string>
     <string name="scenes">Scenes</string>
     <string name="scripts">Scripts</string>
+    <string name="search_icons">Search icons</string>
     <string name="search_notifications">Search notifications</string>
     <string name="search_results">Search Results</string>
     <string name="search_sensors">Search sensors</string>
