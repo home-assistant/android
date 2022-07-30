@@ -73,7 +73,7 @@ class TemplateTile : TileService() {
             val renderedText = try {
                 integrationUseCase.renderTemplate(template, mapOf()).toString()
             } catch (e: Exception) {
-                Log.i("TemplateTile", "Exception while rendering template", e)
+                Log.e("TemplateTile", "Exception while rendering template", e)
                 // JsonMappingException suggests that template is not a String (= error)
                 if (e.cause is JsonMappingException) getString(commonR.string.template_error)
                 else getString(commonR.string.template_render_error)
