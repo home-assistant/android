@@ -36,15 +36,21 @@ object BluetoothUtils {
                 val btConnectedDevices = bluetoothManager.getConnectedDevices(BluetoothProfile.GATT)
                 for (btDev in btConnectedDevices) {
                     if (!allowDuplicates && devices.any { it.address == btDev.address }) continue
+                    var isDuplicate = false
+                    for (device in bondedDevices) {
+                        if (device == btDev)
+                            isDuplicate = true
+                    }
                     val name = btDev.name ?: btDev.address
-                    devices.add(
-                        BluetoothDevice(
-                            btDev.address,
-                            name,
-                            btDev.bondState == android.bluetooth.BluetoothDevice.BOND_BONDED,
-                            isConnected(btDev)
+                    if (!isDuplicate)
+                        devices.add(
+                            BluetoothDevice(
+                                btDev.address,
+                                name,
+                                btDev.bondState == android.bluetooth.BluetoothDevice.BOND_BONDED,
+                                isConnected(btDev)
+                            )
                         )
-                    )
                 }
             }
         }
