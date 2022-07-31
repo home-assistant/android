@@ -130,13 +130,13 @@ abstract class TileExtensions : TileService() {
             tile.updateTile()
             withContext(Dispatchers.IO) {
                 try {
-                    val state = integrationUseCase.getEntity(tileData!!.entityId)
                     integrationUseCase.callService(
-                        tileData.entityId.split(".")[0],
+                        tileData!!.entityId.split(".")[0],
                         when (tileData.entityId.split(".")[0]) {
                             "button", "input_button" -> "press"
                             in toggleDomains -> "toggle"
                             "lock" -> {
+                                val state = integrationUseCase.getEntity(tileData.entityId)
                                 if (state?.state == "locked")
                                     "unlock"
                                 else
