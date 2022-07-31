@@ -9,7 +9,7 @@ import java.lang.reflect.Method
 
 object BluetoothUtils {
     @SuppressLint("MissingPermission")
-    fun getBluetoothDevices(context: Context, allowDuplicates: Boolean = false): List<BluetoothDevice> {
+    fun getBluetoothDevices(context: Context): List<BluetoothDevice> {
         val devices: MutableList<BluetoothDevice> = ArrayList()
 
         val bluetoothManager =
@@ -35,16 +35,16 @@ object BluetoothUtils {
                 }
                 val btConnectedDevices = bluetoothManager.getConnectedDevices(BluetoothProfile.GATT)
                 for (btDev in btConnectedDevices) {
-                    if (!allowDuplicates && devices.any { it.address == btDev.address }) continue
+                    if (devices.any { it.address == btDev.address }) continue
                     val name = btDev.name ?: btDev.address
-                    val device = BluetoothDevice(
-                        btDev.address,
-                        name,
-                        btDev.bondState == android.bluetooth.BluetoothDevice.BOND_BONDED,
-                        isConnected(btDev)
+                    devices.add(
+                        BluetoothDevice(
+                            btDev.address,
+                            name,
+                            btDev.bondState == android.bluetooth.BluetoothDevice.BOND_BONDED,
+                            isConnected(btDev)
+                        )
                     )
-
-                    if (!devices.contains(device)) devices.add(device)
                 }
             }
         }
