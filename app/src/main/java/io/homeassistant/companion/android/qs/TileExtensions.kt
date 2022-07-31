@@ -128,7 +128,7 @@ abstract class TileExtensions : TileService() {
         if (hasTile) {
             tile.state = Tile.STATE_ACTIVE
             tile.updateTile()
-            withContext(Dispatchers.Main) {
+            withContext(Dispatchers.IO) {
                 try {
                     val state = integrationUseCase.getEntity(tileData!!.entityId)
                     integrationUseCase.callService(
