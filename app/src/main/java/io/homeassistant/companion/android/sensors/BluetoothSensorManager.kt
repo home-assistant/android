@@ -136,9 +136,9 @@ class BluetoothSensorManager : SensorManager {
         if (checkPermission(context, bluetoothConnection.id)) {
 
             val bluetoothDevices = BluetoothUtils.getBluetoothDevices(context, true)
-            pairedDevices = bluetoothDevices.filter { b -> b.paired }.map { checkNameAddress(it) }
-            connectedPairedDevices = bluetoothDevices.filter { b -> b.paired && b.connected }.map { checkNameAddress(it) }
-            connectedNotPairedDevices = bluetoothDevices.filter { b -> !b.paired && b.connected }.map { checkNameAddress(it) }
+            pairedDevices = bluetoothDevices.filter { b -> b.paired }.map { checkNameAddress(it) }.distinct()
+            connectedPairedDevices = bluetoothDevices.filter { b -> b.paired && b.connected }.map { checkNameAddress(it) }.distinct()
+            connectedNotPairedDevices = bluetoothDevices.filter { b -> !b.paired && b.connected }.map { checkNameAddress(it) }.distinct()
             totalConnectedDevices = bluetoothDevices.count { b -> b.connected }
         }
         onSensorUpdated(
