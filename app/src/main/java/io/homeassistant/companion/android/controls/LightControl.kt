@@ -25,7 +25,8 @@ object LightControl : HaControl {
         context: Context,
         control: Control.StatefulBuilder,
         entity: Entity<Map<String, Any>>,
-        area: AreaRegistryResponse?
+        area: AreaRegistryResponse?,
+        baseUrl: String?
     ): Control.StatefulBuilder {
         val position = entity.getLightBrightness()
         control.setControlTemplate(

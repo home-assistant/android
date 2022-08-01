@@ -16,7 +16,12 @@ import io.homeassistant.companion.android.webview.WebViewActivity
 @RequiresApi(Build.VERSION_CODES.R)
 interface HaControl {
 
-    fun createControl(context: Context, entity: Entity<Map<String, Any>>, area: AreaRegistryResponse?): Control {
+    fun createControl(
+        context: Context,
+        entity: Entity<Map<String, Any>>,
+        area: AreaRegistryResponse?,
+        baseUrl: String?
+    ): Control {
         val controlPath = "entityId:${entity.entityId}"
         val control = Control.StatefulBuilder(
             entity.entityId,
@@ -41,14 +46,15 @@ interface HaControl {
             }
         )
 
-        return provideControlFeatures(context, control, entity, area).build()
+        return provideControlFeatures(context, control, entity, area, baseUrl).build()
     }
 
     fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
         entity: Entity<Map<String, Any>>,
-        area: AreaRegistryResponse?
+        area: AreaRegistryResponse?,
+        baseUrl: String?
     ): Control.StatefulBuilder
 
     fun getDeviceType(entity: Entity<Map<String, Any>>): Int

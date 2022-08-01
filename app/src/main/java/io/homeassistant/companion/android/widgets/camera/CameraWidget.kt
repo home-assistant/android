@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.widgets.camera
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
@@ -84,10 +85,21 @@ class CameraWidget : AppWidgetProvider() {
 
     private fun updateAllWidgets(context: Context) {
         mainScope.launch {
-            val cameraWidgetList = cameraWidgetDao.getAll()
+            val appWidgetManager = AppWidgetManager.getInstance(context)
+            val systemWidgetIds = appWidgetManager.getAppWidgetIds(ComponentName(context, CameraWidget::class.java))
+            val dbWidgetList = cameraWidgetDao.getAll()
+
+            val invalidWidgetIds = dbWidgetList
+                .filter { !systemWidgetIds.contains(it.id) }
+                .map { it.id }
+            if (invalidWidgetIds.isNotEmpty()) {
+                Log.i(TAG, "Found widgets $invalidWidgetIds in database, but not in AppWidgetManager - sending onDeleted")
+                onDeleted(context, invalidWidgetIds.toIntArray())
+            }
+
+            val cameraWidgetList = dbWidgetList.filter { systemWidgetIds.contains(it.id) }
             if (cameraWidgetList.isNotEmpty()) {
                 Log.d(TAG, "Updating all widgets")
-                val appWidgetManager = AppWidgetManager.getInstance(context)
                 for (item in cameraWidgetList) {
                     updateAppWidget(context, item.id, appWidgetManager)
                 }

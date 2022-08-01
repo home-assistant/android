@@ -30,6 +30,7 @@ class OnboardingViewModel @Inject constructor(
 
     private val _homeAssistantSearcher = HomeAssistantSearcher(
         nsdManager = app.getSystemService()!!,
+        wifiManager = app.getSystemService(),
         onInstanceFound = { instance ->
             if (foundInstances.none { it.url == instance.url }) {
                 foundInstances.add(instance)

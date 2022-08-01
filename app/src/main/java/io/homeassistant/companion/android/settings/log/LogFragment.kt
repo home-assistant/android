@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.settings.log
 
-import android.Manifest
 import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -15,10 +14,8 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
-import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
@@ -50,33 +47,11 @@ class LogFragment : Fragment() {
     private var processLog = ""
     private var crashLog: String? = null
     private var currentLog = ""
-    private val requestPermission =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            if (granted) {
-                shareLog()
-            }
-        }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.share_log -> {
-                val permission = Manifest.permission.WRITE_EXTERNAL_STORAGE
-                if (ContextCompat.checkSelfPermission(requireContext(), permission) == PackageManager.PERMISSION_DENIED) {
-                    Log.d(TAG, "Click on share logs without WRITE_EXTERNAL_STORAGE permission")
-                    AlertDialog.Builder(requireActivity())
-                        .setTitle(getString(commonR.string.share_logs))
-                        .setMessage(getString(commonR.string.share_logs_perm_message))
-                        .setPositiveButton(commonR.string.confirm_positive) { _, _ ->
-                            Log.i(TAG, "Request WRITE_EXTERNAL_STORAGE permission, to create log file")
-                            requestPermission.launch(permission)
-                        }
-                        .setNegativeButton(commonR.string.confirm_negative) { _, _ ->
-                            Log.w(TAG, "User cancel request for WRITE_EXTERNAL_STORAGE permission")
-                            // Do nothing
-                        }.show()
-                } else {
-                    shareLog()
-                }
+                shareLog()
                 return true
             }
             R.id.refresh_log -> {

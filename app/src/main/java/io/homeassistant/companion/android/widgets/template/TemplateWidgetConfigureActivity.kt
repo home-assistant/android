@@ -114,9 +114,6 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 templateWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, android.R.color.white) } ?: true
             binding.textColorBlack.isChecked =
                 templateWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, commonR.color.colorWidgetButtonLabelBlack) } ?: false
-
-            binding.deleteButton.visibility = View.VISIBLE
-            binding.deleteButton.setOnClickListener(onDeleteWidget)
         } else {
             binding.backgroundType.setSelection(0)
         }
@@ -216,10 +213,10 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             var enabled: Boolean
             withContext(Dispatchers.IO) {
                 try {
-                    templateText = integrationUseCase.renderTemplate(template, mapOf())
+                    templateText = integrationUseCase.renderTemplate(template, mapOf()) ?: getString(commonR.string.template_error)
                     enabled = true
                 } catch (e: Exception) {
-                    templateText = "Error in template"
+                    templateText = getString(commonR.string.template_render_error)
                     enabled = false
                 }
             }

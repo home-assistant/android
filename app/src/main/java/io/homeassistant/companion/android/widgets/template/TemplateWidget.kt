@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.widgets.template
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
@@ -46,6 +47,9 @@ class TemplateWidget : BaseWidgetProvider() {
         }
     }
 
+    override fun getWidgetProvider(context: Context): ComponentName =
+        ComponentName(context, TemplateWidget::class.java)
+
     override suspend fun getAllWidgetIds(context: Context): List<Int> {
         return templateWidgetDao.getAll().map { it.id }
     }
@@ -85,11 +89,19 @@ class TemplateWidget : BaseWidgetProvider() {
                 }
 
                 // Content
-                var renderedTemplate = templateWidgetDao.get(appWidgetId)?.lastUpdate ?: "Loading"
+                var renderedTemplate: String? = templateWidgetDao.get(appWidgetId)?.lastUpdate ?: "Loading"
                 try {
                     renderedTemplate = integrationUseCase.renderTemplate(widget.template, mapOf())
-                    templateWidgetDao.updateTemplateWidgetLastUpdate(appWidgetId, renderedTemplate)
-                    setViewVisibility(R.id.widgetTemplateError, View.GONE)
+                    if (renderedTemplate != null) {
+                        templateWidgetDao.updateTemplateWidgetLastUpdate(
+                            appWidgetId,
+                            renderedTemplate
+                        )
+                        setViewVisibility(R.id.widgetTemplateError, View.GONE)
+                    } else {
+                        Log.e(TAG, "Template returned null: ${widget.template}")
+                        setViewVisibility(R.id.widgetTemplateError, View.VISIBLE)
+                    }
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to render template: ${widget.template}", e)
                     setViewVisibility(R.id.widgetTemplateError, View.VISIBLE)

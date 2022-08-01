@@ -6,6 +6,7 @@ const val websocketChannel = "Websocket"
 const val highAccuracyChannel = "High accuracy location"
 const val databaseChannel = "App Database"
 const val locationDisabledChannel = "Location disabled"
+const val downloadsChannel = "downloads"
 const val generalChannel = "general"
 
 val appCreatedChannels = listOf(
@@ -15,5 +16,6 @@ val appCreatedChannels = listOf(
     highAccuracyChannel,
     databaseChannel,
     locationDisabledChannel,
+    downloadsChannel,
     generalChannel
 )
