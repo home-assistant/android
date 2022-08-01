@@ -357,7 +357,7 @@ class BluetoothSensorManager : SensorManager {
         // reset the last_sent_state of the sensor so it won't skip the update of attributes
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         runBlocking {
-            sensorDao.updateLastSendState(beaconMonitor.id, "")
+            sensorDao.updateLastSentStateAndIcon(beaconMonitor.id, "", "")
         }
 
         onSensorUpdated(
@@ -367,7 +367,7 @@ class BluetoothSensorManager : SensorManager {
             icon,
             attr
         )
-    }    
+    }
 
     private fun checkNameAddress(bt: BluetoothDevice): String {
         return if (bt.address != bt.name) "${bt.address} (${bt.name})" else bt.address
