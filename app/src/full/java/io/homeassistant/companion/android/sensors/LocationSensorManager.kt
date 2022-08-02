@@ -123,7 +123,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
         private var geofencingClient: GeofencingClient? = null
         private var fusedLocationProviderClient: FusedLocationProviderClient? = null
 
-        private var isBackgroundLocationSetup = false
+        var isBackgroundLocationSetup = false
         private var isZoneLocationSetup = false
 
         private var lastLocationSend = 0L
