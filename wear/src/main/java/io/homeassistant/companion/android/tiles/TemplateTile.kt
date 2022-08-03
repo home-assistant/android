@@ -11,6 +11,7 @@ import android.text.style.ForegroundColorSpan
 import android.text.style.RelativeSizeSpan
 import android.text.style.StyleSpan
 import android.text.style.UnderlineSpan
+import android.util.Log
 import androidx.core.content.getSystemService
 import androidx.core.text.HtmlCompat.FROM_HTML_MODE_LEGACY
 import androidx.core.text.HtmlCompat.fromHtml
@@ -32,6 +33,7 @@ import androidx.wear.tiles.TileBuilders.Tile
 import androidx.wear.tiles.TileService
 import androidx.wear.tiles.TimelineBuilders.Timeline
 import androidx.wear.tiles.TimelineBuilders.TimelineEntry
+import com.fasterxml.jackson.databind.JsonMappingException
 import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
@@ -69,11 +71,12 @@ class TemplateTile : TileService() {
 
             val template = integrationUseCase.getTemplateTileContent()
             val renderedText = try {
-                integrationUseCase.renderTemplate(template, mapOf()) ?: getString(
-                    commonR.string.template_error
-                )
+                integrationUseCase.renderTemplate(template, mapOf()).toString()
             } catch (e: Exception) {
-                getString(commonR.string.template_render_error)
+                Log.e("TemplateTile", "Exception while rendering template", e)
+                // JsonMappingException suggests that template is not a String (= error)
+                if (e.cause is JsonMappingException) getString(commonR.string.template_error)
+                else getString(commonR.string.template_render_error)
             }
 
             Tile.Builder()
