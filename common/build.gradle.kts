@@ -13,7 +13,7 @@ val versionName = System.getenv("VERSION") ?: "LOCAL"
 val versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
 
 android {
-    compileSdk = 31
+    compileSdk = 32
 
     defaultConfig {
         minSdk = 21
