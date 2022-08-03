@@ -156,6 +156,7 @@ class MessagingManager @Inject constructor(
         const val COMMAND_KEEP_SCREEN_ON = "keep_screen_on"
         const val COMMAND_LAUNCH_APP = "command_launch_app"
         const val COMMAND_PERSISTENT_CONNECTION = "command_persistent_connection"
+        const val COMMAND_STOP_TTS = "command_stop_tts"
 
         // DND commands
         const val DND_PRIORITY_ONLY = "priority_only"
@@ -230,7 +231,8 @@ class MessagingManager @Inject constructor(
             COMMAND_MEDIA,
             COMMAND_UPDATE_SENSORS,
             COMMAND_LAUNCH_APP,
-            COMMAND_PERSISTENT_CONNECTION
+            COMMAND_PERSISTENT_CONNECTION,
+            COMMAND_STOP_TTS
         )
         val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
         val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
@@ -259,6 +261,8 @@ class MessagingManager @Inject constructor(
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
+
+    private var textToSpeech: TextToSpeech? = null
 
     fun handleMessage(jsonData: Map<String, String>, source: String) {
 
@@ -496,6 +500,7 @@ class MessagingManager @Inject constructor(
                             else -> handleDeviceCommands(jsonData)
                         }
                     }
+                    COMMAND_STOP_TTS -> handleDeviceCommands(jsonData)
                     else -> Log.d(TAG, "No command received")
                 }
             }
@@ -522,6 +527,12 @@ class MessagingManager @Inject constructor(
         notificationManagerCompat.cancel(tag, messageId, true)
     }
 
+    private fun stopTTS() {
+        Log.d(TAG, "Stopping TTS")
+        textToSpeech?.stop()
+        textToSpeech?.shutdown()
+    }
+
     private fun removeNotificationChannel(channelName: String) {
         val notificationManagerCompat = NotificationManagerCompat.from(context)
 
@@ -533,7 +544,6 @@ class MessagingManager @Inject constructor(
     }
 
     private fun speakNotification(data: Map<String, String>) {
-        var textToSpeech: TextToSpeech? = null
         var tts = data[TTS_TEXT]
         val audioManager = context.getSystemService<AudioManager>()
         val currentAlarmVolume = audioManager?.getStreamVolume(AudioManager.STREAM_ALARM)
@@ -568,6 +578,15 @@ class MessagingManager @Inject constructor(
                     override fun onError(p0: String?) {
                         textToSpeech?.stop()
                         textToSpeech?.shutdown()
+                        if (data[MEDIA_STREAM] == ALARM_STREAM_MAX)
+                            audioManager?.setStreamVolume(
+                                AudioManager.STREAM_ALARM,
+                                currentAlarmVolume!!,
+                                0
+                            )
+                    }
+
+                    override fun onStop(utteranceId: String?, interrupted: Boolean) {
                         if (data[MEDIA_STREAM] == ALARM_STREAM_MAX)
                             audioManager?.setStreamVolume(
                                 AudioManager.STREAM_ALARM,
@@ -837,6 +856,9 @@ class MessagingManager @Inject constructor(
             }
             COMMAND_PERSISTENT_CONNECTION -> {
                 togglePersistentConnection(data[PERSISTENT].toString())
+            }
+            COMMAND_STOP_TTS -> {
+                stopTTS()
             }
             else -> Log.d(TAG, "No command received")
         }
