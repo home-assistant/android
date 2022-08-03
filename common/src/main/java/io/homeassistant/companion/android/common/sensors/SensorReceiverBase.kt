@@ -297,8 +297,8 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                     val sensor = sensorDao.get(it.uniqueId)
                     if (sensor != null) {
                         sensor.registered = null
-                        sensor.lastSentState = ""
-                        sensor.lastSentIcon = ""
+                        sensor.lastSentState = null
+                        sensor.lastSentIcon = null
                         sensorDao.update(sensor)
                     }
                 }

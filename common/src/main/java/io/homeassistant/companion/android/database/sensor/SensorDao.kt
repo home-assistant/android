@@ -73,7 +73,7 @@ interface SensorDao {
     fun updateSettingValue(sensorId: String, settingName: String, value: String)
 
     @Query("UPDATE sensors SET last_sent_state = :state, last_sent_icon = :icon WHERE id = :sensorId")
-    suspend fun updateLastSentStateAndIcon(sensorId: String, state: String, icon: String)
+    suspend fun updateLastSentStateAndIcon(sensorId: String, state: String?, icon: String?)
 
     @Query("SELECT COUNT(id) FROM sensors WHERE enabled = 1")
     suspend fun getEnabledCount(): Int?
@@ -85,7 +85,7 @@ interface SensorDao {
                 async {
                     val sensorEntity = get(sensorId)
                     if (sensorEntity != null) {
-                        update(sensorEntity.copy(enabled = enabled, lastSentState = "", lastSentIcon = ""))
+                        update(sensorEntity.copy(enabled = enabled, lastSentState = null, lastSentIcon = null))
                     } else {
                         add(Sensor(sensorId, enabled, state = ""))
                     }

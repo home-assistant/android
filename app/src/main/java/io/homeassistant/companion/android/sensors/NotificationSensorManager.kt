@@ -154,7 +154,8 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             lastNotification,
             state.toString().take(255),
             lastNotification.statelessIcon,
-            attr
+            attr,
+            forceUpdate = true,
         )
 
         // Need to send update!
@@ -211,7 +212,8 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             lastRemovedNotification,
             state.toString().take(255),
             lastRemovedNotification.statelessIcon,
-            attr
+            attr,
+            forceUpdate = true,
         )
 
         // Need to send update!

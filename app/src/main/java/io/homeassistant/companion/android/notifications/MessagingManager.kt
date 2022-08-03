@@ -750,8 +750,8 @@ class MessagingManager @Inject constructor(
                     mainScope.launch {
                         sensorDao.updateLastSentStateAndIcon(
                             BluetoothSensorManager.bleTransmitter.id,
-                            "",
-                            ""
+                            null,
+                            null
                         )
                     }
                     BluetoothSensorManager().requestSensorUpdate(context)
