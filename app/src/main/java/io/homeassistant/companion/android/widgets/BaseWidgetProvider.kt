@@ -71,7 +71,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
 
     fun onScreenOn(context: Context) {
         mainScope = CoroutineScope(Dispatchers.Main + Job())
-        if (entityUpdates == null) {
+        if (!isSubscribed()) {
             mainScope.launch {
                 if (!integrationUseCase.isRegistered()) {
                     return@launch
@@ -84,6 +84,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                     )
 
                     entityUpdates = integrationUseCase.getEntityUpdates()
+                    setSubscribed(entityUpdates != null)
                     entityUpdates?.collect {
                         onEntityStateChanged(context, it)
                     }
@@ -95,6 +96,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     private fun onScreenOff() {
         mainScope.cancel()
         entityUpdates = null
+        setSubscribed(false)
     }
 
     private suspend fun updateAllWidgets(
@@ -131,6 +133,8 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         }
     }
 
+    abstract fun isSubscribed(): Boolean
+    abstract fun setSubscribed(subscribed: Boolean)
     abstract fun getWidgetProvider(context: Context): ComponentName
     abstract suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity<Map<String, Any>>? = null): RemoteViews
     abstract suspend fun getAllWidgetIds(context: Context): List<Int>

@@ -35,6 +35,8 @@ class TemplateWidget : BaseWidgetProvider() {
         internal const val EXTRA_TEXT_SIZE = "EXTRA_TEXT_SIZE"
         internal const val EXTRA_BACKGROUND_TYPE = "EXTRA_BACKGROUND_TYPE"
         internal const val EXTRA_TEXT_COLOR = "EXTRA_TEXT_COLOR"
+
+        private var isSubscribed = false
     }
 
     @Inject
@@ -45,6 +47,12 @@ class TemplateWidget : BaseWidgetProvider() {
         mainScope.launch {
             templateWidgetDao.deleteAll(appWidgetIds)
         }
+    }
+
+    override fun isSubscribed(): Boolean = isSubscribed
+
+    override fun setSubscribed(subscribed: Boolean) {
+        isSubscribed = subscribed
     }
 
     override fun getWidgetProvider(context: Context): ComponentName =

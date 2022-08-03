@@ -42,10 +42,18 @@ class EntityWidget : BaseWidgetProvider() {
         internal const val EXTRA_TEXT_COLOR = "EXTRA_TEXT_COLOR"
 
         private data class ResolvedText(val text: CharSequence?, val exception: Boolean = false)
+
+        private var isSubscribed = false
     }
 
     @Inject
     lateinit var staticWidgetDao: StaticWidgetDao
+
+    override fun isSubscribed(): Boolean = isSubscribed
+
+    override fun setSubscribed(subscribed: Boolean) {
+        isSubscribed = subscribed
+    }
 
     override fun getWidgetProvider(context: Context): ComponentName =
         ComponentName(context, EntityWidget::class.java)
