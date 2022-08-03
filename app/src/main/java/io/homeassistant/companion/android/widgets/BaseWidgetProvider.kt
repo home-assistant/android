@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import android.util.Log
 import android.widget.RemoteViews
@@ -77,6 +78,11 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                 }
                 updateAllWidgets(context)
                 if (getAllWidgetIds(context).isNotEmpty()) {
+                    context.applicationContext.registerReceiver(
+                        this@BaseWidgetProvider,
+                        IntentFilter(Intent.ACTION_SCREEN_OFF)
+                    )
+
                     entityUpdates = integrationUseCase.getEntityUpdates()
                     entityUpdates?.collect {
                         onEntityStateChanged(context, it)
