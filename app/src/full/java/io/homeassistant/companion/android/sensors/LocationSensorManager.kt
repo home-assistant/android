@@ -599,16 +599,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             if (location.accuracy > minAccuracy) {
                 Log.w(TAG, "Location accuracy didn't meet requirements, disregarding: $location")
             } else {
-                // Update GeoLocation Sensor (if enabled) with new Location
-                val geoSensorManager = SensorReceiver.MANAGERS.firstOrNull { it.getAvailableSensors(latestContext).any { s -> s.name == commonR.string.basic_sensor_name_geolocation } }
-                if (geoSensorManager != null) {
-                    if (geoSensorManager.isEnabled(latestContext, "geocoded_location")) {
-                        geoSensorManager.requestSensorUpdate(latestContext)
-                    } else {
-                        HighAccuracyLocationService.updateNotificationAddress(latestContext, location)
-                    }
-                }
-
+                HighAccuracyLocationService.updateNotificationAddress(latestContext, location)
                 // Send new location to Home Assistant
                 sendLocationUpdate(location)
             }
@@ -774,10 +765,22 @@ class LocationSensorManager : LocationSensorManagerBase() {
         lastLocationSend = now
         lastUpdateLocation = updateLocation.gps.contentToString()
 
+        val geoSensorManager = SensorReceiver.MANAGERS.firstOrNull { it.getAvailableSensors(latestContext).any { s -> s.name == commonR.string.basic_sensor_name_geolocation } }
+        val geoSensor = AppDatabase.getInstance(latestContext).sensorDao().getFull(GeocodeSensorManager.geocodedLocation.id)
+
         ioScope.launch {
             try {
                 integrationUseCase.updateLocation(updateLocation)
                 Log.d(TAG, "Location update sent successfully")
+
+                // Update Geocoded Location Sensor
+                SensorReceiver().updateSensor(
+                    latestContext,
+                    integrationUseCase,
+                    geoSensor,
+                    geoSensorManager,
+                    GeocodeSensorManager.geocodedLocation
+                )
             } catch (e: Exception) {
                 Log.e(TAG, "Could not update location.", e)
             }
