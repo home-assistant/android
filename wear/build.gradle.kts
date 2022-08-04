@@ -100,7 +100,7 @@ dependencies {
     implementation("androidx.wear:wear-remote-interactions:1.0.0")
     compileOnly("com.google.android.wearable:wearable:2.9.0")
 
-    implementation("com.google.dagger:hilt-android:2.42")
+    implementation("com.google.dagger:hilt-android:2.43.2")
     kapt("com.google.dagger:hilt-android-compiler:2.43.2")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.3")
