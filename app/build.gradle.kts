@@ -152,6 +152,7 @@ dependencies {
     implementation("androidx.recyclerview:recyclerview:1.2.1")
     implementation("androidx.preference:preference-ktx:1.2.0")
     implementation("com.google.android.material:material:1.6.1")
+    implementation("androidx.fragment:fragment-ktx:1.5.1")
 
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.3")
