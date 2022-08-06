@@ -76,6 +76,8 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import org.json.JSONObject
 import java.net.URL
 import java.net.URLDecoder
@@ -86,6 +88,7 @@ import io.homeassistant.companion.android.common.R as commonR
 
 class MessagingManager @Inject constructor(
     @ApplicationContext val context: Context,
+    private val okHttpClient: OkHttpClient,
     private val integrationUseCase: IntegrationRepository,
     private val urlUseCase: UrlRepository,
     private val authenticationUseCase: AuthenticationRepository,
@@ -1332,11 +1335,16 @@ class MessagingManager @Inject constructor(
 
             var image: Bitmap? = null
             try {
-                val uc = url.openConnection()
-                if (requiresAuth) {
-                    uc.setRequestProperty("Authorization", authenticationUseCase.buildBearerToken())
-                }
-                image = BitmapFactory.decodeStream(uc.getInputStream())
+                val request = Request.Builder().apply {
+                    url(url)
+                    if (requiresAuth) {
+                        addHeader("Authorization", authenticationUseCase.buildBearerToken())
+                    }
+                }.build()
+
+                val response = okHttpClient.newCall(request).execute()
+                image = BitmapFactory.decodeStream(response.body?.byteStream())
+                response.close()
             } catch (e: Exception) {
                 Log.e(TAG, "Couldn't download image for notification", e)
             }
