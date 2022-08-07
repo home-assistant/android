@@ -325,7 +325,8 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         integrationUseCase: IntegrationRepository,
         fullSensor: SensorWithAttributes?,
         sensorManager: SensorManager?,
-        basicSensor: SensorManager.BasicSensor
+        basicSensor: SensorManager.BasicSensor,
+        sensorDao: SensorDao
     ) {
         sensorManager?.requestSensorUpdate(context)
         if (

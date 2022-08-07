@@ -766,7 +766,8 @@ class LocationSensorManager : LocationSensorManagerBase() {
         lastUpdateLocation = updateLocation.gps.contentToString()
 
         val geoSensorManager = SensorReceiver.MANAGERS.firstOrNull { it.getAvailableSensors(latestContext).any { s -> s.name == commonR.string.basic_sensor_name_geolocation } }
-        val geoSensor = AppDatabase.getInstance(latestContext).sensorDao().getFull(GeocodeSensorManager.geocodedLocation.id)
+        val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
+        val geoSensor = sensorDao.getFull(GeocodeSensorManager.geocodedLocation.id)
 
         ioScope.launch {
             try {
@@ -779,7 +780,8 @@ class LocationSensorManager : LocationSensorManagerBase() {
                     integrationUseCase,
                     geoSensor,
                     geoSensorManager,
-                    GeocodeSensorManager.geocodedLocation
+                    GeocodeSensorManager.geocodedLocation,
+                    sensorDao
                 )
             } catch (e: Exception) {
                 Log.e(TAG, "Could not update location.", e)
