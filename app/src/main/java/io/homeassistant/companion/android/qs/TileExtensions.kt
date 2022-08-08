@@ -4,8 +4,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.drawable.Icon
 import android.os.Build
-import android.os.Handler
-import android.os.Looper
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import android.util.Log
@@ -151,7 +149,7 @@ abstract class TileExtensions : TileService() {
                     Log.d(TAG, "Service call sent for tile ID: $tileId")
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to call service for tile ID: $tileId", e)
-                    Handler(Looper.getMainLooper()).post {
+                    withContext(Dispatchers.Main) {
                         Toast.makeText(
                             context,
                             commonR.string.service_call_failure,
@@ -167,7 +165,7 @@ abstract class TileExtensions : TileService() {
             tile.state = Tile.STATE_UNAVAILABLE
             tile.updateTile()
             Log.d(TAG, "No tile data found for tile ID: $tileId")
-            Handler(Looper.getMainLooper()).post {
+            withContext(Dispatchers.Main) {
                 Toast.makeText(
                     context,
                     commonR.string.tile_data_missing,
