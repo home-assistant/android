@@ -87,7 +87,7 @@ class WebSocketRepositoryImpl @Inject constructor(
     private val notificationMutex = Mutex()
     private var notificationFlow: Flow<Map<String, Any>>? = null
     private var notificationProducerScope: ProducerScope<Map<String, Any>>? = null
-    private var lastResponse = mutableMapOf<String, SocketResponse?>()
+    private var lastResponseID = mutableMapOf<String, Long?>()
 
     override fun getConnectionState(): WebSocketState? = connectionState
 
@@ -183,13 +183,14 @@ class WebSocketRepositoryImpl @Inject constructor(
         eventSubscriptionMutex.withLock {
             if (eventSubscriptionFlow[eventType] == null) {
 
-                lastResponse[eventType] = sendMessage(
+                val response = sendMessage(
                     mapOf(
                         "type" to "subscribe_events",
                         "event_type" to eventType
                     )
                 )
-                if (lastResponse[eventType] == null) {
+                lastResponseID[eventType] = response?.id
+                if (response == null) {
                     Log.e(TAG, "Unable to register for events of type $eventType")
                     return null
                 }
@@ -202,10 +203,10 @@ class WebSocketRepositoryImpl @Inject constructor(
                             sendMessage(
                                 mapOf(
                                     "type" to "unsubscribe_events",
-                                    "subscription" to lastResponse[eventType]!!.id
+                                    "subscription" to lastResponseID[eventType]!!
                                 )
                             )
-                            lastResponse.remove(eventType)
+                            lastResponseID.remove(eventType)
                         }
                         eventSubscriptionProducerScope.remove(eventType)
                         eventSubscriptionFlow.remove(eventType)
@@ -397,13 +398,14 @@ class WebSocketRepositoryImpl @Inject constructor(
                 delay(10000)
                 if (connect()) {
                     eventSubscriptionFlow.forEach { (eventType, _) ->
-                        lastResponse[eventType] = sendMessage(
+                        val response = sendMessage(
                             mapOf(
                                 "type" to "subscribe_events",
                                 "event_type" to eventType
                             )
                         )
-                        if (lastResponse[eventType] == null) {
+                        lastResponseID[eventType] = response?.id
+                        if (response == null) {
                             Log.e(TAG, "Issue re-registering event subscriptions")
                         }
                     }
