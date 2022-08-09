@@ -87,7 +87,7 @@ class WebSocketRepositoryImpl @Inject constructor(
     private val notificationMutex = Mutex()
     private var notificationFlow: Flow<Map<String, Any>>? = null
     private var notificationProducerScope: ProducerScope<Map<String, Any>>? = null
-    private var lastResponse: SocketResponse? = null
+    private var lastResponse = mutableMapOf<String, SocketResponse?>()
 
     override fun getConnectionState(): WebSocketState? = connectionState
 
@@ -183,13 +183,13 @@ class WebSocketRepositoryImpl @Inject constructor(
         eventSubscriptionMutex.withLock {
             if (eventSubscriptionFlow[eventType] == null) {
 
-                lastResponse = sendMessage(
+                lastResponse[eventType] = sendMessage(
                     mapOf(
                         "type" to "subscribe_events",
                         "event_type" to eventType
                     )
                 )
-                if (lastResponse == null) {
+                if (lastResponse[eventType] == null) {
                     Log.e(TAG, "Unable to register for events of type $eventType")
                     return null
                 }
@@ -202,7 +202,7 @@ class WebSocketRepositoryImpl @Inject constructor(
                             sendMessage(
                                 mapOf(
                                     "type" to "unsubscribe_events",
-                                    "subscription" to lastResponse!!.id
+                                    "subscription" to lastResponse[eventType]!!.id
                                 )
                             )
                         }
@@ -396,13 +396,13 @@ class WebSocketRepositoryImpl @Inject constructor(
                 delay(10000)
                 if (connect()) {
                     eventSubscriptionFlow.forEach { (eventType, _) ->
-                        lastResponse = sendMessage(
+                        lastResponse[eventType] = sendMessage(
                             mapOf(
                                 "type" to "subscribe_events",
                                 "event_type" to eventType
                             )
                         )
-                        if (lastResponse == null) {
+                        if (lastResponse[eventType] == null) {
                             Log.e(TAG, "Issue re-registering event subscriptions")
                         }
                     }
