@@ -205,6 +205,7 @@ class WebSocketRepositoryImpl @Inject constructor(
                                     "subscription" to lastResponse[eventType]!!.id
                                 )
                             )
+                            lastResponse.remove(eventType)
                         }
                         eventSubscriptionProducerScope.remove(eventType)
                         eventSubscriptionFlow.remove(eventType)
