@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.widgets.template
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
@@ -34,6 +35,8 @@ class TemplateWidget : BaseWidgetProvider() {
         internal const val EXTRA_TEXT_SIZE = "EXTRA_TEXT_SIZE"
         internal const val EXTRA_BACKGROUND_TYPE = "EXTRA_BACKGROUND_TYPE"
         internal const val EXTRA_TEXT_COLOR = "EXTRA_TEXT_COLOR"
+
+        private var isSubscribed = false
     }
 
     @Inject
@@ -45,6 +48,15 @@ class TemplateWidget : BaseWidgetProvider() {
             templateWidgetDao.deleteAll(appWidgetIds)
         }
     }
+
+    override fun isSubscribed(): Boolean = isSubscribed
+
+    override fun setSubscribed(subscribed: Boolean) {
+        isSubscribed = subscribed
+    }
+
+    override fun getWidgetProvider(context: Context): ComponentName =
+        ComponentName(context, TemplateWidget::class.java)
 
     override suspend fun getAllWidgetIds(context: Context): List<Int> {
         return templateWidgetDao.getAll().map { it.id }
@@ -85,10 +97,13 @@ class TemplateWidget : BaseWidgetProvider() {
                 }
 
                 // Content
-                var renderedTemplate = templateWidgetDao.get(appWidgetId)?.lastUpdate ?: "Loading"
+                var renderedTemplate: String? = templateWidgetDao.get(appWidgetId)?.lastUpdate ?: "Loading"
                 try {
-                    renderedTemplate = integrationUseCase.renderTemplate(widget.template, mapOf())
-                    templateWidgetDao.updateTemplateWidgetLastUpdate(appWidgetId, renderedTemplate)
+                    renderedTemplate = integrationUseCase.renderTemplate(widget.template, mapOf()).toString()
+                    templateWidgetDao.updateTemplateWidgetLastUpdate(
+                        appWidgetId,
+                        renderedTemplate
+                    )
                     setViewVisibility(R.id.widgetTemplateError, View.GONE)
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to render template: ${widget.template}", e)

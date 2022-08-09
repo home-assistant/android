@@ -21,6 +21,7 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -59,12 +60,18 @@ class LocationSensorManager : LocationSensorManagerBase() {
         private const val DEFAULT_UPDATE_INTERVAL_HA_SECONDS = 5
         private const val DEFAULT_TRIGGER_RANGE_METERS = 300
 
+        private const val DEFAULT_LOCATION_INTERVAL: Long = 60000
+        private const val DEFAULT_LOCATION_FAST_INTERVAL: Long = 30000
+        private const val DEFAULT_LOCATION_MAX_WAIT_TIME: Long = 200000
+
         const val ACTION_REQUEST_LOCATION_UPDATES =
             "io.homeassistant.companion.android.background.REQUEST_UPDATES"
         const val ACTION_REQUEST_ACCURATE_LOCATION_UPDATE =
             "io.homeassistant.companion.android.background.REQUEST_ACCURATE_UPDATE"
         const val ACTION_PROCESS_LOCATION =
             "io.homeassistant.companion.android.background.PROCESS_UPDATES"
+        const val ACTION_PROCESS_HIGH_ACCURACY_LOCATION =
+            "io.homeassistant.companion.android.background.PROCESS_HIGH_ACCURACY_UPDATES"
         const val ACTION_PROCESS_GEO =
             "io.homeassistant.companion.android.background.PROCESS_GEOFENCE"
         const val ACTION_FORCE_HIGH_ACCURACY =
@@ -124,12 +131,13 @@ class LocationSensorManager : LocationSensorManagerBase() {
         private var isZoneLocationSetup = false
 
         private var lastLocationSend = 0L
+        private var lastLocationReceived = 0L
         private var lastUpdateLocation = ""
 
         private var geofenceRegistered = false
 
         private var lastHighAccuracyMode = false
-        private var lastHighAccuracyUpdateInterval = DEFAULT_MINIMUM_ACCURACY
+        private var lastHighAccuracyUpdateInterval = DEFAULT_UPDATE_INTERVAL_HA_SECONDS
         private var forceHighAccuracyModeOn = false
         private var highAccuracyModeEnabled = false
 
@@ -166,7 +174,8 @@ class LocationSensorManager : LocationSensorManagerBase() {
         when (intent.action) {
             Intent.ACTION_BOOT_COMPLETED,
             ACTION_REQUEST_LOCATION_UPDATES -> setupLocationTracking()
-            ACTION_PROCESS_LOCATION -> handleLocationUpdate(intent)
+            ACTION_PROCESS_LOCATION,
+            ACTION_PROCESS_HIGH_ACCURACY_LOCATION -> handleLocationUpdate(intent)
             ACTION_PROCESS_GEO -> handleGeoUpdate(intent)
             ACTION_REQUEST_ACCURATE_LOCATION_UPDATE -> requestSingleAccurateLocation()
             ACTION_FORCE_HIGH_ACCURACY -> {
@@ -221,6 +230,23 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 if (zoneEnabled && !isZoneLocationSetup) {
                     isZoneLocationSetup = true
                     requestZoneUpdates()
+                }
+
+                val now = System.currentTimeMillis()
+                if (
+                    (!highAccuracyModeEnabled && isBackgroundLocationSetup) &&
+                    ((lastLocationReceived + (DEFAULT_LOCATION_MAX_WAIT_TIME * 2L)) < now)
+                ) {
+                    Log.d(TAG, "Background location updates appear to have stopped, restarting location updates")
+                    isBackgroundLocationSetup = false
+                    removeBackgroundUpdateRequests()
+                } else if (
+                    highAccuracyModeEnabled &&
+                    ((lastLocationReceived + (getHighAccuracyModeUpdateInterval().toLong() * 2000L)) < now)
+                ) {
+                    Log.d(TAG, "High accuracy mode appears to have stopped, restarting high accuracy mode")
+                    isBackgroundLocationSetup = false
+                    stopHighAccuracyService()
                 }
 
                 setupBackgroundLocation(backgroundEnabled, zoneEnabled)
@@ -562,6 +588,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
     private fun handleLocationUpdate(intent: Intent) {
         Log.d(TAG, "Received location update.")
+        lastLocationReceived = System.currentTimeMillis()
         LocationResult.extractResult(intent)?.lastLocation?.let { location ->
             val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
             val sensorSettings = sensorDao.getSettings(backgroundLocation.id)
@@ -572,16 +599,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             if (location.accuracy > minAccuracy) {
                 Log.w(TAG, "Location accuracy didn't meet requirements, disregarding: $location")
             } else {
-                // Update GeoLocation Sensor (if enabled) with new Location
-                val geoSensorManager = SensorReceiver.MANAGERS.firstOrNull { it.getAvailableSensors(latestContext).any { s -> s.name == commonR.string.basic_sensor_name_geolocation } }
-                if (geoSensorManager != null) {
-                    if (geoSensorManager.isEnabled(latestContext, "geocoded_location")) {
-                        geoSensorManager.requestSensorUpdate(latestContext)
-                    } else {
-                        HighAccuracyLocationService.updateNotificationAddress(latestContext, location)
-                    }
-                }
-
+                HighAccuracyLocationService.updateNotificationAddress(latestContext, location)
                 // Send new location to Home Assistant
                 sendLocationUpdate(location)
             }
@@ -747,10 +765,22 @@ class LocationSensorManager : LocationSensorManagerBase() {
         lastLocationSend = now
         lastUpdateLocation = updateLocation.gps.contentToString()
 
+        val geoSensorManager = SensorReceiver.MANAGERS.firstOrNull { it.getAvailableSensors(latestContext).any { s -> s.name == commonR.string.basic_sensor_name_geolocation } }
+        val geoSensor = AppDatabase.getInstance(latestContext).sensorDao().getFull(GeocodeSensorManager.geocodedLocation.id)
+
         ioScope.launch {
             try {
                 integrationUseCase.updateLocation(updateLocation)
                 Log.d(TAG, "Location update sent successfully")
+
+                // Update Geocoded Location Sensor
+                SensorReceiver().updateSensor(
+                    latestContext,
+                    integrationUseCase,
+                    geoSensor,
+                    geoSensorManager,
+                    GeocodeSensorManager.geocodedLocation
+                )
             } catch (e: Exception) {
                 Log.e(TAG, "Could not update location.", e)
             }
@@ -764,13 +794,13 @@ class LocationSensorManager : LocationSensorManagerBase() {
     }
 
     private fun createLocationRequest(): LocationRequest {
-        val locationRequest = LocationRequest()
+        val locationRequest = LocationRequest.create()
 
-        locationRequest.interval = 60000 // Every 60 seconds
-        locationRequest.fastestInterval = 30000 // Every 30 seconds
-        locationRequest.maxWaitTime = 200000 // Every 5 minutes
+        locationRequest.interval = DEFAULT_LOCATION_INTERVAL // Every 60 seconds
+        locationRequest.fastestInterval = DEFAULT_LOCATION_FAST_INTERVAL // Every 30 seconds
+        locationRequest.maxWaitTime = DEFAULT_LOCATION_MAX_WAIT_TIME // Every ~3.5 minutes
 
-        locationRequest.priority = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY
+        locationRequest.priority = Priority.PRIORITY_BALANCED_POWER_ACCURACY
 
         return locationRequest
     }
@@ -900,7 +930,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
         val maxRetries = 5
         val request = createLocationRequest().apply {
-            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+            priority = Priority.PRIORITY_HIGH_ACCURACY
             numUpdates = maxRetries
             interval = 10000
             fastestInterval = 5000

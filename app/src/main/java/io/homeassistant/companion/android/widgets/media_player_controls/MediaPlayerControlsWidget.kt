@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.widgets.media_player_controls
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -63,6 +64,8 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         internal const val EXTRA_SHOW_SKIP = "EXTRA_INCLUDE_SKIP"
         internal const val EXTRA_SHOW_SEEK = "EXTRA_INCLUDE_SEEK"
         internal const val EXTRA_BACKGROUND_TYPE = "EXTRA_BACKGROUND_TYPE"
+
+        private var isSubscribed = false
     }
 
     @Inject
@@ -70,6 +73,15 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
     @Inject
     lateinit var mediaPlayCtrlWidgetDao: MediaPlayerControlsWidgetDao
+
+    override fun isSubscribed(): Boolean = isSubscribed
+
+    override fun setSubscribed(subscribed: Boolean) {
+        isSubscribed = subscribed
+    }
+
+    override fun getWidgetProvider(context: Context): ComponentName =
+        ComponentName(context, MediaPlayerControlsWidget::class.java)
 
     override fun onUpdate(
         context: Context,

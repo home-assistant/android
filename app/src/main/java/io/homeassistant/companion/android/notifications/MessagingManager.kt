@@ -76,15 +76,19 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import org.json.JSONObject
 import java.net.URL
 import java.net.URLDecoder
 import java.util.Locale
+import java.util.UUID
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
 class MessagingManager @Inject constructor(
     @ApplicationContext val context: Context,
+    private val okHttpClient: OkHttpClient,
     private val integrationUseCase: IntegrationRepository,
     private val urlUseCase: UrlRepository,
     private val authenticationUseCase: AuthenticationRepository,
@@ -155,6 +159,7 @@ class MessagingManager @Inject constructor(
         const val COMMAND_KEEP_SCREEN_ON = "keep_screen_on"
         const val COMMAND_LAUNCH_APP = "command_launch_app"
         const val COMMAND_PERSISTENT_CONNECTION = "command_persistent_connection"
+        const val COMMAND_STOP_TTS = "command_stop_tts"
 
         // DND commands
         const val DND_PRIORITY_ONLY = "priority_only"
@@ -204,6 +209,12 @@ class MessagingManager @Inject constructor(
         const val BLE_TRANSMIT_LOW = "ble_transmit_low"
         const val BLE_TRANSMIT_MEDIUM = "ble_transmit_medium"
         const val BLE_TRANSMIT_HIGH = "ble_transmit_high"
+        const val BLE_SET_UUID = "ble_set_uuid"
+        const val BLE_SET_MAJOR = "ble_set_major"
+        const val BLE_SET_MINOR = "ble_set_minor"
+        const val BLE_UUID = "ble_uuid"
+        const val BLE_MAJOR = "ble_major"
+        const val BLE_MINOR = "ble_minor"
 
         // High accuracy commands
         const val HIGH_ACCURACY_SET_UPDATE_INTERVAL = "high_accuracy_set_update_interval"
@@ -223,7 +234,8 @@ class MessagingManager @Inject constructor(
             COMMAND_MEDIA,
             COMMAND_UPDATE_SENSORS,
             COMMAND_LAUNCH_APP,
-            COMMAND_PERSISTENT_CONNECTION
+            COMMAND_PERSISTENT_CONNECTION,
+            COMMAND_STOP_TTS
         )
         val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
         val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
@@ -236,7 +248,10 @@ class MessagingManager @Inject constructor(
             MEDIA_FAST_FORWARD, MEDIA_NEXT, MEDIA_PAUSE, MEDIA_PLAY,
             MEDIA_PLAY_PAUSE, MEDIA_PREVIOUS, MEDIA_REWIND, MEDIA_STOP
         )
-        val BLE_COMMANDS = listOf(BLE_SET_ADVERTISE_MODE, BLE_SET_TRANSMIT_POWER)
+        val BLE_COMMANDS = listOf(
+            BLE_SET_ADVERTISE_MODE, BLE_SET_TRANSMIT_POWER, BLE_SET_UUID, BLE_SET_MAJOR,
+            BLE_SET_MINOR
+        )
         val BLE_TRANSMIT_COMMANDS =
             listOf(BLE_TRANSMIT_HIGH, BLE_TRANSMIT_LOW, BLE_TRANSMIT_MEDIUM, BLE_TRANSMIT_ULTRA_LOW)
         val BLE_ADVERTISE_COMMANDS =
@@ -250,6 +265,8 @@ class MessagingManager @Inject constructor(
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
+    private var textToSpeech: TextToSpeech? = null
+
     fun handleMessage(jsonData: Map<String, String>, source: String) {
 
         val jsonObject = JSONObject(jsonData)
@@ -258,6 +275,13 @@ class MessagingManager @Inject constructor(
             NotificationItem(0, now, jsonData[MESSAGE].toString(), jsonObject.toString(), source)
         notificationDao.add(notificationRow)
 
+        mainScope.launch {
+            try {
+                integrationUseCase.fireEvent("mobile_app_notification_received", jsonData)
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to send notification received event", e)
+            }
+        }
         when {
             jsonData[MESSAGE] == REQUEST_LOCATION_UPDATE -> {
                 Log.d(TAG, "Request location update")
@@ -361,8 +385,11 @@ class MessagingManager @Inject constructor(
                             (
                                 (!jsonData[COMMAND].isNullOrEmpty() && jsonData[COMMAND] in BLE_COMMANDS) &&
                                     (
-                                        !jsonData[BLE_ADVERTISE].isNullOrEmpty() && jsonData[BLE_ADVERTISE] in BLE_ADVERTISE_COMMANDS ||
-                                            !jsonData[BLE_TRANSMIT].isNullOrEmpty() && jsonData[BLE_TRANSMIT] in BLE_TRANSMIT_COMMANDS
+                                        (!jsonData[BLE_ADVERTISE].isNullOrEmpty() && jsonData[BLE_ADVERTISE] in BLE_ADVERTISE_COMMANDS) ||
+                                            (!jsonData[BLE_TRANSMIT].isNullOrEmpty() && jsonData[BLE_TRANSMIT] in BLE_TRANSMIT_COMMANDS) ||
+                                            (jsonData[COMMAND] == BLE_SET_UUID && !jsonData[BLE_UUID].isNullOrEmpty()) ||
+                                            (jsonData[COMMAND] == BLE_SET_MAJOR && !jsonData[BLE_MAJOR].isNullOrEmpty()) ||
+                                            (jsonData[COMMAND] == BLE_SET_MINOR && !jsonData[BLE_MINOR].isNullOrEmpty())
                                         )
                                 )
                         )
@@ -476,6 +503,7 @@ class MessagingManager @Inject constructor(
                             else -> handleDeviceCommands(jsonData)
                         }
                     }
+                    COMMAND_STOP_TTS -> handleDeviceCommands(jsonData)
                     else -> Log.d(TAG, "No command received")
                 }
             }
@@ -502,6 +530,12 @@ class MessagingManager @Inject constructor(
         notificationManagerCompat.cancel(tag, messageId, true)
     }
 
+    private fun stopTTS() {
+        Log.d(TAG, "Stopping TTS")
+        textToSpeech?.stop()
+        textToSpeech?.shutdown()
+    }
+
     private fun removeNotificationChannel(channelName: String) {
         val notificationManagerCompat = NotificationManagerCompat.from(context)
 
@@ -513,7 +547,6 @@ class MessagingManager @Inject constructor(
     }
 
     private fun speakNotification(data: Map<String, String>) {
-        var textToSpeech: TextToSpeech? = null
         var tts = data[TTS_TEXT]
         val audioManager = context.getSystemService<AudioManager>()
         val currentAlarmVolume = audioManager?.getStreamVolume(AudioManager.STREAM_ALARM)
@@ -548,6 +581,15 @@ class MessagingManager @Inject constructor(
                     override fun onError(p0: String?) {
                         textToSpeech?.stop()
                         textToSpeech?.shutdown()
+                        if (data[MEDIA_STREAM] == ALARM_STREAM_MAX)
+                            audioManager?.setStreamVolume(
+                                AudioManager.STREAM_ALARM,
+                                currentAlarmVolume!!,
+                                0
+                            )
+                    }
+
+                    override fun onStop(utteranceId: String?, interrupted: Boolean) {
                         if (data[MEDIA_STREAM] == ALARM_STREAM_MAX)
                             audioManager?.setStreamVolume(
                                 AudioManager.STREAM_ALARM,
@@ -689,13 +731,17 @@ class MessagingManager @Inject constructor(
                     BluetoothSensorManager.enableDisableBLETransmitter(context, false)
                 if (command == TURN_ON)
                     BluetoothSensorManager.enableDisableBLETransmitter(context, true)
-                if (command == BLE_SET_ADVERTISE_MODE || command == BLE_SET_TRANSMIT_POWER)
+                if (command in BLE_COMMANDS) {
                     sensorDao.updateSettingValue(
                         BluetoothSensorManager.bleTransmitter.id,
-                        if (command == BLE_SET_ADVERTISE_MODE)
-                            BluetoothSensorManager.SETTING_BLE_ADVERTISE_MODE
-                        else
-                            BluetoothSensorManager.SETTING_BLE_TRANSMIT_POWER,
+                        when (command) {
+                            BLE_SET_ADVERTISE_MODE -> BluetoothSensorManager.SETTING_BLE_ADVERTISE_MODE
+                            BLE_SET_TRANSMIT_POWER -> BluetoothSensorManager.SETTING_BLE_TRANSMIT_POWER
+                            BLE_SET_UUID -> BluetoothSensorManager.SETTING_BLE_ID1
+                            BLE_SET_MAJOR -> BluetoothSensorManager.SETTING_BLE_ID2
+                            BLE_SET_MINOR -> BluetoothSensorManager.SETTING_BLE_ID3
+                            else -> BluetoothSensorManager.SETTING_BLE_TRANSMIT_POWER
+                        },
                         when (command) {
                             BLE_SET_ADVERTISE_MODE -> {
                                 when (data[BLE_ADVERTISE]) {
@@ -705,6 +751,11 @@ class MessagingManager @Inject constructor(
                                     else -> BluetoothSensorManager.BLE_ADVERTISE_LOW_POWER
                                 }
                             }
+                            BLE_SET_UUID -> data[BLE_UUID] ?: UUID.randomUUID().toString()
+                            BLE_SET_MAJOR -> data[BLE_MAJOR]
+                                ?: BluetoothSensorManager.DEFAULT_BLE_MAJOR
+                            BLE_SET_MINOR -> data[BLE_MINOR]
+                                ?: BluetoothSensorManager.DEFAULT_BLE_MINOR
                             else -> {
                                 when (data[BLE_TRANSMIT]) {
                                     BLE_TRANSMIT_HIGH -> BluetoothSensorManager.BLE_TRANSMIT_HIGH
@@ -716,6 +767,18 @@ class MessagingManager @Inject constructor(
                             }
                         }
                     )
+
+                    // Force the transmitter to restart and send updated attributes
+                    mainScope.launch {
+                        sensorDao.updateLastSentStateAndIcon(
+                            BluetoothSensorManager.bleTransmitter.id,
+                            null,
+                            null
+                        )
+                    }
+                    BluetoothSensorManager().requestSensorUpdate(context)
+                    SensorWorker.start(context)
+                }
             }
             COMMAND_HIGH_ACCURACY_MODE -> {
                 when (command) {
@@ -796,6 +859,9 @@ class MessagingManager @Inject constructor(
             }
             COMMAND_PERSISTENT_CONNECTION -> {
                 togglePersistentConnection(data[PERSISTENT].toString())
+            }
+            COMMAND_STOP_TTS -> {
+                stopTTS()
             }
             else -> Log.d(TAG, "No command received")
         }
@@ -1269,11 +1335,16 @@ class MessagingManager @Inject constructor(
 
             var image: Bitmap? = null
             try {
-                val uc = url.openConnection()
-                if (requiresAuth) {
-                    uc.setRequestProperty("Authorization", authenticationUseCase.buildBearerToken())
-                }
-                image = BitmapFactory.decodeStream(uc.getInputStream())
+                val request = Request.Builder().apply {
+                    url(url)
+                    if (requiresAuth) {
+                        addHeader("Authorization", authenticationUseCase.buildBearerToken())
+                    }
+                }.build()
+
+                val response = okHttpClient.newCall(request).execute()
+                image = BitmapFactory.decodeStream(response.body?.byteStream())
+                response.close()
             } catch (e: Exception) {
                 Log.e(TAG, "Couldn't download image for notification", e)
             }

@@ -9,23 +9,15 @@
             android:icon="@drawable/ic_globe"
             android:title="@string/pref_connection_url"
             app:useSimpleSummaryProvider="true"/>
-        <io.homeassistant.companion.android.settings.ssid.SsidPreference
+        <Preference
             android:key="connection_internal_ssids"
             android:icon="@drawable/ic_wifi"
             android:title="@string/pref_connection_wifi"
-            android:dialogTitle="@string/manage_ssids"
-            android:positiveButtonText="@string/save"
-            android:negativeButtonText="@string/cancel"
-            app:summaryMaxLines="1"/>
+            android:summary="@string/pref_connection_ssids_empty" />
         <EditTextPreference
             android:key="connection_internal"
             android:title="@string/pref_connection_internal"
             app:useSimpleSummaryProvider="true"/>
-        <SwitchPreference
-            android:key="prioritize_internal"
-            android:title="@string/prioritize_internal"
-            android:icon="@drawable/ic_priority"
-            android:summary="@string/prioritize_internal_summary" />
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/device_registration">

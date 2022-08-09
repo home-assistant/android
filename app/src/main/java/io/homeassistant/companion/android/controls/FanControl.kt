@@ -25,7 +25,8 @@ object FanControl : HaControl {
         context: Context,
         control: Control.StatefulBuilder,
         entity: Entity<Map<String, Any>>,
-        area: AreaRegistryResponse?
+        area: AreaRegistryResponse?,
+        baseUrl: String?
     ): Control.StatefulBuilder {
         if (entity.supportsFanSetSpeed()) {
             val position = entity.getFanSpeed()

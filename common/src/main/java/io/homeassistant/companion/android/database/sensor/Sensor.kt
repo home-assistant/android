@@ -15,8 +15,10 @@ data class Sensor(
     var registered: Boolean? = null,
     @ColumnInfo(name = "state")
     var state: String,
-    @ColumnInfo(name = "last_sent_state")
-    var lastSentState: String = "",
+    @ColumnInfo(name = "last_sent_state", defaultValue = "NULL")
+    var lastSentState: String? = null,
+    @ColumnInfo(name = "last_sent_icon", defaultValue = "NULL")
+    var lastSentIcon: String? = null,
     @ColumnInfo(name = "state_type")
     var stateType: String = "",
     @ColumnInfo(name = "type")

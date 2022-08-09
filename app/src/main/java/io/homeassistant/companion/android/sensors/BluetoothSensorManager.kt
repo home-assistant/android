@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Build
 import io.homeassistant.companion.android.bluetooth.ble.IBeaconTransmitter
 import io.homeassistant.companion.android.bluetooth.ble.TransmitterManager
+import io.homeassistant.companion.android.common.bluetooth.BluetoothDevice
 import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils
 import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils.supportsTransmitter
 import io.homeassistant.companion.android.common.sensors.SensorManager
@@ -18,9 +19,9 @@ import io.homeassistant.companion.android.common.R as commonR
 class BluetoothSensorManager : SensorManager {
     companion object {
 
-        private const val SETTING_BLE_ID1 = "ble_uuid"
-        private const val SETTING_BLE_ID2 = "ble_major"
-        private const val SETTING_BLE_ID3 = "ble_minor"
+        const val SETTING_BLE_ID1 = "ble_uuid"
+        const val SETTING_BLE_ID2 = "ble_major"
+        const val SETTING_BLE_ID3 = "ble_minor"
         const val SETTING_BLE_TRANSMIT_POWER = "ble_transmit_power"
         const val SETTING_BLE_ADVERTISE_MODE = "ble_advertise_mode"
         private const val SETTING_BLE_TRANSMIT_ENABLED = "ble_transmit_enabled"
@@ -35,12 +36,11 @@ class BluetoothSensorManager : SensorManager {
 
         private const val DEFAULT_BLE_TRANSMIT_POWER = "ultraLow"
         private const val DEFAULT_BLE_ADVERTISE_MODE = "lowPower"
-        private const val DEFAULT_BLE_MAJOR = "100"
-        private const val DEFAULT_BLE_MINOR = "1"
+        const val DEFAULT_BLE_MAJOR = "100"
+        const val DEFAULT_BLE_MINOR = "1"
         private const val DEFAULT_MEASURED_POWER_AT_1M = -59
         private var priorBluetoothStateEnabled = false
 
-        // private const val TAG = "BluetoothSM"
         private var bleTransmitterDevice = IBeaconTransmitter("", "", "", transmitPowerSetting = "", measuredPowerSetting = 0, advertiseModeSetting = "", transmitting = false, state = "", restartRequired = false)
         val bluetoothConnection = SensorManager.BasicSensor(
             "bluetooth_connection",
@@ -135,11 +135,11 @@ class BluetoothSensorManager : SensorManager {
 
         if (checkPermission(context, bluetoothConnection.id)) {
 
-            val bluetoothDevices = BluetoothUtils.getBluetoothDevices(context, true)
-            pairedDevices = bluetoothDevices.filter { b -> b.paired }.map { it.address }
-            connectedPairedDevices = bluetoothDevices.filter { b -> b.paired && b.connected }.map { it.address }
-            connectedNotPairedDevices = bluetoothDevices.filter { b -> !b.paired && b.connected }.map { it.address }
-            totalConnectedDevices = bluetoothDevices.filter { b -> b.connected }.count()
+            val bluetoothDevices = BluetoothUtils.getBluetoothDevices(context)
+            pairedDevices = bluetoothDevices.filter { b -> b.paired }.map { checkNameAddress(it) }
+            connectedPairedDevices = bluetoothDevices.filter { b -> b.paired && b.connected }.map { checkNameAddress(it) }
+            connectedNotPairedDevices = bluetoothDevices.filter { b -> !b.paired && b.connected }.map { checkNameAddress(it) }
+            totalConnectedDevices = bluetoothDevices.count { b -> b.connected }
         }
         onSensorUpdated(
             context,
@@ -259,5 +259,9 @@ class BluetoothSensorManager : SensorManager {
                 "Supports transmitter" to supportsTransmitter(context)
             )
         )
+    }
+
+    private fun checkNameAddress(bt: BluetoothDevice): String {
+        return if (bt.address != bt.name) "${bt.address} (${bt.name})" else bt.address
     }
 }

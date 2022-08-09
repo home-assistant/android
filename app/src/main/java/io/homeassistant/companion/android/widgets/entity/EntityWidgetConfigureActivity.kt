@@ -166,8 +166,6 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 staticWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, commonR.color.colorWidgetButtonLabelBlack) } ?: false
 
             binding.addButton.setText(commonR.string.update_widget)
-            binding.deleteButton.visibility = VISIBLE
-            binding.deleteButton.setOnClickListener(onDeleteWidget)
         } else {
             binding.backgroundType.setSelection(0)
         }

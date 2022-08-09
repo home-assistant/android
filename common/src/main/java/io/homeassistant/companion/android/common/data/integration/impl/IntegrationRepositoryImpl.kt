@@ -157,7 +157,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         return urlRepository.getApiUrls().isNotEmpty()
     }
 
-    override suspend fun renderTemplate(template: String, variables: Map<String, String>): String {
+    override suspend fun renderTemplate(template: String, variables: Map<String, String>): String? {
         var causeException: Exception? = null
         for (it in urlRepository.getApiUrls()) {
             try {
@@ -167,7 +167,7 @@ class IntegrationRepositoryImpl @Inject constructor(
                         "render_template",
                         mapOf("template" to Template(template, variables))
                     )
-                ).getValue("template")
+                )["template"]
             } catch (e: Exception) {
                 if (causeException == null) causeException = e
                 // Ignore failure until we are out of URLS to try, but use the first exception as cause exception

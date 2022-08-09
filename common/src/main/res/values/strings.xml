@@ -5,7 +5,7 @@
     <string name="activity_intent_error">Unable to send activity intent, please check command format</string>
     <string name="add_service_data_field">Add Field</string>
     <string name="add_shortcut">Add Shortcut</string>
-    <string name="add_ssid">Add SSID</string>
+    <string name="add_ssid">Add</string>
     <string name="add_ssid_name_suggestion">Add %1$s</string>
     <string name="add_widget">Add widget</string>
     <string name="all_entities">All entities</string>
@@ -119,8 +119,6 @@
     <string name="confirm_delete_all_notification_title">Confirm deleting all notifications</string>
     <string name="confirm_delete_this_notification_message">Are you sure? This cannot be undone</string>
     <string name="confirm_delete_this_notification_title">Confirm deleting this notification</string>
-    <string name="confirm_delete_this_widget_message">Are you sure? This cannot be undone. If you accidentally deleted the wrong widget you will need to remove the bad widget from the home screen and create a new one.</string>
-    <string name="confirm_delete_this_widget_title">Confirm deleting this widget</string>
     <string name="confirm_negative">NO</string>
     <string name="confirm_positive">YES</string>
     <string name="continue_on_phone">Continue on your phone</string>
@@ -138,7 +136,6 @@
     <string name="delete_all_notifications">Delete all notifications from history</string>
     <string name="delete_shortcut">Delete Shortcut</string>
     <string name="delete_this_notification">Delete this notification from history</string>
-    <string name="delete_widget">Delete Widget</string>
     <string name="description">Description</string>
     <string name="details">Details</string>
     <string name="developer_tools">Developer Tools</string>
@@ -153,6 +150,7 @@
     <string name="documentation">Documentation</string>
     <string name="domain_automation">Automation</string>
     <string name="domain_button">Button</string>
+    <string name="domain_camera">Camera</string>
     <string name="domain_climate">Climate</string>
     <string name="domain_cover">Cover</string>
     <string name="domain_fan">Fan</string>
@@ -165,6 +163,10 @@
     <string name="domain_script">Script</string>
     <string name="domain_switch">Switch</string>
     <string name="domain_vacuum">Vacuum</string>
+    <string name="downloads">Downloads</string>
+    <string name="downloads_unnamed_file">Unnamed file</string>
+    <string name="downloads_complete">Download complete.</string>
+    <string name="downloads_failed">Download failed.</string>
     <string name="empty_template">Template value must not be blank</string>
     <string name="enable_all_sensors_summary">All required permissions will be requested upon enabling</string>
     <string name="enable_all_sensors">Enable All Sensors</string>
@@ -195,6 +197,7 @@
     <string name="error_ssl">Unable to communicate with Home Assistant because of a SSL error.  Please ensure your certificate is valid.</string>
     <string name="error_with_registration">The \'Mobile App\' integration is required to use the app, but it is not available on your Home Assistant server. Please check your server configuration and try again.</string>
     <string name="errors">Errors</string>
+    <string name="error_http_generic">There was an error loading Home Assistant. Please review the connection settings and try again.\n\nError Code: %d \nDescription: %s</string>
     <string name="event_error">Failed to notify HA of picked option.</string>
     <string name="exit">Exit</string>
     <string name="failed_authentication">Could not authenticate</string>
@@ -307,6 +310,7 @@
     <string name="manage_shortcuts">Manage Shortcuts</string>
     <string name="manage_ssids_input_exists">This SSID already exists.</string>
     <string name="manage_ssids_input">New WiFi SSID</string>
+    <string name="manage_ssids_introduction">The internal connection URL will be used when connected to one of the listed SSIDs.</string>
     <string name="manage_ssids">Manage SSID(s)</string>
     <string name="manage_this_notification">Manage This Notification</string>
     <string name="manage_tiles_summary">Setup and manage Quick Setting tiles here. They will not function until you set them up here.</string>
@@ -363,6 +367,7 @@
     <string name="no_supported_entities_summary">Check the documentation for more information</string>
     <string name="no_widgets_summary">When you add a widget to your home screen, you will see it here</string>
     <string name="no_widgets">No Widgets Found</string>
+    <string name="no_description">No description provided</string>
     <string name="none">None</string>
     <string name="none_selected">None selected</string>
     <string name="not_private">Your connection to this site is not private.</string>
@@ -395,8 +400,10 @@
     <string name="pref_location_background_title">Background Location Tracking</string>
     <string name="pref_location_zone_summary">Import existing Home Assistant zones as geofences for zone based tracking.</string>
     <string name="pref_location_zone_title">Zone Based Tracking</string>
-    <string name="prioritize_internal_summary">Always try the internal URL first before the external URL. Enable this setting if you typically leave location off.</string>
-    <string name="prioritize_internal">Prioritize Internal URL</string>
+    <string name="prioritize_internal_title">When loading dashboard and unknown if connected to Home Network WiFi</string>
+    <string name="prioritize_internal_on">Use internal connection URL</string>
+    <string name="prioritize_internal_on_expanded">Use internal connection URL (use this if you typically turn location access off)</string>
+    <string name="prioritize_internal_off">Use Home Assistant URL (recommended)</string>
     <string name="privacy_policy">Privacy Policy</string>
     <string name="privacy_url">https://www.home-assistant.io/privacy</string>
     <string name="profile">Profile</string>
@@ -603,7 +610,6 @@
     <string name="setting_toast_label">Enable Toast Confirmation</string>
     <string name="settings">Settings</string>
     <string name="share_failed">Sharing with Home Assistant Failed!</string>
-    <string name="share_logs_perm_message">In order to prepare the logs for sharing, the app needs permissions to access the external storage. Otherwise the log cannot be shared.\n\nDo you want to continue?</string>
     <string name="share_logs_sens_message">Please note: By sharing the log, you could share sensitive data like location data or your Home Assistant URL.\n\nDo you want to continue?</string>
     <string name="share_logs">Share logs</string>
     <string name="share_success">Shared with Home Assistant</string>
@@ -665,6 +671,8 @@
     <string name="state_unknown">Unknown</string>
     <string name="state_unlocked">Unlocked</string>
     <string name="state_unlocking">Unlocking</string>
+    <string name="state_recording">Recording</string>
+    <string name="state_streaming">Streaming</string>
     <string name="state">State</string>
     <string name="state_name">State: %1$s</string>
     <string name="states">Overview</string>
@@ -680,8 +688,9 @@
     <string name="template_tile_content">Template tile content</string>
     <string name="template_tile_desc">Renders and displays a template</string>
     <string name="template_tile_empty">Set template in the phone settings</string>
-    <string name="template_tile_error">Error in template</string>
-    <string name="template_tile_help">Provide a template below that will be displayed on the Wear OS template tile.</string>
+    <string name="template_error">Error in template</string>
+    <string name="template_render_error">Error rendering template</string>
+    <string name="template_tile_help">Provide a template below that will be displayed on the Wear OS template tile. See help for markup options.</string>
     <string name="template_widget_default">Enter Template Here</string>
     <string name="template_widget_desc">Render any template with HTML formatting</string>
     <string name="template_widget">Template Widget</string>
@@ -712,7 +721,6 @@
     <string name="tile_list">List of Tiles</string>
     <string name="tile_missing_entity_summary">You must have one of the following domains in order to use this feature: cover, fan, input_boolean, light, remote, scene, script, switch</string>
     <string name="tile_missing_entity_title">Missing Valid Entity Domains</string>
-    <string name="tile_not_setup">Tile Not Setup</string>
     <string name="tile_save">Update Tile Data</string>
     <string name="tile_settings">Tile settings</string>
     <string name="tile_subtitle">Tile Subtitle</string>
@@ -764,6 +772,7 @@
     <string name="widget_background_type_transparent">Transparent</string>
     <string name="widget_button_image_description">Service Button</string>
     <string name="widget_camera_description">Camera Widget</string>
+    <string name="widget_camera_contentdescription">Camera image</string>
     <string name="widget_config_service_error">A custom component is preventing service data from loading.</string>
     <string name="widget_creation_error">Unable to create widget.</string>
     <string name="widget_entity_fetch_error">Unable to fetch data for configured entity.</string>

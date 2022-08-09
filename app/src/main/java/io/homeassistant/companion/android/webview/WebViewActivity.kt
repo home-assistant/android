@@ -50,6 +50,7 @@ import androidx.core.content.getSystemService
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import com.google.android.exoplayer2.DefaultLoadControl
@@ -84,6 +85,7 @@ import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.ChangeLog
+import io.homeassistant.companion.android.util.DataUriDownloadManager
 import io.homeassistant.companion.android.util.OnSwipeListener
 import io.homeassistant.companion.android.util.TLSWebViewClient
 import io.homeassistant.companion.android.util.isStarted
@@ -245,6 +247,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         webView = binding.webview
         webView.apply {
+            // TODO This quick bar workaround only works on Home Assistant core versions <2022.7
+            // If not 'fixed' or officially supported: should be removed in Android 2023.1 (GitHub: #2690)
             setOnTouchListener(object : OnSwipeListener() {
                 override fun onSwipe(
                     e1: MotionEvent,
@@ -1346,27 +1350,42 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     private fun downloadFile(url: String, contentDisposition: String, mimetype: String) {
         Log.d(TAG, "WebView requested download of $url")
-        val request = DownloadManager.Request(Uri.parse(url))
-            .setMimeType(mimetype)
-            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-            .setDestinationInExternalPublicDir(
-                Environment.DIRECTORY_DOWNLOADS,
-                URLUtil.guessFileName(url, contentDisposition, mimetype)
-            )
-        runBlocking {
-            if (url.startsWith(urlRepository.getUrl(true).toString()) ||
-                url.startsWith(urlRepository.getUrl(false).toString())
-            ) {
-                request.addRequestHeader("Authorization", presenter.getAuthorizationHeader())
+        val uri = Uri.parse(url)
+        when (uri.scheme?.lowercase()) {
+            "http", "https" -> {
+                val request = DownloadManager.Request(uri)
+                    .setMimeType(mimetype)
+                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                    .setDestinationInExternalPublicDir(
+                        Environment.DIRECTORY_DOWNLOADS,
+                        URLUtil.guessFileName(url, contentDisposition, mimetype)
+                    )
+                runBlocking {
+                    if (url.startsWith(urlRepository.getUrl(true).toString()) ||
+                        url.startsWith(urlRepository.getUrl(false).toString())
+                    ) {
+                        request.addRequestHeader("Authorization", presenter.getAuthorizationHeader())
+                    }
+                }
+                try {
+                    request.addRequestHeader("Cookie", CookieManager.getInstance().getCookie(url))
+                } catch (e: Exception) {
+                    // Cannot get cookies, probably not relevant
+                }
+
+                getSystemService<DownloadManager>()?.enqueue(request) ?: Log.d(TAG, "Unable to start download, cannot get DownloadManager")
+            }
+            "data" -> {
+                lifecycleScope.launch {
+                    DataUriDownloadManager.saveDataUri(this@WebViewActivity, url, mimetype)
+                }
+            }
+            else -> {
+                Log.d(TAG, "Received download request for unsupported scheme, forwarding to system")
+                val browserIntent = Intent(Intent.ACTION_VIEW, uri)
+                startActivity(browserIntent)
             }
         }
-        try {
-            request.addRequestHeader("Cookie", CookieManager.getInstance().getCookie(url))
-        } catch (e: Exception) {
-            // Cannot get cookies, probably not relevant
-        }
-
-        getSystemService<DownloadManager>()?.enqueue(request) ?: Log.d(TAG, "Unable to start download, cannot get DownloadManager")
     }
 
     override fun dispatchKeyEvent(event: KeyEvent?): Boolean {

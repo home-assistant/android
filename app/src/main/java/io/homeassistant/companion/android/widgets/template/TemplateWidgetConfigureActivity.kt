@@ -7,6 +7,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.text.Html.fromHtml
+import android.util.Log
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
@@ -16,6 +17,7 @@ import androidx.core.graphics.toColorInt
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
+import com.fasterxml.jackson.databind.JsonMappingException
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -114,9 +116,6 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 templateWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, android.R.color.white) } ?: true
             binding.textColorBlack.isChecked =
                 templateWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, commonR.color.colorWidgetButtonLabelBlack) } ?: false
-
-            binding.deleteButton.visibility = View.VISIBLE
-            binding.deleteButton.setOnClickListener(onDeleteWidget)
         } else {
             binding.backgroundType.setSelection(0)
         }
@@ -216,10 +215,15 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             var enabled: Boolean
             withContext(Dispatchers.IO) {
                 try {
-                    templateText = integrationUseCase.renderTemplate(template, mapOf())
+                    templateText = integrationUseCase.renderTemplate(template, mapOf()).toString()
                     enabled = true
                 } catch (e: Exception) {
-                    templateText = "Error in template"
+                    Log.e(TAG, "Exception while rendering template", e)
+                    // JsonMappingException suggests that template is not a String (= error)
+                    templateText = getString(
+                        if (e.cause is JsonMappingException) commonR.string.template_error
+                        else commonR.string.template_render_error
+                    )
                     enabled = false
                 }
             }

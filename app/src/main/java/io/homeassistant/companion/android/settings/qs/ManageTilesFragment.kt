@@ -30,7 +30,7 @@ class ManageTilesFragment constructor(
         private const val TAG = "TileFragment"
         val validDomains = listOf(
             "button", "cover", "fan", "humidifier", "input_boolean", "input_button", "light",
-            "media_player", "remote", "siren", "scene", "script", "switch"
+            "lock", "media_player", "remote", "siren", "scene", "script", "switch"
         )
     }
 

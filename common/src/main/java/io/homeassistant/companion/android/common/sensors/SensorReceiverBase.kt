@@ -147,19 +147,18 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
 
         val currentHAversion = integrationUseCase.getHomeAssistantVersion()
         val supportsDisabledSensors = integrationUseCase.isHomeAssistantVersionAtLeast(2022, 6, 0)
-        val coreSensorStatus: Map<String, Boolean> = if (supportsDisabledSensors) {
+        val coreSensorStatus: Map<String, Boolean>? = if (supportsDisabledSensors) {
             try {
                 val config = integrationUseCase.getConfig().entities
                 config
                     ?.filter { it.value["disabled"] != null }
-                    ?.mapValues { !(it.value["disabled"] as Boolean) }
-                    .orEmpty() // Map to sensor id -> enabled
+                    ?.mapValues { !(it.value["disabled"] as Boolean) } // Map to sensor id -> enabled
             } catch (e: Exception) {
                 Log.e(tag, "Error while getting core config to sync sensor status", e)
-                emptyMap()
+                null
             }
         } else {
-            emptyMap()
+            null
         }
 
         managers.forEach { manager ->
@@ -180,7 +179,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
             manager.getAvailableSensors(context).forEach sensorForEach@{ basicSensor ->
                 val fullSensor = sensorDao.getFull(basicSensor.id)
                 val sensor = fullSensor?.sensor ?: return@sensorForEach
-                val sensorCoreEnabled = coreSensorStatus[basicSensor.id]
+                val sensorCoreEnabled = coreSensorStatus?.get(basicSensor.id)
                 val sensorCoreRegistration = sensor.coreRegistration
                 val sensorAppRegistration = sensor.appRegistration
 
@@ -197,12 +196,14 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                     canBeRegistered &&
                     (
                         (sensor.registered == null && (sensor.enabled || supportsDisabledSensors)) ||
-                            (sensor.enabled != sensor.registered && supportsDisabledSensors)
+                            (sensor.enabled != sensor.registered && supportsDisabledSensors) ||
+                            (sensor.registered != null && coreSensorStatus != null && sensorCoreEnabled == null)
                         )
                 ) {
                     // 1. (Re-)register sensors with core when they can be registered and:
                     // - sensor isn't registered, but is enabled or on core >=2022.6
                     // - sensor enabled has changed from registered enabled state on core >=2022.6
+                    // - sensor is registered according to database, but core >=2022.6 doesn't know about it
                     try {
                         registerSensor(context, integrationUseCase, fullSensor, basicSensor)
                         sensor.registered = sensor.enabled
@@ -273,7 +274,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                         Log.e(tag, "Issue re-registering sensor ${basicSensor.id}", e)
                     }
                 }
-                if (canBeRegistered && sensor.enabled && sensor.registered != null && sensor.state != sensor.lastSentState) {
+                if (canBeRegistered && sensor.enabled && sensor.registered != null && (sensor.state != sensor.lastSentState || sensor.icon != sensor.lastSentIcon)) {
                     enabledRegistrations.add(fullSensor.toSensorRegistration(basicSensor))
                 }
             }
@@ -284,7 +285,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
             try {
                 success = integrationUseCase.updateSensors(enabledRegistrations.toTypedArray())
                 enabledRegistrations.forEach {
-                    sensorDao.updateLastSendState(it.uniqueId, it.state.toString())
+                    sensorDao.updateLastSentStateAndIcon(it.uniqueId, it.state.toString(), it.icon)
                 }
             } catch (e: Exception) {
                 Log.e(tag, "Exception while updating sensors.", e)
@@ -296,7 +297,8 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                     val sensor = sensorDao.get(it.uniqueId)
                     if (sensor != null) {
                         sensor.registered = null
-                        sensor.lastSentState = ""
+                        sensor.lastSentState = null
+                        sensor.lastSentIcon = null
                         sensorDao.update(sensor)
                     }
                 }
@@ -316,6 +318,31 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         reg.name = context.createConfigurationContext(config).resources.getString(basicSensor.name)
 
         integrationUseCase.registerSensor(reg)
+    }
+
+    suspend fun updateSensor(
+        context: Context,
+        integrationUseCase: IntegrationRepository,
+        fullSensor: SensorWithAttributes?,
+        sensorManager: SensorManager?,
+        basicSensor: SensorManager.BasicSensor
+    ) {
+        sensorManager?.requestSensorUpdate(context)
+        if (
+            fullSensor != null && fullSensor.sensor.enabled &&
+            fullSensor.sensor.registered == true &&
+            (
+                fullSensor.sensor.state != fullSensor.sensor.lastSentState ||
+                    fullSensor.sensor.icon != fullSensor.sensor.lastSentIcon
+                )
+        ) {
+            integrationUseCase.updateSensors(arrayOf(fullSensor.toSensorRegistration(basicSensor)))
+            sensorDao.updateLastSentStateAndIcon(
+                basicSensor.id,
+                fullSensor.sensor.state,
+                fullSensor.sensor.icon
+            )
+        }
     }
 
     private fun createNotificationChannel(context: Context) {

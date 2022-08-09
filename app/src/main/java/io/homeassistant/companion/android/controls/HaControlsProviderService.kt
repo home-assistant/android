@@ -10,6 +10,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
+import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
@@ -41,12 +42,15 @@ class HaControlsProviderService : ControlsProviderService() {
     @Inject
     lateinit var webSocketRepository: WebSocketRepository
 
+    @Inject
+    lateinit var urlRepository: UrlRepository
+
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
     private val domainToHaControl = mapOf(
         "automation" to DefaultSwitchControl,
         "button" to DefaultButtonControl,
-        "camera" to null,
+        "camera" to CameraControl,
         "climate" to ClimateControl,
         "cover" to CoverControl,
         "fan" to FanControl,
@@ -62,6 +66,9 @@ class HaControlsProviderService : ControlsProviderService() {
         "script" to DefaultButtonControl,
         "switch" to DefaultSwitchControl,
         "vacuum" to VacuumControl
+    )
+    private val domainToMinimumApi = mapOf(
+        "camera" to Build.VERSION_CODES.S
     )
 
     override fun createPublisherForAllAvailable(): Flow.Publisher<Control> {
@@ -84,12 +91,17 @@ class HaControlsProviderService : ControlsProviderService() {
 
                     entities
                         ?.sortedWith(compareBy(nullsLast()) { areaForEntity[it.entityId]?.name })
+                        ?.filter {
+                            domainToMinimumApi[it.domain] == null ||
+                                Build.VERSION.SDK_INT >= domainToMinimumApi[it.domain]!!
+                        }
                         ?.mapNotNull {
                             try {
                                 domainToHaControl[it.domain]?.createControl(
                                     applicationContext,
                                     it as Entity<Map<String, Any>>,
-                                    areaForEntity[it.entityId]
+                                    areaForEntity[it.entityId],
+                                    null // Prevent downloading camera images
                                 )
                             } catch (e: Exception) {
                                 Log.e(TAG, "Unable to create control for ${it.domain} entity, skipping", e)
@@ -139,7 +151,9 @@ class HaControlsProviderService : ControlsProviderService() {
                         var deviceRegistry = getDeviceRegistry.await()
                         var entityRegistry = getEntityRegistry.await()
 
-                        sendEntitiesToSubscriber(subscriber, entities, areaRegistry, deviceRegistry, entityRegistry)
+                        val baseUrl = urlRepository.getUrl().toString().removeSuffix("/")
+
+                        sendEntitiesToSubscriber(subscriber, entities, areaRegistry, deviceRegistry, entityRegistry, baseUrl)
 
                         // Listen for the state changed events.
                         webSocketScope.launch {
@@ -148,7 +162,8 @@ class HaControlsProviderService : ControlsProviderService() {
                                     val control = domainToHaControl[it.domain]?.createControl(
                                         applicationContext,
                                         it as Entity<Map<String, Any>>,
-                                        RegistriesDataHandler.getAreaForEntity(it.entityId, areaRegistry, deviceRegistry, entityRegistry)
+                                        RegistriesDataHandler.getAreaForEntity(it.entityId, areaRegistry, deviceRegistry, entityRegistry),
+                                        baseUrl
                                     )
                                     subscriber.onNext(control)
                                 }
@@ -157,20 +172,20 @@ class HaControlsProviderService : ControlsProviderService() {
                         webSocketScope.launch {
                             webSocketRepository.getAreaRegistryUpdates()?.collect {
                                 areaRegistry = webSocketRepository.getAreaRegistry()
-                                sendEntitiesToSubscriber(subscriber, entities, areaRegistry, deviceRegistry, entityRegistry)
+                                sendEntitiesToSubscriber(subscriber, entities, areaRegistry, deviceRegistry, entityRegistry, baseUrl)
                             }
                         }
                         webSocketScope.launch {
                             webSocketRepository.getDeviceRegistryUpdates()?.collect {
                                 deviceRegistry = webSocketRepository.getDeviceRegistry()
-                                sendEntitiesToSubscriber(subscriber, entities, areaRegistry, deviceRegistry, entityRegistry)
+                                sendEntitiesToSubscriber(subscriber, entities, areaRegistry, deviceRegistry, entityRegistry, baseUrl)
                             }
                         }
                         webSocketScope.launch {
                             webSocketRepository.getEntityRegistryUpdates()?.collect { event ->
                                 if (event.action == "update" && controlIds.contains(event.entityId)) {
                                     entityRegistry = webSocketRepository.getEntityRegistry()
-                                    sendEntitiesToSubscriber(subscriber, entities, areaRegistry, deviceRegistry, entityRegistry)
+                                    sendEntitiesToSubscriber(subscriber, entities, areaRegistry, deviceRegistry, entityRegistry, baseUrl)
                                 }
                             }
                         }
@@ -219,21 +234,24 @@ class HaControlsProviderService : ControlsProviderService() {
         entities: Map<String, Entity<Map<String, Any>>>,
         areaRegistry: List<AreaRegistryResponse>?,
         deviceRegistry: List<DeviceRegistryResponse>?,
-        entityRegistry: List<EntityRegistryResponse>?
+        entityRegistry: List<EntityRegistryResponse>?,
+        baseUrl: String
     ) {
         entities.forEach {
             val control = try {
-                domainToHaControl[it.value.domain]?.createControl(
+                domainToHaControl[it.key.split(".")[0]]?.createControl(
                     applicationContext,
                     it.value,
-                    RegistriesDataHandler.getAreaForEntity(it.key, areaRegistry, deviceRegistry, entityRegistry)
+                    RegistriesDataHandler.getAreaForEntity(it.value.entityId, areaRegistry, deviceRegistry, entityRegistry),
+                    baseUrl
                 )
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to create control for ${it.value.domain} entity, sending error entity", e)
                 domainToHaControl["ha_failed"]?.createControl(
                     applicationContext,
                     getFailedEntity(it.value.entityId, e),
-                    RegistriesDataHandler.getAreaForEntity(it.key, areaRegistry, deviceRegistry, entityRegistry)
+                    RegistriesDataHandler.getAreaForEntity(it.value.entityId, areaRegistry, deviceRegistry, entityRegistry),
+                    baseUrl
                 )
             }
             subscriber.onNext(control)

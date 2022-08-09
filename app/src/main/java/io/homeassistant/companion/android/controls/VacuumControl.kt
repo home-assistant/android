@@ -23,7 +23,8 @@ object VacuumControl : HaControl {
         context: Context,
         control: Control.StatefulBuilder,
         entity: Entity<Map<String, Any>>,
-        area: AreaRegistryResponse?
+        area: AreaRegistryResponse?,
+        baseUrl: String?
     ): Control.StatefulBuilder {
         entitySupportedFeatures = entity.attributes["supported_features"] as Int
         if (entitySupportedFeatures and SUPPORT_TURN_ON != SUPPORT_TURN_ON) {

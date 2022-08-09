@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.google.android.gms.wearable.CapabilityClient
@@ -112,10 +113,13 @@ class SettingsWearViewModel @Inject constructor(
             viewModelScope.launch {
                 try {
                     templateTileContentRendered.value =
-                        integrationUseCase.renderTemplate(template, mapOf())
+                        integrationUseCase.renderTemplate(template, mapOf()).toString()
                 } catch (e: Exception) {
+                    Log.e(TAG, "Exception while rendering template", e)
+                    // JsonMappingException suggests that template is not a String (= error)
                     templateTileContentRendered.value = getApplication<Application>().getString(
-                        commonR.string.template_tile_error
+                        if (e.cause is JsonMappingException) commonR.string.template_error
+                        else commonR.string.template_render_error
                     )
                 }
             }
