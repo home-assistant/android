@@ -9,6 +9,7 @@
     <string name="add_ssid_name_suggestion">Add %1$s</string>
     <string name="add_widget">Add widget</string>
     <string name="all_entities">All entities</string>
+    <string name="allow">Allow</string>
     <string name="app_name">Home Assistant</string>
     <string name="app_version_info">App Version Info</string>
     <string name="application_version">Application Version</string>
@@ -748,6 +749,8 @@
     <string name="wear_set_favorites">Select your favorite entities to appear at the top of the Wear home screen. You can also drag and drop to change the order in which they appear.</string>
     <string name="wear_settings">Wear Device Settings</string>
     <string name="websocket_listening">Connected to Home Assistant</string>
+    <string name="websocket_restricted_title">Unable to open connection to Home Assistant</string>
+    <string name="websocket_restricted_fix">Update settings to fix or disable</string>
     <string name="webview_error_AUTH_SCHEME">Unsupported authentication scheme (not basic or digest), please check network settings.</string>
     <string name="webview_error_AUTHENTICATION">User authentication failed on server, please check server settings.</string>
     <string name="webview_error_description">Encountered error :</string>
@@ -829,7 +832,9 @@
     <string name="websocket_setting_always">Always</string>
     <string name="websocket_setting_always_minimal">Always\n\nRequired to always receive notifications</string>
     <string name="websocket_persistent_notification">In order to maintain the persistent connection the app will need to create a persistent notification. You may use the button below to manage the appearance of this notification. It is recommended to minimize the notification to hide the icon.</string>
+    <string name="websocket_notification_backgroundaccess">To reliably connect your server, allow Home Assistant to keep running in the background.</string>
     <string name="websocket_notification_channel">Manage Persistent Connection Notification</string>
+    <string name="websocket_notification_issues">Persistent Connection Issues</string>
     <string name="notification_channels">Notification Channels</string>
     <string name="notification_channels_summary">Manage all notification channels configured on the device. Channels control the behavior of its notifications including visibility and sound.</string>
     <string name="info">Information</string>
