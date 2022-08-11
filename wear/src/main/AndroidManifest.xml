@@ -17,7 +17,8 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:supportsRtl="true"
         android:theme="@style/Theme.HomeAssistant"
-        android:fullBackupContent="@xml/backup_rules">
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/backup_rules_android12">
         <!-- Start things like SensorWorker on device boot -->
         <receiver android:name=".sensors.SensorReceiver"
             android:exported="true">

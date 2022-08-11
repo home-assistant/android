@@ -17,6 +17,9 @@ class HighAccuracyLocationReceiver : BroadcastReceiver() {
                 {
                     HighAccuracyLocationService.stopService(context)
                     LocationSensorManager.setHighAccuracyModeSetting(context, false)
+                    val locationIntent = Intent(context, LocationSensorManager::class.java)
+                    locationIntent.action = LocationSensorManager.ACTION_REQUEST_LOCATION_UPDATES
+                    context.sendBroadcast(locationIntent)
                 }
         }
     }

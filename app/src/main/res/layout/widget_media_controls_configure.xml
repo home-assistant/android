@@ -130,13 +130,5 @@
             android:layout_gravity="end"
             android:layout_marginTop="8dp"
             android:text="@string/add_widget" />
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/delete_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            android:layout_marginTop="8dp"
-            android:visibility="gone"
-            android:text="@string/delete_widget" />
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

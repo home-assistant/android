@@ -92,7 +92,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.6.4")
 
-    implementation("com.google.android.material:material:1.6.0")
+    implementation("com.google.android.material:material:1.6.1")
 
     implementation("androidx.wear:wear:1.2.0")
     implementation("com.google.android.gms:play-services-wearable:17.1.0")
@@ -100,28 +100,28 @@ dependencies {
     implementation("androidx.wear:wear-remote-interactions:1.0.0")
     compileOnly("com.google.android.wearable:wearable:2.9.0")
 
-    implementation("com.google.dagger:hilt-android:2.42")
-    kapt("com.google.dagger:hilt-android-compiler:2.42")
+    implementation("com.google.dagger:hilt-android:2.43.2")
+    kapt("com.google.dagger:hilt-android-compiler:2.43.2")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.3")
     implementation("com.squareup.okhttp3:okhttp:4.10.0")
 
     implementation("com.mikepenz:iconics-core:5.3.4")
-    implementation("androidx.appcompat:appcompat:1.4.1")
+    implementation("androidx.appcompat:appcompat:1.4.2")
     implementation("com.mikepenz:community-material-typeface:6.4.95.0-kotlin@aar")
     implementation("com.mikepenz:iconics-compose:5.3.4")
 
-    implementation("androidx.activity:activity-ktx:1.4.0")
-    implementation("androidx.activity:activity-compose:1.4.0")
-    implementation("androidx.compose.compiler:compiler:1.1.1")
-    implementation("androidx.compose.foundation:foundation:1.1.1")
-    implementation("androidx.compose.ui:ui-tooling:1.1.1")
-    implementation("androidx.wear.compose:compose-foundation:1.0.0-rc02")
-    implementation("androidx.wear.compose:compose-material:1.0.0-rc02")
-    implementation("androidx.wear.compose:compose-navigation:1.0.0-rc02")
+    implementation("androidx.activity:activity-ktx:1.5.1")
+    implementation("androidx.activity:activity-compose:1.5.1")
+    implementation("androidx.compose.compiler:compiler:1.2.0")
+    implementation("androidx.compose.foundation:foundation:1.2.0")
+    implementation("androidx.compose.ui:ui-tooling:1.2.0")
+    implementation("androidx.wear.compose:compose-foundation:1.0.0")
+    implementation("androidx.wear.compose:compose-material:1.0.0")
+    implementation("androidx.wear.compose:compose-navigation:1.0.0")
 
     implementation("com.google.guava:guava:31.1-android")
     implementation("androidx.wear.tiles:tiles:1.0.1")
 
-    implementation("androidx.wear.watchface:watchface-complications-data-source-ktx:1.1.0-rc01")
+    implementation("androidx.wear.watchface:watchface-complications-data-source-ktx:1.1.0")
 }

@@ -7,6 +7,7 @@
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
@@ -32,7 +33,8 @@
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28"/>
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
@@ -378,7 +380,7 @@
         <service
             android:name=".qs.Tile1Service"
             android:icon="@drawable/ic_stat_ic_notification"
-            android:label="@string/tile_not_setup"
+            android:label="@string/tile_1"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">
             <intent-filter>
@@ -390,7 +392,7 @@
         <service
             android:name=".qs.Tile2Service"
             android:icon="@drawable/ic_stat_ic_notification"
-            android:label="@string/tile_not_setup"
+            android:label="@string/tile_2"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">
             <intent-filter>
@@ -402,7 +404,7 @@
         <service
             android:name=".qs.Tile3Service"
             android:icon="@drawable/ic_stat_ic_notification"
-            android:label="@string/tile_not_setup"
+            android:label="@string/tile_3"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">
             <intent-filter>
@@ -414,7 +416,7 @@
         <service
             android:name=".qs.Tile4Service"
             android:icon="@drawable/ic_stat_ic_notification"
-            android:label="@string/tile_not_setup"
+            android:label="@string/tile_4"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">
             <intent-filter>
@@ -426,7 +428,7 @@
         <service
             android:name=".qs.Tile5Service"
             android:icon="@drawable/ic_stat_ic_notification"
-            android:label="@string/tile_not_setup"
+            android:label="@string/tile_5"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">
             <intent-filter>
@@ -438,7 +440,7 @@
         <service
             android:name=".qs.Tile6Service"
             android:icon="@drawable/ic_stat_ic_notification"
-            android:label="@string/tile_not_setup"
+            android:label="@string/tile_6"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">
             <intent-filter>
@@ -450,7 +452,7 @@
         <service
             android:name=".qs.Tile7Service"
             android:icon="@drawable/ic_stat_ic_notification"
-            android:label="@string/tile_not_setup"
+            android:label="@string/tile_7"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">
             <intent-filter>
@@ -462,7 +464,7 @@
         <service
             android:name=".qs.Tile8Service"
             android:icon="@drawable/ic_stat_ic_notification"
-            android:label="@string/tile_not_setup"
+            android:label="@string/tile_8"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">
             <intent-filter>
@@ -474,7 +476,7 @@
         <service
             android:name=".qs.Tile9Service"
             android:icon="@drawable/ic_stat_ic_notification"
-            android:label="@string/tile_not_setup"
+            android:label="@string/tile_9"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">
             <intent-filter>
@@ -486,7 +488,7 @@
         <service
             android:name=".qs.Tile10Service"
             android:icon="@drawable/ic_stat_ic_notification"
-            android:label="@string/tile_not_setup"
+            android:label="@string/tile_10"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">
             <intent-filter>
@@ -498,7 +500,7 @@
         <service
             android:name=".qs.Tile11Service"
             android:icon="@drawable/ic_stat_ic_notification"
-            android:label="@string/tile_not_setup"
+            android:label="@string/tile_11"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">
             <intent-filter>
@@ -510,7 +512,7 @@
         <service
             android:name=".qs.Tile12Service"
             android:icon="@drawable/ic_stat_ic_notification"
-            android:label="@string/tile_not_setup"
+            android:label="@string/tile_12"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">
             <intent-filter>

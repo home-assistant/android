@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.bluetooth
 
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.content.Context
@@ -7,7 +8,8 @@ import androidx.core.content.getSystemService
 import java.lang.reflect.Method
 
 object BluetoothUtils {
-    fun getBluetoothDevices(context: Context, allowDuplicates: Boolean = false): List<BluetoothDevice> {
+    @SuppressLint("MissingPermission")
+    fun getBluetoothDevices(context: Context): List<BluetoothDevice> {
         val devices: MutableList<BluetoothDevice> = ArrayList()
 
         val bluetoothManager =
@@ -26,20 +28,20 @@ object BluetoothUtils {
                         BluetoothDevice(
                             btDev.address,
                             name,
-                            true,
+                            btDev.bondState == android.bluetooth.BluetoothDevice.BOND_BONDED,
                             isConnected(btDev)
                         )
                     )
                 }
                 val btConnectedDevices = bluetoothManager.getConnectedDevices(BluetoothProfile.GATT)
                 for (btDev in btConnectedDevices) {
-                    if (!allowDuplicates && devices.any { it.address == btDev.address }) continue
+                    if (devices.any { it.address == btDev.address }) continue
                     val name = btDev.name ?: btDev.address
                     devices.add(
                         BluetoothDevice(
                             btDev.address,
                             name,
-                            false,
+                            btDev.bondState == android.bluetooth.BluetoothDevice.BOND_BONDED,
                             isConnected(btDev)
                         )
                     )

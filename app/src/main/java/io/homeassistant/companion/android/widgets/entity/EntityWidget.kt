@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.widgets.entity
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
@@ -41,10 +42,21 @@ class EntityWidget : BaseWidgetProvider() {
         internal const val EXTRA_TEXT_COLOR = "EXTRA_TEXT_COLOR"
 
         private data class ResolvedText(val text: CharSequence?, val exception: Boolean = false)
+
+        private var isSubscribed = false
     }
 
     @Inject
     lateinit var staticWidgetDao: StaticWidgetDao
+
+    override fun isSubscribed(): Boolean = isSubscribed
+
+    override fun setSubscribed(subscribed: Boolean) {
+        isSubscribed = subscribed
+    }
+
+    override fun getWidgetProvider(context: Context): ComponentName =
+        ComponentName(context, EntityWidget::class.java)
 
     override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity<Map<String, Any>>?): RemoteViews {
         val intent = Intent(context, EntityWidget::class.java).apply {
