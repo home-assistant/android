@@ -1409,7 +1409,7 @@ class MessagingManager @Inject constructor(
 
                     val durationInMicroSeconds = ((mediaRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: VIDEO_GUESS_MILLISECONDS)) * 1000
 
-                    // Start at 100 milliseconds and get frames every 0.5 seconds until reaching the end
+                    // Start at 100 milliseconds and get frames every 0.75 seconds until reaching the end
                     run frameLoop@{
                         for (timeInMicroSeconds in VIDEO_START_MICROSECONDS until durationInMicroSeconds step VIDEO_INCREMENT_MICROSECONDS) {
                             // Max size in bytes for notification GIF
