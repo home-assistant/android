@@ -101,10 +101,12 @@ class WebsocketManager(
             return@withContext Result.success()
         }
 
-        Log.d(TAG, "Starting to listen to Websocket")
-        if (!createNotification()) return@withContext Result.success()
+        if (!createNotification()) {
+            return@withContext Result.success()
+        }
 
         // Start listening for notifications
+        Log.d(TAG, "Starting to listen to Websocket")
         val job = launch { collectNotifications() }
 
         // play ping pong to ensure we have a connection.
