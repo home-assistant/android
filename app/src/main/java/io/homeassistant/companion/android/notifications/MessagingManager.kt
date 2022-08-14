@@ -131,6 +131,7 @@ class MessagingManager @Inject constructor(
         const val PACKAGE_NAME = "package_name"
         const val COMMAND = "command"
         const val TTS_TEXT = "tts_text"
+        const val CHANNEL = "channel"
 
         // special intent constants
         const val INTENT_PACKAGE_NAME = "intent_package_name"
@@ -291,9 +292,9 @@ class MessagingManager @Inject constructor(
                 Log.d(TAG, "Clearing notification with tag: ${jsonData["tag"]}")
                 clearNotification(jsonData["tag"]!!)
             }
-            jsonData[MESSAGE] == REMOVE_CHANNEL && !jsonData["channel"].isNullOrBlank() -> {
-                Log.d(TAG, "Removing Notification channel ${jsonData["channel"]}")
-                removeNotificationChannel(jsonData["channel"]!!)
+            jsonData[MESSAGE] == REMOVE_CHANNEL && !jsonData[CHANNEL].isNullOrBlank() -> {
+                Log.d(TAG, "Removing Notification channel ${jsonData[CHANNEL]}")
+                removeNotificationChannel(jsonData[CHANNEL]!!)
             }
             jsonData[MESSAGE] == TTS -> {
                 Log.d(TAG, "Sending notification title to TTS")
@@ -1117,7 +1118,7 @@ class MessagingManager @Inject constructor(
         builder: NotificationCompat.Builder,
         data: Map<String, String>
     ) {
-        if (data["channel"] == ALARM_STREAM) {
+        if (data[CHANNEL] == ALARM_STREAM) {
             builder.setCategory(Notification.CATEGORY_ALARM)
             builder.setSound(
                 RingtoneManager.getActualDefaultRingtoneUri(
@@ -1587,9 +1588,9 @@ class MessagingManager @Inject constructor(
         var channelID = generalChannel
         var channelName = "General"
 
-        if (data.containsKey("channel")) {
-            channelID = createChannelID(data["channel"].toString())
-            channelName = data["channel"].toString().trim()
+        if (!data[CHANNEL].isNullOrEmpty()) {
+            channelID = createChannelID(data[CHANNEL].toString())
+            channelName = data[CHANNEL].toString().trim()
         }
 
         // Since android Oreo notification channel is needed.
