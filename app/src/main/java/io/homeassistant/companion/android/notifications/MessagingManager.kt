@@ -259,7 +259,7 @@ class MessagingManager @Inject constructor(
 
         // Video Values
         const val VIDEO_START_MICROSECONDS = 100000L
-        const val VIDEO_INCREMENT_MICROSECONDS = 2000000L
+        const val VIDEO_INCREMENT_MICROSECONDS = 750000L
         const val VIDEO_GUESS_MILLISECONDS = 7000L
     }
 
@@ -1395,6 +1395,8 @@ class MessagingManager @Inject constructor(
         ) {
             url ?: return@withContext null
             val processingFrames = mutableListOf<Deferred<Bitmap?>>()
+            var processingFramesSize = 0
+            var singleFrame = 0
 
             try {
                 MediaMetadataRetriever().let { mediaRetriever ->
@@ -1407,15 +1409,21 @@ class MessagingManager @Inject constructor(
 
                     val durationInMicroSeconds = ((mediaRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: VIDEO_GUESS_MILLISECONDS)) * 1000
 
-                    // Start at 100 milliseconds and get frames every 2 seconds until reaching the end
+                    // Start at 100 milliseconds and get frames every 0.75 seconds until reaching the end
                     run frameLoop@{
                         for (timeInMicroSeconds in VIDEO_START_MICROSECONDS until durationInMicroSeconds step VIDEO_INCREMENT_MICROSECONDS) {
-                            if (processingFrames.size >= 5) {
+                            // Max size in bytes for notification GIF
+                            val maxSize = (2500000 - singleFrame)
+                            if (processingFramesSize >= maxSize) {
                                 return@frameLoop
                             }
 
                             mediaRetriever.getFrameAtTime(timeInMicroSeconds, MediaMetadataRetriever.OPTION_CLOSEST)
-                                ?.let { smallFrame -> processingFrames.add(async { smallFrame.getCompressedFrame() }) }
+                                ?.let { smallFrame ->
+                                    processingFrames.add(async { smallFrame.getCompressedFrame() })
+                                    processingFramesSize += (smallFrame.getCompressedFrame())!!.allocationByteCount
+                                    singleFrame = (smallFrame.getCompressedFrame())!!.allocationByteCount
+                                }
                         }
                     }
 
@@ -1430,8 +1438,16 @@ class MessagingManager @Inject constructor(
         }
 
     private fun Bitmap.getCompressedFrame(): Bitmap? {
-        val newHeight = height / 4
-        val newWidth = width / 4
+        var newWidth = 480
+        var newHeight = 0
+        // If already smaller than 480p do not scale else scale
+        if (width < newWidth) {
+            newWidth = width
+            newHeight = height
+        } else {
+            val ratio: Float = (width.toFloat() / height.toFloat())
+            newHeight = (newWidth / ratio).toInt()
+        }
         return Bitmap.createScaledBitmap(this, newWidth, newHeight, false)
     }
 
