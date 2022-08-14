@@ -170,7 +170,7 @@
     <string name="empty_template">Template value must not be blank</string>
     <string name="enable_all_sensors_summary">All required permissions will be requested upon enabling</string>
     <string name="enable_all_sensors">Enable All Sensors</string>
-    <string name="enable_location_tracking_description">Enabling this sensor will allow the Home Assistant application to track you location and report it back to your instance of Home Assistant. Ensure that you enable background access to location, otherwise we cannot enable location tracking.  Your location data is sent directly to your Home Assistant instance and is never sent to a 3rd party.</string>
+    <string name="enable_location_tracking_description">Enabling this sensor will allow the Home Assistant application to track your location and report it back to your instance of Home Assistant. Ensure that you enable background access to location, otherwise we cannot enable location tracking.  Your location data is sent directly to your Home Assistant instance and is never sent to a 3rd party.</string>
     <string name="enable_location_tracking_prompt">This app collects location data to enable Location Tracking, WiFi Connection Status, and URL decision making even when the app is closed or not in use.</string>
     <string name="enable_location_tracking">Enable Location Tracking</string>
     <string name="enable_remaining_sensors">Enable %1$d Sensors</string>
