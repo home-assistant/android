@@ -82,12 +82,12 @@ class WebSocketRepositoryImpl @Inject constructor(
     private val connectedMutex = Mutex()
     private var connected = CompletableDeferred<Boolean>()
     private val eventSubscriptionMutex = Mutex()
-    private val eventSubscriptionFlow = mutableMapOf<String, SharedFlow<*>>()
-    private var eventSubscriptionProducerScope = mutableMapOf<String, ProducerScope<Any>>()
+    private var eventSubscriptionId = mutableMapOf<Map<Any, Any>, Long?>()
+    private val eventSubscriptionFlow = mutableMapOf<Map<Any, Any>, SharedFlow<*>>()
+    private var eventSubscriptionProducerScope = mutableMapOf<Map<Any, Any>, ProducerScope<Any>>()
     private val notificationMutex = Mutex()
     private var notificationFlow: Flow<Map<String, Any>>? = null
     private var notificationProducerScope: ProducerScope<Map<String, Any>>? = null
-    private var lastResponseID = mutableMapOf<String, Long?>()
 
     override fun getConnectionState(): WebSocketState? = connectionState
 
@@ -179,43 +179,61 @@ class WebSocketRepositoryImpl @Inject constructor(
     override suspend fun getEntityRegistryUpdates(): Flow<EntityRegistryUpdatedEvent>? =
         subscribeToEventsForType(EVENT_ENTITY_REGISTRY_UPDATED)
 
-    private suspend fun <T : Any> subscribeToEventsForType(eventType: String): Flow<T>? {
-        eventSubscriptionMutex.withLock {
-            if (eventSubscriptionFlow[eventType] == null) {
+    private suspend fun <T : Any> subscribeToEventsForType(eventType: String): Flow<T>? =
+        subscribeTo("subscribe_events", mapOf("event_type" to eventType))
 
-                val response = sendMessage(
-                    mapOf(
-                        "type" to "subscribe_events",
-                        "event_type" to eventType
-                    )
-                )
-                lastResponseID[eventType] = response?.id
+    /**
+     * Start a subscription for events on the websocket connection and get a Flow for listening to
+     * new messages. When there are no more listeners, the subscription will automatically be cancelled
+     * using `unsubscribe_events`. If the subscription already exists, the existing Flow is returned.
+     *
+     * @param type value for the `type` key in the subscription message, for example `subscribe_events`
+     * @param data a key/value map of additional data to be included in the subscription message, for
+     *             example the `event_type` + value when subscribing with `subscribe_events`
+     * @return a Flow that will emit messages delivered to this subscription, or `null` if an error
+     *         occurred
+     */
+    private suspend fun <T : Any> subscribeTo(type: String, data: Map<Any, Any>): Flow<T>? {
+        val subscribeMessage = mapOf(
+            "type" to type
+        ).plus(data)
+
+        eventSubscriptionMutex.withLock {
+            if (eventSubscriptionId[subscribeMessage] == null) {
+
+                val response = sendMessage(subscribeMessage)
+                eventSubscriptionId[subscribeMessage] = response?.id
                 if (response == null) {
-                    Log.e(TAG, "Unable to register for events of type $eventType")
+                    Log.e(TAG, "Unable to subscribe to $type with data $data")
                     return null
                 }
 
-                eventSubscriptionFlow[eventType] = callbackFlow<T> {
-                    eventSubscriptionProducerScope[eventType] = this as ProducerScope<Any>
+                // Subscriptions are stored by subscribe message instead of ID, because the ID will
+                // change when the app needs to resubscribe
+                eventSubscriptionFlow[subscribeMessage] = callbackFlow<T> {
+                    eventSubscriptionProducerScope[subscribeMessage] = this as ProducerScope<Any>
                     awaitClose {
-                        Log.d(TAG, "Unsubscribing from $eventType")
+                        Log.d(TAG, "Unsubscribing from $type with data $data")
                         ioScope.launch {
                             sendMessage(
                                 mapOf(
                                     "type" to "unsubscribe_events",
-                                    "subscription" to lastResponseID[eventType]!!
+                                    "subscription" to eventSubscriptionId[subscribeMessage]!!
                                 )
                             )
-                            lastResponseID.remove(eventType)
+                            eventSubscriptionId.remove(subscribeMessage)
                         }
-                        eventSubscriptionProducerScope.remove(eventType)
-                        eventSubscriptionFlow.remove(eventType)
+                        eventSubscriptionProducerScope.remove(subscribeMessage)
+                        eventSubscriptionFlow.remove(subscribeMessage)
                     }
                 }.shareIn(ioScope, SharingStarted.WhileSubscribed())
             }
         }
-        return eventSubscriptionFlow[eventType]!! as Flow<T>
+        return eventSubscriptionFlow[subscribeMessage]!! as Flow<T>
     }
+
+    private fun getSubscriptionMessageById(id: Long): Map<Any, Any>? =
+        eventSubscriptionId.filterValues { it == id }.keys.firstOrNull()
 
     override suspend fun getNotifications(): Flow<Map<String, Any>>? {
         notificationMutex.withLock {
@@ -370,7 +388,7 @@ class WebSocketRepositoryImpl @Inject constructor(
                 response.event,
                 eventResponseClass
             )
-            eventSubscriptionProducerScope[eventResponse.eventType]?.send(eventResponse.data)
+            eventSubscriptionProducerScope[getSubscriptionMessageById(response.id!!)]?.send(eventResponse.data)
         } else if (response.event?.contains("hass_confirm_id") == true) {
             if (notificationProducerScope?.isActive == true) {
                 notificationProducerScope?.send(
@@ -397,16 +415,11 @@ class WebSocketRepositoryImpl @Inject constructor(
             ioScope.launch {
                 delay(10000)
                 if (connect()) {
-                    eventSubscriptionFlow.forEach { (eventType, _) ->
-                        val response = sendMessage(
-                            mapOf(
-                                "type" to "subscribe_events",
-                                "event_type" to eventType
-                            )
-                        )
-                        lastResponseID[eventType] = response?.id
+                    eventSubscriptionFlow.forEach { (subscribeMessage, _) ->
+                        val response = sendMessage(subscribeMessage)
+                        eventSubscriptionId[subscribeMessage] = response?.id
                         if (response == null) {
-                            Log.e(TAG, "Issue re-registering event subscriptions")
+                            Log.e(TAG, "Issue re-registering subscription with $subscribeMessage")
                         }
                     }
                     if (notificationFlow != null) {
