@@ -31,6 +31,7 @@ import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.util.getAttribute
+import io.homeassistant.companion.android.widgets.common.WidgetAuthenticationActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -43,8 +44,10 @@ import io.homeassistant.companion.android.common.R as commonR
 class ButtonWidget : AppWidgetProvider() {
     companion object {
         private const val TAG = "ButtonWidget"
-        private const val CALL_SERVICE =
+        public const val CALL_SERVICE =
             "io.homeassistant.companion.android.widgets.button.ButtonWidget.CALL_SERVICE"
+        private const val CALL_SERVICE_AUTH =
+            "io.homeassistant.companion.android.widgets.button.ButtonWidget.CALL_SERVICE_AUTH"
         internal const val RECEIVE_DATA =
             "io.homeassistant.companion.android.widgets.button.ButtonWidget.RECEIVE_DATA"
 
@@ -55,6 +58,7 @@ class ButtonWidget : AppWidgetProvider() {
         internal const val EXTRA_ICON = "EXTRA_ICON"
         internal const val EXTRA_BACKGROUND_TYPE = "EXTRA_BACKGROUND_TYPE"
         internal const val EXTRA_TEXT_COLOR = "EXTRA_TEXT_COLOR"
+        internal const val EXTRA_REQUIRE_AUTHENTICATION = "EXTRA_REQUIRE_AUTHENTICATION"
 
         // Vector icon rendering resolution fallback (if we can't infer via AppWidgetManager for some reason)
         private const val DEFAULT_MAX_ICON_SIZE = 512
@@ -141,10 +145,20 @@ class ButtonWidget : AppWidgetProvider() {
 
         super.onReceive(context, intent)
         when (action) {
+            CALL_SERVICE_AUTH -> authThenCallConfiguredService(context, appWidgetId)
             CALL_SERVICE -> callConfiguredService(context, appWidgetId)
             RECEIVE_DATA -> saveServiceCallConfiguration(context, intent.extras, appWidgetId)
             Intent.ACTION_SCREEN_ON -> updateAllWidgets(context)
         }
+    }
+
+    private fun authThenCallConfiguredService(context: Context, appWidgetId: Int) {
+        Log.d(TAG, "Calling authentication, then configured service")
+
+        val intent = Intent(context, WidgetAuthenticationActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NEW_DOCUMENT
+        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+        context.startActivity(intent)
     }
 
     private fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews {
@@ -153,12 +167,13 @@ class ButtonWidget : AppWidgetProvider() {
         // (e.g home screen rotation) the widget will fall back on its default layout
         // without any click listener being applied
 
+        val widget = buttonWidgetDao.get(appWidgetId)
+        val auth = widget?.requireAuthentication == true
+
         val intent = Intent(context, ButtonWidget::class.java).apply {
-            action = CALL_SERVICE
+            action = if (auth) CALL_SERVICE_AUTH else CALL_SERVICE
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         }
-
-        val widget = buttonWidgetDao.get(appWidgetId)
 
         // Create an icon pack and load all drawables.
         if (iconPack == null) {
@@ -339,6 +354,7 @@ class ButtonWidget : AppWidgetProvider() {
         val service: String? = extras.getString(EXTRA_SERVICE)
         val serviceData: String? = extras.getString(EXTRA_SERVICE_DATA)
         val label: String? = extras.getString(EXTRA_LABEL)
+        val requireAuthentication: Boolean = extras.getBoolean(EXTRA_REQUIRE_AUTHENTICATION)
         val icon: Int = extras.getInt(EXTRA_ICON)
         val backgroundType: WidgetBackgroundType = extras.getSerializable(EXTRA_BACKGROUND_TYPE) as WidgetBackgroundType
         val textColor: String? = extras.getString(EXTRA_TEXT_COLOR)
@@ -355,10 +371,11 @@ class ButtonWidget : AppWidgetProvider() {
                     "domain: " + domain + System.lineSeparator() +
                     "service: " + service + System.lineSeparator() +
                     "service_data: " + serviceData + System.lineSeparator() +
+                    "require_authentication: " + requireAuthentication + System.lineSeparator() +
                     "label: " + label
             )
 
-            val widget = ButtonWidgetEntity(appWidgetId, icon, domain, service, serviceData, label, backgroundType, textColor)
+            val widget = ButtonWidgetEntity(appWidgetId, icon, domain, service, serviceData, label, backgroundType, textColor, requireAuthentication)
             buttonWidgetDao.add(widget)
 
             // It is the responsibility of the configuration activity to update the app widget

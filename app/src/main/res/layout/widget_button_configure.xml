@@ -163,6 +163,12 @@
             </RadioGroup>
         </LinearLayout>
 
+        <CheckBox
+            android:id="@+id/widget_checkbox_require_authentication"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/widget_checkbox_require_authentication" />
+
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/add_button"
             android:layout_width="wrap_content"
