@@ -289,6 +289,8 @@
     <string name="location">Location</string>
     <string name="lock_summary">Use biometric or screenlock credential to unlock app</string>
     <string name="lock_title">Lock app</string>
+    <string name="lock_home_bypass_summary">Disable app lock when connected to the home WiFi network</string>
+    <string name="lock_home_bypass_title">Unlock on home WiFi</string>
     <string name="locks">Locks</string>
     <string name="lockscreen_message">Tap to unlock :</string>
     <string name="lockscreen_title">App Locked !</string>

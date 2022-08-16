@@ -97,6 +97,7 @@ class SettingsFragment constructor(
             var isValid: Boolean
             if (newValue == false) {
                 isValid = true
+                findPreference<SwitchPreference>("app_lock_home_bypass")?.isVisible = false
                 findPreference<EditTextPreference>("session_timeout")?.isVisible = false
             } else {
                 isValid = true
@@ -113,6 +114,10 @@ class SettingsFragment constructor(
                 }
             }
             isValid
+        }
+
+        findPreference<SwitchPreference>("app_lock_home_bypass")?.let {
+            it.isVisible = findPreference<SwitchPreference>("app_lock")?.isChecked == true
         }
 
         findPreference<EditTextPreference>("session_timeout")?.let { pref ->
@@ -429,6 +434,7 @@ class SettingsFragment constructor(
         val success = result == Authenticator.SUCCESS
         val switchLock = findPreference<SwitchPreference>("app_lock")
         switchLock?.isChecked = success
+        findPreference<SwitchPreference>("app_lock_home_bypass")?.isVisible = success
         findPreference<EditTextPreference>("session_timeout")?.isVisible = success
     }
 
