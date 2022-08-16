@@ -198,6 +198,7 @@ class WebSocketRepositoryImpl @Inject constructor(
                 eventSubscriptionFlow[eventType] = callbackFlow<T> {
                     eventSubscriptionProducerScope[eventType] = this as ProducerScope<Any>
                     awaitClose {
+                        if (lastResponseID[eventType] == null) return@awaitClose
                         Log.d(TAG, "Unsubscribing from $eventType")
                         ioScope.launch {
                             sendMessage(
