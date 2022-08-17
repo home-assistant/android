@@ -71,12 +71,12 @@ class BatterySensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
 
-        private val chargingWattage = SensorManager.BasicSensor(
-            "charging_wattage",
+        private val batteryPower = SensorManager.BasicSensor(
+            "battery_power",
             "sensor",
-            commonR.string.basic_sensor_name_charging_wattage,
-            commonR.string.sensor_description_charging_wattage,
-            "mdi:battery-charging",
+            commonR.string.basic_sensor_name_battery_power,
+            commonR.string.sensor_description_battery_power,
+            "mdi:battery-plus",
             "power",
             unitOfMeasurement = "W",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
@@ -109,7 +109,7 @@ class BatterySensorManager : SensorManager {
             chargerTypeState,
             batteryHealthState,
             batteryTemperature,
-            chargingWattage
+            batteryPower
         )
     }
 
@@ -128,7 +128,7 @@ class BatterySensorManager : SensorManager {
             updateChargerType(context, intent)
             updateBatteryHealth(context, intent)
             updateBatteryTemperature(context, intent)
-            updateChargingWattage(context, intent)
+            updateBatteryPower(context, intent)
         }
     }
 
@@ -262,19 +262,19 @@ class BatterySensorManager : SensorManager {
         )
     }
 
-    private fun updateChargingWattage(context: Context, intent: Intent) {
-        if (!isEnabled(context, chargingWattage.id))
+    private fun updateBatteryPower(context: Context, intent: Intent) {
+        if (!isEnabled(context, batteryPower.id))
             return
 
         val voltage = getBatteryVolts(intent)
         val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
         val current = getBatteryCurrent(batteryManager)
         val wattage = voltage * current
-        val icon = if (wattage > 0) chargingWattage.statelessIcon else "mdi:battery"
+        val icon = if (wattage > 0) batteryPower.statelessIcon else "mdi:battery-minus"
 
         onSensorUpdated(
             context,
-            chargingWattage,
+            batteryPower,
             wattage.toBigDecimal().setScale(2, RoundingMode.HALF_UP),
             icon,
             mapOf(
