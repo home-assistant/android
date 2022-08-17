@@ -208,10 +208,11 @@ class WebSocketRepositoryImpl @Inject constructor(
             if (eventSubscriptionId[subscribeMessage] == null) {
 
                 val response = sendMessage(subscribeMessage)
-                eventSubscriptionId[subscribeMessage] = response?.id
-                if (response == null) {
+                if (response == null || response.success != true) {
                     Log.e(TAG, "Unable to subscribe to $type with data $data")
                     return null
+                } else {
+                    eventSubscriptionId[subscribeMessage] = response.id
                 }
 
                 // Subscriptions are stored by subscribe message instead of ID, because the ID will
@@ -441,9 +442,11 @@ class WebSocketRepositoryImpl @Inject constructor(
                 if (connect()) {
                     eventSubscriptionFlow.forEach { (subscribeMessage, _) ->
                         val response = sendMessage(subscribeMessage)
-                        eventSubscriptionId[subscribeMessage] = response?.id
-                        if (response == null) {
+                        if (response == null || response.success != true) {
                             Log.e(TAG, "Issue re-registering subscription with $subscribeMessage")
+                            eventSubscriptionId[subscribeMessage] = null
+                        } else {
+                            eventSubscriptionId[subscribeMessage] = response.id
                         }
                     }
                     if (notificationFlow != null) {
