@@ -76,10 +76,20 @@ class GeocodeSensorManager : SensorManager {
                     ?: DEFAULT_MINIMUM_ACCURACY
                 sensorDao.add(SensorSetting(geocodedLocation.id, SETTING_ACCURACY, minAccuracy.toString(), SensorSettingType.NUMBER))
 
-                if (location.accuracy <= minAccuracy)
+                if (location.accuracy <= minAccuracy) {
                     address = Geocoder(context)
                         .getFromLocation(location.latitude, location.longitude, 1)
                         .firstOrNull()
+                } else {
+                    Log.w(TAG, "Skipping geocoded update as accuracy was not met: ${location.accuracy}")
+                    return@addOnSuccessListener
+                }
+
+                val now = System.currentTimeMillis()
+                if (now - location.time > 300000) {
+                    Log.w(TAG, "Skipping geocoded update due to old timestamp ${location.time} compared to $now")
+                    return@addOnSuccessListener
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to get geocoded location", e)
             }
@@ -99,7 +109,7 @@ class GeocodeSensorManager : SensorManager {
                 )
             }.orEmpty()
 
-            var prettyAddress = address?.getAddressLine(0)
+            val prettyAddress = address?.getAddressLine(0)
 
             HighAccuracyLocationService.updateNotificationAddress(context, location, if (!prettyAddress.isNullOrEmpty()) prettyAddress else context.getString(commonR.string.unknown_address))
 
