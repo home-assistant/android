@@ -219,15 +219,17 @@ class WebSocketRepositoryImpl @Inject constructor(
                 eventSubscriptionFlow[subscribeMessage] = callbackFlow<T> {
                     eventSubscriptionProducerScope[subscribeMessage] = this as ProducerScope<Any>
                     awaitClose {
-                        Log.d(TAG, "Unsubscribing from $type with data $data")
-                        ioScope.launch {
-                            sendMessage(
-                                mapOf(
-                                    "type" to "unsubscribe_events",
-                                    "subscription" to eventSubscriptionId[subscribeMessage]!!
+                        if (eventSubscriptionId[subscribeMessage] != null) {
+                            Log.d(TAG, "Unsubscribing from $type with data $data")
+                            ioScope.launch {
+                                sendMessage(
+                                    mapOf(
+                                        "type" to "unsubscribe_events",
+                                        "subscription" to eventSubscriptionId[subscribeMessage]!!
+                                    )
                                 )
-                            )
-                            eventSubscriptionId.remove(subscribeMessage)
+                                eventSubscriptionId.remove(subscribeMessage)
+                            }
                         }
                         eventSubscriptionProducerScope.remove(subscribeMessage)
                         eventSubscriptionFlow.remove(subscribeMessage)
