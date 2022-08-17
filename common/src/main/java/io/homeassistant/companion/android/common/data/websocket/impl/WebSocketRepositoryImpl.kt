@@ -26,6 +26,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ev
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.TemplateUpdatedEvent
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -63,6 +64,8 @@ class WebSocketRepositoryImpl @Inject constructor(
     companion object {
         private const val TAG = "WebSocketRepository"
 
+        private const val SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS = "subscribe_events"
+        private const val SUBSCRIBE_TYPE_RENDER_TEMPLATE = "render_template"
         private const val EVENT_STATE_CHANGED = "state_changed"
         private const val EVENT_AREA_REGISTRY_UPDATED = "area_registry_updated"
         private const val EVENT_DEVICE_REGISTRY_UPDATED = "device_registry_updated"
@@ -180,7 +183,10 @@ class WebSocketRepositoryImpl @Inject constructor(
         subscribeToEventsForType(EVENT_ENTITY_REGISTRY_UPDATED)
 
     private suspend fun <T : Any> subscribeToEventsForType(eventType: String): Flow<T>? =
-        subscribeTo("subscribe_events", mapOf("event_type" to eventType))
+        subscribeTo(SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS, mapOf("event_type" to eventType))
+
+    override suspend fun getTemplateUpdates(template: String): Flow<TemplateUpdatedEvent>? =
+        subscribeTo(SUBSCRIBE_TYPE_RENDER_TEMPLATE, mapOf("template" to template))
 
     /**
      * Start a subscription for events on the websocket connection and get a Flow for listening to
@@ -366,29 +372,45 @@ class WebSocketRepositoryImpl @Inject constructor(
     }
 
     private suspend fun handleEvent(response: SocketResponse) {
-        val eventResponseType = response.event?.get("event_type")
-        if (eventResponseType != null && eventResponseType.isTextual) {
-            val eventResponseClass = when (eventResponseType.textValue()) {
-                EVENT_STATE_CHANGED -> object : TypeReference<EventResponse<StateChangedEvent>>() {}
-                EVENT_AREA_REGISTRY_UPDATED ->
-                    object :
-                        TypeReference<EventResponse<AreaRegistryUpdatedEvent>>() {}
-                EVENT_DEVICE_REGISTRY_UPDATED ->
-                    object :
-                        TypeReference<EventResponse<DeviceRegistryUpdatedEvent>>() {}
-                EVENT_ENTITY_REGISTRY_UPDATED ->
-                    object :
-                        TypeReference<EventResponse<EntityRegistryUpdatedEvent>>() {}
-                else -> {
-                    Log.d(TAG, "Unknown event type received")
-                    object : TypeReference<EventResponse<Any>>() {}
+        val subscriptionId = response.id
+        if (subscriptionId != null && eventSubscriptionId.values.contains(subscriptionId)) {
+            val subscriptionMessage = getSubscriptionMessageById(subscriptionId)
+            val subscriptionType = subscriptionMessage?.get("type")
+            val eventResponseType = response.event?.get("event_type")
+
+            val message: Any =
+                if (subscriptionType == SUBSCRIBE_TYPE_RENDER_TEMPLATE) {
+                    mapper.convertValue(response.event, TemplateUpdatedEvent::class.java)
+                } else if (eventResponseType != null && eventResponseType.isTextual) {
+                    val eventResponseClass = when (eventResponseType.textValue()) {
+                        EVENT_STATE_CHANGED ->
+                            object :
+                                TypeReference<EventResponse<StateChangedEvent>>() {}
+                        EVENT_AREA_REGISTRY_UPDATED ->
+                            object :
+                                TypeReference<EventResponse<AreaRegistryUpdatedEvent>>() {}
+                        EVENT_DEVICE_REGISTRY_UPDATED ->
+                            object :
+                                TypeReference<EventResponse<DeviceRegistryUpdatedEvent>>() {}
+                        EVENT_ENTITY_REGISTRY_UPDATED ->
+                            object :
+                                TypeReference<EventResponse<EntityRegistryUpdatedEvent>>() {}
+                        else -> {
+                            Log.d(TAG, "Unknown event type received")
+                            object : TypeReference<EventResponse<Any>>() {}
+                        }
+                    }
+
+                    mapper.convertValue(
+                        response.event,
+                        eventResponseClass
+                    ).data
+                } else {
+                    Log.d(TAG, "Unknown event for subscription received, skipping")
+                    return
                 }
-            }
-            val eventResponse = mapper.convertValue(
-                response.event,
-                eventResponseClass
-            )
-            eventSubscriptionProducerScope[getSubscriptionMessageById(response.id!!)]?.send(eventResponse.data)
+
+            eventSubscriptionProducerScope[subscriptionMessage]?.send(message)
         } else if (response.event?.contains("hass_confirm_id") == true) {
             if (notificationProducerScope?.isActive == true) {
                 notificationProducerScope?.send(
