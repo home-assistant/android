@@ -254,6 +254,7 @@ class AuthenticationRepositoryImpl @Inject constructor(
     override suspend fun isLockEnabledRaw(): Boolean {
         return localStorage.getBoolean(PREF_BIOMETRIC_ENABLED)
     }
+
     override suspend fun isLockHomeBypassEnabled(): Boolean {
         return localStorage.getBoolean(PREF_BIOMETRIC_HOME_BYPASS_ENABLED)
     }
@@ -262,7 +263,7 @@ class AuthenticationRepositoryImpl @Inject constructor(
         val raw = isLockEnabledRaw()
         val bypass = isLockHomeBypassEnabled()
         if (raw && bypass) {
-            return urlRepository.isInternal()
+            return !(urlRepository.isHomeWifiSsid())
         } else {
             return raw
         }
