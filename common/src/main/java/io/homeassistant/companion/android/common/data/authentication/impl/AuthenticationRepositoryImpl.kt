@@ -261,9 +261,8 @@ class AuthenticationRepositoryImpl @Inject constructor(
     override suspend fun isLockEnabled(): Boolean {
         val raw = isLockEnabledRaw()
         val bypass = isLockHomeBypassEnabled()
-        Log.d(TAG, "isLockEnabled(): RAW: ${raw}, bypass: ${bypass}")
         if (raw && bypass) {
-            return !(urlRepository.isInternal())
+            return urlRepository.isInternal()
         } else {
             return raw
         }
