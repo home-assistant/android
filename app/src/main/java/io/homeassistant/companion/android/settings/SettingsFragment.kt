@@ -357,7 +357,7 @@ class SettingsFragment constructor(
             }
         }
 
-        findPreference<SwitchPreference>("app_lock_home_bypass)?.let {
+        findPreference<SwitchPreference>("app_lock_home_bypass")?.let {
             it.isEnabled = false
             try {
                 val unwrappedDrawable =
@@ -383,7 +383,7 @@ class SettingsFragment constructor(
             }
         }
 
-        findPreference<SwitchPreference>("app_lock_home_bypass)?.let {
+        findPreference<SwitchPreference>("app_lock_home_bypass")?.let {
             it.isEnabled = true
             try {
                 val unwrappedDrawable =
