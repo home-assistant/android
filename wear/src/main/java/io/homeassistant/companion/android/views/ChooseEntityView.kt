@@ -3,6 +3,11 @@ package io.homeassistant.companion.android.views
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Modifier
@@ -32,12 +37,14 @@ import io.homeassistant.companion.android.common.R as commonR
 fun ChooseEntityView(
     entitiesByDomainOrder: SnapshotStateList<String>,
     entitiesByDomain: SnapshotStateMap<String, SnapshotStateList<Entity<*>>>,
+    favoriteEntityIds: State<List<String>>,
     onNoneClicked: () -> Unit,
     onEntitySelected: (entity: SimplifiedEntity) -> Unit,
     allowNone: Boolean = true
 ) {
     // Remember expanded state of each header
     val expandedStates = rememberExpandedStates(entitiesByDomainOrder)
+    var expandedFavorites: Boolean by rememberSaveable { mutableStateOf(false) }
 
     WearAppTheme {
         ThemeLazyColumn {
@@ -59,6 +66,31 @@ fun ChooseEntityView(
                     )
                 }
             }
+
+            if (favoriteEntityIds.value.isNotEmpty()) {
+                item {
+                    ExpandableListHeader(
+                        string = stringResource(commonR.string.favorites),
+                        expanded = expandedFavorites,
+                        onExpandChanged = { expandedFavorites = it }
+                    )
+                }
+                if (expandedFavorites) {
+                    items(favoriteEntityIds.value.size) { index ->
+                        val favoriteEntityID = favoriteEntityIds.value[index].split(",")[0]
+                        for (entity in entitiesByDomain.flatMap { (key, values) -> values }) {
+                            if (entity.entityId == favoriteEntityID) {
+                                ChooseEntityChip(
+                                    entity = entity,
+                                    onEntitySelected = onEntitySelected
+                                )
+                                break // no need to search further
+                            }
+                        }
+                    }
+                }
+            }
+
             for (domain in entitiesByDomainOrder) {
                 val entities = entitiesByDomain[domain]
                 if (!entities.isNullOrEmpty()) {

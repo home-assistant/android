@@ -60,6 +60,7 @@ fun LoadConfigView(
                 ChooseEntityView(
                     entitiesByDomainOrder = complicationConfigViewModel.entitiesByDomainOrder,
                     entitiesByDomain = complicationConfigViewModel.entitiesByDomain,
+                    favoriteEntityIds = complicationConfigViewModel.favoriteEntityIds,
                     onNoneClicked = {},
                     onEntitySelected = { entity ->
                         complicationConfigViewModel.setEntity(entity)

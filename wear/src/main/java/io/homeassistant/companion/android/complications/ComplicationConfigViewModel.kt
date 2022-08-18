@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.complications
 
 import android.app.Application
 import android.util.Log
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -20,12 +21,16 @@ import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.database.wear.EntityStateComplications
 import io.homeassistant.companion.android.database.wear.EntityStateComplicationsDao
+import io.homeassistant.companion.android.database.wear.FavoritesDao
+import io.homeassistant.companion.android.database.wear.getAllFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class ComplicationConfigViewModel @Inject constructor(
     application: Application,
+    private val favoritesDao: FavoritesDao,
     private val integrationUseCase: IntegrationRepository,
     private val webSocketUseCase: WebSocketRepository,
     private val entityStateComplicationsDao: EntityStateComplicationsDao
@@ -46,6 +51,7 @@ class ComplicationConfigViewModel @Inject constructor(
         private set
     var entitiesByDomainOrder = mutableStateListOf<String>()
         private set
+    val favoriteEntityIds = favoritesDao.getAllFlow().collectAsState()
 
     var loadingState by mutableStateOf(LoadingState.LOADING)
         private set
@@ -124,4 +130,18 @@ class ComplicationConfigViewModel @Inject constructor(
             entityStateComplicationsDao.add(EntityStateComplications(id, entity.entityId))
         }
     }
+
+    /**
+     * Convert a Flow into a State object that updates until the view model is cleared.
+     */
+    private fun <T> Flow<T>.collectAsState(
+        initial: T
+    ): State<T> {
+        val state = mutableStateOf(initial)
+        viewModelScope.launch {
+            collect { state.value = it }
+        }
+        return state
+    }
+    private fun <T> Flow<List<T>>.collectAsState(): State<List<T>> = collectAsState(initial = emptyList())
 }

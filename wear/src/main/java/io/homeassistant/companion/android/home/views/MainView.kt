@@ -121,6 +121,7 @@ fun MainView(
                                             isHapticEnabled,
                                             isToastEnabled
                                         ) { entityId -> onEntityLongClicked(entityId) }
+                                        break // no need to search further
                                     }
                                 }
                                 if (!isValidEntity) {
