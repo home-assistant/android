@@ -1587,6 +1587,7 @@ class MessagingManager @Inject constructor(
             intent.putExtra("fragment", NOTIFICATION_HISTORY)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+        intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
 
         return PendingIntent.getActivity(
             context,
@@ -1886,6 +1887,7 @@ class MessagingManager @Inject constructor(
             else
                 WebViewActivity.newInstance(context, title)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
             context.startActivity(intent)
         } catch (e: Exception) {
             Log.e(TAG, "Unable to open webview", e)
