@@ -87,14 +87,6 @@ class ComplicationConfigViewModel @Inject constructor(
                 } else {
                     LoadingState.ERROR
                 }
-
-                // Listen for updates
-                viewModelScope.launch {
-                    integrationUseCase.getEntityUpdates()?.collect {
-                        entities[it.entityId] = it
-                        updateEntityDomains()
-                    }
-                }
             } catch (e: Exception) {
                 Log.e(TAG, "Exception while loading entities", e)
                 loadingState = LoadingState.ERROR
