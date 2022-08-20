@@ -190,6 +190,7 @@ class WebsocketManager(
         val intent = WebViewActivity.newInstance(applicationContext)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+        intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
         val pendingIntent = PendingIntent.getActivity(
             applicationContext,
             0,
@@ -201,6 +202,7 @@ class WebsocketManager(
         settingIntent.putExtra("fragment", "websocket")
         settingIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         settingIntent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+        settingIntent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
         val settingPendingIntent = PendingIntent.getActivity(
             applicationContext,
             0,
