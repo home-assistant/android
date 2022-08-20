@@ -102,7 +102,6 @@ class GeocodeSensorManager : SensorManager {
                     "administrative_area" to it.adminArea,
                     "country" to it.countryName,
                     "iso_country_code" to it.countryCode,
-                    "language" to it.locale.displayLanguage,
                     "locality" to it.locality,
                     "latitude" to it.latitude,
                     "longitude" to it.longitude,
