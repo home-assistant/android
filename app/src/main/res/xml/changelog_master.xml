@@ -15,8 +15,10 @@
         <change>Move prioritize internal to new Home WiFi SSID screen</change>
         <change>Only apply prioritize internal to WebView when location is disabled on the device</change>
         <change>Add themed icon for supported devices (Android 13+)</change>
+        <change>Add a battery power sensor</change>
         <change>Add additional attributes for notification sensors</change>
         <change>Add attribute to network type sensor to indicate if current network is a metered connection</change>
+        <change>Update geocoded location sensor when we send a location update, also only send a sensor update when accuracy is met and location is from a recent report</change>
         <change>Bug fixes, performance improvements, design tweaks and dependency updates</change>
     </release>
     <release version="2022.8 - Wear" versioncode="1">
