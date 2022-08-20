@@ -303,20 +303,25 @@ class WebSocketRepositoryImpl @Inject constructor(
                 .replace("http://", "ws://")
                 .plus("api/websocket")
 
-            connection = okHttpClient.newWebSocket(
-                Request.Builder().url(urlString).build(),
-                this
-            ).also {
-                // Preemptively send auth
-                connectionState = WebSocketState.AUTHENTICATING
-                it.send(
-                    mapper.writeValueAsString(
-                        mapOf(
-                            "type" to "auth",
-                            "access_token" to authenticationRepository.retrieveAccessToken()
+            try {
+                connection = okHttpClient.newWebSocket(
+                    Request.Builder().url(urlString).build(),
+                    this
+                ).also {
+                    // Preemptively send auth
+                    connectionState = WebSocketState.AUTHENTICATING
+                    it.send(
+                        mapper.writeValueAsString(
+                            mapOf(
+                                "type" to "auth",
+                                "access_token" to authenticationRepository.retrieveAccessToken()
+                            )
                         )
                     )
-                )
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to connect", e)
+                return false
             }
 
             // Wait up to 30 seconds for auth response
