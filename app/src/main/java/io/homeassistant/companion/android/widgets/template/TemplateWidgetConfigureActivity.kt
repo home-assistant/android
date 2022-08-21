@@ -7,6 +7,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.text.Html.fromHtml
+import android.util.Log
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
@@ -16,6 +17,7 @@ import androidx.core.graphics.toColorInt
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
+import com.fasterxml.jackson.databind.JsonMappingException
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -213,10 +215,15 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             var enabled: Boolean
             withContext(Dispatchers.IO) {
                 try {
-                    templateText = integrationUseCase.renderTemplate(template, mapOf()) ?: getString(commonR.string.template_error)
+                    templateText = integrationUseCase.renderTemplate(template, mapOf()).toString()
                     enabled = true
                 } catch (e: Exception) {
-                    templateText = getString(commonR.string.template_render_error)
+                    Log.e(TAG, "Exception while rendering template", e)
+                    // JsonMappingException suggests that template is not a String (= error)
+                    templateText = getString(
+                        if (e.cause is JsonMappingException) commonR.string.template_error
+                        else commonR.string.template_render_error
+                    )
                     enabled = false
                 }
             }

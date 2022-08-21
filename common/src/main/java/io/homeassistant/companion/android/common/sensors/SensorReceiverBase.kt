@@ -297,8 +297,8 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                     val sensor = sensorDao.get(it.uniqueId)
                     if (sensor != null) {
                         sensor.registered = null
-                        sensor.lastSentState = ""
-                        sensor.lastSentIcon = ""
+                        sensor.lastSentState = null
+                        sensor.lastSentIcon = null
                         sensorDao.update(sensor)
                     }
                 }
@@ -318,6 +318,31 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         reg.name = context.createConfigurationContext(config).resources.getString(basicSensor.name)
 
         integrationUseCase.registerSensor(reg)
+    }
+
+    suspend fun updateSensor(
+        context: Context,
+        integrationUseCase: IntegrationRepository,
+        fullSensor: SensorWithAttributes?,
+        sensorManager: SensorManager?,
+        basicSensor: SensorManager.BasicSensor
+    ) {
+        sensorManager?.requestSensorUpdate(context)
+        if (
+            fullSensor != null && fullSensor.sensor.enabled &&
+            fullSensor.sensor.registered == true &&
+            (
+                fullSensor.sensor.state != fullSensor.sensor.lastSentState ||
+                    fullSensor.sensor.icon != fullSensor.sensor.lastSentIcon
+                )
+        ) {
+            integrationUseCase.updateSensors(arrayOf(fullSensor.toSensorRegistration(basicSensor)))
+            sensorDao.updateLastSentStateAndIcon(
+                basicSensor.id,
+                fullSensor.sensor.state,
+                fullSensor.sensor.icon
+            )
+        }
     }
 
     private fun createNotificationChannel(context: Context) {

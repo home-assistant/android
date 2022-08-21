@@ -186,26 +186,31 @@ interface SensorManager {
         basicSensor: BasicSensor,
         state: Any,
         mdiIcon: String,
-        attributes: Map<String, Any?>
+        attributes: Map<String, Any?>,
+        forceUpdate: Boolean = false,
     ) {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
-        val sensor = sensorDao.get(basicSensor.id)?.copy(
-            state = state.toString(),
-            stateType = when (state) {
-                is Boolean -> "boolean"
-                is Int -> "int"
-                is Number -> "float"
-                is String -> "string"
-                else -> throw IllegalArgumentException("Unknown Sensor State Type")
-            },
-            type = basicSensor.type,
-            icon = mdiIcon,
-            name = basicSensor.name.toString(),
-            deviceClass = basicSensor.deviceClass,
-            unitOfMeasurement = basicSensor.unitOfMeasurement,
-            stateClass = basicSensor.stateClass,
-            entityCategory = basicSensor.entityCategory
-        ) ?: return
+        val sensor = sensorDao.get(basicSensor.id)?.let {
+            it.copy(
+                state = state.toString(),
+                stateType = when (state) {
+                    is Boolean -> "boolean"
+                    is Int -> "int"
+                    is Number -> "float"
+                    is String -> "string"
+                    else -> throw IllegalArgumentException("Unknown Sensor State Type")
+                },
+                type = basicSensor.type,
+                icon = mdiIcon,
+                name = basicSensor.name.toString(),
+                deviceClass = basicSensor.deviceClass,
+                unitOfMeasurement = basicSensor.unitOfMeasurement,
+                stateClass = basicSensor.stateClass,
+                entityCategory = basicSensor.entityCategory,
+                lastSentState = if (forceUpdate) null else it.lastSentState,
+                lastSentIcon = if (forceUpdate) null else it.lastSentIcon,
+            )
+        } ?: return
 
         sensorDao.update(sensor)
         sensorDao.replaceAllAttributes(

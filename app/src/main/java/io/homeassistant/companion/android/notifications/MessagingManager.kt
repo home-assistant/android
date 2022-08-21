@@ -76,7 +76,11 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import org.json.JSONObject
+import java.io.File
+import java.io.FileOutputStream
 import java.net.URL
 import java.net.URLDecoder
 import java.util.Locale
@@ -86,6 +90,7 @@ import io.homeassistant.companion.android.common.R as commonR
 
 class MessagingManager @Inject constructor(
     @ApplicationContext val context: Context,
+    private val okHttpClient: OkHttpClient,
     private val integrationUseCase: IntegrationRepository,
     private val urlUseCase: UrlRepository,
     private val authenticationUseCase: AuthenticationRepository,
@@ -128,6 +133,7 @@ class MessagingManager @Inject constructor(
         const val PACKAGE_NAME = "package_name"
         const val COMMAND = "command"
         const val TTS_TEXT = "tts_text"
+        const val CHANNEL = "channel"
 
         // special intent constants
         const val INTENT_PACKAGE_NAME = "intent_package_name"
@@ -157,6 +163,7 @@ class MessagingManager @Inject constructor(
         const val COMMAND_KEEP_SCREEN_ON = "keep_screen_on"
         const val COMMAND_LAUNCH_APP = "command_launch_app"
         const val COMMAND_PERSISTENT_CONNECTION = "command_persistent_connection"
+        const val COMMAND_STOP_TTS = "command_stop_tts"
 
         // DND commands
         const val DND_PRIORITY_ONLY = "priority_only"
@@ -232,7 +239,8 @@ class MessagingManager @Inject constructor(
             COMMAND_MEDIA,
             COMMAND_UPDATE_SENSORS,
             COMMAND_LAUNCH_APP,
-            COMMAND_PERSISTENT_CONNECTION
+            COMMAND_PERSISTENT_CONNECTION,
+            COMMAND_STOP_TTS
         )
         val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
         val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
@@ -256,11 +264,13 @@ class MessagingManager @Inject constructor(
 
         // Video Values
         const val VIDEO_START_MICROSECONDS = 100000L
-        const val VIDEO_INCREMENT_MICROSECONDS = 2000000L
+        const val VIDEO_INCREMENT_MICROSECONDS = 750000L
         const val VIDEO_GUESS_MILLISECONDS = 7000L
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
+
+    private var textToSpeech: TextToSpeech? = null
 
     fun handleMessage(jsonData: Map<String, String>, source: String) {
 
@@ -286,9 +296,9 @@ class MessagingManager @Inject constructor(
                 Log.d(TAG, "Clearing notification with tag: ${jsonData["tag"]}")
                 clearNotification(jsonData["tag"]!!)
             }
-            jsonData[MESSAGE] == REMOVE_CHANNEL && !jsonData["channel"].isNullOrBlank() -> {
-                Log.d(TAG, "Removing Notification channel ${jsonData["channel"]}")
-                removeNotificationChannel(jsonData["channel"]!!)
+            jsonData[MESSAGE] == REMOVE_CHANNEL && !jsonData[CHANNEL].isNullOrBlank() -> {
+                Log.d(TAG, "Removing Notification channel ${jsonData[CHANNEL]}")
+                removeNotificationChannel(jsonData[CHANNEL]!!)
             }
             jsonData[MESSAGE] == TTS -> {
                 Log.d(TAG, "Sending notification title to TTS")
@@ -511,6 +521,7 @@ class MessagingManager @Inject constructor(
                             else -> handleDeviceCommands(jsonData)
                         }
                     }
+                    COMMAND_STOP_TTS -> handleDeviceCommands(jsonData)
                     else -> Log.d(TAG, "No command received")
                 }
             }
@@ -537,6 +548,12 @@ class MessagingManager @Inject constructor(
         notificationManagerCompat.cancel(tag, messageId, true)
     }
 
+    private fun stopTTS() {
+        Log.d(TAG, "Stopping TTS")
+        textToSpeech?.stop()
+        textToSpeech?.shutdown()
+    }
+
     private fun removeNotificationChannel(channelName: String) {
         val notificationManagerCompat = NotificationManagerCompat.from(context)
 
@@ -548,7 +565,6 @@ class MessagingManager @Inject constructor(
     }
 
     private fun speakNotification(data: Map<String, String>) {
-        var textToSpeech: TextToSpeech? = null
         var tts = data[TTS_TEXT]
         val audioManager = context.getSystemService<AudioManager>()
         val currentAlarmVolume = audioManager?.getStreamVolume(AudioManager.STREAM_ALARM)
@@ -583,6 +599,15 @@ class MessagingManager @Inject constructor(
                     override fun onError(p0: String?) {
                         textToSpeech?.stop()
                         textToSpeech?.shutdown()
+                        if (data[MEDIA_STREAM] == ALARM_STREAM_MAX)
+                            audioManager?.setStreamVolume(
+                                AudioManager.STREAM_ALARM,
+                                currentAlarmVolume!!,
+                                0
+                            )
+                    }
+
+                    override fun onStop(utteranceId: String?, interrupted: Boolean) {
                         if (data[MEDIA_STREAM] == ALARM_STREAM_MAX)
                             audioManager?.setStreamVolume(
                                 AudioManager.STREAM_ALARM,
@@ -765,8 +790,8 @@ class MessagingManager @Inject constructor(
                     mainScope.launch {
                         sensorDao.updateLastSentStateAndIcon(
                             BluetoothSensorManager.bleTransmitter.id,
-                            "",
-                            ""
+                            null,
+                            null
                         )
                     }
                     BluetoothSensorManager().requestSensorUpdate(context)
@@ -858,6 +883,9 @@ class MessagingManager @Inject constructor(
             }
             COMMAND_PERSISTENT_CONNECTION -> {
                 togglePersistentConnection(data[PERSISTENT].toString())
+            }
+            COMMAND_STOP_TTS -> {
+                stopTTS()
             }
             else -> Log.d(TAG, "No command received")
         }
@@ -1113,7 +1141,7 @@ class MessagingManager @Inject constructor(
         builder: NotificationCompat.Builder,
         data: Map<String, String>
     ) {
-        if (data["channel"] == ALARM_STREAM) {
+        if (data[CHANNEL] == ALARM_STREAM) {
             builder.setCategory(Notification.CATEGORY_ALARM)
             builder.setSound(
                 RingtoneManager.getActualDefaultRingtoneUri(
@@ -1331,11 +1359,16 @@ class MessagingManager @Inject constructor(
 
             var image: Bitmap? = null
             try {
-                val uc = url.openConnection()
-                if (requiresAuth) {
-                    uc.setRequestProperty("Authorization", authenticationUseCase.buildBearerToken())
-                }
-                image = BitmapFactory.decodeStream(uc.getInputStream())
+                val request = Request.Builder().apply {
+                    url(url)
+                    if (requiresAuth) {
+                        addHeader("Authorization", authenticationUseCase.buildBearerToken())
+                    }
+                }.build()
+
+                val response = okHttpClient.newCall(request).execute()
+                image = BitmapFactory.decodeStream(response.body?.byteStream())
+                response.close()
             } catch (e: Exception) {
                 Log.e(TAG, "Couldn't download image for notification", e)
             }
@@ -1385,28 +1418,48 @@ class MessagingManager @Inject constructor(
             Dispatchers.IO
         ) {
             url ?: return@withContext null
+            val videoFile = File(context.applicationContext.cacheDir.absolutePath + "/notifications/video-${System.currentTimeMillis()}")
             val processingFrames = mutableListOf<Deferred<Bitmap?>>()
+            var processingFramesSize = 0
+            var singleFrame = 0
 
             try {
                 MediaMetadataRetriever().let { mediaRetriever ->
+                    val request = Request.Builder().apply {
+                        url(url)
+                        if (requiresAuth) {
+                            addHeader("Authorization", authenticationUseCase.buildBearerToken())
+                        }
+                    }.build()
+                    val response = okHttpClient.newCall(request).execute()
 
-                    if (requiresAuth) {
-                        mediaRetriever.setDataSource(url.toString(), mapOf("Authorization" to authenticationUseCase.buildBearerToken()))
-                    } else {
-                        mediaRetriever.setDataSource(url.toString(), hashMapOf())
+                    if (!videoFile.exists()) {
+                        videoFile.parentFile?.mkdirs()
+                        videoFile.createNewFile()
                     }
+                    FileOutputStream(videoFile).use { output ->
+                        response.body?.byteStream()?.copyTo(output)
+                    }
+                    response.close()
 
+                    mediaRetriever.setDataSource(videoFile.absolutePath)
                     val durationInMicroSeconds = ((mediaRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: VIDEO_GUESS_MILLISECONDS)) * 1000
 
-                    // Start at 100 milliseconds and get frames every 2 seconds until reaching the end
+                    // Start at 100 milliseconds and get frames every 0.75 seconds until reaching the end
                     run frameLoop@{
                         for (timeInMicroSeconds in VIDEO_START_MICROSECONDS until durationInMicroSeconds step VIDEO_INCREMENT_MICROSECONDS) {
-                            if (processingFrames.size >= 5) {
+                            // Max size in bytes for notification GIF
+                            val maxSize = (2500000 - singleFrame)
+                            if (processingFramesSize >= maxSize) {
                                 return@frameLoop
                             }
 
                             mediaRetriever.getFrameAtTime(timeInMicroSeconds, MediaMetadataRetriever.OPTION_CLOSEST)
-                                ?.let { smallFrame -> processingFrames.add(async { smallFrame.getCompressedFrame() }) }
+                                ?.let { smallFrame ->
+                                    processingFrames.add(async { smallFrame.getCompressedFrame() })
+                                    processingFramesSize += (smallFrame.getCompressedFrame())!!.allocationByteCount
+                                    singleFrame = (smallFrame.getCompressedFrame())!!.allocationByteCount
+                                }
                         }
                     }
 
@@ -1417,12 +1470,22 @@ class MessagingManager @Inject constructor(
                 Log.e(TAG, "Couldn't download video for notification", e)
             }
 
-            return@withContext processingFrames.awaitAll().filterNotNull()
+            val frames = processingFrames.awaitAll().filterNotNull()
+            videoFile.delete()
+            return@withContext frames
         }
 
     private fun Bitmap.getCompressedFrame(): Bitmap? {
-        val newHeight = height / 4
-        val newWidth = width / 4
+        var newWidth = 480
+        var newHeight = 0
+        // If already smaller than 480p do not scale else scale
+        if (width < newWidth) {
+            newWidth = width
+            newHeight = height
+        } else {
+            val ratio: Float = (width.toFloat() / height.toFloat())
+            newHeight = (newWidth / ratio).toInt()
+        }
         return Bitmap.createScaledBitmap(this, newWidth, newHeight, false)
     }
 
@@ -1545,6 +1608,7 @@ class MessagingManager @Inject constructor(
             intent.putExtra("fragment", NOTIFICATION_HISTORY)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+        intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
 
         return PendingIntent.getActivity(
             context,
@@ -1562,9 +1626,9 @@ class MessagingManager @Inject constructor(
         var channelID = generalChannel
         var channelName = "General"
 
-        if (data.containsKey("channel")) {
-            channelID = createChannelID(data["channel"].toString())
-            channelName = data["channel"].toString().trim()
+        if (!data[CHANNEL].isNullOrEmpty()) {
+            channelID = createChannelID(data[CHANNEL].toString())
+            channelName = data[CHANNEL].toString().trim()
         }
 
         // Since android Oreo notification channel is needed.
@@ -1844,6 +1908,7 @@ class MessagingManager @Inject constructor(
             else
                 WebViewActivity.newInstance(context, title)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
             context.startActivity(intent)
         } catch (e: Exception) {
             Log.e(TAG, "Unable to open webview", e)

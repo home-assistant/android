@@ -27,6 +27,7 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.util.websocketChannel
+import io.homeassistant.companion.android.common.util.websocketIssuesChannel
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.notifications.MessagingManager
@@ -37,6 +38,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.lang.IllegalStateException
 import java.util.concurrent.TimeUnit
 
 class WebsocketManager(
@@ -48,6 +50,7 @@ class WebsocketManager(
         private const val TAG = "WebSockManager"
         private const val SOURCE = "Websocket"
         private const val NOTIFICATION_ID = 65423
+        private const val NOTIFICATION_RESTRICTED_ID = 65424
         private val DEFAULT_WEBSOCKET_SETTING = if (BuildConfig.FLAVOR == "full") WebsocketSetting.NEVER else WebsocketSetting.ALWAYS
 
         fun start(context: Context) {
@@ -98,10 +101,12 @@ class WebsocketManager(
             return@withContext Result.success()
         }
 
-        Log.d(TAG, "Starting to listen to Websocket")
-        createNotification()
+        if (!createNotification()) {
+            return@withContext Result.success()
+        }
 
         // Start listening for notifications
+        Log.d(TAG, "Starting to listen to Websocket")
         val job = launch { collectNotifications() }
 
         // play ping pong to ensure we have a connection.
@@ -163,7 +168,12 @@ class WebsocketManager(
         }
     }
 
-    private suspend fun createNotification() {
+    /**
+     * Create a notification to start the service as a foreground service.
+     *
+     * @return `true` if the foreground service was started
+     */
+    private suspend fun createNotification(): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             var notificationChannel =
                 notificationManager.getNotificationChannel(websocketChannel)
@@ -180,6 +190,7 @@ class WebsocketManager(
         val intent = WebViewActivity.newInstance(applicationContext)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+        intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
         val pendingIntent = PendingIntent.getActivity(
             applicationContext,
             0,
@@ -191,6 +202,7 @@ class WebsocketManager(
         settingIntent.putExtra("fragment", "websocket")
         settingIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         settingIntent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+        settingIntent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
         val settingPendingIntent = PendingIntent.getActivity(
             applicationContext,
             0,
@@ -210,6 +222,31 @@ class WebsocketManager(
                 settingPendingIntent
             )
             .build()
-        setForeground(ForegroundInfo(NOTIFICATION_ID, notification))
+        return try {
+            setForeground(ForegroundInfo(NOTIFICATION_ID, notification))
+            true
+        } catch (e: IllegalStateException) {
+            Log.e(TAG, "Unable to setForeground due to restrictions", e)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                if (notificationManager.getNotificationChannel(websocketIssuesChannel) == null) {
+                    val restrictedNotificationChannel = NotificationChannel(
+                        websocketIssuesChannel,
+                        applicationContext.getString(R.string.websocket_notification_issues),
+                        NotificationManager.IMPORTANCE_DEFAULT
+                    )
+                    notificationManager.createNotificationChannel(restrictedNotificationChannel)
+                }
+            }
+            val restrictedNotification = NotificationCompat.Builder(applicationContext, websocketIssuesChannel)
+                .setSmallIcon(R.drawable.ic_stat_ic_notification)
+                .setContentTitle(applicationContext.getString(R.string.websocket_restricted_title))
+                .setContentText(applicationContext.getString(R.string.websocket_restricted_fix))
+                .setContentIntent(settingPendingIntent)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setAutoCancel(true)
+                .build()
+            notificationManager.notify(NOTIFICATION_RESTRICTED_ID, restrictedNotification)
+            false
+        }
     }
 }

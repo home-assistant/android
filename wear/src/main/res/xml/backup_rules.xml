@@ -2,4 +2,5 @@
 <full-backup-content>
     <include domain="database" path="." />
     <include domain="sharedpref" path="." />
+    <exclude domain="sharedpref" path="session_0.xml" />
 </full-backup-content>

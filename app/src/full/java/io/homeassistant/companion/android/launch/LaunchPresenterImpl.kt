@@ -2,14 +2,13 @@ package io.homeassistant.companion.android.launch
 
 import android.content.Context
 import android.util.Log
-import com.google.android.gms.tasks.Tasks
-import com.google.firebase.iid.FirebaseInstanceId
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.onboarding.getMessagingToken
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -26,7 +25,7 @@ class LaunchPresenterImpl @Inject constructor(
                     DeviceRegistration(
                         "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
                         null,
-                        Tasks.await(FirebaseInstanceId.getInstance().instanceId).token
+                        getMessagingToken()
                     )
                 )
             } catch (e: Exception) {

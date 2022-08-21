@@ -87,6 +87,7 @@ class WebSocketRepositoryImpl @Inject constructor(
     private val notificationMutex = Mutex()
     private var notificationFlow: Flow<Map<String, Any>>? = null
     private var notificationProducerScope: ProducerScope<Map<String, Any>>? = null
+    private var lastResponseID = mutableMapOf<String, Long?>()
 
     override fun getConnectionState(): WebSocketState? = connectionState
 
@@ -188,6 +189,7 @@ class WebSocketRepositoryImpl @Inject constructor(
                         "event_type" to eventType
                     )
                 )
+                lastResponseID[eventType] = response?.id
                 if (response == null) {
                     Log.e(TAG, "Unable to register for events of type $eventType")
                     return null
@@ -196,14 +198,17 @@ class WebSocketRepositoryImpl @Inject constructor(
                 eventSubscriptionFlow[eventType] = callbackFlow<T> {
                     eventSubscriptionProducerScope[eventType] = this as ProducerScope<Any>
                     awaitClose {
-                        Log.d(TAG, "Unsubscribing from $eventType")
-                        ioScope.launch {
-                            sendMessage(
-                                mapOf(
-                                    "type" to "unsubscribe_events",
-                                    "subscription" to response.id
+                        if (lastResponseID[eventType] != null) {
+                            Log.d(TAG, "Unsubscribing from $eventType")
+                            ioScope.launch {
+                                sendMessage(
+                                    mapOf(
+                                        "type" to "unsubscribe_events",
+                                        "subscription" to lastResponseID[eventType]
+                                    )
                                 )
-                            )
+                                lastResponseID.remove(eventType)
+                            }
                         }
                         eventSubscriptionProducerScope.remove(eventType)
                         eventSubscriptionFlow.remove(eventType)
@@ -273,20 +278,25 @@ class WebSocketRepositoryImpl @Inject constructor(
                 .replace("http://", "ws://")
                 .plus("api/websocket")
 
-            connection = okHttpClient.newWebSocket(
-                Request.Builder().url(urlString).build(),
-                this
-            ).also {
-                // Preemptively send auth
-                connectionState = WebSocketState.AUTHENTICATING
-                it.send(
-                    mapper.writeValueAsString(
-                        mapOf(
-                            "type" to "auth",
-                            "access_token" to authenticationRepository.retrieveAccessToken()
+            try {
+                connection = okHttpClient.newWebSocket(
+                    Request.Builder().url(urlString).build(),
+                    this
+                ).also {
+                    // Preemptively send auth
+                    connectionState = WebSocketState.AUTHENTICATING
+                    it.send(
+                        mapper.writeValueAsString(
+                            mapOf(
+                                "type" to "auth",
+                                "access_token" to authenticationRepository.retrieveAccessToken()
+                            )
                         )
                     )
-                )
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to connect", e)
+                return false
             }
 
             // Wait up to 30 seconds for auth response
@@ -395,13 +405,14 @@ class WebSocketRepositoryImpl @Inject constructor(
                 delay(10000)
                 if (connect()) {
                     eventSubscriptionFlow.forEach { (eventType, _) ->
-                        val resp = sendMessage(
+                        val response = sendMessage(
                             mapOf(
                                 "type" to "subscribe_events",
                                 "event_type" to eventType
                             )
                         )
-                        if (resp == null) {
+                        lastResponseID[eventType] = response?.id
+                        if (response == null) {
                             Log.e(TAG, "Issue re-registering event subscriptions")
                         }
                     }

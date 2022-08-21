@@ -35,6 +35,8 @@ class TemplateWidget : BaseWidgetProvider() {
         internal const val EXTRA_TEXT_SIZE = "EXTRA_TEXT_SIZE"
         internal const val EXTRA_BACKGROUND_TYPE = "EXTRA_BACKGROUND_TYPE"
         internal const val EXTRA_TEXT_COLOR = "EXTRA_TEXT_COLOR"
+
+        private var isSubscribed = false
     }
 
     @Inject
@@ -45,6 +47,12 @@ class TemplateWidget : BaseWidgetProvider() {
         mainScope.launch {
             templateWidgetDao.deleteAll(appWidgetIds)
         }
+    }
+
+    override fun isSubscribed(): Boolean = isSubscribed
+
+    override fun setSubscribed(subscribed: Boolean) {
+        isSubscribed = subscribed
     }
 
     override fun getWidgetProvider(context: Context): ComponentName =
@@ -91,17 +99,12 @@ class TemplateWidget : BaseWidgetProvider() {
                 // Content
                 var renderedTemplate: String? = templateWidgetDao.get(appWidgetId)?.lastUpdate ?: "Loading"
                 try {
-                    renderedTemplate = integrationUseCase.renderTemplate(widget.template, mapOf())
-                    if (renderedTemplate != null) {
-                        templateWidgetDao.updateTemplateWidgetLastUpdate(
-                            appWidgetId,
-                            renderedTemplate
-                        )
-                        setViewVisibility(R.id.widgetTemplateError, View.GONE)
-                    } else {
-                        Log.e(TAG, "Template returned null: ${widget.template}")
-                        setViewVisibility(R.id.widgetTemplateError, View.VISIBLE)
-                    }
+                    renderedTemplate = integrationUseCase.renderTemplate(widget.template, mapOf()).toString()
+                    templateWidgetDao.updateTemplateWidgetLastUpdate(
+                        appWidgetId,
+                        renderedTemplate
+                    )
+                    setViewVisibility(R.id.widgetTemplateError, View.GONE)
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to render template: ${widget.template}", e)
                     setViewVisibility(R.id.widgetTemplateError, View.VISIBLE)
