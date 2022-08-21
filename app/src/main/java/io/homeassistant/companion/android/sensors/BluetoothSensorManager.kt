@@ -357,7 +357,7 @@ class BluetoothSensorManager : SensorManager {
         // reset the last_sent_state of the sensor so it won't skip the update of attributes
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         runBlocking {
-            sensorDao.updateLastSentStateAndIcon(beaconMonitor.id, "", "")
+            sensorDao.updateLastSentStateAndIcon(beaconMonitor.id, null, null)
         }
 
         onSensorUpdated(
