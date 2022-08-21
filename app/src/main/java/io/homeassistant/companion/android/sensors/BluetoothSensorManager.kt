@@ -283,6 +283,10 @@ class BluetoothSensorManager : SensorManager {
     }
 
     private fun updateBeaconMonitoringDevice(context: Context) {
+        if (!isEnabled(context, beaconMonitor.id)) {
+            return
+        }
+
         beaconMonitoringDevice.sensorManager = this
 
         val monitoringActive = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_ENABLED, SensorSettingType.TOGGLE, "true").toBoolean()
@@ -343,6 +347,10 @@ class BluetoothSensorManager : SensorManager {
     }
 
     fun updateBeaconMonitoringSensor(context: Context) {
+        if (!isEnabled(context, beaconMonitor.id)) {
+            return
+        }
+
         val icon = if (monitoringManager.isMonitoring()) "mdi:bluetooth" else "mdi:bluetooth-off"
 
         var state = if (!BluetoothUtils.isOn(context)) "Bluetooth is turned off" else if (monitoringManager.isMonitoring()) "Monitoring" else "Stopped"
