@@ -111,22 +111,16 @@ fun MainView(
                                     colors = ChipDefaults.secondaryChipColors()
                                 )
                             } else {
-                                var isValidEntity = false
-                                for (entity in mainViewModel.entities) {
-                                    if (entity.value.entityId == favoriteEntityID) {
-                                        isValidEntity = true
+                                mainViewModel.entities.values.toList()
+                                    .firstOrNull { it.entityId == favoriteEntityID }
+                                    ?.let {
                                         EntityUi(
                                             mainViewModel.entities[favoriteEntityID]!!,
                                             onEntityClicked,
                                             isHapticEnabled,
                                             isToastEnabled
                                         ) { entityId -> onEntityLongClicked(entityId) }
-                                        break // no need to search further
-                                    }
-                                }
-                                if (!isValidEntity) {
-                                    deleteFavorite(favoriteEntityID)
-                                }
+                                    } ?: deleteFavorite(favoriteEntityID)
                             }
                         }
                     }
