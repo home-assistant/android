@@ -78,15 +78,14 @@ fun ChooseEntityView(
                 if (expandedFavorites) {
                     items(favoriteEntityIds.value.size) { index ->
                         val favoriteEntityID = favoriteEntityIds.value[index].split(",")[0]
-                        for (entity in entitiesByDomain.flatMap { (key, values) -> values }) {
-                            if (entity.entityId == favoriteEntityID) {
+                        entitiesByDomain.flatMap { (_, values) -> values }
+                            .firstOrNull { it.entityId == favoriteEntityID }
+                            ?.let {
                                 ChooseEntityChip(
-                                    entity = entity,
+                                    entity = it,
                                     onEntitySelected = onEntitySelected
                                 )
-                                break // no need to search further
                             }
-                        }
                     }
                 }
             }
