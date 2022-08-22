@@ -255,7 +255,8 @@ class HaControlsProviderService : ControlsProviderService() {
                     baseUrl
                 )
             }
-            subscriber.onNext(control)
+            if (control != null)
+                subscriber.onNext(control)
         }
     }
 
