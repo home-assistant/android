@@ -66,7 +66,10 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
 
         binding.addButton.setOnClickListener {
             if (requestLauncherSetup) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && selectedEntities.size > 0) {
+                if (
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                    binding.widgetTextConfigEntityId.text.split(",").any { entities[it.trim()] != null }
+                ) {
                     getSystemService<AppWidgetManager>()?.requestPinAppWidget(
                         ComponentName(this, MediaPlayerControlsWidget::class.java),
                         null,
