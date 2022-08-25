@@ -145,6 +145,16 @@
             android:summary="@string/rate_limit_summary"/>
     </PreferenceCategory>
     <PreferenceCategory
+        android:key="device_controls"
+        android:title="@string/controls_setting_category"
+        app:isPreferenceVisible="false">
+        <Preference
+            android:key="manage_device_controls"
+            android:icon="@drawable/ic_home_variant_outline"
+            android:title="@string/controls_setting_title"
+            android:summary="@string/controls_setting_summary" />
+    </PreferenceCategory>
+    <PreferenceCategory
         android:key="quick_settings"
         android:title="@string/quick_settings"
         app:isPreferenceVisible="false">

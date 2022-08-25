@@ -20,6 +20,7 @@ interface HaControl {
         context: Context,
         entity: Entity<Map<String, Any>>,
         area: AreaRegistryResponse?,
+        authRequired: Boolean,
         baseUrl: String?
     ): Control {
         val controlPath = "entityId:${entity.entityId}"
@@ -45,6 +46,9 @@ interface HaControl {
                 else -> context.getString(R.string.state_unknown)
             }
         )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            control.setAuthRequired(authRequired)
+        }
 
         return provideControlFeatures(context, control, entity, area, baseUrl).build()
     }
