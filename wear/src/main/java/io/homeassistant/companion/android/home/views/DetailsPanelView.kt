@@ -43,7 +43,6 @@ import io.homeassistant.companion.android.util.onEntityFeedback
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
 import java.text.DateFormat
-import kotlin.math.round
 
 @Composable
 fun DetailsPanelView(

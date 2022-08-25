@@ -93,8 +93,8 @@ fun <T> Entity<T>.getFanSteps(): Int? {
         fun calculateNumStep(percentageStep: Double): Int {
             val numSteps = round(100 / percentageStep).toInt()
             if (numSteps <= 10) return numSteps
-            if (numSteps % 10 == 0) return  10
-            return calculateNumStep(percentageStep * 2);
+            if (numSteps % 10 == 0) return 10
+            return calculateNumStep(percentageStep * 2)
         }
 
         return calculateNumStep(((attributes as Map<*, *>)["percentage_step"] as? Double)?.toDouble() ?: 1.0) - 1
