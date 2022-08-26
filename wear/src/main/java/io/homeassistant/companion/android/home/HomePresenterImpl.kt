@@ -95,44 +95,60 @@ class HomePresenterImpl @Inject constructor(
             in toggleDomains -> "toggle"
             else -> "turn_on"
         }
-        integrationUseCase.callService(
-            domain,
-            serviceName,
-            hashMapOf("entity_id" to entityId)
-        )
+        try {
+            integrationUseCase.callService(
+                domain,
+                serviceName,
+                hashMapOf("entity_id" to entityId)
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception when toggling entity", e)
+        }
     }
 
     override suspend fun onFanSpeedChanged(entityId: String, speed: Float) {
-        integrationUseCase.callService(
-            entityId.split(".")[0],
-            "set_percentage",
-            hashMapOf(
-                "entity_id" to entityId,
-                "percentage" to speed.toInt()
+        try {
+            integrationUseCase.callService(
+                entityId.split(".")[0],
+                "set_percentage",
+                hashMapOf(
+                    "entity_id" to entityId,
+                    "percentage" to speed.toInt()
+                )
             )
-        )
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception when setting fan speed", e)
+        }
     }
 
     override suspend fun onBrightnessChanged(entityId: String, brightness: Float) {
-        integrationUseCase.callService(
-            entityId.split(".")[0],
-            "turn_on",
-            hashMapOf(
-                "entity_id" to entityId,
-                "brightness" to brightness.toInt()
+        try {
+            integrationUseCase.callService(
+                entityId.split(".")[0],
+                "turn_on",
+                hashMapOf(
+                    "entity_id" to entityId,
+                    "brightness" to brightness.toInt()
+                )
             )
-        )
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception when setting light brightness", e)
+        }
     }
 
     override suspend fun onColorTempChanged(entityId: String, colorTemp: Float) {
-        integrationUseCase.callService(
-            entityId.split(".")[0],
-            "turn_on",
-            hashMapOf(
-                "entity_id" to entityId,
-                "color_temp" to colorTemp.toInt()
+        try {
+            integrationUseCase.callService(
+                entityId.split(".")[0],
+                "turn_on",
+                hashMapOf(
+                    "entity_id" to entityId,
+                    "color_temp" to colorTemp.toInt()
+                )
             )
-        )
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception when setting light color temp", e)
+        }
     }
 
     override fun onInvalidAuthorization() = finishSession()
@@ -141,7 +157,13 @@ class HomePresenterImpl @Inject constructor(
 
     private fun finishSession() {
         mainScope.launch {
-            authenticationUseCase.revokeSession()
+            try {
+                authenticationUseCase.revokeSession()
+            } catch (e: Exception) {
+                Log.e(TAG, "Exception while revoking session", e)
+                // Remove local data anyway, the user wants to sign out and we don't need the server for that
+                authenticationUseCase.removeSessionData()
+            }
             view.displayOnBoarding()
         }
     }

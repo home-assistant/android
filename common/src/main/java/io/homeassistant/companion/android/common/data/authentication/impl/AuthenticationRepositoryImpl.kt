@@ -135,6 +135,10 @@ class AuthenticationRepositoryImpl @Inject constructor(
             session.refreshToken,
             AuthenticationService.REVOKE_ACTION
         )
+        removeSessionData()
+    }
+
+    override suspend fun removeSessionData() {
         saveSession(null)
         urlRepository.saveUrl("", true)
         urlRepository.saveUrl("", false)

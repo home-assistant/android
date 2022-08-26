@@ -163,6 +163,7 @@ fun MainView(
                                     onClick = onRetryLoadEntitiesClicked,
                                     colors = ChipDefaults.primaryChipColors()
                                 )
+                                Spacer(modifier = Modifier.height(32.dp))
                             }
                         }
                     }
@@ -300,27 +301,29 @@ fun MainView(
                                 )
                             }
                         }
+                    }
+                }
 
-                        // Settings
-                        item {
-                            Chip(
-                                modifier = Modifier
-                                    .fillMaxWidth(),
-                                icon = {
-                                    Image(
-                                        asset = CommunityMaterial.Icon.cmd_cog,
-                                        colorFilter = ColorFilter.tint(Color.White)
-                                    )
-                                },
-                                label = {
-                                    Text(
-                                        text = stringResource(id = commonR.string.settings)
-                                    )
-                                },
-                                onClick = onSettingsClicked,
-                                colors = ChipDefaults.secondaryChipColors()
-                            )
-                        }
+                if (mainViewModel.loadingState.value != MainViewModel.LoadingState.LOADING) {
+                    // Settings
+                    item {
+                        Chip(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            icon = {
+                                Image(
+                                    asset = CommunityMaterial.Icon.cmd_cog,
+                                    colorFilter = ColorFilter.tint(Color.White)
+                                )
+                            },
+                            label = {
+                                Text(
+                                    text = stringResource(id = commonR.string.settings)
+                                )
+                            },
+                            onClick = onSettingsClicked,
+                            colors = ChipDefaults.secondaryChipColors()
+                        )
                     }
                 }
             }
