@@ -99,7 +99,7 @@ fun <T> Entity<T>.getFanSteps(): Int? {
 
         return calculateNumStep(((attributes as Map<*, *>)["percentage_step"] as? Double)?.toDouble() ?: 1.0) - 1
     } catch (e: Exception) {
-        Log.e(EntityExt.TAG, "Unable to get getFanPercentageStep")
+        Log.e(EntityExt.TAG, "Unable to get getFanSteps")
         null
     }
 }
