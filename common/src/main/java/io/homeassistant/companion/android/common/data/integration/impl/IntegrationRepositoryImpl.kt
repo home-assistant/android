@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.common.data.integration.impl
 
 import android.util.Log
 import io.homeassistant.companion.android.common.BuildConfig
+import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
@@ -31,7 +32,6 @@ import kotlinx.coroutines.flow.map
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.json.JSONArray
 import java.util.concurrent.TimeUnit
-import java.util.regex.Pattern
 import javax.inject.Inject
 import javax.inject.Named
 
@@ -77,8 +77,6 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_SEC_WARNING_NEXT = "sec_warning_last"
         private const val TAG = "IntegrationRepository"
         private const val RATE_LIMIT_URL = BuildConfig.RATE_LIMIT_URL
-
-        private val VERSION_PATTERN = Pattern.compile("([0-9]{4})\\.([0-9]{1,2})\\.([0-9]{1,2}).*")
     }
 
     override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {
@@ -485,17 +483,8 @@ class IntegrationRepositoryImpl @Inject constructor(
     ): Boolean {
         if (!isRegistered()) return false
 
-        val version = getHomeAssistantVersion()
-        val matches = VERSION_PATTERN.matcher(version)
-        var result = false
-        if (matches.find() && matches.matches()) {
-            val coreYear = matches.group(1)?.toIntOrNull() ?: 0
-            val coreMonth = matches.group(2)?.toIntOrNull() ?: 0
-            val coreRelease = matches.group(3)?.toIntOrNull() ?: 0
-            result =
-                coreYear > year || (coreYear == year && (coreMonth > month || (coreMonth == month && coreRelease >= release)))
-        }
-        return result
+        val version = HomeAssistantVersion.fromString(getHomeAssistantVersion())
+        return version?.isAtLeast(year, month, release) ?: false
     }
 
     override suspend fun getConfig(): GetConfigResponse {

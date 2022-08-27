@@ -8,6 +8,8 @@ import com.fasterxml.jackson.module.kotlin.contains
 import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import io.homeassistant.companion.android.common.BuildConfig
+import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.AuthorizationException
 import io.homeassistant.companion.android.common.data.integration.ServiceData
@@ -79,6 +81,7 @@ class WebSocketRepositoryImpl @Inject constructor(
     private val id = AtomicLong(1)
     private var connection: WebSocket? = null
     private var connectionState: WebSocketState? = null
+    private var connectionHaVersion: HomeAssistantVersion? = null
     private val connectedMutex = Mutex()
     private var connected = CompletableDeferred<Boolean>()
     private val eventSubscriptionMutex = Mutex()
@@ -302,7 +305,23 @@ class WebSocketRepositoryImpl @Inject constructor(
             // Wait up to 30 seconds for auth response
             return true == withTimeoutOrNull(30000) {
                 return@withTimeoutOrNull try {
-                    connected.await()
+                    val didConnect = connected.await()
+                    if (didConnect && connectionHaVersion?.isAtLeast(2022, 9) == true) {
+                        connection?.let {
+                            val supportedFeaturesMessage = mapOf(
+                                "type" to "supported_features",
+                                "id" to id.getAndIncrement(),
+                                "features" to mapOf(
+                                    "coalesce_messages" to 1
+                                )
+                            )
+                            Log.d(TAG, "Sending message ${supportedFeaturesMessage["id"]}: $supportedFeaturesMessage")
+                            it.send(
+                                mapper.writeValueAsString(supportedFeaturesMessage)
+                            )
+                        }
+                    }
+                    didConnect
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to authenticate", e)
                     false
@@ -338,7 +357,8 @@ class WebSocketRepositoryImpl @Inject constructor(
     private inline fun <reified T> mapResponse(response: SocketResponse?): T? =
         if (response?.result != null) mapper.convertValue(response.result) else null
 
-    private fun handleAuthComplete(successful: Boolean) {
+    private fun handleAuthComplete(successful: Boolean, haVersion: String?) {
+        connectionHaVersion = haVersion?.let { HomeAssistantVersion.fromString(it) }
         if (successful) {
             connectionState = WebSocketState.ACTIVE
             connected.complete(true)
@@ -395,6 +415,7 @@ class WebSocketRepositoryImpl @Inject constructor(
             connectedMutex.withLock {
                 connected = CompletableDeferred()
                 connection = null
+                connectionHaVersion = null
                 if (connectionState != WebSocketState.CLOSED_AUTH)
                     connectionState = WebSocketState.CLOSED_OTHER
             }
@@ -439,18 +460,26 @@ class WebSocketRepositoryImpl @Inject constructor(
     }
 
     override fun onMessage(webSocket: WebSocket, text: String) {
-        Log.d(TAG, "Websocket: onMessage (text)")
-        val message: SocketResponse = mapper.readValue(text)
-        Log.d(TAG, "Message number ${message.id} received: $text")
+        Log.d(TAG, "Websocket: onMessage (${if (BuildConfig.DEBUG) "text: $text" else "text"})")
+        val textTree = mapper.readTree(text)
+        val messages: List<SocketResponse> = if (textTree.isArray) {
+            textTree.elements().asSequence().toList().map { mapper.convertValue(it) }
+        } else {
+            listOf(mapper.readValue(text))
+        }
 
-        ioScope.launch {
-            when (message.type) {
-                "auth_required" -> Log.d(TAG, "Auth Requested")
-                "auth_ok" -> handleAuthComplete(true)
-                "auth_invalid" -> handleAuthComplete(false)
-                "pong", "result" -> handleMessage(message)
-                "event" -> handleEvent(message)
-                else -> Log.d(TAG, "Unknown message type: $text")
+        messages.forEach { message ->
+            Log.d(TAG, "Message number ${message.id} received")
+
+            ioScope.launch {
+                when (message.type) {
+                    "auth_required" -> Log.d(TAG, "Auth Requested")
+                    "auth_ok" -> handleAuthComplete(true, message.haVersion)
+                    "auth_invalid" -> handleAuthComplete(false, message.haVersion)
+                    "pong", "result" -> handleMessage(message)
+                    "event" -> handleEvent(message)
+                    else -> Log.d(TAG, "Unknown message type: ${message.type}")
+                }
             }
         }
     }
