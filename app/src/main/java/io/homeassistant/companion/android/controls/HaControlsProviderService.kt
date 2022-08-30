@@ -165,7 +165,8 @@ class HaControlsProviderService : ControlsProviderService() {
                                         RegistriesDataHandler.getAreaForEntity(it.entityId, areaRegistry, deviceRegistry, entityRegistry),
                                         baseUrl
                                     )
-                                    subscriber.onNext(control)
+                                    if (control != null)
+                                        subscriber.onNext(control)
                                 }
                             }
                         }
@@ -254,7 +255,8 @@ class HaControlsProviderService : ControlsProviderService() {
                     baseUrl
                 )
             }
-            subscriber.onNext(control)
+            if (control != null)
+                subscriber.onNext(control)
         }
     }
 
