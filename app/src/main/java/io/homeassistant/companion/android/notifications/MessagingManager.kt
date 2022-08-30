@@ -445,7 +445,7 @@ class MessagingManager @Inject constructor(
                         handleDeviceCommands(jsonData)
                     }
                     COMMAND_MEDIA -> {
-                        if (!jsonData[COMMAND].isNullOrEmpty() && jsonData[COMMAND] in MEDIA_COMMANDS && !jsonData[MEDIA_PACKAGE_NAME].isNullOrEmpty()) {
+                        if (!jsonData[MEDIA_COMMAND].isNullOrEmpty() && jsonData[MEDIA_COMMAND] in MEDIA_COMMANDS && !jsonData[MEDIA_PACKAGE_NAME].isNullOrEmpty()) {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
                                 handleDeviceCommands(jsonData)
                             } else {
