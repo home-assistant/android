@@ -19,6 +19,7 @@ interface AuthenticationRepository {
     suspend fun retrieveAccessToken(): String
 
     suspend fun revokeSession()
+    suspend fun removeSessionData()
 
     suspend fun getSessionState(): SessionState
 
