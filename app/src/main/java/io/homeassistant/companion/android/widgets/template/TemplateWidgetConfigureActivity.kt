@@ -27,7 +27,6 @@ import io.homeassistant.companion.android.databinding.WidgetTemplateConfigureBin
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.util.getHexForColor
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
-import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -170,7 +169,7 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         }
 
         val createIntent = Intent().apply {
-            action = BaseWidgetProvider.RECEIVE_DATA
+            action = TemplateWidget.RECEIVE_DATA
             component = ComponentName(applicationContext, TemplateWidget::class.java)
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             putExtra(TemplateWidget.EXTRA_TEMPLATE, binding.templateText.text.toString())
