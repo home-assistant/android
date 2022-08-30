@@ -109,6 +109,7 @@
     <string name="choose_server">Choose server</string>
     <string name="clear_favorites">Clear Favorites</string>
     <string name="color_temp">Color temperature: %1$d</string>
+    <string name="collapse">Collapse</string>
     <string name="complication_entity_invalid">Invalid entity</string>
     <string name="complication_entity_state_content_description">Entity state</string>
     <string name="complication_entity_state_label">Entity state</string>
@@ -201,6 +202,7 @@
     <string name="error_http_generic">There was an error loading Home Assistant. Please review the connection settings and try again.\n\nError Code: %d \nDescription: %s</string>
     <string name="event_error">Failed to notify HA of picked option.</string>
     <string name="exit">Exit</string>
+    <string name="expand">Expand</string>
     <string name="failed_authentication">Could not authenticate</string>
     <string name="failed_connection">Could not connect</string>
     <string name="failed_registration">Could not register</string>
