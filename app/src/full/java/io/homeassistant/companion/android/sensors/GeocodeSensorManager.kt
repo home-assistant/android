@@ -40,6 +40,10 @@ class GeocodeSensorManager : SensorManager {
         return listOf(geocodedLocation)
     }
 
+    override fun hasSensor(context: Context): Boolean {
+        return Geocoder.isPresent()
+    }
+
     override fun requiredPermissions(sensorId: String): Array<String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             arrayOf(
@@ -99,13 +103,16 @@ class GeocodeSensorManager : SensorManager {
                     "country" to it.countryName,
                     "iso_country_code" to it.countryCode,
                     "locality" to it.locality,
-                    "latitude" to it.latitude,
-                    "longitude" to it.longitude,
+                    "location" to listOf(it.latitude, it.longitude),
+                    "name" to it.featureName,
+                    "phone" to it.phone,
+                    "premises" to it.premises,
                     "postal_code" to it.postalCode,
                     "sub_administrative_area" to it.subAdminArea,
                     "sub_locality" to it.subLocality,
                     "sub_thoroughfare" to it.subThoroughfare,
-                    "thoroughfare" to it.thoroughfare
+                    "thoroughfare" to it.thoroughfare,
+                    "url" to it.url
                 )
             }.orEmpty()
 
