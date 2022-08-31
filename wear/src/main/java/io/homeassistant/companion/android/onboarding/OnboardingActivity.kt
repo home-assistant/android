@@ -13,7 +13,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.wear.activity.ConfirmationActivity
 import androidx.wear.remote.interactions.RemoteActivityHelper
 import androidx.wear.widget.WearableRecyclerView
-import androidx.work.await
 import com.google.android.gms.tasks.Tasks
 import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.CapabilityInfo
@@ -24,6 +23,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationActivity
 import io.homeassistant.companion.android.onboarding.manual_setup.ManualSetupActivity
 import io.homeassistant.companion.android.util.LoadingView
+import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
@@ -110,15 +110,14 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
             showLoading()
             try {
                 val url = "homeassistant://wear-phone-signin${if (instance != null) "?url=${instance.url}" else ""}"
-                val result = remoteActivityHelper.startRemoteActivity(
+                remoteActivityHelper.startRemoteActivity(
                     Intent(Intent.ACTION_VIEW).apply {
                         addCategory(Intent.CATEGORY_DEFAULT)
                         addCategory(Intent.CATEGORY_BROWSABLE)
                         data = Uri.parse(url)
                     },
                     null // a Wear device only has one companion device so this is not needed
-                )
-                result.await()
+                ).await()
                 showContinueOnPhone()
             } catch (e: Exception) {
                 if (e is RemoteActivityHelper.RemoteIntentException) {
