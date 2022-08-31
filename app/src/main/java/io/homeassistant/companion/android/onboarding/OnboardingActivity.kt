@@ -1,11 +1,16 @@
 package io.homeassistant.companion.android.onboarding
 
+import android.os.Build
 import android.os.Bundle
 import android.view.KeyEvent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.commit
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.onboarding.authentication.AuthenticationFragment
+import io.homeassistant.companion.android.onboarding.discovery.DiscoveryFragment
+import io.homeassistant.companion.android.onboarding.manual.ManualSetupFragment
 import io.homeassistant.companion.android.onboarding.welcome.WelcomeFragment
 
 @AndroidEntryPoint
@@ -26,10 +31,32 @@ class OnboardingActivity : AppCompatActivity() {
         viewModel.locationTrackingPossible.value = input.locationTrackingPossible
 
         if (savedInstanceState == null) {
-            supportFragmentManager
-                .beginTransaction()
-                .add(R.id.content, WelcomeFragment::class.java, null)
-                .commit()
+            supportFragmentManager.commit {
+                add(R.id.content, WelcomeFragment::class.java, null)
+            }
+            if (input.url != null) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    supportFragmentManager.commit {
+                        replace(R.id.content, DiscoveryFragment::class.java, null)
+                        addToBackStack(null)
+                    }
+                }
+                if (input.url.isNotBlank() || Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+                    viewModel.onManualUrlUpdated(input.url)
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N || !viewModel.manualContinueEnabled) {
+                        supportFragmentManager.commit {
+                            replace(R.id.content, ManualSetupFragment::class.java, null)
+                            addToBackStack(null)
+                        }
+                    }
+                    if (viewModel.manualContinueEnabled) {
+                        supportFragmentManager.commit {
+                            replace(R.id.content, AuthenticationFragment::class.java, null)
+                            addToBackStack(null)
+                        }
+                    }
+                }
+            }
         }
     }
 

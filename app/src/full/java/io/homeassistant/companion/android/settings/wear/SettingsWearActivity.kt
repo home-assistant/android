@@ -173,12 +173,12 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
             }
             wearNodesWithApp.size < allConnectedNodes.size -> {
                 Log.d(TAG, "Installed on some devices")
-                startActivity(SettingsWearMainView.newInstance(applicationContext, wearNodesWithApp))
+                startActivity(SettingsWearMainView.newInstance(applicationContext, wearNodesWithApp, getAuthIntentUrl()))
                 finish()
             }
             else -> {
                 Log.d(TAG, "Installed on all devices")
-                startActivity(SettingsWearMainView.newInstance(applicationContext, wearNodesWithApp))
+                startActivity(SettingsWearMainView.newInstance(applicationContext, wearNodesWithApp, getAuthIntentUrl()))
                 finish()
             }
         }
@@ -222,6 +222,17 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
                         Toast.LENGTH_LONG
                     ).show()
                 }
+            }
+        }
+    }
+
+    private fun getAuthIntentUrl(): String? {
+        return intent.data?.let {
+            if (it.scheme == "homeassistant" && it.host == "wear-phone-signin") {
+                // Return empty string if phone sign in was used to open this, indicating no instance selected
+                it.getQueryParameter("url") ?: ""
+            } else {
+                null
             }
         }
     }

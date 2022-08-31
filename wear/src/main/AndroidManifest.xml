@@ -52,7 +52,6 @@
         </activity>
         <activity android:name=".onboarding.OnboardingActivity" />
         <activity android:name=".onboarding.integration.MobileAppIntegrationActivity" />
-        <activity android:name=".onboarding.authentication.AuthenticationActivity" />
         <activity android:name=".onboarding.manual_setup.ManualSetupActivity" />
         <activity android:name=".complications.ComplicationConfigActivity"
             android:exported="true">

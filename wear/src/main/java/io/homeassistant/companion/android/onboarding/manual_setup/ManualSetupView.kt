@@ -1,9 +1,13 @@
 package io.homeassistant.companion.android.onboarding.manual_setup
 
+import androidx.annotation.StringRes
+
 interface ManualSetupView {
-    fun startAuthentication(flowId: String)
+    fun startIntegration()
 
     fun showLoading()
 
-    fun showError()
+    fun showContinueOnPhone()
+
+    fun showError(@StringRes message: Int)
 }
