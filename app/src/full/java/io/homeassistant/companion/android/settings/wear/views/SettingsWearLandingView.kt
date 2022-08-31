@@ -73,7 +73,7 @@ fun SettingWearLandingView(
                     )
                     SettingsRow(
                         primaryText = stringResource(commonR.string.template_tile),
-                        secondaryText = stringResource(commonR.string.set_favorites_on_device),
+                        secondaryText = stringResource(commonR.string.template_tile_set_on_watch),
                         mdiIcon = CommunityMaterial.Icon3.cmd_text_box,
                         enabled = true,
                         onSensorClicked = navigateTemplateTile

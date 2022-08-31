@@ -686,6 +686,7 @@
     <string name="switches">Switches</string>
     <string name="tag_reader_title">Processing Tag</string>
     <string name="template_tile">Template tile</string>
+    <string name="template_tile_set_on_watch">Set template to display on Wear OS tile</string>
     <string name="template_tile_change_message">Change template in phone settings</string>
     <string name="template_tile_content">Template tile content</string>
     <string name="template_tile_desc">Renders and displays a template</string>
