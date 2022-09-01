@@ -744,7 +744,7 @@
     <string name="version">Version: %s</string>
     <string name="view_password">View Password</string>
     <string name="wait">Wait</string>
-    <string name="wear_favorite_entities">Wear Favorite Entities</string>
+    <string name="wear_favorite_entities">Favorite Entities</string>
     <string name="wear_os_category">Wear OS</string>
     <string name="wear_os_settings_summary">Manage Wear OS App</string>
     <string name="wear_os_settings_title">Wear OS Settings</string>

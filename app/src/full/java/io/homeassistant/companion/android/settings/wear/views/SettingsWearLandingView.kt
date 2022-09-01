@@ -65,18 +65,18 @@ fun SettingWearLandingView(
                 }
                 isAuthed -> {
                     SettingsRow(
-                        primaryText = stringResource(commonR.string.favorite),
+                        primaryText = stringResource(commonR.string.wear_favorite_entities),
                         secondaryText = stringResource(commonR.string.set_favorites_on_device),
                         mdiIcon = CommunityMaterial.Icon3.cmd_star,
                         enabled = true,
-                        onSensorClicked = navigateFavorites
+                        onClicked = navigateFavorites
                     )
                     SettingsRow(
                         primaryText = stringResource(commonR.string.template_tile),
                         secondaryText = stringResource(commonR.string.template_tile_set_on_watch),
                         mdiIcon = CommunityMaterial.Icon3.cmd_text_box,
                         enabled = true,
-                        onSensorClicked = navigateTemplateTile
+                        onClicked = navigateTemplateTile
                     )
                 }
                 else -> {

@@ -31,11 +31,11 @@ fun SettingsRow(
     secondaryText: String,
     mdiIcon: IIcon?,
     enabled: Boolean,
-    onSensorClicked: () -> Unit
+    onClicked: () -> Unit
 ) {
     Row(
         modifier = Modifier
-            .clickable { onSensorClicked() }
+            .clickable { onClicked() }
             .heightIn(min = 72.dp)
             .padding(all = 16.dp)
             .fillMaxWidth(),
