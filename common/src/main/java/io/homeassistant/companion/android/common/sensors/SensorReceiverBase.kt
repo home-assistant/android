@@ -30,6 +30,8 @@ import javax.inject.Inject
 
 abstract class SensorReceiverBase : BroadcastReceiver() {
     companion object {
+        const val ACTION_UPDATE_SENSOR = "io.homeassistant.companion.android.UPDATE_SENSOR"
+
         fun shouldDoFastUpdates(context: Context): Boolean {
             val settingDao = AppDatabase.getInstance(context).settingsDao().get(0)
             return when (settingDao?.sensorUpdateFrequency) {
@@ -117,12 +119,20 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                 Log.i(tag, "Skipping faster update because not charging/different preference")
                 return@launch
             }
-            updateSensors(context, integrationUseCase, sensorDao, intent)
-            if (chargingActions.contains(intent.action)) {
-                // Add a 5 second delay to perform another update so charging state updates completely.
-                // This is necessary as the system needs a few seconds to verify the charger.
-                delay(5000L)
+            if (intent.action == ACTION_UPDATE_SENSOR) {
+                val basicSensor = intent.getSerializableExtra("basic_sensor") as? SensorManager.BasicSensor
+                if (basicSensor != null) {
+                    val fullSensor = sensorDao.getFull(basicSensor.id)
+                    updateSensor(integrationUseCase, fullSensor, basicSensor, sensorDao)
+                }
+            } else {
                 updateSensors(context, integrationUseCase, sensorDao, intent)
+                if (chargingActions.contains(intent.action)) {
+                    // Add a 5 second delay to perform another update so charging state updates completely.
+                    // This is necessary as the system needs a few seconds to verify the charger.
+                    delay(5000L)
+                    updateSensors(context, integrationUseCase, sensorDao, intent)
+                }
             }
         }
     }
@@ -320,15 +330,12 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         integrationUseCase.registerSensor(reg)
     }
 
-    suspend fun updateSensor(
-        context: Context,
+    private suspend fun updateSensor(
         integrationUseCase: IntegrationRepository,
         fullSensor: SensorWithAttributes?,
-        sensorManager: SensorManager?,
         basicSensor: SensorManager.BasicSensor,
         sensorDao: SensorDao
     ) {
-        sensorManager?.requestSensorUpdate(context)
         if (
             fullSensor != null && fullSensor.sensor.enabled &&
             fullSensor.sensor.registered == true &&

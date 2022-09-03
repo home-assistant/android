@@ -29,6 +29,7 @@ import io.homeassistant.companion.android.common.data.integration.UpdateLocation
 import io.homeassistant.companion.android.common.data.integration.ZoneAttributes
 import io.homeassistant.companion.android.common.sensors.LocationSensorManagerBase
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
@@ -765,24 +766,17 @@ class LocationSensorManager : LocationSensorManagerBase() {
         lastLocationSend = now
         lastUpdateLocation = updateLocation.gps.contentToString()
 
-        val geoSensorManager = SensorReceiver.MANAGERS.firstOrNull { it.getAvailableSensors(latestContext).any { s -> s.name == commonR.string.basic_sensor_name_geolocation } }
-        val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
-        val geoSensor = sensorDao.getFull(GeocodeSensorManager.geocodedLocation.id)
-
         ioScope.launch {
             try {
                 integrationUseCase.updateLocation(updateLocation)
                 Log.d(TAG, "Location update sent successfully")
 
                 // Update Geocoded Location Sensor
-                SensorReceiver().updateSensor(
-                    latestContext,
-                    integrationUseCase,
-                    geoSensor,
-                    geoSensorManager,
-                    GeocodeSensorManager.geocodedLocation,
-                    sensorDao
-                )
+                val intent = Intent(latestContext, SensorReceiverBase::class.java)
+                intent.action = SensorReceiverBase.ACTION_UPDATE_SENSOR
+                intent.putExtra("basic_sensor", GeocodeSensorManager.geocodedLocation)
+                GeocodeSensorManager().requestSensorUpdate(latestContext)
+                latestContext.sendBroadcast(intent)
             } catch (e: Exception) {
                 Log.e(TAG, "Could not update location.", e)
             }

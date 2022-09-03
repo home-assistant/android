@@ -12,6 +12,7 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
+import java.io.Serializable
 import java.util.Locale
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -40,7 +41,7 @@ interface SensorManager {
         val stateClass: String? = null,
         val entityCategory: String? = null,
         val updateType: UpdateType = UpdateType.WORKER
-    ) {
+    ) : Serializable {
         enum class UpdateType {
             INTENT, WORKER, LOCATION, CUSTOM
         }
