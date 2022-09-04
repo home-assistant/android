@@ -11,6 +11,8 @@ class BatterySensorManager : SensorManager {
 
     companion object {
         private const val TAG = "BatterySensor"
+        private const val SETTING_BATTERY_CURRENT_DIVISOR = "battery_current_divisor"
+        private const val DEFAULT_BATTERY_CURRENT_DIVISOR = 1000000
         private val batteryLevel = SensorManager.BasicSensor(
             "battery_level",
             "sensor",
@@ -268,7 +270,7 @@ class BatterySensorManager : SensorManager {
 
         val voltage = getBatteryVolts(intent)
         val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
-        val current = getBatteryCurrent(batteryManager)
+        val current = getBatteryCurrent(context, batteryManager)
         val wattage = voltage * current
         val icon = if (wattage > 0) batteryPower.statelessIcon else "mdi:battery-minus"
 
@@ -319,8 +321,14 @@ class BatterySensorManager : SensorManager {
         return intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0) / 10f
     }
 
-    private fun getBatteryCurrent(batteryManager: BatteryManager): Float {
-        return batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW) / 1000000f
+    private fun getBatteryCurrent(context: Context, batteryManager: BatteryManager): Float {
+        val dividerSetting = getNumberSetting(
+            context,
+            batteryPower,
+            SETTING_BATTERY_CURRENT_DIVISOR,
+            DEFAULT_BATTERY_CURRENT_DIVISOR
+        )
+        return batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW) / dividerSetting.toFloat()
     }
 
     private fun getBatteryVolts(intent: Intent): Float {

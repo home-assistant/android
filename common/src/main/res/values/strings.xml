@@ -612,6 +612,7 @@
     <string name="sensor_setting_nextalarm_allow_list_title">Allow List</string>
     <string name="sensor_setting_notification_allow_list_title">Allow List</string>
     <string name="sensor_setting_notification_disable_allow_list_title">Disable Allow List Requirement</string>
+    <string name="sensor_setting_battery_current_divisor_title">Battery Current Divisor</string>
     <string name="sensor_settings">Sensor Settings</string>
     <string name="sensor_summary">Use this to manage what sensors are enabled/disabled.</string>
     <string name="sensor_title">Manage Sensors</string>
@@ -915,7 +916,7 @@
     <string name="tls_cert_not_found_message">The remote site requires a client certificate.\nPlease install the required credential on your phone and try again.</string>
     <string name="tls_cert_expired_message">The certificate is not yet or no longer valid.\nPlease install a new credential on your phone and try again.</string>
     <string name="basic_sensor_name_battery_power">Battery Power</string>
-    <string name="sensor_description_battery_power">The current wattage of the device. To get the most out of this sensor consider using the \"Fast while charging\" sensor update frequency setting.</string>
     <string name="widget_checkbox_require_authentication">Require Authentication</string>
     <string name="widget_error_authenticating">Error authenticating - is an authentication method configured?</string>
+    <string name="sensor_description_battery_power">The current wattage of the device. To get the most out of this sensor consider using the \"Fast while charging\" sensor update frequency setting. If your values are not as expected you may need to adjust the \"Battery Current Divisor\" setting to get a proper unit of amperes for the \"current\" attribute. Android is supposed to report microamperes however, some devices may report a different unit. The default will convert microamperes to amperes.</string>
 </resources>
