@@ -31,6 +31,7 @@ import javax.inject.Inject
 abstract class SensorReceiverBase : BroadcastReceiver() {
     companion object {
         const val ACTION_UPDATE_SENSOR = "io.homeassistant.companion.android.UPDATE_SENSOR"
+        const val EXTRA_SENSOR_ID = "sensorId"
 
         fun shouldDoFastUpdates(context: Context): Boolean {
             val settingDao = AppDatabase.getInstance(context).settingsDao().get(0)
@@ -120,10 +121,9 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                 return@launch
             }
             if (intent.action == ACTION_UPDATE_SENSOR) {
-                val basicSensor = intent.getSerializableExtra("basic_sensor") as? SensorManager.BasicSensor
-                if (basicSensor != null) {
-                    val fullSensor = sensorDao.getFull(basicSensor.id)
-                    updateSensor(integrationUseCase, fullSensor, basicSensor, sensorDao)
+                val sensorId = intent.getStringExtra(EXTRA_SENSOR_ID)
+                if (sensorId != null) {
+                    updateSensor(context, sensorId)
                 }
             } else {
                 updateSensors(context, integrationUseCase, sensorDao, intent)
@@ -331,14 +331,16 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
     }
 
     private suspend fun updateSensor(
-        integrationUseCase: IntegrationRepository,
-        fullSensor: SensorWithAttributes?,
-        basicSensor: SensorManager.BasicSensor,
-        sensorDao: SensorDao
+        context: Context,
+        sensorId: String
     ) {
+        val sensorManager = managers.firstOrNull { it.getAvailableSensors(context).any { s -> s.id == sensorId } }
+        sensorManager?.requestSensorUpdate(context)
+        val basicSensor = sensorManager?.getAvailableSensors(context)?.firstOrNull { it.id == sensorId }
+        val fullSensor = sensorDao.getFull(sensorId)
         if (
             fullSensor != null && fullSensor.sensor.enabled &&
-            fullSensor.sensor.registered == true &&
+            fullSensor.sensor.registered == true && basicSensor != null &&
             (
                 fullSensor.sensor.state != fullSensor.sensor.lastSentState ||
                     fullSensor.sensor.icon != fullSensor.sensor.lastSentIcon

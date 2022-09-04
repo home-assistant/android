@@ -772,10 +772,9 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 Log.d(TAG, "Location update sent successfully")
 
                 // Update Geocoded Location Sensor
-                val intent = Intent(latestContext, SensorReceiverBase::class.java)
+                val intent = Intent(latestContext, SensorReceiver::class.java)
                 intent.action = SensorReceiverBase.ACTION_UPDATE_SENSOR
-                intent.putExtra("basic_sensor", GeocodeSensorManager.geocodedLocation)
-                GeocodeSensorManager().requestSensorUpdate(latestContext)
+                intent.putExtra(SensorReceiverBase.EXTRA_SENSOR_ID, GeocodeSensorManager.geocodedLocation.id)
                 latestContext.sendBroadcast(intent)
             } catch (e: Exception) {
                 Log.e(TAG, "Could not update location.", e)
