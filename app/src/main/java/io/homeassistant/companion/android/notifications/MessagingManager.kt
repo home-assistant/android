@@ -153,6 +153,7 @@ class MessagingManager @Inject constructor(
         const val COMMAND_VOLUME_LEVEL = "command_volume_level"
         const val COMMAND_BLUETOOTH = "command_bluetooth"
         const val COMMAND_BLE_TRANSMITTER = "command_ble_transmitter"
+        const val COMMAND_BEACON_MONITOR = "command_beacon_monitor"
         const val COMMAND_SCREEN_ON = "command_screen_on"
         const val COMMAND_MEDIA = "command_media"
         const val COMMAND_UPDATE_SENSORS = "command_update_sensors"
@@ -230,6 +231,7 @@ class MessagingManager @Inject constructor(
             COMMAND_VOLUME_LEVEL,
             COMMAND_BLUETOOTH,
             COMMAND_BLE_TRANSMITTER,
+            COMMAND_BEACON_MONITOR,
             COMMAND_HIGH_ACCURACY_MODE,
             COMMAND_ACTIVITY,
             COMMAND_WEBVIEW,
@@ -402,6 +404,19 @@ class MessagingManager @Inject constructor(
                                 Log.d(
                                     TAG,
                                     "Invalid ble transmitter command received, posting notification to device"
+                                )
+                                sendNotification(jsonData)
+                            }
+                        }
+                    }
+                    COMMAND_BEACON_MONITOR -> {
+                        if (!jsonData[COMMAND].isNullOrEmpty() && jsonData[COMMAND] in ENABLE_COMMANDS)
+                            handleDeviceCommands(jsonData)
+                        else {
+                            mainScope.launch {
+                                Log.d(
+                                    TAG,
+                                    "Invalid beacon monitor command received, posting notification to device"
                                 )
                                 sendNotification(jsonData)
                             }
@@ -782,6 +797,12 @@ class MessagingManager @Inject constructor(
                     BluetoothSensorManager().requestSensorUpdate(context)
                     SensorWorker.start(context)
                 }
+            }
+            COMMAND_BEACON_MONITOR -> {
+                if (command == TURN_OFF)
+                    BluetoothSensorManager.enableDisableBeaconMonitor(context, false)
+                if (command == TURN_ON)
+                    BluetoothSensorManager.enableDisableBeaconMonitor(context, true)
             }
             COMMAND_HIGH_ACCURACY_MODE -> {
                 when (command) {
