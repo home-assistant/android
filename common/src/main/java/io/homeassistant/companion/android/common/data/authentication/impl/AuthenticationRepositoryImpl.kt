@@ -37,6 +37,7 @@ class AuthenticationRepositoryImpl @Inject constructor(
         private const val PREF_REFRESH_TOKEN = "refresh_token"
         private const val PREF_TOKEN_TYPE = "token_type"
         private const val PREF_BIOMETRIC_ENABLED = "biometric_enabled"
+        private const val PREF_BIOMETRIC_HOME_BYPASS_ENABLED = "biometric_home_bypass_enabled"
     }
 
     private val mapper = jacksonObjectMapper()
@@ -250,7 +251,25 @@ class AuthenticationRepositoryImpl @Inject constructor(
         localStorage.putBoolean(PREF_BIOMETRIC_ENABLED, enabled)
     }
 
-    override suspend fun isLockEnabled(): Boolean {
+    override suspend fun setLockHomeBypassEnabled(enabled: Boolean) {
+        localStorage.putBoolean(PREF_BIOMETRIC_HOME_BYPASS_ENABLED, enabled)
+    }
+
+    override suspend fun isLockEnabledRaw(): Boolean {
         return localStorage.getBoolean(PREF_BIOMETRIC_ENABLED)
+    }
+
+    override suspend fun isLockHomeBypassEnabled(): Boolean {
+        return localStorage.getBoolean(PREF_BIOMETRIC_HOME_BYPASS_ENABLED)
+    }
+
+    override suspend fun isLockEnabled(): Boolean {
+        val raw = isLockEnabledRaw()
+        val bypass = isLockHomeBypassEnabled()
+        if (raw && bypass) {
+            return !(urlRepository.isHomeWifiSsid())
+        } else {
+            return raw
+        }
     }
 }

@@ -48,6 +48,11 @@
             android:icon="@drawable/ic_lock"
             android:title="@string/lock_title"
             android:summary="@string/lock_summary"/>
+        <SwitchPreference
+            android:key="app_lock_home_bypass"
+            android:icon="@drawable/ic_wifi"
+            android:title="@string/lock_home_bypass_title"
+            android:summary="@string/lock_home_bypass_summary"/>
         <EditTextPreference
             android:key="session_timeout"
             android:icon="@drawable/ic_timeout"
