@@ -33,6 +33,7 @@ import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.LocationPermissionInfoHandler
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
+import io.homeassistant.companion.android.settings.controls.ManageControlsSettingsFragment
 import io.homeassistant.companion.android.settings.language.LanguagesProvider
 import io.homeassistant.companion.android.settings.log.LogFragment
 import io.homeassistant.companion.android.settings.notification.NotificationChannelFragment
@@ -209,6 +210,20 @@ class SettingsFragment constructor(
                         .beginTransaction()
                         .replace(R.id.content, ManageTilesFragment::class.java, null)
                         .addToBackStack(getString(commonR.string.tiles))
+                        .commit()
+                    return@setOnPreferenceClickListener true
+                }
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                findPreference<PreferenceCategory>("device_controls")?.let {
+                    it.isVisible = true
+                }
+                findPreference<Preference>("manage_device_controls")?.setOnPreferenceClickListener {
+                    parentFragmentManager
+                        .beginTransaction()
+                        .replace(R.id.content, ManageControlsSettingsFragment::class.java, null)
+                        .addToBackStack(getString(commonR.string.controls_setting_title))
                         .commit()
                     return@setOnPreferenceClickListener true
                 }

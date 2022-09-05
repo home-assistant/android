@@ -5,6 +5,7 @@ import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
+import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationException
@@ -74,6 +75,8 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_WEBVIEW_DEBUG_ENABLED = "webview_debug_enabled"
         private const val PREF_SESSION_TIMEOUT = "session_timeout"
         private const val PREF_SESSION_EXPIRE = "session_expire"
+        private const val PREF_CONTROLS_AUTH_REQUIRED = "controls_auth_required"
+        private const val PREF_CONTROLS_AUTH_ENTITIES = "controls_auth_entities"
         private const val PREF_SEC_WARNING_NEXT = "sec_warning_last"
         private const val TAG = "IntegrationRepository"
         private const val RATE_LIMIT_URL = BuildConfig.RATE_LIMIT_URL
@@ -384,6 +387,25 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     override suspend fun getSessionExpireMillis(): Long {
         return localStorage.getLong(PREF_SESSION_EXPIRE) ?: 0
+    }
+
+    override suspend fun setControlsAuthRequired(setting: ControlsAuthRequiredSetting) {
+        localStorage.putString(PREF_CONTROLS_AUTH_REQUIRED, setting.name)
+    }
+
+    override suspend fun getControlsAuthRequired(): ControlsAuthRequiredSetting {
+        val current = localStorage.getString(PREF_CONTROLS_AUTH_REQUIRED)
+        return ControlsAuthRequiredSetting.values().firstOrNull {
+            it.name == current
+        } ?: ControlsAuthRequiredSetting.NONE
+    }
+
+    override suspend fun setControlsAuthEntities(entities: List<String>) {
+        localStorage.putStringSet(PREF_CONTROLS_AUTH_ENTITIES, entities.toSet())
+    }
+
+    override suspend fun getControlsAuthEntities(): List<String> {
+        return localStorage.getStringSet(PREF_CONTROLS_AUTH_ENTITIES)?.toList() ?: emptyList()
     }
 
     override suspend fun getTileShortcuts(): List<String> {

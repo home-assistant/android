@@ -42,6 +42,11 @@ interface IntegrationRepository {
     suspend fun setSessionExpireMillis(value: Long)
     suspend fun getSessionExpireMillis(): Long
 
+    suspend fun setControlsAuthRequired(setting: ControlsAuthRequiredSetting)
+    suspend fun getControlsAuthRequired(): ControlsAuthRequiredSetting
+    suspend fun setControlsAuthEntities(entities: List<String>)
+    suspend fun getControlsAuthEntities(): List<String>
+
     suspend fun getTileShortcuts(): List<String>
     suspend fun setTileShortcuts(entities: List<String>)
     suspend fun getTemplateTileContent(): String

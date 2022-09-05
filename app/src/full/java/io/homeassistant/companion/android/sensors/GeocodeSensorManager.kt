@@ -83,7 +83,7 @@ class GeocodeSensorManager : SensorManager {
                 if (location.accuracy <= minAccuracy) {
                     address = Geocoder(context)
                         .getFromLocation(location.latitude, location.longitude, 1)
-                        .firstOrNull()
+                        ?.firstOrNull()
                 } else {
                     Log.w(TAG, "Skipping geocoded update as accuracy was not met: ${location.accuracy}")
                     return@addOnSuccessListener

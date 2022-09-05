@@ -32,6 +32,7 @@ import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.settings.wear.SettingsWearViewModel
+import io.homeassistant.companion.android.util.compose.getEntityDomainString
 import org.burnoutcrew.reorderable.ReorderableItem
 import org.burnoutcrew.reorderable.ReorderableLazyListState
 import org.burnoutcrew.reorderable.detectReorderAfterLongPress
@@ -161,7 +162,7 @@ fun WearFavoriteEntityRow(
             ) {
                 Text(text = entityName, style = MaterialTheme.typography.body1)
                 CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
-                    Text(text = getDomainString(entityDomain), style = MaterialTheme.typography.body2)
+                    Text(text = getEntityDomainString(entityDomain), style = MaterialTheme.typography.body2)
                 }
             }
             if (draggable) {
@@ -178,22 +179,5 @@ fun WearFavoriteEntityRow(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun getDomainString(domain: String): String {
-    return when (domain) {
-        "button" -> stringResource(commonR.string.domain_button)
-        "cover" -> stringResource(commonR.string.domain_cover)
-        "fan" -> stringResource(commonR.string.domain_fan)
-        "input_boolean" -> stringResource(commonR.string.domain_input_boolean)
-        "input_button" -> stringResource(commonR.string.domain_input_button)
-        "light" -> stringResource(commonR.string.domain_light)
-        "lock" -> stringResource(commonR.string.domain_lock)
-        "scene" -> stringResource(commonR.string.domain_scene)
-        "script" -> stringResource(commonR.string.domain_script)
-        "switch" -> stringResource(commonR.string.domain_switch)
-        else -> ""
     }
 }

@@ -129,6 +129,13 @@
     <string name="connect">Connect</string>
     <string name="connected_to_home_assistant">Connected to Home Assistant</string>
     <string name="continue_connect">Continue</string>
+    <string name="controls_setting_category">Device Controls</string>
+    <string name="controls_setting_title">Manage Device Controls</string>
+    <string name="controls_setting_summary">Choose if quick access device controls can be used when this device is locked</string>
+    <string name="controls_setting_choose_setting">Choose which entities you want to be able to control using the built-in device controls option when this device is locked:</string>
+    <string name="controls_setting_choose_all">Select all</string>
+    <string name="controls_setting_choose_none">Select none</string>
+    <string name="controls_setting_choose_empty">No entities available</string>
     <string name="covers">Covers</string>
     <string name="crash_reporting_summary">Help the developers fix bugs and crashes by leaving this enabled. If the application crashes this will automatically generate and send a report. If you notice a crash also create an issue on Github!</string>
     <string name="crash_reporting">Crash Reporting</string>
