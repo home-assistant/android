@@ -29,6 +29,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ge
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TemplateUpdatedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.TriggerEvent
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -67,6 +68,7 @@ class WebSocketRepositoryImpl @Inject constructor(
         private const val TAG = "WebSocketRepository"
 
         private const val SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS = "subscribe_events"
+        private const val SUBSCRIBE_TYPE_SUBSCRIBE_TRIGGER = "subscribe_trigger"
         private const val SUBSCRIBE_TYPE_RENDER_TEMPLATE = "render_template"
         private const val EVENT_STATE_CHANGED = "state_changed"
         private const val EVENT_AREA_REGISTRY_UPDATED = "area_registry_updated"
@@ -176,6 +178,9 @@ class WebSocketRepositoryImpl @Inject constructor(
     override suspend fun getStateChanges(): Flow<StateChangedEvent>? =
         subscribeToEventsForType(EVENT_STATE_CHANGED)
 
+    override suspend fun getStateChanges(entityIds: List<String>): Flow<TriggerEvent>? =
+        subscribeToTrigger("state", mapOf("entity_id" to entityIds))
+
     override suspend fun getAreaRegistryUpdates(): Flow<AreaRegistryUpdatedEvent>? =
         subscribeToEventsForType(EVENT_AREA_REGISTRY_UPDATED)
 
@@ -190,6 +195,13 @@ class WebSocketRepositoryImpl @Inject constructor(
 
     override suspend fun getTemplateUpdates(template: String): Flow<TemplateUpdatedEvent>? =
         subscribeTo(SUBSCRIBE_TYPE_RENDER_TEMPLATE, mapOf("template" to template))
+
+    private suspend fun subscribeToTrigger(platform: String, data: Map<Any, Any>): Flow<TriggerEvent>? {
+        val triggerData = mapOf(
+            "platform" to platform
+        ).plus(data)
+        return subscribeTo(SUBSCRIBE_TYPE_SUBSCRIBE_TRIGGER, mapOf("trigger" to triggerData))
+    }
 
     /**
      * Start a subscription for events on the websocket connection and get a Flow for listening to
@@ -409,6 +421,14 @@ class WebSocketRepositoryImpl @Inject constructor(
             val message: Any =
                 if (subscriptionType == SUBSCRIBE_TYPE_RENDER_TEMPLATE) {
                     mapper.convertValue(response.event, TemplateUpdatedEvent::class.java)
+                } else if (subscriptionType == SUBSCRIBE_TYPE_SUBSCRIBE_TRIGGER) {
+                    val trigger = response.event?.get("variables")?.get("trigger")
+                    if (trigger != null) {
+                        mapper.convertValue(trigger, TriggerEvent::class.java)
+                    } else {
+                        Log.w(TAG, "Received no trigger value for trigger subscription, skipping")
+                        return
+                    }
                 } else if (eventResponseType != null && eventResponseType.isTextual) {
                     val eventResponseClass = when (eventResponseType.textValue()) {
                         EVENT_STATE_CHANGED ->

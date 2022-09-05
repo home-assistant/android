@@ -64,6 +64,7 @@ interface IntegrationRepository {
     suspend fun getEntities(): List<Entity<Any>>?
     suspend fun getEntity(entityId: String): Entity<Map<String, Any>>?
     suspend fun getEntityUpdates(): Flow<Entity<*>>?
+    suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity<*>>?
 
     suspend fun callService(domain: String, service: String, serviceData: HashMap<String, Any>)
 

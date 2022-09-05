@@ -42,18 +42,10 @@ class EntityWidget : BaseWidgetProvider() {
         internal const val EXTRA_TEXT_COLOR = "EXTRA_TEXT_COLOR"
 
         private data class ResolvedText(val text: CharSequence?, val exception: Boolean = false)
-
-        private var isSubscribed = false
     }
 
     @Inject
     lateinit var staticWidgetDao: StaticWidgetDao
-
-    override fun isSubscribed(): Boolean = isSubscribed
-
-    override fun setSubscribed(subscribed: Boolean) {
-        isSubscribed = subscribed
-    }
 
     override fun getWidgetProvider(context: Context): ComponentName =
         ComponentName(context, EntityWidget::class.java)
@@ -130,9 +122,8 @@ class EntityWidget : BaseWidgetProvider() {
         return views
     }
 
-    override suspend fun getAllWidgetIds(context: Context): List<Int> {
-        return staticWidgetDao.getAll().map { it.id }
-    }
+    override suspend fun getAllWidgetIdsWithEntities(context: Context): Map<Int, List<String>> =
+        staticWidgetDao.getAll().associate { it.id to listOf(it.entityId) }
 
     private suspend fun resolveTextToShow(
         context: Context,
@@ -197,7 +188,7 @@ class EntityWidget : BaseWidgetProvider() {
             return
         }
 
-        mainScope.launch {
+        widgetScope?.launch {
             Log.d(
                 TAG,
                 "Saving entity state config data:" + System.lineSeparator() +
@@ -223,20 +214,17 @@ class EntityWidget : BaseWidgetProvider() {
         }
     }
 
-    override suspend fun onEntityStateChanged(context: Context, entity: Entity<*>) {
-        staticWidgetDao.getAll().forEach {
-            if (it.entityId == entity.entityId) {
-                mainScope.launch {
-                    val views = getWidgetRemoteViews(context, it.id, entity as Entity<Map<String, Any>>)
-                    AppWidgetManager.getInstance(context).updateAppWidget(it.id, views)
-                }
-            }
+    override suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity<*>) {
+        widgetScope?.launch {
+            val views = getWidgetRemoteViews(context, appWidgetId, entity as Entity<Map<String, Any>>)
+            AppWidgetManager.getInstance(context).updateAppWidget(appWidgetId, views)
         }
     }
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
-        mainScope.launch {
+        widgetScope?.launch {
             staticWidgetDao.deleteAll(appWidgetIds)
+            appWidgetIds.forEach { removeSubscription(it) }
         }
     }
 }

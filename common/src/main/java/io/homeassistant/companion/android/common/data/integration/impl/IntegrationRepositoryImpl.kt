@@ -589,6 +589,21 @@ class IntegrationRepositoryImpl @Inject constructor(
             }
     }
 
+    override suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity<*>>? {
+        return webSocketRepository.getStateChanges(entityIds)
+            ?.filter { it.toState != null }
+            ?.map {
+                Entity(
+                    it.toState!!.entityId,
+                    it.toState.state,
+                    it.toState.attributes,
+                    it.toState.lastChanged,
+                    it.toState.lastUpdated,
+                    it.toState.context
+                )
+            }
+    }
+
     override suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>) {
         val canRegisterCategoryStateClass = isHomeAssistantVersionAtLeast(2021, 11, 0)
         val canRegisterEntityDisabledState = isHomeAssistantVersionAtLeast(2022, 6, 0)
