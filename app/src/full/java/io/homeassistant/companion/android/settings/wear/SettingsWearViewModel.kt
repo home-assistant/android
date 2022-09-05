@@ -23,6 +23,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.burnoutcrew.reorderable.ItemPosition
 import javax.inject.Inject
@@ -50,10 +52,10 @@ class SettingsWearViewModel @Inject constructor(
 
     private val objectMapper = jacksonObjectMapper()
 
-    var hasData = mutableStateOf(false)
-        private set
-    var isAuthenticated = mutableStateOf(false)
-        private set
+    private val _hasData = MutableStateFlow(false)
+    val hasData = _hasData.asStateFlow()
+    private val _isAuthenticated = MutableStateFlow(false)
+    val isAuthenticated = _isAuthenticated.asStateFlow()
     var entities = mutableStateMapOf<String, Entity<*>>()
         private set
     var supportedDomains = mutableStateListOf<String>()
@@ -221,7 +223,7 @@ class SettingsWearViewModel @Inject constructor(
     }
 
     private fun onLoadConfigFromWear(data: DataMap) {
-        isAuthenticated.value = data.getBoolean(KEY_IS_AUTHENTICATED, false)
+        _isAuthenticated.value = data.getBoolean(KEY_IS_AUTHENTICATED, false)
         val supportedDomainsList: List<String> =
             objectMapper.readValue(data.getString(KEY_SUPPORTED_DOMAINS, "[\"input_boolean\", \"light\", \"lock\", \"switch\", \"script\", \"scene\"]"))
         supportedDomains.clear()
@@ -234,6 +236,6 @@ class SettingsWearViewModel @Inject constructor(
         }
         setTemplateContent(data.getString(KEY_TEMPLATE_TILE, ""))
         templateTileRefreshInterval.value = data.getInt(KEY_TEMPLATE_TILE_REFRESH_INTERVAL, 0)
-        hasData.value = true
+        _hasData.value = true
     }
 }

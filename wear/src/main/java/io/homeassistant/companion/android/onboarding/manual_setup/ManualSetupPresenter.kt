@@ -1,8 +1,10 @@
 package io.homeassistant.companion.android.onboarding.manual_setup
 
+import android.content.Context
+
 interface ManualSetupPresenter {
 
-    fun onNextClicked(url: String)
+    fun onNextClicked(context: Context, url: String)
 
     fun onFinish()
 }
