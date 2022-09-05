@@ -155,7 +155,7 @@ dependencies {
     implementation("androidx.fragment:fragment-ktx:1.5.2")
 
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.3")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.4")
     implementation("com.squareup.okhttp3:okhttp:4.10.0")
     implementation("com.squareup.picasso:picasso:2.8")
 
