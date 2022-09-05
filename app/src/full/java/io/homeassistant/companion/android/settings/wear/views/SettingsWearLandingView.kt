@@ -1,19 +1,24 @@
 package io.homeassistant.companion.android.settings.wear.views
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Button
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.homeassistant.companion.android.settings.views.SettingsRow
 import io.homeassistant.companion.android.util.wearDeviceName
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -35,44 +40,51 @@ fun SettingWearLandingView(
                 docsLink = WEAR_DOCS_LINK
             )
         }
-    ) {
+    ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(all = 16.dp)
+                .padding(padding)
         ) {
-            Text(
-                text = stringResource(id = commonR.string.manage_wear_device, deviceName),
-                textAlign = TextAlign.Center
-            )
+            Row(
+                modifier = Modifier
+                    .height(48.dp)
+                    .padding(start = 72.dp, end = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(id = commonR.string.manage_wear_device, deviceName),
+                    style = MaterialTheme.typography.body2,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colors.primary
+                )
+            }
             when {
                 !hasData -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
                 }
                 isAuthed -> {
-                    Button(
-                        onClick = navigateFavorites,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 10.dp)
-                    ) {
-                        Text(stringResource(commonR.string.set_favorites_on_device))
-                    }
-                    Button(
-                        onClick = navigateTemplateTile,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 10.dp)
-                    ) {
-                        Text(stringResource(commonR.string.template_tile))
-                    }
+                    SettingsRow(
+                        primaryText = stringResource(commonR.string.wear_favorite_entities),
+                        secondaryText = stringResource(commonR.string.set_favorites_on_device),
+                        mdiIcon = CommunityMaterial.Icon3.cmd_star,
+                        enabled = true,
+                        onClicked = navigateFavorites
+                    )
+                    SettingsRow(
+                        primaryText = stringResource(commonR.string.template_tile),
+                        secondaryText = stringResource(commonR.string.template_tile_set_on_watch),
+                        mdiIcon = CommunityMaterial.Icon3.cmd_text_box,
+                        enabled = true,
+                        onClicked = navigateTemplateTile
+                    )
                 }
                 else -> {
                     Button(
                         onClick = loginWearOs,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 10.dp)
+                            .padding(top = 10.dp, start = 16.dp, end = 16.dp)
                     ) {
                         Text(stringResource(commonR.string.login_wear_os_device))
                     }
