@@ -223,6 +223,8 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
                 buttonWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, commonR.color.colorWidgetButtonLabelBlack) } ?: false
 
             binding.addButton.setText(commonR.string.update_widget)
+
+            binding.widgetCheckboxRequireAuthentication.isChecked = buttonWidget.requireAuthentication
         } else {
             binding.backgroundType.setSelection(0)
         }
@@ -462,6 +464,8 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
                     getHexForColor(if (binding.textColorWhite.isChecked) android.R.color.white else commonR.color.colorWidgetButtonLabelBlack)
                 else null
             )
+
+            intent.putExtra(ButtonWidget.EXTRA_REQUIRE_AUTHENTICATION, binding.widgetCheckboxRequireAuthentication.isChecked)
 
             context.sendBroadcast(intent)
 
