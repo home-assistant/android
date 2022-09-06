@@ -735,6 +735,8 @@
     <string name="tile_7">Tile 7</string>
     <string name="tile_8">Tile 8</string>
     <string name="tile_9">Tile 9</string>
+    <string name="tile_add">Add Tile</string>
+    <string name="tile_added">Tile added</string>
     <string name="tile_data_missing">Tile data is missing, please set it up in App Configuration</string>
     <string name="tile_entity">Select a entity to toggle or call (required)</string>
     <string name="tile_label">Tile Label (required)</string>
@@ -744,7 +746,7 @@
     <string name="tile_save">Update Tile Data</string>
     <string name="tile_settings">Tile settings</string>
     <string name="tile_subtitle">Tile Subtitle</string>
-    <string name="tile_updated">Tile Data Updated</string>
+    <string name="tile_updated">Tile Data updated</string>
     <string name="tiles">Tiles</string>
     <string name="toast_message">%1$s was selected</string>
     <string name="tts_error">Unable to process notification \"%1$s\" as text to speech.</string>
