@@ -30,6 +30,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.getFanSpeed
+import io.homeassistant.companion.android.common.data.integration.getFanSteps
 import io.homeassistant.companion.android.common.data.integration.getLightBrightness
 import io.homeassistant.companion.android.common.data.integration.supportsFanSetSpeed
 import io.homeassistant.companion.android.common.data.integration.supportsLightBrightness
@@ -169,6 +170,7 @@ fun FanSpeedSlider(
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
     val position = entity.getFanSpeed() ?: return
+    val steps = entity.getFanSteps() ?: return
 
     Column {
         Text(
@@ -190,7 +192,7 @@ fun FanSpeedSlider(
                     haptic
                 )
             },
-            steps = 9,
+            steps = steps,
             valueRange = position.min..position.max,
             decreaseIcon = {
                 Image(

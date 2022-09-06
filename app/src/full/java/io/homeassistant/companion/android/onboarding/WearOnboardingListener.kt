@@ -33,7 +33,7 @@ class WearOnboardingListener : WearableListenerService() {
     private fun sendHomeAssistantInstance(nodeId: String) = runBlocking {
         Log.d("WearOnboardingListener", "sendHomeAssistantInstance: $nodeId")
         // Retrieve current instance
-        val url = urlUseCase.getUrl()
+        val url = urlUseCase.getUrl(false)
 
         if (url != null) {
             // Put as DataMap in data layer

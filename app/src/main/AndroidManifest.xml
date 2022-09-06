@@ -12,6 +12,7 @@
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -99,6 +100,7 @@
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="io.homeassistant.companion.android.widgets.ButtonWidget.CALL_SERVICE" />
+                <action android:name="io.homeassistant.companion.android.widgets.ButtonWidget.CALL_SERVICE_AUTH" />
                 <action android:name="io.homeassistant.companion.android.widgets.ButtonWidget.RECEIVE_DATA" />
             </intent-filter>
 
@@ -161,7 +163,7 @@
                 <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
                 <action android:name="io.homeassistant.companion.android.background.REQUEST_SENSORS_UPDATE" />
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="io.homeassistant.companion.android.widgets.template.BaseWidgetProvider.RECEIVE_DATA" />
+                <action android:name="io.homeassistant.companion.android.widgets.template.TemplateWidget.RECEIVE_DATA" />
             </intent-filter>
 
             <meta-data
@@ -175,6 +177,11 @@
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>
+        </activity>
+        <activity android:name=".widgets.common.WidgetAuthenticationActivity"
+            android:configChanges="orientation|screenSize"
+            android:exported="true"
+            android:theme="@style/Theme.Transparent">
         </activity>
         <activity android:name=".widgets.camera.CameraWidgetConfigureActivity"
             android:configChanges="orientation|screenSize"

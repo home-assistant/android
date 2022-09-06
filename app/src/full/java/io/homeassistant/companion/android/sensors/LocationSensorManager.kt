@@ -29,6 +29,7 @@ import io.homeassistant.companion.android.common.data.integration.UpdateLocation
 import io.homeassistant.companion.android.common.data.integration.ZoneAttributes
 import io.homeassistant.companion.android.common.sensors.LocationSensorManagerBase
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
@@ -765,22 +766,16 @@ class LocationSensorManager : LocationSensorManagerBase() {
         lastLocationSend = now
         lastUpdateLocation = updateLocation.gps.contentToString()
 
-        val geoSensorManager = SensorReceiver.MANAGERS.firstOrNull { it.getAvailableSensors(latestContext).any { s -> s.name == commonR.string.basic_sensor_name_geolocation } }
-        val geoSensor = AppDatabase.getInstance(latestContext).sensorDao().getFull(GeocodeSensorManager.geocodedLocation.id)
-
         ioScope.launch {
             try {
                 integrationUseCase.updateLocation(updateLocation)
                 Log.d(TAG, "Location update sent successfully")
 
                 // Update Geocoded Location Sensor
-                SensorReceiver().updateSensor(
-                    latestContext,
-                    integrationUseCase,
-                    geoSensor,
-                    geoSensorManager,
-                    GeocodeSensorManager.geocodedLocation
-                )
+                val intent = Intent(latestContext, SensorReceiver::class.java)
+                intent.action = SensorReceiverBase.ACTION_UPDATE_SENSOR
+                intent.putExtra(SensorReceiverBase.EXTRA_SENSOR_ID, GeocodeSensorManager.geocodedLocation.id)
+                latestContext.sendBroadcast(intent)
             } catch (e: Exception) {
                 Log.e(TAG, "Could not update location.", e)
             }

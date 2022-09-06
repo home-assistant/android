@@ -33,6 +33,7 @@ import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.LocationPermissionInfoHandler
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
+import io.homeassistant.companion.android.settings.controls.ManageControlsSettingsFragment
 import io.homeassistant.companion.android.settings.language.LanguagesProvider
 import io.homeassistant.companion.android.settings.log.LogFragment
 import io.homeassistant.companion.android.settings.notification.NotificationChannelFragment
@@ -97,6 +98,7 @@ class SettingsFragment constructor(
             var isValid: Boolean
             if (newValue == false) {
                 isValid = true
+                findPreference<SwitchPreference>("app_lock_home_bypass")?.isVisible = false
                 findPreference<EditTextPreference>("session_timeout")?.isVisible = false
             } else {
                 isValid = true
@@ -113,6 +115,10 @@ class SettingsFragment constructor(
                 }
             }
             isValid
+        }
+
+        findPreference<SwitchPreference>("app_lock_home_bypass")?.let {
+            it.isVisible = findPreference<SwitchPreference>("app_lock")?.isChecked == true
         }
 
         findPreference<EditTextPreference>("session_timeout")?.let { pref ->
@@ -204,6 +210,20 @@ class SettingsFragment constructor(
                         .beginTransaction()
                         .replace(R.id.content, ManageTilesFragment::class.java, null)
                         .addToBackStack(getString(commonR.string.tiles))
+                        .commit()
+                    return@setOnPreferenceClickListener true
+                }
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                findPreference<PreferenceCategory>("device_controls")?.let {
+                    it.isVisible = true
+                }
+                findPreference<Preference>("manage_device_controls")?.setOnPreferenceClickListener {
+                    parentFragmentManager
+                        .beginTransaction()
+                        .replace(R.id.content, ManageControlsSettingsFragment::class.java, null)
+                        .addToBackStack(getString(commonR.string.controls_setting_title))
                         .commit()
                     return@setOnPreferenceClickListener true
                 }
@@ -351,6 +371,18 @@ class SettingsFragment constructor(
                 Log.e(TAG, "Unable to set the icon tint", e)
             }
         }
+
+        findPreference<SwitchPreference>("app_lock_home_bypass")?.let {
+            it.isEnabled = false
+            try {
+                val unwrappedDrawable =
+                    AppCompatResources.getDrawable(requireContext(), R.drawable.ic_wifi)
+                unwrappedDrawable?.setTint(Color.DKGRAY)
+                it.icon = unwrappedDrawable
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to set the icon tint", e)
+            }
+        }
     }
 
     override fun enableInternalConnection() {
@@ -359,6 +391,18 @@ class SettingsFragment constructor(
             try {
                 val unwrappedDrawable =
                     AppCompatResources.getDrawable(requireContext(), R.drawable.ic_computer)
+                unwrappedDrawable?.setTint(resources.getColor(commonR.color.colorAccent))
+                it.icon = unwrappedDrawable
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to set the icon tint", e)
+            }
+        }
+
+        findPreference<SwitchPreference>("app_lock_home_bypass")?.let {
+            it.isEnabled = true
+            try {
+                val unwrappedDrawable =
+                    AppCompatResources.getDrawable(requireContext(), R.drawable.ic_wifi)
                 unwrappedDrawable?.setTint(resources.getColor(commonR.color.colorAccent))
                 it.icon = unwrappedDrawable
             } catch (e: Exception) {
@@ -429,6 +473,8 @@ class SettingsFragment constructor(
         val success = result == Authenticator.SUCCESS
         val switchLock = findPreference<SwitchPreference>("app_lock")
         switchLock?.isChecked = success
+
+        findPreference<SwitchPreference>("app_lock_home_bypass")?.isVisible = success
         findPreference<EditTextPreference>("session_timeout")?.isVisible = success
     }
 

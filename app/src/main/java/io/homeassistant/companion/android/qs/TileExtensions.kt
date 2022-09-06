@@ -149,8 +149,14 @@ abstract class TileExtensions : TileService() {
                     Log.d(TAG, "Service call sent for tile ID: $tileId")
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to call service for tile ID: $tileId", e)
-                    Toast.makeText(context, commonR.string.service_call_failure, Toast.LENGTH_SHORT)
-                        .show()
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            context,
+                            commonR.string.service_call_failure,
+                            Toast.LENGTH_SHORT
+                        )
+                            .show()
+                    }
                 }
             }
             tile.state = Tile.STATE_INACTIVE
@@ -159,7 +165,14 @@ abstract class TileExtensions : TileService() {
             tile.state = Tile.STATE_UNAVAILABLE
             tile.updateTile()
             Log.d(TAG, "No tile data found for tile ID: $tileId")
-            Toast.makeText(context, commonR.string.tile_data_missing, Toast.LENGTH_SHORT).show()
+            withContext(Dispatchers.Main) {
+                Toast.makeText(
+                    context,
+                    commonR.string.tile_data_missing,
+                    Toast.LENGTH_SHORT
+                )
+                    .show()
+            }
         }
     }
 

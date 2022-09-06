@@ -30,6 +30,9 @@ import javax.inject.Inject
 
 abstract class SensorReceiverBase : BroadcastReceiver() {
     companion object {
+        const val ACTION_UPDATE_SENSOR = "io.homeassistant.companion.android.UPDATE_SENSOR"
+        const val EXTRA_SENSOR_ID = "sensorId"
+
         fun shouldDoFastUpdates(context: Context): Boolean {
             val settingDao = AppDatabase.getInstance(context).settingsDao().get(0)
             return when (settingDao?.sensorUpdateFrequency) {
@@ -117,12 +120,19 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                 Log.i(tag, "Skipping faster update because not charging/different preference")
                 return@launch
             }
-            updateSensors(context, integrationUseCase, sensorDao, intent)
-            if (chargingActions.contains(intent.action)) {
-                // Add a 5 second delay to perform another update so charging state updates completely.
-                // This is necessary as the system needs a few seconds to verify the charger.
-                delay(5000L)
+            if (intent.action == ACTION_UPDATE_SENSOR) {
+                val sensorId = intent.getStringExtra(EXTRA_SENSOR_ID)
+                if (sensorId != null) {
+                    updateSensor(context, sensorId)
+                }
+            } else {
                 updateSensors(context, integrationUseCase, sensorDao, intent)
+                if (chargingActions.contains(intent.action)) {
+                    // Add a 5 second delay to perform another update so charging state updates completely.
+                    // This is necessary as the system needs a few seconds to verify the charger.
+                    delay(5000L)
+                    updateSensors(context, integrationUseCase, sensorDao, intent)
+                }
             }
         }
     }
@@ -320,17 +330,17 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         integrationUseCase.registerSensor(reg)
     }
 
-    suspend fun updateSensor(
+    private suspend fun updateSensor(
         context: Context,
-        integrationUseCase: IntegrationRepository,
-        fullSensor: SensorWithAttributes?,
-        sensorManager: SensorManager?,
-        basicSensor: SensorManager.BasicSensor
+        sensorId: String
     ) {
+        val sensorManager = managers.firstOrNull { it.getAvailableSensors(context).any { s -> s.id == sensorId } }
         sensorManager?.requestSensorUpdate(context)
+        val basicSensor = sensorManager?.getAvailableSensors(context)?.firstOrNull { it.id == sensorId }
+        val fullSensor = sensorDao.getFull(sensorId)
         if (
             fullSensor != null && fullSensor.sensor.enabled &&
-            fullSensor.sensor.registered == true &&
+            fullSensor.sensor.registered == true && basicSensor != null &&
             (
                 fullSensor.sensor.state != fullSensor.sensor.lastSentState ||
                     fullSensor.sensor.icon != fullSensor.sensor.lastSentIcon

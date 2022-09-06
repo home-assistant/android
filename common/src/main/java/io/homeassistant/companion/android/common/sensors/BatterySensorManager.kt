@@ -4,12 +4,15 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
+import java.math.RoundingMode
 import io.homeassistant.companion.android.common.R as commonR
 
 class BatterySensorManager : SensorManager {
 
     companion object {
         private const val TAG = "BatterySensor"
+        private const val SETTING_BATTERY_CURRENT_DIVISOR = "battery_current_divisor"
+        private const val DEFAULT_BATTERY_CURRENT_DIVISOR = 1000000
         private val batteryLevel = SensorManager.BasicSensor(
             "battery_level",
             "sensor",
@@ -70,6 +73,18 @@ class BatterySensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
 
+        private val batteryPower = SensorManager.BasicSensor(
+            "battery_power",
+            "sensor",
+            commonR.string.basic_sensor_name_battery_power,
+            commonR.string.sensor_description_battery_power,
+            "mdi:battery-plus",
+            "power",
+            unitOfMeasurement = "W",
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+        )
+
         fun getIsCharging(intent: Intent): Boolean {
             val status: Int = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
 
@@ -95,7 +110,8 @@ class BatterySensorManager : SensorManager {
             isChargingState,
             chargerTypeState,
             batteryHealthState,
-            batteryTemperature
+            batteryTemperature,
+            batteryPower
         )
     }
 
@@ -114,6 +130,7 @@ class BatterySensorManager : SensorManager {
             updateChargerType(context, intent)
             updateBatteryHealth(context, intent)
             updateBatteryTemperature(context, intent)
+            updateBatteryPower(context, intent)
         }
     }
 
@@ -247,6 +264,28 @@ class BatterySensorManager : SensorManager {
         )
     }
 
+    private fun updateBatteryPower(context: Context, intent: Intent) {
+        if (!isEnabled(context, batteryPower.id))
+            return
+
+        val voltage = getBatteryVolts(intent)
+        val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
+        val current = getBatteryCurrent(context, batteryManager)
+        val wattage = voltage * current
+        val icon = if (wattage > 0) batteryPower.statelessIcon else "mdi:battery-minus"
+
+        onSensorUpdated(
+            context,
+            batteryPower,
+            wattage.toBigDecimal().setScale(2, RoundingMode.HALF_UP),
+            icon,
+            mapOf(
+                "current" to current,
+                "voltage" to voltage
+            )
+        )
+    }
+
     private fun getChargerType(intent: Intent): String {
         return when (intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1)) {
             BatteryManager.BATTERY_PLUGGED_AC -> "ac"
@@ -280,5 +319,19 @@ class BatterySensorManager : SensorManager {
 
     private fun getBatteryTemperature(intent: Intent): Float {
         return intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0) / 10f
+    }
+
+    private fun getBatteryCurrent(context: Context, batteryManager: BatteryManager): Float {
+        val dividerSetting = getNumberSetting(
+            context,
+            batteryPower,
+            SETTING_BATTERY_CURRENT_DIVISOR,
+            DEFAULT_BATTERY_CURRENT_DIVISOR
+        )
+        return batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW) / dividerSetting.toFloat()
+    }
+
+    private fun getBatteryVolts(intent: Intent): Float {
+        return intent.getIntExtra(BatteryManager.EXTRA_VOLTAGE, 0) / 1000f
     }
 }

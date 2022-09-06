@@ -9,6 +9,7 @@
     <string name="add_ssid_name_suggestion">Add %1$s</string>
     <string name="add_widget">Add widget</string>
     <string name="all_entities">All entities</string>
+    <string name="allow">Allow</string>
     <string name="app_name">Home Assistant</string>
     <string name="app_version_info">App Version Info</string>
     <string name="application_version">Application Version</string>
@@ -41,6 +42,7 @@
     <string name="basic_sensor_name_battery_state">Battery State</string>
     <string name="basic_sensor_name_battery_temperature">Battery Temperature</string>
     <string name="basic_sensor_name_bluetooth_ble_emitter">BLE Transmitter</string>
+    <string name="basic_sensor_name_bluetooth_ble_beacon_monitor">Beacon Monitor</string>
     <string name="basic_sensor_name_bluetooth_state">Bluetooth State</string>
     <string name="basic_sensor_name_bluetooth">Bluetooth Connection</string>
     <string name="basic_sensor_name_call_number">Call Number</string>
@@ -108,6 +110,7 @@
     <string name="choose_server">Choose server</string>
     <string name="clear_favorites">Clear Favorites</string>
     <string name="color_temp">Color temperature: %1$d</string>
+    <string name="collapse">Collapse</string>
     <string name="complication_entity_invalid">Invalid entity</string>
     <string name="complication_entity_state_content_description">Entity state</string>
     <string name="complication_entity_state_label">Entity state</string>
@@ -127,6 +130,13 @@
     <string name="connect">Connect</string>
     <string name="connected_to_home_assistant">Connected to Home Assistant</string>
     <string name="continue_connect">Continue</string>
+    <string name="controls_setting_category">Device Controls</string>
+    <string name="controls_setting_title">Manage Device Controls</string>
+    <string name="controls_setting_summary">Choose if quick access device controls can be used when this device is locked</string>
+    <string name="controls_setting_choose_setting">Choose which entities you want to be able to control using the built-in device controls option when this device is locked:</string>
+    <string name="controls_setting_choose_all">Select all</string>
+    <string name="controls_setting_choose_none">Select none</string>
+    <string name="controls_setting_choose_empty">No entities available</string>
     <string name="covers">Covers</string>
     <string name="crash_reporting_summary">Help the developers fix bugs and crashes by leaving this enabled. If the application crashes this will automatically generate and send a report. If you notice a crash also create an issue on Github!</string>
     <string name="crash_reporting">Crash Reporting</string>
@@ -170,7 +180,7 @@
     <string name="empty_template">Template value must not be blank</string>
     <string name="enable_all_sensors_summary">All required permissions will be requested upon enabling</string>
     <string name="enable_all_sensors">Enable All Sensors</string>
-    <string name="enable_location_tracking_description">Enabling this sensor will allow the Home Assistant application to track you location and report it back to your instance of Home Assistant. Ensure that you enable background access to location, otherwise we cannot enable location tracking.  Your location data is sent directly to your Home Assistant instance and is never sent to a 3rd party.</string>
+    <string name="enable_location_tracking_description">Enabling this sensor will allow the Home Assistant application to track your location and report it back to your instance of Home Assistant. Ensure that you enable background access to location, otherwise we cannot enable location tracking.  Your location data is sent directly to your Home Assistant instance and is never sent to a 3rd party.</string>
     <string name="enable_location_tracking_prompt">This app collects location data to enable Location Tracking, WiFi Connection Status, and URL decision making even when the app is closed or not in use.</string>
     <string name="enable_location_tracking">Enable Location Tracking</string>
     <string name="enable_remaining_sensors">Enable %1$d Sensors</string>
@@ -200,9 +210,12 @@
     <string name="error_http_generic">There was an error loading Home Assistant. Please review the connection settings and try again.\n\nError Code: %d \nDescription: %s</string>
     <string name="event_error">Failed to notify HA of picked option.</string>
     <string name="exit">Exit</string>
+    <string name="expand">Expand</string>
     <string name="failed_authentication">Could not authenticate</string>
     <string name="failed_connection">Could not connect</string>
+    <string name="failed_phone_connection">Could not connect to phone</string>
     <string name="failed_registration">Could not register</string>
+    <string name="failed_unsupported">Not supported</string>
     <string name="failed_scan">Scanning for Home Assistant failed.</string>
     <string name="failure_send_favorites_wear">Failed to send favorites selection to Wear OS</string>
     <string name="fans">Fans</string>
@@ -288,6 +301,8 @@
     <string name="location">Location</string>
     <string name="lock_summary">Use biometric or screenlock credential to unlock app</string>
     <string name="lock_title">Lock app</string>
+    <string name="lock_home_bypass_summary">Disable app lock when connected to the home WiFi network</string>
+    <string name="lock_home_bypass_title">Unlock on home WiFi</string>
     <string name="locks">Locks</string>
     <string name="lockscreen_message">Tap to unlock :</string>
     <string name="lockscreen_title">App Locked !</string>
@@ -329,8 +344,6 @@
     <string name="message_missing_all">The Wear app is missing on your watch, click the button below to install the app.\n\nNote: Currently the Wear OS app requires you to be enrolled in the beta for the phone app. If the button does not work then please join the beta: https://play.google.com/apps/testing/io.homeassistant.companion.android</string>
     <string name="message_no_connected_nodes">No connected Wear devices, please make sure Bluetooth is on and your watch is paired.</string>
     <string name="message_some_installed">The Wear app is installed on some of your Wear devices: (%1$s)\n\nClick the button below to install the app on the other devices.\n\nNote: Currently the Wear OS app requires you to be enrolled in the beta for the phone app. If the button does not work then please join the beta: https://play.google.com/apps/testing/io.homeassistant.companion.android</string>
-    <string name="mfa_title">Two-factor\nAuthentication</string>
-    <string name="mfa_hint">Code</string>
     <string name="missing_command_permission">Please open the Home Assistant app and send the command again in order to grant the proper permissions. You will be taken to a page to either grant the Home Assistant app the permission, or you will need to select Permissions from the details page and then grant the missing permission. For command_bluetooth the name of the permission is Nearby devices. If you are attempting to use command_activity to make a phone call you will also need to grant Phone permissions.</string>
     <string name="areas">Areas</string>
     <string name="more_entities">More entities</string>
@@ -371,7 +384,6 @@
     <string name="none">None</string>
     <string name="none_selected">None selected</string>
     <string name="not_private">Your connection to this site is not private.</string>
-    <string name="notification_clear_failure">Failed to send event on notification cleared</string>
     <string name="notification_data">Full Notification Data</string>
     <string name="notification_dismiss_failure">Failed to send event on notification dismissed</string>
     <string name="notification_history_summary">History of Notifications (currently displays the last 25 notifications received)</string>
@@ -456,6 +468,7 @@
     <string name="sensor_description_battery_state">The current charging state of the battery</string>
     <string name="sensor_description_battery_temperature">The current battery temperature</string>
     <string name="sensor_description_bluetooth_ble_emitter">Send BLE iBeacon with configured interval, used to track presence around house, e.g. together with roomassistant, esp32-mqtt-room or espresence projects.\n\nWarning: this can affect battery life, particularly if the \"Transmitter power\" setting is set to High or \"Advertise Mode\" is set to Low latency.\nSettings allow for specifying:\n- \"UUID\" (standard UUID format), \"Major\" and \"Minor\" (should be 0 - 65535), to tailor identifiers and groups\n- \"Transmitter Power\" and \"Advertise Mode\" to help to preserve battery life (use lowest values if possible)#n - \"Measured Power\" to specify power measured at 1m (initial default -59)\n\nNote:\nAdditionally a separate setting exists (\"Enable Transmitter\") to stop or start transmitting.</string>
+    <string name="sensor_description_bluetooth_ble_beacon_monitor">Scans for iBeacons and shows the IDs of nearby beacons and their distance in meters.\n\nWarning: this can affect battery life, especially with a short \"Scan Interval\".\n\nSettings allow for specifying:\n- \"Filter Iterations\" (should be 1 - 100, default: 10), higher values will result in more stable measurements but also less responsiveness.\n- \"Filter RSSI Multiplier\" (should be 1.0 - 2.0, default: 1.05), can be used to archive more stable measurements when beacons are farther away. This will also affect responsiveness.\n - \"Scan Interval\" (default: 500) milliseconds between scans. Shorter intervals will drain the battery more quickly.\n - \"Scan Period\" (default: 1100) milliseconds to scan for beacons. Most beacons will send a signal every second so this value should be at least 1100ms.\n\nNote:\nAdditionally a separate setting exists (\"Enable Beacon Monitor\") to stop or start scanning.</string>
     <string name="sensor_description_bluetooth_connection">Information about currently connected Bluetooth devices</string>
     <string name="sensor_description_bluetooth_state">Whether Bluetooth is enabled on the device</string>
     <string name="sensor_description_call_number">The cell number of the incoming or outgoing call</string>
@@ -576,6 +589,11 @@
     <string name="sensor_setting_ble_transmit_power_title">Transmitter power</string>
     <string name="sensor_setting_ble_transmit_power_ultraLow_label">Ultra Low</string>
     <string name="sensor_setting_ble_uuid_title">UUID</string>
+    <string name="sensor_setting_beacon_monitor_enabled_title">Enable Beacon Monitor</string>
+    <string name="sensor_setting_beacon_monitor_scan_period_title">Scan Period</string>
+    <string name="sensor_setting_beacon_monitor_scan_interval_title">Scan Interval</string>
+    <string name="sensor_setting_beacon_monitor_filter_iterations_title">Filter Iterations</string>
+    <string name="sensor_setting_beacon_monitor_filter_rssi_multiplier_title">Filter RSSI Multiplier</string>
     <string name="sensor_setting_geocode_minimum_accuracy_title">Minimum Accuracy</string>
     <string name="sensor_setting_lastreboot_deadband_title">Deadband</string>
     <string name="sensor_setting_lastupdate_add_new_intent_title">Add New Intent</string>
@@ -594,6 +612,7 @@
     <string name="sensor_setting_nextalarm_allow_list_title">Allow List</string>
     <string name="sensor_setting_notification_allow_list_title">Allow List</string>
     <string name="sensor_setting_notification_disable_allow_list_title">Disable Allow List Requirement</string>
+    <string name="sensor_setting_battery_current_divisor_title">Battery Current Divisor</string>
     <string name="sensor_settings">Sensor Settings</string>
     <string name="sensor_summary">Use this to manage what sensors are enabled/disabled.</string>
     <string name="sensor_title">Manage Sensors</string>
@@ -684,6 +703,7 @@
     <string name="switches">Switches</string>
     <string name="tag_reader_title">Processing Tag</string>
     <string name="template_tile">Template tile</string>
+    <string name="template_tile_set_on_watch">Set template to display on Wear OS tile</string>
     <string name="template_tile_change_message">Change template in phone settings</string>
     <string name="template_tile_content">Template tile content</string>
     <string name="template_tile_desc">Renders and displays a template</string>
@@ -741,13 +761,15 @@
     <string name="version">Version: %s</string>
     <string name="view_password">View Password</string>
     <string name="wait">Wait</string>
-    <string name="wear_favorite_entities">Wear Favorite Entities</string>
+    <string name="wear_favorite_entities">Favorite Entities</string>
     <string name="wear_os_category">Wear OS</string>
     <string name="wear_os_settings_summary">Manage Wear OS App</string>
     <string name="wear_os_settings_title">Wear OS Settings</string>
     <string name="wear_set_favorites">Select your favorite entities to appear at the top of the Wear home screen. You can also drag and drop to change the order in which they appear.</string>
     <string name="wear_settings">Wear Device Settings</string>
     <string name="websocket_listening">Connected to Home Assistant</string>
+    <string name="websocket_restricted_title">Unable to open connection to Home Assistant</string>
+    <string name="websocket_restricted_fix">Update settings to fix or disable</string>
     <string name="webview_error_AUTH_SCHEME">Unsupported authentication scheme (not basic or digest), please check network settings.</string>
     <string name="webview_error_AUTHENTICATION">User authentication failed on server, please check server settings.</string>
     <string name="webview_error_description">Encountered error :</string>
@@ -829,7 +851,9 @@
     <string name="websocket_setting_always">Always</string>
     <string name="websocket_setting_always_minimal">Always\n\nRequired to always receive notifications</string>
     <string name="websocket_persistent_notification">In order to maintain the persistent connection the app will need to create a persistent notification. You may use the button below to manage the appearance of this notification. It is recommended to minimize the notification to hide the icon.</string>
+    <string name="websocket_notification_backgroundaccess">To reliably connect your server, allow Home Assistant to keep running in the background.</string>
     <string name="websocket_notification_channel">Manage Persistent Connection Notification</string>
+    <string name="websocket_notification_issues">Persistent Connection Issues</string>
     <string name="notification_channels">Notification Channels</string>
     <string name="notification_channels_summary">Manage all notification channels configured on the device. Channels control the behavior of its notifications including visibility and sound.</string>
     <string name="info">Information</string>
@@ -891,4 +915,8 @@
     <string name="tls_cert_title">TLS Client Certificate Error</string>
     <string name="tls_cert_not_found_message">The remote site requires a client certificate.\nPlease install the required credential on your phone and try again.</string>
     <string name="tls_cert_expired_message">The certificate is not yet or no longer valid.\nPlease install a new credential on your phone and try again.</string>
+    <string name="basic_sensor_name_battery_power">Battery Power</string>
+    <string name="widget_checkbox_require_authentication">Require Authentication</string>
+    <string name="widget_error_authenticating">Error authenticating - is an authentication method configured?</string>
+    <string name="sensor_description_battery_power">The current wattage of the device. To get the most out of this sensor consider using the \"Fast while charging\" sensor update frequency setting. If your values are not as expected you may need to adjust the \"Battery Current Divisor\" setting to get a proper unit of amperes for the \"current\" attribute. Android is supposed to report microamperes however, some devices may report a different unit. The default will convert microamperes to amperes.</string>
 </resources>

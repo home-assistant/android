@@ -79,6 +79,8 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
+import java.io.File
+import java.io.FileOutputStream
 import java.net.URL
 import java.net.URLDecoder
 import java.util.Locale
@@ -131,6 +133,7 @@ class MessagingManager @Inject constructor(
         const val PACKAGE_NAME = "package_name"
         const val COMMAND = "command"
         const val TTS_TEXT = "tts_text"
+        const val CHANNEL = "channel"
 
         // special intent constants
         const val INTENT_PACKAGE_NAME = "intent_package_name"
@@ -150,6 +153,7 @@ class MessagingManager @Inject constructor(
         const val COMMAND_VOLUME_LEVEL = "command_volume_level"
         const val COMMAND_BLUETOOTH = "command_bluetooth"
         const val COMMAND_BLE_TRANSMITTER = "command_ble_transmitter"
+        const val COMMAND_BEACON_MONITOR = "command_beacon_monitor"
         const val COMMAND_SCREEN_ON = "command_screen_on"
         const val COMMAND_MEDIA = "command_media"
         const val COMMAND_UPDATE_SENSORS = "command_update_sensors"
@@ -227,6 +231,7 @@ class MessagingManager @Inject constructor(
             COMMAND_VOLUME_LEVEL,
             COMMAND_BLUETOOTH,
             COMMAND_BLE_TRANSMITTER,
+            COMMAND_BEACON_MONITOR,
             COMMAND_HIGH_ACCURACY_MODE,
             COMMAND_ACTIVITY,
             COMMAND_WEBVIEW,
@@ -259,7 +264,7 @@ class MessagingManager @Inject constructor(
 
         // Video Values
         const val VIDEO_START_MICROSECONDS = 100000L
-        const val VIDEO_INCREMENT_MICROSECONDS = 2000000L
+        const val VIDEO_INCREMENT_MICROSECONDS = 750000L
         const val VIDEO_GUESS_MILLISECONDS = 7000L
     }
 
@@ -291,9 +296,9 @@ class MessagingManager @Inject constructor(
                 Log.d(TAG, "Clearing notification with tag: ${jsonData["tag"]}")
                 clearNotification(jsonData["tag"]!!)
             }
-            jsonData[MESSAGE] == REMOVE_CHANNEL && !jsonData["channel"].isNullOrBlank() -> {
-                Log.d(TAG, "Removing Notification channel ${jsonData["channel"]}")
-                removeNotificationChannel(jsonData["channel"]!!)
+            jsonData[MESSAGE] == REMOVE_CHANNEL && !jsonData[CHANNEL].isNullOrBlank() -> {
+                Log.d(TAG, "Removing Notification channel ${jsonData[CHANNEL]}")
+                removeNotificationChannel(jsonData[CHANNEL]!!)
             }
             jsonData[MESSAGE] == TTS -> {
                 Log.d(TAG, "Sending notification title to TTS")
@@ -404,6 +409,19 @@ class MessagingManager @Inject constructor(
                             }
                         }
                     }
+                    COMMAND_BEACON_MONITOR -> {
+                        if (!jsonData[COMMAND].isNullOrEmpty() && jsonData[COMMAND] in ENABLE_COMMANDS)
+                            handleDeviceCommands(jsonData)
+                        else {
+                            mainScope.launch {
+                                Log.d(
+                                    TAG,
+                                    "Invalid beacon monitor command received, posting notification to device"
+                                )
+                                sendNotification(jsonData)
+                            }
+                        }
+                    }
                     COMMAND_HIGH_ACCURACY_MODE -> {
                         if ((!jsonData[COMMAND].isNullOrEmpty() && jsonData[COMMAND] in ENABLE_COMMANDS) ||
                             (
@@ -442,7 +460,7 @@ class MessagingManager @Inject constructor(
                         handleDeviceCommands(jsonData)
                     }
                     COMMAND_MEDIA -> {
-                        if (!jsonData[COMMAND].isNullOrEmpty() && jsonData[COMMAND] in MEDIA_COMMANDS && !jsonData[MEDIA_PACKAGE_NAME].isNullOrEmpty()) {
+                        if (!jsonData[MEDIA_COMMAND].isNullOrEmpty() && jsonData[MEDIA_COMMAND] in MEDIA_COMMANDS && !jsonData[MEDIA_PACKAGE_NAME].isNullOrEmpty()) {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
                                 handleDeviceCommands(jsonData)
                             } else {
@@ -779,6 +797,12 @@ class MessagingManager @Inject constructor(
                     BluetoothSensorManager().requestSensorUpdate(context)
                     SensorWorker.start(context)
                 }
+            }
+            COMMAND_BEACON_MONITOR -> {
+                if (command == TURN_OFF)
+                    BluetoothSensorManager.enableDisableBeaconMonitor(context, false)
+                if (command == TURN_ON)
+                    BluetoothSensorManager.enableDisableBeaconMonitor(context, true)
             }
             COMMAND_HIGH_ACCURACY_MODE -> {
                 when (command) {
@@ -1117,7 +1141,7 @@ class MessagingManager @Inject constructor(
         builder: NotificationCompat.Builder,
         data: Map<String, String>
     ) {
-        if (data["channel"] == ALARM_STREAM) {
+        if (data[CHANNEL] == ALARM_STREAM) {
             builder.setCategory(Notification.CATEGORY_ALARM)
             builder.setSound(
                 RingtoneManager.getActualDefaultRingtoneUri(
@@ -1394,28 +1418,48 @@ class MessagingManager @Inject constructor(
             Dispatchers.IO
         ) {
             url ?: return@withContext null
+            val videoFile = File(context.applicationContext.cacheDir.absolutePath + "/notifications/video-${System.currentTimeMillis()}")
             val processingFrames = mutableListOf<Deferred<Bitmap?>>()
+            var processingFramesSize = 0
+            var singleFrame = 0
 
             try {
                 MediaMetadataRetriever().let { mediaRetriever ->
+                    val request = Request.Builder().apply {
+                        url(url)
+                        if (requiresAuth) {
+                            addHeader("Authorization", authenticationUseCase.buildBearerToken())
+                        }
+                    }.build()
+                    val response = okHttpClient.newCall(request).execute()
 
-                    if (requiresAuth) {
-                        mediaRetriever.setDataSource(url.toString(), mapOf("Authorization" to authenticationUseCase.buildBearerToken()))
-                    } else {
-                        mediaRetriever.setDataSource(url.toString(), hashMapOf())
+                    if (!videoFile.exists()) {
+                        videoFile.parentFile?.mkdirs()
+                        videoFile.createNewFile()
                     }
+                    FileOutputStream(videoFile).use { output ->
+                        response.body?.byteStream()?.copyTo(output)
+                    }
+                    response.close()
 
+                    mediaRetriever.setDataSource(videoFile.absolutePath)
                     val durationInMicroSeconds = ((mediaRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: VIDEO_GUESS_MILLISECONDS)) * 1000
 
-                    // Start at 100 milliseconds and get frames every 2 seconds until reaching the end
+                    // Start at 100 milliseconds and get frames every 0.75 seconds until reaching the end
                     run frameLoop@{
                         for (timeInMicroSeconds in VIDEO_START_MICROSECONDS until durationInMicroSeconds step VIDEO_INCREMENT_MICROSECONDS) {
-                            if (processingFrames.size >= 5) {
+                            // Max size in bytes for notification GIF
+                            val maxSize = (2500000 - singleFrame)
+                            if (processingFramesSize >= maxSize) {
                                 return@frameLoop
                             }
 
                             mediaRetriever.getFrameAtTime(timeInMicroSeconds, MediaMetadataRetriever.OPTION_CLOSEST)
-                                ?.let { smallFrame -> processingFrames.add(async { smallFrame.getCompressedFrame() }) }
+                                ?.let { smallFrame ->
+                                    processingFrames.add(async { smallFrame.getCompressedFrame() })
+                                    processingFramesSize += (smallFrame.getCompressedFrame())!!.allocationByteCount
+                                    singleFrame = (smallFrame.getCompressedFrame())!!.allocationByteCount
+                                }
                         }
                     }
 
@@ -1426,12 +1470,22 @@ class MessagingManager @Inject constructor(
                 Log.e(TAG, "Couldn't download video for notification", e)
             }
 
-            return@withContext processingFrames.awaitAll().filterNotNull()
+            val frames = processingFrames.awaitAll().filterNotNull()
+            videoFile.delete()
+            return@withContext frames
         }
 
     private fun Bitmap.getCompressedFrame(): Bitmap? {
-        val newHeight = height / 4
-        val newWidth = width / 4
+        var newWidth = 480
+        var newHeight = 0
+        // If already smaller than 480p do not scale else scale
+        if (width < newWidth) {
+            newWidth = width
+            newHeight = height
+        } else {
+            val ratio: Float = (width.toFloat() / height.toFloat())
+            newHeight = (newWidth / ratio).toInt()
+        }
         return Bitmap.createScaledBitmap(this, newWidth, newHeight, false)
     }
 
@@ -1554,6 +1608,7 @@ class MessagingManager @Inject constructor(
             intent.putExtra("fragment", NOTIFICATION_HISTORY)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+        intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
 
         return PendingIntent.getActivity(
             context,
@@ -1571,9 +1626,9 @@ class MessagingManager @Inject constructor(
         var channelID = generalChannel
         var channelName = "General"
 
-        if (data.containsKey("channel")) {
-            channelID = createChannelID(data["channel"].toString())
-            channelName = data["channel"].toString().trim()
+        if (!data[CHANNEL].isNullOrEmpty()) {
+            channelID = createChannelID(data[CHANNEL].toString())
+            channelName = data[CHANNEL].toString().trim()
         }
 
         // Since android Oreo notification channel is needed.
@@ -1853,6 +1908,7 @@ class MessagingManager @Inject constructor(
             else
                 WebViewActivity.newInstance(context, title)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
             context.startActivity(intent)
         } catch (e: Exception) {
             Log.e(TAG, "Unable to open webview", e)

@@ -2,8 +2,10 @@ package io.homeassistant.companion.android.common.data.integration.impl
 
 import android.util.Log
 import io.homeassistant.companion.android.common.BuildConfig
+import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
+import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationException
@@ -31,7 +33,6 @@ import kotlinx.coroutines.flow.map
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.json.JSONArray
 import java.util.concurrent.TimeUnit
-import java.util.regex.Pattern
 import javax.inject.Inject
 import javax.inject.Named
 
@@ -74,11 +75,11 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_WEBVIEW_DEBUG_ENABLED = "webview_debug_enabled"
         private const val PREF_SESSION_TIMEOUT = "session_timeout"
         private const val PREF_SESSION_EXPIRE = "session_expire"
+        private const val PREF_CONTROLS_AUTH_REQUIRED = "controls_auth_required"
+        private const val PREF_CONTROLS_AUTH_ENTITIES = "controls_auth_entities"
         private const val PREF_SEC_WARNING_NEXT = "sec_warning_last"
         private const val TAG = "IntegrationRepository"
         private const val RATE_LIMIT_URL = BuildConfig.RATE_LIMIT_URL
-
-        private val VERSION_PATTERN = Pattern.compile("([0-9]{4})\\.([0-9]{1,2})\\.([0-9]{1,2}).*")
     }
 
     override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {
@@ -176,6 +177,13 @@ class IntegrationRepositoryImpl @Inject constructor(
 
         if (causeException != null) throw IntegrationException(causeException)
         else throw IntegrationException("Error calling integration request render_template")
+    }
+
+    override suspend fun getTemplateUpdates(template: String): Flow<String>? {
+        return webSocketRepository.getTemplateUpdates(template)
+            ?.map {
+                it.result
+            }
     }
 
     override suspend fun updateLocation(updateLocation: UpdateLocation) {
@@ -381,6 +389,25 @@ class IntegrationRepositoryImpl @Inject constructor(
         return localStorage.getLong(PREF_SESSION_EXPIRE) ?: 0
     }
 
+    override suspend fun setControlsAuthRequired(setting: ControlsAuthRequiredSetting) {
+        localStorage.putString(PREF_CONTROLS_AUTH_REQUIRED, setting.name)
+    }
+
+    override suspend fun getControlsAuthRequired(): ControlsAuthRequiredSetting {
+        val current = localStorage.getString(PREF_CONTROLS_AUTH_REQUIRED)
+        return ControlsAuthRequiredSetting.values().firstOrNull {
+            it.name == current
+        } ?: ControlsAuthRequiredSetting.NONE
+    }
+
+    override suspend fun setControlsAuthEntities(entities: List<String>) {
+        localStorage.putStringSet(PREF_CONTROLS_AUTH_ENTITIES, entities.toSet())
+    }
+
+    override suspend fun getControlsAuthEntities(): List<String> {
+        return localStorage.getStringSet(PREF_CONTROLS_AUTH_ENTITIES)?.toList() ?: emptyList()
+    }
+
     override suspend fun getTileShortcuts(): List<String> {
         val jsonArray = JSONArray(localStorage.getString(PREF_TILE_SHORTCUTS) ?: "[]")
         return List(jsonArray.length()) {
@@ -485,17 +512,8 @@ class IntegrationRepositoryImpl @Inject constructor(
     ): Boolean {
         if (!isRegistered()) return false
 
-        val version = getHomeAssistantVersion()
-        val matches = VERSION_PATTERN.matcher(version)
-        var result = false
-        if (matches.find() && matches.matches()) {
-            val coreYear = matches.group(1)?.toIntOrNull() ?: 0
-            val coreMonth = matches.group(2)?.toIntOrNull() ?: 0
-            val coreRelease = matches.group(3)?.toIntOrNull() ?: 0
-            result =
-                coreYear > year || (coreYear == year && (coreMonth > month || (coreMonth == month && coreRelease >= release)))
-        }
-        return result
+        val version = HomeAssistantVersion.fromString(getHomeAssistantVersion())
+        return version?.isAtLeast(year, month, release) ?: false
     }
 
     override suspend fun getConfig(): GetConfigResponse {
@@ -589,6 +607,21 @@ class IntegrationRepositoryImpl @Inject constructor(
                     it.newState.lastChanged,
                     it.newState.lastUpdated,
                     it.newState.context
+                )
+            }
+    }
+
+    override suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity<*>>? {
+        return webSocketRepository.getStateChanges(entityIds)
+            ?.filter { it.toState != null }
+            ?.map {
+                Entity(
+                    it.toState!!.entityId,
+                    it.toState.state,
+                    it.toState.attributes,
+                    it.toState.lastChanged,
+                    it.toState.lastUpdated,
+                    it.toState.context
                 )
             }
     }

@@ -14,7 +14,7 @@ plugins {
 }
 
 android {
-    compileSdk = 32
+    compileSdk = 33
 
     ndkVersion = "21.3.6528147"
 
@@ -146,24 +146,24 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.43.2")
     kapt("com.google.dagger:hilt-android-compiler:2.43.2")
 
-    implementation("androidx.appcompat:appcompat:1.4.2")
+    implementation("androidx.appcompat:appcompat:1.5.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.5.1")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.recyclerview:recyclerview:1.2.1")
     implementation("androidx.preference:preference-ktx:1.2.0")
     implementation("com.google.android.material:material:1.6.1")
-    implementation("androidx.fragment:fragment-ktx:1.5.1")
+    implementation("androidx.fragment:fragment-ktx:1.5.2")
 
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.3")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.4")
     implementation("com.squareup.okhttp3:okhttp:4.10.0")
     implementation("com.squareup.picasso:picasso:2.8")
 
     "fullImplementation"("com.google.android.gms:play-services-location:20.0.0")
     "fullImplementation"("com.google.firebase:firebase-core:21.1.0")
     "fullImplementation"("com.google.firebase:firebase-iid:21.1.0")
-    "fullImplementation"("com.google.firebase:firebase-messaging:23.0.6")
-    "fullImplementation"("io.sentry:sentry-android:6.3.1")
+    "fullImplementation"("com.google.firebase:firebase-messaging:23.0.7")
+    "fullImplementation"("io.sentry:sentry-android:6.4.1")
     "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
     "fullImplementation"("com.google.android.gms:play-services-wearable:17.1.0")
     "fullImplementation"("androidx.wear:wear-remote-interactions:1.0.0")
@@ -180,19 +180,19 @@ dependencies {
     }
     "minimalImplementation"("org.chromium.net:cronet-embedded:101.4951.41")
 
-    implementation("androidx.compose.animation:animation:1.2.0")
-    implementation("androidx.compose.compiler:compiler:1.2.0")
-    implementation("androidx.compose.foundation:foundation:1.2.0")
-    implementation("androidx.compose.material:material:1.2.0")
-    implementation("androidx.compose.material:material-icons-core:1.2.0")
-    implementation("androidx.compose.material:material-icons-extended:1.2.0")
-    implementation("androidx.compose.runtime:runtime:1.2.0")
-    implementation("androidx.compose.ui:ui:1.2.0")
-    implementation("androidx.compose.ui:ui-tooling:1.2.0")
+    implementation("androidx.compose.animation:animation:1.2.1")
+    implementation("androidx.compose.compiler:compiler:1.3.0")
+    implementation("androidx.compose.foundation:foundation:1.2.1")
+    implementation("androidx.compose.material:material:1.2.1")
+    implementation("androidx.compose.material:material-icons-core:1.2.1")
+    implementation("androidx.compose.material:material-icons-extended:1.2.1")
+    implementation("androidx.compose.runtime:runtime:1.2.1")
+    implementation("androidx.compose.ui:ui:1.2.1")
+    implementation("androidx.compose.ui:ui-tooling:1.2.1")
     implementation("androidx.activity:activity-compose:1.5.1")
     implementation("androidx.navigation:navigation-compose:2.5.1")
     implementation("com.google.android.material:compose-theme-adapter:1.1.15")
-    implementation("com.google.accompanist:accompanist-appcompat-theme:0.25.0")
+    implementation("com.google.accompanist:accompanist-appcompat-theme:0.25.1")
 
     implementation("com.mikepenz:iconics-core:5.3.4")
     implementation("com.mikepenz:iconics-compose:5.3.4")

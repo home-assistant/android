@@ -109,6 +109,7 @@ class ManageShortcutsViewModel @Inject constructor(
         )
         intent.action = shortcutPath
         intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+        intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
         intent.putExtra("iconId", iconId)
 
         val shortcut = ShortcutInfo.Builder(getApplication(), shortcutId)

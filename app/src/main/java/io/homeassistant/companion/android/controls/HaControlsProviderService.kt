@@ -7,6 +7,7 @@ import android.service.controls.actions.ControlAction
 import android.util.Log
 import androidx.annotation.RequiresApi
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
@@ -34,6 +35,39 @@ class HaControlsProviderService : ControlsProviderService() {
 
     companion object {
         private const val TAG = "HaConProService"
+
+        private val domainToHaControl = mapOf(
+            "automation" to DefaultSwitchControl,
+            "button" to DefaultButtonControl,
+            "camera" to CameraControl,
+            "climate" to ClimateControl,
+            "cover" to CoverControl,
+            "fan" to FanControl,
+            "ha_failed" to HaFailedControl,
+            "input_boolean" to DefaultSwitchControl,
+            "input_button" to DefaultButtonControl,
+            "input_number" to DefaultSliderControl,
+            "light" to LightControl,
+            "lock" to LockControl,
+            "media_player" to null,
+            "remote" to null,
+            "scene" to DefaultButtonControl,
+            "script" to DefaultButtonControl,
+            "switch" to DefaultSwitchControl,
+            "vacuum" to VacuumControl
+        )
+        private val domainToMinimumApi = mapOf(
+            "camera" to Build.VERSION_CODES.S
+        )
+
+        fun getSupportedDomains(): List<String> =
+            domainToHaControl
+                .filter { it.value != null }
+                .map { it.key }
+                .filter {
+                    domainToMinimumApi[it] == null ||
+                        Build.VERSION.SDK_INT >= domainToMinimumApi[it]!!
+                }
     }
 
     @Inject
@@ -46,30 +80,6 @@ class HaControlsProviderService : ControlsProviderService() {
     lateinit var urlRepository: UrlRepository
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
-
-    private val domainToHaControl = mapOf(
-        "automation" to DefaultSwitchControl,
-        "button" to DefaultButtonControl,
-        "camera" to CameraControl,
-        "climate" to ClimateControl,
-        "cover" to CoverControl,
-        "fan" to FanControl,
-        "ha_failed" to HaFailedControl,
-        "input_boolean" to DefaultSwitchControl,
-        "input_button" to DefaultButtonControl,
-        "input_number" to DefaultSliderControl,
-        "light" to LightControl,
-        "lock" to LockControl,
-        "media_player" to null,
-        "remote" to null,
-        "scene" to DefaultButtonControl,
-        "script" to DefaultButtonControl,
-        "switch" to DefaultSwitchControl,
-        "vacuum" to VacuumControl
-    )
-    private val domainToMinimumApi = mapOf(
-        "camera" to Build.VERSION_CODES.S
-    )
 
     override fun createPublisherForAllAvailable(): Flow.Publisher<Control> {
         return Flow.Publisher { subscriber ->
@@ -101,6 +111,7 @@ class HaControlsProviderService : ControlsProviderService() {
                                     applicationContext,
                                     it as Entity<Map<String, Any>>,
                                     areaForEntity[it.entityId],
+                                    false, // Auth not required for preview
                                     null // Prevent downloading camera images
                                 )
                             } catch (e: Exception) {
@@ -163,9 +174,11 @@ class HaControlsProviderService : ControlsProviderService() {
                                         applicationContext,
                                         it as Entity<Map<String, Any>>,
                                         RegistriesDataHandler.getAreaForEntity(it.entityId, areaRegistry, deviceRegistry, entityRegistry),
+                                        entityRequiresAuth(it.entityId),
                                         baseUrl
                                     )
-                                    subscriber.onNext(control)
+                                    if (control != null)
+                                        subscriber.onNext(control)
                                 }
                             }
                         }
@@ -229,7 +242,7 @@ class HaControlsProviderService : ControlsProviderService() {
         }
     }
 
-    private fun sendEntitiesToSubscriber(
+    private suspend fun sendEntitiesToSubscriber(
         subscriber: Flow.Subscriber<in Control>,
         entities: Map<String, Entity<Map<String, Any>>>,
         areaRegistry: List<AreaRegistryResponse>?,
@@ -243,6 +256,7 @@ class HaControlsProviderService : ControlsProviderService() {
                     applicationContext,
                     it.value,
                     RegistriesDataHandler.getAreaForEntity(it.value.entityId, areaRegistry, deviceRegistry, entityRegistry),
+                    entityRequiresAuth(it.value.entityId),
                     baseUrl
                 )
             } catch (e: Exception) {
@@ -251,10 +265,12 @@ class HaControlsProviderService : ControlsProviderService() {
                     applicationContext,
                     getFailedEntity(it.value.entityId, e),
                     RegistriesDataHandler.getAreaForEntity(it.value.entityId, areaRegistry, deviceRegistry, entityRegistry),
+                    entityRequiresAuth(it.value.entityId),
                     baseUrl
                 )
             }
-            subscriber.onNext(control)
+            if (control != null)
+                subscriber.onNext(control)
         }
     }
 
@@ -270,5 +286,17 @@ class HaControlsProviderService : ControlsProviderService() {
             lastUpdated = Calendar.getInstance(),
             context = null
         )
+    }
+
+    private suspend fun entityRequiresAuth(entityId: String): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val setting = integrationRepository.getControlsAuthRequired()
+            if (setting == ControlsAuthRequiredSetting.SELECTION) {
+                val includeList = integrationRepository.getControlsAuthEntities()
+                includeList.contains(entityId)
+            } else {
+                setting == ControlsAuthRequiredSetting.ALL
+            }
+        } else false
     }
 }

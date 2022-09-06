@@ -1,14 +1,8 @@
 package io.homeassistant.companion.android.common.data.authentication.impl
 
-import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowAuthentication
-import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowForm
-import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowMfaCode
-import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowRequest
 import io.homeassistant.companion.android.common.data.authentication.impl.entities.Token
 import okhttp3.HttpUrl
-import okhttp3.ResponseBody
 import retrofit2.Response
-import retrofit2.http.Body
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
 import retrofit2.http.POST
@@ -21,9 +15,6 @@ interface AuthenticationService {
         const val GRANT_TYPE_CODE = "authorization_code"
         const val GRANT_TYPE_REFRESH = "refresh_token"
         const val REVOKE_ACTION = "revoke"
-        val HANDLER = listOf("homeassistant", null)
-        const val AUTHENTICATE_BASE_PATH = "auth/login_flow/"
-        const val AUTH_CALLBACK = "homeassistant://auth-callback"
     }
 
     @FormUrlEncoded
@@ -51,13 +42,4 @@ interface AuthenticationService {
         @Field("token") refreshToken: String,
         @Field("action") action: String
     )
-
-    @POST
-    suspend fun initializeLogin(@Url url: String, @Body body: LoginFlowRequest): LoginFlowForm
-
-    @POST
-    suspend fun authenticatePassword(@Url url: HttpUrl, @Body body: LoginFlowAuthentication): Response<ResponseBody>
-
-    @POST
-    suspend fun authenticateMfa(@Url url: HttpUrl, @Body body: LoginFlowMfaCode): Response<ResponseBody>
 }

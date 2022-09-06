@@ -40,6 +40,10 @@ class GeocodeSensorManager : SensorManager {
         return listOf(geocodedLocation)
     }
 
+    override fun hasSensor(context: Context): Boolean {
+        return Geocoder.isPresent()
+    }
+
     override fun requiredPermissions(sensorId: String): Array<String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             arrayOf(
@@ -76,10 +80,20 @@ class GeocodeSensorManager : SensorManager {
                     ?: DEFAULT_MINIMUM_ACCURACY
                 sensorDao.add(SensorSetting(geocodedLocation.id, SETTING_ACCURACY, minAccuracy.toString(), SensorSettingType.NUMBER))
 
-                if (location.accuracy <= minAccuracy)
+                if (location.accuracy <= minAccuracy) {
                     address = Geocoder(context)
                         .getFromLocation(location.latitude, location.longitude, 1)
-                        .firstOrNull()
+                        ?.firstOrNull()
+                } else {
+                    Log.w(TAG, "Skipping geocoded update as accuracy was not met: ${location.accuracy}")
+                    return@addOnSuccessListener
+                }
+
+                val now = System.currentTimeMillis()
+                if (now - location.time > 300000) {
+                    Log.w(TAG, "Skipping geocoded update due to old timestamp ${location.time} compared to $now")
+                    return@addOnSuccessListener
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to get geocoded location", e)
             }
@@ -89,17 +103,20 @@ class GeocodeSensorManager : SensorManager {
                     "country" to it.countryName,
                     "iso_country_code" to it.countryCode,
                     "locality" to it.locality,
-                    "latitude" to it.latitude,
-                    "longitude" to it.longitude,
+                    "location" to listOf(it.latitude, it.longitude),
+                    "name" to it.featureName,
+                    "phone" to it.phone,
+                    "premises" to it.premises,
                     "postal_code" to it.postalCode,
                     "sub_administrative_area" to it.subAdminArea,
                     "sub_locality" to it.subLocality,
                     "sub_thoroughfare" to it.subThoroughfare,
-                    "thoroughfare" to it.thoroughfare
+                    "thoroughfare" to it.thoroughfare,
+                    "url" to it.url
                 )
             }.orEmpty()
 
-            var prettyAddress = address?.getAddressLine(0)
+            val prettyAddress = address?.getAddressLine(0)
 
             HighAccuracyLocationService.updateNotificationAddress(context, location, if (!prettyAddress.isNullOrEmpty()) prettyAddress else context.getString(commonR.string.unknown_address))
 

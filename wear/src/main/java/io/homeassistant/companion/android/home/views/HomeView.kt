@@ -171,6 +171,7 @@ fun LoadHomePage(
                 ChooseEntityView(
                     entitiesByDomainOrder = mainViewModel.entitiesByDomainOrder,
                     entitiesByDomain = mainViewModel.entitiesByDomain,
+                    favoriteEntityIds = mainViewModel.favoriteEntityIds,
                     onNoneClicked = {
                         mainViewModel.clearTileShortcut(shortcutEntitySelectionIndex)
                         TileService.getUpdater(context).requestUpdate(ShortcutsTile::class.java)

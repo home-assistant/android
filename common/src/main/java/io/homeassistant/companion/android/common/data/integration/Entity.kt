@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.common.data.integration
 import android.graphics.Color
 import android.util.Log
 import java.util.Calendar
+import kotlin.math.round
 
 data class Entity<T>(
     val entityId: String,
@@ -80,7 +81,25 @@ fun <T> Entity<T>.getFanSpeed(): EntityPosition? {
             max = maxValue
         )
     } catch (e: Exception) {
-        Log.e(EntityExt.TAG, "Unable to get getLightBrightness", e)
+        Log.e(EntityExt.TAG, "Unable to get getFanSpeed", e)
+        null
+    }
+}
+
+fun <T> Entity<T>.getFanSteps(): Int? {
+    return try {
+        if (!supportsFanSetSpeed()) return null
+
+        fun calculateNumStep(percentageStep: Double): Int {
+            val numSteps = round(100 / percentageStep).toInt()
+            if (numSteps <= 10) return numSteps
+            if (numSteps % 10 == 0) return 10
+            return calculateNumStep(percentageStep * 2)
+        }
+
+        return calculateNumStep(((attributes as Map<*, *>)["percentage_step"] as? Double)?.toDouble() ?: 1.0) - 1
+    } catch (e: Exception) {
+        Log.e(EntityExt.TAG, "Unable to get getFanSteps")
         null
     }
 }

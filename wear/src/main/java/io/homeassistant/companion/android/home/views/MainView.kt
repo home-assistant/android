@@ -111,21 +111,16 @@ fun MainView(
                                     colors = ChipDefaults.secondaryChipColors()
                                 )
                             } else {
-                                var isValidEntity = false
-                                for (entity in mainViewModel.entities) {
-                                    if (entity.value.entityId == favoriteEntityID) {
-                                        isValidEntity = true
+                                mainViewModel.entities.values.toList()
+                                    .firstOrNull { it.entityId == favoriteEntityID }
+                                    ?.let {
                                         EntityUi(
                                             mainViewModel.entities[favoriteEntityID]!!,
                                             onEntityClicked,
                                             isHapticEnabled,
                                             isToastEnabled
                                         ) { entityId -> onEntityLongClicked(entityId) }
-                                    }
-                                }
-                                if (!isValidEntity) {
-                                    deleteFavorite(favoriteEntityID)
-                                }
+                                    } ?: deleteFavorite(favoriteEntityID)
                             }
                         }
                     }
@@ -163,6 +158,7 @@ fun MainView(
                                     onClick = onRetryLoadEntitiesClicked,
                                     colors = ChipDefaults.primaryChipColors()
                                 )
+                                Spacer(modifier = Modifier.height(32.dp))
                             }
                         }
                     }
@@ -300,27 +296,29 @@ fun MainView(
                                 )
                             }
                         }
+                    }
+                }
 
-                        // Settings
-                        item {
-                            Chip(
-                                modifier = Modifier
-                                    .fillMaxWidth(),
-                                icon = {
-                                    Image(
-                                        asset = CommunityMaterial.Icon.cmd_cog,
-                                        colorFilter = ColorFilter.tint(Color.White)
-                                    )
-                                },
-                                label = {
-                                    Text(
-                                        text = stringResource(id = commonR.string.settings)
-                                    )
-                                },
-                                onClick = onSettingsClicked,
-                                colors = ChipDefaults.secondaryChipColors()
-                            )
-                        }
+                if (mainViewModel.loadingState.value != MainViewModel.LoadingState.LOADING) {
+                    // Settings
+                    item {
+                        Chip(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            icon = {
+                                Image(
+                                    asset = CommunityMaterial.Icon.cmd_cog,
+                                    colorFilter = ColorFilter.tint(Color.White)
+                                )
+                            },
+                            label = {
+                                Text(
+                                    text = stringResource(id = commonR.string.settings)
+                                )
+                            },
+                            onClick = onSettingsClicked,
+                            colors = ChipDefaults.secondaryChipColors()
+                        )
                     }
                 }
             }
