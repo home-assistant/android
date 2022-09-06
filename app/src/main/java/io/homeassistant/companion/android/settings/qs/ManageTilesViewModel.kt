@@ -13,13 +13,13 @@ import androidx.core.content.getSystemService
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmapOrNull
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.maltaisn.icondialog.data.Icon
 import com.maltaisn.icondialog.pack.IconPack
 import com.maltaisn.icondialog.pack.IconPackLoader
 import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
@@ -45,9 +45,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.Executors
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 @HiltViewModel
 class ManageTilesViewModel @Inject constructor(
+    state: SavedStateHandle,
     private val integrationUseCase: IntegrationRepository,
     private val tileDao: TileDao,
     application: Application
@@ -68,24 +70,32 @@ class ManageTilesViewModel @Inject constructor(
 
     var sortedEntities by mutableStateOf<List<Entity<*>>>(emptyList())
         private set
-    var selectedIconDrawable by mutableStateOf(AppCompatResources.getDrawable(application, R.drawable.ic_stat_ic_notification))
+    var selectedIconDrawable by mutableStateOf(AppCompatResources.getDrawable(application, commonR.drawable.ic_stat_ic_notification))
         private set
     var selectedEntityId by mutableStateOf("")
     var tileLabel by mutableStateOf("")
     var tileSubtitle by mutableStateOf<String?>(null)
-    var submitButtonLabel by mutableStateOf(R.string.tile_save)
+    var submitButtonLabel by mutableStateOf(commonR.string.tile_save)
         private set
 
     private var selectedIcon: Int? = null
     private var selectedTileId = 0
     private var selectedTileAdded = false
 
-    private val _saveResultSnackbar = MutableSharedFlow<Int>()
-    var saveResultSnackbar = _saveResultSnackbar.asSharedFlow()
+    private val _tileInfoSnackbar = MutableSharedFlow<Int>(replay = 1)
+    var tileInfoSnackbar = _tileInfoSnackbar.asSharedFlow()
 
     init {
         // Initialize fields based on the tile_1 TileEntity
-        selectTile(0)
+        state.get<String>("id")?.let { id ->
+            selectTile(slots.indexOfFirst { it.id == id })
+            viewModelScope.launch {
+                // A deeplink only happens when tapping on a tile that hasn't been setup
+                _tileInfoSnackbar.emit(commonR.string.tile_data_missing)
+            }
+        } ?: run {
+            selectTile(0)
+        }
 
         viewModelScope.launch(Dispatchers.IO) {
             sortedEntities = integrationUseCase.getEntities().orEmpty()
@@ -104,15 +114,15 @@ class ManageTilesViewModel @Inject constructor(
     }
 
     fun selectTile(index: Int) {
-        val tile = slots[index]
+        val tile = slots[if (index == -1) 0 else index]
         selectedTile = tile
         viewModelScope.launch {
             tileDao.get(tile.id).also {
                 selectedTileId = it?.id ?: 0
                 selectedTileAdded = it?.added ?: false
                 submitButtonLabel =
-                    if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2 || it?.added == true) R.string.tile_save
-                    else R.string.tile_add
+                    if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2 || it?.added == true) commonR.string.tile_save
+                    else commonR.string.tile_add
                 if (it?.isSetup == true) {
                     updateExistingTileFields(it)
                 }
@@ -170,7 +180,7 @@ class ManageTilesViewModel @Inject constructor(
                     it.toBitmapOrNull(it.intrinsicWidth, it.intrinsicHeight)?.let { bitmap ->
                         android.graphics.drawable.Icon.createWithBitmap(bitmap)
                     }
-                } ?: android.graphics.drawable.Icon.createWithResource(app, R.drawable.ic_stat_ic_notification)
+                } ?: android.graphics.drawable.Icon.createWithResource(app, commonR.drawable.ic_stat_ic_notification)
 
                 statusBarManager?.requestAddTileService(
                     ComponentName(app, service),
@@ -183,16 +193,16 @@ class ManageTilesViewModel @Inject constructor(
                         if (result == StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ADDED ||
                             result == StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ALREADY_ADDED
                         ) {
-                            _saveResultSnackbar.emit(R.string.tile_added)
+                            _tileInfoSnackbar.emit(commonR.string.tile_added)
                             selectedTileAdded = true
-                            submitButtonLabel = R.string.tile_save
+                            submitButtonLabel = commonR.string.tile_save
                         } else { // Silently ignore error, database was still updated
-                            _saveResultSnackbar.emit(R.string.tile_updated)
+                            _tileInfoSnackbar.emit(commonR.string.tile_updated)
                         }
                     }
                 }
             } else {
-                _saveResultSnackbar.emit(R.string.tile_updated)
+                _tileInfoSnackbar.emit(commonR.string.tile_updated)
             }
         }
     }

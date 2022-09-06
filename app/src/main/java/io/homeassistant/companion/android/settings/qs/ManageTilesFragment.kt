@@ -17,14 +17,11 @@ import com.maltaisn.icondialog.IconDialogSettings
 import com.maltaisn.icondialog.pack.IconPack
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.settings.qs.views.ManageTilesView
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
-class ManageTilesFragment constructor(
-    val integrationRepository: IntegrationRepository
-) : Fragment(), IconDialog.Callback {
+class ManageTilesFragment : Fragment(), IconDialog.Callback {
 
     companion object {
         private const val TAG = "TileFragment"

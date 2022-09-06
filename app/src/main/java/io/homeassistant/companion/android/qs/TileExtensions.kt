@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.qs
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.Icon
 import android.os.Build
@@ -23,6 +24,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.TileEntity
 import io.homeassistant.companion.android.database.qs.isSetup
+import io.homeassistant.companion.android.settings.SettingsActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -126,11 +128,16 @@ abstract class TileExtensions : TileService() {
                 true
             } else {
                 if (tileData != null) {
-                    Log.d(TAG, "Tile data found but not added for tile ID: $tileId")
+                    Log.d(TAG, "Tile data found but not setup for tile ID: $tileId")
                 } else {
                     Log.d(TAG, "No tile data found for tile ID: $tileId")
                 }
-                tile.state = Tile.STATE_UNAVAILABLE
+                tile.state =
+                    if (integrationUseCase.isRegistered()) Tile.STATE_INACTIVE
+                    else Tile.STATE_UNAVAILABLE
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    tile.subtitle = getString(commonR.string.tile_not_setup)
+                }
                 tile.updateTile()
                 false
             }
@@ -185,16 +192,15 @@ abstract class TileExtensions : TileService() {
             tile.state = Tile.STATE_INACTIVE
             tile.updateTile()
         } else {
-            tile.state = Tile.STATE_UNAVAILABLE
-            tile.updateTile()
             Log.d(TAG, "No tile data found for tile ID: $tileId")
             withContext(Dispatchers.Main) {
-                Toast.makeText(
-                    context,
-                    commonR.string.tile_data_missing,
-                    Toast.LENGTH_SHORT
+                startActivityAndCollapse(
+                    SettingsActivity.newInstance(context).apply {
+                        putExtra("fragment", "tiles/$tileId")
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
+                    }
                 )
-                    .show()
             }
         }
     }

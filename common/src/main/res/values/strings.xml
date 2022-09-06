@@ -737,12 +737,13 @@
     <string name="tile_9">Tile 9</string>
     <string name="tile_add">Add Tile</string>
     <string name="tile_added">Tile added</string>
-    <string name="tile_data_missing">Tile data is missing, please set it up in App Configuration</string>
+    <string name="tile_data_missing">You need to set up the tile before using it</string>
     <string name="tile_entity">Select a entity to toggle or call (required)</string>
     <string name="tile_label">Tile Label (required)</string>
     <string name="tile_list">List of Tiles</string>
     <string name="tile_missing_entity_summary">You must have one of the following domains in order to use this feature: cover, fan, input_boolean, light, remote, scene, script, switch</string>
     <string name="tile_missing_entity_title">Missing Valid Entity Domains</string>
+    <string name="tile_not_setup">Requires setup</string>
     <string name="tile_save">Update Tile Data</string>
     <string name="tile_settings">Tile settings</string>
     <string name="tile_subtitle">Tile Subtitle</string>

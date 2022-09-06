@@ -51,7 +51,7 @@ fun ManageTilesView(
 
     val scaffoldState = rememberScaffoldState()
     LaunchedEffect("snackbar") {
-        viewModel.saveResultSnackbar.onEach {
+        viewModel.tileInfoSnackbar.onEach {
             if (it != 0) {
                 scaffoldState.snackbarHostState.showSnackbar(context.getString(it))
             }

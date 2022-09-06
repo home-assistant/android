@@ -14,6 +14,7 @@ import dagger.hilt.android.components.ActivityComponent
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
+import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
 import io.homeassistant.companion.android.settings.sensor.SensorDetailFragment
 import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
 import io.homeassistant.companion.android.common.R as commonR
@@ -58,11 +59,15 @@ class SettingsActivity : BaseActivity() {
                         settingsNavigation == "websocket" -> WebsocketSettingFragment::class.java
                         settingsNavigation == "notification_history" -> NotificationHistoryFragment::class.java
                         settingsNavigation?.startsWith("sensors/") == true -> SensorDetailFragment::class.java
+                        settingsNavigation?.startsWith("tiles/") == true -> ManageTilesFragment::class.java
                         else -> SettingsFragment::class.java
                     },
                     if (settingsNavigation?.startsWith("sensors/") == true) {
                         val sensorId = settingsNavigation.split("/")[1]
                         SensorDetailFragment.newInstance(sensorId).arguments
+                    } else if (settingsNavigation?.startsWith("tiles/") == true) {
+                        val tileId = settingsNavigation.split("/")[1]
+                        Bundle().apply { putString("id", tileId) }
                     } else null
                 )
                 .commit()
