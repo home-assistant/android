@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.settings.qs.views
 
+import android.os.Build
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -100,16 +101,18 @@ fun ManageTilesView(
                         .fillMaxWidth()
                 )
 
-                TextField(
-                    value = viewModel.tileSubtitle.orEmpty(),
-                    onValueChange = { viewModel.tileSubtitle = it },
-                    label = {
-                        Text(text = stringResource(id = R.string.tile_subtitle))
-                    },
-                    modifier = Modifier
-                        .padding(10.dp)
-                        .fillMaxWidth()
-                )
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    TextField(
+                        value = viewModel.tileSubtitle.orEmpty(),
+                        onValueChange = { viewModel.tileSubtitle = it },
+                        label = {
+                            Text(text = stringResource(id = R.string.tile_subtitle))
+                        },
+                        modifier = Modifier
+                            .padding(10.dp)
+                            .fillMaxWidth()
+                    )
+                }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
