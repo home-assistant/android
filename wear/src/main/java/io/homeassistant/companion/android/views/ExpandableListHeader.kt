@@ -28,10 +28,13 @@ import io.homeassistant.companion.android.common.R as commonR
 fun <K> rememberExpandedStates(
     initialKeys: Iterable<K>
 ): SnapshotStateMap<K, Boolean> {
+    val defaultExpanded = if (initialKeys is Collection) {
+        initialKeys.size == 1
+    } else false
     return remember {
         mutableStateMapOf<K, Boolean>().apply {
             initialKeys.forEach { key ->
-                put(key, false)
+                put(key, defaultExpanded)
             }
         }
     }
