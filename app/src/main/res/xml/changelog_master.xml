@@ -1,29 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2022.8 - Phone" versioncode="2">
-        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; TTS and notification commands have new formats, refer to the companion docs for updated format.</change>
-        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Add friendly BT name next to the mac address if we have it for BT connection sensor.</change>
-        <change>Deprecates 3 finger swipe down gesture for HA Core 2022.7+</change>
-        <change>Add support for TLS client authentication, refer to the companion docs for setup instructions</change>
-        <change>Fire an event when a notification is received</change>
-        <change>Allow UUID, Major and Minor to be changed via notification command for BLE transmitter</change>
-        <change>Add notification command to stop Text to Speech notifications</change>
-        <change>Add camera domain to device controls for devices on Android 12+</change>
-        <change>Add lock domain to Quick Setting Tiles</change>
-        <change>Show battery charging status in battery level sensor icon</change>
-        <change>Move prioritize internal to new Home WiFi SSID screen</change>
-        <change>Only apply prioritize internal to WebView when location is disabled on the device</change>
-        <change>Add themed icon for supported devices (Android 13+)</change>
-        <change>Add a battery power sensor</change>
-        <change>Add additional attributes for notification sensors</change>
-        <change>Add attribute to network type sensor to indicate if current network is a metered connection</change>
-        <change>Update geocoded location sensor when we send a location update, also only send a sensor update when accuracy is met and location is from a recent report</change>
+    <release version="2022.9 - Phone" versioncode="2">
+        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Geocoded Location sensor attributes for latitude and longitude have been combined into location, the sensor will no longer show on the map. Additional attributes also added to the sensor.</change>
+        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Template widgets will only update when the template detects a change. If you are not seeing frequent updates then you are hit by rate limiting and will need to readjust the template.</change>
+        <change>Add beacon monitor sensor</change>
+        <change>Add authentication option to button widget</change>
+        <change>Add option to bypass locking the app when on home WiFi</change>
+        <change>Only subscribe to state changes that we care about for entity state and media player widgets</change>
+        <change>Allow device controls on locked devices for Android 13+</change>
         <change>Bug fixes, performance improvements, design tweaks and dependency updates</change>
     </release>
-    <release version="2022.8 - Wear" versioncode="1">
-        <change>Add support for entity states in complications</change>
-        <change>Allow HTML styling on template tile</change>
-        <change>Show entity state in chip background</change>
+    <release version="2022.9 - Wear" versioncode="1">
+        <change>Faster entity selection for entity state complication</change>
+        <change>Always default to using the phone for logging in</change>
     </release>
 </changelog>
