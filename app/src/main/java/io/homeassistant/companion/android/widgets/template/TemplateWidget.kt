@@ -286,7 +286,7 @@ class TemplateWidget : AppWidgetProvider() {
         }
     }
 
-    private fun onTemplateChanged(context: Context, appWidgetId: Int, template: String) {
+    private fun onTemplateChanged(context: Context, appWidgetId: Int, template: String?) {
         widgetScope?.launch {
             val views = getWidgetRemoteViews(context, appWidgetId, template)
             AppWidgetManager.getInstance(context).updateAppWidget(appWidgetId, views)

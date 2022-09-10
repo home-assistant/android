@@ -4,6 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class TemplateUpdatedEvent(
-    val result: String,
+    val result: String?,
     val listeners: Map<String, Any>
 )

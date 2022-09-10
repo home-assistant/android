@@ -15,7 +15,7 @@ interface IntegrationRepository {
     suspend fun getNotificationRateLimits(): RateLimitResponse
 
     suspend fun renderTemplate(template: String, variables: Map<String, String>): String?
-    suspend fun getTemplateUpdates(template: String): Flow<String>?
+    suspend fun getTemplateUpdates(template: String): Flow<String?>?
 
     suspend fun updateLocation(updateLocation: UpdateLocation)
 

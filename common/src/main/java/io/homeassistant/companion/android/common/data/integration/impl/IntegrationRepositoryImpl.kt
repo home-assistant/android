@@ -179,7 +179,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         else throw IntegrationException("Error calling integration request render_template")
     }
 
-    override suspend fun getTemplateUpdates(template: String): Flow<String>? {
+    override suspend fun getTemplateUpdates(template: String): Flow<String?>? {
         return webSocketRepository.getTemplateUpdates(template)
             ?.map {
                 it.result
