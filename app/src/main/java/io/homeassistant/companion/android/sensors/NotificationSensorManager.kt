@@ -227,15 +227,15 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         try {
             val attr: MutableMap<String, Any?> = mutableMapOf()
             for (item in activeNotifications) {
-                attr += mappedBundle(item.notification.extras, "_${item.packageName}").orEmpty()
-                    .plus(item.packageName + "_" + item.id + "_post_time" to item.postTime)
-                    .plus(item.packageName + "_" + item.id + "_is_ongoing" to item.isOngoing)
-                    .plus(item.packageName + "_" + item.id + "_is_clearable" to item.isClearable)
-                    .plus(item.packageName + "_" + item.id + "_group_id" to item.notification.group)
-                    .plus(item.packageName + "_" + item.id + "_category" to item.notification.category)
+                attr += mappedBundle(item.notification.extras, "_${item.packageName}_${item.id}").orEmpty()
+                    .plus("${item.packageName}_${item.id}_post_time" to item.postTime)
+                    .plus("${item.packageName}_${item.id}_is_ongoing" to item.isOngoing)
+                    .plus("${item.packageName}_${item.id}_is_clearable" to item.isClearable)
+                    .plus("${item.packageName}_${item.id}_group_id" to item.notification.group)
+                    .plus("${item.packageName}_${item.id}_category" to item.notification.category)
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                    attr[item.packageName + "_" + item.id + "_channel_id"] = item.notification.channelId
+                    attr["${item.packageName}_${item.id}_channel_id"] = item.notification.channelId
             }
             onSensorUpdated(
                 applicationContext,
