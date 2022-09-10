@@ -168,18 +168,16 @@ class HaControlsProviderService : ControlsProviderService() {
 
                         // Listen for the state changed events.
                         webSocketScope.launch {
-                            integrationRepository.getEntityUpdates()?.collect {
-                                if (controlIds.contains(it.entityId)) {
-                                    val control = domainToHaControl[it.domain]?.createControl(
-                                        applicationContext,
-                                        it as Entity<Map<String, Any>>,
-                                        RegistriesDataHandler.getAreaForEntity(it.entityId, areaRegistry, deviceRegistry, entityRegistry),
-                                        entityRequiresAuth(it.entityId),
-                                        baseUrl
-                                    )
-                                    if (control != null)
-                                        subscriber.onNext(control)
-                                }
+                            integrationRepository.getEntityUpdates(controlIds)?.collect {
+                                val control = domainToHaControl[it.domain]?.createControl(
+                                    applicationContext,
+                                    it as Entity<Map<String, Any>>,
+                                    RegistriesDataHandler.getAreaForEntity(it.entityId, areaRegistry, deviceRegistry, entityRegistry),
+                                    entityRequiresAuth(it.entityId),
+                                    baseUrl
+                                )
+                                if (control != null)
+                                    subscriber.onNext(control)
                             }
                         }
                         webSocketScope.launch {
