@@ -2023,7 +2023,12 @@ class MessagingManager @Inject constructor(
         try {
             if (data["app_lock_enabled"] != null) {
                 runBlocking {
-                    authenticationUseCase.setLockEnabled(data["app_lock_enabled"]!!.toBooleanStrict())
+                    val setEnabled = data["app_lock_enabled"]!!.toBooleanStrict()
+                    if (!authenticationUseCase.hasLockEverBeenEnabled() && setEnabled) {
+                        Log.w(TAG, "Not enabling app lock, as it has not been enabled before by the user!")
+                    } else {
+                        authenticationUseCase.setLockEnabled(setEnabled)
+                    }
                 }
             }
             if (data["app_lock_timeout"] != null) {

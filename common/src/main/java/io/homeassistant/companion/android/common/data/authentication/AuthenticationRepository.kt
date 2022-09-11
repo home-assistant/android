@@ -20,6 +20,7 @@ interface AuthenticationRepository {
     suspend fun setLockEnabled(enabled: Boolean)
     suspend fun setLockHomeBypassEnabled(enabled: Boolean)
     suspend fun isLockEnabledRaw(): Boolean
+    suspend fun hasLockEverBeenEnabled(): Boolean
     suspend fun isLockHomeBypassEnabled(): Boolean
     suspend fun isLockEnabled(): Boolean
 }
