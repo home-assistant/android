@@ -226,6 +226,11 @@ class MessagingManager @Inject constructor(
         const val BLE_MAJOR = "ble_major"
         const val BLE_MINOR = "ble_minor"
 
+        // App-lock command parameters:
+        const val APP_LOCK_ENABLED = "app_lock_enabled"
+        const val APP_LOCK_TIMEOUT = "app_lock_timeout"
+        const val HOME_BYPASS_ENABLED = "home_bypass_enabled"
+
         // High accuracy commands
         const val HIGH_ACCURACY_SET_UPDATE_INTERVAL = "high_accuracy_set_update_interval"
         const val FORCE_ON = "force_on"
@@ -2021,9 +2026,9 @@ class MessagingManager @Inject constructor(
 
     private fun setAppLock(data: Map<String, String>) {
         try {
-            if (data["app_lock_enabled"] != null) {
+            if (data[APP_LOCK_ENABLED] != null) {
                 runBlocking {
-                    val setEnabled = data["app_lock_enabled"]!!.toBooleanStrict()
+                    val setEnabled = data[APP_LOCK_ENABLED]!!.toBooleanStrict()
                     if (!authenticationUseCase.hasLockEverBeenEnabled() && setEnabled) {
                         Log.w(TAG, "Not enabling app lock, as it has not been enabled before by the user!")
                     } else {
@@ -2031,14 +2036,14 @@ class MessagingManager @Inject constructor(
                     }
                 }
             }
-            if (data["app_lock_timeout"] != null) {
+            if (data[APP_LOCK_TIMEOUT] != null) {
                 runBlocking {
-                    integrationUseCase.sessionTimeOut(data["app_lock_timeout"]!!.toInt())
+                    integrationUseCase.sessionTimeOut(data[APP_LOCK_TIMEOUT]!!.toInt())
                 }
             }
-            if (data["home_bypass_enabled"] != null) {
+            if (data[HOME_BYPASS_ENABLED] != null) {
                 runBlocking {
-                    authenticationUseCase.setLockHomeBypassEnabled(data["home_bypass_enabled"]!!.toBooleanStrict())
+                    authenticationUseCase.setLockHomeBypassEnabled(data[HOME_BYPASS_ENABLED]!!.toBooleanStrict())
                 }
             }
         } catch (e: Exception) {
