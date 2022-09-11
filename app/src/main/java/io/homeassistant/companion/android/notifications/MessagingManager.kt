@@ -2021,17 +2021,17 @@ class MessagingManager @Inject constructor(
 
     private fun setAppLock(data: Map<String, String>) {
         try {
-            if (data.containsKey("app_lock_enabled")) {
+            if (data["app_lock_enabled"] != null) {
                 runBlocking {
                     authenticationUseCase.setLockEnabled(data["app_lock_enabled"]!!.toBooleanStrict())
                 }
             }
-            if (data.containsKey("app_lock_timeout")) {
+            if (data["app_lock_timeout"] != null) {
                 runBlocking {
                     integrationUseCase.sessionTimeOut(data["app_lock_timeout"]!!.toInt())
                 }
             }
-            if (data.containsKey("home_bypass_enabled")) {
+            if (data["home_bypass_enabled"] != null) {
                 runBlocking {
                     authenticationUseCase.setLockHomeBypassEnabled(data["home_bypass_enabled"]!!.toBooleanStrict())
                 }
