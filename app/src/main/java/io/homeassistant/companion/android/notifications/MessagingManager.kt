@@ -2031,8 +2031,8 @@ class MessagingManager @Inject constructor(
                 runBlocking {
                     val setEnabled = data[APP_LOCK_ENABLED]!!.toBooleanStrict()
                     val canAuth = (BiometricManager.from(context).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS)
-                    if (setEnabled && !(canAuth && authenticationUseCase.hasLockEverBeenEnabled())) {
-                        Log.w(TAG, "Not enabling app lock, as it has not been enabled before by the user!")
+                    if (setEnabled && !canAuth) {
+                        Log.w(TAG, "Not enabling app lock. BiometricManager cannot Authenticate!")
                     } else {
                         authenticationUseCase.setLockEnabled(setEnabled)
                     }
