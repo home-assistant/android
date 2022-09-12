@@ -35,6 +35,7 @@ import android.view.KeyEvent
 import android.widget.RemoteViews
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.biometric.BiometricManager
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
@@ -2029,7 +2030,8 @@ class MessagingManager @Inject constructor(
             if (data[APP_LOCK_ENABLED] != null) {
                 runBlocking {
                     val setEnabled = data[APP_LOCK_ENABLED]!!.toBooleanStrict()
-                    if (!authenticationUseCase.hasLockEverBeenEnabled() && setEnabled) {
+                    val canAuth = (BiometricManager.from(context).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS)
+                    if (setEnabled && !(canAuth && authenticationUseCase.hasLockEverBeenEnabled())) {
                         Log.w(TAG, "Not enabling app lock, as it has not been enabled before by the user!")
                     } else {
                         authenticationUseCase.setLockEnabled(setEnabled)
