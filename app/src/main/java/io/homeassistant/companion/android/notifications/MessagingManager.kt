@@ -2028,9 +2028,9 @@ class MessagingManager @Inject constructor(
     }
 
     private suspend fun setAppLock(data: Map<String, String>) {
-        val app_lock_enabled = data[APP_LOCK_ENABLED]?.toBooleanOrNull()
+        val app_lock_enabled = data[APP_LOCK_ENABLED]?.toLowerCase()?.toBooleanStrictOrNull()
         val app_lock_timeout = data[APP_LOCK_TIMEOUT]?.toIntOrNull()
-        val home_bypass_enabled = data[APP_LOCK_ENABLED]?.toBooleanOrNull()
+        val home_bypass_enabled = data[APP_LOCK_ENABLED]?.toLowerCase()?.toBooleanStrictOrNull()
 
         var updated = false
         if (app_lock_enabled != null) {
@@ -2042,7 +2042,7 @@ class MessagingManager @Inject constructor(
                 updated = true
             }
         }
-        if (app_lock_timeout != null) {
+        if (app_lock_timeout != null && app_lock_timeout >= 0) {
             integrationUseCase.sessionTimeOut(app_lock_timeout)
             updated = true
         }
