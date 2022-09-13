@@ -2028,28 +2028,32 @@ class MessagingManager @Inject constructor(
     }
 
     private suspend fun setAppLock(data: Map<String, String>) {
-        try {   
-            val app_lock_enabled = data[APP_LOCK_ENABLED]?.toBooleanOrNull()
-            val app_lock_timeout = data[APP_LOCK_TIMEOUT]?.toIntOrNull()
-            val home_bypass_enabled = data[APP_LOCK_ENABLED]?.toBooleanOrNull()
+        val app_lock_enabled = data[APP_LOCK_ENABLED]?.toBooleanOrNull()
+        val app_lock_timeout = data[APP_LOCK_TIMEOUT]?.toIntOrNull()
+        val home_bypass_enabled = data[APP_LOCK_ENABLED]?.toBooleanOrNull()
 
-            if (app_lock_enabled != null) {
-                val canAuth = (BiometricManager.from(context).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS)
-                if (app_lock_enabled && !canAuth) {
-                    Log.w(TAG, "Not enabling app lock. BiometricManager cannot Authenticate!")
-                } else {
-                    authenticationUseCase.setLockEnabled(app_lock_enabled)
-                }
+        var updated = false
+        if (app_lock_enabled != null) {
+            val canAuth = (BiometricManager.from(context).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS)
+            if (app_lock_enabled && !canAuth) {
+                Log.w(TAG, "Not enabling app lock. BiometricManager cannot Authenticate!")
+            } else {
+                authenticationUseCase.setLockEnabled(app_lock_enabled)
+                updated = true
             }
-            if (app_lock_timeout != null) {
-                integrationUseCase.sessionTimeOut(app_lock_timeout)
-            }
-            if (home_bypass_enabled != null) {
-                authenticationUseCase.setLockHomeBypassEnabled(home_bypass_enabled)
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to set app lock settings", e)
-            mainScope.launch { sendNotification(data) }
+        }
+        if (app_lock_timeout != null) {
+            integrationUseCase.sessionTimeOut(app_lock_timeout)
+            updated = true
+        }
+        if (home_bypass_enabled != null) {
+            authenticationUseCase.setLockHomeBypassEnabled(home_bypass_enabled)
+            updated = true
+        }
+
+        if (!updated) {
+            Log.w(TAG, "No app lock parameters have been updated")
+            sendNotification(data)
         }
     }
 
