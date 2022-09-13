@@ -950,7 +950,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 moreInfoEntity = path.substringAfter("entityId:")
             intent.removeExtra(EXTRA_PATH)
 
-            if (presenter.isFullScreen())
+            if (presenter.isFullScreen() || isVideoFullScreen)
                 hideSystemUI()
             else
                 showSystemUI()
