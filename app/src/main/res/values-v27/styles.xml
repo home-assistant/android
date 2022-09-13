@@ -14,5 +14,4 @@
         <item name="android:windowLightStatusBar">@bool/isLightMode</item>
         <item name="android:windowLightNavigationBar">@bool/isLightMode</item>
     </style>
-
 </resources>
