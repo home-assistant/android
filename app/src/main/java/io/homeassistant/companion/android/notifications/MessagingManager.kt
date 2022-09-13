@@ -2028,27 +2028,37 @@ class MessagingManager @Inject constructor(
     }
 
     private suspend fun setAppLock(data: Map<String, String>) {
-        val app_lock_enabled = data[APP_LOCK_ENABLED]?.toLowerCase()?.toBooleanStrictOrNull()
-        val app_lock_timeout = data[APP_LOCK_TIMEOUT]?.toIntOrNull()
-        val home_bypass_enabled = data[APP_LOCK_ENABLED]?.toLowerCase()?.toBooleanStrictOrNull()
+        val app_lock_enable_param_present = data[APP_LOCK_ENABLED] != null
+        val app_lock_timeout_param_present = data[APP_LOCK_TIMEOUT] != null
+        val home_bypass_param_present = data[APP_LOCK_ENABLED] != null
+
+        val app_lock_enable_value = data[APP_LOCK_ENABLED]?.toLowerCase()?.toBooleanStrictOrNull()
+        val app_lock_timeout_value = data[APP_LOCK_TIMEOUT]?.toIntOrNull()
+        val home_bypass_value = data[APP_LOCK_ENABLED]?.toLowerCase()?.toBooleanStrictOrNull()
+
+        val invalid = (app_lock_enable_param_present && app_lock_enable_value == null) ||
+            (app_lock_timeout_param_present && app_lock_timeout_value == null) ||
+            (home_bypass_param_present && home_bypass_value == null)
 
         var updated = false
-        if (app_lock_enabled != null) {
-            val canAuth = (BiometricManager.from(context).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS)
-            if (app_lock_enabled && !canAuth) {
-                Log.w(TAG, "Not enabling app lock. BiometricManager cannot Authenticate!")
-            } else {
-                authenticationUseCase.setLockEnabled(app_lock_enabled)
+        if (!invalid) {
+            if (app_lock_enable_value != null) {
+                val canAuth = (BiometricManager.from(context).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS)
+                if (app_lock_enable_value && !canAuth) {
+                    Log.w(TAG, "Not enabling app lock. BiometricManager cannot Authenticate!")
+                } else {
+                    authenticationUseCase.setLockEnabled(app_lock_enable_value)
+                    updated = true
+                }
+            }
+            if (app_lock_timeout_value != null && app_lock_timeout_value >= 0) {
+                integrationUseCase.sessionTimeOut(app_lock_timeout_value)
                 updated = true
             }
-        }
-        if (app_lock_timeout != null && app_lock_timeout >= 0) {
-            integrationUseCase.sessionTimeOut(app_lock_timeout)
-            updated = true
-        }
-        if (home_bypass_enabled != null) {
-            authenticationUseCase.setLockHomeBypassEnabled(home_bypass_enabled)
-            updated = true
+            if (home_bypass_value != null) {
+                authenticationUseCase.setLockHomeBypassEnabled(home_bypass_value)
+                updated = true
+            }
         }
 
         if (!updated) {
