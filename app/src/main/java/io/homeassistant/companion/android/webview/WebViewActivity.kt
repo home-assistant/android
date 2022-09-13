@@ -49,6 +49,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.ColorUtils
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.webkit.WebViewCompat
@@ -957,46 +958,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     }
 
     private fun hideSystemUI() {
-        if (isCutout())
-            decor.systemUiVisibility = decor.systemUiVisibility or
-                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
-                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-        else {
-            decor.viewTreeObserver.addOnGlobalLayoutListener {
-                val r = Rect()
-                decor.getWindowVisibleDisplayFrame(r)
-                val height = r.bottom - decor.top
-
-                if ((decor.height - height) > (decor.height / 5))
-                    decor.getChildAt(0).layoutParams.height = decor.height - (decor.height - height)
-                else
-                    decor.getChildAt(0).layoutParams.height = decor.height
-
-                decor.requestLayout()
-            }
-            decor.systemUiVisibility = decor.systemUiVisibility or
-                View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
-                View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
-                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
-                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
-                View.SYSTEM_UI_FLAG_FULLSCREEN or
-                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-        }
+        windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
     }
 
     private fun showSystemUI() {
-        if (isCutout()) {
-            decor.systemUiVisibility = decor.systemUiVisibility and
-                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION.inv() and
-                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY.inv()
-        } else {
-            decor.systemUiVisibility = decor.systemUiVisibility and View.SYSTEM_UI_FLAG_LAYOUT_STABLE.inv() and
-                View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION.inv() and
-                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN.inv() and
-                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION.inv() and
-                View.SYSTEM_UI_FLAG_FULLSCREEN.inv() and
-                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY.inv()
-        }
+        windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
     }
 
     override fun onPictureInPictureModeChanged(
@@ -1306,13 +1273,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 }
                 .show()
         }
-    }
-
-    private fun isCutout(): Boolean {
-        var cutout = false
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && window.decorView.rootWindowInsets.displayCutout != null)
-            cutout = true
-        return cutout
     }
 
     private fun waitForConnection() {
