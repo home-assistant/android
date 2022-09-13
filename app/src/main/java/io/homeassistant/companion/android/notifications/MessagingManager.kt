@@ -877,7 +877,9 @@ class MessagingManager @Inject constructor(
                     processActivityCommand(data)
             }
             COMMAND_APP_LOCK -> {
-                setAppLock(data)
+                mainScope.launch {
+                    setAppLock(data)
+                }
             }
             COMMAND_WEBVIEW -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -2025,28 +2027,25 @@ class MessagingManager @Inject constructor(
         }
     }
 
-    private fun setAppLock(data: Map<String, String>) {
-        try {
-            if (data[APP_LOCK_ENABLED] != null) {
-                runBlocking {
-                    val setEnabled = data[APP_LOCK_ENABLED]!!.toBooleanStrict()
-                    val canAuth = (BiometricManager.from(context).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS)
-                    if (setEnabled && !canAuth) {
-                        Log.w(TAG, "Not enabling app lock. BiometricManager cannot Authenticate!")
-                    } else {
-                        authenticationUseCase.setLockEnabled(setEnabled)
-                    }
+    private suspend fun setAppLock(data: Map<String, String>) {
+        try {   
+            val app_lock_enabled = data[APP_LOCK_ENABLED]?.toBooleanOrNull()
+            val app_lock_timeout = data[APP_LOCK_TIMEOUT]?.toIntOrNull()
+            val home_bypass_enabled = data[APP_LOCK_ENABLED]?.toBooleanOrNull()
+
+            if (app_lock_enabled != null) {
+                val canAuth = (BiometricManager.from(context).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS)
+                if (app_lock_enabled && !canAuth) {
+                    Log.w(TAG, "Not enabling app lock. BiometricManager cannot Authenticate!")
+                } else {
+                    authenticationUseCase.setLockEnabled(app_lock_enabled)
                 }
             }
-            if (data[APP_LOCK_TIMEOUT] != null) {
-                runBlocking {
-                    integrationUseCase.sessionTimeOut(data[APP_LOCK_TIMEOUT]!!.toInt())
-                }
+            if (app_lock_timeout != null) {
+                integrationUseCase.sessionTimeOut(app_lock_timeout)
             }
-            if (data[HOME_BYPASS_ENABLED] != null) {
-                runBlocking {
-                    authenticationUseCase.setLockHomeBypassEnabled(data[HOME_BYPASS_ENABLED]!!.toBooleanStrict())
-                }
+            if (home_bypass_enabled != null) {
+                authenticationUseCase.setLockHomeBypassEnabled(home_bypass_enabled)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to set app lock settings", e)
