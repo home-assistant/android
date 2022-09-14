@@ -15,6 +15,8 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.IntervalToString
+import io.homeassistant.companion.android.views.ListHeader
+import io.homeassistant.companion.android.views.ThemeLazyColumn
 
 @Composable
 fun TemplateTileSettingsView(

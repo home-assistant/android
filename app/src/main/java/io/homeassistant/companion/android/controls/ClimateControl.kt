@@ -36,7 +36,8 @@ object ClimateControl : HaControl {
         context: Context,
         control: Control.StatefulBuilder,
         entity: Entity<Map<String, Any>>,
-        area: AreaRegistryResponse?
+        area: AreaRegistryResponse?,
+        baseUrl: String?
     ): Control.StatefulBuilder {
         control.setStatusText(
             when (entity.state) {
@@ -147,6 +148,7 @@ object ClimateControl : HaControl {
     private fun entityShouldBePresentedAsThermostat(entity: Entity<Map<String, Any>>): Boolean {
         return temperatureControlModes.containsKey(entity.state) &&
             ((entity.attributes["hvac_modes"] as? List<String>)?.isNotEmpty() == true) &&
+            ((entity.attributes["hvac_modes"] as? List<String>)?.any { it == entity.state } == true) &&
             ((entity.attributes["hvac_modes"] as? List<String>)?.all { temperatureControlModes.containsKey(it) } == true) &&
             (
                 ((entity.attributes["supported_features"] as Int) and SUPPORT_TARGET_TEMPERATURE == SUPPORT_TARGET_TEMPERATURE) ||

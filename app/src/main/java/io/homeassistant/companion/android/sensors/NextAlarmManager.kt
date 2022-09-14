@@ -7,6 +7,7 @@ import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
+import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -83,7 +84,7 @@ class NextAlarmManager : SensorManager {
                         return
                     }
                 } else {
-                    sensorDao.add(SensorSetting(nextAlarm.id, SETTING_ALLOW_LIST, allowPackageList, "list-apps"))
+                    sensorDao.add(SensorSetting(nextAlarm.id, SETTING_ALLOW_LIST, allowPackageList, SensorSettingType.LIST_APPS))
                 }
 
                 val cal: Calendar = GregorianCalendar()

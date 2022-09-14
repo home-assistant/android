@@ -19,7 +19,8 @@ object DefaultButtonControl : HaControl {
         context: Context,
         control: Control.StatefulBuilder,
         entity: Entity<Map<String, Any>>,
-        area: AreaRegistryResponse?
+        area: AreaRegistryResponse?,
+        baseUrl: String?
     ): Control.StatefulBuilder {
         control.setStatusText("")
         control.setControlTemplate(

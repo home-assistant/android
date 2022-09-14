@@ -14,6 +14,7 @@ import android.service.controls.templates.ToggleTemplate
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.getFanSpeed
 import io.homeassistant.companion.android.common.data.integration.supportsFanSetSpeed
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.R as commonR
@@ -24,17 +25,11 @@ object FanControl : HaControl {
         context: Context,
         control: Control.StatefulBuilder,
         entity: Entity<Map<String, Any>>,
-        area: AreaRegistryResponse?
+        area: AreaRegistryResponse?,
+        baseUrl: String?
     ): Control.StatefulBuilder {
         if (entity.supportsFanSetSpeed()) {
-            val minValue = 0f
-            val maxValue = 100f
-            var currentValue =
-                (entity.attributes["percentage"] as? Number)?.toFloat() ?: 0f
-            if (currentValue < minValue)
-                currentValue = minValue
-            if (currentValue > maxValue)
-                currentValue = maxValue
+            val position = entity.getFanSpeed()
             control.setControlTemplate(
                 ToggleRangeTemplate(
                     entity.entityId,
@@ -42,9 +37,9 @@ object FanControl : HaControl {
                     "",
                     RangeTemplate(
                         entity.entityId,
-                        minValue,
-                        maxValue,
-                        currentValue,
+                        position?.min ?: 0f,
+                        position?.max ?: 100f,
+                        position?.value ?: 0f,
                         1f,
                         "%.0f%%"
                     )

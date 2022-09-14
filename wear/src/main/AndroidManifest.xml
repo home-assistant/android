@@ -17,7 +17,8 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:supportsRtl="true"
         android:theme="@style/Theme.HomeAssistant"
-        android:fullBackupContent="@xml/backup_rules">
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/backup_rules_android12">
         <!-- Start things like SensorWorker on device boot -->
         <receiver android:name=".sensors.SensorReceiver"
             android:exported="true">
@@ -51,8 +52,15 @@
         </activity>
         <activity android:name=".onboarding.OnboardingActivity" />
         <activity android:name=".onboarding.integration.MobileAppIntegrationActivity" />
-        <activity android:name=".onboarding.authentication.AuthenticationActivity" />
         <activity android:name=".onboarding.manual_setup.ManualSetupActivity" />
+        <activity android:name=".complications.ComplicationConfigActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="io.homeassistant.companion.android.ENTITY_STATE_COMPLICATION_CONFIG" />
+                <category android:name="android.support.wearable.complications.category.PROVIDER_CONFIG" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
 
         <!-- To show confirmations and failures -->
         <activity android:name="androidx.wear.activity.ConfirmationActivity" />
@@ -90,6 +98,28 @@
                 <action android:name="io.homeassistant.companion.android.TILE_ACTION" />
             </intent-filter>
         </receiver>
+        
+        <!-- Complications -->
+        <service android:name=".complications.EntityStateDataSourceService"
+            android:exported="true"
+            android:icon="@drawable/ic_lightbulb"
+            android:label="@string/complication_entity_state_label"
+            android:permission="com.google.android.wearable.permission.BIND_COMPLICATION_PROVIDER">
+            <intent-filter>
+                <action android:name="android.support.wearable.complications.ACTION_COMPLICATION_UPDATE_REQUEST" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.support.wearable.complications.SUPPORTED_TYPES"
+                android:value="SHORT_TEXT" />
+            <meta-data
+                android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
+                android:value="900" />
+            <meta-data
+                android:name="android.support.wearable.complications.PROVIDER_CONFIG_ACTION"
+                android:value="io.homeassistant.companion.android.ENTITY_STATE_COMPLICATION_CONFIG" />
+        </service>
+        <receiver android:name=".complications.ComplicationReceiver" />
 
         <service android:name=".phone.PhoneSettingsListener" android:exported="true">
             <intent-filter>

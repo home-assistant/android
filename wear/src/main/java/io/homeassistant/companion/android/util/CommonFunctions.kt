@@ -8,8 +8,28 @@ import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.home.HomePresenterImpl
 import java.util.Calendar
 import io.homeassistant.companion.android.common.R as commonR
+
+fun stringForDomain(domain: String, context: Context): String? =
+    (
+        HomePresenterImpl.domainsWithNames + mapOf(
+            "automation" to commonR.string.automation,
+            "binary_sensor" to commonR.string.binary_sensor,
+            "device_tracker" to commonR.string.device_tracker,
+            "input_number" to commonR.string.domain_input_number,
+            "media_player" to commonR.string.media_player,
+            "persistent_notification" to commonR.string.persistent_notification,
+            "person" to commonR.string.person,
+            "select" to commonR.string.select,
+            "sensor" to commonR.string.sensor,
+            "sun" to commonR.string.sun,
+            "update" to commonR.string.update,
+            "weather" to commonR.string.weather,
+            "zone" to commonR.string.zone
+        )
+        )[domain]?.let { context.getString(it) }
 
 fun getIcon(icon: String?, domain: String, context: Context): IIcon? {
     val simpleEntity = Entity(
@@ -40,13 +60,27 @@ fun getIcon(entity: Entity<Map<String, Any>>?, domain: String, context: Context)
             else
                 entity?.attributes?.get("state") as String?
         when (domain) {
+            "alert" -> CommunityMaterial.Icon.cmd_alert
+            "air_quality" -> CommunityMaterial.Icon.cmd_air_filter
+            "automation" -> CommunityMaterial.Icon3.cmd_robot
             "button" -> when (entity?.attributes?.get("device_class")) {
                 "restart" -> CommunityMaterial.Icon3.cmd_restart
                 "update" -> CommunityMaterial.Icon3.cmd_package_up
                 else -> CommunityMaterial.Icon2.cmd_gesture_tap_button
             }
+            "calendar" -> CommunityMaterial.Icon.cmd_calendar
+            "camera" -> CommunityMaterial.Icon3.cmd_video
+            "climate" -> CommunityMaterial.Icon3.cmd_thermostat
+            "configurator" -> CommunityMaterial.Icon.cmd_cog
+            "conversation" -> CommunityMaterial.Icon3.cmd_text_to_speech
             "cover" -> coverIcon(compareState, entity)
+            "counter" -> CommunityMaterial.Icon.cmd_counter
             "fan" -> CommunityMaterial.Icon2.cmd_fan
+            "google_assistant" -> CommunityMaterial.Icon2.cmd_google_assistant
+            "group" -> CommunityMaterial.Icon2.cmd_google_circles_communities
+            "homeassistant" -> CommunityMaterial.Icon2.cmd_home_assistant
+            "homekit" -> CommunityMaterial.Icon2.cmd_home_automation
+            "image_processing" -> CommunityMaterial.Icon2.cmd_image_filter_frames
             "input_boolean" -> if (entity?.entityId?.isNotBlank() == true) {
                 if (compareState == "on")
                     CommunityMaterial.Icon.cmd_check_circle_outline
@@ -56,6 +90,14 @@ fun getIcon(entity: Entity<Map<String, Any>>?, domain: String, context: Context)
                 CommunityMaterial.Icon2.cmd_light_switch
             }
             "input_button" -> CommunityMaterial.Icon2.cmd_gesture_tap_button
+            "input_datetime" -> if (entity?.attributes?.get("has_date") == false)
+                CommunityMaterial.Icon.cmd_clock
+            else if (entity?.attributes?.get("has_time") == false)
+                CommunityMaterial.Icon.cmd_calendar
+            else
+                CommunityMaterial.Icon.cmd_calendar_clock
+            "input_select" -> CommunityMaterial.Icon2.cmd_format_list_bulleted
+            "input_text" -> CommunityMaterial.Icon2.cmd_form_textbox
             "light" -> CommunityMaterial.Icon2.cmd_lightbulb
             "lock" -> when (compareState) {
                 "unlocked" -> CommunityMaterial.Icon2.cmd_lock_open
@@ -63,8 +105,24 @@ fun getIcon(entity: Entity<Map<String, Any>>?, domain: String, context: Context)
                 "locking", "unlocking" -> CommunityMaterial.Icon2.cmd_lock_clock
                 else -> CommunityMaterial.Icon2.cmd_lock
             }
-            "script" -> CommunityMaterial.Icon3.cmd_script_text_outline // Different from frontend: outline version
+            "mailbox" -> CommunityMaterial.Icon3.cmd_mailbox
+            "notify" -> CommunityMaterial.Icon.cmd_comment_alert
+            "number" -> CommunityMaterial.Icon3.cmd_ray_vertex
+            "persistent_notification" -> CommunityMaterial.Icon.cmd_bell
+            "person" -> CommunityMaterial.Icon.cmd_account
+            "plant" -> CommunityMaterial.Icon2.cmd_flower
+            "proximity" -> CommunityMaterial.Icon.cmd_apple_safari
+            "remote" -> CommunityMaterial.Icon3.cmd_remote
             "scene" -> CommunityMaterial.Icon3.cmd_palette_outline // Different from frontend: outline version
+            "script" -> CommunityMaterial.Icon3.cmd_script_text_outline // Different from frontend: outline version
+            "select" -> CommunityMaterial.Icon2.cmd_format_list_bulleted
+            "sensor" -> CommunityMaterial.Icon.cmd_eye
+            "siren" -> CommunityMaterial.Icon.cmd_bullhorn
+            "simple_alarm" -> CommunityMaterial.Icon.cmd_bell
+            "sun" -> if (compareState == "above_horizon")
+                CommunityMaterial.Icon3.cmd_white_balance_sunny
+            else
+                CommunityMaterial.Icon3.cmd_weather_night
             "switch" -> if (entity?.entityId?.isNotBlank() == true) {
                 when (entity.attributes["device_class"]) {
                     "outlet" -> if (compareState == "on") CommunityMaterial.Icon3.cmd_power_plug else CommunityMaterial.Icon3.cmd_power_plug_off
@@ -74,7 +132,13 @@ fun getIcon(entity: Entity<Map<String, Any>>?, domain: String, context: Context)
             } else { // For SimplifiedEntity without state, use a more generic icon
                 CommunityMaterial.Icon2.cmd_light_switch
             }
-            else -> CommunityMaterial.Icon.cmd_cellphone
+            "timer" -> CommunityMaterial.Icon3.cmd_timer_outline
+            "updater" -> CommunityMaterial.Icon.cmd_cloud_upload
+            "vacuum" -> CommunityMaterial.Icon3.cmd_robot_vacuum
+            "water_heater" -> CommunityMaterial.Icon3.cmd_thermometer
+            "weather" -> CommunityMaterial.Icon3.cmd_weather_cloudy
+            "zone" -> CommunityMaterial.Icon3.cmd_map_marker_radius
+            else -> CommunityMaterial.Icon.cmd_bookmark
         }
     }
 }
@@ -124,8 +188,13 @@ private fun coverIcon(state: String?, entity: Entity<Map<String, Any>>?): IIcon?
 }
 
 fun onEntityClickedFeedback(isToastEnabled: Boolean, isHapticEnabled: Boolean, context: Context, friendlyName: String, haptic: HapticFeedback) {
+    val message = context.getString(commonR.string.toast_message, friendlyName)
+    onEntityFeedback(isToastEnabled, isHapticEnabled, message, context, haptic)
+}
+
+fun onEntityFeedback(isToastEnabled: Boolean, isHapticEnabled: Boolean, message: String, context: Context, haptic: HapticFeedback) {
     if (isToastEnabled)
-        Toast.makeText(context, context.getString(commonR.string.toast_message, friendlyName), Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     if (isHapticEnabled)
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
 }

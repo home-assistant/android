@@ -9,11 +9,8 @@ import androidx.room.Query
 interface TileDao {
 
     @Query("SELECT * FROM qs_tiles WHERE tileId = :tileId")
-    fun get(tileId: String): TileEntity?
+    suspend fun get(tileId: String): TileEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun add(tileEntity: TileEntity)
-
-    @Query("DELETE FROM qs_tiles WHERE tileId = :id")
-    fun delete(id: String)
 }

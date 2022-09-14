@@ -8,10 +8,18 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.Text
+import androidx.wear.compose.material.items
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.theme.WearAppTheme
+import io.homeassistant.companion.android.util.playPreviewEntityScene1
+import io.homeassistant.companion.android.util.playPreviewEntityScene2
+import io.homeassistant.companion.android.util.playPreviewEntityScene3
 import io.homeassistant.companion.android.util.previewEntity1
 import io.homeassistant.companion.android.util.previewEntity2
+import io.homeassistant.companion.android.views.ExpandableListHeader
+import io.homeassistant.companion.android.views.ListHeader
+import io.homeassistant.companion.android.views.ThemeLazyColumn
+import io.homeassistant.companion.android.views.rememberExpandedStates
 import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
@@ -45,9 +53,9 @@ fun EntityViewList(
                     }
                     if (expandedStates[header.hashCode()]!!) {
                         val filtered = entities.filter { entityListFilter(it) }
-                        items(filtered.size) { index ->
+                        items(filtered, key = { it.entityId }) { entity ->
                             EntityUi(
-                                filtered[index],
+                                entity,
                                 onEntityClicked,
                                 isHapticEnabled,
                                 isToastEnabled
@@ -83,6 +91,20 @@ private fun PreviewEntityListView() {
     EntityViewList(
         entityLists = mapOf(stringResource(commonR.string.lights) to listOf(previewEntity1, previewEntity2)),
         entityListsOrder = listOf(stringResource(commonR.string.lights)),
+        entityListFilter = { true },
+        onEntityClicked = { _, _ -> },
+        onEntityLongClicked = { _ -> },
+        isHapticEnabled = false,
+        isToastEnabled = false
+    )
+}
+
+@Preview
+@Composable
+private fun PreviewEntityListScenes() {
+    EntityViewList(
+        entityLists = mapOf(stringResource(commonR.string.scenes) to listOf(playPreviewEntityScene1, playPreviewEntityScene2, playPreviewEntityScene3)),
+        entityListsOrder = listOf(stringResource(commonR.string.scenes)),
         entityListFilter = { true },
         onEntityClicked = { _, _ -> },
         onEntityLongClicked = { _ -> },

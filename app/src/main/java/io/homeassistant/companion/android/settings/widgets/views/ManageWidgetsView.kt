@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Button
 import androidx.compose.material.ExtendedFloatingActionButton
 import androidx.compose.material.Icon
@@ -70,7 +71,7 @@ fun ManageWidgetsView(
 ) {
     var expandedAddWidget by remember { mutableStateOf(false) }
     Scaffold(floatingActionButton = {
-        if (viewModel.supportsAddingWidgets.value) {
+        if (viewModel.supportsAddingWidgets) {
             ExtendedFloatingActionButton(
                 backgroundColor = MaterialTheme.colors.primary,
                 contentColor = MaterialTheme.colors.onPrimary,
@@ -94,8 +95,7 @@ fun ManageWidgetsView(
                 title = { Text(stringResource(R.string.add_widget)) },
                 content = {
                     LazyColumn {
-                        items(availableWidgets.size) { index ->
-                            val (key, widgetType) = availableWidgets[index]
+                        items(availableWidgets, key = { (key) -> key }) { (key, widgetType) ->
                             PopupWidgetRow(widgetLabel = key, widgetType = widgetType) {
                                 expandedAddWidget = false
                             }
@@ -106,7 +106,10 @@ fun ManageWidgetsView(
                 contentPadding = PaddingValues(all = 0.dp)
             )
         }
-        LazyColumn(modifier = Modifier.padding(all = 16.dp)) {
+        LazyColumn(
+            contentPadding = PaddingValues(all = 16.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
             if (viewModel.buttonWidgetList.value.isEmpty() && viewModel.staticWidgetList.value.isEmpty() &&
                 viewModel.mediaWidgetList.value.isEmpty() && viewModel.templateWidgetList.value.isEmpty() &&
                 viewModel.cameraWidgetList.value.isEmpty()
@@ -193,8 +196,7 @@ private fun <T : WidgetEntity> LazyListScope.widgetItems(
         item {
             Text(stringResource(id = title))
         }
-        items(widgetList.size, key = { index -> widgetList[index].id }) { index ->
-            val item = widgetList[index]
+        items(widgetList, key = { "$widgetType-${it.id}" }) { item ->
             WidgetRow(widgetLabel = widgetLabel(item), widgetId = item.id, widgetType = widgetType)
         }
     }

@@ -18,6 +18,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -33,10 +34,13 @@ import io.homeassistant.companion.android.database.sensor.EntriesTypeConverter
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.sensor.SensorSetting
+import io.homeassistant.companion.android.database.sensor.SensorSettingTypeConverter
 import io.homeassistant.companion.android.database.settings.LocalNotificationSettingConverter
 import io.homeassistant.companion.android.database.settings.LocalSensorSettingConverter
 import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
+import io.homeassistant.companion.android.database.wear.EntityStateComplications
+import io.homeassistant.companion.android.database.wear.EntityStateComplicationsDao
 import io.homeassistant.companion.android.database.wear.Favorites
 import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
@@ -49,6 +53,7 @@ import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
+import io.homeassistant.companion.android.database.widget.WidgetBackgroundTypeConverter
 import kotlinx.coroutines.runBlocking
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -66,17 +71,28 @@ import io.homeassistant.companion.android.common.R as commonR
         NotificationItem::class,
         TileEntity::class,
         Favorites::class,
+        EntityStateComplications::class,
         Setting::class
     ],
-    version = 25,
+    version = 33,
     autoMigrations = [
-        AutoMigration(from = 24, to = 25)
+        AutoMigration(from = 24, to = 25),
+        AutoMigration(from = 25, to = 26),
+        AutoMigration(from = 26, to = 27),
+        AutoMigration(from = 27, to = 28, spec = AppDatabase.Companion.Migration27to28::class),
+        AutoMigration(from = 28, to = 29),
+        AutoMigration(from = 29, to = 30),
+        AutoMigration(from = 30, to = 31),
+        AutoMigration(from = 31, to = 32),
+        AutoMigration(from = 32, to = 33),
     ]
 )
 @TypeConverters(
     LocalNotificationSettingConverter::class,
     LocalSensorSettingConverter::class,
-    EntriesTypeConverter::class
+    EntriesTypeConverter::class,
+    SensorSettingTypeConverter::class,
+    WidgetBackgroundTypeConverter::class
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun authenticationDao(): AuthenticationDao
@@ -89,6 +105,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun notificationDao(): NotificationDao
     abstract fun tileDao(): TileDao
     abstract fun favoritesDao(): FavoritesDao
+    abstract fun entityStateComplicationsDao(): EntityStateComplicationsDao
     abstract fun settingsDao(): SettingsDao
 
     companion object {
@@ -492,6 +509,14 @@ abstract class AppDatabase : RoomDatabase() {
         private val MIGRATION_23_24 = object : Migration(23, 24) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE `settings` ADD `sensorUpdateFrequency` TEXT NOT NULL DEFAULT 'NORMAL'")
+            }
+        }
+
+        class Migration27to28 : AutoMigrationSpec {
+            override fun onPostMigrate(db: SupportSQLiteDatabase) {
+                // Update 'registered' in the sensors table to set the value to null instead of the previous default of 0
+                // This will force an update to indicate whether a sensor is not registered (null) or registered as disabled (0)
+                db.execSQL("UPDATE `sensors` SET `registered` = NULL")
             }
         }
 

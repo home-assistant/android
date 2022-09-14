@@ -49,18 +49,17 @@ class TimeZoneManager : SensorManager {
             return
 
         val timeZone: TimeZone = TimeZone.getDefault()
-        val currentZone = timeZone.getDisplayName(Locale.ENGLISH)
-        val date = Date()
+        val currentlyInDst = timeZone.inDaylightTime(Date())
 
         onSensorUpdated(
             context,
             currentTimeZone,
-            currentZone,
+            timeZone.getDisplayName(currentlyInDst, TimeZone.LONG, Locale.ENGLISH),
             currentTimeZone.statelessIcon,
             mapOf(
-                "in_daylight_time" to timeZone.inDaylightTime(date),
+                "in_daylight_time" to currentlyInDst,
                 "time_zone_id" to timeZone.id,
-                "time_zone_short" to timeZone.getDisplayName(timeZone.inDaylightTime(date), TimeZone.SHORT, Locale.ENGLISH),
+                "time_zone_short" to timeZone.getDisplayName(currentlyInDst, TimeZone.SHORT, Locale.ENGLISH),
                 "uses_daylight_time" to timeZone.useDaylightTime(),
                 "utc_offset" to timeZone.getOffset(System.currentTimeMillis())
             )

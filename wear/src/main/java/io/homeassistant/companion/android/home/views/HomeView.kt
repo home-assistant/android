@@ -1,23 +1,13 @@
 package io.homeassistant.companion.android.home.views
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
-import androidx.wear.compose.material.Chip
-import androidx.wear.compose.material.ChipDefaults
-import androidx.wear.compose.material.ExperimentalWearMaterialApi
-import androidx.wear.compose.material.Text
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
@@ -27,7 +17,7 @@ import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.tiles.ShortcutsTile
 import io.homeassistant.companion.android.tiles.TemplateTile
-import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.views.ChooseEntityView
 
 private const val ARG_SCREEN_SENSOR_MANAGER_ID = "sensorManagerId"
 
@@ -43,7 +33,6 @@ private const val SCREEN_SELECT_TILE_SHORTCUT = "select_tile_shortcut"
 private const val SCREEN_SET_TILE_TEMPLATE = "set_tile_template"
 private const val SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL = "set_tile_template_refresh_interval"
 
-@OptIn(ExperimentalWearMaterialApi::class)
 @Composable
 fun LoadHomePage(
     mainViewModel: MainViewModel
@@ -52,207 +41,191 @@ fun LoadHomePage(
     val context = LocalContext.current
 
     WearAppTheme {
-        if (mainViewModel.loadingState.value == MainViewModel.LoadingState.LOADING &&
-            mainViewModel.favoriteEntityIds.value.isEmpty()
+        val swipeDismissableNavController = rememberSwipeDismissableNavController()
+        SwipeDismissableNavHost(
+            navController = swipeDismissableNavController,
+            startDestination = SCREEN_LANDING
         ) {
-            Column {
-                ListHeader(id = commonR.string.loading)
-                Chip(
-                    modifier = Modifier
-                        .padding(top = 30.dp, start = 10.dp, end = 10.dp),
-                    label = {
-                        Text(
-                            text = stringResource(commonR.string.loading_entities),
-                            textAlign = TextAlign.Center
-                        )
+            composable(SCREEN_LANDING) {
+                MainView(
+                    mainViewModel = mainViewModel,
+                    favoriteEntityIds = mainViewModel.favoriteEntityIds.value,
+                    onEntityClicked = { id, state -> mainViewModel.toggleEntity(id, state) },
+                    onEntityLongClicked = { entityId ->
+                        swipeDismissableNavController.navigate("$SCREEN_ENTITY_DETAIL/$entityId")
                     },
-                    onClick = { /* No op */ },
-                    colors = ChipDefaults.primaryChipColors()
+                    onRetryLoadEntitiesClicked = mainViewModel::loadEntities,
+                    onSettingsClicked = { swipeDismissableNavController.navigate(SCREEN_SETTINGS) },
+                    onTestClicked = { lists, order, filter ->
+                        mainViewModel.entityLists.clear()
+                        mainViewModel.entityLists.putAll(lists)
+                        mainViewModel.entityListsOrder.clear()
+                        mainViewModel.entityListsOrder.addAll(order)
+                        mainViewModel.entityListFilter = filter
+                        swipeDismissableNavController.navigate(SCREEN_ENTITY_LIST)
+                    },
+                    isHapticEnabled = mainViewModel.isHapticEnabled.value,
+                    isToastEnabled = mainViewModel.isToastEnabled.value,
+                    deleteFavorite = { id -> mainViewModel.removeFavoriteEntity(id) }
                 )
             }
-        } else {
-            val swipeDismissableNavController = rememberSwipeDismissableNavController()
-            SwipeDismissableNavHost(
-                navController = swipeDismissableNavController,
-                startDestination = SCREEN_LANDING
-            ) {
-                composable(SCREEN_LANDING) {
-                    MainView(
-                        mainViewModel = mainViewModel,
-                        favoriteEntityIds = mainViewModel.favoriteEntityIds.value,
-                        onEntityClicked = { id, state -> mainViewModel.toggleEntity(id, state) },
-                        onEntityLongClicked = { entityId ->
-                            swipeDismissableNavController.navigate("$SCREEN_ENTITY_DETAIL/$entityId")
-                        },
-                        onRetryLoadEntitiesClicked = mainViewModel::loadEntities,
-                        onSettingsClicked = { swipeDismissableNavController.navigate(SCREEN_SETTINGS) },
-                        onTestClicked = { lists, order, filter ->
-                            mainViewModel.entityLists.clear()
-                            mainViewModel.entityLists.putAll(lists)
-                            mainViewModel.entityListsOrder.clear()
-                            mainViewModel.entityListsOrder.addAll(order)
-                            mainViewModel.entityListFilter = filter
-                            swipeDismissableNavController.navigate(SCREEN_ENTITY_LIST)
-                        },
-                        isHapticEnabled = mainViewModel.isHapticEnabled.value,
-                        isToastEnabled = mainViewModel.isToastEnabled.value,
-                        deleteFavorite = { id -> mainViewModel.removeFavoriteEntity(id) }
-                    )
-                }
-                composable("$SCREEN_ENTITY_DETAIL/{entityId}") {
-                    val entity = mainViewModel.entities[it.arguments?.getString("entityId")]
-                    if (entity != null) {
-                        DetailsPanelView(
-                            entity = entity,
-                            onEntityToggled = { entityId, state ->
-                                mainViewModel.toggleEntity(entityId, state)
-                            },
-                            onFanSpeedChanged = { speed ->
-                                mainViewModel.setFanSpeed(
-                                    entity.entityId,
-                                    speed
-                                )
-                            },
-                            onBrightnessChanged = { brightness ->
-                                mainViewModel.setBrightness(
-                                    entity.entityId,
-                                    brightness
-                                )
-                            },
-                            onColorTempChanged = { colorTemp ->
-                                mainViewModel.setColorTemp(
-                                    entity.entityId,
-                                    colorTemp
-                                )
-                            }
-                        )
-                    }
-                }
-                composable(SCREEN_ENTITY_LIST) {
-                    EntityViewList(
-                        entityLists = mainViewModel.entityLists,
-                        entityListsOrder = mainViewModel.entityListsOrder,
-                        entityListFilter = mainViewModel.entityListFilter,
-                        onEntityClicked = { entityId, state ->
+            composable("$SCREEN_ENTITY_DETAIL/{entityId}") {
+                val entity = mainViewModel.entities[it.arguments?.getString("entityId")]
+                if (entity != null) {
+                    DetailsPanelView(
+                        entity = entity,
+                        onEntityToggled = { entityId, state ->
                             mainViewModel.toggleEntity(entityId, state)
                         },
-                        onEntityLongClicked = { entityId ->
-                            swipeDismissableNavController.navigate("$SCREEN_ENTITY_DETAIL/$entityId")
-                        },
-                        isHapticEnabled = mainViewModel.isHapticEnabled.value,
-                        isToastEnabled = mainViewModel.isToastEnabled.value
-                    )
-                }
-                composable(SCREEN_SETTINGS) {
-                    SettingsView(
-                        favorites = mainViewModel.favoriteEntityIds.value,
-                        onClickSetFavorites = {
-                            swipeDismissableNavController.navigate(
-                                SCREEN_SET_FAVORITES
+                        onFanSpeedChanged = { speed ->
+                            mainViewModel.setFanSpeed(
+                                entity.entityId,
+                                speed
                             )
                         },
-                        onClearFavorites = { mainViewModel.clearFavorites() },
-                        onClickSetShortcuts = {
-                            swipeDismissableNavController.navigate(
-                                SCREEN_SET_TILE_SHORTCUTS
+                        onBrightnessChanged = { brightness ->
+                            mainViewModel.setBrightness(
+                                entity.entityId,
+                                brightness
                             )
                         },
-                        onClickSensors = {
-                            swipeDismissableNavController.navigate(
-                                SCREEN_MANAGE_SENSORS
+                        onColorTempChanged = { colorTemp ->
+                            mainViewModel.setColorTemp(
+                                entity.entityId,
+                                colorTemp
                             )
                         },
-                        onClickLogout = { mainViewModel.logout() },
-                        isHapticEnabled = mainViewModel.isHapticEnabled.value,
                         isToastEnabled = mainViewModel.isToastEnabled.value,
-                        onHapticEnabled = { mainViewModel.setHapticEnabled(it) },
-                        onToastEnabled = { mainViewModel.setToastEnabled(it) }
-                    ) { swipeDismissableNavController.navigate(SCREEN_SET_TILE_TEMPLATE) }
-                }
-                composable(SCREEN_SET_FAVORITES) {
-                    SetFavoritesView(
-                        mainViewModel,
-                        mainViewModel.favoriteEntityIds.value
-                    ) { entityId, isSelected ->
-                        if (isSelected) {
-                            mainViewModel.addFavoriteEntity(entityId)
-                        } else {
-                            mainViewModel.removeFavoriteEntity(entityId)
-                        }
-                    }
-                }
-                composable(SCREEN_SET_TILE_SHORTCUTS) {
-                    SetTileShortcutsView(
-                        shortcutEntities = mainViewModel.shortcutEntities,
-                        onShortcutEntitySelectionChange = {
-                            shortcutEntitySelectionIndex = it
-                            swipeDismissableNavController.navigate(SCREEN_SELECT_TILE_SHORTCUT)
-                        },
-                        isShowShortcutTextEnabled = mainViewModel.isShowShortcutTextEnabled.value,
-                        onShowShortcutTextEnabled = {
-                            mainViewModel.setShowShortcutTextEnabled(it)
-                            TileService.getUpdater(context).requestUpdate(ShortcutsTile::class.java)
-                        }
+                        isHapticEnabled = mainViewModel.isHapticEnabled.value
                     )
                 }
-                composable(SCREEN_SELECT_TILE_SHORTCUT) {
-                    ChooseEntityView(
-                        mainViewModel,
-                        {
-                            mainViewModel.clearTileShortcut(shortcutEntitySelectionIndex)
-                            TileService.getUpdater(context).requestUpdate(ShortcutsTile::class.java)
-                            swipeDismissableNavController.navigateUp()
-                        },
-                        { entity ->
-                            mainViewModel.setTileShortcut(shortcutEntitySelectionIndex, entity)
-                            TileService.getUpdater(context).requestUpdate(ShortcutsTile::class.java)
-                            swipeDismissableNavController.navigateUp()
-                        }
-                    )
-                }
-                composable(SCREEN_SET_TILE_TEMPLATE) {
-                    TemplateTileSettingsView(
-                        templateContent = mainViewModel.templateTileContent.value,
-                        refreshInterval = mainViewModel.templateTileRefreshInterval.value
-                    ) {
+            }
+            composable(SCREEN_ENTITY_LIST) {
+                EntityViewList(
+                    entityLists = mainViewModel.entityLists,
+                    entityListsOrder = mainViewModel.entityListsOrder,
+                    entityListFilter = mainViewModel.entityListFilter,
+                    onEntityClicked = { entityId, state ->
+                        mainViewModel.toggleEntity(entityId, state)
+                    },
+                    onEntityLongClicked = { entityId ->
+                        swipeDismissableNavController.navigate("$SCREEN_ENTITY_DETAIL/$entityId")
+                    },
+                    isHapticEnabled = mainViewModel.isHapticEnabled.value,
+                    isToastEnabled = mainViewModel.isToastEnabled.value
+                )
+            }
+            composable(SCREEN_SETTINGS) {
+                SettingsView(
+                    favorites = mainViewModel.favoriteEntityIds.value,
+                    onClickSetFavorites = {
                         swipeDismissableNavController.navigate(
-                            SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL
+                            SCREEN_SET_FAVORITES
                         )
+                    },
+                    onClearFavorites = { mainViewModel.clearFavorites() },
+                    onClickSetShortcuts = {
+                        swipeDismissableNavController.navigate(
+                            SCREEN_SET_TILE_SHORTCUTS
+                        )
+                    },
+                    onClickSensors = {
+                        swipeDismissableNavController.navigate(
+                            SCREEN_MANAGE_SENSORS
+                        )
+                    },
+                    onClickLogout = { mainViewModel.logout() },
+                    isHapticEnabled = mainViewModel.isHapticEnabled.value,
+                    isToastEnabled = mainViewModel.isToastEnabled.value,
+                    onHapticEnabled = { mainViewModel.setHapticEnabled(it) },
+                    onToastEnabled = { mainViewModel.setToastEnabled(it) }
+                ) { swipeDismissableNavController.navigate(SCREEN_SET_TILE_TEMPLATE) }
+            }
+            composable(SCREEN_SET_FAVORITES) {
+                SetFavoritesView(
+                    mainViewModel,
+                    mainViewModel.favoriteEntityIds.value
+                ) { entityId, isSelected ->
+                    if (isSelected) {
+                        mainViewModel.addFavoriteEntity(entityId)
+                    } else {
+                        mainViewModel.removeFavoriteEntity(entityId)
                     }
                 }
-                composable(SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL) {
-                    RefreshIntervalPickerView(
-                        currentInterval = mainViewModel.templateTileRefreshInterval.value
-                    ) {
-                        mainViewModel.setTemplateTileRefreshInterval(it)
-                        TileService.getUpdater(context).requestUpdate(TemplateTile::class.java)
+            }
+            composable(SCREEN_SET_TILE_SHORTCUTS) {
+                SetTileShortcutsView(
+                    shortcutEntities = mainViewModel.shortcutEntities,
+                    onShortcutEntitySelectionChange = {
+                        shortcutEntitySelectionIndex = it
+                        swipeDismissableNavController.navigate(SCREEN_SELECT_TILE_SHORTCUT)
+                    },
+                    isShowShortcutTextEnabled = mainViewModel.isShowShortcutTextEnabled.value,
+                    onShowShortcutTextEnabled = {
+                        mainViewModel.setShowShortcutTextEnabled(it)
+                        TileService.getUpdater(context).requestUpdate(ShortcutsTile::class.java)
+                    }
+                )
+            }
+            composable(SCREEN_SELECT_TILE_SHORTCUT) {
+                ChooseEntityView(
+                    entitiesByDomainOrder = mainViewModel.entitiesByDomainOrder,
+                    entitiesByDomain = mainViewModel.entitiesByDomain,
+                    favoriteEntityIds = mainViewModel.favoriteEntityIds,
+                    onNoneClicked = {
+                        mainViewModel.clearTileShortcut(shortcutEntitySelectionIndex)
+                        TileService.getUpdater(context).requestUpdate(ShortcutsTile::class.java)
+                        swipeDismissableNavController.navigateUp()
+                    },
+                    onEntitySelected = { entity ->
+                        mainViewModel.setTileShortcut(shortcutEntitySelectionIndex, entity)
+                        TileService.getUpdater(context).requestUpdate(ShortcutsTile::class.java)
                         swipeDismissableNavController.navigateUp()
                     }
-                }
-                composable(route = SCREEN_MANAGE_SENSORS) {
-                    SensorsView(onClickSensorManager = {
-                        swipeDismissableNavController.navigate("$SCREEN_SINGLE_SENSOR_MANAGER/${it.id()}")
-                    })
-                }
-                composable(
-                    route = "$SCREEN_SINGLE_SENSOR_MANAGER/{$ARG_SCREEN_SENSOR_MANAGER_ID}",
-                    arguments = listOf(
-                        navArgument(name = ARG_SCREEN_SENSOR_MANAGER_ID) {
-                            type = NavType.StringType
-                        }
+                )
+            }
+            composable(SCREEN_SET_TILE_TEMPLATE) {
+                TemplateTileSettingsView(
+                    templateContent = mainViewModel.templateTileContent.value,
+                    refreshInterval = mainViewModel.templateTileRefreshInterval.value
+                ) {
+                    swipeDismissableNavController.navigate(
+                        SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL
                     )
-                ) { backStackEntry ->
-                    val sensorManagerId =
-                        backStackEntry.arguments?.getString(ARG_SCREEN_SENSOR_MANAGER_ID)
-                    val sensorManager = getSensorManagers().first { sensorManager ->
-                        sensorManager.id() == sensorManagerId
+                }
+            }
+            composable(SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL) {
+                RefreshIntervalPickerView(
+                    currentInterval = mainViewModel.templateTileRefreshInterval.value
+                ) {
+                    mainViewModel.setTemplateTileRefreshInterval(it)
+                    TileService.getUpdater(context).requestUpdate(TemplateTile::class.java)
+                    swipeDismissableNavController.navigateUp()
+                }
+            }
+            composable(route = SCREEN_MANAGE_SENSORS) {
+                SensorsView(onClickSensorManager = {
+                    swipeDismissableNavController.navigate("$SCREEN_SINGLE_SENSOR_MANAGER/${it.id()}")
+                })
+            }
+            composable(
+                route = "$SCREEN_SINGLE_SENSOR_MANAGER/{$ARG_SCREEN_SENSOR_MANAGER_ID}",
+                arguments = listOf(
+                    navArgument(name = ARG_SCREEN_SENSOR_MANAGER_ID) {
+                        type = NavType.StringType
                     }
-                    SensorManagerUi(
-                        allSensors = mainViewModel.sensors.value,
-                        sensorManager = sensorManager,
-                    ) { sensorId, isEnabled ->
-                        mainViewModel.enableDisableSensor(sensorManager, sensorId, isEnabled)
-                    }
+                )
+            ) { backStackEntry ->
+                val sensorManagerId =
+                    backStackEntry.arguments?.getString(ARG_SCREEN_SENSOR_MANAGER_ID)
+                val sensorManager = getSensorManagers().first { sensorManager ->
+                    sensorManager.id() == sensorManagerId
+                }
+                SensorManagerUi(
+                    allSensors = mainViewModel.sensors.value,
+                    sensorManager = sensorManager,
+                ) { sensorId, isEnabled ->
+                    mainViewModel.enableDisableSensor(sensorManager, sensorId, isEnabled)
                 }
             }
         }

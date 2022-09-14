@@ -9,7 +9,6 @@ import io.homeassistant.companion.android.viewHolders.HeaderViewHolder
 import io.homeassistant.companion.android.viewHolders.InstanceViewHolder
 import io.homeassistant.companion.android.viewHolders.LoadingViewHolder
 import io.homeassistant.companion.android.viewHolders.ManualSetupViewHolder
-import io.homeassistant.companion.android.viewHolders.PhoneSignInViewHolder
 import kotlin.math.min
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -19,16 +18,12 @@ class ServerListAdapter(
 
     lateinit var onInstanceClicked: (HomeAssistantInstance) -> Unit
     lateinit var onManualSetupClicked: () -> Unit
-    lateinit var onPhoneSignInClicked: () -> Unit
-
-    var phoneSignInAvailable = false
 
     companion object {
         private const val TYPE_INSTANCE = 1
         private const val TYPE_HEADER = 2
         private const val TYPE_LOADING = 3
         private const val TYPE_MANUAL = 4
-        private const val TYPE_PHONE_SIGNIN = 5
     }
 
     override fun onCreateViewHolder(
@@ -51,11 +46,6 @@ class ServerListAdapter(
                     .inflate(R.layout.listitem_instance, parent, false)
                 ManualSetupViewHolder(view, onManualSetupClicked)
             }
-            TYPE_PHONE_SIGNIN -> {
-                val view = LayoutInflater.from(parent.context)
-                    .inflate(R.layout.listitem_instance, parent, false)
-                PhoneSignInViewHolder(view, onPhoneSignInClicked)
-            }
             else -> {
                 val view = LayoutInflater.from(parent.context)
                     .inflate(R.layout.listitem_loading, parent, false)
@@ -69,8 +59,6 @@ class ServerListAdapter(
             holder.server = servers[position - 1]
         } else if (holder is ManualSetupViewHolder) {
             holder.text.setText(commonR.string.manual_setup)
-        } else if (holder is PhoneSignInViewHolder) {
-            holder.text.setText(commonR.string.sign_in_on_phone)
         } else if (holder is HeaderViewHolder) {
             if (position == 0) {
                 holder.headerTextView.setText(commonR.string.list_header_instances)
@@ -81,14 +69,13 @@ class ServerListAdapter(
     }
 
     override fun getItemCount() = min(
-        servers.size + (if (phoneSignInAvailable) 4 else 3),
-        if (phoneSignInAvailable) 5 else 4
+        servers.size + 3,
+        4
     )
 
     override fun getItemViewType(position: Int): Int {
         return when {
-            position == 0 || position == this.itemCount - (if (phoneSignInAvailable) 3 else 2) -> TYPE_HEADER
-            position == this.itemCount - 2 && phoneSignInAvailable -> TYPE_PHONE_SIGNIN
+            position == 0 || position == this.itemCount - 2 -> TYPE_HEADER
             position == this.itemCount - 1 -> TYPE_MANUAL
             servers.size > 0 -> TYPE_INSTANCE
             else -> TYPE_LOADING

@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.settings.log
 
-import android.Manifest
 import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -15,57 +14,44 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
-import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.tabs.TabLayout
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.getLatestFatalCrash
 import io.homeassistant.companion.android.util.LogcatReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
 import java.util.Calendar
+import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
+@AndroidEntryPoint
 class LogFragment : Fragment() {
 
     companion object {
         private const val TAG = "LogFragment"
     }
 
+    @Inject
+    lateinit var prefsRepository: PrefsRepository
+
+    private var processLog = ""
+    private var crashLog: String? = null
     private var currentLog = ""
-    private val requestPermission =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            if (granted) {
-                shareLog()
-            }
-        }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.share_log -> {
-                val permission = Manifest.permission.WRITE_EXTERNAL_STORAGE
-                if (ContextCompat.checkSelfPermission(requireContext(), permission) == PackageManager.PERMISSION_DENIED) {
-                    Log.d(TAG, "Click on share logs without WRITE_EXTERNAL_STORAGE permission")
-                    AlertDialog.Builder(requireActivity())
-                        .setTitle(getString(commonR.string.share_logs))
-                        .setMessage(getString(commonR.string.share_logs_perm_message))
-                        .setPositiveButton(commonR.string.confirm_positive) { _, _ ->
-                            Log.i(TAG, "Request WRITE_EXTERNAL_STORAGE permission, to create log file")
-                            requestPermission.launch(permission)
-                        }
-                        .setNegativeButton(commonR.string.confirm_negative) { _, _ ->
-                            Log.w(TAG, "User cancel request for WRITE_EXTERNAL_STORAGE permission")
-                            // Do nothing
-                        }.show()
-                } else {
-                    shareLog()
-                }
+                shareLog()
                 return true
             }
             R.id.refresh_log -> {
@@ -80,25 +66,62 @@ class LogFragment : Fragment() {
 
         setHasOptionsMenu(true)
 
+        requireView().findViewById<TabLayout>(R.id.logTabLayout)
+            .addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+                override fun onTabSelected(tab: TabLayout.Tab?) {
+                    showLog()
+                }
+
+                override fun onTabUnselected(tab: TabLayout.Tab?) {
+                }
+
+                override fun onTabReselected(tab: TabLayout.Tab?) {
+                    (requireView().findViewById<ScrollView>(R.id.logScrollview))?.apply {
+                        post {
+                            if (tab?.id == R.id.logTabCrash) fullScroll(ScrollView.FOCUS_UP)
+                            else fullScroll(ScrollView.FOCUS_DOWN)
+                        }
+                    }
+                }
+            })
+
         refreshLog()
     }
 
     private fun refreshLog() = lifecycleScope.launch(Dispatchers.Main) {
         if (view != null && activity != null) {
-            val logTextView = requireView().findViewById<TextView>(R.id.logTextView)
             val toolbar = requireActivity().findViewById<Toolbar>(R.id.toolbar)
 
             toolbar.menu.setGroupVisible(R.id.log_toolbar_group, false)
             showHideLogLoader(true)
 
             // Runs with Dispatcher IO
-            currentLog = LogcatReader.readLog()
+            processLog = LogcatReader.readLog()
+            crashLog = getLatestFatalCrash(requireContext(), prefsRepository.isCrashReporting())
 
-            logTextView?.text = currentLog
+            showLog()
             toolbar.menu.setGroupVisible(R.id.log_toolbar_group, true)
             showHideLogLoader(false)
+        }
+    }
+
+    private fun showLog() {
+        if (view != null) {
+            val tabLayout = requireView().findViewById<TabLayout>(R.id.logTabLayout)
+            val logTextView = requireView().findViewById<TextView>(R.id.logTextView)
+
+            // Update UI to show selected log and correct tab(s)
+            tabLayout.isVisible = crashLog != null
+
+            val showCrashLog = tabLayout.isVisible &&
+                tabLayout.getTabAt(tabLayout.selectedTabPosition)?.text == getString(commonR.string.log_loader_crash)
+            currentLog = if (showCrashLog) crashLog.toString() else processLog
+
+            logTextView?.text = currentLog
             (view?.findViewById<ScrollView>(R.id.logScrollview))?.apply {
-                post { fullScroll(ScrollView.FOCUS_DOWN) }
+                post {
+                    fullScroll(if (showCrashLog) ScrollView.FOCUS_UP else ScrollView.FOCUS_DOWN)
+                }
             }
         }
     }
@@ -197,9 +220,9 @@ class LogFragment : Fragment() {
     private fun showHideLogLoader(show: Boolean) {
         if (view != null) {
             val logLoader = requireView().findViewById<LinearLayout>(R.id.logLoader)
-            val logScrollView = requireView().findViewById<ScrollView>(R.id.logScrollview)
+            val logContents = requireView().findViewById<LinearLayout>(R.id.logContents)
 
-            logScrollView.isGone = show
+            logContents.isGone = show
             logLoader.isVisible = show
         }
     }

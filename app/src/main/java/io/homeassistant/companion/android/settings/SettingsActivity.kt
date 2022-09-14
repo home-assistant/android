@@ -14,6 +14,8 @@ import dagger.hilt.android.components.ActivityComponent
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
+import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
+import io.homeassistant.companion.android.settings.sensor.SensorDetailFragment
 import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -46,24 +48,30 @@ class SettingsActivity : BaseActivity() {
 
         setSupportActionBar(findViewById(R.id.toolbar))
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        val settingsNavigation = intent.getStringExtra("fragment")
 
-        supportFragmentManager
-            .beginTransaction()
-            .replace(
-                R.id.content,
-                if (settingsNavigation == null)
-                    SettingsFragment::class.java
-                else {
-                    when (settingsNavigation) {
-                        "websocket" -> WebsocketSettingFragment::class.java
-                        "notification_history" -> NotificationHistoryFragment::class.java
+        if (savedInstanceState == null) {
+            val settingsNavigation = intent.getStringExtra("fragment")
+            supportFragmentManager
+                .beginTransaction()
+                .replace(
+                    R.id.content,
+                    when {
+                        settingsNavigation == "websocket" -> WebsocketSettingFragment::class.java
+                        settingsNavigation == "notification_history" -> NotificationHistoryFragment::class.java
+                        settingsNavigation?.startsWith("sensors/") == true -> SensorDetailFragment::class.java
+                        settingsNavigation?.startsWith("tiles/") == true -> ManageTilesFragment::class.java
                         else -> SettingsFragment::class.java
-                    }
-                },
-                null
-            )
-            .commit()
+                    },
+                    if (settingsNavigation?.startsWith("sensors/") == true) {
+                        val sensorId = settingsNavigation.split("/")[1]
+                        SensorDetailFragment.newInstance(sensorId).arguments
+                    } else if (settingsNavigation?.startsWith("tiles/") == true) {
+                        val tileId = settingsNavigation.split("/")[1]
+                        Bundle().apply { putString("id", tileId) }
+                    } else null
+                )
+                .commit()
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

@@ -15,6 +15,7 @@ import io.homeassistant.companion.android.common.util.sensorWorkerChannel
 import io.homeassistant.companion.android.database.AppDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.lang.IllegalStateException
 import io.homeassistant.companion.android.common.R as commonR
 
 abstract class SensorWorkerBase(
@@ -35,8 +36,8 @@ abstract class SensorWorkerBase(
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         val sensorDao = AppDatabase.getInstance(applicationContext).sensorDao()
         val enabledSensorCount = sensorDao.getEnabledCount() ?: 0
-        if (enabledSensorCount > 0) {
-            Log.d(TAG, "Updating all Sensors.")
+        val currentCoreSupportsDisabledSensors = integrationUseCase.isHomeAssistantVersionAtLeast(2022, 6, 0)
+        if (enabledSensorCount > 0 || currentCoreSupportsDisabledSensors) {
             createNotificationChannel()
             val notification = NotificationCompat.Builder(applicationContext, sensorWorkerChannel)
                 .setSmallIcon(commonR.drawable.ic_stat_ic_notification)
@@ -45,13 +46,22 @@ abstract class SensorWorkerBase(
                 .build()
 
             val foregroundInfo = ForegroundInfo(NOTIFICATION_ID, notification)
-            setForeground(foregroundInfo)
+            try {
+                setForeground(foregroundInfo)
+                Log.d(TAG, "Updating all Sensors in foreground.")
+            } catch (e: IllegalStateException) {
+                // On Android 12+ we might encounter a ForegroundServiceStartNotAllowedException
+                // depending on battery settings and trigger. Because the service also works in the
+                // background, ignore it and continue (doesn't need to be logged as an exception).
+                Log.d(TAG, "Updating all Sensors in background.", e)
+            }
+
             val lastUpdateSensor = sensorDao.get(LastUpdateManager.lastUpdate.id)
             if (lastUpdateSensor != null) {
                 if (lastUpdateSensor.enabled)
                     LastUpdateManager().sendLastUpdate(appContext, TAG)
             }
-            sensorReceiver.updateSensors(appContext, integrationUseCase, null)
+            sensorReceiver.updateSensors(appContext, integrationUseCase, sensorDao, null)
         }
         Result.success()
     }

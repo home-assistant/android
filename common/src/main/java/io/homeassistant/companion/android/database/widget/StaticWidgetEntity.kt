@@ -21,5 +21,9 @@ data class StaticWidgetEntity(
     @ColumnInfo(name = "attribute_separator")
     val attributeSeparator: String = "",
     @ColumnInfo(name = "last_update")
-    val lastUpdate: String
-) : WidgetEntity
+    val lastUpdate: String,
+    @ColumnInfo(name = "background_type", defaultValue = "DAYNIGHT")
+    override val backgroundType: WidgetBackgroundType = WidgetBackgroundType.DAYNIGHT,
+    @ColumnInfo(name = "text_color")
+    override val textColor: String? = null
+) : WidgetEntity, ThemeableWidgetEntity

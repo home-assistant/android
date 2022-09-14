@@ -8,12 +8,15 @@ import android.content.res.Configuration
 import android.media.MediaMetadata
 import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
+import android.os.Build
+import android.os.Bundle
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.common.R as commonR
 
 class NotificationSensorManager : NotificationListenerService(), SensorManager {
@@ -118,17 +121,16 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             applicationContext,
             lastNotification,
             SETTING_ALLOW_LIST,
-            "list-apps",
-            ""
+            SensorSettingType.LIST_APPS,
+            default = ""
         ).split(", ").filter { it.isNotBlank() }
 
-        val disableAllowListRequirement = getSetting(
+        val disableAllowListRequirement = getToggleSetting(
             applicationContext,
             lastNotification,
             SETTING_DISABLE_ALLOW_LIST,
-            "toggle",
-            "false"
-        ).toBoolean()
+            default = false
+        )
 
         if (sbn.packageName == application.packageName ||
             (allowPackages.isNotEmpty() && sbn.packageName !in allowPackages) ||
@@ -137,13 +139,17 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             return
         }
 
-        val attr = sbn.notification.extras.keySet()
-            .map { it to sbn.notification.extras.get(it) }
-            .toMap()
+        val attr = mappedBundle(sbn.notification.extras).orEmpty()
             .plus("package" to sbn.packageName)
             .plus("post_time" to sbn.postTime)
             .plus("is_clearable" to sbn.isClearable)
             .plus("is_ongoing" to sbn.isOngoing)
+            .plus("group_id" to sbn.notification.group)
+            .plus("category" to sbn.notification.category)
+            .toMutableMap()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+            attr["channel_id"] = sbn.notification.channelId
 
         // Attempt to use the text of the notification but fallback to package name if all else fails.
         val state = attr["android.title"].toString() + "-" + attr["android.text"].toString()
@@ -154,7 +160,8 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             lastNotification,
             state.toString().take(255),
             lastNotification.statelessIcon,
-            attr
+            attr,
+            forceUpdate = true,
         )
 
         // Need to send update!
@@ -173,17 +180,16 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             applicationContext,
             lastRemovedNotification,
             SETTING_ALLOW_LIST,
-            "list-apps",
-            ""
+            SensorSettingType.LIST_APPS,
+            default = ""
         ).split(", ").filter { it.isNotBlank() }
 
-        val disableAllowListRequirement = getSetting(
+        val disableAllowListRequirement = getToggleSetting(
             applicationContext,
             lastRemovedNotification,
             SETTING_DISABLE_ALLOW_LIST,
-            "toggle",
-            "false"
-        ).toBoolean()
+            default = false
+        )
 
         if (sbn.packageName == application.packageName ||
             (allowPackages.isNotEmpty() && sbn.packageName !in allowPackages) ||
@@ -192,13 +198,17 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             return
         }
 
-        val attr = sbn.notification.extras.keySet()
-            .map { it to sbn.notification.extras.get(it) }
-            .toMap()
+        val attr = mappedBundle(sbn.notification.extras).orEmpty()
             .plus("package" to sbn.packageName)
             .plus("post_time" to sbn.postTime)
             .plus("is_clearable" to sbn.isClearable)
             .plus("is_ongoing" to sbn.isOngoing)
+            .plus("group_id" to sbn.notification.group)
+            .plus("category" to sbn.notification.category)
+            .toMutableMap()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+            attr["channel_id"] = sbn.notification.channelId
 
         // Attempt to use the text of the notification but fallback to package name if all else fails.
         val state = attr["android.text"] ?: attr["android.title"] ?: sbn.packageName
@@ -208,7 +218,8 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             lastRemovedNotification,
             state.toString().take(255),
             lastRemovedNotification.statelessIcon,
-            attr
+            attr,
+            forceUpdate = true,
         )
 
         // Need to send update!
@@ -222,12 +233,15 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         try {
             val attr: MutableMap<String, Any?> = mutableMapOf()
             for (item in activeNotifications) {
-                attr += item.notification.extras.keySet()
-                    .map { it + "_" + item.packageName to item.notification.extras.get(it) }
-                    .toMap()
-                    .plus(item.packageName + "_" + item.id + "_post_time" to item.postTime)
-                    .plus(item.packageName + "_" + item.id + "_is_ongoing" to item.isOngoing)
-                    .plus(item.packageName + "_" + item.id + "_is_clearable" to item.isClearable)
+                attr += mappedBundle(item.notification.extras, "_${item.packageName}_${item.id}").orEmpty()
+                    .plus("${item.packageName}_${item.id}_post_time" to item.postTime)
+                    .plus("${item.packageName}_${item.id}_is_ongoing" to item.isOngoing)
+                    .plus("${item.packageName}_${item.id}_is_clearable" to item.isClearable)
+                    .plus("${item.packageName}_${item.id}_group_id" to item.notification.group)
+                    .plus("${item.packageName}_${item.id}_category" to item.notification.category)
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                    attr["${item.packageName}_${item.id}_channel_id"] = item.notification.channelId
             }
             onSensorUpdated(
                 applicationContext,
@@ -288,6 +302,38 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             PlaybackState.STATE_SKIPPING_TO_PREVIOUS -> "Skip to Previous"
             PlaybackState.STATE_SKIPPING_TO_QUEUE_ITEM -> "Skip to Queue Item"
             else -> "Unknown"
+        }
+    }
+
+    /**
+     * Returns the values of a bundle as a key/value map for use as a sensor's attributes.
+     * Arrays are converted to lists to make them human readable.
+     * Bundles inside the given bundle will also be mapped as a key/value map.
+     */
+    private fun mappedBundle(bundle: Bundle, keySuffix: String = ""): Map<String, Any?>? {
+        return try {
+            bundle.keySet().associate { key ->
+                val keyValue = when (val value = bundle.get(key)) {
+                    is Array<*> -> {
+                        if (value.all { it is Bundle }) value.map { mappedBundle(it as Bundle) ?: value }
+                        else value.toList()
+                    }
+                    is BooleanArray -> value.toList()
+                    is Bundle -> mappedBundle(value) ?: value
+                    is ByteArray -> value.toList()
+                    is CharArray -> value.toList()
+                    is DoubleArray -> value.toList()
+                    is FloatArray -> value.toList()
+                    is IntArray -> value.toList()
+                    is LongArray -> value.toList()
+                    is ShortArray -> value.toList()
+                    else -> value
+                }
+                "${key}$keySuffix" to keyValue
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception while trying to map notification bundle", e)
+            null
         }
     }
 }

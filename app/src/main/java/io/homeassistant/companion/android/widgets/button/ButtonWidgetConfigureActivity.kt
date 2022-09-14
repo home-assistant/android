@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.widgets.button
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -13,16 +12,21 @@ import android.util.Log
 import android.view.View
 import android.view.View.VISIBLE
 import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.EditText
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
+import androidx.core.graphics.toColorInt
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.google.android.material.color.DynamicColors
 import com.maltaisn.icondialog.IconDialog
 import com.maltaisn.icondialog.IconDialogSettings
 import com.maltaisn.icondialog.data.Icon
@@ -30,27 +34,24 @@ import com.maltaisn.icondialog.pack.IconPack
 import com.maltaisn.icondialog.pack.IconPackLoader
 import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.BaseActivity
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.Service
-import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
+import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetButtonConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
+import io.homeassistant.companion.android.util.getHexForColor
+import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.common.ServiceFieldBinder
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetDynamicFieldAdapter
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
-class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
+class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.Callback {
     companion object {
         private const val TAG: String = "ButtonWidgetConfigAct"
         private const val ICON_DIALOG_TAG = "icon-dialog"
@@ -59,6 +60,10 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
 
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
+
+    @Inject
+    lateinit var buttonWidgetDao: ButtonWidgetDao
+    override val dao get() = buttonWidgetDao
 
     private lateinit var iconPack: IconPack
 
@@ -69,15 +74,7 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
 
     private lateinit var binding: WidgetButtonConfigureBinding
 
-    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
-
-    private var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
     private var requestLauncherSetup = false
-
-    private var onDeleteWidget = View.OnClickListener {
-        val context = this@ButtonWidgetConfigureActivity
-        deleteConfirmation(context)
-    }
 
     private val onAddFieldListener = View.OnClickListener {
         val context = this@ButtonWidgetConfigureActivity
@@ -193,16 +190,43 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
             return
         }
 
-        val buttonWidgetDao = AppDatabase.getInstance(applicationContext).buttonWidgetDao()
         val buttonWidget = buttonWidgetDao.get(appWidgetId)
         var serviceText = ""
+
+        val backgroundTypeValues = mutableListOf(
+            getString(commonR.string.widget_background_type_daynight),
+            getString(commonR.string.widget_background_type_transparent)
+        )
+        if (DynamicColors.isDynamicColorAvailable())
+            backgroundTypeValues.add(0, getString(commonR.string.widget_background_type_dynamiccolor))
+        binding.backgroundType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
+
         if (buttonWidget != null) {
             serviceText = "${buttonWidget.domain}.${buttonWidget.service}"
             binding.widgetTextConfigService.setText(serviceText)
             binding.label.setText(buttonWidget.label)
+
+            binding.backgroundType.setSelection(
+                when {
+                    buttonWidget.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable() ->
+                        backgroundTypeValues.indexOf(getString(commonR.string.widget_background_type_dynamiccolor))
+                    buttonWidget.backgroundType == WidgetBackgroundType.TRANSPARENT ->
+                        backgroundTypeValues.indexOf(getString(commonR.string.widget_background_type_transparent))
+                    else ->
+                        backgroundTypeValues.indexOf(getString(commonR.string.widget_background_type_daynight))
+                }
+            )
+            binding.textColor.visibility = if (buttonWidget.backgroundType == WidgetBackgroundType.TRANSPARENT) View.VISIBLE else View.GONE
+            binding.textColorWhite.isChecked =
+                buttonWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, android.R.color.white) } ?: true
+            binding.textColorBlack.isChecked =
+                buttonWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, commonR.color.colorWidgetButtonLabelBlack) } ?: false
+
             binding.addButton.setText(commonR.string.update_widget)
-            binding.deleteButton.visibility = VISIBLE
-            binding.deleteButton.setOnClickListener(onDeleteWidget)
+
+            binding.widgetCheckboxRequireAuthentication.isChecked = buttonWidget.requireAuthentication
+        } else {
+            binding.backgroundType.setSelection(0)
         }
         // Create an icon pack loader with application context.
         val loader = IconPackLoader(this)
@@ -213,15 +237,16 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
         binding.widgetTextConfigService.setAdapter(serviceAdapter)
         binding.widgetTextConfigService.onFocusChangeListener = dropDownOnFocus
 
-        mainScope.launch {
+        lifecycleScope.launch {
             try {
                 // Fetch services
                 integrationUseCase.getServices()?.forEach {
                     services[getServiceString(it)] = it
                 }
                 Log.d(TAG, "Services found: $services")
+                serviceAdapter.addAll(services.values)
+                serviceAdapter.sort()
                 if (buttonWidget != null) {
-                    serviceAdapter.add(services[serviceText])
                     val serviceData = services[serviceText]!!.serviceData
                     val target = serviceData.target
                     val fields = serviceData.fields
@@ -255,13 +280,12 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
                         entities[it.entityId] = it
                     }
                     dynamicFieldAdapter.notifyDataSetChanged()
-                } else
-                    serviceAdapter.addAll(services.values)
-                serviceAdapter.sort()
+                }
 
                 // Update service adapter
                 runOnUiThread {
                     serviceAdapter.notifyDataSetChanged()
+                    serviceAdapter.filter.filter(binding.widgetTextConfigService.text)
                 }
             } catch (e: Exception) {
                 // Custom components can cause services to not load
@@ -282,6 +306,18 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
         }
 
         binding.widgetTextConfigService.addTextChangedListener(serviceTextWatcher)
+
+        binding.backgroundType.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                binding.textColor.visibility =
+                    if (parent?.adapter?.getItem(position) == getString(commonR.string.widget_background_type_transparent)) View.VISIBLE
+                    else View.GONE
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                binding.textColor.visibility = View.GONE
+            }
+        }
 
         binding.addFieldButton.setOnClickListener(onAddFieldListener)
         binding.addButton.setOnClickListener {
@@ -325,11 +361,6 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
                 iconDialog.show(supportFragmentManager, ICON_DIALOG_TAG)
             }
         }
-    }
-
-    override fun onDestroy() {
-        mainScope.cancel()
-        super.onDestroy()
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -418,6 +449,24 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
                 jacksonObjectMapper().writeValueAsString(serviceDataMap)
             )
 
+            intent.putExtra(
+                ButtonWidget.EXTRA_BACKGROUND_TYPE,
+                when (binding.backgroundType.selectedItem as String?) {
+                    getString(commonR.string.widget_background_type_dynamiccolor) -> WidgetBackgroundType.DYNAMICCOLOR
+                    getString(commonR.string.widget_background_type_transparent) -> WidgetBackgroundType.TRANSPARENT
+                    else -> WidgetBackgroundType.DAYNIGHT
+                }
+            )
+
+            intent.putExtra(
+                ButtonWidget.EXTRA_TEXT_COLOR,
+                if (binding.backgroundType.selectedItem as String? == getString(commonR.string.widget_background_type_transparent))
+                    getHexForColor(if (binding.textColorWhite.isChecked) android.R.color.white else commonR.color.colorWidgetButtonLabelBlack)
+                else null
+            )
+
+            intent.putExtra(ButtonWidget.EXTRA_REQUIRE_AUTHENTICATION, binding.widgetCheckboxRequireAuthentication.isChecked)
+
             context.sendBroadcast(intent)
 
             // Make sure we pass back the original appWidgetId
@@ -430,35 +479,5 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
             Log.e(TAG, "Issue configuring widget", e)
             showAddWidgetError()
         }
-    }
-
-    private fun showAddWidgetError() {
-        Toast.makeText(applicationContext, commonR.string.widget_creation_error, Toast.LENGTH_LONG).show()
-    }
-
-    private fun deleteConfirmation(context: Context) {
-        val buttonWidgetDao = AppDatabase.getInstance(context).buttonWidgetDao()
-
-        val builder: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(context)
-
-        builder.setTitle(commonR.string.confirm_delete_this_widget_title)
-        builder.setMessage(commonR.string.confirm_delete_this_widget_message)
-
-        builder.setPositiveButton(
-            commonR.string.confirm_positive
-        ) { dialog, _ ->
-            buttonWidgetDao.delete(appWidgetId)
-            dialog.dismiss()
-            finish()
-        }
-
-        builder.setNegativeButton(
-            commonR.string.confirm_negative
-        ) { dialog, _ -> // Do nothing
-            dialog.dismiss()
-        }
-
-        val alert: android.app.AlertDialog? = builder.create()
-        alert?.show()
     }
 }

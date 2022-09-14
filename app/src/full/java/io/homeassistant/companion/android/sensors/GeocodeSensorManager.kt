@@ -11,6 +11,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
+import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.location.HighAccuracyLocationService
 import java.lang.Exception
 import io.homeassistant.companion.android.common.R as commonR
@@ -39,6 +40,10 @@ class GeocodeSensorManager : SensorManager {
         get() = commonR.string.sensor_name_geolocation
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(geocodedLocation)
+    }
+
+    override fun hasSensor(context: Context): Boolean {
+        return Geocoder.isPresent()
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
@@ -79,46 +84,52 @@ class GeocodeSensorManager : SensorManager {
                 return
             }
 
-            val sensorDao = AppDatabase.getInstance(context).sensorDao()
-            val sensorSettings = sensorDao.getSettings(geocodedLocation.id)
-            val minAccuracy = sensorSettings
-                .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
-                ?: DEFAULT_MINIMUM_ACCURACY
-            sensorDao.add(
-                SensorSetting(
-                    geocodedLocation.id,
-                    SETTING_ACCURACY,
-                    minAccuracy.toString(),
-                    "number"
+                val sensorDao = AppDatabase.getInstance(context).sensorDao()
+                val sensorSettings = sensorDao.getSettings(geocodedLocation.id)
+                val minAccuracy = sensorSettings
+                    .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
+                    ?: DEFAULT_MINIMUM_ACCURACY
+                sensorDao.add(SensorSetting(geocodedLocation.id, SETTING_ACCURACY, minAccuracy.toString(), SensorSettingType.NUMBER))
+
+                if (location.accuracy <= minAccuracy) {
+                    address = Geocoder(context)
+                        .getFromLocation(location.latitude, location.longitude, 1)
+                        ?.firstOrNull()
+                } else {
+                    Log.w(TAG, "Skipping geocoded update as accuracy was not met: ${location.accuracy}")
+                    return@addOnSuccessListener
+                }
+
+                val now = System.currentTimeMillis()
+                if (now - location.time > 300000) {
+                    Log.w(TAG, "Skipping geocoded update due to old timestamp ${location.time} compared to $now")
+                    return@addOnSuccessListener
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to get geocoded location", e)
+            }
+            val attributes = address?.let {
+                mapOf(
+                    "administrative_area" to it.adminArea,
+                    "country" to it.countryName,
+                    "iso_country_code" to it.countryCode,
+                    "locality" to it.locality,
+                    "location" to listOf(it.latitude, it.longitude),
+                    "name" to it.featureName,
+                    "phone" to it.phone,
+                    "premises" to it.premises,
+                    "postal_code" to it.postalCode,
+                    "sub_administrative_area" to it.subAdminArea,
+                    "sub_locality" to it.subLocality,
+                    "sub_thoroughfare" to it.subThoroughfare,
+                    "thoroughfare" to it.thoroughfare,
+                    "url" to it.url
                 )
-            )
+            }.orEmpty()
 
-            if (location.accuracy <= minAccuracy)
-                address = Geocoder(context)
-                    .getFromLocation(location.latitude, location.longitude, 1)
-                    .firstOrNull()
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to get geocoded location", e)
-        }
-        val attributes = address?.let {
-            mapOf(
-                "Administrative Area" to it.adminArea,
-                "Country" to it.countryName,
-                "ISO Country Code" to it.countryCode,
-                "Locality" to it.locality,
-                "Latitude" to it.latitude,
-                "Longitude" to it.longitude,
-                "Postal Code" to it.postalCode,
-                "Sub Administrative Area" to it.subAdminArea,
-                "Sub Locality" to it.subLocality,
-                "Sub Thoroughfare" to it.subThoroughfare,
-                "Thoroughfare" to it.thoroughfare
-            )
-        }.orEmpty()
+            val prettyAddress = address?.getAddressLine(0)
 
-        val prettyAddress = address?.getAddressLine(0) ?: "Unknown"
-
-        HighAccuracyLocationService.updateNotificationAddress(context, location, if (!prettyAddress.isNullOrEmpty()) prettyAddress else context.getString(commonR.string.unknown_address))
+            HighAccuracyLocationService.updateNotificationAddress(context, location, if (!prettyAddress.isNullOrEmpty()) prettyAddress else context.getString(commonR.string.unknown_address))
 
             onSensorUpdated(
                 context,
@@ -128,4 +139,5 @@ class GeocodeSensorManager : SensorManager {
                 attributes
             )
         }
+    }
 }

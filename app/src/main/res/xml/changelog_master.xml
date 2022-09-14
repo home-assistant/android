@@ -1,15 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2022.4">
-        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Updated User Agent String format to also include the WebView User Agent</change>
-        <change>Add new notification command to allow for changing Persistent Connection setting</change>
-        <change>Allow persistent connection to work when the device has no internet</change>
-        <change>Migrate Manage Sensors screen to Compose, small design tweaks and speed improvements</change>
-        <change>Add a network transport sensor</change>
-        <change>Allow changing high accuracy update interval via notification command</change>
-        <change>Add a new notification command to launch an app with only the package name, if app is not installed user will be taken to install the app</change>
-        <change>Add missing volume level sensors and allow control via notification command for some of them</change>
-        <change>Bug fixes, design tweaks and dependency updates</change>
+    <release version="2022.9 - Phone" versioncode="2">
+        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Geocoded Location sensor attributes for latitude and longitude have been combined into location, the sensor will no longer show on the map. Additional attributes also added to the sensor.</change>
+        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Template widgets will only update when the template detects a change. If you are not seeing frequent updates then you are hit by rate limiting and will need to readjust the template.</change>
+        <change>Add beacon monitor sensor</change>
+        <change>Add authentication option to button widget</change>
+        <change>Add option to bypass locking the app when on home WiFi</change>
+        <change>Only subscribe to state changes that we care about for entity state and media player widgets</change>
+        <change>Allow device controls on locked devices for Android 13+</change>
+        <change>Bug fixes, performance improvements, design tweaks and dependency updates</change>
+    </release>
+    <release version="2022.9 - Wear" versioncode="1">
+        <change>Faster entity selection for entity state complication</change>
+        <change>Always default to using the phone for logging in</change>
     </release>
 </changelog>

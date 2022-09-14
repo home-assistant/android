@@ -17,5 +17,11 @@ data class ButtonWidgetEntity(
     @ColumnInfo(name = "service_data")
     val serviceData: String,
     @ColumnInfo(name = "label")
-    val label: String?
-) : WidgetEntity
+    val label: String?,
+    @ColumnInfo(name = "background_type", defaultValue = "DAYNIGHT")
+    override val backgroundType: WidgetBackgroundType = WidgetBackgroundType.DAYNIGHT,
+    @ColumnInfo(name = "text_color")
+    override val textColor: String? = null,
+    @ColumnInfo(name = "require_authentication", defaultValue = "0")
+    val requireAuthentication: Boolean
+) : WidgetEntity, ThemeableWidgetEntity

@@ -39,7 +39,6 @@ import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
-import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.Toast
@@ -51,7 +50,9 @@ import androidx.core.content.getSystemService
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
 import com.google.android.exoplayer2.DefaultLoadControl
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
@@ -68,10 +69,11 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.data.HomeAssistantApis
+import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
-import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.authentication.Authentication
+import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.databinding.ActivityWebviewBinding
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
 import io.homeassistant.companion.android.databinding.ExoPlayerViewBinding
@@ -83,9 +85,12 @@ import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.ChangeLog
+import io.homeassistant.companion.android.util.DataUriDownloadManager
 import io.homeassistant.companion.android.util.OnSwipeListener
+import io.homeassistant.companion.android.util.TLSWebViewClient
 import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.websocket.WebsocketManager
+import io.homeassistant.companion.android.webview.WebView.ErrorType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -162,6 +167,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     @Inject
     lateinit var urlRepository: UrlRepository
 
+    @Inject
+    lateinit var authenticationDao: AuthenticationDao
+
+    @Inject
+    lateinit var keyChainRepository: KeyChainRepository
+
     private lateinit var binding: ActivityWebviewBinding
     private lateinit var webView: WebView
     private lateinit var loadedUrl: String
@@ -236,6 +247,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         webView = binding.webview
         webView.apply {
+            // TODO This quick bar workaround only works on Home Assistant core versions <2022.7
+            // If not 'fixed' or officially supported: should be removed in Android 2023.1 (GitHub: #2690)
             setOnTouchListener(object : OnSwipeListener() {
                 override fun onSwipe(
                     e1: MotionEvent,
@@ -263,14 +276,14 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             settings.displayZoomControls = false
             settings.mediaPlaybackRequiresUserGesture = !presenter.isAutoPlayVideoEnabled()
             settings.userAgentString = settings.userAgentString + " ${HomeAssistantApis.USER_AGENT_STRING}"
-            webViewClient = object : WebViewClient() {
+            webViewClient = object : TLSWebViewClient(keyChainRepository) {
                 override fun onReceivedError(
                     view: WebView?,
                     errorCode: Int,
                     description: String?,
                     failingUrl: String?
                 ) {
-                    Log.e(TAG, "onReceivedHttpError: errorCode: $errorCode url:$failingUrl")
+                    Log.e(TAG, "onReceivedError: errorCode: $errorCode url:$failingUrl")
                     if (failingUrl == loadedUrl) {
                         showError()
                     }
@@ -300,7 +313,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     request: WebResourceRequest?,
                     errorResponse: WebResourceResponse?
                 ) {
-                    Log.e(TAG, "onReceivedHttpError: $errorResponse")
+                    Log.e(TAG, "onReceivedHttpError: ${errorResponse?.statusCode} : ${errorResponse?.reasonPhrase} for: ${request?.url}")
                     if (request?.url.toString() == loadedUrl) {
                         showError()
                     }
@@ -323,8 +336,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     handler: SslErrorHandler?,
                     error: SslError?
                 ) {
-                    Log.e(TAG, "onReceivedHttpError: $error")
-                    showError()
+                    Log.e(TAG, "onReceivedSslError: $error")
+                    showError(
+                        io.homeassistant.companion.android.webview.WebView.ErrorType.SSL,
+                        error,
+                        null
+                    )
                 }
 
                 override fun onLoadResource(
@@ -517,6 +534,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     fun getExternalAuth(payload: String) {
                         JSONObject(payload).let {
                             presenter.onGetExternalAuth(
+                                this@WebViewActivity,
                                 it.getString("callback"),
                                 it.has("force") && it.getBoolean("force")
                             )
@@ -1080,7 +1098,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     }
 
     override fun showError(
-        errorType: io.homeassistant.companion.android.webview.WebView.ErrorType,
+        errorType: ErrorType,
         error: SslError?,
         description: String?
     ) {
@@ -1096,13 +1114,51 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 waitForConnection()
             }
 
-        if (errorType == io.homeassistant.companion.android.webview.WebView.ErrorType.AUTHENTICATION) {
+        var tlsWebViewClient: TLSWebViewClient? = null
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.GET_WEB_VIEW_CLIENT)) {
+            tlsWebViewClient = WebViewCompat.getWebViewClient(webView) as TLSWebViewClient
+        }
+
+        if (tlsWebViewClient?.isTLSClientAuthNeeded == true &&
+            errorType == ErrorType.TIMEOUT &&
+            !tlsWebViewClient.hasUserDeniedAccess
+        ) {
+            // Ignore if a timeout occurs but the user has not denied access
+            // It is likely due to the user not choosing a key yet
+            return
+        } else if (tlsWebViewClient?.isTLSClientAuthNeeded == true &&
+            errorType == ErrorType.AUTHENTICATION &&
+            tlsWebViewClient.hasUserDeniedAccess
+        ) {
+            // If no key is available to the app
+            alert.setMessage(commonR.string.tls_cert_not_found_message)
+            alert.setTitle(commonR.string.tls_cert_title)
+            alert.setPositiveButton(android.R.string.ok) { _, _ ->
+                presenter.clearKnownUrls()
+                relaunchApp()
+            }
+            alert.setNeutralButton(commonR.string.exit) { _, _ ->
+                finishAffinity()
+            }
+        } else if (tlsWebViewClient?.isTLSClientAuthNeeded == true &&
+            !tlsWebViewClient.isCertificateChainValid
+        ) {
+            // If the chain is no longer valid
+            alert.setMessage(commonR.string.tls_cert_expired_message)
+            alert.setTitle(commonR.string.tls_cert_title)
+            alert.setPositiveButton(android.R.string.ok) { _, _ ->
+                ioScope.launch {
+                    keyChainRepository.clear()
+                }
+                relaunchApp()
+            }
+        } else if (errorType == ErrorType.AUTHENTICATION) {
             alert.setMessage(commonR.string.error_auth_revoked)
             alert.setPositiveButton(android.R.string.ok) { _, _ ->
                 presenter.clearKnownUrls()
                 relaunchApp()
             }
-        } else if (errorType == io.homeassistant.companion.android.webview.WebView.ErrorType.SSL) {
+        } else if (errorType == ErrorType.SSL) {
             if (description != null)
                 alert.setMessage(getString(commonR.string.webview_error_description) + " " + description)
             else if (error!!.primaryError == SslError.SSL_DATE_INVALID)
@@ -1123,7 +1179,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             alert.setNeutralButton(commonR.string.exit) { _, _ ->
                 finishAffinity()
             }
-        } else if (errorType == io.homeassistant.companion.android.webview.WebView.ErrorType.SECURITY_WARNING) {
+        } else if (errorType == ErrorType.SECURITY_WARNING) {
             alert.setTitle(commonR.string.security_vulnerably_title)
             alert.setMessage(commonR.string.security_vulnerably_message)
             alert.setPositiveButton(commonR.string.security_vulnerably_view) { _, _ ->
@@ -1174,7 +1230,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         realm: String,
         authError: Boolean
     ) {
-        val authenticationDao = AppDatabase.getInstance(applicationContext).authenticationDao()
         val httpAuth = authenticationDao.get((resourceURL + realm))
 
         val dialogLayout = DialogAuthenticationBinding.inflate(layoutInflater)
@@ -1295,27 +1350,42 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     private fun downloadFile(url: String, contentDisposition: String, mimetype: String) {
         Log.d(TAG, "WebView requested download of $url")
-        val request = DownloadManager.Request(Uri.parse(url))
-            .setMimeType(mimetype)
-            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-            .setDestinationInExternalPublicDir(
-                Environment.DIRECTORY_DOWNLOADS,
-                URLUtil.guessFileName(url, contentDisposition, mimetype)
-            )
-        runBlocking {
-            if (url.startsWith(urlRepository.getUrl(true).toString()) ||
-                url.startsWith(urlRepository.getUrl(false).toString())
-            ) {
-                request.addRequestHeader("Authorization", presenter.getAuthorizationHeader())
+        val uri = Uri.parse(url)
+        when (uri.scheme?.lowercase()) {
+            "http", "https" -> {
+                val request = DownloadManager.Request(uri)
+                    .setMimeType(mimetype)
+                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                    .setDestinationInExternalPublicDir(
+                        Environment.DIRECTORY_DOWNLOADS,
+                        URLUtil.guessFileName(url, contentDisposition, mimetype)
+                    )
+                runBlocking {
+                    if (url.startsWith(urlRepository.getUrl(true).toString()) ||
+                        url.startsWith(urlRepository.getUrl(false).toString())
+                    ) {
+                        request.addRequestHeader("Authorization", presenter.getAuthorizationHeader())
+                    }
+                }
+                try {
+                    request.addRequestHeader("Cookie", CookieManager.getInstance().getCookie(url))
+                } catch (e: Exception) {
+                    // Cannot get cookies, probably not relevant
+                }
+
+                getSystemService<DownloadManager>()?.enqueue(request) ?: Log.d(TAG, "Unable to start download, cannot get DownloadManager")
+            }
+            "data" -> {
+                lifecycleScope.launch {
+                    DataUriDownloadManager.saveDataUri(this@WebViewActivity, url, mimetype)
+                }
+            }
+            else -> {
+                Log.d(TAG, "Received download request for unsupported scheme, forwarding to system")
+                val browserIntent = Intent(Intent.ACTION_VIEW, uri)
+                startActivity(browserIntent)
             }
         }
-        try {
-            request.addRequestHeader("Cookie", CookieManager.getInstance().getCookie(url))
-        } catch (e: Exception) {
-            // Cannot get cookies, probably not relevant
-        }
-
-        getSystemService<DownloadManager>()?.enqueue(request) ?: Log.d(TAG, "Unable to start download, cannot get DownloadManager")
     }
 
     override fun dispatchKeyEvent(event: KeyEvent?): Boolean {

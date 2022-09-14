@@ -14,7 +14,7 @@ plugins {
 }
 
 android {
-    compileSdk = 31
+    compileSdk = 33
 
     ndkVersion = "21.3.6528147"
 
@@ -159,32 +159,33 @@ dependencies {
         exclude(group = "org.json", module = "json")
     }
 
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.20")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.20")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.1")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.21")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.21")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
 
-    implementation("com.google.dagger:hilt-android:2.41")
-    kapt("com.google.dagger:hilt-android-compiler:2.41")
+    implementation("com.google.dagger:hilt-android:2.43.2")
+    kapt("com.google.dagger:hilt-android-compiler:2.43.2")
 
-    implementation("androidx.appcompat:appcompat:1.4.1")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.4.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.3")
+    implementation("androidx.appcompat:appcompat:1.5.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.5.1")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.recyclerview:recyclerview:1.2.1")
-    implementation("androidx.preference:preference-ktx:1.1.1")
-    implementation("com.google.android.material:material:1.5.0")
+    implementation("androidx.preference:preference-ktx:1.2.0")
+    implementation("com.google.android.material:material:1.6.1")
+    implementation("androidx.fragment:fragment-ktx:1.5.2")
 
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.2")
-    implementation("com.squareup.okhttp3:okhttp:4.9.3")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.4")
+    implementation("com.squareup.okhttp3:okhttp:4.10.0")
     implementation("com.squareup.picasso:picasso:2.8")
 
-    "fullImplementation"("com.google.android.gms:play-services-location:19.0.1")
-    "fullImplementation"("com.google.firebase:firebase-core:20.0.2")
+    "fullImplementation"("com.google.android.gms:play-services-location:20.0.0")
+    "fullImplementation"("com.google.firebase:firebase-core:21.1.0")
     "fullImplementation"("com.google.firebase:firebase-iid:21.1.0")
-    "fullImplementation"("com.google.firebase:firebase-messaging:23.0.0")
-    "fullImplementation"("io.sentry:sentry-android:5.7.3")
-    "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.1")
+    "fullImplementation"("com.google.firebase:firebase-messaging:23.0.7")
+    "fullImplementation"("io.sentry:sentry-android:6.4.1")
+    "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
     "fullImplementation"("com.google.android.gms:play-services-wearable:17.1.0")
     "fullImplementation"("androidx.wear:wear-remote-interactions:1.0.0")
     "fullImplementation"("com.amap.api:location:5.6.2")
@@ -192,33 +193,33 @@ dependencies {
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.webkit:webkit:1.4.0")
 
-    implementation("com.google.android.exoplayer:exoplayer-core:2.15.1")
-    implementation("com.google.android.exoplayer:exoplayer-hls:2.15.1")
-    implementation("com.google.android.exoplayer:exoplayer-ui:2.15.1")
-    "fullImplementation"("com.google.android.exoplayer:extension-cronet:2.15.1")
-    implementation("com.google.android.exoplayer:extension-cronet:2.15.1") {
+    implementation("com.google.android.exoplayer:exoplayer-core:2.17.1")
+    implementation("com.google.android.exoplayer:exoplayer-hls:2.17.1")
+    implementation("com.google.android.exoplayer:exoplayer-ui:2.17.1")
+    "fullImplementation"("com.google.android.exoplayer:extension-cronet:2.17.1")
+    "minimalImplementation"("com.google.android.exoplayer:extension-cronet:2.15.1") {
         exclude(group = "com.google.android.gms", module = "play-services-cronet")
     }
-    implementation("org.chromium.net:cronet-embedded:95.4638.50")
+    "minimalImplementation"("org.chromium.net:cronet-embedded:101.4951.41")
 
-    implementation("androidx.compose.animation:animation:1.1.1")
-    implementation("androidx.compose.compiler:compiler:1.1.1")
-    implementation("androidx.compose.foundation:foundation:1.1.1")
-    implementation("androidx.compose.material:material:1.1.1")
-    implementation("androidx.compose.material:material-icons-core:1.1.1")
-    implementation("androidx.compose.material:material-icons-extended:1.1.1")
-    implementation("androidx.compose.runtime:runtime:1.1.1")
-    implementation("androidx.compose.ui:ui:1.1.1")
-    implementation("androidx.compose.ui:ui-tooling:1.1.1")
-    implementation("androidx.activity:activity-compose:1.4.0")
-    implementation("androidx.navigation:navigation-compose:2.4.2")
-    implementation("com.google.android.material:compose-theme-adapter:1.1.3")
-    implementation("com.google.accompanist:accompanist-appcompat-theme:0.23.1")
+    implementation("androidx.compose.animation:animation:1.2.1")
+    implementation("androidx.compose.compiler:compiler:1.3.0")
+    implementation("androidx.compose.foundation:foundation:1.2.1")
+    implementation("androidx.compose.material:material:1.2.1")
+    implementation("androidx.compose.material:material-icons-core:1.2.1")
+    implementation("androidx.compose.material:material-icons-extended:1.2.1")
+    implementation("androidx.compose.runtime:runtime:1.2.1")
+    implementation("androidx.compose.ui:ui:1.2.1")
+    implementation("androidx.compose.ui:ui-tooling:1.2.1")
+    implementation("androidx.activity:activity-compose:1.5.1")
+    implementation("androidx.navigation:navigation-compose:2.5.1")
+    implementation("com.google.android.material:compose-theme-adapter:1.1.15")
+    implementation("com.google.accompanist:accompanist-appcompat-theme:0.25.1")
 
-    implementation("com.mikepenz:iconics-core:5.3.3")
-    implementation("com.mikepenz:iconics-compose:5.3.3")
+    implementation("com.mikepenz:iconics-core:5.3.4")
+    implementation("com.mikepenz:iconics-compose:5.3.4")
     implementation("com.mikepenz:community-material-typeface:6.4.95.0-kotlin@aar")
-    implementation("org.burnoutcrew.composereorderable:reorderable:0.7.4")
+    "fullImplementation"("org.burnoutcrew.composereorderable:reorderable:0.9.2")
     implementation("com.github.AppDevNext:ChangeLog:3.4")
 }
 

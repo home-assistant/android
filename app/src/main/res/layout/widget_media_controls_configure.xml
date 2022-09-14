@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -27,9 +28,9 @@
                 android:layout_height="wrap_content"
                 android:labelFor="@id/widget_text_config_entity_id"
                 android:padding="5dp"
-                android:text="@string/label_entity_id" />
+                android:text="@string/label_entity_ids" />
 
-            <AutoCompleteTextView
+            <MultiAutoCompleteTextView
                 android:id="@+id/widget_text_config_entity_id"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -68,6 +69,16 @@
             android:checked="true"
             android:text="@string/widget_media_show_seek" />
 
+        <CheckBox
+            android:id="@+id/widget_show_media_player_source"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start"
+            android:layoutDirection="rtl"
+            android:layout_margin="5dp"
+            android:checked="true"
+            android:text="@string/widget_media_show_source" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="50dp"
@@ -90,6 +101,28 @@
                 android:inputType="text" />
         </LinearLayout>
 
+        <LinearLayout
+            android:id="@+id/background_type_parent"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:padding="5dp"
+                android:text="@string/widget_background_type_label" />
+
+            <Spinner
+                android:id="@+id/background_type"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/add_button"
             android:layout_width="wrap_content"
@@ -97,13 +130,5 @@
             android:layout_gravity="end"
             android:layout_marginTop="8dp"
             android:text="@string/add_widget" />
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/delete_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            android:layout_marginTop="8dp"
-            android:visibility="gone"
-            android:text="@string/delete_widget" />
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

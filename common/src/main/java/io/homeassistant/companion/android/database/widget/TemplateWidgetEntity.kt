@@ -10,6 +10,12 @@ data class TemplateWidgetEntity(
     override val id: Int,
     @ColumnInfo(name = "template")
     val template: String,
+    @ColumnInfo(name = "text_size", defaultValue = "12.0")
+    val textSize: Float,
     @ColumnInfo(name = "last_update")
-    val lastUpdate: String
-) : WidgetEntity
+    val lastUpdate: String,
+    @ColumnInfo(name = "background_type", defaultValue = "DAYNIGHT")
+    override val backgroundType: WidgetBackgroundType = WidgetBackgroundType.DAYNIGHT,
+    @ColumnInfo(name = "text_color")
+    override val textColor: String? = null
+) : WidgetEntity, ThemeableWidgetEntity

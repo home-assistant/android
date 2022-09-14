@@ -14,6 +14,7 @@ import android.service.controls.templates.ToggleTemplate
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.getLightBrightness
 import io.homeassistant.companion.android.common.data.integration.supportsLightBrightness
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.R as commonR
@@ -24,15 +25,10 @@ object LightControl : HaControl {
         context: Context,
         control: Control.StatefulBuilder,
         entity: Entity<Map<String, Any>>,
-        area: AreaRegistryResponse?
+        area: AreaRegistryResponse?,
+        baseUrl: String?
     ): Control.StatefulBuilder {
-        val minValue = 0f
-        val maxValue = 100f
-        var currentValue = (entity.attributes["brightness"] as? Number)?.toFloat()?.div(255f)?.times(100) ?: 0f
-        if (currentValue < minValue)
-            currentValue = minValue
-        if (currentValue > maxValue)
-            currentValue = maxValue
+        val position = entity.getLightBrightness()
         control.setControlTemplate(
             if (entity.supportsLightBrightness())
                 ToggleRangeTemplate(
@@ -41,9 +37,9 @@ object LightControl : HaControl {
                     "",
                     RangeTemplate(
                         entity.entityId,
-                        minValue,
-                        maxValue,
-                        currentValue,
+                        position?.min ?: 0f,
+                        position?.max ?: 100f,
+                        position?.value ?: 0f,
                         1f,
                         "%.0f%%"
                     )

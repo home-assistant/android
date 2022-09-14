@@ -10,16 +10,19 @@ import io.homeassistant.companion.android.BuildConfig
 class OnboardApp : ActivityResultContract<OnboardApp.Input, OnboardApp.Output?>() {
 
     companion object {
+        private const val EXTRA_URL = "extra_url"
         private const val EXTRA_DEFAULT_DEVICE_NAME = "extra_default_device_name"
         private const val EXTRA_LOCATION_TRACKING_POSSIBLE = "location_tracking_possible"
 
         fun parseInput(intent: Intent): Input = Input(
+            url = intent.getStringExtra(EXTRA_URL),
             defaultDeviceName = intent.getStringExtra(EXTRA_DEFAULT_DEVICE_NAME) ?: Build.MODEL,
             locationTrackingPossible = intent.getBooleanExtra(EXTRA_LOCATION_TRACKING_POSSIBLE, false),
         )
     }
 
     data class Input(
+        val url: String? = null,
         val defaultDeviceName: String = Build.MODEL,
         val locationTrackingPossible: Boolean = BuildConfig.FLAVOR == "full"
     )
@@ -42,6 +45,7 @@ class OnboardApp : ActivityResultContract<OnboardApp.Input, OnboardApp.Output?>(
 
     override fun createIntent(context: Context, input: Input): Intent {
         return Intent(context, OnboardingActivity::class.java).apply {
+            putExtra(EXTRA_URL, input.url)
             putExtra(EXTRA_DEFAULT_DEVICE_NAME, input.defaultDeviceName)
             putExtra(EXTRA_LOCATION_TRACKING_POSSIBLE, input.locationTrackingPossible)
         }

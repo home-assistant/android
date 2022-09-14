@@ -11,6 +11,7 @@ import android.os.Build
 import android.os.PowerManager
 import android.telephony.TelephonyManager
 import dagger.hilt.android.HiltAndroidApp
+import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
 import io.homeassistant.companion.android.database.AppDatabase
@@ -35,6 +36,9 @@ open class HomeAssistantApplication : Application() {
     @Inject
     lateinit var prefsRepository: PrefsRepository
 
+    @Inject
+    lateinit var keyChainRepository: KeyChainRepository
+
     override fun onCreate() {
         super.onCreate()
 
@@ -56,6 +60,10 @@ open class HomeAssistantApplication : Application() {
                 addAction(WifiManager.WIFI_STATE_CHANGED_ACTION)
             }
         )
+
+        ioScope.launch {
+            keyChainRepository.load(applicationContext)
+        }
 
         val sensorReceiver = SensorReceiver()
         // This will cause the sensor to be updated every time the OS broadcasts that a cable was plugged/unplugged.
@@ -152,6 +160,12 @@ open class HomeAssistantApplication : Application() {
                 IntentFilter(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED)
             )
         }
+
+        // Add a receiver for the shutdown event to attempt to send 1 final sensor update
+        registerReceiver(
+            sensorReceiver,
+            IntentFilter(Intent.ACTION_SHUTDOWN)
+        )
 
         // Register for all saved user intents
         val sensorDao = AppDatabase.getInstance(applicationContext).sensorDao()

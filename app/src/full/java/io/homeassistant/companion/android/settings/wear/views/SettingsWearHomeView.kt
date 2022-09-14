@@ -5,6 +5,8 @@ import android.net.Uri
 import androidx.compose.material.IconButton
 import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
@@ -37,10 +39,13 @@ fun LoadSettingsHomeView(
                 )
             }
             composable(SettingsWearMainView.LANDING) {
+                val hasData by settingsWearViewModel.hasData.collectAsState()
+                val isAuthenticated by settingsWearViewModel.isAuthenticated.collectAsState()
+
                 SettingWearLandingView(
                     deviceName = deviceName,
-                    hasData = settingsWearViewModel.hasData.value,
-                    isAuthed = settingsWearViewModel.isAuthenticated.value,
+                    hasData = hasData,
+                    isAuthed = isAuthenticated,
                     navigateFavorites = { navController.navigate(SettingsWearMainView.FAVORITES) },
                     navigateTemplateTile = { navController.navigate(SettingsWearMainView.TEMPLATE) },
                     loginWearOs = loginWearOs,

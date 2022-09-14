@@ -79,6 +79,8 @@ class WidgetDynamicFieldAdapter(
             } catch (e: Exception) {
                 // Who knows what custom components will break here
             }
+        } else {
+            autoCompleteTextView.hint = null
         }
 
         // If field is looking for an entity_id,
@@ -121,6 +123,10 @@ class WidgetDynamicFieldAdapter(
             autoCompleteTextView.setAdapter(fieldAdapter)
             autoCompleteTextView.setTokenizer(CommaTokenizer())
             autoCompleteTextView.onFocusChangeListener = dropDownOnFocus
+        } else {
+            autoCompleteTextView.setAdapter(null)
+            autoCompleteTextView.setTokenizer(null)
+            autoCompleteTextView.onFocusChangeListener = null
         }
 
         // Populate textview with stored text for that field
@@ -131,18 +137,22 @@ class WidgetDynamicFieldAdapter(
                 autoCompleteTextView.setText(serviceFieldList[position].value as String)
             } catch (e: Exception) {
                 Log.d(TAG, "Unable to get service field list", e)
+                // Set text to empty string to prevent a recycled, incorrect value
+                autoCompleteTextView.setText("")
             }
         }
 
         // Have the text view store its text for later recall
         autoCompleteTextView.doAfterTextChanged {
             // Only attempt to store data if we are in bounds
-            if (serviceFieldList.size >= position) {
+            if (serviceFieldList.size >= holder.bindingAdapterPosition &&
+                holder.bindingAdapterPosition != RecyclerView.NO_POSITION
+            ) {
                 // Don't store data that's empty (or just whitespace)
                 if (it.isNullOrBlank()) {
-                    serviceFieldList[position].value = null
+                    serviceFieldList[holder.bindingAdapterPosition].value = null
                 } else {
-                    serviceFieldList[position].value = it.toString().toJsonType()
+                    serviceFieldList[holder.bindingAdapterPosition].value = it.toString().toJsonType()
                 }
             }
         }

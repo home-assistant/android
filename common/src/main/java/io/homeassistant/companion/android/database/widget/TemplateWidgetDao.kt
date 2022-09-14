@@ -7,7 +7,7 @@ import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface TemplateWidgetDao {
+interface TemplateWidgetDao : WidgetDao {
 
     @Query("SELECT * FROM template_widgets WHERE id = :id")
     fun get(id: Int): TemplateWidgetEntity?
@@ -16,7 +16,7 @@ interface TemplateWidgetDao {
     suspend fun add(templateWidgetEntity: TemplateWidgetEntity)
 
     @Query("DELETE FROM template_widgets WHERE id = :id")
-    fun delete(id: Int)
+    override suspend fun delete(id: Int)
 
     @Query("DELETE FROM template_widgets WHERE id IN (:ids)")
     suspend fun deleteAll(ids: IntArray)

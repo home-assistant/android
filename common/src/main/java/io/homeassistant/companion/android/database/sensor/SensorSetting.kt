@@ -4,6 +4,16 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.TypeConverter
 
+enum class SensorSettingType(val string: String, val listType: Boolean = false) {
+    STRING("string"),
+    NUMBER("number"),
+    TOGGLE("toggle"),
+    LIST("list", listType = true),
+    LIST_APPS("list-apps", listType = true),
+    LIST_BLUETOOTH("list-bluetooth", listType = true),
+    LIST_ZONES("list-zones", listType = true),
+}
+
 @Entity(tableName = "sensor_settings", primaryKeys = ["sensor_id", "name"])
 data class SensorSetting(
     @ColumnInfo(name = "sensor_id")
@@ -12,16 +22,14 @@ data class SensorSetting(
     val name: String,
     @ColumnInfo(name = "value")
     var value: String,
+    /** Indicates the data type of the `value`. */
     @ColumnInfo(name = "value_type")
-    var valueType: String,
-    @ColumnInfo(name = "entries")
-    var entries: List<String> = arrayListOf(),
+    val valueType: SensorSettingType,
     @ColumnInfo(name = "enabled")
-    var enabled: Boolean = true
-) {
-
-    constructor(sensorId: String, name: String, value: String, valueType: String, enabled: Boolean) : this(sensorId, name, value, valueType, arrayListOf(), enabled)
-}
+    val enabled: Boolean = true,
+    @ColumnInfo(name = "entries")
+    val entries: List<String> = arrayListOf(),
+)
 
 class EntriesTypeConverter {
     @TypeConverter
@@ -32,5 +40,18 @@ class EntriesTypeConverter {
     @TypeConverter
     fun toStringFromList(list: List<String>): String {
         return list.joinToString(separator = "|")
+    }
+}
+
+class SensorSettingTypeConverter {
+    @TypeConverter
+    fun fromStringToEnum(value: String): SensorSettingType {
+        return enumValues<SensorSettingType>().find { it.string == value }
+            ?: SensorSettingType.STRING
+    }
+
+    @TypeConverter
+    fun toStringFromEnum(enum: SensorSettingType): String {
+        return enum.string
     }
 }

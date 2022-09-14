@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.widgets.camera
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -13,41 +12,40 @@ import android.widget.AdapterView
 import android.widget.AutoCompleteTextView
 import android.widget.Toast
 import androidx.core.content.getSystemService
+import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
-import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.databinding.WidgetCameraConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
+import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
-class CameraWidgetConfigureActivity : BaseActivity() {
+class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
     companion object {
         private const val TAG: String = "CameraWidgetConfigAct"
         private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.camera.CameraWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
     }
 
-    private var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
     private var requestLauncherSetup = false
 
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
-    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     private var entities = LinkedHashMap<String, Entity<Any>>()
     private var selectedEntity: Entity<Any>? = null
+
+    @Inject
+    lateinit var cameraWidgetDao: CameraWidgetDao
+    override val dao get() = cameraWidgetDao
 
     public override fun onCreate(icicle: Bundle?) {
         super.onCreate(icicle)
@@ -96,13 +94,10 @@ class CameraWidgetConfigureActivity : BaseActivity() {
             return
         }
 
-        val cameraWidgetDao = AppDatabase.getInstance(this).cameraWidgetDao()
         val cameraWidget = cameraWidgetDao.get(appWidgetId)
         if (cameraWidget != null) {
             binding.widgetTextConfigEntityId.setText(cameraWidget.entityId)
             binding.addButton.setText(commonR.string.update_widget)
-            binding.deleteButton.visibility = View.VISIBLE
-            binding.deleteButton.setOnClickListener(onDeleteWidget)
             val entity = runBlocking {
                 try {
                     integrationUseCase.getEntity(cameraWidget.entityId)
@@ -124,7 +119,7 @@ class CameraWidgetConfigureActivity : BaseActivity() {
         binding.widgetTextConfigEntityId.onFocusChangeListener = dropDownOnFocus
         binding.widgetTextConfigEntityId.onItemClickListener = entityDropDownOnItemClick
 
-        mainScope.launch {
+        lifecycleScope.launch {
             try {
                 // Fetch entities
                 val fetchedEntities = integrationUseCase.getEntities()
@@ -192,15 +187,6 @@ class CameraWidgetConfigureActivity : BaseActivity() {
         }
     }
 
-    private fun showAddWidgetError() {
-        Toast.makeText(applicationContext, commonR.string.widget_creation_error, Toast.LENGTH_LONG).show()
-    }
-
-    override fun onDestroy() {
-        mainScope.cancel()
-        super.onDestroy()
-    }
-
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         if (intent != null && intent.extras != null && intent.hasExtra(PIN_WIDGET_CALLBACK)) {
@@ -209,36 +195,5 @@ class CameraWidgetConfigureActivity : BaseActivity() {
             )
             onAddWidget()
         }
-    }
-
-    private var onDeleteWidget = View.OnClickListener {
-        val context = this@CameraWidgetConfigureActivity
-        deleteConfirmation(context)
-    }
-
-    private fun deleteConfirmation(context: Context) {
-        val cameraWidgetDao = AppDatabase.getInstance(context).cameraWidgetDao()
-
-        val builder: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(context)
-
-        builder.setTitle(commonR.string.confirm_delete_this_widget_title)
-        builder.setMessage(commonR.string.confirm_delete_this_widget_message)
-
-        builder.setPositiveButton(
-            commonR.string.confirm_positive
-        ) { dialog, _ ->
-            cameraWidgetDao.delete(appWidgetId)
-            dialog.dismiss()
-            finish()
-        }
-
-        builder.setNegativeButton(
-            commonR.string.confirm_negative
-        ) { dialog, _ -> // Do nothing
-            dialog.dismiss()
-        }
-
-        val alert: android.app.AlertDialog? = builder.create()
-        alert?.show()
     }
 }

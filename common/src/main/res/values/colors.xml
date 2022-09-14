@@ -19,8 +19,12 @@
     <color name="colorSensorIconEnabled">#44739e</color>
     <color name="colorSwitchUncheckedThumb">#ececec</color>
     <color name="colorWidgetButtonBackground">@android:color/white</color>
-    <color name="colorWidgetButtonLabel">#3A3A3A</color>
+    <color name="colorWidgetButtonLabel">@color/colorWidgetButtonLabelBlack</color>
+    <color name="colorWidgetButtonLabelBlack">#3A3A3A</color>
+    <color name="colorWidgetButtonLabelWhite">#E6E6E6</color>
     <color name="colorActionBarPopupBackground">@android:color/white</color>
     <color name="colorLaunchScreenBackground">#fafafa</color>
     <color name="colorCodeBackground">#f5f5f5</color>
+    <color name="colorAlertWarning">#1fffa600</color>
+    <color name="colorOnAlertWarning">#ffa600</color>
 </resources>

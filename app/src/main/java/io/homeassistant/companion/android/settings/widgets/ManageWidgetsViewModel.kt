@@ -10,16 +10,25 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.getSystemService
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import io.homeassistant.companion.android.database.AppDatabase
+import dagger.hilt.android.lifecycle.HiltViewModel
+import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
+import io.homeassistant.companion.android.database.widget.CameraWidgetDao
+import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
+import io.homeassistant.companion.android.database.widget.StaticWidgetDao
+import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@HiltViewModel
 class ManageWidgetsViewModel @Inject constructor(
+    buttonWidgetDao: ButtonWidgetDao,
+    cameraWidgetDao: CameraWidgetDao,
+    staticWidgetDao: StaticWidgetDao,
+    mediaPlayerControlsWidgetDao: MediaPlayerControlsWidgetDao,
+    templateWidgetDao: TemplateWidgetDao,
     application: Application
-) : AndroidViewModel(
-    application
-) {
+) : AndroidViewModel(application) {
     companion object {
         private const val TAG = "ManageWidgetsViewModel"
 
@@ -27,22 +36,15 @@ class ManageWidgetsViewModel @Inject constructor(
             "io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER"
     }
 
-    private val buttonWidgetDao = AppDatabase.getInstance(application).buttonWidgetDao()
-    private val cameraWidgetDao = AppDatabase.getInstance(application).cameraWidgetDao()
-    private val staticWidgetDao = AppDatabase.getInstance(application).staticWidgetDao()
-    private val mediaPlayerControlsWidgetDao = AppDatabase.getInstance(application).mediaPlayCtrlWidgetDao()
-    private val templateWidgetDao = AppDatabase.getInstance(application).templateWidgetDao()
-
     val buttonWidgetList = buttonWidgetDao.getAllFlow().collectAsState()
     val cameraWidgetList = cameraWidgetDao.getAllFlow().collectAsState()
     val staticWidgetList = staticWidgetDao.getAllFlow().collectAsState()
     val mediaWidgetList = mediaPlayerControlsWidgetDao.getAllFlow().collectAsState()
     val templateWidgetList = templateWidgetDao.getAllFlow().collectAsState()
-    var supportsAddingWidgets = mutableStateOf(false)
-        private set
+    val supportsAddingWidgets: Boolean
 
     init {
-        supportsAddingWidgets.value = checkSupportsAddingWidgets()
+        supportsAddingWidgets = checkSupportsAddingWidgets()
     }
 
     private fun checkSupportsAddingWidgets(): Boolean {

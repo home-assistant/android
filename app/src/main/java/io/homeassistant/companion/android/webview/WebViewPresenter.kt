@@ -1,10 +1,12 @@
 package io.homeassistant.companion.android.webview
 
+import android.content.Context
+
 interface WebViewPresenter {
 
     fun onViewReady(path: String?)
 
-    fun onGetExternalAuth(callback: String, force: Boolean)
+    fun onGetExternalAuth(context: Context, callback: String, force: Boolean)
 
     fun checkSecurityVersion()
 

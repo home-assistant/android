@@ -19,6 +19,8 @@ import io.homeassistant.companion.android.common.data.authentication.impl.Authen
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.impl.IntegrationRepositoryImpl
 import io.homeassistant.companion.android.common.data.integration.impl.IntegrationService
+import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
+import io.homeassistant.companion.android.common.data.keychain.KeyChainRepositoryImpl
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepositoryImpl
 import io.homeassistant.companion.android.common.data.url.UrlRepository
@@ -147,4 +149,8 @@ abstract class DataModule {
     @Binds
     @Singleton
     abstract fun bindWifiRepository(wifiHelper: WifiHelperImpl): WifiHelper
+
+    @Binds
+    @Singleton
+    abstract fun bindKeyChainRepository(keyChainRepository: KeyChainRepositoryImpl): KeyChainRepository
 }

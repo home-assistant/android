@@ -2,9 +2,12 @@ package io.homeassistant.companion.android.widgets
 
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
+import android.util.Log
 import android.widget.RemoteViews
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -12,10 +15,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * A widget provider class for widgets that update based on entity state changes.
+ */
 abstract class BaseWidgetProvider : AppWidgetProvider() {
 
     companion object {
@@ -23,14 +29,28 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             "io.homeassistant.companion.android.widgets.template.BaseWidgetProvider.UPDATE_VIEW"
         const val RECEIVE_DATA =
             "io.homeassistant.companion.android.widgets.template.TemplateWidget.RECEIVE_DATA"
-    }
 
-    private var entityUpdates: Flow<Entity<*>>? = null
+        var widgetScope: CoroutineScope? = null
+        val widgetEntities = mutableMapOf<Int, List<String>>()
+        val widgetJobs = mutableMapOf<Int, Job>()
+    }
 
     @Inject
     protected lateinit var integrationUseCase: IntegrationRepository
-    protected var mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
+
+    private var thisSetScope = false
     protected var lastIntent = ""
+
+    init {
+        setupWidgetScope()
+    }
+
+    private fun setupWidgetScope() {
+        if (widgetScope == null || !widgetScope!!.isActive) {
+            widgetScope = CoroutineScope(Dispatchers.Main + Job())
+            thisSetScope = true
+        }
+    }
 
     override fun onUpdate(
         context: Context,
@@ -39,7 +59,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     ) {
         // There may be multiple widgets active, so update all of them
         for (appWidgetId in appWidgetIds) {
-            mainScope.launch {
+            widgetScope?.launch {
                 val views = getWidgetRemoteViews(context, appWidgetId)
                 appWidgetManager.updateAppWidget(appWidgetId, views)
             }
@@ -67,17 +87,35 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     }
 
     fun onScreenOn(context: Context) {
-        mainScope = CoroutineScope(Dispatchers.Main + Job())
-        if (entityUpdates == null) {
-            mainScope.launch {
-                if (!integrationUseCase.isRegistered()) {
-                    return@launch
-                }
-                updateAllWidgets(context)
-                if (getAllWidgetIds(context).isNotEmpty()) {
-                    entityUpdates = integrationUseCase.getEntityUpdates()
-                    entityUpdates?.collect {
-                        onEntityStateChanged(context, it)
+        setupWidgetScope()
+        widgetScope!!.launch {
+            if (!integrationUseCase.isRegistered()) {
+                return@launch
+            }
+            updateAllWidgets(context)
+
+            val allWidgets = getAllWidgetIdsWithEntities(context)
+            val widgetsWithDifferentEntities = allWidgets.filter { it.value != widgetEntities[it.key] }
+            if (widgetsWithDifferentEntities.isNotEmpty()) {
+                context.applicationContext.registerReceiver(
+                    this@BaseWidgetProvider,
+                    IntentFilter(Intent.ACTION_SCREEN_OFF)
+                )
+
+                widgetsWithDifferentEntities.forEach { (id, entities) ->
+                    widgetJobs[id]?.cancel()
+
+                    val entityUpdates = integrationUseCase.getEntityUpdates(entities)
+                    if (entityUpdates != null) {
+                        widgetEntities[id] = entities
+                        widgetJobs[id] = widgetScope!!.launch {
+                            entityUpdates.collect {
+                                onEntityStateChanged(context, id, it)
+                            }
+                        }
+                    } else { // Remove data to make it retry on the next update
+                        widgetEntities.remove(id)
+                        widgetJobs.remove(id)
                     }
                 }
             }
@@ -85,14 +123,33 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     }
 
     private fun onScreenOff() {
-        mainScope.cancel()
-        entityUpdates = null
+        if (thisSetScope) {
+            widgetScope?.cancel()
+            thisSetScope = false
+            widgetEntities.clear()
+            widgetJobs.clear()
+        }
     }
 
     private suspend fun updateAllWidgets(
         context: Context
     ) {
-        getAllWidgetIds(context).forEach {
+        val widgetProvider = getWidgetProvider(context)
+        val systemWidgetIds = AppWidgetManager.getInstance(context)
+            .getAppWidgetIds(widgetProvider)
+            .toSet()
+        val dbWidgetIds = getAllWidgetIdsWithEntities(context).keys
+
+        val invalidWidgetIds = dbWidgetIds.minus(systemWidgetIds)
+        if (invalidWidgetIds.isNotEmpty()) {
+            Log.i(
+                widgetProvider.shortClassName,
+                "Found widgets $invalidWidgetIds in database, but not in AppWidgetManager - sending onDeleted"
+            )
+            onDeleted(context, invalidWidgetIds.toIntArray())
+        }
+
+        dbWidgetIds.filter { systemWidgetIds.contains(it) }.forEach {
             updateView(context, it)
         }
     }
@@ -102,14 +159,21 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         appWidgetId: Int,
         appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context)
     ) {
-        mainScope.launch {
+        widgetScope?.launch {
             val views = getWidgetRemoteViews(context, appWidgetId)
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
     }
 
+    protected fun removeSubscription(appWidgetId: Int) {
+        widgetEntities.remove(appWidgetId)
+        widgetJobs[appWidgetId]?.cancel()
+        widgetJobs.remove(appWidgetId)
+    }
+
+    abstract fun getWidgetProvider(context: Context): ComponentName
     abstract suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity<Map<String, Any>>? = null): RemoteViews
-    abstract suspend fun getAllWidgetIds(context: Context): List<Int>
+    abstract suspend fun getAllWidgetIdsWithEntities(context: Context): Map<Int, List<String>>
     abstract fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int)
-    abstract suspend fun onEntityStateChanged(context: Context, entity: Entity<*>)
+    abstract suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity<*>)
 }

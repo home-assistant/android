@@ -19,7 +19,7 @@ import io.homeassistant.companion.android.common.data.authentication.Authenticat
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
-import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.wear.getAll
 import io.homeassistant.companion.android.database.wear.replaceAll
 import io.homeassistant.companion.android.home.HomeActivity
@@ -41,6 +41,9 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
 
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
+
+    @Inject
+    lateinit var favoritesDao: FavoritesDao
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -65,8 +68,7 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
     }
 
     private fun sendPhoneData() = mainScope.launch {
-        val currentFavorites =
-            AppDatabase.getInstance(applicationContext).favoritesDao().getAll()
+        val currentFavorites = favoritesDao.getAll()
         val putDataRequest = PutDataMapRequest.create("/config").run {
             dataMap.putLong(KEY_UPDATE_TIME, System.nanoTime())
             dataMap.putBoolean(KEY_IS_AUTHENTICATED, integrationUseCase.isRegistered())
@@ -107,32 +109,35 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
     }
 
     private fun login(dataMap: DataMap) = mainScope.launch {
-        val url = dataMap.getString("URL")
-        val authCode = dataMap.getString("AuthCode")
-        val deviceName = dataMap.getString("DeviceName")
-        val deviceTrackingEnabled = dataMap.getString("LocationTracking")
+        try {
+            val url = dataMap.getString("URL")
+            val authCode = dataMap.getString("AuthCode")
+            val deviceName = dataMap.getString("DeviceName")
+            val deviceTrackingEnabled = dataMap.getBoolean("LocationTracking")
 
-        urlRepository.saveUrl(url)
-        authenticationRepository.registerAuthorizationCode(authCode)
-        integrationUseCase.registerDevice(
-            DeviceRegistration(
-                "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-                deviceName
+            urlRepository.saveUrl(url)
+            authenticationRepository.registerAuthorizationCode(authCode)
+            integrationUseCase.registerDevice(
+                DeviceRegistration(
+                    "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                    deviceName
+                )
             )
-        )
+
+            val intent = HomeActivity.newInstance(applicationContext)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to login to Home Assistant", e)
+        }
 
         sendPhoneData()
-
-        val intent = HomeActivity.newInstance(applicationContext)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        startActivity(intent)
     }
 
     private fun saveFavorites(dataMap: DataMap) {
         val favoritesIds: List<String> =
             objectMapper.readValue(dataMap.getString(KEY_FAVORITES, "[]"))
 
-        val favoritesDao = AppDatabase.getInstance(applicationContext).favoritesDao()
         mainScope.launch {
             favoritesDao.replaceAll(favoritesIds)
         }

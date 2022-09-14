@@ -33,6 +33,7 @@ import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.LocationPermissionInfoHandler
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
+import io.homeassistant.companion.android.settings.controls.ManageControlsSettingsFragment
 import io.homeassistant.companion.android.settings.language.LanguagesProvider
 import io.homeassistant.companion.android.settings.log.LogFragment
 import io.homeassistant.companion.android.settings.notification.NotificationChannelFragment
@@ -41,8 +42,7 @@ import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
 import io.homeassistant.companion.android.settings.sensor.SensorSettingsFragment
 import io.homeassistant.companion.android.settings.sensor.SensorUpdateFrequencyFragment
 import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSettingsFragment
-import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
-import io.homeassistant.companion.android.settings.ssid.SsidPreference
+import io.homeassistant.companion.android.settings.ssid.SsidFragment
 import io.homeassistant.companion.android.settings.wear.SettingsWearActivity
 import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
@@ -62,7 +62,6 @@ class SettingsFragment constructor(
 
     companion object {
         private const val TAG = "SettingsFragment"
-        private const val SSID_DIALOG_TAG = "${BuildConfig.APPLICATION_ID}.SSID_DIALOG_TAG"
         private const val LOCATION_REQUEST_CODE = 0
         private const val BACKGROUND_LOCATION_REQUEST_CODE = 1
     }
@@ -99,6 +98,7 @@ class SettingsFragment constructor(
             var isValid: Boolean
             if (newValue == false) {
                 isValid = true
+                findPreference<SwitchPreference>("app_lock_home_bypass")?.isVisible = false
                 findPreference<EditTextPreference>("session_timeout")?.isVisible = false
             } else {
                 isValid = true
@@ -115,6 +115,10 @@ class SettingsFragment constructor(
                 }
             }
             isValid
+        }
+
+        findPreference<SwitchPreference>("app_lock_home_bypass")?.let {
+            it.isVisible = findPreference<SwitchPreference>("app_lock")?.isChecked == true
         }
 
         findPreference<EditTextPreference>("session_timeout")?.let { pref ->
@@ -144,6 +148,13 @@ class SettingsFragment constructor(
 
         findPreference<EditTextPreference>("connection_external")?.onPreferenceChangeListener =
             onChangeUrlValidator
+
+        findPreference<Preference>("connection_internal_ssids")?.let {
+            it.setOnPreferenceClickListener {
+                onDisplaySsidScreen()
+                return@setOnPreferenceClickListener true
+            }
+        }
 
         findPreference<Preference>("sensors")?.setOnPreferenceClickListener {
             parentFragmentManager
@@ -199,6 +210,20 @@ class SettingsFragment constructor(
                         .beginTransaction()
                         .replace(R.id.content, ManageTilesFragment::class.java, null)
                         .addToBackStack(getString(commonR.string.tiles))
+                        .commit()
+                    return@setOnPreferenceClickListener true
+                }
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                findPreference<PreferenceCategory>("device_controls")?.let {
+                    it.isVisible = true
+                }
+                findPreference<Preference>("manage_device_controls")?.setOnPreferenceClickListener {
+                    parentFragmentManager
+                        .beginTransaction()
+                        .replace(R.id.content, ManageControlsSettingsFragment::class.java, null)
+                        .addToBackStack(getString(commonR.string.controls_setting_title))
                         .commit()
                     return@setOnPreferenceClickListener true
                 }
@@ -281,9 +306,13 @@ class SettingsFragment constructor(
         }
 
         val pm = requireContext().packageManager
-        val hasWearApp = pm.getLaunchIntentForPackage("com.google.android.wearable.app")
-        val hasSamsungApp = pm.getLaunchIntentForPackage("com.samsung.android.app.watchmanager")
-        findPreference<PreferenceCategory>("wear_category")?.isVisible = BuildConfig.FLAVOR == "full" && (hasWearApp != null || hasSamsungApp != null)
+        val wearCompanionApps = listOf(
+            "com.google.android.wearable.app",
+            "com.samsung.android.app.watchmanager",
+            "com.montblanc.summit.companion.android"
+        )
+        findPreference<PreferenceCategory>("wear_category")?.isVisible =
+            BuildConfig.FLAVOR == "full" && wearCompanionApps.any { pm.getLaunchIntentForPackage(it) != null }
         findPreference<Preference>("wear_settings")?.setOnPreferenceClickListener {
             startActivity(SettingsWearActivity.newInstance(requireContext()))
             return@setOnPreferenceClickListener true
@@ -343,11 +372,11 @@ class SettingsFragment constructor(
             }
         }
 
-        findPreference<SwitchPreference>("prioritize_internal")?.let {
+        findPreference<SwitchPreference>("app_lock_home_bypass")?.let {
             it.isEnabled = false
             try {
                 val unwrappedDrawable =
-                    AppCompatResources.getDrawable(requireContext(), commonR.drawable.ic_priority)
+                    AppCompatResources.getDrawable(requireContext(), R.drawable.ic_wifi)
                 unwrappedDrawable?.setTint(Color.DKGRAY)
                 it.icon = unwrappedDrawable
             } catch (e: Exception) {
@@ -369,11 +398,11 @@ class SettingsFragment constructor(
             }
         }
 
-        findPreference<SwitchPreference>("prioritize_internal")?.let {
+        findPreference<SwitchPreference>("app_lock_home_bypass")?.let {
             it.isEnabled = true
             try {
                 val unwrappedDrawable =
-                    AppCompatResources.getDrawable(requireContext(), commonR.drawable.ic_priority)
+                    AppCompatResources.getDrawable(requireContext(), R.drawable.ic_wifi)
                 unwrappedDrawable?.setTint(resources.getColor(commonR.color.colorAccent))
                 it.icon = unwrappedDrawable
             } catch (e: Exception) {
@@ -382,56 +411,70 @@ class SettingsFragment constructor(
         }
     }
 
+    override fun updateSsids(ssids: Set<String>) {
+        findPreference<Preference>("connection_internal_ssids")?.let {
+            it.summary =
+                if (ssids.isEmpty()) getString(commonR.string.pref_connection_ssids_empty)
+                else ssids.joinToString()
+        }
+    }
+
     override fun onLangSettingsChanged() {
         requireActivity().recreate()
     }
 
-    override fun onDisplayPreferenceDialog(preference: Preference) {
-        if (preference is SsidPreference) {
-            val permissionsToCheck: Array<String> = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-            } else {
-                arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION)
-            }
-
-            if (DisabledLocationHandler.isLocationEnabled(requireContext())) {
-                var permissionsToRequest: Array<String>? = null
-                if (!permissionsToCheck.isNullOrEmpty() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    // For Android 11 we MUST NOT request Background Location permission with fine or coarse permissions
-                    // as for Android 11 the background location request needs to be done separately
-                    // See here: https://developer.android.com/about/versions/11/privacy/location#request-background-location-separately
-                    permissionsToRequest = permissionsToCheck.toList().minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION).toTypedArray()
-                }
-
-                val hasPermission = checkPermission(permissionsToCheck)
-                if (permissionsToCheck.isNotEmpty() && !hasPermission) {
-                    LocationPermissionInfoHandler.showLocationPermInfoDialogIfNeeded(
-                        requireContext(), permissionsToCheck,
-                        continueYesCallback = {
-                            checkAndRequestPermissions(permissionsToCheck, LOCATION_REQUEST_CODE, permissionsToRequest, true)
-                            // openSsidDialog() will be called in onRequestPermissionsResult if permission is granted
-                        }
-                    )
-                } else openSsidDialog()
-            } else {
-                if (presenter.isSsidUsed()) {
-                    DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(commonR.string.pref_connection_wifi)), showAsNotification = false, withDisableOption = true) {
-                        presenter.clearSsids()
-                        preference.setSsids(emptySet())
-                    }
-                } else {
-                    DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(commonR.string.pref_connection_wifi)))
-                }
-            }
+    private fun onDisplaySsidScreen() {
+        val permissionsToCheck: Array<String> = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
         } else {
-            super.onDisplayPreferenceDialog(preference)
+            arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION)
         }
+
+        if (DisabledLocationHandler.isLocationEnabled(requireContext())) {
+            var permissionsToRequest: Array<String>? = null
+            if (permissionsToCheck.isNotEmpty() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                // For Android 11 we MUST NOT request Background Location permission with fine or coarse permissions
+                // as for Android 11 the background location request needs to be done separately
+                // See here: https://developer.android.com/about/versions/11/privacy/location#request-background-location-separately
+                permissionsToRequest = permissionsToCheck.toList().minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION).toTypedArray()
+            }
+
+            val hasPermission = checkPermission(permissionsToCheck)
+            if (permissionsToCheck.isNotEmpty() && !hasPermission) {
+                LocationPermissionInfoHandler.showLocationPermInfoDialogIfNeeded(
+                    requireContext(), permissionsToCheck,
+                    continueYesCallback = {
+                        checkAndRequestPermissions(permissionsToCheck, LOCATION_REQUEST_CODE, permissionsToRequest, true)
+                        // showSsidSettings() will be called in onRequestPermissionsResult if permission is granted
+                    }
+                )
+            } else showSsidSettings()
+        } else {
+            if (presenter.isSsidUsed()) {
+                DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(commonR.string.pref_connection_wifi)), showAsNotification = false, withDisableOption = true) {
+                    presenter.clearSsids()
+                    presenter.updateInternalUrlStatus()
+                }
+            } else {
+                DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(commonR.string.pref_connection_wifi)))
+            }
+        }
+    }
+
+    private fun showSsidSettings() {
+        parentFragmentManager
+            .beginTransaction()
+            .replace(R.id.content, SsidFragment::class.java, null)
+            .addToBackStack(getString(commonR.string.manage_ssids))
+            .commit()
     }
 
     private fun authenticationResult(result: Int) {
         val success = result == Authenticator.SUCCESS
         val switchLock = findPreference<SwitchPreference>("app_lock")
         switchLock?.isChecked = success
+
+        findPreference<SwitchPreference>("app_lock_home_bypass")?.isVisible = success
         findPreference<EditTextPreference>("session_timeout")?.isVisible = success
     }
 
@@ -511,18 +554,6 @@ class SettingsFragment constructor(
         return true
     }
 
-    private fun openSsidDialog() {
-        // check if dialog is already showing
-        val fm = parentFragmentManager
-        if (fm.findFragmentByTag(SSID_DIALOG_TAG) != null) {
-            return
-        }
-
-        val ssidDialog = SsidDialogFragment.newInstance("connection_internal_ssids")
-        ssidDialog.setTargetFragment(this, 0)
-        ssidDialog.show(fm, SSID_DIALOG_TAG)
-    }
-
     private fun isIgnoringBatteryOptimizations(): Boolean {
         return Build.VERSION.SDK_INT <= Build.VERSION_CODES.M ||
             context?.getSystemService<PowerManager>()
@@ -552,7 +583,7 @@ class SettingsFragment constructor(
         }
         if ((requestCode == LOCATION_REQUEST_CODE && !isGreaterR || requestCode == BACKGROUND_LOCATION_REQUEST_CODE && isGreaterR) && grantResults.isNotEmpty()) {
             if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
-                openSsidDialog()
+                showSsidSettings()
             }
         }
     }
@@ -560,5 +591,7 @@ class SettingsFragment constructor(
     override fun onResume() {
         super.onResume()
         activity?.title = getString(commonR.string.companion_app)
+
+        presenter.updateInternalUrlStatus()
     }
 }

@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.home
 import android.app.Application
 import android.util.Log
 import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -11,7 +10,6 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
@@ -20,17 +18,21 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.De
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.data.SimplifiedEntity
-import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
+import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.wear.getAllFlow
 import io.homeassistant.companion.android.util.RegistriesDataHandler
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class MainViewModel @Inject constructor(application: Application) : AndroidViewModel(application) {
+class MainViewModel @Inject constructor(
+    private val favoritesDao: FavoritesDao,
+    private val sensorsDao: SensorDao,
+    application: Application
+) : AndroidViewModel(application) {
 
     companion object {
         const val TAG = "MainViewModel"
@@ -41,9 +43,6 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
     }
 
     private lateinit var homePresenter: HomePresenter
-    val app = getApplication<HomeAssistantApplication>()
-    private val favoritesDao = AppDatabase.getInstance(app.applicationContext).favoritesDao()
-    private val sensorsDao = AppDatabase.getInstance(app.applicationContext).sensorDao()
     private var areaRegistry: List<AreaRegistryResponse>? = null
     private var deviceRegistry: List<DeviceRegistryResponse>? = null
     private var entityRegistry: List<EntityRegistryResponse>? = null
@@ -100,7 +99,7 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
     fun supportedDomains(): List<String> = HomePresenterImpl.supportedDomains
 
     fun stringForDomain(domain: String): String? =
-        HomePresenterImpl.domainsWithNames[domain]?.let { app.applicationContext.getString(it) }
+        HomePresenterImpl.domainsWithNames[domain]?.let { getApplication<Application>().getString(it) }
 
     val sensors = sensorsDao.getAllFlow().collectAsState()
 
@@ -126,13 +125,17 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
             try {
                 // Load initial state
                 loadingState.value = LoadingState.LOADING
-                homePresenter.getAreaRegistry()?.let {
-                    areaRegistry = it
+                val getAreaRegistry = async { homePresenter.getAreaRegistry() }
+                val getDeviceRegistry = async { homePresenter.getDeviceRegistry() }
+                val getEntityRegistry = async { homePresenter.getEntityRegistry() }
+                val getEntities = async { homePresenter.getEntities() }
+
+                areaRegistry = getAreaRegistry.await()?.also {
                     areas.addAll(it)
                 }
-                deviceRegistry = homePresenter.getDeviceRegistry()
-                entityRegistry = homePresenter.getEntityRegistry()
-                homePresenter.getEntities()?.forEach {
+                deviceRegistry = getDeviceRegistry.await()
+                entityRegistry = getEntityRegistry.await()
+                getEntities.await()?.forEach {
                     if (supportedDomains().contains(it.domain)) {
                         entities[it.entityId] = it
                     }
@@ -257,12 +260,12 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
 
     fun enableDisableSensor(sensorManager: SensorManager, sensorId: String, isEnabled: Boolean) {
         viewModelScope.launch {
-            val basicSensor = sensorManager.getAvailableSensors(app)
+            val basicSensor = sensorManager.getAvailableSensors(getApplication())
                 .first { basicSensor -> basicSensor.id == sensorId }
             updateSensorEntity(sensorsDao, basicSensor, isEnabled)
 
             if (isEnabled) try {
-                sensorManager.requestSensorUpdate(app)
+                sensorManager.requestSensorUpdate(getApplication())
             } catch (e: Exception) {
                 Log.e(TAG, "Exception while requesting update for sensor $sensorId", e)
             }
@@ -274,15 +277,7 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
         basicSensor: SensorManager.BasicSensor,
         isEnabled: Boolean
     ) {
-        var sensorEntity = sensorDao.get(basicSensor.id)
-        if (sensorEntity != null) {
-            sensorEntity.enabled = isEnabled
-            sensorEntity.lastSentState = ""
-            sensorDao.update(sensorEntity)
-        } else {
-            sensorEntity = Sensor(basicSensor.id, isEnabled, false, "")
-            sensorDao.add(sensorEntity)
-        }
+        sensorDao.setSensorsEnabled(listOf(basicSensor.id), isEnabled)
     }
 
     fun getAreaForEntity(entityId: String): AreaRegistryResponse? =
@@ -290,6 +285,9 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
 
     fun getCategoryForEntity(entityId: String): String? =
         RegistriesDataHandler.getCategoryForEntity(entityId, entityRegistry)
+
+    fun getHiddenByForEntity(entityId: String): String? =
+        RegistriesDataHandler.getHiddenByForEntity(entityId, entityRegistry)
 
     /**
      * Clears all favorites in the database.

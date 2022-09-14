@@ -8,7 +8,7 @@ import androidx.annotation.RequiresApi
 class Tile7Service : TileExtensions() {
 
     companion object {
-        private const val TILE_ID = "tile_7"
+        const val TILE_ID = "tile_7"
     }
 
     override fun getTile(): Tile? {

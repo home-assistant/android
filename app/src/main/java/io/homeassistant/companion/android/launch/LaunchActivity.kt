@@ -17,8 +17,7 @@ import io.homeassistant.companion.android.common.data.authentication.Authenticat
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
-import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.database.sensor.Sensor
+import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.onboarding.getMessagingToken
 import io.homeassistant.companion.android.sensors.LocationSensorManager
@@ -27,7 +26,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 import javax.inject.Inject
+import javax.net.ssl.SSLException
+import javax.net.ssl.SSLHandshakeException
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
@@ -48,6 +50,9 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
 
     @Inject
     lateinit var integrationRepository: IntegrationRepository
+
+    @Inject
+    lateinit var sensorDao: SensorDao
 
     private val mainScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -129,35 +134,59 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
         messagingToken: String,
         deviceTrackingEnabled: Boolean
     ) {
-        urlRepository.saveUrl(url)
-        authenticationRepository.registerAuthorizationCode(authCode)
-        integrationRepository.registerDevice(
-            DeviceRegistration(
-                "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-                deviceName,
-                messagingToken
+        try {
+            urlRepository.saveUrl(url)
+            authenticationRepository.registerAuthorizationCode(authCode)
+            integrationRepository.registerDevice(
+                DeviceRegistration(
+                    "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                    deviceName,
+                    messagingToken
+                )
             )
-        )
+        } catch (e: Exception) {
+            // Fatal errors: if one of these calls fail, the app cannot proceed.
+            // Show an error, clean up the session and require new registration.
+            // Because this runs after the webview, the only expected errors are:
+            // - missing mobile_app integration
+            // - system version related in OkHttp (cryptography)
+            // - general connection issues (offline/unknown)
+            Log.e(TAG, "Exception while registering", e)
+            try {
+                authenticationRepository.revokeSession()
+            } catch (e: Exception) {
+                Log.e(TAG, "Can't revoke session", e)
+            }
+            AlertDialog.Builder(this@LaunchActivity)
+                .setTitle(commonR.string.error_connection_failed)
+                .setMessage(
+                    when {
+                        e is HttpException && e.code() == 404 -> commonR.string.error_with_registration
+                        e is SSLHandshakeException -> commonR.string.webview_error_FAILED_SSL_HANDSHAKE
+                        e is SSLException -> commonR.string.webview_error_SSL_INVALID
+                        else -> commonR.string.webview_error
+                    }
+                )
+                .setCancelable(false)
+                .setPositiveButton(commonR.string.ok) { dialog, _ ->
+                    dialog.dismiss()
+                    displayOnBoarding(false)
+                }
+                .show()
+            return
+        }
         setLocationTracking(deviceTrackingEnabled)
         displayWebview()
     }
 
-    private fun setLocationTracking(enabled: Boolean) {
-        val sensorDao = AppDatabase.getInstance(applicationContext).sensorDao()
-        arrayOf(
-            LocationSensorManager.backgroundLocation,
-            LocationSensorManager.zoneLocation,
-            LocationSensorManager.singleAccurateLocation
-        ).forEach { basicSensor ->
-            var sensorEntity = sensorDao.get(basicSensor.id)
-            if (sensorEntity != null) {
-                sensorEntity.enabled = enabled
-                sensorEntity.lastSentState = ""
-                sensorDao.update(sensorEntity)
-            } else {
-                sensorEntity = Sensor(basicSensor.id, enabled, false, "")
-                sensorDao.add(sensorEntity)
-            }
-        }
+    private suspend fun setLocationTracking(enabled: Boolean) {
+        sensorDao.setSensorsEnabled(
+            sensorIds = listOf(
+                LocationSensorManager.backgroundLocation.id,
+                LocationSensorManager.zoneLocation.id,
+                LocationSensorManager.singleAccurateLocation.id
+            ),
+            enabled = enabled
+        )
     }
 }
