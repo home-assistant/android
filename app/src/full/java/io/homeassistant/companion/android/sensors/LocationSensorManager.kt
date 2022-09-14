@@ -12,17 +12,8 @@ import android.os.PowerManager
 import android.text.TextUtils
 import android.util.Log
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.Geofence
-import com.google.android.gms.location.GeofencingClient
-import com.google.android.gms.location.GeofencingEvent
-import com.google.android.gms.location.GeofencingRequest
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationResult
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.GCJ2WGS
 import io.homeassistant.companion.android.common.data.integration.UpdateLocation
@@ -127,8 +118,6 @@ class LocationSensorManager : LocationSensorManagerBase() {
         )
         internal const val TAG = "LocBroadcastReceiver"
 
-        private var geofencingClient: GeofencingClient? = null
-        private var fusedLocationProviderClient: FusedLocationProviderClient? = null
 
         private var isBackgroundLocationSetup = false
         private var isZoneLocationSetup = false
@@ -144,11 +133,6 @@ class LocationSensorManager : LocationSensorManagerBase() {
         private var forceHighAccuracyModeOn = false
         private var highAccuracyModeEnabled = false
 
-        private var lastEnteredGeoZones: MutableList<String> = ArrayList()
-        private var lastExitedGeoZones: MutableList<String> = ArrayList()
-
-        private var lastHighAccuracyTriggerRange: Int = 0
-        private var lastHighAccuracyZones: List<String> = ArrayList()
 
         fun setHighAccuracyModeSetting(context: Context, enabled: Boolean) {
             val sensorDao = AppDatabase.getInstance(context).sensorDao()
@@ -184,7 +168,6 @@ class LocationSensorManager : LocationSensorManagerBase() {
             amapLocation = location
             Log.d(TAG, "Amap Location -- ${location.latitude}")
 
-            addressUpdata(latestContext)
             val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
             val sensorSettings = sensorDao.getSettings(backgroundLocation.id)
             val minAccuracy = sensorSettings
@@ -195,7 +178,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                     backgroundLocation.id,
                     SETTING_ACCURACY,
                     minAccuracy.toString(),
-                    "number"
+                    SensorSettingType.NUMBER
                 )
             )
             if (location.accuracy > minAccuracy) {
@@ -225,7 +208,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             ACTION_REQUEST_LOCATION_UPDATES -> setupLocationTracking()
             ACTION_PROCESS_LOCATION,
             ACTION_PROCESS_HIGH_ACCURACY_LOCATION -> handleLocationUpdate(intent)
-            ACTION_PROCESS_GEO -> handleGeoUpdate(intent)
+            ACTION_PROCESS_GEO -> handleLocationUpdate(intent)
             ACTION_REQUEST_ACCURATE_LOCATION_UPDATE -> requestSingleAccurateLocation()
             ACTION_FORCE_HIGH_ACCURACY -> {
                 var command = intent.extras?.get("command")?.toString()
@@ -237,13 +220,13 @@ class LocationSensorManager : LocationSensorManagerBase() {
                         forceHighAccuracyModeOn = turnOn
                         setHighAccuracyModeSetting(latestContext, turnOn)
                         ioScope.launch {
-                            handleLocationUpdate()
+                            handleLocationUpdate(intent)
                         }
                     }
 
                     MessagingManager.HIGH_ACCURACY_SET_UPDATE_INTERVAL -> {
                         if (lastHighAccuracyMode)
-                            handleLocationUpdate()
+                            handleLocationUpdate(intent)
                     }
                 }
             }
@@ -322,7 +305,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                     backgroundLocation.id,
                     SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL,
                     updateIntervalHighAccuracySecondsInt.toString(),
-                    "number"
+                    SensorSettingType.NUMBER
                 )
             )
         }
@@ -331,123 +314,10 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
     private fun getHighAccuracyModeState(): Boolean {
 
-        var highAccuracyMode = getHighAccuracyModeSetting()
+        return getHighAccuracyModeSetting()
 
-        if (!highAccuracyMode) return false
-
-        val shouldEnableHighAccuracyMode = shouldEnableHighAccuracyMode()
-
-        // As soon as the high accuracy mode should be enabled, disable the force of high accuracy mode!
-        if (shouldEnableHighAccuracyMode) {
-            Log.d(TAG, "Forcing of high accuracy mode disabled, because high accuracy mode had to be enabled anyway.")
-            forceHighAccuracyModeOn = false
-        }
-
-        return if (!forceHighAccuracyModeOn) {
-            shouldEnableHighAccuracyMode
-        } else {
-            Log.d(TAG, "High accuracy mode enabled, because command_high_accuracy_mode was used to turn it on")
-            true
-        }
     }
 
-    private fun shouldEnableHighAccuracyMode(): Boolean {
-
-        val highAccuracyModeBTDevicesSetting = getSetting(
-            latestContext,
-            backgroundLocation,
-            SETTING_HIGH_ACCURACY_MODE_BLUETOOTH_DEVICES,
-            SensorSettingType.LIST_BLUETOOTH,
-            ""
-        )
-        val highAccuracyModeBTDevices = highAccuracyModeBTDevicesSetting
-            .split(", ")
-            .mapNotNull { it.trim().ifBlank { null } }
-            .toMutableList()
-        val highAccuracyBtZoneCombined = getHighAccuracyBTZoneCombinedSetting()
-
-        val useTriggerRange = getHighAccuracyModeTriggerRange() > 0
-        val highAccuracyZones = getHighAccuracyModeZones(false)
-        var highAccuracyExpZones = highAccuracyZones
-        if (useTriggerRange) {
-            // Use a trigger range, if defined
-            highAccuracyExpZones = getHighAccuracyModeZones(true)
-        }
-
-        var btDevConnected = false
-        var inZone = false
-        var constraintsUsed = false
-
-        if (highAccuracyModeBTDevices.isNotEmpty()) {
-            constraintsUsed = true
-
-            val bluetoothDevices = BluetoothUtils.getBluetoothDevices(latestContext)
-
-            // If any of the stored devices aren't a Bluetooth device address, try to match them to a device
-            var updatedBtDeviceNames = false
-            highAccuracyModeBTDevices.filter { !BluetoothAdapter.checkBluetoothAddress(it) }.forEach {
-                val foundDevices = bluetoothDevices.filter { btDevice -> btDevice.name == it }
-                if (foundDevices.isNotEmpty()) {
-                    highAccuracyModeBTDevices.remove(it)
-                    foundDevices.forEach { btDevice ->
-                        if (!highAccuracyModeBTDevices.contains(btDevice.address))
-                            highAccuracyModeBTDevices.add(btDevice.address)
-                    }
-                    updatedBtDeviceNames = true
-                }
-            }
-            if (updatedBtDeviceNames) {
-                val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
-                sensorDao.add(
-                    SensorSetting(
-                        backgroundLocation.id,
-                        SETTING_HIGH_ACCURACY_MODE_BLUETOOTH_DEVICES,
-                        highAccuracyModeBTDevices.joinToString().replace("[", "").replace("]", ""),
-                        SensorSettingType.LIST_BLUETOOTH
-                    )
-                )
-            }
-
-            btDevConnected = bluetoothDevices.any { it.connected && highAccuracyModeBTDevices.contains(it.address) }
-
-            if (!forceHighAccuracyModeOn) {
-                if (!btDevConnected) Log.d(TAG, "High accuracy mode disabled, because defined ($highAccuracyModeBTDevices) bluetooth device(s) not connected (Connected devices: $bluetoothDevices)")
-                else Log.d(TAG, "High accuracy mode enabled, because defined ($highAccuracyModeBTDevices) bluetooth device(s) connected (Connected devices: $bluetoothDevices)")
-            }
-        }
-
-        if (highAccuracyZones.isNotEmpty()) {
-            constraintsUsed = true
-
-            // (Expanded) Zone entered
-            val zoneExpEntered = lastEnteredGeoZones.isNotEmpty() && highAccuracyExpZones.containsAll(lastEnteredGeoZones)
-
-            // Exits events are only used if expended zones are used. The exit events are used to determine the enter of the expanded zone from the original zone
-            // Zone exited
-            val zoneExited = useTriggerRange && lastExitedGeoZones.isNotEmpty() && highAccuracyZones.containsAll(lastExitedGeoZones)
-
-            inZone = zoneExpEntered || zoneExited
-
-            if (!forceHighAccuracyModeOn) {
-                if (!inZone) Log.d(TAG, "High accuracy mode disabled, because not in zone $highAccuracyExpZones")
-                else Log.d(TAG, "High accuracy mode enabled, because in zone $highAccuracyExpZones")
-            }
-        }
-
-        // true = High accuracy mode enabled
-        // false = High accuracy mode disabled
-        //
-        // if BT device and zone are combined and BT device is connected AND in zone -> High accuracy mode enabled (true)
-        // if BT device and zone are NOT combined and either BT Device is connected OR in Zone -> High accuracy mode enabled (true)
-        // Else (NO BT dev connected and NOT in Zone), if min. one constraint is used ->  High accuracy mode disabled (false)
-        //                                             if no constraint is used ->  High accuracy mode enabled (true)
-        return when {
-            highAccuracyBtZoneCombined && btDevConnected && inZone -> true
-            !highAccuracyBtZoneCombined && (btDevConnected || inZone) -> true
-            highAccuracyBtZoneCombined && !constraintsUsed -> false
-            else -> !constraintsUsed
-        }
-    }
 
     private fun getHighAccuracyModeSetting(): Boolean {
         return getSetting(
@@ -459,26 +329,6 @@ class LocationSensorManager : LocationSensorManagerBase() {
         ).toBoolean()
     }
 
-    private fun getHighAccuracyBTZoneCombinedSetting(): Boolean {
-        return getSetting(
-            latestContext,
-            backgroundLocation,
-            SETTING_HIGH_ACCURACY_BT_ZONE_COMBINED,
-            SensorSettingType.TOGGLE,
-            "false"
-        ).toBoolean()
-
-        if (highAccuracyMode) {
-            if (!highAccuracyModeBTDevices.isNullOrEmpty()) {
-                val bluetoothDevices = BluetoothUtils.getBluetoothDevices(latestContext)
-                val highAccuracyBtDevConnected =
-                    bluetoothDevices.any { it.connected && highAccuracyModeBTDevices.contains(it.name) }
-
-                highAccuracyMode = highAccuracyBtDevConnected
-            }
-        }
-        return highAccuracyMode
-    }
 
     private fun removeAllLocationUpdateRequests() {
         Log.d(TAG, "Removing all location requests.")
@@ -528,7 +378,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
         mLocationClient!!.startLocation()
     }
 
-    private fun handleLocationUpdate() {
+    private fun handleLocationUpdate(intent: Intent) {
         if (mLocationClient != null) {
             mLocationClient!!.startLocation()
         } else {
@@ -621,115 +471,6 @@ class LocationSensorManager : LocationSensorManagerBase() {
         }
     }
 
-    private fun getLocationUpdateIntent(isGeofence: Boolean): PendingIntent {
-        val intent = Intent(latestContext, LocationSensorManager::class.java)
-        intent.action = if (isGeofence) ACTION_PROCESS_GEO else ACTION_PROCESS_LOCATION
-        return PendingIntent.getBroadcast(latestContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
-    }
-
-    private fun createLocationRequest(): LocationRequest {
-        val locationRequest = LocationRequest.create()
-
-        locationRequest.interval = DEFAULT_LOCATION_INTERVAL // Every 60 seconds
-        locationRequest.fastestInterval = DEFAULT_LOCATION_FAST_INTERVAL // Every 30 seconds
-        locationRequest.maxWaitTime = DEFAULT_LOCATION_MAX_WAIT_TIME // Every ~3.5 minutes
-
-        locationRequest.priority = Priority.PRIORITY_BALANCED_POWER_ACCURACY
-
-        return locationRequest
-    }
-
-    private suspend fun createGeofencingRequest(): GeofencingRequest {
-        val geofencingRequestBuilder = GeofencingRequest.Builder()
-            .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
-
-        // TODO cache the zones on device so we don't need to reach out each time
-        var configuredZones: Array<Entity<ZoneAttributes>> = emptyArray()
-        try {
-            configuredZones = integrationUseCase.getZones()
-        } catch (e: Exception) {
-            Log.e(TAG, "Error receiving zones from Home Assistant", e)
-        }
-
-        val highAccuracyTriggerRange = getHighAccuracyModeTriggerRange()
-        val highAccuracyZones = getHighAccuracyModeZones(false)
-        configuredZones.forEach {
-            addGeofenceToBuilder(geofencingRequestBuilder, it)
-            if (highAccuracyTriggerRange > 0 && highAccuracyZones.contains(it.entityId)) {
-                addGeofenceToBuilder(geofencingRequestBuilder, it, highAccuracyTriggerRange)
-            }
-        }
-
-        geofenceRegistered = true
-        return geofencingRequestBuilder.build()
-    }
-
-    private fun addGeofenceToBuilder(
-        geofencingRequestBuilder: GeofencingRequest.Builder,
-        zone: Entity<ZoneAttributes>,
-        triggerRange: Int = 0
-    ) {
-        val postRequestId = if (triggerRange > 0)"_expanded" else ""
-        geofencingRequestBuilder
-            .addGeofence(
-                Geofence.Builder()
-                    .setRequestId(zone.entityId + postRequestId)
-                    .setCircularRegion(
-                        zone.attributes.latitude,
-                        zone.attributes.longitude,
-                        zone.attributes.radius + triggerRange
-                    )
-                    .setExpirationDuration(Geofence.NEVER_EXPIRE)
-                    .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT)
-                    .build()
-            )
-    }
-
-    private fun getHighAccuracyModeTriggerRange(): Int {
-        val enabled = isEnabled(latestContext, zoneLocation.id)
-
-        if (!enabled) return 0
-
-        val highAccuracyTriggerRange = getSetting(
-            latestContext,
-            backgroundLocation,
-            SETTING_HIGH_ACCURACY_MODE_TRIGGER_RANGE_ZONE,
-            SensorSettingType.NUMBER,
-            DEFAULT_TRIGGER_RANGE_METERS.toString()
-        )
-
-        var highAccuracyTriggerRangeInt = highAccuracyTriggerRange.toIntOrNull() ?: DEFAULT_TRIGGER_RANGE_METERS
-        if (highAccuracyTriggerRangeInt < 0) {
-            highAccuracyTriggerRangeInt = DEFAULT_TRIGGER_RANGE_METERS
-
-            val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
-            sensorDao.add(SensorSetting(backgroundLocation.id, SETTING_HIGH_ACCURACY_MODE_TRIGGER_RANGE_ZONE, highAccuracyTriggerRangeInt.toString(), SensorSettingType.NUMBER))
-        }
-
-        return highAccuracyTriggerRangeInt
-    }
-
-    private fun getHighAccuracyModeZones(expandedZones: Boolean): List<String> {
-        val enabled = isEnabled(latestContext, zoneLocation.id)
-
-        if (!enabled) return emptyList()
-
-        val highAccuracyZones = getSetting(
-            latestContext,
-            backgroundLocation,
-            SETTING_HIGH_ACCURACY_MODE_ZONE,
-            SensorSettingType.LIST_ZONES,
-            ""
-        )
-
-        return if (highAccuracyZones.isNotEmpty()) {
-            val expanded = if (expandedZones) "_expanded" else ""
-            highAccuracyZones.split(",").map { it.trim() + expanded }
-        } else {
-            emptyList()
-        }
-    }
-
     private fun requestSingleAccurateLocation() {
         if (!checkPermission(latestContext, singleAccurateLocation.id)) {
             Log.w(TAG, "Not getting single accurate location because of permissions.")
@@ -762,67 +503,21 @@ class LocationSensorManager : LocationSensorManagerBase() {
         }
         sensorDao.add(Attribute(singleAccurateLocation.id, "lastAccurateLocationRequest", now.toString(), "string"))
 
-        val maxRetries = 5
-        val request = createLocationRequest().apply {
-            priority = Priority.PRIORITY_HIGH_ACCURACY
-            numUpdates = maxRetries
-            interval = 10000
-            fastestInterval = 5000
-        }
-        LocationServices.getFusedLocationProviderClient(latestContext)
-            .requestLocationUpdates(
-                request,
-                object : LocationCallback() {
-                    val wakeLock: PowerManager.WakeLock? =
-                        latestContext.getSystemService<PowerManager>()
-                            ?.newWakeLock(
-                                PowerManager.PARTIAL_WAKE_LOCK,
-                                "HomeAssistant::AccurateLocation"
-                            )?.apply { acquire(10 * 60 * 1000L /*10 minutes*/) }
-                    var numberCalls = 0
-                    override fun onLocationResult(locationResult: LocationResult) {
-                        numberCalls++
-                        Log.d(
-                            TAG,
-                            "Got single accurate location update: ${locationResult.lastLocation}"
-                        )
-                        if (locationResult.equals(null)) {
-                            Log.w(TAG, "No location provided.")
-                            return
-                        }
+        val wakeLock: PowerManager.WakeLock? =
+            ContextCompat.getSystemService(latestContext, PowerManager::class.java)
+                ?.newWakeLock(
+                    PowerManager.PARTIAL_WAKE_LOCK,
+                    "HomeAssistant::AccurateLocation"
+                )?.apply { acquire(10 * 60 * 1000L /*10 minutes*/) }
 
-                        when {
-                            locationResult.lastLocation!!.accuracy <= minAccuracy -> {
-                                Log.d(TAG, "Location accurate enough, all done with high accuracy.")
-                                runBlocking {
-                                    locationResult.lastLocation?.let {
-                                        sendLocationUpdate(
-                                            it
-                                        )
-                                    }
-                                }
-                                if (wakeLock?.isHeld == true) wakeLock.release()
-                            }
-                            numberCalls >= maxRetries -> {
-                                Log.d(
-                                    TAG,
-                                    "No location was accurate enough, sending our last location anyway"
-                                )
-                                if (locationResult.lastLocation!!.accuracy <= minAccuracy * 2)
-                                    runBlocking { sendLocationUpdate(locationResult.lastLocation!!) }
-                                if (wakeLock?.isHeld == true) wakeLock.release()
-                            }
-                            else -> {
-                                Log.w(
-                                    TAG,
-                                    "Location not accurate enough on retry $numberCalls of $maxRetries"
-                                )
-                            }
-                        }
-                    }
-                },
-                Looper.getMainLooper()
-            )
+        runBlocking { sendLocationUpdate(amapLocation) }
+        if (wakeLock?.isHeld == true) wakeLock.release()
+
+        if (mLocationClient != null) {
+            mLocationClient!!.startLocation()
+        } else {
+            requestLocationUpdates()
+        }
     }
 
     override fun docsLink(): String {
@@ -882,5 +577,13 @@ class LocationSensorManager : LocationSensorManagerBase() {
             }
         } else
             sensorDao.add(SensorSetting(singleAccurateLocation.id, SETTING_INCLUDE_SENSOR_UPDATE, "false", SensorSettingType.TOGGLE))
+    }
+
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return if (DisabledLocationHandler.hasGPS(context)) {
+            listOf(singleAccurateLocation, backgroundLocation, zoneLocation, highAccuracyMode, highAccuracyUpdateInterval)
+        } else {
+            listOf(backgroundLocation, zoneLocation, highAccuracyMode, highAccuracyUpdateInterval)
+        }
     }
 }

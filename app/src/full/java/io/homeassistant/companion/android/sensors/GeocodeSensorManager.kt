@@ -4,16 +4,14 @@ import android.Manifest
 import android.content.Context
 import android.location.Address
 import android.location.Geocoder
-import android.location.Location
 import android.os.Build
 import android.util.Log
-import io.homeassistant.companion.android.R
+import com.google.android.gms.location.LocationServices
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.location.HighAccuracyLocationService
-import java.lang.Exception
 import io.homeassistant.companion.android.common.R as commonR
 
 class GeocodeSensorManager : SensorManager {
@@ -64,25 +62,16 @@ class GeocodeSensorManager : SensorManager {
     }
 
     private fun updateGeocodedLocation(context: Context) {
-        if (!isEnabled(context, geocodedLocation.id) || !checkPermission(
-                context,
-                geocodedLocation.id
-            )
-        )
+        if (!isEnabled(context, geocodedLocation.id) || !checkPermission(context, geocodedLocation.id))
             return
-//        val locApi = LocationServices.getFusedLocationProviderClient(context)
-//        locApi.lastLocation.addOnSuccessListener { location ->
-//            addressUpdata(context)
-//        }
-    }
-
-    private fun addressUpdata(context: Context, location: Location) {
-        var address: Address? = null
-        try {
-            if (location == null) {
-                Log.e(TAG, "Somehow location is null even though it was successful")
-                return
-            }
+        val locApi = LocationServices.getFusedLocationProviderClient(context)
+        locApi.lastLocation.addOnSuccessListener { location ->
+            var address: Address? = null
+            try {
+                if (location == null) {
+                    Log.e(TAG, "Somehow location is null even though it was successful")
+                    return@addOnSuccessListener
+                }
 
                 val sensorDao = AppDatabase.getInstance(context).sensorDao()
                 val sensorSettings = sensorDao.getSettings(geocodedLocation.id)

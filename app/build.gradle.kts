@@ -1,5 +1,7 @@
 import com.github.triplet.gradle.androidpublisher.ResolutionStrategy
 import com.google.gms.googleservices.GoogleServicesPlugin.GoogleServicesPluginConfig
+import java.text.SimpleDateFormat
+
 
 plugins {
     id("com.android.application")
@@ -23,8 +25,8 @@ android {
         minSdk = 21
         targetSdk = 31
 
-        versionName = "LOCAL"
-        versionCode = 1
+        versionName = getVersionName()
+        versionCode = getVersionCode()
 
         manifestPlaceholders["sentryRelease"] = "$applicationId@$versionName"
     }
@@ -188,7 +190,7 @@ dependencies {
     "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
     "fullImplementation"("com.google.android.gms:play-services-wearable:17.1.0")
     "fullImplementation"("androidx.wear:wear-remote-interactions:1.0.0")
-    "fullImplementation"("com.amap.api:location:5.6.2")
+    "fullImplementation"("com.amap.api:location:6.1.0")
 
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.webkit:webkit:1.4.0")
@@ -197,10 +199,6 @@ dependencies {
     implementation("com.google.android.exoplayer:exoplayer-hls:2.17.1")
     implementation("com.google.android.exoplayer:exoplayer-ui:2.17.1")
     "fullImplementation"("com.google.android.exoplayer:extension-cronet:2.17.1")
-    "minimalImplementation"("com.google.android.exoplayer:extension-cronet:2.15.1") {
-        exclude(group = "com.google.android.gms", module = "play-services-cronet")
-    }
-    "minimalImplementation"("org.chromium.net:cronet-embedded:101.4951.41")
 
     implementation("androidx.compose.animation:animation:1.2.1")
     implementation("androidx.compose.compiler:compiler:1.3.0")
@@ -226,4 +224,13 @@ dependencies {
 // Disable to fix memory leak and be compatible with the configuration cache.
 configure<GoogleServicesPluginConfig> {
     disableVersionCheck = true
+}
+
+fun getVersionCode():Int {
+    val time = System.currentTimeMillis()
+    return (time/1000).toInt()
+}
+
+fun getVersionName(): String {
+    return SimpleDateFormat("yyyy-MM-dd").format(System.currentTimeMillis())
 }
