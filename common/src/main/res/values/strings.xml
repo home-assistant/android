@@ -922,4 +922,7 @@
     <string name="widget_checkbox_require_authentication">Require Authentication</string>
     <string name="widget_error_authenticating">Error authenticating - is an authentication method configured?</string>
     <string name="sensor_description_battery_power">The current wattage of the device. To get the most out of this sensor consider using the \"Fast while charging\" sensor update frequency setting. If your values are not as expected you may need to adjust the \"Battery Current Divisor\" setting to get a proper unit of amperes for the \"current\" attribute. Android is supposed to report microamperes however, some devices may report a different unit. The default will convert microamperes to amperes.</string>
+    <string name="sensor_name_accent_color_sensor">Accent Color</string>
+    <string name="sensor_description_accent_color_sensor">A hexadecimal color value for the dynamic accent color used in the device theme</string>
+    <string name="sensor_name_dynamic_colors">Dynamic Colors</string>
 </resources>
