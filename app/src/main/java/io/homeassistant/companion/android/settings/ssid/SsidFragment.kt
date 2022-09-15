@@ -34,6 +34,7 @@ class SsidFragment : Fragment() {
                         wifiSsids = viewModel.wifiSsids,
                         prioritizeInternal = viewModel.prioritizeInternal,
                         activeSsid = viewModel.activeSsid,
+                        activeBssid = viewModel.activeBssid,
                         onAddWifiSsid = viewModel::addHomeWifiSsid,
                         onRemoveWifiSsid = viewModel::removeHomeWifiSsid,
                         onSetPrioritize = viewModel::setPrioritize
