@@ -570,7 +570,7 @@ class MessagingManager @Inject constructor(
         val currentAlarmVolume = audioManager?.getStreamVolume(AudioManager.STREAM_ALARM)
         val maxAlarmVolume = audioManager?.getStreamMaxVolume(AudioManager.STREAM_ALARM)
         if (tts.isNullOrEmpty())
-            tts = context.getString(commonR.string.tts_no_title)
+            tts = context.getString(commonR.string.tts_no_text)
         textToSpeech = TextToSpeech(
             context
         ) {
