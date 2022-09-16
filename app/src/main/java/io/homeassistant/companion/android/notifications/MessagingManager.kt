@@ -102,6 +102,7 @@ class MessagingManager @Inject constructor(
         const val TAG = "MessagingService"
 
         const val APP_PREFIX = "app://"
+        const val INTENT_PREFIX = "intent://"
         const val MARKET_PREFIX = "https://play.google.com/store/apps/details?id="
         const val SETTINGS_PREFIX = "settings://"
         const val NOTIFICATION_HISTORY = "notification_history"
@@ -1588,6 +1589,9 @@ class MessagingManager @Inject constructor(
             uri.startsWith(APP_PREFIX) -> {
                 context.packageManager.getLaunchIntentForPackage(uri.substringAfter(APP_PREFIX))
             }
+            uri.startsWith(INTENT_PREFIX) -> {
+                Intent.parseUri(uri, Intent.URI_INTENT_SCHEME)
+            }
             uri.startsWith(SETTINGS_PREFIX) -> {
                 if (uri.substringAfter(SETTINGS_PREFIX) == NOTIFICATION_HISTORY)
                     SettingsActivity.newInstance(context)
@@ -1606,6 +1610,13 @@ class MessagingManager @Inject constructor(
 
         if (uri.startsWith(SETTINGS_PREFIX) && uri.substringAfter(SETTINGS_PREFIX) == NOTIFICATION_HISTORY)
             intent.putExtra("fragment", NOTIFICATION_HISTORY)
+        if (uri.startsWith(INTENT_PREFIX) || uri.startsWith(APP_PREFIX))
+            intent.`package`?.let {
+                context.packageManager.getLaunchIntentForPackage(
+                    it
+                )
+            }
+
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
