@@ -8,9 +8,9 @@ import com.google.android.material.color.DynamicColors
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.R as commonR
 
-class DynamicColorsSensorManager : SensorManager {
+class DynamicColorSensorManager : SensorManager {
     companion object {
-        private const val TAG = "DynamicColors"
+        private const val TAG = "DynamicColor"
 
         val accentColorSensor = SensorManager.BasicSensor(
             "accent_color",
@@ -28,7 +28,7 @@ class DynamicColorsSensorManager : SensorManager {
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
-        get() = commonR.string.sensor_name_dynamic_colors
+        get() = commonR.string.sensor_name_dynamic_color
 
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(accentColorSensor)
