@@ -1,6 +1,9 @@
 package io.homeassistant.companion.android.webview
 
 import android.content.Context
+import android.content.IntentSender
+import io.homeassistant.companion.android.matter.MatterCommissioningRequest
+import kotlinx.coroutines.flow.Flow
 
 interface WebViewPresenter {
 
@@ -36,4 +39,8 @@ interface WebViewPresenter {
     fun getAuthorizationHeader(): String
 
     suspend fun parseWebViewColor(webViewColor: String): Int
+
+    fun startCommissioningMatterDevice(context: Context)
+    fun getMatterCommissioningStatusFlow(): Flow<MatterCommissioningRequest.Status>
+    fun getMatterCommissioningIntent(): IntentSender?
 }

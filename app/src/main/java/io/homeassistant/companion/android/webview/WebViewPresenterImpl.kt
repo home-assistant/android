@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.webview
 
 import android.content.Context
+import android.content.IntentSender
 import android.graphics.Color
 import android.net.Uri
 import android.util.Log
@@ -10,11 +11,16 @@ import io.homeassistant.companion.android.common.data.authentication.SessionStat
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
+import io.homeassistant.companion.android.matter.MatterCommissioningHelper
+import io.homeassistant.companion.android.matter.MatterCommissioningRequest
 import io.homeassistant.companion.android.util.UrlHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -43,6 +49,10 @@ class WebViewPresenterImpl @Inject constructor(
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     private var url: URL? = null
+
+    private val _matterCommissioningStatus = MutableStateFlow(MatterCommissioningRequest.Status.NOT_STARTED)
+
+    private var matterCommissioningIntentSender: IntentSender? = null
 
     override fun onViewReady(path: String?) {
         mainScope.launch {
@@ -235,5 +245,33 @@ class WebViewPresenterImpl @Inject constructor(
                 m.group(3).toInt()
             )
         } else Color.parseColor(colorString)
+    }
+
+    override fun startCommissioningMatterDevice(context: Context) {
+        if (_matterCommissioningStatus.value != MatterCommissioningRequest.Status.REQUESTED) {
+            _matterCommissioningStatus.tryEmit(MatterCommissioningRequest.Status.REQUESTED)
+
+            MatterCommissioningHelper.startNewCommissioningFlow(
+                context,
+                { intentSender ->
+                    Log.d(TAG, "Matter commissioning is ready")
+                    matterCommissioningIntentSender = intentSender
+                    _matterCommissioningStatus.tryEmit(MatterCommissioningRequest.Status.IN_PROGRESS)
+                },
+                { e ->
+                    Log.e(TAG, "Matter commissioning couldn't be prepared", e)
+                    _matterCommissioningStatus.tryEmit(MatterCommissioningRequest.Status.ERROR)
+                }
+            )
+        } // else already waiting for a result, don't send another request
+    }
+
+    override fun getMatterCommissioningStatusFlow(): Flow<MatterCommissioningRequest.Status> =
+        _matterCommissioningStatus.asStateFlow()
+
+    override fun getMatterCommissioningIntent(): IntentSender? {
+        val intent = matterCommissioningIntentSender
+        matterCommissioningIntentSender = null
+        return intent
     }
 }

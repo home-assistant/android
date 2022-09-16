@@ -2,7 +2,10 @@ package io.homeassistant.companion.android.settings
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.UiModeManager
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -14,6 +17,7 @@ import android.os.PowerManager
 import android.provider.Settings
 import android.text.InputType
 import android.util.Log
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
@@ -32,6 +36,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.LocationPermissionInfoHandler
+import io.homeassistant.companion.android.matter.MatterCommissioningHelper
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.settings.controls.ManageControlsSettingsFragment
 import io.homeassistant.companion.android.settings.language.LanguagesProvider
@@ -71,6 +76,18 @@ class SettingsFragment constructor(
     private val requestBackgroundAccessResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         updateBackgroundAccessPref()
     }
+    // TODO remove
+    private val commissionMatterDevice = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+        val success = result.resultCode == Activity.RESULT_OK
+        val passcode = MatterCommissioningHelper.getPasscodeFromCommissioningResult(result)
+        AlertDialog.Builder(requireActivity())
+            .setMessage("Matter commissioning ${if (success) "OK" else "failed"}\n${if (success) "Passcode: $passcode" else "Returned code: ${result.resultCode}"}")
+            .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                requireContext().getSystemService<ClipboardManager>()?.setPrimaryClip(ClipData.newPlainText("", passcode ?: ""))
+                dialog.dismiss()
+            }
+            .show()
+    }
 
     private val requestNotificationPermissionResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         updateNotificationChannelPrefs()
@@ -93,6 +110,23 @@ class SettingsFragment constructor(
                     .show()
             }
             isValid
+        }
+
+        // TODO remove
+        findPreference<Preference>("matter_commissioning")?.setOnPreferenceClickListener {
+            MatterCommissioningHelper.startNewCommissioningFlow(
+                requireContext(),
+                { intentSender ->
+                    commissionMatterDevice.launch(IntentSenderRequest.Builder(intentSender).build())
+                },
+                { e ->
+                    AlertDialog.Builder(requireActivity())
+                        .setMessage("Matter commissioning couldn't be started\n\n${e.message}")
+                        .setPositiveButton(android.R.string.ok) { _, _ -> }
+                        .show()
+                }
+            )
+            return@setOnPreferenceClickListener true
         }
 
         findPreference<SwitchPreference>("app_lock")?.setOnPreferenceChangeListener { _, newValue ->
