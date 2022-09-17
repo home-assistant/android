@@ -102,7 +102,7 @@ class MessagingManager @Inject constructor(
         const val TAG = "MessagingService"
 
         const val APP_PREFIX = "app://"
-        const val APP_LINK_PREFIX = "app-link://"
+        const val DEEP_LINK_PREFIX = "deep-link://"
         const val INTENT_PREFIX = "intent://"
         const val MARKET_PREFIX = "https://play.google.com/store/apps/details?id="
         const val SETTINGS_PREFIX = "settings://"
@@ -1599,11 +1599,11 @@ class MessagingManager @Inject constructor(
                 else
                     WebViewActivity.newInstance(context)
             }
-            UrlHandler.isAbsoluteUrl(uri) || uri.startsWith(APP_LINK_PREFIX) -> {
+            UrlHandler.isAbsoluteUrl(uri) || uri.startsWith(DEEP_LINK_PREFIX) -> {
                 Intent(Intent.ACTION_VIEW).apply {
                     this.data = Uri.parse(
-                        if (uri.startsWith(APP_LINK_PREFIX))
-                            uri.removePrefix(APP_LINK_PREFIX)
+                        if (uri.startsWith(DEEP_LINK_PREFIX))
+                            uri.removePrefix(DEEP_LINK_PREFIX)
                         else
                             uri
                     )
@@ -1616,7 +1616,7 @@ class MessagingManager @Inject constructor(
 
         if (uri.startsWith(SETTINGS_PREFIX) && uri.substringAfter(SETTINGS_PREFIX) == NOTIFICATION_HISTORY)
             intent.putExtra("fragment", NOTIFICATION_HISTORY)
-        if (uri.startsWith(INTENT_PREFIX) || uri.startsWith(APP_PREFIX) || uri.startsWith(APP_LINK_PREFIX))
+        if (uri.startsWith(INTENT_PREFIX) || uri.startsWith(APP_PREFIX) || uri.startsWith(DEEP_LINK_PREFIX))
             intent.`package`?.let {
                 context.packageManager.getLaunchIntentForPackage(
                     it
