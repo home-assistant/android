@@ -103,7 +103,7 @@ class MessagingManager @Inject constructor(
 
         const val APP_PREFIX = "app://"
         const val DEEP_LINK_PREFIX = "deep-link://"
-        const val INTENT_PREFIX = "intent://"
+        const val INTENT_PREFIX = "intent:"
         const val MARKET_PREFIX = "https://play.google.com/store/apps/details?id="
         const val SETTINGS_PREFIX = "settings://"
         const val NOTIFICATION_HISTORY = "notification_history"

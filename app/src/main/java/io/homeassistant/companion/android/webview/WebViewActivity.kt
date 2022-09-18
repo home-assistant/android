@@ -114,7 +114,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         private const val TAG = "WebviewActivity"
         private const val APP_PREFIX = "app://"
-        private const val INTENT_PREFIX = "intent://"
+        private const val INTENT_PREFIX = "intent:"
         private const val MARKET_PREFIX = "https://play.google.com/store/apps/details?id="
 
         fun newInstance(context: Context, path: String? = null): Intent {
