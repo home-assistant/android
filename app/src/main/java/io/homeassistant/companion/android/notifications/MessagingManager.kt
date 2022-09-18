@@ -1583,6 +1583,7 @@ class MessagingManager @Inject constructor(
     private fun createOpenUriPendingIntent(
         uri: String
     ): PendingIntent {
+        val needsPackage = uri.startsWith(APP_PREFIX) || uri.startsWith(INTENT_PREFIX) || uri.startsWith(DEEP_LINK_PREFIX)
         val intent = when {
             uri.isBlank() -> {
                 WebViewActivity.newInstance(context)
@@ -1616,12 +1617,6 @@ class MessagingManager @Inject constructor(
 
         if (uri.startsWith(SETTINGS_PREFIX) && uri.substringAfter(SETTINGS_PREFIX) == NOTIFICATION_HISTORY)
             intent.putExtra("fragment", NOTIFICATION_HISTORY)
-        if (uri.startsWith(INTENT_PREFIX) || uri.startsWith(APP_PREFIX) || uri.startsWith(DEEP_LINK_PREFIX))
-            intent.`package`?.let {
-                context.packageManager.getLaunchIntentForPackage(
-                    it
-                )
-            }
 
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
@@ -1630,7 +1625,21 @@ class MessagingManager @Inject constructor(
         return PendingIntent.getActivity(
             context,
             (uri.hashCode() + System.currentTimeMillis()).toInt(),
-            intent,
+            if (needsPackage) {
+                val intentPackage = intent.`package`?.let {
+                    context.packageManager.getLaunchIntentForPackage(
+                        it
+                    )
+                }
+                if (intentPackage != null)
+                    intent
+                else {
+                    val marketIntent = Intent(Intent.ACTION_VIEW)
+                    marketIntent.data = Uri.parse(MARKET_PREFIX + intent.`package`.toString())
+                    marketIntent
+                }
+            } else
+                intent,
             PendingIntent.FLAG_IMMUTABLE
         )
     }
