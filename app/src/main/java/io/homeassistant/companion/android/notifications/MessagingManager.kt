@@ -1631,13 +1631,12 @@ class MessagingManager @Inject constructor(
                         it
                     )
                 }
-                if (intentPackage != null)
-                    intent
-                else {
+                if (intentPackage == null && (!intent.`package`.isNullOrEmpty() || uri.startsWith(APP_PREFIX))) {
                     val marketIntent = Intent(Intent.ACTION_VIEW)
                     marketIntent.data = Uri.parse(MARKET_PREFIX + if (uri.startsWith(INTENT_PREFIX)) intent.`package`.toString() else uri.removePrefix(APP_PREFIX))
                     marketIntent
-                }
+                } else
+                    intent
             } else
                 intent,
             PendingIntent.FLAG_IMMUTABLE
