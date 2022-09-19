@@ -1,10 +1,8 @@
 package io.homeassistant.companion.android.sensors
 
 import android.content.Context
-import android.os.Build
 import android.provider.Settings
 import android.util.Log
-import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -21,7 +19,7 @@ class SettingsSensorManager : SensorManager {
     }
 
     override fun docsLink(): String {
-        return "https://companion.home-assistant.io/docs/core/sensors#last-used-app-sensor"
+        return "https://companion.home-assistant.io/docs/core/sensors#screen-brightness-sensor"
     }
 
     override val enabledByDefault: Boolean
@@ -33,22 +31,16 @@ class SettingsSensorManager : SensorManager {
         return listOf(screenBrightness)
     }
 
-    override fun hasSensor(context: Context): Boolean {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-    }
-
     override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }
 
-    @RequiresApi(Build.VERSION_CODES.LOLLIPOP_MR1)
     override fun requestSensorUpdate(
         context: Context
     ) {
         updateScreenBrightness(context)
     }
 
-    @RequiresApi(Build.VERSION_CODES.LOLLIPOP_MR1)
     private fun updateScreenBrightness(context: Context) {
         if (!isEnabled(context, screenBrightness.id))
             return
