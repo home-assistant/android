@@ -56,6 +56,7 @@ class SensorReceiver : SensorReceiverBase() {
             PressureSensorManager(),
             ProximitySensorManager(),
             QuestSensorManager(),
+            SettingsSensorManager(),
             StepsSensorManager(),
             StorageSensorManager(),
             TimeZoneManager(),
