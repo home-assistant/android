@@ -134,6 +134,7 @@ class MessagingManager @Inject constructor(
         const val COMMAND = "command"
         const val TTS_TEXT = "tts_text"
         const val CHANNEL = "channel"
+        const val CONFIRMATION = "confirmation"
 
         // special intent constants
         const val INTENT_PACKAGE_NAME = "intent_package_name"
@@ -280,13 +281,17 @@ class MessagingManager @Inject constructor(
             NotificationItem(0, now, jsonData[MESSAGE].toString(), jsonObject.toString(), source)
         notificationDao.add(notificationRow)
 
-        mainScope.launch {
-            try {
-                integrationUseCase.fireEvent("mobile_app_notification_received", jsonData)
-            } catch (e: Exception) {
-                Log.e(TAG, "Unable to send notification received event", e)
+        val confirmation = jsonData[CONFIRMATION]?.toBoolean() ?: false
+        if (confirmation) {
+            mainScope.launch {
+                try {
+                    integrationUseCase.fireEvent("mobile_app_notification_received", jsonData)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unable to send notification received event", e)
+                }
             }
         }
+
         when {
             jsonData[MESSAGE] == REQUEST_LOCATION_UPDATE -> {
                 Log.d(TAG, "Request location update")
