@@ -1,0 +1,22 @@
+package io.homeassistant.companion.android.common.data.websocket
+
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
+import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.SharedFlow
+
+/**
+ * A class that holds information about messages that are currently active (sent and no response
+ * received, or sent for a subscription) on the websocket connection.
+ * @param message Map that holds the websocket message contents
+ * @param eventFlow Flow (using callbackFlow) that will emit events for a subscription, else `null`
+ * @param onEvent Channel that can receive events for a subscription, else `null`
+ * @param onResponse Continuation for the initial response to this message. Don't set this when
+ * creating this class, it will be set when a message is sent on the websocket.
+ */
+data class WebSocketRequest(
+    val message: Map<*, *>,
+    val eventFlow: SharedFlow<Any>? = null,
+    val onEvent: Channel<Any>? = null,
+    var onResponse: CancellableContinuation<SocketResponse>? = null
+)

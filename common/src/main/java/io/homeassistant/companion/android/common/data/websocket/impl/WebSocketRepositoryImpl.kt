@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.common.data.integration.ServiceData
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.websocket.WebSocketRequest
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
@@ -30,18 +31,18 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.So
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TemplateUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TriggerEvent
-import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -55,6 +56,7 @@ import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okio.ByteString
+import java.io.IOException
 import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
 
@@ -82,7 +84,7 @@ class WebSocketRepositoryImpl @Inject constructor(
     private val mapper = jacksonObjectMapper()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
         .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
-    private val responseCallbackJobs = mutableMapOf<Long, CancellableContinuation<SocketResponse>>()
+    private val activeMessages = mutableMapOf<Long, WebSocketRequest>()
     private val id = AtomicLong(1)
     private var connection: WebSocket? = null
     private var connectionState: WebSocketState? = null
@@ -90,9 +92,6 @@ class WebSocketRepositoryImpl @Inject constructor(
     private val connectedMutex = Mutex()
     private var connected = CompletableDeferred<Boolean>()
     private val eventSubscriptionMutex = Mutex()
-    private var eventSubscriptionId = mutableMapOf<Map<Any, Any>, Long?>()
-    private val eventSubscriptionFlow = mutableMapOf<Map<Any, Any>, SharedFlow<*>>()
-    private var eventSubscriptionProducerScope = mutableMapOf<Map<Any, Any>, ProducerScope<Any>>()
     private val notificationMutex = Mutex()
     private var notificationFlow: Flow<Map<String, Any>>? = null
     private var notificationProducerScope: ProducerScope<Map<String, Any>>? = null
@@ -220,32 +219,26 @@ class WebSocketRepositoryImpl @Inject constructor(
         ).plus(data)
 
         eventSubscriptionMutex.withLock {
-            if (eventSubscriptionId[subscribeMessage] == null) {
-
-                val response = sendMessage(subscribeMessage)
-                if (response == null || response.success != true) {
-                    Log.e(TAG, "Unable to subscribe to $type with data $data")
-                    return null
-                } else {
-                    eventSubscriptionId[subscribeMessage] = response.id
-                }
-
-                // Subscriptions are stored by subscribe message instead of ID, because the ID will
-                // change when the app needs to resubscribe
-                eventSubscriptionFlow[subscribeMessage] = callbackFlow<T> {
-                    eventSubscriptionProducerScope[subscribeMessage] = this as ProducerScope<Any>
+            if (activeMessages.values.none { it.message == subscribeMessage }) {
+                val channel = Channel<Any>(capacity = Channel.BUFFERED)
+                val flow = callbackFlow<T> {
+                    val producer = this as ProducerScope<Any>
+                    launch {
+                        channel.consumeAsFlow().collect {
+                            producer.send(it)
+                        }
+                    }
                     awaitClose {
                         ioScope.launch {
-                            var unsubscribeId: Long? = null
+                            var subscription: Long? = null
                             eventSubscriptionMutex.withLock {
-                                eventSubscriptionProducerScope.remove(subscribeMessage)
-                                eventSubscriptionFlow.remove(subscribeMessage)
-                                eventSubscriptionId[subscribeMessage]?.let {
-                                    unsubscribeId = it
-                                    eventSubscriptionId.remove(subscribeMessage)
+                                activeMessages.entries.firstOrNull { it.value.message == subscribeMessage }?.let {
+                                    subscription = it.key
+                                    channel.close()
+                                    activeMessages.remove(subscription)
                                 }
                             }
-                            unsubscribeId?.let {
+                            subscription?.let {
                                 Log.d(TAG, "Unsubscribing from $type with data $data")
                                 sendMessage(
                                     mapOf(
@@ -257,13 +250,24 @@ class WebSocketRepositoryImpl @Inject constructor(
                         }
                     }
                 }.shareIn(ioScope, SharingStarted.WhileSubscribed())
+
+                val webSocketRequest = WebSocketRequest(
+                    message = subscribeMessage,
+                    eventFlow = flow,
+                    onEvent = channel
+                )
+                val response = sendMessage(webSocketRequest)
+                if (response == null || response.success != true) {
+                    Log.e(TAG, "Unable to subscribe to $type with data $data")
+                    activeMessages.entries
+                        .firstOrNull { it.value.message == subscribeMessage }
+                        ?.let { activeMessages.remove(it.key) }
+                    return null
+                }
             }
         }
-        return eventSubscriptionFlow[subscribeMessage] as Flow<T>
+        return activeMessages.values.find { it.message == subscribeMessage }?.eventFlow as? Flow<T>
     }
-
-    private fun getSubscriptionMessageById(id: Long): Map<Any, Any>? =
-        eventSubscriptionId.filterValues { it == id }.keys.firstOrNull()
 
     override suspend fun getNotifications(): Flow<Map<String, Any>>? {
         notificationMutex.withLock {
@@ -373,7 +377,10 @@ class WebSocketRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun sendMessage(request: Map<*, *>): SocketResponse? {
+    private suspend fun sendMessage(request: Map<*, *>): SocketResponse? =
+        sendMessage(WebSocketRequest(request))
+
+    private suspend fun sendMessage(request: WebSocketRequest): SocketResponse? {
         return if (connect()) {
             withTimeoutOrNull(30000) {
                 suspendCancellableCoroutine { cont ->
@@ -382,9 +389,11 @@ class WebSocketRepositoryImpl @Inject constructor(
                     connection?.let {
                         synchronized(it) {
                             val requestId = id.getAndIncrement()
-                            val outbound = request.plus("id" to requestId)
+                            val outbound = request.message.plus("id" to requestId)
                             Log.d(TAG, "Sending message $requestId: $outbound")
-                            responseCallbackJobs[requestId] = cont
+                            activeMessages[requestId] = request.apply {
+                                onResponse = cont
+                            }
                             connection?.send(mapper.writeValueAsString(outbound))
                             Log.d(TAG, "Message number $requestId sent")
                         }
@@ -413,67 +422,86 @@ class WebSocketRepositoryImpl @Inject constructor(
 
     private fun handleMessage(response: SocketResponse) {
         val id = response.id!!
-        responseCallbackJobs[id]?.resumeWith(Result.success(response))
-        responseCallbackJobs.remove(id)
+        activeMessages[id]?.let {
+            it.onResponse!!.resumeWith(Result.success(response))
+            if (it.eventFlow == null) {
+                activeMessages.remove(id)
+            }
+        }
     }
 
     private suspend fun handleEvent(response: SocketResponse) {
         val subscriptionId = response.id
-        if (subscriptionId != null && eventSubscriptionId.values.contains(subscriptionId)) {
-            val subscriptionMessage = getSubscriptionMessageById(subscriptionId)
-            val subscriptionType = subscriptionMessage?.get("type")
-            val eventResponseType = response.event?.get("event_type")
+        activeMessages[subscriptionId]?.let { messageData ->
+            if (response.event?.contains("hass_confirm_id") == true) {
+                if (notificationProducerScope?.isActive == true) {
+                    notificationProducerScope?.send(
+                        mapper.convertValue(
+                            response.event,
+                            object : TypeReference<Map<String, Any>>() {}
+                        )
+                    )
+                } else {
+                    // Received notification but no longer handling it
+                }
+            } else {
+                val subscriptionType = messageData.message["type"]
+                val eventResponseType = response.event?.get("event_type")
 
-            val message: Any =
-                if (subscriptionType == SUBSCRIBE_TYPE_RENDER_TEMPLATE) {
-                    mapper.convertValue(response.event, TemplateUpdatedEvent::class.java)
-                } else if (subscriptionType == SUBSCRIBE_TYPE_SUBSCRIBE_TRIGGER) {
-                    val trigger = response.event?.get("variables")?.get("trigger")
-                    if (trigger != null) {
-                        mapper.convertValue(trigger, TriggerEvent::class.java)
+                val message: Any =
+                    if (subscriptionType == SUBSCRIBE_TYPE_RENDER_TEMPLATE) {
+                        mapper.convertValue(response.event, TemplateUpdatedEvent::class.java)
+                    } else if (subscriptionType == SUBSCRIBE_TYPE_SUBSCRIBE_TRIGGER) {
+                        val trigger = response.event?.get("variables")?.get("trigger")
+                        if (trigger != null) {
+                            mapper.convertValue(trigger, TriggerEvent::class.java)
+                        } else {
+                            Log.w(TAG, "Received no trigger value for trigger subscription, skipping")
+                            return
+                        }
+                    } else if (eventResponseType != null && eventResponseType.isTextual) {
+                        val eventResponseClass = when (eventResponseType.textValue()) {
+                            EVENT_STATE_CHANGED ->
+                                object :
+                                    TypeReference<EventResponse<StateChangedEvent>>() {}
+                            EVENT_AREA_REGISTRY_UPDATED ->
+                                object :
+                                    TypeReference<EventResponse<AreaRegistryUpdatedEvent>>() {}
+                            EVENT_DEVICE_REGISTRY_UPDATED ->
+                                object :
+                                    TypeReference<EventResponse<DeviceRegistryUpdatedEvent>>() {}
+                            EVENT_ENTITY_REGISTRY_UPDATED ->
+                                object :
+                                    TypeReference<EventResponse<EntityRegistryUpdatedEvent>>() {}
+                            else -> {
+                                Log.d(TAG, "Unknown event type received")
+                                object : TypeReference<EventResponse<Any>>() {}
+                            }
+                        }
+
+                        mapper.convertValue(
+                            response.event,
+                            eventResponseClass
+                        ).data
                     } else {
-                        Log.w(TAG, "Received no trigger value for trigger subscription, skipping")
+                        Log.d(TAG, "Unknown event for subscription received, skipping")
                         return
                     }
-                } else if (eventResponseType != null && eventResponseType.isTextual) {
-                    val eventResponseClass = when (eventResponseType.textValue()) {
-                        EVENT_STATE_CHANGED ->
-                            object :
-                                TypeReference<EventResponse<StateChangedEvent>>() {}
-                        EVENT_AREA_REGISTRY_UPDATED ->
-                            object :
-                                TypeReference<EventResponse<AreaRegistryUpdatedEvent>>() {}
-                        EVENT_DEVICE_REGISTRY_UPDATED ->
-                            object :
-                                TypeReference<EventResponse<DeviceRegistryUpdatedEvent>>() {}
-                        EVENT_ENTITY_REGISTRY_UPDATED ->
-                            object :
-                                TypeReference<EventResponse<EntityRegistryUpdatedEvent>>() {}
-                        else -> {
-                            Log.d(TAG, "Unknown event type received")
-                            object : TypeReference<EventResponse<Any>>() {}
-                        }
-                    }
 
-                    mapper.convertValue(
-                        response.event,
-                        eventResponseClass
-                    ).data
-                } else {
-                    Log.d(TAG, "Unknown event for subscription received, skipping")
-                    return
+                try {
+                    messageData.onEvent?.send(message)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unable to send event message to channel", e)
                 }
-
-            eventSubscriptionProducerScope[subscriptionMessage]?.send(message)
-        } else if (response.event?.contains("hass_confirm_id") == true) {
-            if (notificationProducerScope?.isActive == true) {
-                notificationProducerScope?.send(
-                    mapper.convertValue(
-                        response.event,
-                        object : TypeReference<Map<String, Any>>() {}
-                    )
-                )
             }
+        } ?: run {
+            Log.d(TAG, "Received event for unknown subscription, unsubscribing")
+            sendMessage(
+                mapOf(
+                    "type" to "unsubscribe_events",
+                    "subscription" to subscriptionId
+                )
+            )
         }
     }
 
@@ -485,20 +513,26 @@ class WebSocketRepositoryImpl @Inject constructor(
                 connectionHaVersion = null
                 if (connectionState != WebSocketState.CLOSED_AUTH)
                     connectionState = WebSocketState.CLOSED_OTHER
+                activeMessages
+                    .filterValues { it.eventFlow == null }
+                    .forEach {
+                        it.value.onResponse?.resumeWith(Result.failure(IOException()))
+                        activeMessages.remove(it.key)
+                    }
             }
         }
         // If we still have flows flowing
-        if ((eventSubscriptionFlow.any() || notificationFlow != null) && ioScope.isActive) {
+        if ((activeMessages.any { it.value.eventFlow != null } || notificationFlow != null) && ioScope.isActive) {
             ioScope.launch {
                 delay(10000)
                 if (connect()) {
-                    eventSubscriptionFlow.forEach { (subscribeMessage, _) ->
-                        val response = sendMessage(subscribeMessage)
+                    activeMessages.filterValues { it.eventFlow != null }.forEach { (oldId, oldMessage) ->
+                        val response = sendMessage(oldMessage)
                         if (response == null || response.success != true) {
-                            Log.e(TAG, "Issue re-registering subscription with $subscribeMessage")
-                            eventSubscriptionId[subscribeMessage] = null
+                            Log.e(TAG, "Issue re-registering subscription with ${oldMessage.message}")
                         } else {
-                            eventSubscriptionId[subscribeMessage] = response.id
+                            // sendMessage will have created a new item for this subscription
+                            activeMessages.remove(oldId)
                         }
                     }
                     if (notificationFlow != null) {
