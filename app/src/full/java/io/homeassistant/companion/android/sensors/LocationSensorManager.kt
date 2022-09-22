@@ -187,7 +187,6 @@ class LocationSensorManager : LocationSensorManagerBase() {
                         if (turnOn) Log.d(TAG, "Forcing of high accuracy mode enabled")
                         else Log.d(TAG, "Forcing of high accuracy mode disabled")
                         forceHighAccuracyModeOn = turnOn
-                        setHighAccuracyModeSetting(latestContext, turnOn)
                         ioScope.launch {
                             setupBackgroundLocation()
                         }
@@ -384,9 +383,9 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
         var highAccuracyMode = getHighAccuracyModeSetting()
 
-        if (!highAccuracyMode) return false
+        if (!forceHighAccuracyModeOn && !highAccuracyMode) return false
 
-        val shouldEnableHighAccuracyMode = shouldEnableHighAccuracyMode()
+        val shouldEnableHighAccuracyMode = highAccuracyMode && shouldEnableHighAccuracyMode()
 
         // As soon as the high accuracy mode should be enabled, disable the force of high accuracy mode!
         if (shouldEnableHighAccuracyMode) {
