@@ -16,7 +16,6 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
-import kotlinx.coroutines.runBlocking
 import java.util.UUID
 import kotlin.collections.ArrayList
 import io.homeassistant.companion.android.common.R as commonR
@@ -295,7 +294,7 @@ class BluetoothSensorManager : SensorManager {
         KalmanFilter.maxIterations = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_FILTER_ITERATIONS, SensorSettingType.NUMBER, DEFAULT_BEACON_MONITOR_FILTER_ITERATIONS).toIntOrNull() ?: DEFAULT_BEACON_MONITOR_FILTER_ITERATIONS.toInt()
         KalmanFilter.rssiMultiplier = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER, SensorSettingType.NUMBER, DEFAULT_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER).toDoubleOrNull() ?: DEFAULT_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER.toDouble()
 
-        var restart = monitoringManager.isMonitoring() &&
+        val restart = monitoringManager.isMonitoring() &&
             (monitoringManager.scanPeriod != scanPeriod || monitoringManager.scanInterval != scanInterval)
         monitoringManager.scanPeriod = scanPeriod
         monitoringManager.scanInterval = scanInterval
@@ -353,19 +352,13 @@ class BluetoothSensorManager : SensorManager {
 
         val icon = if (monitoringManager.isMonitoring()) "mdi:bluetooth" else "mdi:bluetooth-off"
 
-        var state = if (!BluetoothUtils.isOn(context)) "Bluetooth is turned off" else if (monitoringManager.isMonitoring()) "Monitoring" else "Stopped"
+        val state = if (!BluetoothUtils.isOn(context)) "Bluetooth is turned off" else if (monitoringManager.isMonitoring()) "Monitoring" else "Stopped"
 
-        var attr: Map<String, Any?> = mapOf()
+        val attr: MutableMap<String, Any?> = mutableMapOf()
         if (BluetoothUtils.isOn(context) && monitoringManager.isMonitoring()) {
             for (beacon: IBeacon in beaconMonitoringDevice.beacons) {
-                attr += Pair(beacon.uuid, beacon.distance)
+                attr += Pair("${beacon.uuid}-${beacon.major}-${beacon.minor}", beacon.distance)
             }
-        }
-
-        // reset the last_sent_state of the sensor so it won't skip the update of attributes
-        val sensorDao = AppDatabase.getInstance(context).sensorDao()
-        runBlocking {
-            sensorDao.updateLastSentStateAndIcon(beaconMonitor.id, null, null)
         }
 
         onSensorUpdated(
@@ -373,7 +366,8 @@ class BluetoothSensorManager : SensorManager {
             beaconMonitor,
             state,
             icon,
-            attr
+            attr,
+            forceUpdate = true
         )
     }
 
