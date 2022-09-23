@@ -595,6 +595,7 @@
     <string name="sensor_setting_beacon_monitor_filter_iterations_title">Filter Iterations</string>
     <string name="sensor_setting_beacon_monitor_filter_rssi_multiplier_title">Filter RSSI Multiplier</string>
     <string name="sensor_setting_geocode_minimum_accuracy_title">Minimum Accuracy</string>
+    <string name="sensor_setting_geocode_include_location_updates_title">Update sensor with device tracker</string>
     <string name="sensor_setting_lastreboot_deadband_title">Deadband</string>
     <string name="sensor_setting_lastupdate_add_new_intent_title">Add New Intent</string>
     <string name="sensor_setting_lastupdate_intent_title" translatable="false">Intent %1$1s</string>

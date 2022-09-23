@@ -766,16 +766,29 @@ class LocationSensorManager : LocationSensorManagerBase() {
         lastLocationSend = now
         lastUpdateLocation = updateLocation.gps.contentToString()
 
+        val geocodeIncludeLocation = getSetting(
+            latestContext,
+            GeocodeSensorManager.geocodedLocation,
+            GeocodeSensorManager.SETTINGS_INCLUDE_LOCATION,
+            SensorSettingType.TOGGLE,
+            "false"
+        ).toBoolean()
+
         ioScope.launch {
             try {
                 integrationUseCase.updateLocation(updateLocation)
                 Log.d(TAG, "Location update sent successfully")
 
                 // Update Geocoded Location Sensor
-                val intent = Intent(latestContext, SensorReceiver::class.java)
-                intent.action = SensorReceiverBase.ACTION_UPDATE_SENSOR
-                intent.putExtra(SensorReceiverBase.EXTRA_SENSOR_ID, GeocodeSensorManager.geocodedLocation.id)
-                latestContext.sendBroadcast(intent)
+                if (geocodeIncludeLocation) {
+                    val intent = Intent(latestContext, SensorReceiver::class.java)
+                    intent.action = SensorReceiverBase.ACTION_UPDATE_SENSOR
+                    intent.putExtra(
+                        SensorReceiverBase.EXTRA_SENSOR_ID,
+                        GeocodeSensorManager.geocodedLocation.id
+                    )
+                    latestContext.sendBroadcast(intent)
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Could not update location.", e)
             }
