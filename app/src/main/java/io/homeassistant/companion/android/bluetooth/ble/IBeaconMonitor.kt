@@ -30,7 +30,7 @@ class IBeaconMonitor {
         var tmp: Map<String, IBeacon> = linkedMapOf()
         for (existingBeacon in beacons) {
             existingBeacon.skippedUpdated++
-            tmp += Pair("${existingBeacon.uuid}-${existingBeacon.major}-${existingBeacon.minor}", existingBeacon)
+            tmp += Pair(name(existingBeacon.uuid, existingBeacon.major, existingBeacon.minor), existingBeacon)
         }
         for (newBeacon in newBeacons) {
             val uuid = newBeacon.id1.toString()
@@ -60,7 +60,8 @@ class IBeaconMonitor {
         }
         assert(sorted.count() == beacons.count())
         beacons.forEachIndexed foreach@{ i, existingBeacon ->
-            if ("${sorted[i].uuid}-${sorted[i].major}-${sorted[i].minor}" != "${existingBeacon.uuid}-${existingBeacon.major}-${existingBeacon.minor}" || // the distance order switched
+
+            if (name(sorted[i].uuid, sorted[i].major, sorted[i].minor) != name(existingBeacon.uuid, existingBeacon.major, existingBeacon.minor) || // the distance order switched
                 kotlin.math.abs(sorted[i].distance - existingBeacon.distance) > 0.5 // the distance difference is greater than 0.5m
             ) {
                 requireUpdate = true

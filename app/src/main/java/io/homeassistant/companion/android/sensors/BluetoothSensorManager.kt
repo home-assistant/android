@@ -9,6 +9,7 @@ import io.homeassistant.companion.android.bluetooth.ble.IBeaconTransmitter
 import io.homeassistant.companion.android.bluetooth.ble.KalmanFilter
 import io.homeassistant.companion.android.bluetooth.ble.MonitoringManager
 import io.homeassistant.companion.android.bluetooth.ble.TransmitterManager
+import io.homeassistant.companion.android.bluetooth.ble.name
 import io.homeassistant.companion.android.common.bluetooth.BluetoothDevice
 import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils
 import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils.supportsTransmitter
@@ -336,7 +337,7 @@ class BluetoothSensorManager : SensorManager {
             if (state != "") state else lastState,
             icon,
             mapOf(
-                "id" to bleTransmitterDevice.uuid + "-" + bleTransmitterDevice.major + "-" + bleTransmitterDevice.minor,
+                "id" to name(bleTransmitterDevice.uuid, bleTransmitterDevice.major, bleTransmitterDevice.minor),
                 "Transmitting power" to bleTransmitterDevice.transmitPowerSetting,
                 "Advertise mode" to bleTransmitterDevice.advertiseModeSetting,
                 "Measured power" to bleTransmitterDevice.measuredPowerSetting,
@@ -354,10 +355,10 @@ class BluetoothSensorManager : SensorManager {
 
         val state = if (!BluetoothUtils.isOn(context)) "Bluetooth is turned off" else if (monitoringManager.isMonitoring()) "Monitoring" else "Stopped"
 
-        val attr: MutableMap<String, Any?> = mutableMapOf()
+        val attr = mutableMapOf<String, Any?>()
         if (BluetoothUtils.isOn(context) && monitoringManager.isMonitoring()) {
             for (beacon: IBeacon in beaconMonitoringDevice.beacons) {
-                attr += Pair("${beacon.uuid}-${beacon.major}-${beacon.minor}", beacon.distance)
+                attr += Pair(name(beacon.uuid, beacon.major, beacon.minor), beacon.distance)
             }
         }
 
