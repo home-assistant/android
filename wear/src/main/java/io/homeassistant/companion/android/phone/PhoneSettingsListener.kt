@@ -110,8 +110,8 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
 
     private fun login(dataMap: DataMap) = mainScope.launch {
         try {
-            val url = dataMap.getString("URL")
-            val authCode = dataMap.getString("AuthCode")
+            val url = dataMap.getString("URL", "")
+            val authCode = dataMap.getString("AuthCode", "")
             val deviceName = dataMap.getString("DeviceName")
             val deviceTrackingEnabled = dataMap.getBoolean("LocationTracking")
 
