@@ -1,19 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2022.9 - Phone" versioncode="2">
-        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Geocoded Location sensor attributes for latitude and longitude have been combined into location, the sensor will no longer show on the map. Additional attributes also added to the sensor.</change>
-        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Template widgets will only update when the template detects a change. If you are not seeing frequent updates then you are hit by rate limiting and will need to readjust the template.</change>
-        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Notification Received event will only be sent if a notification contains "confirmation: true" in the service call.</change>
-        <change>Add beacon monitor sensor</change>
-        <change>Add authentication option to button widget</change>
-        <change>Add option to bypass locking the app when on home WiFi</change>
-        <change>Only subscribe to state changes that we care about for entity state and media player widgets</change>
-        <change>Allow device controls on locked devices for Android 13+</change>
+    <release version="2022.10 - Phone" versioncode="2">
+        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; BLE Transmitter and Beacon Monitor sensor now report beacon attributes in "UUID Major.Minor" format.</change>
+        <change>Add dynamic color sensor for supported devices</change>
+        <change>Add support for considering WiFi BSSID as Home WiFi</change>
+        <change>Add support for intent scheme URI and app deep links in notification clickAction and actions</change>
+        <change>Allow intents registered under Last Update sensor to contain categories (if the intent requires them)</change>
         <change>Bug fixes, performance improvements, design tweaks and dependency updates</change>
     </release>
-    <release version="2022.9 - Wear" versioncode="1">
-        <change>Faster entity selection for entity state complication</change>
-        <change>Always default to using the phone for logging in</change>
+    <release version="2022.10 - Wear" versioncode="1">
+        <change>Dependency updates</change>
     </release>
 </changelog>
