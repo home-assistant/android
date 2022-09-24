@@ -482,7 +482,7 @@
     <string name="sensor_description_dnd_sensor">The current state of Do Not Disturb</string>
     <string name="sensor_description_doze">Whether the device is in Doze mode</string>
     <string name="sensor_description_external_storage">Information about the total and available storage space externally</string>
-    <string name="sensor_description_geocoded_location">Calculated address based on GPS data using Googles Location API</string>
+    <string name="sensor_description_geocoded_location">Calculated address based on GPS data using Googles Location API. The minimum accuracy setting determines if a location update is accurate enough to be updated, the default is 200 meters. A setting also exists to send a sensor update anytime the location sensors update, by default this off.</string>
     <string name="sensor_description_headphone">Whether headphones are plugged into the device</string>
     <string name="sensor_description_headset_mounted">Whether the headset is currently in use</string>
     <string name="sensor_description_high_accuracy_mode">Whether high accuracy mode is active on the device</string>
@@ -595,7 +595,7 @@
     <string name="sensor_setting_beacon_monitor_filter_iterations_title">Filter Iterations</string>
     <string name="sensor_setting_beacon_monitor_filter_rssi_multiplier_title">Filter RSSI Multiplier</string>
     <string name="sensor_setting_geocode_minimum_accuracy_title">Minimum Accuracy</string>
-    <string name="sensor_setting_geocode_include_location_updates_title">Update sensor with device tracker</string>
+    <string name="sensor_setting_geocode_include_location_updates_title">Update sensor with location sensors</string>
     <string name="sensor_setting_lastreboot_deadband_title">Deadband</string>
     <string name="sensor_setting_lastupdate_add_new_intent_title">Add New Intent</string>
     <string name="sensor_setting_lastupdate_intent_title" translatable="false">Intent %1$1s</string>
