@@ -4,6 +4,11 @@ import java.net.URL
 
 interface UrlRepository {
 
+    companion object {
+        const val BSSID_PREFIX = "BSSID:"
+        const val INVALID_BSSID = "02:00:00:00:00:00"
+    }
+
     suspend fun getWebhookId(): String?
 
     suspend fun getApiUrls(): Array<URL>
