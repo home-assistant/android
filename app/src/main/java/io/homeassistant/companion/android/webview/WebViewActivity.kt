@@ -115,7 +115,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         private const val TAG = "WebviewActivity"
         private const val APP_PREFIX = "app://"
-        private const val INTENT_PREFIX = "intent://"
+        private const val INTENT_PREFIX = "intent:"
         private const val MARKET_PREFIX = "https://play.google.com/store/apps/details?id="
 
         fun newInstance(context: Context, path: String? = null): Intent {
@@ -384,15 +384,14 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                         it1
                                     )
                                 }
-                                if (intentPackage != null)
-                                    startActivity(intent)
-                                else {
+                                if (intentPackage == null && !intent.`package`.isNullOrEmpty()) {
                                     Log.w(TAG, "No app found for intent prefix, opening app store")
                                     val marketIntent = Intent(Intent.ACTION_VIEW)
                                     marketIntent.data =
                                         Uri.parse(MARKET_PREFIX + intent.`package`.toString())
                                     startActivity(marketIntent)
-                                }
+                                } else
+                                    startActivity(intent)
                                 return true
                             } else if (!webView.url.toString().contains(it.toString())) {
                                 Log.d(TAG, "Launching browser")
