@@ -45,7 +45,6 @@
     <string name="basic_sensor_name_bluetooth_ble_beacon_monitor">Beacon Monitor</string>
     <string name="basic_sensor_name_bluetooth_state">Bluetooth State</string>
     <string name="basic_sensor_name_bluetooth">Bluetooth Connection</string>
-    <string name="basic_sensor_name_call_number">Call Number</string>
     <string name="basic_sensor_name_charger_type">Charger Type</string>
     <string name="basic_sensor_name_charging">Is Charging</string>
     <string name="basic_sensor_name_current_time_zone">Current Time Zone</string>
@@ -89,10 +88,8 @@
     <string name="basic_sensor_name_wifi_signal">WiFi Signal Strength</string>
     <string name="basic_sensor_name_wifi_state">WiFi State</string>
     <string name="basic_sensor_name_wifi">WiFi Connection</string>
-    <string name="basic_sensor_sleep_events">Sleep Events</string>
-    <string name="basic_sensor_sleep_tracking">Sleep Tracking</string>
     <string name="binary_sensor">Binary Sensor</string>
-    <string name="biometric_message">Unlock using your biometric or screenlock credential</string>
+    <string name="biometric_message">Unlock using your biometric or screen lock credential</string>
     <string name="biometric_set_title">Confirm to continue</string>
     <string name="biometric_title">Home Assistant is locked</string>
     <string name="brightness">Brightness: %1$d%%</string>
@@ -299,13 +296,13 @@
     <string name="location_perm_info_title">Location access</string>
     <string name="location_warn_channel">Location disabled</string>
     <string name="location">Location</string>
-    <string name="lock_summary">Use biometric or screenlock credential to unlock app</string>
+    <string name="lock_summary">Use biometric or screen lock credential to unlock app</string>
     <string name="lock_title">Lock app</string>
     <string name="lock_home_bypass_summary">Disable app lock when connected to the home WiFi network</string>
     <string name="lock_home_bypass_title">Unlock on home WiFi</string>
     <string name="locks">Locks</string>
     <string name="lockscreen_message">Tap to unlock :</string>
-    <string name="lockscreen_title">App Locked !</string>
+    <string name="lockscreen_title">App Locked!</string>
     <string name="log_file_not_created">Log file could not be created.</string>
     <string name="log_loader_text">Collecting logs…</string>
     <string name="log_loader_process">Current log</string>
@@ -471,7 +468,6 @@
     <string name="sensor_description_bluetooth_ble_beacon_monitor">Scans for iBeacons and shows the IDs of nearby beacons and their distance in meters.\n\nWarning: this can affect battery life, especially with a short \"Scan Interval\".\n\nSettings allow for specifying:\n- \"Filter Iterations\" (should be 1 - 100, default: 10), higher values will result in more stable measurements but also less responsiveness.\n- \"Filter RSSI Multiplier\" (should be 1.0 - 2.0, default: 1.05), can be used to archive more stable measurements when beacons are farther away. This will also affect responsiveness.\n - \"Scan Interval\" (default: 500) milliseconds between scans. Shorter intervals will drain the battery more quickly.\n - \"Scan Period\" (default: 1100) milliseconds to scan for beacons. Most beacons will send a signal every second so this value should be at least 1100ms.\n\nNote:\nAdditionally a separate setting exists (\"Enable Beacon Monitor\") to stop or start scanning.</string>
     <string name="sensor_description_bluetooth_connection">Information about currently connected Bluetooth devices</string>
     <string name="sensor_description_bluetooth_state">Whether Bluetooth is enabled on the device</string>
-    <string name="sensor_description_call_number">The cell number of the incoming or outgoing call</string>
     <string name="sensor_description_charger_type">The type of charger plugged into the device currently</string>
     <string name="sensor_description_charging">Whether the device is actively charging</string>
     <string name="sensor_description_current_time_zone">The current time zone the device is in</string>
@@ -493,7 +489,7 @@
     <string name="sensor_description_last_notification">The details of the last notification. You must setup an allow list or explicitly allow all notifications to be sent.\n\nNote: Sending all notification data will result in heavy battery usage.</string>
     <string name="sensor_description_last_reboot">The date and time of the devices last reboot. The setting below will allow you to adjust the deadband in milliseconds, if you still find the value to jump incorrectly. The default value is 60000 (1 minute).</string>
     <string name="sensor_description_last_removed_notification">The details of the last removed notification. This can be any notification either cleared by the user or removed by an application. You must setup an allow list or explicitly allow all notifications to be sent.\n\nNote: Sending all notification data will result in heavy battery usage.</string>
-    <string name="sensor_description_last_update">The intent for the last update that was sent, periodic updates will show as \"SensorWorker\". Enabling the \"Add New Intent\" toggle will create 1 setting to allow you to register for a broadcast intent. The toggle will switch back to off once a new setting is created so you will need to turn it back on to save more intents. You can also clear out the setting value to remove the setting in the next update. You must restart the application after making changes to these settings to take effect.</string>
+    <string name="sensor_description_last_update">The intent action for the last update that was sent, periodic updates will show as \"SensorWorker\".\n\nEnabling the \"Add New Intent\" toggle will create 1 setting to allow you to register for a intent action. The toggle will switch back to off once a new setting is created so you will need to turn it back on to save more intent actions. You can also clear out the setting value to remove the setting in the next update.\n\nIf you are not receiving all intents then you will need to add categories that the intent expects. To do this you will need to add each category after the intent separated by a \",\" repeating until there are no more categories. For example an intent with 2 categories will be: \"intent,category1,category2\" as the setting value.\n\nYou must restart the application after making changes to these settings to take effect.</string>
     <string name="sensor_description_light_sensor">The current level of illuminance</string>
     <string name="sensor_description_location_accurate">Allow Home Assistant to send a notification to request an accurate location along with the application periodically requesting an accurate location.  The Minimum Accuracy setting will allow you to decide how accurate the device location (in meters) has to be in order to send to Home Assistant.  The Minimum time between updates (in milliseconds) keeps the device from sending the accurate location too often. The Include in sensor update setting will make a location request with each sensor update.</string>
     <string name="sensor_description_location_background">Update your location behind the scenes, periodically.  The Minimum Accuracy setting will allow you to decide how accurate the device location (in meters) has to be in order to send to Home Assistant.</string>
@@ -516,9 +512,7 @@
     <string name="sensor_description_sim_1">Information about the current cellular provider in SIM slot 1</string>
     <string name="sensor_description_sim_2">Information about the current cellular provider in SIM slot 2</string>
     <string name="sensor_description_sleep_confidence">The confidence rating the user is asleep including attributing factors</string>
-    <string name="sensor_description_sleep_events">Additional one time events from Sleep as Android</string>
     <string name="sensor_description_sleep_segment">Details about the last sleep session</string>
-    <string name="sensor_description_sleep_tracking">Sleep tracking status from Sleep as Android</string>
     <string name="sensor_description_speakerphone">Whether speakerphone is enabled on the device</string>
     <string name="sensor_description_steps_sensor">The total number of steps since the last reboot of the device</string>
     <string name="sensor_description_storage_sensor">Information about the total and available storage space internally and externally</string>
@@ -563,7 +557,6 @@
     <string name="sensor_name_proximity">Proximity Sensor</string>
     <string name="sensor_name_quest">Quest Sensors</string>
     <string name="sensor_name_ringer_mode">Ringer Mode</string>
-    <string name="sensor_name_sleep_as_android">Sleep as Android Sensors</string>
     <string name="sensor_name_speakerphone">Speakerphone</string>
     <string name="sensor_name_steps">Steps Sensor</string>
     <string name="sensor_name_storage">Storage Sensors</string>
@@ -623,7 +616,7 @@
     <string name="session_timeout_title">Session TimeOut (in seconds)</string>
     <string name="set_favorite">Set Favorites</string>
     <string name="set_favorites_on_device">Set Favorites on Wear OS Device</string>
-    <string name="set_lock_message">No biometric sensor or screenlock credential available</string>
+    <string name="set_lock_message">No biometric sensor or screen lock credential available</string>
     <string name="set_lock_title">App Locking Error</string>
     <string name="setting_haptic_label">Enable Haptic Feedback</string>
     <string name="setting_toast_label">Enable Toast Confirmation</string>
@@ -751,7 +744,7 @@
     <string name="tiles">Tiles</string>
     <string name="toast_message">%1$s was selected</string>
     <string name="tts_error">Unable to process notification \"%1$s\" as text to speech.</string>
-    <string name="tts_no_title">Please set a title for text to speech to process</string>
+    <string name="tts_no_text">Please set the text for text to speech to process</string>
     <string name="unable_to_register">Unable to Register Application</string>
     <string name="unknown_address">Unknown address</string>
     <string name="update_pinned_shortcut">Update Pinned Shortcut Data</string>
@@ -860,7 +853,7 @@
     <string name="notification_channels">Notification Channels</string>
     <string name="notification_channels_summary">Manage all notification channels configured on the device. Channels control the behavior of its notifications including visibility and sound.</string>
     <string name="info">Information</string>
-    <string name="show_changelog">Show Changelog</string>
+    <string name="show_changelog">Show Change Log</string>
     <string name="show_changelog_summary">Show the change log dialog from when the app was updated</string>
     <string name="tile_icon">Select a icon for the tile</string>
     <string name="tile_select">Select a tile to edit</string>
@@ -922,4 +915,7 @@
     <string name="widget_checkbox_require_authentication">Require Authentication</string>
     <string name="widget_error_authenticating">Error authenticating - is an authentication method configured?</string>
     <string name="sensor_description_battery_power">The current wattage of the device. To get the most out of this sensor consider using the \"Fast while charging\" sensor update frequency setting. If your values are not as expected you may need to adjust the \"Battery Current Divisor\" setting to get a proper unit of amperes for the \"current\" attribute. Android is supposed to report microamperes however, some devices may report a different unit. The default will convert microamperes to amperes.</string>
+    <string name="sensor_name_accent_color_sensor">Accent Color</string>
+    <string name="sensor_description_accent_color_sensor">A hexadecimal color value for the dynamic accent color used in the device theme</string>
+    <string name="sensor_name_dynamic_color">Dynamic Color</string>
 </resources>
