@@ -3,10 +3,17 @@ package io.homeassistant.companion.android.controls
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.os.Build
 import android.service.controls.Control
 import android.service.controls.actions.ControlAction
+import androidx.annotation.ColorInt
 import androidx.annotation.RequiresApi
+import androidx.compose.material.MaterialTheme
+import androidx.core.graphics.drawable.toIcon
+import com.google.android.material.color.MaterialColors
+import com.mikepenz.iconics.IconicsDrawable
+import com.mikepenz.iconics.utils.toAndroidIconCompat
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -48,6 +55,15 @@ interface HaControl {
         )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             control.setAuthRequired(authRequired)
+        }
+        if (entity.attributes["icon"]?.toString()?.startsWith("mdi:") == true &&
+            !entity.attributes["icon"]?.toString()?.substringAfter(":").isNullOrBlank()
+        ) {
+            val iconName = entity.attributes["icon"]!!.toString().split(':')[1]
+            val iconDrawable =
+                IconicsDrawable(context, "cmd-$iconName")
+            iconDrawable.setTint(context.resources.getColor(R.color.colorAccent))
+            control.setCustomIcon(iconDrawable.toAndroidIconCompat().toIcon(context))
         }
 
         return provideControlFeatures(context, control, entity, area, baseUrl).build()
