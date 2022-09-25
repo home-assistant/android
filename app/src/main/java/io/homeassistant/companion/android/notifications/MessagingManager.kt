@@ -2044,11 +2044,7 @@ class MessagingManager @Inject constructor(
             else
                 Settings.System.SCREEN_BRIGHTNESS_MODE,
             if (data[MESSAGE].toString() == COMMAND_SCREEN_BRIGHTNESS_LEVEL)
-                when {
-                    command!!.toInt() < 0 -> 0
-                    command.toInt() > 255 -> 255
-                    else -> command.toInt()
-                }
+                command!!.toInt().coerceIn(0, 255)
             else {
                 if (command == TURN_ON)
                     Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC

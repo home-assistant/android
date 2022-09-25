@@ -15,6 +15,7 @@ class SettingsSensorManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_screen_brightness,
             commonR.string.sensor_description_screen_brightness,
+            statelessIcon = "mdi:brightness-6"
         )
     }
 
@@ -59,7 +60,7 @@ class SettingsSensorManager : SensorManager {
             Log.e(TAG, "Unable to get screen brightness settings", e)
         }
 
-        val icon = if (auto) "mdi:brightness-auto" else "mdi:brightness-5"
+        val icon = if (auto) "mdi:brightness-auto" else screenBrightness.statelessIcon
         onSensorUpdated(
             context,
             screenBrightness,
