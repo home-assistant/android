@@ -7,11 +7,7 @@ import android.graphics.Color
 import android.os.Build
 import android.service.controls.Control
 import android.service.controls.actions.ControlAction
-import androidx.annotation.ColorInt
 import androidx.annotation.RequiresApi
-import androidx.compose.material.MaterialTheme
-import androidx.core.graphics.drawable.toIcon
-import com.google.android.material.color.MaterialColors
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.utils.toAndroidIconCompat
 import io.homeassistant.companion.android.common.R
@@ -62,7 +58,12 @@ interface HaControl {
             val iconName = entity.attributes["icon"]!!.toString().split(':')[1]
             val iconDrawable =
                 IconicsDrawable(context, "cmd-$iconName")
-            iconDrawable.setTint(context.resources.getColor(R.color.colorAccent))
+            val colorTint = when (entity.state) {
+                "on" -> "#FDD663"
+                "off", "unavailable", "unknown" -> "#A6A6A7"
+                else -> "#8AB4F8"
+            }
+            iconDrawable.setTint(Color.parseColor(colorTint))
             control.setCustomIcon(iconDrawable.toAndroidIconCompat().toIcon(context))
         }
 
