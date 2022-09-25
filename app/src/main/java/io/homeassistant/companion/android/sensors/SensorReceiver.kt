@@ -38,6 +38,7 @@ class SensorReceiver : SensorReceiverBase() {
             BatterySensorManager(),
             BluetoothSensorManager(),
             DNDSensorManager(),
+            DynamicColorSensorManager(),
             DevicePolicyManager(),
             GeocodeSensorManager(),
             KeyguardSensorManager(),

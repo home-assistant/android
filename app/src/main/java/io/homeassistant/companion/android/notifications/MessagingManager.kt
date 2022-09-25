@@ -102,6 +102,8 @@ class MessagingManager @Inject constructor(
         const val TAG = "MessagingService"
 
         const val APP_PREFIX = "app://"
+        const val DEEP_LINK_PREFIX = "deep-link://"
+        const val INTENT_PREFIX = "intent:"
         const val MARKET_PREFIX = "https://play.google.com/store/apps/details?id="
         const val SETTINGS_PREFIX = "settings://"
         const val NOTIFICATION_HISTORY = "notification_history"
@@ -579,7 +581,7 @@ class MessagingManager @Inject constructor(
         val currentAlarmVolume = audioManager?.getStreamVolume(AudioManager.STREAM_ALARM)
         val maxAlarmVolume = audioManager?.getStreamMaxVolume(AudioManager.STREAM_ALARM)
         if (tts.isNullOrEmpty())
-            tts = context.getString(commonR.string.tts_no_title)
+            tts = context.getString(commonR.string.tts_no_text)
         textToSpeech = TextToSpeech(
             context
         ) {
@@ -1591,6 +1593,7 @@ class MessagingManager @Inject constructor(
     private fun createOpenUriPendingIntent(
         uri: String
     ): PendingIntent {
+        val needsPackage = uri.startsWith(APP_PREFIX) || uri.startsWith(INTENT_PREFIX)
         val intent = when {
             uri.isBlank() -> {
                 WebViewActivity.newInstance(context)
@@ -1598,15 +1601,23 @@ class MessagingManager @Inject constructor(
             uri.startsWith(APP_PREFIX) -> {
                 context.packageManager.getLaunchIntentForPackage(uri.substringAfter(APP_PREFIX))
             }
+            uri.startsWith(INTENT_PREFIX) -> {
+                Intent.parseUri(uri, Intent.URI_INTENT_SCHEME)
+            }
             uri.startsWith(SETTINGS_PREFIX) -> {
                 if (uri.substringAfter(SETTINGS_PREFIX) == NOTIFICATION_HISTORY)
                     SettingsActivity.newInstance(context)
                 else
                     WebViewActivity.newInstance(context)
             }
-            UrlHandler.isAbsoluteUrl(uri) -> {
+            UrlHandler.isAbsoluteUrl(uri) || uri.startsWith(DEEP_LINK_PREFIX) -> {
                 Intent(Intent.ACTION_VIEW).apply {
-                    this.data = Uri.parse(uri)
+                    this.data = Uri.parse(
+                        if (uri.startsWith(DEEP_LINK_PREFIX))
+                            uri.removePrefix(DEEP_LINK_PREFIX)
+                        else
+                            uri
+                    )
                 }
             }
             else -> {
@@ -1616,6 +1627,7 @@ class MessagingManager @Inject constructor(
 
         if (uri.startsWith(SETTINGS_PREFIX) && uri.substringAfter(SETTINGS_PREFIX) == NOTIFICATION_HISTORY)
             intent.putExtra("fragment", NOTIFICATION_HISTORY)
+
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
@@ -1623,7 +1635,20 @@ class MessagingManager @Inject constructor(
         return PendingIntent.getActivity(
             context,
             (uri.hashCode() + System.currentTimeMillis()).toInt(),
-            intent,
+            if (needsPackage) {
+                val intentPackage = intent.`package`?.let {
+                    context.packageManager.getLaunchIntentForPackage(
+                        it
+                    )
+                }
+                if (intentPackage == null && (!intent.`package`.isNullOrEmpty() || uri.startsWith(APP_PREFIX))) {
+                    val marketIntent = Intent(Intent.ACTION_VIEW)
+                    marketIntent.data = Uri.parse(MARKET_PREFIX + if (uri.startsWith(INTENT_PREFIX)) intent.`package`.toString() else uri.removePrefix(APP_PREFIX))
+                    marketIntent
+                } else
+                    intent
+            } else
+                intent,
             PendingIntent.FLAG_IMMUTABLE
         )
     }

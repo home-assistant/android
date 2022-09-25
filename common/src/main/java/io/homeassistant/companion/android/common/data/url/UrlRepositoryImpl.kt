@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.common.data.url
 
+import android.net.wifi.WifiManager
+import android.os.Build
 import android.util.Log
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.MalformedHttpUrlException
@@ -125,9 +127,21 @@ class UrlRepositoryImpl @Inject constructor(
     }
 
     override suspend fun isHomeWifiSsid(): Boolean {
-        val formattedSsid = wifiHelper.getWifiSsid().removeSurrounding("\"")
+        val formattedSsid = wifiHelper.getWifiSsid()?.removeSurrounding("\"")
+        val formattedBssid = wifiHelper.getWifiBssid()
         val wifiSsids = getHomeWifiSsids()
-        return formattedSsid in wifiSsids
+        return (
+            formattedSsid != null &&
+                (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || formattedSsid !== WifiManager.UNKNOWN_SSID) &&
+                formattedSsid in wifiSsids
+            ) || (
+            formattedBssid != null &&
+                formattedBssid != UrlRepository.INVALID_BSSID &&
+                wifiSsids.any {
+                    it.startsWith(UrlRepository.BSSID_PREFIX) &&
+                        it.removePrefix(UrlRepository.BSSID_PREFIX).equals(formattedBssid, ignoreCase = true)
+                }
+            )
     }
 
     override suspend fun isInternal(): Boolean {
