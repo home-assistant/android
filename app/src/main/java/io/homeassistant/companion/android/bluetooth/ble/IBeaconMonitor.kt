@@ -59,7 +59,7 @@ class IBeaconMonitor {
             return
         }
         beacons.forEachIndexed foreach@{ i, existingBeacon ->
-            if (i <= sorted.size) {
+            if (i < sorted.size) {
                 if (name(sorted[i].uuid, sorted[i].major, sorted[i].minor) != name(existingBeacon.uuid, existingBeacon.major, existingBeacon.minor) || // the distance order switched
                     kotlin.math.abs(sorted[i].distance - existingBeacon.distance) > 0.5 // the distance difference is greater than 0.5m
                 ) {
