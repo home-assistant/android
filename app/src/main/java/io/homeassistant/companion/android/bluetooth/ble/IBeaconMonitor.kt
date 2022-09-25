@@ -58,7 +58,6 @@ class IBeaconMonitor {
             sendUpdate(context, sorted)
             return
         }
-        assert(sorted.count() == beacons.count())
         beacons.forEachIndexed foreach@{ i, existingBeacon ->
             if (i <= sorted.size) {
                 if (name(sorted[i].uuid, sorted[i].major, sorted[i].minor) != name(existingBeacon.uuid, existingBeacon.major, existingBeacon.minor) || // the distance order switched
