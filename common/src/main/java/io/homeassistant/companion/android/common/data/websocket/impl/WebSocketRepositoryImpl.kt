@@ -72,6 +72,8 @@ class WebSocketRepositoryImpl @Inject constructor(
         private const val SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS = "subscribe_events"
         private const val SUBSCRIBE_TYPE_SUBSCRIBE_TRIGGER = "subscribe_trigger"
         private const val SUBSCRIBE_TYPE_RENDER_TEMPLATE = "render_template"
+        private const val SUBSCRIBE_TYPE_PUSH_NOTIFICATION_CHANNEL =
+            "mobile_app/push_notification_channel"
         private const val EVENT_STATE_CHANGED = "state_changed"
         private const val EVENT_AREA_REGISTRY_UPDATED = "area_registry_updated"
         private const val EVENT_DEVICE_REGISTRY_UPDATED = "device_registry_updated"
@@ -92,9 +94,6 @@ class WebSocketRepositoryImpl @Inject constructor(
     private val connectedMutex = Mutex()
     private var connected = CompletableDeferred<Boolean>()
     private val eventSubscriptionMutex = Mutex()
-    private val notificationMutex = Mutex()
-    private var notificationFlow: Flow<Map<String, Any>>? = null
-    private var notificationProducerScope: ProducerScope<Map<String, Any>>? = null
 
     override fun getConnectionState(): WebSocketState? = connectionState
 
@@ -210,10 +209,15 @@ class WebSocketRepositoryImpl @Inject constructor(
      * @param type value for the `type` key in the subscription message, for example `subscribe_events`
      * @param data a key/value map of additional data to be included in the subscription message, for
      *             example the `event_type` + value when subscribing with `subscribe_events`
+     * @param timeout timeout until the subscription is ended after the flow is no longer collected
      * @return a Flow that will emit messages delivered to this subscription, or `null` if an error
      *         occurred
      */
-    private suspend fun <T : Any> subscribeTo(type: String, data: Map<Any, Any>): Flow<T>? {
+    private suspend fun <T : Any> subscribeTo(
+        type: String,
+        data: Map<Any, Any>,
+        timeout: Long = 0
+    ): Flow<T>? {
         val subscribeMessage = mapOf(
             "type" to type
         ).plus(data)
@@ -232,11 +236,12 @@ class WebSocketRepositoryImpl @Inject constructor(
                         ioScope.launch {
                             var subscription: Long? = null
                             eventSubscriptionMutex.withLock {
-                                activeMessages.entries.firstOrNull { it.value.message == subscribeMessage }?.let {
-                                    subscription = it.key
-                                    channel.close()
-                                    activeMessages.remove(subscription)
-                                }
+                                activeMessages.entries.firstOrNull { it.value.message == subscribeMessage }
+                                    ?.let {
+                                        subscription = it.key
+                                        channel.close()
+                                        activeMessages.remove(subscription)
+                                    }
                             }
                             subscription?.let {
                                 Log.d(TAG, "Unsubscribing from $type with data $data")
@@ -247,9 +252,12 @@ class WebSocketRepositoryImpl @Inject constructor(
                                     )
                                 )
                             }
+                            if (activeMessages.isEmpty()) {
+                                connection?.close(1001, "Done listening to subscriptions.")
+                            }
                         }
                     }
-                }.shareIn(ioScope, SharingStarted.WhileSubscribed())
+                }.shareIn(ioScope, SharingStarted.WhileSubscribed(timeout, 0))
 
                 val webSocketRequest = WebSocketRequest(
                     message = subscribeMessage,
@@ -269,36 +277,15 @@ class WebSocketRepositoryImpl @Inject constructor(
         return activeMessages.values.find { it.message == subscribeMessage }?.eventFlow as? Flow<T>
     }
 
-    override suspend fun getNotifications(): Flow<Map<String, Any>>? {
-        notificationMutex.withLock {
-            if (notificationFlow == null) {
-                val response = sendMessage(
-                    mapOf(
-                        "type" to "mobile_app/push_notification_channel",
-                        "webhook_id" to urlRepository.getWebhookId(),
-                        "support_confirm" to true
-                    )
-                )
-
-                if (response == null) {
-                    Log.e(TAG, "Unable to register for notifications")
-                    return null
-                }
-
-                notificationFlow = callbackFlow {
-                    notificationProducerScope = this
-                    awaitClose {
-                        // TODO: Is there a way to unsubscribe?
-                        notificationFlow = null
-                        notificationProducerScope = null
-                        connection?.close(1001, "Done listening to notifications.")
-                    }
-                }.shareIn(ioScope, SharingStarted.WhileSubscribed(DISCONNECT_DELAY, 0))
-            }
-
-            return notificationFlow
-        }
-    }
+    override suspend fun getNotifications(): Flow<Map<String, Any>>? =
+        subscribeTo(
+            SUBSCRIBE_TYPE_PUSH_NOTIFICATION_CHANNEL,
+            mapOf(
+                "webhook_id" to urlRepository.getWebhookId().toString(),
+                "support_confirm" to true
+            ),
+            DISCONNECT_DELAY
+        )
 
     override suspend fun ackNotification(confirmId: String): Boolean {
         val response = sendMessage(
@@ -433,66 +420,58 @@ class WebSocketRepositoryImpl @Inject constructor(
     private suspend fun handleEvent(response: SocketResponse) {
         val subscriptionId = response.id
         activeMessages[subscriptionId]?.let { messageData ->
-            if (response.event?.contains("hass_confirm_id") == true) {
-                if (notificationProducerScope?.isActive == true) {
-                    notificationProducerScope?.send(
-                        mapper.convertValue(
-                            response.event,
-                            object : TypeReference<Map<String, Any>>() {}
-                        )
+            val subscriptionType = messageData.message["type"]
+            val eventResponseType = response.event?.get("event_type")
+
+            val message: Any =
+                if (response.event?.contains("hass_confirm_id") == true) {
+                    mapper.convertValue(
+                        response.event,
+                        object : TypeReference<Map<String, Any>>() {}
                     )
-                } else {
-                    // Received notification but no longer handling it
-                }
-            } else {
-                val subscriptionType = messageData.message["type"]
-                val eventResponseType = response.event?.get("event_type")
-
-                val message: Any =
-                    if (subscriptionType == SUBSCRIBE_TYPE_RENDER_TEMPLATE) {
-                        mapper.convertValue(response.event, TemplateUpdatedEvent::class.java)
-                    } else if (subscriptionType == SUBSCRIBE_TYPE_SUBSCRIBE_TRIGGER) {
-                        val trigger = response.event?.get("variables")?.get("trigger")
-                        if (trigger != null) {
-                            mapper.convertValue(trigger, TriggerEvent::class.java)
-                        } else {
-                            Log.w(TAG, "Received no trigger value for trigger subscription, skipping")
-                            return
-                        }
-                    } else if (eventResponseType != null && eventResponseType.isTextual) {
-                        val eventResponseClass = when (eventResponseType.textValue()) {
-                            EVENT_STATE_CHANGED ->
-                                object :
-                                    TypeReference<EventResponse<StateChangedEvent>>() {}
-                            EVENT_AREA_REGISTRY_UPDATED ->
-                                object :
-                                    TypeReference<EventResponse<AreaRegistryUpdatedEvent>>() {}
-                            EVENT_DEVICE_REGISTRY_UPDATED ->
-                                object :
-                                    TypeReference<EventResponse<DeviceRegistryUpdatedEvent>>() {}
-                            EVENT_ENTITY_REGISTRY_UPDATED ->
-                                object :
-                                    TypeReference<EventResponse<EntityRegistryUpdatedEvent>>() {}
-                            else -> {
-                                Log.d(TAG, "Unknown event type received")
-                                object : TypeReference<EventResponse<Any>>() {}
-                            }
-                        }
-
-                        mapper.convertValue(
-                            response.event,
-                            eventResponseClass
-                        ).data
+                } else if (subscriptionType == SUBSCRIBE_TYPE_RENDER_TEMPLATE) {
+                    mapper.convertValue(response.event, TemplateUpdatedEvent::class.java)
+                } else if (subscriptionType == SUBSCRIBE_TYPE_SUBSCRIBE_TRIGGER) {
+                    val trigger = response.event?.get("variables")?.get("trigger")
+                    if (trigger != null) {
+                        mapper.convertValue(trigger, TriggerEvent::class.java)
                     } else {
-                        Log.d(TAG, "Unknown event for subscription received, skipping")
+                        Log.w(TAG, "Received no trigger value for trigger subscription, skipping")
                         return
                     }
+                } else if (eventResponseType != null && eventResponseType.isTextual) {
+                    val eventResponseClass = when (eventResponseType.textValue()) {
+                        EVENT_STATE_CHANGED ->
+                            object :
+                                TypeReference<EventResponse<StateChangedEvent>>() {}
+                        EVENT_AREA_REGISTRY_UPDATED ->
+                            object :
+                                TypeReference<EventResponse<AreaRegistryUpdatedEvent>>() {}
+                        EVENT_DEVICE_REGISTRY_UPDATED ->
+                            object :
+                                TypeReference<EventResponse<DeviceRegistryUpdatedEvent>>() {}
+                        EVENT_ENTITY_REGISTRY_UPDATED ->
+                            object :
+                                TypeReference<EventResponse<EntityRegistryUpdatedEvent>>() {}
+                        else -> {
+                            Log.d(TAG, "Unknown event type received")
+                            object : TypeReference<EventResponse<Any>>() {}
+                        }
+                    }
 
-                try {
-                    messageData.onEvent?.send(message)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Unable to send event message to channel", e)
+                    mapper.convertValue(
+                        response.event,
+                        eventResponseClass
+                    ).data
+                } else {
+                    Log.d(TAG, "Unknown event for subscription received, skipping")
+                    return
                 }
+
+            try {
+                messageData.onEvent?.send(message)
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to send event message to channel", e)
             }
         } ?: run {
             Log.d(TAG, "Received event for unknown subscription, unsubscribing")
@@ -522,10 +501,11 @@ class WebSocketRepositoryImpl @Inject constructor(
             }
         }
         // If we still have flows flowing
-        if ((activeMessages.any { it.value.eventFlow != null } || notificationFlow != null) && ioScope.isActive) {
+        if (activeMessages.any { it.value.eventFlow != null } && ioScope.isActive) {
             ioScope.launch {
                 delay(10000)
                 if (connect()) {
+                    Log.d(TAG, "Resubscribing to active subscriptions...")
                     activeMessages.filterValues { it.eventFlow != null }.forEach { (oldId, oldMessage) ->
                         val response = sendMessage(oldMessage)
                         if (response == null || response.success != true) {
@@ -533,19 +513,6 @@ class WebSocketRepositoryImpl @Inject constructor(
                         } else {
                             // sendMessage will have created a new item for this subscription
                             activeMessages.remove(oldId)
-                        }
-                    }
-                    if (notificationFlow != null) {
-                        val response = sendMessage(
-                            mapOf(
-                                "type" to "mobile_app/push_notification_channel",
-                                "webhook_id" to urlRepository.getWebhookId(),
-                                "support_confirm" to true
-                            )
-                        )
-
-                        if (response == null) {
-                            Log.e(TAG, "Unable to re-register for notifications")
                         }
                     }
                 }
