@@ -38,10 +38,10 @@ class IBeaconMonitor {
             val minor = newBeacon.id3.toString()
             val distance = round(newBeacon.distance * 100) / 100
             val rssi = newBeacon.runningAverageRssi
-            if (!tmp.contains(uuid)) { // we found a new beacon
+            if (!tmp.contains(name(uuid, major, minor))) { // we found a new beacon
                 requireUpdate = true
             }
-            tmp += Pair(uuid, IBeacon(uuid, major, minor, distance, rssi, 0))
+            tmp += Pair(name(uuid, major, minor), IBeacon(uuid, major, minor, distance, rssi, 0))
         }
         val sorted = sort(tmp.values).toMutableList()
         if (requireUpdate) {
