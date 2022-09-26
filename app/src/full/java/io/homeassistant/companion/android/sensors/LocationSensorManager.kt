@@ -140,6 +140,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
         private var lastHighAccuracyMode = false
         private var lastHighAccuracyUpdateInterval = DEFAULT_UPDATE_INTERVAL_HA_SECONDS
         private var forceHighAccuracyModeOn = false
+        private var forceHighAccuracyModeOff = false
         private var highAccuracyModeEnabled = false
 
         private var lastEnteredGeoZones: MutableList<String> = ArrayList()
@@ -182,12 +183,22 @@ class LocationSensorManager : LocationSensorManagerBase() {
             ACTION_FORCE_HIGH_ACCURACY -> {
                 var command = intent.extras?.get("command")?.toString()
                 when (command) {
-                    MessagingManager.TURN_ON, MessagingManager.TURN_OFF -> {
-                        var turnOn = command == MessagingManager.TURN_ON
+                    MessagingManager.TURN_ON, MessagingManager.TURN_OFF, MessagingManager.FORCE_ON -> {
+                        var turnOn = command != MessagingManager.TURN_OFF
                         if (turnOn) Log.d(TAG, "Forcing of high accuracy mode enabled")
                         else Log.d(TAG, "Forcing of high accuracy mode disabled")
                         forceHighAccuracyModeOn = turnOn
+                        forceHighAccuracyModeOff = false
                         setHighAccuracyModeSetting(latestContext, turnOn)
+                        ioScope.launch {
+                            setupBackgroundLocation()
+                        }
+                    }
+
+                    MessagingManager.FORCE_OFF -> {
+                        Log.d(TAG, "High accuracy mode forced off")
+                        forceHighAccuracyModeOn = false
+                        forceHighAccuracyModeOff = true
                         ioScope.launch {
                             setupBackgroundLocation()
                         }
@@ -388,17 +399,26 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
         val shouldEnableHighAccuracyMode = shouldEnableHighAccuracyMode()
 
-        // As soon as the high accuracy mode should be enabled, disable the force of high accuracy mode!
-        if (shouldEnableHighAccuracyMode) {
+        // As soon as the high accuracy mode should be enabled, disable the force_on of high accuracy mode!
+        if (shouldEnableHighAccuracyMode && forceHighAccuracyModeOn) {
             Log.d(TAG, "Forcing of high accuracy mode disabled, because high accuracy mode had to be enabled anyway.")
             forceHighAccuracyModeOn = false
         }
 
-        return if (!forceHighAccuracyModeOn) {
-            shouldEnableHighAccuracyMode
-        } else {
+        // As soon as the high accuracy mode shouldn't be enabled, disable the force_off of high accuracy mode!
+        if (!shouldEnableHighAccuracyMode && forceHighAccuracyModeOff) {
+            Log.d(TAG, "Forcing off of high accuracy mode disabled, because high accuracy mode had to be disabled anyway.")
+            forceHighAccuracyModeOff = false
+        }
+
+        return if (forceHighAccuracyModeOn) {
             Log.d(TAG, "High accuracy mode enabled, because command_high_accuracy_mode was used to turn it on")
             true
+        } else if (forceHighAccuracyModeOff) {
+            Log.d(TAG, "High accuracy mode disabled, because command_high_accuracy_mode was used to force it off")
+            false
+        } else {
+            shouldEnableHighAccuracyMode
         }
     }
 
@@ -461,7 +481,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
             btDevConnected = bluetoothDevices.any { it.connected && highAccuracyModeBTDevices.contains(it.address) }
 
-            if (!forceHighAccuracyModeOn) {
+            if (!forceHighAccuracyModeOn && !forceHighAccuracyModeOff) {
                 if (!btDevConnected) Log.d(TAG, "High accuracy mode disabled, because defined ($highAccuracyModeBTDevices) bluetooth device(s) not connected (Connected devices: $bluetoothDevices)")
                 else Log.d(TAG, "High accuracy mode enabled, because defined ($highAccuracyModeBTDevices) bluetooth device(s) connected (Connected devices: $bluetoothDevices)")
             }
@@ -479,7 +499,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
             inZone = zoneExpEntered || zoneExited
 
-            if (!forceHighAccuracyModeOn) {
+            if (!forceHighAccuracyModeOn && !forceHighAccuracyModeOff) {
                 if (!inZone) Log.d(TAG, "High accuracy mode disabled, because not in zone $highAccuracyExpZones")
                 else Log.d(TAG, "High accuracy mode enabled, because in zone $highAccuracyExpZones")
             }
