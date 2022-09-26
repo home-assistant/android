@@ -225,6 +225,8 @@ class MessagingManager @Inject constructor(
 
         // High accuracy commands
         const val HIGH_ACCURACY_SET_UPDATE_INTERVAL = "high_accuracy_set_update_interval"
+        const val FORCE_ON = "force_on"
+        const val FORCE_OFF = "force_off"
 
         // Command groups
         val DEVICE_COMMANDS = listOf(
@@ -252,6 +254,7 @@ class MessagingManager @Inject constructor(
             SYSTEM_STREAM, DTMF_STREAM
         )
         val ENABLE_COMMANDS = listOf(TURN_OFF, TURN_ON)
+        val FORCE_COMMANDS = listOf(FORCE_OFF, FORCE_ON)
         val MEDIA_COMMANDS = listOf(
             MEDIA_FAST_FORWARD, MEDIA_NEXT, MEDIA_PAUSE, MEDIA_PLAY,
             MEDIA_PLAY_PAUSE, MEDIA_PREVIOUS, MEDIA_REWIND, MEDIA_STOP
@@ -431,6 +434,7 @@ class MessagingManager @Inject constructor(
                     }
                     COMMAND_HIGH_ACCURACY_MODE -> {
                         if ((!jsonData[COMMAND].isNullOrEmpty() && jsonData[COMMAND] in ENABLE_COMMANDS) ||
+                            (!jsonData[COMMAND].isNullOrEmpty() && jsonData[COMMAND] in FORCE_COMMANDS) ||
                             (
                                 !jsonData[COMMAND].isNullOrEmpty() && jsonData[COMMAND] == HIGH_ACCURACY_SET_UPDATE_INTERVAL &&
                                     jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toIntOrNull() != null && jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toInt()!! >= 5
@@ -815,6 +819,7 @@ class MessagingManager @Inject constructor(
                 when (command) {
                     TURN_OFF -> LocationSensorManager.setHighAccuracyModeSetting(context, false)
                     TURN_ON -> LocationSensorManager.setHighAccuracyModeSetting(context, true)
+                    FORCE_ON -> LocationSensorManager.setHighAccuracyModeSetting(context, true)
                     HIGH_ACCURACY_SET_UPDATE_INTERVAL -> LocationSensorManager.setHighAccuracyModeIntervalSetting(context, data[HIGH_ACCURACY_UPDATE_INTERVAL]!!.toInt())
                 }
                 val intent = Intent(context, LocationSensorManager::class.java)
