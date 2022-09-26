@@ -53,10 +53,6 @@ class ThemesManager @Inject constructor(
                 WebSettingsCompat.DARK_STRATEGY_WEB_THEME_DARKENING_ONLY
             )
             when (theme) {
-                "newTheme" -> {
-                    // Just a template for custom themes
-                    // context.setTheme(android.R.style.newTheme);
-                }
                 "dark" -> {
                     WebSettingsCompat.setForceDark(
                         webSettings,
