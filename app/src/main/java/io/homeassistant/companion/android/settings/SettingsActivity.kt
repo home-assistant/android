@@ -120,18 +120,18 @@ class SettingsActivity : BaseActivity() {
 
     override fun onResume() {
         super.onResume()
-        runBlocking {
-            val appLocked = integrationUseCase.isAppLocked()
-            Log.d(TAG, "onResume(): appLock: " + appLocked)
 
-            if (appLocked) {
-                authenticating = true
-                authenticator.authenticate(getString(commonR.string.biometric_title))
-                blurView.bringToFront()
-                blurView.setBlurEnabled(true)
-            } else {
-                blurView.setBlurEnabled(false)
-            }
+        val appLocked = runBlocking {
+            integrationUseCase.isAppLocked()
+        }
+        Log.d(TAG, "onResume(): appLock: " + appLocked)
+
+        if (appLocked) {
+            authenticating = true
+            authenticator.authenticate(getString(commonR.string.biometric_title))
+            blurView.setBlurEnabled(true)
+        } else {
+            blurView.setBlurEnabled(false)
         }
     }
 
@@ -152,9 +152,9 @@ class SettingsActivity : BaseActivity() {
             when (result) {
                 Authenticator.SUCCESS -> {
                     Log.d(TAG, "Authentication successful, unlocking app")
+                    blurView.setBlurEnabled(false)
                     runBlocking {
                         integrationUseCase.setAppActive(true)
-                        blurView.setBlurEnabled(false)
                     }
                 }
                 Authenticator.CANCELED -> {

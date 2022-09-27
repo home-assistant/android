@@ -100,7 +100,6 @@ class SettingsFragment constructor(
                 isValid = canAuth
 
                 if (!canAuth) {
-                    isValid = false
                     AlertDialog.Builder(requireActivity())
                         .setTitle(commonR.string.set_lock_title)
                         .setMessage(commonR.string.set_lock_message)
