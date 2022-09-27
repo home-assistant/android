@@ -9,10 +9,12 @@ import android.service.controls.Control
 import android.service.controls.actions.ControlAction
 import androidx.annotation.RequiresApi
 import com.mikepenz.iconics.IconicsDrawable
+import com.mikepenz.iconics.utils.sizeDp
 import com.mikepenz.iconics.utils.toAndroidIconCompat
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.webview.WebViewActivity
 
@@ -57,9 +59,11 @@ interface HaControl {
         ) {
             val iconName = entity.attributes["icon"]!!.toString().split(':')[1]
             val iconDrawable =
-                IconicsDrawable(context, "cmd-$iconName")
+                IconicsDrawable(context, "cmd-$iconName").apply {
+                    sizeDp = 48
+                }
             val colorTint = when (entity.state) {
-                "on" -> "#FDD663"
+                "on" -> if (entity.domain == "light") "#FDD663" else "#8AB4F8"
                 "off", "unavailable", "unknown" -> "#A6A6A7"
                 else -> "#8AB4F8"
             }
