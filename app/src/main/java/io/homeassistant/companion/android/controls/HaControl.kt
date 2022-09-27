@@ -4,11 +4,11 @@ import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.graphics.Color
 import android.os.Build
 import android.service.controls.Control
 import android.service.controls.actions.ControlAction
 import androidx.annotation.RequiresApi
+import androidx.core.content.ContextCompat
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.utils.sizeDp
 import com.mikepenz.iconics.utils.toAndroidIconCompat
@@ -65,14 +65,14 @@ interface HaControl {
                     sizeDp = 48
                 }
             val colorTint = when {
-                entity.domain == "light" && entity.state == "on" -> context.getString(R.color.colorDeviceControlsLightOn)
-                entity.domain == "camera" -> context.getString(R.color.colorDeviceControlsOff)
-                entity.domain == "climate" && entity.state == "heat" -> context.getString(R.color.colorDeviceControlsThermostatHeat)
-                entity.state == "on" -> context.getString(R.color.colorDeviceControlsDefaultOn)
-                entity.state == "off" || entity.state == "unavailable" || entity.state == "unknown" -> context.getString(R.color.colorDeviceControlsOff)
-                else -> context.getString(R.color.colorDeviceControlsDefaultOn)
+                entity.domain == "light" && entity.state == "on" -> R.color.colorDeviceControlsLightOn
+                entity.domain == "camera" -> R.color.colorDeviceControlsCamera
+                entity.domain == "climate" && entity.state == "heat" -> R.color.colorDeviceControlsThermostatHeat
+                entity.state in listOf("off", "unavailable", "unknown") -> R.color.colorDeviceControlsOff
+                else -> R.color.colorDeviceControlsDefaultOn
             }
-            iconDrawable.setTint(Color.parseColor(colorTint))
+
+            iconDrawable.setTint(ContextCompat.getColor(context, colorTint))
             control.setCustomIcon(iconDrawable.toAndroidIconCompat().toIcon(context))
         }
 
