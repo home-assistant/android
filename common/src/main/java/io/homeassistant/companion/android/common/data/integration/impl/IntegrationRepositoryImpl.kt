@@ -80,7 +80,11 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_SEC_WARNING_NEXT = "sec_warning_last"
         private const val TAG = "IntegrationRepository"
         private const val RATE_LIMIT_URL = BuildConfig.RATE_LIMIT_URL
+
+        private const val APPLOCK_TIMEOUT_GRACE_MS = 200
     }
+
+    private var appActive = false
 
     override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {
         val request = createUpdateRegistrationRequest(deviceRegistration)
@@ -373,6 +377,22 @@ class IntegrationRepositoryImpl @Inject constructor(
         localStorage.putBoolean(PREF_AUTOPLAY_VIDEO, enabled)
     }
 
+    override suspend fun isAppLocked(): Boolean {
+        val lockEnabled = authenticationRepository.isLockEnabled()
+        val sessionExpired = System.currentTimeMillis() > getSessionExpireMillis()
+
+        Log.d(TAG, "isAppLocked(). LockEnabled: " + lockEnabled + ", appActive: " + appActive + ", expireMillis: " + getSessionExpireMillis() + ", currentMillis: " + System.currentTimeMillis())
+        return (lockEnabled && !appActive && sessionExpired)
+    }
+
+    override suspend fun setAppActive(active: Boolean) {
+        if (!active) {
+            setSessionExpireMillis(System.currentTimeMillis() + (getSessionTimeOut() * 1000) + APPLOCK_TIMEOUT_GRACE_MS)
+        }
+        Log.d(TAG, "setAppActive(): " + active)
+        appActive = active
+    }
+
     override suspend fun sessionTimeOut(value: Int) {
         localStorage.putInt(PREF_SESSION_TIMEOUT, value)
     }
@@ -382,6 +402,7 @@ class IntegrationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun setSessionExpireMillis(value: Long) {
+        Log.d(TAG, "setSessionExpireMillis(): " + value)
         localStorage.putLong(PREF_SESSION_EXPIRE, value)
     }
 

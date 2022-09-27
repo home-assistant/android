@@ -156,6 +156,18 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
+    override fun isAppLocked(): Boolean {
+        return runBlocking {
+            integrationUseCase.isAppLocked()
+        }
+    }
+
+    override fun setAppActive(active: Boolean) {
+        return runBlocking {
+            integrationUseCase.setAppActive(active)
+        }
+    }
+
     override fun isLockEnabled(): Boolean {
         return runBlocking {
             authenticationUseCase.isLockEnabled()

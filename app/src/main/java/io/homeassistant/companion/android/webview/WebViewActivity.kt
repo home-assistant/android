@@ -193,7 +193,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var videoHeight = 0
     private var firstAuthTime: Long = 0
     private var resourceURL: String = ""
-    private var unlocked = false
     private var exoPlayer: SimpleExoPlayer? = null
     private var isExoFullScreen = false
     private var exoTop: Int = 0 // These margins are from the DOM and scaled to screen
@@ -237,10 +236,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         playerBinding = ExoPlayerViewBinding.bind(exoPlayerView)
 
-        if (!presenter.isLockEnabled()) {
-            binding.blurView.setBlurEnabled(false)
-            unlocked = true
-        }
+        binding.blurView.setBlurEnabled(presenter.isAppLocked())
 
         authenticator = Authenticator(this, this, ::authenticationResult)
 
@@ -264,11 +260,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     ) {
                         dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_E))
                     }
-                    return !unlocked
+                    return presenter.isAppLocked()
                 }
 
                 override fun onMotionEventHandled(v: View?, event: MotionEvent?): Boolean {
-                    return !unlocked
+                    return presenter.isAppLocked()
                 }
             })
 
@@ -680,12 +676,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         super.onResume()
         if ((currentLang != languagesManager.getCurrentLang()) || currentAutoplay != presenter.isAutoPlayVideoEnabled())
             recreate()
-        if ((!unlocked && !presenter.isLockEnabled()) ||
-            (!unlocked && presenter.isLockEnabled() && System.currentTimeMillis() < presenter.getSessionExpireMillis())
-        ) {
-            unlocked = true
-            binding.blurView.setBlurEnabled(false)
-        }
+
+        val appLocked = presenter.isAppLocked()
+        Log.d(TAG, "onResume(): appLock: " + appLocked)
+        binding.blurView.setBlurEnabled(appLocked)
 
         enablePinchToZoom()
 
@@ -705,6 +699,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     override fun onPause() {
         super.onPause()
         SensorWorker.start(this)
+        presenter.setAppActive(false)
     }
 
     private fun checkAndWarnForDisabledLocation() {
@@ -921,7 +916,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         when (result) {
             Authenticator.SUCCESS -> {
                 Log.d(TAG, "Authentication successful, unlocking app")
-                unlocked = true
+                presenter.setAppActive(true)
                 binding.blurView.setBlurEnabled(false)
             }
             Authenticator.CANCELED -> {
@@ -935,13 +930,14 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) {
-            if (presenter.isLockEnabled() && !unlocked)
-                if ((System.currentTimeMillis() > presenter.getSessionExpireMillis())) {
-                    binding.blurView.setBlurEnabled(true)
-                    authenticator.authenticate(getString(commonR.string.biometric_title))
-                } else {
-                    binding.blurView.setBlurEnabled(false)
-                }
+            val appLocked = presenter.isAppLocked()
+            Log.d(TAG, "onWindowFocusChanged(): appLock: " + appLocked)
+            if (appLocked) {
+                binding.blurView.setBlurEnabled(true)
+                authenticator.authenticate(getString(commonR.string.biometric_title))
+            } else {
+                binding.blurView.setBlurEnabled(false)
+            }
 
             val path = intent.getStringExtra(EXTRA_PATH)
             presenter.onViewReady(path)
@@ -985,8 +981,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        presenter.setSessionExpireMillis((System.currentTimeMillis() + (presenter.sessionTimeOut() * 1000)))
-        unlocked = false
+        presenter.setAppActive(false)
         videoHeight = decor.height
         val bounds = Rect(0, 0, 1920, 1080)
         if (isVideoFullScreen or isExoFullScreen) {
