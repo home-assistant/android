@@ -386,7 +386,11 @@ class MessagingManager @Inject constructor(
                         }
                     }
                     COMMAND_BLUETOOTH -> {
-                        if (!jsonData[COMMAND].isNullOrEmpty() && jsonData[COMMAND] in ENABLE_COMMANDS)
+                        if (
+                            !jsonData[COMMAND].isNullOrEmpty() &&
+                            jsonData[COMMAND] in ENABLE_COMMANDS &&
+                            Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
+                        )
                             handleDeviceCommands(jsonData)
                         else {
                             mainScope.launch {
@@ -770,9 +774,10 @@ class MessagingManager @Inject constructor(
                         }
                     }
                 }
+                @Suppress("DEPRECATION")
                 if (command == TURN_OFF)
                     bluetoothAdapter?.disable()
-                if (command == TURN_ON)
+                else if (command == TURN_ON)
                     bluetoothAdapter?.enable()
             }
             COMMAND_BLE_TRANSMITTER -> {
