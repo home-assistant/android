@@ -6,7 +6,7 @@ import android.util.Log
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.R as commonR
 
-class SettingsSensorManager : SensorManager {
+class DisplaySensorManager : SensorManager {
     companion object {
         private const val TAG = "ScreenBrightness"
 
@@ -26,7 +26,7 @@ class SettingsSensorManager : SensorManager {
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
-        get() = commonR.string.sensor_name_device_settings
+        get() = commonR.string.sensor_name_display_sensors
 
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(screenBrightness)

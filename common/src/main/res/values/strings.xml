@@ -918,7 +918,7 @@
     <string name="sensor_name_accent_color_sensor">Accent Color</string>
     <string name="sensor_description_accent_color_sensor">A hexadecimal color value for the dynamic accent color used in the device theme</string>
     <string name="sensor_name_dynamic_color">Dynamic Color</string>
-    <string name="sensor_name_device_settings">Device Settings Sensors</string>
     <string name="basic_sensor_name_screen_brightness">Screen Brightness</string>
     <string name="sensor_description_screen_brightness">The current screen brightness on the device, an attribute also indicates if auto-brightness is enabled</string>
+    <string name="sensor_name_display_sensors">Display Sensors</string>
 </resources>
