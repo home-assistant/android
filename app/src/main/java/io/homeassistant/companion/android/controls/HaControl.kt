@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.controls
 
+import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
@@ -21,6 +22,7 @@ import io.homeassistant.companion.android.webview.WebViewActivity
 @RequiresApi(Build.VERSION_CODES.R)
 interface HaControl {
 
+    @SuppressLint("ResourceType")
     fun createControl(
         context: Context,
         entity: Entity<Map<String, Any>>,
@@ -62,10 +64,13 @@ interface HaControl {
                 IconicsDrawable(context, "cmd-$iconName").apply {
                     sizeDp = 48
                 }
-            val colorTint = when (entity.state) {
-                "on" -> if (entity.domain == "light") "#FDD663" else "#8AB4F8"
-                "off", "unavailable", "unknown" -> "#A6A6A7"
-                else -> "#8AB4F8"
+            val colorTint = when {
+                entity.domain == "light" && entity.state == "on" -> context.getString(R.color.colorDeviceControlsLightOn)
+                entity.domain == "camera" -> context.getString(R.color.colorDeviceControlsOff)
+                entity.domain == "climate" && entity.state == "heat" -> context.getString(R.color.colorDeviceControlsThermostatHeat)
+                entity.state == "on" -> context.getString(R.color.colorDeviceControlsDefaultOn)
+                entity.state == "off" || entity.state == "unavailable" || entity.state == "unknown" -> context.getString(R.color.colorDeviceControlsOff)
+                else -> context.getString(R.color.colorDeviceControlsDefaultOn)
             }
             iconDrawable.setTint(Color.parseColor(colorTint))
             control.setCustomIcon(iconDrawable.toAndroidIconCompat().toIcon(context))
