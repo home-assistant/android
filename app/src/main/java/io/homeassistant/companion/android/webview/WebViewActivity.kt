@@ -223,7 +223,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         binding.blurView.setupWith(binding.root)
             .setBlurAlgorithm(RenderScriptBlur(this))
-            .setBlurRadius(5f)
+            .setBlurRadius(8f)
             .setHasFixedTransformationMatrix(false)
 
         exoPlayerView = binding.exoplayerView

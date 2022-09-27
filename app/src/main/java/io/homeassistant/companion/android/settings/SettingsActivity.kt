@@ -73,7 +73,7 @@ class SettingsActivity : BaseActivity() {
         blurView.setupWith(getWindow().getDecorView().getRootView() as ViewGroup)
             .setBlurAlgorithm(RenderScriptBlur(this))
             .setBlurAutoUpdate(true)
-            .setBlurRadius(5f)
+            .setBlurRadius(8f)
             .setHasFixedTransformationMatrix(false)
             .setBlurEnabled(false)
 
