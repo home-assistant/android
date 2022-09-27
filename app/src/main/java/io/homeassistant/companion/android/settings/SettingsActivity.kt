@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.ViewGroup
 import androidx.appcompat.widget.SearchView
 import androidx.biometric.BiometricManager
 import dagger.hilt.EntryPoint
@@ -13,6 +14,8 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.components.ActivityComponent
+import eightbitlab.com.blurview.BlurView
+import eightbitlab.com.blurview.RenderScriptBlur
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
@@ -32,6 +35,7 @@ class SettingsActivity : BaseActivity() {
     lateinit var integrationUseCase: IntegrationRepository
 
     private lateinit var authenticator: Authenticator
+    private lateinit var blurView: BlurView
 
     private var authenticating = false
     private var externalAuthCallback: ((Int) -> Boolean)? = null
@@ -64,6 +68,14 @@ class SettingsActivity : BaseActivity() {
 
         setSupportActionBar(findViewById(R.id.toolbar))
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+        blurView = findViewById(R.id.blurView)
+        blurView.setupWith(getWindow().getDecorView().getRootView() as ViewGroup)
+            .setBlurAlgorithm(RenderScriptBlur(this))
+            .setBlurAutoUpdate(true)
+            .setBlurRadius(5f)
+            .setHasFixedTransformationMatrix(false)
+            .setBlurEnabled(false)
 
         authenticator = Authenticator(this, this, ::settingsActivityAuthenticationResult)
 
@@ -115,6 +127,10 @@ class SettingsActivity : BaseActivity() {
             if (appLocked) {
                 authenticating = true
                 authenticator.authenticate(getString(commonR.string.biometric_title))
+                blurView.bringToFront()
+                blurView.setBlurEnabled(true)
+            } else {
+                blurView.setBlurEnabled(false)
             }
         }
     }
@@ -138,6 +154,7 @@ class SettingsActivity : BaseActivity() {
                     Log.d(TAG, "Authentication successful, unlocking app")
                     runBlocking {
                         integrationUseCase.setAppActive(true)
+                        blurView.setBlurEnabled(false)
                     }
                 }
                 Authenticator.CANCELED -> {
