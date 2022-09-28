@@ -193,6 +193,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var videoHeight = 0
     private var firstAuthTime: Long = 0
     private var resourceURL: String = ""
+    private var appLocked = true
     private var exoPlayer: SimpleExoPlayer? = null
     private var isExoFullScreen = false
     private var exoTop: Int = 0 // These margins are from the DOM and scaled to screen
@@ -236,7 +237,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         playerBinding = ExoPlayerViewBinding.bind(exoPlayerView)
 
-        binding.blurView.setBlurEnabled(presenter.isAppLocked())
+        appLocked = presenter.isAppLocked()
+        binding.blurView.setBlurEnabled(appLocked)
 
         authenticator = Authenticator(this, this, ::authenticationResult)
 
@@ -260,11 +262,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     ) {
                         dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_E))
                     }
-                    return presenter.isAppLocked()
+                    return appLocked
                 }
 
                 override fun onMotionEventHandled(v: View?, event: MotionEvent?): Boolean {
-                    return presenter.isAppLocked()
+                    return appLocked
                 }
             })
 
@@ -677,7 +679,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         if ((currentLang != languagesManager.getCurrentLang()) || currentAutoplay != presenter.isAutoPlayVideoEnabled())
             recreate()
 
-        val appLocked = presenter.isAppLocked()
+        appLocked = presenter.isAppLocked()
         Log.d(TAG, "onResume(): appLock: " + appLocked)
         binding.blurView.setBlurEnabled(appLocked)
 
@@ -916,6 +918,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         when (result) {
             Authenticator.SUCCESS -> {
                 Log.d(TAG, "Authentication successful, unlocking app")
+                appLocked = false
                 presenter.setAppActive(true)
                 binding.blurView.setBlurEnabled(false)
             }
@@ -930,7 +933,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) {
-            val appLocked = presenter.isAppLocked()
+            appLocked = presenter.isAppLocked()
             Log.d(TAG, "onWindowFocusChanged(): appLock: " + appLocked)
             if (appLocked) {
                 binding.blurView.setBlurEnabled(true)
