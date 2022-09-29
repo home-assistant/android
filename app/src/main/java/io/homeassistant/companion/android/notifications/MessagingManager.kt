@@ -487,7 +487,7 @@ class MessagingManager @Inject constructor(
 
                         val invalid = (!app_lock_enable_param_present && !app_lock_timeout_param_present && !home_bypass_param_present) ||
                             (app_lock_enable_param_present && app_lock_enable_value == null) ||
-                            (app_lock_timeout_param_present && app_lock_timeout_value == null) ||
+                            (app_lock_timeout_param_present && (app_lock_timeout_value == null || app_lock_timeout_value < 0)) ||
                             (home_bypass_param_present && home_bypass_value == null)
 
                         if (!invalid)
@@ -2055,27 +2055,19 @@ class MessagingManager @Inject constructor(
         val app_lock_timeout_value = data[APP_LOCK_TIMEOUT]?.toIntOrNull()
         val home_bypass_value = data[APP_LOCK_ENABLED]?.toLowerCase()?.toBooleanStrictOrNull()
 
-        var updated = false
-        if (app_lock_enable_value != null) {
-            val canAuth = (BiometricManager.from(context).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS)
-            if (app_lock_enable_value && !canAuth) {
-                Log.w(TAG, "Not enabling app lock. BiometricManager cannot Authenticate!")
-            } else {
+        val canAuth = (BiometricManager.from(context).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS)
+        if (canAuth) {
+            if (app_lock_enable_value != null) {
                 authenticationUseCase.setLockEnabled(app_lock_enable_value)
-                updated = true
             }
-        }
-        if (app_lock_timeout_value != null && app_lock_timeout_value >= 0) {
-            integrationUseCase.sessionTimeOut(app_lock_timeout_value)
-            updated = true
-        }
-        if (home_bypass_value != null) {
-            authenticationUseCase.setLockHomeBypassEnabled(home_bypass_value)
-            updated = true
-        }
-
-        if (!updated) {
-            Log.w(TAG, "No app lock parameters have been updated")
+            if (app_lock_timeout_value != null) {
+                integrationUseCase.sessionTimeOut(app_lock_timeout_value)
+            }
+            if (home_bypass_value != null) {
+                authenticationUseCase.setLockHomeBypassEnabled(home_bypass_value)
+            }
+        } else {
+            Log.w(TAG, "Not changing App-Lock settings. BiometricManager cannot Authenticate!")
             sendNotification(data)
         }
     }
