@@ -64,16 +64,22 @@ interface HaControl {
                 IconicsDrawable(context, "cmd-$iconName").apply {
                     sizeDp = 48
                 }
-            val colorTint = when {
-                entity.domain == "light" && entity.state == "on" -> R.color.colorDeviceControlsLightOn
-                entity.domain == "camera" -> R.color.colorDeviceControlsCamera
-                entity.domain == "climate" && entity.state == "heat" -> R.color.colorDeviceControlsThermostatHeat
-                entity.state in listOf("off", "unavailable", "unknown") -> R.color.colorDeviceControlsOff
-                else -> R.color.colorDeviceControlsDefaultOn
-            }
+            if (iconDrawable.icon != null) {
+                val colorTint = when {
+                    entity.domain == "light" && entity.state == "on" -> R.color.colorDeviceControlsLightOn
+                    entity.domain == "camera" -> R.color.colorDeviceControlsCamera
+                    entity.domain == "climate" && entity.state == "heat" -> R.color.colorDeviceControlsThermostatHeat
+                    entity.state in listOf(
+                        "off",
+                        "unavailable",
+                        "unknown"
+                    ) -> R.color.colorDeviceControlsOff
+                    else -> R.color.colorDeviceControlsDefaultOn
+                }
 
-            iconDrawable.setTint(ContextCompat.getColor(context, colorTint))
-            control.setCustomIcon(iconDrawable.toAndroidIconCompat().toIcon(context))
+                iconDrawable.setTint(ContextCompat.getColor(context, colorTint))
+                control.setCustomIcon(iconDrawable.toAndroidIconCompat().toIcon(context))
+            }
         }
 
         return provideControlFeatures(context, control, entity, area, baseUrl).build()
