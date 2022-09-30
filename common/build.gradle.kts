@@ -13,6 +13,8 @@ val versionName = System.getenv("VERSION") ?: "LOCAL"
 val versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
 
 android {
+    namespace = "io.homeassistant.companion.android.common"
+
     compileSdk = 33
 
     defaultConfig {

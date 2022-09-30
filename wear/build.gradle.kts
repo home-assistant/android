@@ -8,6 +8,8 @@ plugins {
 }
 
 android {
+    namespace = "io.homeassistant.companion.android"
+
     compileSdk = 33
 
     defaultConfig {
