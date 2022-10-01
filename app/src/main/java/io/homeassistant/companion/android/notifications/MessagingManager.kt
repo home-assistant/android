@@ -167,6 +167,8 @@ class MessagingManager @Inject constructor(
         const val COMMAND_LAUNCH_APP = "command_launch_app"
         const val COMMAND_PERSISTENT_CONNECTION = "command_persistent_connection"
         const val COMMAND_STOP_TTS = "command_stop_tts"
+        const val COMMAND_AUTO_SCREEN_BRIGHTNESS = "command_auto_screen_brightness"
+        const val COMMAND_SCREEN_BRIGHTNESS_LEVEL = "command_screen_brightness_level"
 
         // DND commands
         const val DND_PRIORITY_ONLY = "priority_only"
@@ -243,7 +245,9 @@ class MessagingManager @Inject constructor(
             COMMAND_UPDATE_SENSORS,
             COMMAND_LAUNCH_APP,
             COMMAND_PERSISTENT_CONNECTION,
-            COMMAND_STOP_TTS
+            COMMAND_STOP_TTS,
+            COMMAND_AUTO_SCREEN_BRIGHTNESS,
+            COMMAND_SCREEN_BRIGHTNESS_LEVEL
         )
         val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
         val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
@@ -529,6 +533,22 @@ class MessagingManager @Inject constructor(
                         }
                     }
                     COMMAND_STOP_TTS -> handleDeviceCommands(jsonData)
+                    COMMAND_AUTO_SCREEN_BRIGHTNESS -> {
+                        if (!jsonData[COMMAND].isNullOrEmpty() && jsonData[COMMAND] in ENABLE_COMMANDS)
+                            handleDeviceCommands(jsonData)
+                        else
+                            mainScope.launch {
+                                sendNotification(jsonData)
+                            }
+                    }
+                    COMMAND_SCREEN_BRIGHTNESS_LEVEL -> {
+                        if (!jsonData[COMMAND].isNullOrEmpty() && jsonData[COMMAND]?.toIntOrNull() != null)
+                            handleDeviceCommands(jsonData)
+                        else
+                            mainScope.launch {
+                                sendNotification(jsonData)
+                            }
+                    }
                     else -> Log.d(TAG, "No command received")
                 }
             }
@@ -893,6 +913,16 @@ class MessagingManager @Inject constructor(
             }
             COMMAND_STOP_TTS -> {
                 stopTTS()
+            }
+            COMMAND_AUTO_SCREEN_BRIGHTNESS, COMMAND_SCREEN_BRIGHTNESS_LEVEL -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (Settings.System.canWrite(context)) {
+                        if (!processScreenBrightness(data))
+                            mainScope.launch { sendNotification(data) }
+                    } else
+                        notifyMissingPermission(data[MESSAGE].toString())
+                } else if (!processScreenBrightness(data))
+                    mainScope.launch { sendNotification(data) }
             }
             else -> Log.d(TAG, "No command received")
         }
@@ -1790,6 +1820,14 @@ class MessagingManager @Inject constructor(
         context.startActivity(intent)
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun requestWriteSystemPermission() {
+        val intent = Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS)
+        intent.data = Uri.parse("package:" + context.packageName)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        context.startActivity(intent)
+    }
+
     private fun getKeyEvent(key: String): Int {
         return when (key) {
             MEDIA_FAST_FORWARD -> KeyEvent.KEYCODE_MEDIA_FAST_FORWARD
@@ -1996,6 +2034,27 @@ class MessagingManager @Inject constructor(
         WebsocketManager.start(context)
     }
 
+    private fun processScreenBrightness(data: Map<String, String>): Boolean {
+        val command = data[COMMAND]
+        val contentResolver = context.contentResolver
+        val success = Settings.System.putInt(
+            contentResolver,
+            if (data[MESSAGE].toString() == COMMAND_SCREEN_BRIGHTNESS_LEVEL)
+                Settings.System.SCREEN_BRIGHTNESS
+            else
+                Settings.System.SCREEN_BRIGHTNESS_MODE,
+            if (data[MESSAGE].toString() == COMMAND_SCREEN_BRIGHTNESS_LEVEL)
+                command!!.toInt().coerceIn(0, 255)
+            else {
+                if (command == TURN_ON)
+                    Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
+                else
+                    Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL
+            }
+        )
+        return success
+    }
+
     private fun notifyMissingPermission(type: String) {
         val appManager =
             context.getSystemService<ActivityManager>()
@@ -2029,6 +2088,11 @@ class MessagingManager @Inject constructor(
                                     ).show()
                                 }
                                 navigateAppDetails()
+                            }
+                            COMMAND_SCREEN_BRIGHTNESS_LEVEL, COMMAND_AUTO_SCREEN_BRIGHTNESS -> {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                    requestWriteSystemPermission()
+                                }
                             }
                         }
                     }
