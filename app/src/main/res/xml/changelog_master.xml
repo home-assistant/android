@@ -3,6 +3,8 @@
     tools:ignore="MissingDefaultResource">
     <release version="2022.10 - Phone" versioncode="2">
         <change>&lt;b&gt;Breaking Change:&lt;/b&gt; BLE Transmitter and Beacon Monitor sensor now report beacon attributes in "UUID Major.Minor" format.</change>
+        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Only update Geocoded Location sensor with location updates, if the new setting is enabled.</change>
+        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Add Bluetooth Connect permission to Beacon Monitor sensor for Android 12+.</change>
         <change>Add dynamic color sensor for supported devices</change>
         <change>Add support for considering WiFi BSSID as Home WiFi</change>
         <change>Add support for intent scheme URI and app deep links in notification clickAction and actions</change>
