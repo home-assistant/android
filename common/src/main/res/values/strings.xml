@@ -708,10 +708,9 @@
     <string name="template_widget_default">Enter Template Here</string>
     <string name="template_widget_desc">Render any template with HTML formatting</string>
     <string name="template_widget">Template Widget</string>
-    <string name="themes_option_label_android">Follow System Settings</string>
     <string name="themes_option_label_dark">Dark</string>
     <string name="themes_option_label_light">Light</string>
-    <string name="themes_option_label_system">Follow Home Assistant</string>
+    <string name="themes_option_label_system">Follow System Settings</string>
     <string name="themes_option_value_android">android</string>
     <string name="themes_option_value_dark">dark</string>
     <string name="themes_option_value_light">light</string>

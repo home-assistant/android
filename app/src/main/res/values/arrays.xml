@@ -2,13 +2,11 @@
 <resources>
     <string-array name="pref_theme_option_labels">
         <item>@string/themes_option_label_system</item>
-        <item>@string/themes_option_label_android</item>
         <item>@string/themes_option_label_light</item>
         <item>@string/themes_option_label_dark</item>
     </string-array>
     <string-array name="pref_theme_option_values">
         <item>@string/themes_option_value_system</item>
-        <item>@string/themes_option_value_android</item>
         <item>@string/themes_option_value_light</item>
         <item>@string/themes_option_value_dark</item>
     </string-array>
