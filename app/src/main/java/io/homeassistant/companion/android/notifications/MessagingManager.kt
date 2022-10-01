@@ -1068,8 +1068,11 @@ class MessagingManager @Inject constructor(
         if (data[NOTIFICATION_ICON]?.startsWith("mdi:") == true && !data[NOTIFICATION_ICON]?.substringAfter("mdi:").isNullOrBlank() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val iconName = data[NOTIFICATION_ICON]!!.split(":")[1]
             val iconDrawable =
-                IconicsDrawable(context, "cmd-$iconName").toAndroidIconCompat()
-            builder.setSmallIcon(iconDrawable)
+                IconicsDrawable(context, "cmd-$iconName")
+            if (iconDrawable.icon != null)
+                builder.setSmallIcon(iconDrawable.toAndroidIconCompat())
+            else
+                builder.setSmallIcon(commonR.drawable.ic_stat_ic_notification)
         } else
             builder.setSmallIcon(commonR.drawable.ic_stat_ic_notification)
     }
