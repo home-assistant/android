@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2022.10 - Phone" versioncode="2">
+    <release version="2022.10.0 - Phone" versioncode="2">
         <change>&lt;b&gt;Breaking Change:&lt;/b&gt; BLE Transmitter and Beacon Monitor sensor now report beacon attributes in "UUID_Major_Minor" format.</change>
         <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Only update Geocoded Location sensor with location updates, if the new setting is enabled.</change>
         <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Add Bluetooth Connect permission to Beacon Monitor sensor for Android 12+.</change>
@@ -9,9 +9,16 @@
         <change>Add support for considering WiFi BSSID as Home WiFi</change>
         <change>Add support for intent scheme URI and app deep links in notification clickAction and actions</change>
         <change>Allow intents registered under Last Update sensor to contain categories (if the intent requires them)</change>
+    </release>
+    <release version="2022.10.1 - Phone" versioncode="3">
+        <change>Add notification commands to control Screen Brightness Level and Automatic Screen Brightness</change>
+        <change>Add force_on and force_off commands to High Accuracy notification command to allow control with constraints</change>
+        <change>Add Screen Brightness sensor</change>
+        <change>Show custom icon on Device Controls, if available</change>
+        <change>Combine theme option Follow Home Assistant into Follow System Settings</change>
         <change>Bug fixes, performance improvements, design tweaks and dependency updates</change>
     </release>
-    <release version="2022.10 - Wear" versioncode="1">
+    <release version="2022.10.1 - Wear" versioncode="1">
         <change>Dependency updates</change>
     </release>
 </changelog>
