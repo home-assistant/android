@@ -86,7 +86,7 @@ class OnboardingViewModel @Inject constructor(
         notificationsEnabled = enabled
     }
 
-    fun getOutput(): OnboardApp.Output = OnboardApp.Output(
+    fun getOutput() = OnboardApp.Output(
         url = manualUrl.value,
         authCode = authCode,
         deviceName = deviceName.value,
