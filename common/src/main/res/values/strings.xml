@@ -582,6 +582,7 @@
     <string name="sensor_setting_ble_transmit_power_title">Transmitter power</string>
     <string name="sensor_setting_ble_transmit_power_ultraLow_label">Ultra Low</string>
     <string name="sensor_setting_ble_uuid_title">UUID</string>
+    <string name="sensor_setting_ble_name_title">Name</string>
     <string name="sensor_setting_beacon_monitor_enabled_title">Enable Beacon Monitor</string>
     <string name="sensor_setting_beacon_monitor_scan_period_title">Scan Period</string>
     <string name="sensor_setting_beacon_monitor_scan_interval_title">Scan Interval</string>

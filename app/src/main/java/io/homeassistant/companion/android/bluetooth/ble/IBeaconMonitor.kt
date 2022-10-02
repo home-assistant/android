@@ -15,6 +15,7 @@ data class IBeacon(
     var distance: Double,
     var rssi: Double,
     var skippedUpdated: Int,
+    var name: String?,
 )
 
 class IBeaconMonitor {
@@ -38,10 +39,11 @@ class IBeaconMonitor {
             val minor = newBeacon.id3.toString()
             val distance = round(newBeacon.distance * 100) / 100
             val rssi = newBeacon.runningAverageRssi
+            val name = newBeacon.bluetoothName
             if (!tmp.contains(name(uuid, major, minor))) { // we found a new beacon
                 requireUpdate = true
             }
-            tmp += Pair(name(uuid, major, minor), IBeacon(uuid, major, minor, distance, rssi, 0))
+            tmp += Pair(name(uuid, major, minor), IBeacon(uuid, major, minor, distance, rssi, 0, name))
         }
         val sorted = sort(tmp.values).toMutableList()
         if (requireUpdate) {

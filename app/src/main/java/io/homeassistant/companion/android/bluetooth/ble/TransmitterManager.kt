@@ -22,6 +22,7 @@ object TransmitterManager {
         builder.setId2(haTransmitterI.major)
         builder.setId3(haTransmitterI.minor)
         builder.setManufacturer(haTransmitterI.manufacturer)
+        builder.setBluetoothName(haTransmitterI.name)
         beacon = builder.build()
         return beacon
     }
