@@ -124,7 +124,6 @@ class SettingsActivity : BaseActivity() {
         val appLocked = runBlocking {
             integrationUseCase.isAppLocked()
         }
-        Log.d(TAG, "onResume(): appLock: $appLocked")
 
         if (appLocked) {
             authenticating = true
@@ -141,7 +140,7 @@ class SettingsActivity : BaseActivity() {
             val appLocked = runBlocking {
                 integrationUseCase.isAppLocked()
             }
-            Log.d(TAG, "onWindowFocusChanged(): appLock: " + appLocked)
+
             if (appLocked) {
                 authenticating = true
                 authenticator.authenticate(getString(commonR.string.biometric_title))

@@ -680,7 +680,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             recreate()
 
         appLocked = presenter.isAppLocked()
-        Log.d(TAG, "onResume(): appLock: $appLocked")
         binding.blurView.setBlurEnabled(appLocked)
 
         enablePinchToZoom()
@@ -934,7 +933,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) {
             appLocked = presenter.isAppLocked()
-            Log.d(TAG, "onWindowFocusChanged(): appLock: " + appLocked)
             if (appLocked) {
                 binding.blurView.setBlurEnabled(true)
                 authenticator.authenticate(getString(commonR.string.biometric_title))
