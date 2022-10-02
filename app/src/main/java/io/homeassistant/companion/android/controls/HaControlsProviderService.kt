@@ -155,50 +155,50 @@ class HaControlsProviderService : ControlsProviderService() {
                         val entities = mutableMapOf<String, Entity<Map<String, Any>>>()
                         val baseUrl = urlRepository.getUrl().toString().removeSuffix("/")
 
+                        areaRegistry = getAreaRegistry.await()
+                        deviceRegistry = getDeviceRegistry.await()
+                        entityRegistry = getEntityRegistry.await()
+
                         if (integrationRepository.isHomeAssistantVersionAtLeast(2022, 4, 0)) {
                             webSocketScope.launch {
-                                val states = webSocketRepository.getCompressedStateAndChanges(controlIds.toList())
                                 var sentInitial = false
                                 val error404 = HttpException(Response.error<ResponseBody>(404, byteArrayOf().toResponseBody()))
 
-                                areaRegistry = getAreaRegistry.await()
-                                deviceRegistry = getDeviceRegistry.await()
-                                entityRegistry = getEntityRegistry.await()
-
-                                states?.collect { event ->
-                                    val toSend = mutableMapOf<String, Entity<Map<String, Any>>>()
-                                    event.added?.forEach {
-                                        val entity = it.value.toEntity(it.key)
-                                        entities.remove("ha_failed.$it")
-                                        entities[it.key] = entity
-                                        toSend[it.key] = entity
-                                    }
-                                    event.changed?.forEach {
-                                        val entity = entities[it.key]?.applyCompressedStateDiff(it.value)
-                                        entity?.let { thisEntity ->
-                                            entities[it.key] = thisEntity
+                                webSocketRepository.getCompressedStateAndChanges(controlIds.toList())
+                                    ?.collect { event ->
+                                        val toSend = mutableMapOf<String, Entity<Map<String, Any>>>()
+                                        event.added?.forEach {
+                                            val entity = it.value.toEntity(it.key)
+                                            entities.remove("ha_failed.$it")
+                                            entities[it.key] = entity
                                             toSend[it.key] = entity
                                         }
-                                    }
-                                    event.removed?.forEach {
-                                        entities.remove(it)
-                                        val entity = getFailedEntity(it, error404)
-                                        entities["ha_failed.$it"] = entity
-                                        toSend["ha_failed.$it"] = entity
-                                    }
-                                    if (!sentInitial) {
-                                        // All initial states will be in the first message
-                                        sentInitial = true
-                                        (controlIds - entities.keys).forEach { missingEntity ->
-                                            Log.e(TAG, "Unable to get $missingEntity from Home Assistant, not returned in subscribe_entities.")
-                                            val entity = getFailedEntity(missingEntity, error404)
-                                            entities["ha_failed.$missingEntity"] = entity
-                                            toSend["ha_failed.$missingEntity"] = entity
+                                        event.changed?.forEach {
+                                            val entity = entities[it.key]?.applyCompressedStateDiff(it.value)
+                                            entity?.let { thisEntity ->
+                                                entities[it.key] = thisEntity
+                                                toSend[it.key] = entity
+                                            }
                                         }
-                                    }
-                                    Log.d(TAG, "Sending ${toSend.size} entities to subscriber")
-                                    sendEntitiesToSubscriber(subscriber, toSend, webSocketScope, baseUrl)
-                                } ?: run {
+                                        event.removed?.forEach {
+                                            entities.remove(it)
+                                            val entity = getFailedEntity(it, error404)
+                                            entities["ha_failed.$it"] = entity
+                                            toSend["ha_failed.$it"] = entity
+                                        }
+                                        if (!sentInitial) {
+                                            // All initial states will be in the first message
+                                            sentInitial = true
+                                            (controlIds - entities.keys).forEach { missingEntity ->
+                                                Log.e(TAG, "Unable to get $missingEntity from Home Assistant, not returned in subscribe_entities.")
+                                                val entity = getFailedEntity(missingEntity, error404)
+                                                entities["ha_failed.$missingEntity"] = entity
+                                                toSend["ha_failed.$missingEntity"] = entity
+                                            }
+                                        }
+                                        Log.d(TAG, "Sending ${toSend.size} entities to subscriber")
+                                        sendEntitiesToSubscriber(subscriber, toSend, webSocketScope, baseUrl)
+                                    } ?: run {
                                     controlIds.forEach {
                                         val entity = getFailedEntity(it, Exception())
                                         entities["ha_failed.$it"] = entity
@@ -214,9 +214,6 @@ class HaControlsProviderService : ControlsProviderService() {
                             }
                         } else {
                             // Set up initial states
-                            areaRegistry = getAreaRegistry.await()
-                            deviceRegistry = getDeviceRegistry.await()
-                            entityRegistry = getEntityRegistry.await()
                             controlIds.forEach {
                                 launch { // using launch to create controls async
                                     var id = it
