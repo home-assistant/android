@@ -381,7 +381,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         val lockEnabled = authenticationRepository.isLockEnabled()
         val sessionExpireMillis = getSessionExpireMillis()
         val currentMillis = System.currentTimeMillis()
-        val sessionExpired =  currentMillis > sessionExpireMillis
+        val sessionExpired = currentMillis > sessionExpireMillis
 
         Log.d(TAG, "isAppLocked(). LockEnabled: $lockEnabled, appActive: $appActive, expireMillis: $sessionExpireMillis, currentMillis: $currentMillis")
         return (lockEnabled && !appActive && sessionExpired)
