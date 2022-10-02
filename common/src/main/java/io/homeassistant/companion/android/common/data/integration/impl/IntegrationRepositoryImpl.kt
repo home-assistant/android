@@ -406,7 +406,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         localStorage.putLong(PREF_SESSION_EXPIRE, value)
     }
 
-    override suspend fun getSessionExpireMillis(): Long {
+    private suspend fun getSessionExpireMillis(): Long {
         return localStorage.getLong(PREF_SESSION_EXPIRE) ?: 0
     }
 

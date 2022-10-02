@@ -177,18 +177,6 @@ class SettingsPresenterImpl @Inject constructor(
         }
     }
 
-    override fun setSessionExpireMillis(value: Long) {
-        mainScope.launch {
-            integrationUseCase.setSessionExpireMillis(value)
-        }
-    }
-
-    override fun getSessionExpireMillis(): Long {
-        return runBlocking {
-            integrationUseCase.getSessionExpireMillis()
-        }
-    }
-
     override suspend fun getNotificationRateLimits(): RateLimitResponse? = withContext(Dispatchers.IO) {
         try {
             integrationUseCase.getNotificationRateLimits()

@@ -14,8 +14,6 @@ interface SettingsPresenter {
     fun sessionTimeOut(): Int
     suspend fun getNotificationRateLimits(): RateLimitResponse?
 
-    fun setSessionExpireMillis(value: Long)
-    fun getSessionExpireMillis(): Long
     fun isSsidUsed(): Boolean
     fun clearSsids()
     fun showChangeLog(context: Context)

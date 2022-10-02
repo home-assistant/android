@@ -43,7 +43,6 @@ interface IntegrationRepository {
     suspend fun getSessionTimeOut(): Int
 
     suspend fun setSessionExpireMillis(value: Long)
-    suspend fun getSessionExpireMillis(): Long
 
     suspend fun setControlsAuthRequired(setting: ControlsAuthRequiredSetting)
     suspend fun getControlsAuthRequired(): ControlsAuthRequiredSetting
