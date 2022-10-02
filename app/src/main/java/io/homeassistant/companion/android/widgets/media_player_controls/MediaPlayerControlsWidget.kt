@@ -16,6 +16,7 @@ import android.widget.Toast
 import androidx.core.content.getSystemService
 import com.google.android.material.color.DynamicColors
 import com.mikepenz.iconics.IconicsDrawable
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import com.squareup.picasso.Picasso
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
@@ -230,7 +231,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                     )
                 }
 
-                var iconBitmap = IconicsDrawable(context, "cmd-cast").toBitmap()
+                var iconBitmap = IconicsDrawable(context, CommunityMaterial.Icon.cmd_cast).toBitmap()
                 if (icon?.startsWith("mdi") == true && icon.substringAfter(":").isNotBlank()) {
                     val iconDrawable = IconicsDrawable(context, "cmd-${icon.substringAfter(":")}")
                     if (iconDrawable.icon != null)
