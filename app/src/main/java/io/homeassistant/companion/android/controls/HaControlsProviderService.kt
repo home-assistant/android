@@ -10,6 +10,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.applyCompressedStateDiff
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
@@ -23,7 +24,10 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.ResponseBody
+import okhttp3.ResponseBody.Companion.toResponseBody
 import retrofit2.HttpException
+import retrofit2.Response
 import java.util.Calendar
 import java.util.concurrent.Flow
 import java.util.function.Consumer
@@ -81,6 +85,10 @@ class HaControlsProviderService : ControlsProviderService() {
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
+    private var areaRegistry: List<AreaRegistryResponse>? = null
+    private var deviceRegistry: List<DeviceRegistryResponse>? = null
+    private var entityRegistry: List<EntityRegistryResponse>? = null
+
     override fun createPublisherForAllAvailable(): Flow.Publisher<Control> {
         return Flow.Publisher { subscriber ->
             ioScope.launch {
@@ -90,9 +98,9 @@ class HaControlsProviderService : ControlsProviderService() {
                     val getEntityRegistry = async { webSocketRepository.getEntityRegistry() }
                     val getEntities = async { integrationRepository.getEntities() }
 
-                    val areaRegistry = getAreaRegistry.await()
-                    val deviceRegistry = getDeviceRegistry.await()
-                    val entityRegistry = getEntityRegistry.await()
+                    areaRegistry = getAreaRegistry.await()
+                    deviceRegistry = getDeviceRegistry.await()
+                    entityRegistry = getEntityRegistry.await()
                     val entities = getEntities.await()
 
                     val areaForEntity = entities.orEmpty().associate {
@@ -145,58 +153,129 @@ class HaControlsProviderService : ControlsProviderService() {
                         val getDeviceRegistry = async { webSocketRepository.getDeviceRegistry() }
                         val getEntityRegistry = async { webSocketRepository.getEntityRegistry() }
                         val entities = mutableMapOf<String, Entity<Map<String, Any>>>()
-                        controlIds.forEach {
-                            try {
-                                val entity = integrationRepository.getEntity(it)
-                                if (entity != null) {
-                                    entities[it] = entity
-                                } else {
-                                    Log.e(TAG, "Unable to get $it from Home Assistant, null response.")
-                                }
-                            } catch (e: Exception) {
-                                entities["ha_failed.$it"] = getFailedEntity(it, e)
-                                Log.e(TAG, "Unable to get $it from Home Assistant, caught exception.", e)
-                            }
-                        }
-                        var areaRegistry = getAreaRegistry.await()
-                        var deviceRegistry = getDeviceRegistry.await()
-                        var entityRegistry = getEntityRegistry.await()
-
                         val baseUrl = urlRepository.getUrl().toString().removeSuffix("/")
 
-                        sendEntitiesToSubscriber(subscriber, entities, areaRegistry, deviceRegistry, entityRegistry, baseUrl)
+                        if (integrationRepository.isHomeAssistantVersionAtLeast(2022, 4, 0)) {
+                            webSocketScope.launch {
+                                val states = webSocketRepository.getCompressedStateAndChanges(controlIds.toList())
+                                var sentInitial = false
+                                val error404 = HttpException(Response.error<ResponseBody>(404, byteArrayOf().toResponseBody()))
 
-                        // Listen for the state changed events.
-                        webSocketScope.launch {
-                            integrationRepository.getEntityUpdates(controlIds)?.collect {
-                                val control = domainToHaControl[it.domain]?.createControl(
-                                    applicationContext,
-                                    it as Entity<Map<String, Any>>,
-                                    RegistriesDataHandler.getAreaForEntity(it.entityId, areaRegistry, deviceRegistry, entityRegistry),
-                                    entityRequiresAuth(it.entityId),
-                                    baseUrl
-                                )
-                                if (control != null)
-                                    subscriber.onNext(control)
+                                areaRegistry = getAreaRegistry.await()
+                                deviceRegistry = getDeviceRegistry.await()
+                                entityRegistry = getEntityRegistry.await()
+
+                                states?.collect { event ->
+                                    val toSend = mutableMapOf<String, Entity<Map<String, Any>>>()
+                                    event.added?.forEach {
+                                        val entity = it.value.toEntity(it.key)
+                                        entities.remove("ha_failed.$it")
+                                        entities[it.key] = entity
+                                        toSend[it.key] = entity
+                                    }
+                                    event.changed?.forEach {
+                                        val entity = entities[it.key]?.applyCompressedStateDiff(it.value)
+                                        entity?.let { thisEntity ->
+                                            entities[it.key] = thisEntity
+                                            toSend[it.key] = entity
+                                        }
+                                    }
+                                    event.removed?.forEach {
+                                        entities.remove(it)
+                                        val entity = getFailedEntity(it, error404)
+                                        entities["ha_failed.$it"] = entity
+                                        toSend["ha_failed.$it"] = entity
+                                    }
+                                    if (!sentInitial) {
+                                        // All initial states will be in the first message
+                                        sentInitial = true
+                                        (controlIds - entities.keys).forEach { missingEntity ->
+                                            Log.e(TAG, "Unable to get $missingEntity from Home Assistant, not returned in subscribe_entities.")
+                                            val entity = getFailedEntity(missingEntity, error404)
+                                            entities["ha_failed.$missingEntity"] = entity
+                                            toSend["ha_failed.$missingEntity"] = entity
+                                        }
+                                    }
+                                    Log.d(TAG, "Sending ${toSend.size} entities to subscriber")
+                                    sendEntitiesToSubscriber(subscriber, toSend, webSocketScope, baseUrl)
+                                } ?: run {
+                                    controlIds.forEach {
+                                        val entity = getFailedEntity(it, Exception())
+                                        entities["ha_failed.$it"] = entity
+                                        domainToHaControl["ha_failed"]?.createControl(
+                                            applicationContext,
+                                            entity,
+                                            RegistriesDataHandler.getAreaForEntity(entity.entityId, areaRegistry, deviceRegistry, entityRegistry),
+                                            entityRequiresAuth(entity.entityId),
+                                            baseUrl
+                                        )?.let { control -> subscriber.onNext(control) }
+                                    }
+                                }
+                            }
+                        } else {
+                            // Set up initial states
+                            areaRegistry = getAreaRegistry.await()
+                            deviceRegistry = getDeviceRegistry.await()
+                            entityRegistry = getEntityRegistry.await()
+                            controlIds.forEach {
+                                launch { // using launch to create controls async
+                                    var id = it
+                                    try {
+                                        val entity = integrationRepository.getEntity(it)
+                                        if (entity != null) {
+                                            entities[it] = entity
+                                        } else {
+                                            Log.e(TAG, "Unable to get $it from Home Assistant, null response.")
+                                        }
+                                    } catch (e: Exception) {
+                                        Log.e(TAG, "Unable to get $it from Home Assistant, caught exception.", e)
+                                        entities["ha_failed.$it"] = getFailedEntity(it, e)
+                                        id = "ha_failed.$it"
+                                    }
+                                    entities[id]?.let {
+                                        domainToHaControl[id.split(".")[0]]?.createControl(
+                                            applicationContext,
+                                            it,
+                                            RegistriesDataHandler.getAreaForEntity(it.entityId, areaRegistry, deviceRegistry, entityRegistry),
+                                            entityRequiresAuth(it.entityId),
+                                            baseUrl
+                                        )?.let { control -> subscriber.onNext(control) }
+                                    }
+                                }
+                            }
+
+                            // Listen for the state changed events.
+                            webSocketScope.launch {
+                                integrationRepository.getEntityUpdates(controlIds)?.collect {
+                                    val control = domainToHaControl[it.domain]?.createControl(
+                                        applicationContext,
+                                        it as Entity<Map<String, Any>>,
+                                        RegistriesDataHandler.getAreaForEntity(it.entityId, areaRegistry, deviceRegistry, entityRegistry),
+                                        entityRequiresAuth(it.entityId),
+                                        baseUrl
+                                    )
+                                    if (control != null)
+                                        subscriber.onNext(control)
+                                }
                             }
                         }
                         webSocketScope.launch {
                             webSocketRepository.getAreaRegistryUpdates()?.collect {
                                 areaRegistry = webSocketRepository.getAreaRegistry()
-                                sendEntitiesToSubscriber(subscriber, entities, areaRegistry, deviceRegistry, entityRegistry, baseUrl)
+                                sendEntitiesToSubscriber(subscriber, entities, webSocketScope, baseUrl)
                             }
                         }
                         webSocketScope.launch {
                             webSocketRepository.getDeviceRegistryUpdates()?.collect {
                                 deviceRegistry = webSocketRepository.getDeviceRegistry()
-                                sendEntitiesToSubscriber(subscriber, entities, areaRegistry, deviceRegistry, entityRegistry, baseUrl)
+                                sendEntitiesToSubscriber(subscriber, entities, webSocketScope, baseUrl)
                             }
                         }
                         webSocketScope.launch {
                             webSocketRepository.getEntityRegistryUpdates()?.collect { event ->
                                 if (event.action == "update" && controlIds.contains(event.entityId)) {
                                     entityRegistry = webSocketRepository.getEntityRegistry()
-                                    sendEntitiesToSubscriber(subscriber, entities, areaRegistry, deviceRegistry, entityRegistry, baseUrl)
+                                    sendEntitiesToSubscriber(subscriber, entities, webSocketScope, baseUrl)
                                 }
                             }
                         }
@@ -243,32 +322,32 @@ class HaControlsProviderService : ControlsProviderService() {
     private suspend fun sendEntitiesToSubscriber(
         subscriber: Flow.Subscriber<in Control>,
         entities: Map<String, Entity<Map<String, Any>>>,
-        areaRegistry: List<AreaRegistryResponse>?,
-        deviceRegistry: List<DeviceRegistryResponse>?,
-        entityRegistry: List<EntityRegistryResponse>?,
+        coroutineScope: CoroutineScope,
         baseUrl: String
     ) {
         entities.forEach {
-            val control = try {
-                domainToHaControl[it.key.split(".")[0]]?.createControl(
-                    applicationContext,
-                    it.value,
-                    RegistriesDataHandler.getAreaForEntity(it.value.entityId, areaRegistry, deviceRegistry, entityRegistry),
-                    entityRequiresAuth(it.value.entityId),
-                    baseUrl
-                )
-            } catch (e: Exception) {
-                Log.e(TAG, "Unable to create control for ${it.value.domain} entity, sending error entity", e)
-                domainToHaControl["ha_failed"]?.createControl(
-                    applicationContext,
-                    getFailedEntity(it.value.entityId, e),
-                    RegistriesDataHandler.getAreaForEntity(it.value.entityId, areaRegistry, deviceRegistry, entityRegistry),
-                    entityRequiresAuth(it.value.entityId),
-                    baseUrl
-                )
+            coroutineScope.launch {
+                val control = try {
+                    domainToHaControl[it.key.split(".")[0]]?.createControl(
+                        applicationContext,
+                        it.value,
+                        RegistriesDataHandler.getAreaForEntity(it.value.entityId, areaRegistry, deviceRegistry, entityRegistry),
+                        entityRequiresAuth(it.value.entityId),
+                        baseUrl
+                    )
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unable to create control for ${it.value.domain} entity, sending error entity", e)
+                    domainToHaControl["ha_failed"]?.createControl(
+                        applicationContext,
+                        getFailedEntity(it.value.entityId, e),
+                        RegistriesDataHandler.getAreaForEntity(it.value.entityId, areaRegistry, deviceRegistry, entityRegistry),
+                        entityRequiresAuth(it.value.entityId),
+                        baseUrl
+                    )
+                }
+                if (control != null)
+                    subscriber.onNext(control)
             }
-            if (control != null)
-                subscriber.onNext(control)
         }
     }
 

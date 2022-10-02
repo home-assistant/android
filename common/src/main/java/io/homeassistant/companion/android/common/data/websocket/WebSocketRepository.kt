@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.common.data.websocket
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DomainResponse
@@ -25,6 +26,8 @@ interface WebSocketRepository {
     suspend fun getServices(): List<DomainResponse>?
     suspend fun getStateChanges(): Flow<StateChangedEvent>?
     suspend fun getStateChanges(entityIds: List<String>): Flow<TriggerEvent>?
+    suspend fun getCompressedStateAndChanges(): Flow<CompressedStateChangedEvent>?
+    suspend fun getCompressedStateAndChanges(entityIds: List<String>): Flow<CompressedStateChangedEvent>?
     suspend fun getAreaRegistryUpdates(): Flow<AreaRegistryUpdatedEvent>?
     suspend fun getDeviceRegistryUpdates(): Flow<DeviceRegistryUpdatedEvent>?
     suspend fun getEntityRegistryUpdates(): Flow<EntityRegistryUpdatedEvent>?
