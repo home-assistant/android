@@ -89,7 +89,7 @@ class SettingsFragment constructor(
         }
 
         findPreference<SwitchPreference>("app_lock")?.setOnPreferenceChangeListener { _, newValue ->
-            var isValid: Boolean
+            val isValid: Boolean
             if (newValue == false) {
                 isValid = true
                 findPreference<SwitchPreference>("app_lock_home_bypass")?.isVisible = false

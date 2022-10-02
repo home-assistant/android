@@ -140,10 +140,8 @@ class SettingsActivity : BaseActivity() {
         Log.d(TAG, "settingsActivityAuthenticationResult(): authenticating: " + authenticating + ", externalAuth: " + isExtAuth)
 
         externalAuthCallback?.let {
-            when (it(result)) {
-                true -> {
-                    externalAuthCallback = null
-                }
+            if (it(result) == true) {
+                externalAuthCallback = null
             }
         }
 
@@ -181,13 +179,13 @@ class SettingsActivity : BaseActivity() {
     }
 
     fun requestAuthentication(title: String, callback: (Int) -> Boolean): Boolean {
-        if (BiometricManager.from(this).canAuthenticate() != BiometricManager.BIOMETRIC_SUCCESS) {
-            return false
+        return if (BiometricManager.from(this).canAuthenticate() != BiometricManager.BIOMETRIC_SUCCESS) {
+            false
         } else {
             externalAuthCallback = callback
             authenticator.authenticate(title)
 
-            return true
+            true
         }
     }
 
