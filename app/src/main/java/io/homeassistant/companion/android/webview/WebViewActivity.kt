@@ -680,7 +680,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             recreate()
 
         appLocked = presenter.isAppLocked()
-        Log.d(TAG, "onResume(): appLock: " + appLocked)
+        Log.d(TAG, "onResume(): appLock: $appLocked")
         binding.blurView.setBlurEnabled(appLocked)
 
         enablePinchToZoom()

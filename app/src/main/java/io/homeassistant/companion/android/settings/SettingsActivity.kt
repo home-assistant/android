@@ -124,7 +124,7 @@ class SettingsActivity : BaseActivity() {
         val appLocked = runBlocking {
             integrationUseCase.isAppLocked()
         }
-        Log.d(TAG, "onResume(): appLock: " + appLocked)
+        Log.d(TAG, "onResume(): appLock: $appLocked")
 
         if (appLocked) {
             authenticating = true
@@ -154,7 +154,7 @@ class SettingsActivity : BaseActivity() {
 
     private fun settingsActivityAuthenticationResult(result: Int) {
         val isExtAuth = (externalAuthCallback != null)
-        Log.d(TAG, "settingsActivityAuthenticationResult(): authenticating: " + authenticating + ", externalAuth: " + isExtAuth)
+        Log.d(TAG, "settingsActivityAuthenticationResult(): authenticating: $authenticating, externalAuth: $isExtAuth")
 
         externalAuthCallback?.let {
             if (it(result) == true) {

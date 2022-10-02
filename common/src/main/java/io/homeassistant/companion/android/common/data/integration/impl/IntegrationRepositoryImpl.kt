@@ -379,9 +379,11 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     override suspend fun isAppLocked(): Boolean {
         val lockEnabled = authenticationRepository.isLockEnabled()
-        val sessionExpired = System.currentTimeMillis() > getSessionExpireMillis()
+        val sessionExpireMillis = getSessionExpireMillis()
+        val currentMillis = System.currentTimeMillis()
+        val sessionExpired =  currentMillis > sessionExpireMillis
 
-        Log.d(TAG, "isAppLocked(). LockEnabled: " + lockEnabled + ", appActive: " + appActive + ", expireMillis: " + getSessionExpireMillis() + ", currentMillis: " + System.currentTimeMillis())
+        Log.d(TAG, "isAppLocked(). LockEnabled: $lockEnabled, appActive: $appActive, expireMillis: $sessionExpireMillis, currentMillis: $currentMillis")
         return (lockEnabled && !appActive && sessionExpired)
     }
 
@@ -389,7 +391,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         if (!active) {
             setSessionExpireMillis(System.currentTimeMillis() + (getSessionTimeOut() * 1000) + APPLOCK_TIMEOUT_GRACE_MS)
         }
-        Log.d(TAG, "setAppActive(): " + active)
+        Log.d(TAG, "setAppActive(): $active")
         appActive = active
     }
 
@@ -402,7 +404,7 @@ class IntegrationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun setSessionExpireMillis(value: Long) {
-        Log.d(TAG, "setSessionExpireMillis(): " + value)
+        Log.d(TAG, "setSessionExpireMillis(): $value")
         localStorage.putLong(PREF_SESSION_EXPIRE, value)
     }
 
