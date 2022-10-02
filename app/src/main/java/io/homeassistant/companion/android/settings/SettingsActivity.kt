@@ -135,6 +135,23 @@ class SettingsActivity : BaseActivity() {
         }
     }
 
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            val appLocked = runBlocking {
+                integrationUseCase.isAppLocked()
+            }
+            Log.d(TAG, "onWindowFocusChanged(): appLock: " + appLocked)
+            if (appLocked) {
+                authenticating = true
+                authenticator.authenticate(getString(commonR.string.biometric_title))
+                blurView.setBlurEnabled(true)
+            } else {
+                blurView.setBlurEnabled(false)
+            }
+        }
+    }
+
     private fun settingsActivityAuthenticationResult(result: Int) {
         val isExtAuth = (externalAuthCallback != null)
         Log.d(TAG, "settingsActivityAuthenticationResult(): authenticating: " + authenticating + ", externalAuth: " + isExtAuth)
