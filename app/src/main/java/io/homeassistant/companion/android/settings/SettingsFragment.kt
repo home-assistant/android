@@ -470,7 +470,7 @@ class SettingsFragment constructor(
 
         findPreference<SwitchPreference>("app_lock_home_bypass")?.isVisible = success
         findPreference<EditTextPreference>("session_timeout")?.isVisible = success
-        return success
+        return (result == Authenticator.SUCCESS || result == Authenticator.CANCELED)
     }
 
     private fun removeSystemFromThemesIfNeeded() {
