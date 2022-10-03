@@ -218,7 +218,7 @@ class AudioSensorManager : SensorManager {
             AudioManager.MODE_RINGTONE -> "mdi:phone-ring"
             AudioManager.MODE_IN_CALL -> "mdi:phone"
             AudioManager.MODE_IN_COMMUNICATION -> "mdi:message-video"
-            AudioManager.MODE_CALL_SCREENING -> "mdi:text-to-speech"
+            AudioManager.MODE_CALL_SCREENING -> "mdi:microphone-message"
             else -> "mdi:volume-low"
         }
 
