@@ -81,7 +81,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val TAG = "IntegrationRepository"
         private const val RATE_LIMIT_URL = BuildConfig.RATE_LIMIT_URL
 
-        private const val APPLOCK_TIMEOUT_GRACE_MS = 200
+        private const val APPLOCK_TIMEOUT_GRACE_MS = 1000
     }
 
     private var appActive = false
