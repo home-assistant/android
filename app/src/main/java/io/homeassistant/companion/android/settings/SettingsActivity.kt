@@ -70,7 +70,7 @@ class SettingsActivity : BaseActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         blurView = findViewById(R.id.blurView)
-        blurView.setupWith(getWindow().getDecorView().getRootView() as ViewGroup)
+        blurView.setupWith(window.decorView.rootView as ViewGroup)
             .setBlurAlgorithm(RenderScriptBlur(this))
             .setBlurAutoUpdate(true)
             .setBlurRadius(8f)
