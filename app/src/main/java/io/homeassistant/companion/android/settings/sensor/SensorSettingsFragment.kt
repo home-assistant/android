@@ -51,9 +51,13 @@ class SensorSettingsFragment : Fragment() {
             viewModel.setSensorsSearchQuery(null)
         }
 
-        if (viewModel.showOnlyEnabledSensors.value) {
-            val checkable = menu.findItem(R.id.action_show_only_enabled_sensors)
-            checkable?.isChecked = true
+        when (viewModel.sensorFilter) {
+            SensorSettingsViewModel.SensorFilter.ENABLED ->
+                menu.findItem(R.id.action_show_sensors_enabled)?.isChecked = true
+            SensorSettingsViewModel.SensorFilter.DISABLED ->
+                menu.findItem(R.id.action_show_sensors_disabled)?.isChecked = true
+            else ->
+                menu.findItem(R.id.action_show_sensors_all)?.isChecked = true
         }
 
         menu.findItem(R.id.get_help)?.let {
@@ -64,9 +68,15 @@ class SensorSettingsFragment : Fragment() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-            R.id.action_show_only_enabled_sensors -> {
-                item.isChecked = !item.isChecked
-                viewModel.setShowOnlyEnabledSensors(item.isChecked)
+            R.id.action_show_sensors_all, R.id.action_show_sensors_enabled, R.id.action_show_sensors_disabled -> {
+                item.isChecked = true
+                viewModel.setSensorFilterChoice(
+                    when (item.itemId) {
+                        R.id.action_show_sensors_enabled -> SensorSettingsViewModel.SensorFilter.ENABLED
+                        R.id.action_show_sensors_disabled -> SensorSettingsViewModel.SensorFilter.DISABLED
+                        else -> SensorSettingsViewModel.SensorFilter.ALL
+                    }
+                )
                 return true
             }
         }
