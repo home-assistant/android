@@ -52,12 +52,12 @@ class SensorSettingsFragment : Fragment() {
         }
 
         when (viewModel.sensorFilter) {
+            SensorSettingsViewModel.SensorFilter.ALL ->
+                menu.findItem(R.id.action_show_sensors_all)?.isChecked = true
             SensorSettingsViewModel.SensorFilter.ENABLED ->
                 menu.findItem(R.id.action_show_sensors_enabled)?.isChecked = true
             SensorSettingsViewModel.SensorFilter.DISABLED ->
                 menu.findItem(R.id.action_show_sensors_disabled)?.isChecked = true
-            else ->
-                menu.findItem(R.id.action_show_sensors_all)?.isChecked = true
         }
 
         menu.findItem(R.id.get_help)?.let {
