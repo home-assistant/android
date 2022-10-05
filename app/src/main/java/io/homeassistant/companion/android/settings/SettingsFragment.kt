@@ -468,6 +468,9 @@ class SettingsFragment constructor(
         val switchLock = findPreference<SwitchPreference>("app_lock")
         switchLock?.isChecked = success
 
+        // Prevent requesting authentication after just enabling the app lock
+        presenter.setAppActive(success)
+
         findPreference<SwitchPreference>("app_lock_home_bypass")?.isVisible = success
         findPreference<EditTextPreference>("session_timeout")?.isVisible = success
         return (result == Authenticator.SUCCESS || result == Authenticator.CANCELED)

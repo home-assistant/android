@@ -10,8 +10,7 @@ interface SettingsPresenter {
     fun onCreate()
     fun onFinish()
     fun updateInternalUrlStatus()
-    fun isLockEnabled(): Boolean
-    fun sessionTimeOut(): Int
+    fun setAppActive(active: Boolean)
     suspend fun getNotificationRateLimits(): RateLimitResponse?
 
     fun isSsidUsed(): Boolean
