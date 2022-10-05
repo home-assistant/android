@@ -125,13 +125,7 @@ class SettingsActivity : BaseActivity() {
             integrationUseCase.isAppLocked()
         }
 
-        if (appLocked) {
-            authenticating = true
-            authenticator.authenticate(getString(commonR.string.biometric_title))
-            blurView.setBlurEnabled(true)
-        } else {
-            blurView.setBlurEnabled(false)
-        }
+        blurView.setBlurEnabled(appLocked)
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
