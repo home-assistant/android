@@ -6,6 +6,7 @@ import android.content.Intent
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.sensors.BatterySensorManager
+import io.homeassistant.companion.android.common.sensors.NetworkSensorManager
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
 
@@ -24,7 +25,8 @@ class SensorReceiver : SensorReceiverBase() {
     companion object {
         const val TAG = "SensorReceiver"
         val MANAGERS = listOf(
-            BatterySensorManager()
+            BatterySensorManager(),
+            NetworkSensorManager()
         )
 
         const val ACTION_REQUEST_SENSORS_UPDATE =

@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.home.views
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -21,13 +23,23 @@ fun SensorUi(
     basicSensor: SensorManager.BasicSensor,
     onSensorClicked: (String, Boolean) -> Unit,
 ) {
+    var checked = sensor?.enabled == true
+
+    val permissionLaunch = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { isGranted ->
+        isGranted.forEach { checked = sensor?.enabled == true && it.value }
+    }
+
     val perm = manager.checkPermission(LocalContext.current, basicSensor.id)
-    val checked = sensor?.enabled == true
     ToggleChip(
         checked = (sensor == null && manager.enabledByDefault) ||
             (sensor?.enabled == true && perm),
         onCheckedChange = { enabled ->
-            onSensorClicked(basicSensor.id, enabled)
+            if (perm)
+                onSensorClicked(basicSensor.id, enabled)
+            else
+                permissionLaunch.launch(manager.requiredPermissions(basicSensor.id))
         },
         modifier = Modifier
             .fillMaxWidth(),
