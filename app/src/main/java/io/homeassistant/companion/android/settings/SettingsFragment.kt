@@ -308,6 +308,7 @@ class SettingsFragment constructor(
         val pm = requireContext().packageManager
         val wearCompanionApps = listOf(
             "com.google.android.wearable.app",
+            "com.google.android.apps.wear.companion",
             "com.samsung.android.app.watchmanager",
             "com.montblanc.summit.companion.android"
         )
