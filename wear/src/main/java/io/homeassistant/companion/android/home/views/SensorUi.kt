@@ -26,10 +26,20 @@ fun SensorUi(
 ) {
     var checked = sensor?.enabled == true
 
+    val backgroundRequest =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
+
     val permissionLaunch = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { isGranted ->
-        isGranted.forEach { checked = sensor?.enabled == true && it.value }
+        isGranted.forEach {
+            if (manager.requiredPermissions(basicSensor.id)
+                .contains(Manifest.permission.ACCESS_FINE_LOCATION) && manager.requiredPermissions(basicSensor.id)
+                    .contains(Manifest.permission.ACCESS_BACKGROUND_LOCATION) && it.key == Manifest.permission.ACCESS_FINE_LOCATION
+            )
+                backgroundRequest.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+            checked = sensor?.enabled == true && it.value
+        }
     }
 
     val perm = manager.checkPermission(LocalContext.current, basicSensor.id)
@@ -45,7 +55,8 @@ fun SensorUi(
                     if (permissions.size == 1 && permissions[0] == Manifest.permission.ACCESS_BACKGROUND_LOCATION)
                         permissions
                     else
-                        permissions.toSet().minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION).toTypedArray()
+                        permissions.toSet().minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                            .toTypedArray()
                 )
         },
         modifier = Modifier
