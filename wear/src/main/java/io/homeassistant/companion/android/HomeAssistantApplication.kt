@@ -3,6 +3,7 @@ package io.homeassistant.companion.android
 import android.app.Application
 import android.content.Intent
 import android.content.IntentFilter
+import android.net.wifi.WifiManager
 import dagger.hilt.android.HiltAndroidApp
 import io.homeassistant.companion.android.complications.ComplicationReceiver
 import io.homeassistant.companion.android.sensors.SensorReceiver
@@ -23,6 +24,15 @@ open class HomeAssistantApplication : Application() {
                 addAction(Intent.ACTION_BATTERY_OKAY)
                 addAction(Intent.ACTION_POWER_CONNECTED)
                 addAction(Intent.ACTION_POWER_DISCONNECTED)
+            }
+        )
+
+        // This will trigger an update any time the wifi state has changed
+        registerReceiver(
+            sensorReceiver,
+            IntentFilter().apply {
+                addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION)
+                addAction(WifiManager.WIFI_STATE_CHANGED_ACTION)
             }
         )
 
