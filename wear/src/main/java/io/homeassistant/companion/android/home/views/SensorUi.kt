@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.home.views
 
+import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,10 +37,16 @@ fun SensorUi(
         checked = (sensor == null && manager.enabledByDefault) ||
             (sensor?.enabled == true && perm),
         onCheckedChange = { enabled ->
+            val permissions = manager.requiredPermissions(basicSensor.id)
             if (perm)
                 onSensorClicked(basicSensor.id, enabled)
             else
-                permissionLaunch.launch(manager.requiredPermissions(basicSensor.id))
+                permissionLaunch.launch(
+                    if (permissions.size == 1 && permissions[0] == Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                        permissions
+                    else
+                        permissions.toSet().minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION).toTypedArray()
+                )
         },
         modifier = Modifier
             .fillMaxWidth(),
