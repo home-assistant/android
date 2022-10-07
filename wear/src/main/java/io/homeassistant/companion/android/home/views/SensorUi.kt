@@ -32,14 +32,17 @@ fun SensorUi(
     val permissionLaunch = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { isGranted ->
+        var allGranted = true
         isGranted.forEach {
             if (manager.requiredPermissions(basicSensor.id)
                 .contains(Manifest.permission.ACCESS_FINE_LOCATION) && manager.requiredPermissions(basicSensor.id)
                     .contains(Manifest.permission.ACCESS_BACKGROUND_LOCATION) && it.key == Manifest.permission.ACCESS_FINE_LOCATION
             )
                 backgroundRequest.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-            checked = sensor?.enabled == true && it.value
+            if (!it.value)
+                allGranted = false
         }
+        checked = sensor?.enabled == true && allGranted
     }
 
     val perm = manager.checkPermission(LocalContext.current, basicSensor.id)
