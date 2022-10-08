@@ -921,4 +921,6 @@
     <string name="basic_sensor_name_screen_brightness">Screen Brightness</string>
     <string name="sensor_description_screen_brightness">The current screen brightness on the device, an attribute also indicates if auto-brightness is enabled</string>
     <string name="sensor_name_display_sensors">Display Sensors</string>
+    <string name="sensor_name_screen_off_timeout">Screen Off Timeout</string>
+    <string name="sensor_description_screen_off_timeout">The current duration of idle time before the screen turns off in milliseconds</string>
 </resources>
