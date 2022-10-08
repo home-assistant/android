@@ -52,9 +52,8 @@ class SettingsWearMainView : AppCompatActivity() {
             LoadSettingsHomeView(
                 settingsWearViewModel,
                 currentNodes.firstOrNull()?.displayName ?: "unknown",
-                this::loginWearOs,
-                this::onBackPressed
-            )
+                this::loginWearOs
+            ) { onBackPressedDispatcher.onBackPressed() }
         }
 
         if (registerUrl != null) {

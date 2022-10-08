@@ -80,7 +80,7 @@ class SettingsActivity : BaseActivity() {
                 if (supportFragmentManager.backStackEntryCount > 0) {
                     supportFragmentManager.popBackStack()
                 } else {
-                    onBackPressed()
+                    onBackPressedDispatcher.onBackPressed()
                 }
                 true
             }
