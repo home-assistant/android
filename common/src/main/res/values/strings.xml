@@ -931,4 +931,6 @@
     <string name="sensor_name_display_sensors">Display Sensors</string>
     <string name="sensor_name_screen_off_timeout">Screen Off Timeout</string>
     <string name="sensor_description_screen_off_timeout">The current duration of idle time before the screen turns off in milliseconds</string>
+    <string name="sensor_name_on_body">On Body Sensor</string>
+    <string name="sensor_description_on_body">Indicates whether the device is on body</string>
 </resources>

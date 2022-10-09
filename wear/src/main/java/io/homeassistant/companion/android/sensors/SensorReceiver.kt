@@ -27,7 +27,8 @@ class SensorReceiver : SensorReceiverBase() {
         const val TAG = "SensorReceiver"
         val MANAGERS = listOf(
             BatterySensorManager(),
-            NetworkSensorManager()
+            NetworkSensorManager(),
+            OnBodySensorManager()
         )
 
         const val ACTION_REQUEST_SENSORS_UPDATE =
