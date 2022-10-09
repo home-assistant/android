@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.home.views
 
 import android.Manifest
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,16 +28,19 @@ fun SensorUi(
     var checked = sensor?.enabled == true
 
     val backgroundRequest =
-        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+            checked = sensor?.enabled == true && it
+        }
 
     val permissionLaunch = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { isGranted ->
         var allGranted = true
         isGranted.forEach {
-            if (manager.requiredPermissions(basicSensor.id)
-                .contains(Manifest.permission.ACCESS_FINE_LOCATION) && manager.requiredPermissions(basicSensor.id)
-                    .contains(Manifest.permission.ACCESS_BACKGROUND_LOCATION) && it.key == Manifest.permission.ACCESS_FINE_LOCATION
+            if (
+                manager.requiredPermissions(basicSensor.id).contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
+                manager.requiredPermissions(basicSensor.id).contains(Manifest.permission.ACCESS_BACKGROUND_LOCATION) &&
+                it.key == Manifest.permission.ACCESS_FINE_LOCATION && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
             )
                 backgroundRequest.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
             if (!it.value)

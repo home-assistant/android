@@ -279,7 +279,6 @@ class MainViewModel @Inject constructor(
         isEnabled: Boolean
     ) {
         sensorDao.setSensorsEnabled(listOf(basicSensor.id), isEnabled)
-        sensorDao.updateLastSentStateAndIcon(basicSensor.id, null, null)
         SensorWorker.start(getApplication())
     }
 
