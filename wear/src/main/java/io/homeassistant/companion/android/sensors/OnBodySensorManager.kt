@@ -5,15 +5,12 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import kotlin.math.roundToInt
 import io.homeassistant.companion.android.common.R as commonR
 
-@RequiresApi(Build.VERSION_CODES.O)
 class OnBodySensorManager : SensorManager, SensorEventListener {
     companion object {
 
