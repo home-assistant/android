@@ -129,6 +129,7 @@ class WebViewPresenterImpl @Inject constructor(
         mainScope.launch {
             urlUseCase.saveUrl("", true)
             urlUseCase.saveUrl("", false)
+            urlUseCase.updateCloudUrls(null, null)
         }
     }
 

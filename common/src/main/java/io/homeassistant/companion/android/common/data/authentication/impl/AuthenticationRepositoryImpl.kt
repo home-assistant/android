@@ -77,6 +77,7 @@ class AuthenticationRepositoryImpl @Inject constructor(
         saveSession(null)
         urlRepository.saveUrl("", true)
         urlRepository.saveUrl("", false)
+        urlRepository.updateCloudUrls(null, null)
         urlRepository.saveHomeWifiSsids(emptySet())
     }
 

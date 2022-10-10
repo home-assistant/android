@@ -540,6 +540,7 @@ class IntegrationRepositoryImpl @Inject constructor(
                     PREF_CHECK_SENSOR_REGISTRATION_NEXT,
                     System.currentTimeMillis() + TimeUnit.HOURS.toMillis(4)
                 )
+                urlRepository.updateCloudUrls(response.cloudhookUrl, response.remoteUiUrl)
                 return response
             }
         }

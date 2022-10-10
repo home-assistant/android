@@ -15,9 +15,15 @@ interface UrlRepository {
 
     suspend fun saveRegistrationUrls(cloudHookUrl: String?, remoteUiUrl: String?, webhookId: String)
 
+    suspend fun updateCloudUrls(cloudhookUrl: String?, remoteUiUrl: String?)
+
     suspend fun getUrl(isInternal: Boolean? = null): URL?
 
     suspend fun saveUrl(url: String, isInternal: Boolean? = null)
+
+    suspend fun shouldUseCloud(): Boolean
+
+    suspend fun setUseCloud(use: Boolean)
 
     suspend fun getHomeWifiSsids(): Set<String>
 
