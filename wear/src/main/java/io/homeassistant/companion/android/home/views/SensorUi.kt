@@ -25,12 +25,11 @@ fun SensorUi(
     basicSensor: SensorManager.BasicSensor,
     onSensorClicked: (String, Boolean) -> Unit,
 ) {
-    var checked = sensor?.enabled == true
+    val checked = sensor?.enabled == true
 
     val backgroundRequest =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
             onSensorClicked(basicSensor.id, it)
-            checked = sensor?.enabled == true && it
         }
 
     val permissionLaunch = rememberLauncherForActivityResult(
@@ -50,7 +49,6 @@ fun SensorUi(
                 allGranted = false
         }
         onSensorClicked(basicSensor.id, allGranted)
-        checked = sensor?.enabled == true && allGranted
     }
 
     val perm = manager.checkPermission(LocalContext.current, basicSensor.id)
