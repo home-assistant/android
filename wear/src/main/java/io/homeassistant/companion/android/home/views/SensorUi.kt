@@ -29,6 +29,7 @@ fun SensorUi(
 
     val backgroundRequest =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+            onSensorClicked(basicSensor.id, it)
             checked = sensor?.enabled == true && it
         }
 
@@ -41,11 +42,14 @@ fun SensorUi(
                 manager.requiredPermissions(basicSensor.id).contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
                 manager.requiredPermissions(basicSensor.id).contains(Manifest.permission.ACCESS_BACKGROUND_LOCATION) &&
                 it.key == Manifest.permission.ACCESS_FINE_LOCATION && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
-            )
+            ) {
                 backgroundRequest.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                return@forEach
+            }
             if (!it.value)
                 allGranted = false
         }
+        onSensorClicked(basicSensor.id, allGranted)
         checked = sensor?.enabled == true && allGranted
     }
 
@@ -55,7 +59,7 @@ fun SensorUi(
             (sensor?.enabled == true && perm),
         onCheckedChange = { enabled ->
             val permissions = manager.requiredPermissions(basicSensor.id)
-            if (perm)
+            if (perm || !enabled)
                 onSensorClicked(basicSensor.id, enabled)
             else
                 permissionLaunch.launch(
