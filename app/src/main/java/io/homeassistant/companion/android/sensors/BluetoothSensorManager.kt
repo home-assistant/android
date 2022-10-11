@@ -167,7 +167,6 @@ class BluetoothSensorManager : SensorManager {
             }
             (sensorId == beaconMonitor.id && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) -> {
                 arrayOf(
-                    Manifest.permission.BLUETOOTH,
                     Manifest.permission.BLUETOOTH_CONNECT,
                     Manifest.permission.BLUETOOTH_SCAN,
                     Manifest.permission.ACCESS_FINE_LOCATION,
