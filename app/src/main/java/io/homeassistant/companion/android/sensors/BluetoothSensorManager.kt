@@ -143,7 +143,6 @@ class BluetoothSensorManager : SensorManager {
         return when {
             (sensorId == bleTransmitter.id && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) -> {
                 arrayOf(
-                    Manifest.permission.BLUETOOTH,
                     Manifest.permission.BLUETOOTH_ADVERTISE,
                     Manifest.permission.BLUETOOTH_CONNECT
                 )
@@ -176,7 +175,6 @@ class BluetoothSensorManager : SensorManager {
             }
             (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) -> {
                 arrayOf(
-                    Manifest.permission.BLUETOOTH,
                     Manifest.permission.BLUETOOTH_CONNECT
                 )
             }
