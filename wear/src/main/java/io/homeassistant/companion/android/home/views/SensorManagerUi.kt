@@ -1,7 +1,9 @@
 package io.homeassistant.companion.android.home.views
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.ScalingLazyListState
@@ -9,6 +11,7 @@ import androidx.wear.compose.material.rememberScalingLazyListState
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.theme.WearAppTheme
+import io.homeassistant.companion.android.util.batterySensorManager
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
 
@@ -54,5 +57,16 @@ fun SensorManagerUi(
                 }
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewSensorManagerUI() {
+    CompositionLocalProvider {
+        SensorManagerUi(
+            allSensors = listOf(),
+            sensorManager = batterySensorManager
+        ) { _, _ -> }
     }
 }

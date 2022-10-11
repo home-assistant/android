@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -15,6 +16,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.InlineSlider
@@ -40,6 +42,7 @@ import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.util.getColorTemperature
 import io.homeassistant.companion.android.util.onEntityClickedFeedback
 import io.homeassistant.companion.android.util.onEntityFeedback
+import io.homeassistant.companion.android.util.previewEntity1
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
 import java.text.DateFormat
@@ -341,4 +344,20 @@ private fun onSliderChangedFeedback(
         context,
         haptic
     )
+}
+
+@Preview
+@Composable
+private fun PreviewDetailsPaneView() {
+    CompositionLocalProvider {
+        DetailsPanelView(
+            entity = previewEntity1,
+            onEntityToggled = { _, _, -> },
+            onFanSpeedChanged = {},
+            onBrightnessChanged = {},
+            onColorTempChanged = {},
+            isToastEnabled = false,
+            isHapticEnabled = false
+        )
+    }
 }
