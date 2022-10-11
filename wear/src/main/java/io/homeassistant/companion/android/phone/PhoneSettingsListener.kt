@@ -4,15 +4,7 @@ import android.content.Intent
 import android.util.Log
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.google.android.gms.wearable.DataClient
-import com.google.android.gms.wearable.DataEvent
-import com.google.android.gms.wearable.DataEventBuffer
-import com.google.android.gms.wearable.DataMap
-import com.google.android.gms.wearable.DataMapItem
-import com.google.android.gms.wearable.MessageEvent
-import com.google.android.gms.wearable.PutDataMapRequest
-import com.google.android.gms.wearable.Wearable
-import com.google.android.gms.wearable.WearableListenerService
+import com.google.android.gms.wearable.*
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
@@ -28,6 +20,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -80,9 +73,11 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
             asPutDataRequest()
         }
 
-        Wearable.getDataClient(this@PhoneSettingsListener).putDataItem(putDataRequest).apply {
-            addOnSuccessListener { Log.d(TAG, "Successfully sent /config to device") }
-            addOnFailureListener { e -> Log.e(TAG, "Failed to send /config to device", e) }
+        try {
+            Wearable.getDataClient(this@PhoneSettingsListener).putDataItem(putDataRequest).await()
+            Log.d(TAG, "Successfully sent /config to device")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to send /config to device", e)
         }
     }
 

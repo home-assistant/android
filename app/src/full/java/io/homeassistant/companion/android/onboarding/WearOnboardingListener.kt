@@ -1,11 +1,7 @@
 package io.homeassistant.companion.android.onboarding
 
 import android.util.Log
-import com.google.android.gms.wearable.MessageEvent
-import com.google.android.gms.wearable.PutDataMapRequest
-import com.google.android.gms.wearable.PutDataRequest
-import com.google.android.gms.wearable.Wearable
-import com.google.android.gms.wearable.WearableListenerService
+import com.google.android.gms.wearable.*
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
@@ -43,9 +39,8 @@ class WearOnboardingListener : WearableListenerService() {
                 setUrgent()
                 asPutDataRequest()
             }
-            Wearable.getDataClient(this@WearOnboardingListener).putDataItem(putDataReq).apply {
-                addOnSuccessListener { Log.d("WearOnboardingListener", "sendHomeAssistantInstance: success") }
-                addOnFailureListener { Log.d("WearOnboardingListener", "sendHomeAssistantInstance: failed") }
+            Wearable.getDataClient(this@WearOnboardingListener).putDataItem(putDataReq).addOnCompleteListener {
+                Log.d("WearOnboardingListener", "sendHomeAssistantInstance: ${if (it.isSuccessful) "success" else "failed"}")
             }
         }
     }
