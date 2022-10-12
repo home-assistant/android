@@ -43,6 +43,7 @@ import io.homeassistant.companion.android.settings.sensor.SensorSettingsFragment
 import io.homeassistant.companion.android.settings.sensor.SensorUpdateFrequencyFragment
 import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSettingsFragment
 import io.homeassistant.companion.android.settings.ssid.SsidFragment
+import io.homeassistant.companion.android.settings.url.ExternalUrlFragment
 import io.homeassistant.companion.android.settings.wear.SettingsWearActivity
 import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
@@ -146,8 +147,14 @@ class SettingsFragment constructor(
                 onChangeUrlValidator
         }
 
-        findPreference<EditTextPreference>("connection_external")?.onPreferenceChangeListener =
-            onChangeUrlValidator
+        findPreference<Preference>("connection_external")?.setOnPreferenceClickListener {
+            parentFragmentManager
+                .beginTransaction()
+                .replace(R.id.content, ExternalUrlFragment::class.java, null)
+                .addToBackStack(getString(commonR.string.input_url))
+                .commit()
+            return@setOnPreferenceClickListener true
+        }
 
         findPreference<Preference>("connection_internal_ssids")?.let {
             it.setOnPreferenceClickListener {
@@ -412,6 +419,14 @@ class SettingsFragment constructor(
         }
     }
 
+    override fun updateExternalUrl(url: String, useCloud: Boolean) {
+        findPreference<Preference>("connection_external")?.let {
+            it.summary =
+                if (useCloud) getString(commonR.string.input_cloud)
+                else url
+        }
+    }
+
     override fun updateSsids(ssids: Set<String>) {
         findPreference<Preference>("connection_internal_ssids")?.let {
             it.summary =
@@ -594,5 +609,6 @@ class SettingsFragment constructor(
         activity?.title = getString(commonR.string.companion_app)
 
         presenter.updateInternalUrlStatus()
+        presenter.updateExternalUrlStatus()
     }
 }

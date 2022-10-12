@@ -240,6 +240,7 @@
     <string name="icon">Icon</string>
     <string name="input_booleans">Input Booleans</string>
     <string name="input_buttons">Input Buttons</string>
+    <string name="input_cloud">Use Home Assistant Cloud</string>
     <string name="input_url_hint">https://example.duckdns.org:8123</string>
     <string name="input_url">Home Assistant URL</string>
     <string name="install_app">Install App on Wear Device</string>
@@ -752,7 +753,7 @@
     <string name="update_widget">Update Widget</string>
     <string name="updating_sensors">Updating Sensors</string>
     <string name="url_invalid">Url Invalid</string>
-    <string name="url_parse_error">Unable to parse your Home Assistant URL. It should look like https://example.com</string>
+    <string name="url_parse_error">Unable to parse your URL. It should look like this: https://example.com.</string>
     <string name="username">Username</string>
     <string name="version">Version: %s</string>
     <string name="view_password">View Password</string>

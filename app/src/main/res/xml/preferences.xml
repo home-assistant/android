@@ -4,11 +4,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <PreferenceCategory
         android:title="@string/pref_connection_title">
-        <EditTextPreference
+        <Preference
             android:key="connection_external"
             android:icon="@drawable/ic_globe"
-            android:title="@string/pref_connection_url"
-            app:useSimpleSummaryProvider="true"/>
+            android:title="@string/pref_connection_url"/>
         <Preference
             android:key="connection_internal_ssids"
             android:icon="@drawable/ic_wifi"
