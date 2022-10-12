@@ -608,7 +608,7 @@ class SettingsFragment constructor(
         super.onResume()
         activity?.title = getString(commonR.string.companion_app)
 
-        presenter.updateInternalUrlStatus()
         presenter.updateExternalUrlStatus()
+        presenter.updateInternalUrlStatus()
     }
 }
