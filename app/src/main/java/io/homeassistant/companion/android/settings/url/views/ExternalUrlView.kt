@@ -11,8 +11,11 @@ import androidx.compose.material.Switch
 import androidx.compose.material.SwitchDefaults
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -27,6 +30,8 @@ fun ExternalUrlView(
     onUseCloudToggle: (Boolean) -> Unit,
     onExternalUrlSaved: (String) -> Unit
 ) {
+    val focusRequester = remember { FocusRequester() }
+
     Column(
         modifier = Modifier.padding(vertical = 16.dp)
     ) {
@@ -35,16 +40,20 @@ fun ExternalUrlView(
                 useCloud = useCloud,
                 onUseCloudToggle = onUseCloudToggle
             )
-            Spacer(modifier = Modifier.height(36.dp))
+            Spacer(modifier = Modifier.height(24.dp))
         }
 
         if (!canUseCloud || !useCloud) {
-            UrlInputView(
+            ExternalUrlInputView(
                 url = externalUrl,
-                allowBlank = false,
+                focusRequester = focusRequester,
                 onSaveUrl = onExternalUrlSaved
             )
         }
+    }
+
+    LaunchedEffect(Unit) {
+        if (!canUseCloud) focusRequester.requestFocus()
     }
 }
 

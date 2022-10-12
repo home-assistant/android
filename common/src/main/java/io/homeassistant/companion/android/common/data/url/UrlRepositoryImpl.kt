@@ -90,15 +90,15 @@ class UrlRepositoryImpl @Inject constructor(
         localStorage.putString(PREF_CLOUD_UI_URL, remoteUiUrl)
     }
 
-    override suspend fun getUrl(isInternal: Boolean?, ignoreCloud: Boolean): URL? {
+    override suspend fun getUrl(isInternal: Boolean?, force: Boolean): URL? {
         val internal = localStorage.getString(PREF_LOCAL_URL)?.toHttpUrlOrNull()?.toUrl()
         val external = localStorage.getString(PREF_REMOTE_URL)?.toHttpUrlOrNull()?.toUrl()
         val cloud = localStorage.getString(PREF_CLOUD_UI_URL)?.toHttpUrlOrNull()?.toUrl()
 
-        return if (isInternal ?: isInternal() && internal != null) {
+        return if (isInternal ?: isInternal() && (internal != null || force)) {
             Log.d(TAG, "Using internal URL")
             internal
-        } else if (!ignoreCloud && shouldUseCloud() && cloud != null) {
+        } else if (!force && shouldUseCloud() && cloud != null) {
             Log.d(TAG, "Using cloud / remote UI URL")
             cloud
         } else {

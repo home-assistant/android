@@ -77,7 +77,7 @@ class SettingsPresenterImpl @Inject constructor(
     override fun getString(key: String, defValue: String?): String? {
         return runBlocking {
             when (key) {
-                "connection_internal" -> (urlUseCase.getUrl(true) ?: "").toString()
+                "connection_internal" -> (urlUseCase.getUrl(isInternal = true, force = true) ?: "").toString()
                 "registration_name" -> integrationUseCase.getRegistration().deviceName
                 "session_timeout" -> integrationUseCase.getSessionTimeOut().toString()
                 "themes" -> themesManager.getCurrentTheme()

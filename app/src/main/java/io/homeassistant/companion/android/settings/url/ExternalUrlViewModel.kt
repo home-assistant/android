@@ -30,7 +30,7 @@ class ExternalUrlViewModel @Inject constructor(
         viewModelScope.launch {
             canUseCloud = urlRepository.canUseCloud()
             useCloud = urlRepository.shouldUseCloud()
-            externalUrl = urlRepository.getUrl(isInternal = false, ignoreCloud = true).toString()
+            externalUrl = urlRepository.getUrl(isInternal = false, force = true).toString()
         }
     }
 
@@ -49,7 +49,7 @@ class ExternalUrlViewModel @Inject constructor(
     fun updateExternalUrl(url: String) {
         viewModelScope.launch {
             urlRepository.saveUrl(url, false)
-            externalUrl = urlRepository.getUrl(isInternal = false, ignoreCloud = true)?.toString() ?: ""
+            externalUrl = urlRepository.getUrl(isInternal = false, force = true)?.toString() ?: ""
         }
     }
 }

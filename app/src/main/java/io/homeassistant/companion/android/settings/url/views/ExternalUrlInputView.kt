@@ -20,6 +20,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -30,9 +32,9 @@ import io.homeassistant.companion.android.common.R as commonR
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun UrlInputView(
+fun ExternalUrlInputView(
     url: String?,
-    allowBlank: Boolean,
+    focusRequester: FocusRequester,
     onSaveUrl: (String) -> Unit
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -54,13 +56,14 @@ fun UrlInputView(
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(
                 onDone = {
-                    urlError = !performUrlUpdate(urlInput?.trim(), url, allowBlank, onSaveUrl)
+                    urlError = !performUrlUpdate(urlInput?.trim(), url, onSaveUrl)
                     if (!urlError) {
                         keyboardController?.hide()
                         focusManager.clearFocus()
                     }
                 }
             ),
+            placeholder = { Text(stringResource(commonR.string.input_url)) },
             isError = urlError,
             trailingIcon = if (urlError) {
                 {
@@ -71,6 +74,7 @@ fun UrlInputView(
                 }
             } else null,
             modifier = Modifier
+                .focusRequester(focusRequester)
                 .fillMaxWidth()
                 .padding(bottom = 8.dp)
         )
@@ -88,7 +92,7 @@ fun UrlInputView(
             TextButton(
                 modifier = Modifier.align(Alignment.End),
                 onClick = {
-                    urlError = !performUrlUpdate(urlInput?.trim(), url, allowBlank, onSaveUrl)
+                    urlError = !performUrlUpdate(urlInput?.trim(), url, onSaveUrl)
                     if (!urlError) {
                         keyboardController?.hide()
                         focusManager.clearFocus()
@@ -108,17 +112,13 @@ fun UrlInputView(
 private fun performUrlUpdate(
     input: String?,
     current: String?,
-    allowBlank: Boolean,
     onSaveUrl: (String) -> Unit
 ): Boolean {
     return if (input != current && input?.toHttpUrlOrNull()?.toString() != current) {
         val urlValue = input?.toHttpUrlOrNull()
-        val isValid = (allowBlank && input.isNullOrBlank()) || urlValue != null
+        val isValid = urlValue != null
         if (isValid) {
-            onSaveUrl(
-                if (allowBlank && input.isNullOrBlank()) ""
-                else urlValue.toString()
-            )
+            onSaveUrl(urlValue.toString())
         }
         isValid
     } else {

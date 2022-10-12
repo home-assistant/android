@@ -17,7 +17,7 @@ interface UrlRepository {
 
     suspend fun updateCloudUrls(cloudhookUrl: String?, remoteUiUrl: String?)
 
-    suspend fun getUrl(isInternal: Boolean? = null, ignoreCloud: Boolean = false): URL?
+    suspend fun getUrl(isInternal: Boolean? = null, force: Boolean = false): URL?
 
     suspend fun saveUrl(url: String, isInternal: Boolean? = null)
 
