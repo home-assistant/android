@@ -592,6 +592,9 @@
     <string name="sensor_setting_lastreboot_deadband_title">Deadband</string>
     <string name="sensor_setting_lastupdate_add_new_intent_title">Add New Intent</string>
     <string name="sensor_setting_lastupdate_intent_title" translatable="false">Intent %1$1s</string>
+    <string name="sensor_setting_location_send_as_title">Send location as</string>
+    <string name="sensor_setting_location_send_as_exact_label">Exact location</string>
+    <string name="sensor_setting_location_send_as_zone_only_label">Zone name only</string>
     <string name="sensor_setting_location_ham_enabled_title">High accuracy mode (May drain battery fast)</string>
     <string name="sensor_setting_location_ham_zone_bt_combined_title">High accuracy mode enabled only when in zone and BT device connected</string>
     <string name="sensor_setting_location_ham_only_bt_dev_title">High accuracy mode only when connected to BT devices</string>
