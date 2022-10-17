@@ -118,7 +118,7 @@ abstract class TileExtensions : TileService() {
                 } else
                     tile.state = Tile.STATE_INACTIVE
 
-                val iconId = tileData.iconId
+                val iconId = tileData.dialogIconId
                 if (iconId != null) {
                     val icon = getTileIcon(iconId, context)
                     tile.icon = Icon.createWithBitmap(icon)
@@ -214,7 +214,7 @@ abstract class TileExtensions : TileService() {
                     TileEntity(
                         tileId = tileId,
                         added = added,
-                        iconId = null,
+                        dialogIconId = null,
                         entityId = "",
                         label = "",
                         subtitle = null

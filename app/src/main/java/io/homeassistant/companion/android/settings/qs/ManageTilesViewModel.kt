@@ -140,7 +140,7 @@ class ManageTilesViewModel @Inject constructor(
         tileSubtitle = currentTile.subtitle
         selectedEntityId = currentTile.entityId
         selectIcon(
-            currentTile.iconId?.let {
+            currentTile.dialogIconId?.let {
                 if (::iconPack.isInitialized) iconPack.getIcon(it)
                 else null
             }
@@ -153,7 +153,7 @@ class ManageTilesViewModel @Inject constructor(
                 id = selectedTileId,
                 tileId = selectedTile.id,
                 added = selectedTileAdded,
-                iconId = selectedIcon,
+                dialogIconId = selectedIcon,
                 entityId = selectedEntityId,
                 label = tileLabel,
                 subtitle = tileSubtitle

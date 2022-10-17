@@ -192,7 +192,7 @@ class ButtonWidget : AppWidgetProvider() {
             setWidgetBackground(this, widget)
 
             // Content
-            val iconId = widget?.iconId ?: 988171 // Lightning bolt
+            val iconId = widget?.dialogIconId ?: 988171 // Lightning bolt
 
             val iconDrawable = iconPack?.icons?.get(iconId)?.drawable
             if (iconDrawable != null) {

@@ -30,6 +30,8 @@ data class IconMeta(
     /** Alternate names for the icon, such as user-alert */
     val aliases: List<String>,
 ) {
+    val prefixedName = "mdi:$name"
+
     fun getIcon(): IIcon {
         val iconicsKey = "${CommunityMaterial.mappingPrefix}_${name.replace('-', '_')}"
         return CommunityMaterial.getIcon(iconicsKey)

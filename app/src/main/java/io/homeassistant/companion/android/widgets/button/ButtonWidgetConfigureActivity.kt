@@ -355,7 +355,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
                 searchVisibility = IconDialog.SearchVisibility.ALWAYS
             }
             val iconDialog = IconDialog.newInstance(settings)
-            val iconId = buttonWidget?.iconId ?: 62017
+            val iconId = buttonWidget?.dialogIconId ?: 62017
             onIconDialogIconsSelected(iconDialog, listOf(iconPack.icons[iconId]!!))
             binding.widgetConfigIconSelector.setOnClickListener {
                 iconDialog.show(supportFragmentManager, ICON_DIALOG_TAG)
