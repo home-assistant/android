@@ -326,8 +326,6 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 }
             }
 
-            setupSendLocationAsSetting()
-
             val highAccuracyModeSettingEnabled = getHighAccuracyModeSetting()
             enableDisableSetting(latestContext, backgroundLocation, SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL, highAccuracyModeSettingEnabled)
             enableDisableSetting(latestContext, backgroundLocation, SETTING_HIGH_ACCURACY_MODE_BLUETOOTH_DEVICES, highAccuracyModeSettingEnabled)
@@ -339,6 +337,8 @@ class LocationSensorManager : LocationSensorManagerBase() {
             lastHighAccuracyTriggerRange = highAccuracyTriggerRange
             lastHighAccuracyMode = highAccuracyModeEnabled
             lastHighAccuracyUpdateInterval = updateIntervalHighAccuracySeconds
+
+            getSendLocationAsSetting() // Sets up the setting, value isn't used right now
         }
     }
 
@@ -550,13 +550,6 @@ class LocationSensorManager : LocationSensorManagerBase() {
             SensorSettingType.TOGGLE,
             "false"
         ).toBoolean()
-    }
-
-    private suspend fun setupSendLocationAsSetting() {
-        if (integrationUseCase.isHomeAssistantVersionAtLeast(2022, 2, 0)) {
-            getSendLocationAsSetting() // create if not existing
-            enableDisableSetting(latestContext, backgroundLocation, SETTING_SEND_LOCATION_AS, true)
-        }
     }
 
     private suspend fun getSendLocationAsSetting(): String {
