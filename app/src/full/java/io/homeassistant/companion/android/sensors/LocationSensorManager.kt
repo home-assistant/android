@@ -553,25 +553,25 @@ class LocationSensorManager : LocationSensorManagerBase() {
     }
 
     private suspend fun setupSendLocationAsSetting() {
-        val supported = integrationUseCase.isHomeAssistantVersionAtLeast(2022, 2, 0)
-        getSendLocationAsSetting() // create if not existing
-        enableDisableSetting(latestContext, backgroundLocation, SETTING_SEND_LOCATION_AS, supported)
+        if (integrationUseCase.isHomeAssistantVersionAtLeast(2022, 2, 0)) {
+            getSendLocationAsSetting() // create if not existing
+            enableDisableSetting(latestContext, backgroundLocation, SETTING_SEND_LOCATION_AS, true)
+        }
     }
 
     private suspend fun getSendLocationAsSetting(): String {
-        val supported = integrationUseCase.isHomeAssistantVersionAtLeast(2022, 2, 0)
-        val setting = getSetting(
-            context = latestContext,
-            sensor = backgroundLocation,
-            settingName = SETTING_SEND_LOCATION_AS,
-            settingType = SensorSettingType.LIST,
-            entries = listOf(
-                SEND_LOCATION_AS_EXACT, SEND_LOCATION_AS_ZONE_ONLY
-            ),
-            enabled = supported,
-            default = SEND_LOCATION_AS_EXACT
-        )
-        return if (supported) setting else SEND_LOCATION_AS_EXACT
+        return if (integrationUseCase.isHomeAssistantVersionAtLeast(2022, 2, 0)) {
+            getSetting(
+                context = latestContext,
+                sensor = backgroundLocation,
+                settingName = SETTING_SEND_LOCATION_AS,
+                settingType = SensorSettingType.LIST,
+                entries = listOf(
+                    SEND_LOCATION_AS_EXACT, SEND_LOCATION_AS_ZONE_ONLY
+                ),
+                default = SEND_LOCATION_AS_EXACT
+            )
+        } else SEND_LOCATION_AS_EXACT
     }
 
     private fun removeAllLocationUpdateRequests() {
