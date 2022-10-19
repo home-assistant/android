@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.common.data.integration
 
 import android.graphics.Color
 import android.util.Log
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateDiff
 import java.util.Calendar
 import kotlin.math.round
 
@@ -11,7 +12,7 @@ data class Entity<T>(
     val attributes: T,
     val lastChanged: Calendar,
     val lastUpdated: Calendar,
-    val context: Map<String, Any>?
+    val context: Map<String, Any?>?
 )
 
 data class EntityPosition(
@@ -32,6 +33,48 @@ object EntityExt {
 
 val <T> Entity<T>.domain: String
     get() = this.entityId.split(".")[0]
+
+/**
+ * Apply a [CompressedStateDiff] to this Entity, and return the [Entity] with updated properties.
+ * Based on home-assistant-js-websocket entities `processEvent` function:
+ * https://github.com/home-assistant/home-assistant-js-websocket/blob/449fa43668f5316eb31609cd36088c5e82c818e2/lib/entities.ts#L47
+ */
+fun Entity<Map<String, Any>>.applyCompressedStateDiff(diff: CompressedStateDiff): Entity<Map<String, Any>> {
+    var (_, newState, newAttributes, newLastChanged, newLastUpdated, newContext) = this
+    diff.plus?.let { plus ->
+        plus.state?.let {
+            newState = it
+        }
+        plus.context?.let {
+            newContext = if (it is String) {
+                newContext?.toMutableMap()?.apply { set("id", it) }
+            } else {
+                newContext?.plus(it as Map<String, Any?>)
+            }
+        }
+        plus.lastChanged?.let {
+            val calendar = Calendar.getInstance().apply { timeInMillis = round(it * 1000).toLong() }
+            newLastChanged = calendar
+            newLastUpdated = calendar
+        } ?: plus.lastUpdated?.let {
+            newLastUpdated = Calendar.getInstance().apply { timeInMillis = round(it * 1000).toLong() }
+        }
+        plus.attributes?.let {
+            newAttributes = newAttributes.plus(it)
+        }
+    }
+    diff.minus?.attributes?.let {
+        newAttributes = newAttributes.minus(it.toSet())
+    }
+    return Entity(
+        entityId = entityId,
+        state = newState,
+        attributes = newAttributes,
+        lastChanged = newLastChanged,
+        lastUpdated = newLastUpdated,
+        context = newContext
+    )
+}
 
 fun <T> Entity<T>.getCoverPosition(): EntityPosition? {
     // https://github.com/home-assistant/frontend/blob/dev/src/dialogs/more-info/controls/more-info-cover.ts#L33
