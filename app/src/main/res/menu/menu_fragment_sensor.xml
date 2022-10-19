@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <group android:id="@+id/senor_detail_toolbar_group">
+        <item
+            android:id="@+id/action_search"
+            android:icon="@drawable/ic_search_toolbar"
+            android:title="@string/search_sensors"
+            app:actionViewClass="androidx.appcompat.widget.SearchView"
+            app:showAsAction="ifRoom" />
+
+        <item
+            android:id="@+id/action_filter"
+            android:icon="@drawable/ic_filter_toolbar"
+            android:title="@string/filter_sensors"
+            app:showAsAction="ifRoom">
+            <menu>
+                <group
+                    android:id="@+id/filter_toolbar_group"
+                    android:checkableBehavior="single">
+                    <item
+                        android:id="@+id/action_show_only_enabled_sensors"
+                        android:checkable="true"
+                        android:icon="@drawable/ic_fact_check_toolbar_filter"
+                        android:title="@string/filter_show_only_enabled_sensors" />
+                </group>
+            </menu>
+        </item>
+    </group>
+    <item
+        android:id="@+id/get_help"
+        android:title="@string/get_help"
+        android:icon="@drawable/ic_question_toolbar"
+        app:showAsAction="always"/>
+</menu>

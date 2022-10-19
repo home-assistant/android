@@ -26,7 +26,10 @@ class HelpMenuProvider(private val helpLink: Uri) : MenuProvider {
         }
     }
 
-    override fun onMenuItemSelected(menuItem: MenuItem): Boolean = menuItem.itemId == R.id.get_help
+    /**
+     * Don't handle the help item so the intent is automatically launched
+     */
+    override fun onMenuItemSelected(menuItem: MenuItem): Boolean = false
 }
 
 /**

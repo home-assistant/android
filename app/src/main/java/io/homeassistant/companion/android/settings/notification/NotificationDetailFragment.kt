@@ -54,22 +54,25 @@ class NotificationDetailFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val menuHost: MenuHost = requireActivity()
-        menuHost.addMenuProvider(object : NotificationMenuProvider() {
-            override fun onPrepareMenu(menu: Menu) {
-                super.onPrepareMenu(menu)
-                menu.removeItem(R.id.search_notifications)
-                menu.removeItem(R.id.notification_filter)
-            }
-
-            override fun onMenuItemSelected(menuItem: MenuItem) = when (menuItem.itemId) {
-                R.id.action_delete -> {
-                    deleteConfirmation()
-                    true
+        menuHost.addMenuProvider(
+            object : NotificationMenuProvider() {
+                override fun onPrepareMenu(menu: Menu) {
+                    super.onPrepareMenu(menu)
+                    menu.removeItem(R.id.search_notifications)
+                    menu.removeItem(R.id.notification_filter)
                 }
-                R.id.get_help -> true
-                else -> false
-            }
-        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
+
+                override fun onMenuItemSelected(menuItem: MenuItem) = when (menuItem.itemId) {
+                    R.id.action_delete -> {
+                        deleteConfirmation()
+                        true
+                    }
+                    else -> false
+                }
+            },
+            viewLifecycleOwner,
+            Lifecycle.State.RESUMED
+        )
     }
 
     private fun deleteConfirmation() {

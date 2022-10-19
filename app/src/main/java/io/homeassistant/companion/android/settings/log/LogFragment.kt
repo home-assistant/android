@@ -7,24 +7,27 @@ import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.widget.LinearLayout
 import android.widget.ScrollView
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.widget.Toolbar
 import androidx.core.content.FileProvider
+import androidx.core.view.MenuHost
+import androidx.core.view.MenuProvider
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.tabs.TabLayout
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.databinding.FragmentLogBinding
 import io.homeassistant.companion.android.getLatestFatalCrash
 import io.homeassistant.companion.android.util.LogcatReader
 import kotlinx.coroutines.Dispatchers
@@ -48,51 +51,72 @@ class LogFragment : Fragment() {
     private var crashLog: String? = null
     private var currentLog = ""
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.share_log -> {
-                shareLog()
-                return true
-            }
-            R.id.refresh_log -> {
-                refreshLog()
-            }
+    private var toolbarGroupVisible = false
+        set(value) {
+            field = value
+            activity?.invalidateMenu()
         }
-        return super.onOptionsItemSelected(item)
+
+    private var _binding: FragmentLogBinding? = null
+    private val binding get() = _binding!!
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentLogBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-        setHasOptionsMenu(true)
-
-        requireView().findViewById<TabLayout>(R.id.logTabLayout)
-            .addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
-                override fun onTabSelected(tab: TabLayout.Tab?) {
-                    showLog()
+        val menuHost: MenuHost = requireActivity()
+        menuHost.addMenuProvider(
+            object : MenuProvider {
+                override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                    menuInflater.inflate(R.menu.menu_fragment_log, menu)
                 }
 
-                override fun onTabUnselected(tab: TabLayout.Tab?) {
+                override fun onPrepareMenu(menu: Menu) {
+                    menu.setGroupVisible(R.id.log_toolbar_group, toolbarGroupVisible)
                 }
 
-                override fun onTabReselected(tab: TabLayout.Tab?) {
-                    (requireView().findViewById<ScrollView>(R.id.logScrollview))?.apply {
-                        post {
-                            if (tab?.id == R.id.logTabCrash) fullScroll(ScrollView.FOCUS_UP)
-                            else fullScroll(ScrollView.FOCUS_DOWN)
-                        }
+                override fun onMenuItemSelected(menuItem: MenuItem) = when (menuItem.itemId) {
+                    R.id.share_log -> {
+                        shareLog()
+                        true
+                    }
+                    R.id.refresh_log -> {
+                        refreshLog()
+                        true
+                    }
+                    else -> false
+                }
+            },
+            viewLifecycleOwner,
+            Lifecycle.State.RESUMED
+        )
+
+        binding.logTabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab?) = showLog()
+
+            override fun onTabUnselected(tab: TabLayout.Tab?) {}
+
+            override fun onTabReselected(tab: TabLayout.Tab?) {
+                binding.logScrollview.apply {
+                    post {
+                        if (tab?.id == R.id.logTabCrash) fullScroll(ScrollView.FOCUS_UP)
+                        else fullScroll(ScrollView.FOCUS_DOWN)
                     }
                 }
-            })
+            }
+        })
 
         refreshLog()
     }
 
     private fun refreshLog() = lifecycleScope.launch(Dispatchers.Main) {
         if (view != null && activity != null) {
-            val toolbar = requireActivity().findViewById<Toolbar>(R.id.toolbar)
-
-            toolbar.menu.setGroupVisible(R.id.log_toolbar_group, false)
             showHideLogLoader(true)
 
             // Runs with Dispatcher IO
@@ -100,34 +124,28 @@ class LogFragment : Fragment() {
             crashLog = getLatestFatalCrash(requireContext(), prefsRepository.isCrashReporting())
 
             showLog()
-            toolbar.menu.setGroupVisible(R.id.log_toolbar_group, true)
             showHideLogLoader(false)
         }
     }
 
     private fun showLog() {
-        if (view != null) {
-            val tabLayout = requireView().findViewById<TabLayout>(R.id.logTabLayout)
-            val logTextView = requireView().findViewById<TextView>(R.id.logTextView)
+        if (view == null) return
 
-            // Update UI to show selected log and correct tab(s)
-            tabLayout.isVisible = crashLog != null
+        val tabLayout = binding.logTabLayout
 
-            val showCrashLog = tabLayout.isVisible &&
-                tabLayout.getTabAt(tabLayout.selectedTabPosition)?.text == getString(commonR.string.log_loader_crash)
-            currentLog = if (showCrashLog) crashLog.toString() else processLog
+        // Update UI to show selected log and correct tab(s)
+        tabLayout.isVisible = crashLog != null
 
-            logTextView?.text = currentLog
-            (view?.findViewById<ScrollView>(R.id.logScrollview))?.apply {
-                post {
-                    fullScroll(if (showCrashLog) ScrollView.FOCUS_UP else ScrollView.FOCUS_DOWN)
-                }
+        val showCrashLog = tabLayout.isVisible &&
+            tabLayout.getTabAt(tabLayout.selectedTabPosition)?.text == getString(commonR.string.log_loader_crash)
+        currentLog = if (showCrashLog) crashLog.toString() else processLog
+
+        binding.logTextView.text = currentLog
+        binding.logScrollview.apply {
+            post {
+                fullScroll(if (showCrashLog) ScrollView.FOCUS_UP else ScrollView.FOCUS_DOWN)
             }
         }
-    }
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_log, container, false)
     }
 
     private fun shareLog() {
@@ -204,6 +222,11 @@ class LogFragment : Fragment() {
         activity?.title = getString(commonR.string.log)
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+
     private fun getExcludedComponentsForPackageName(sendIntent: Intent, packageNames: Array<String>): ArrayList<ComponentName> {
         val excludedComponents = ArrayList<ComponentName>()
         val resInfos = requireContext().packageManager.queryIntentActivities(sendIntent, 0)
@@ -218,12 +241,8 @@ class LogFragment : Fragment() {
     }
 
     private fun showHideLogLoader(show: Boolean) {
-        if (view != null) {
-            val logLoader = requireView().findViewById<LinearLayout>(R.id.logLoader)
-            val logContents = requireView().findViewById<LinearLayout>(R.id.logContents)
-
-            logContents.isGone = show
-            logLoader.isVisible = show
-        }
+        toolbarGroupVisible = !show
+        binding.logLoader.isVisible = show
+        binding.logContents.isGone = show
     }
 }

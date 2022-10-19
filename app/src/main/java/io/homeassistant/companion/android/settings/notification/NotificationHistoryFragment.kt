@@ -36,70 +36,73 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val menuHost: MenuHost = requireActivity()
-        menuHost.addMenuProvider(object : NotificationMenuProvider() {
-            override fun onPrepareMenu(menu: Menu) {
-                super.onPrepareMenu(menu)
-                menu.findItem(R.id.last25)?.title = getString(commonR.string.last_num_notifications, 25)
-                menu.findItem(R.id.last50)?.title = getString(commonR.string.last_num_notifications, 50)
-                menu.findItem(R.id.last100)?.title = getString(commonR.string.last_num_notifications, 100)
+        menuHost.addMenuProvider(
+            object : NotificationMenuProvider() {
+                override fun onPrepareMenu(menu: Menu) {
+                    super.onPrepareMenu(menu)
+                    menu.findItem(R.id.last25)?.title = getString(commonR.string.last_num_notifications, 25)
+                    menu.findItem(R.id.last50)?.title = getString(commonR.string.last_num_notifications, 50)
+                    menu.findItem(R.id.last100)?.title = getString(commonR.string.last_num_notifications, 100)
 
-                val prefCategory = findPreference<PreferenceCategory>("list_notifications")
-                val allNotifications = notificationDao.getAll()
-
-                if (allNotifications.isNullOrEmpty()) {
-                    menu.removeItem(R.id.search_notifications)
-                    menu.removeItem(R.id.notification_filter)
-                    menu.removeItem(R.id.action_delete)
-                } else {
-                    val searchViewItem = menu.findItem(R.id.search_notifications)
-                    val searchView: SearchView = searchViewItem.actionView as SearchView
-                    searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-                        override fun onQueryTextSubmit(query: String?): Boolean {
-                            searchView.clearFocus()
-
-                            return false
-                        }
-
-                        override fun onQueryTextChange(query: String?): Boolean {
-                            var searchList: Array<NotificationItem> = emptyArray()
-                            if (!query.isNullOrEmpty()) {
-                                for (item in allNotifications) {
-                                    if (item.message.contains(query, true))
-                                        searchList += item
-                                }
-                                prefCategory?.title = getString(commonR.string.search_results)
-                                reloadNotifications(searchList, prefCategory)
-                            } else if (query.isNullOrEmpty()) {
-                                prefCategory?.title = getString(commonR.string.notifications)
-                                filterNotifications(filterValue, notificationDao, prefCategory)
-                            }
-                            return false
-                        }
-                    })
-                }
-            }
-
-            override fun onMenuItemSelected(menuItem: MenuItem): Boolean = when (menuItem.itemId) {
-                R.id.last25, R.id.last50, R.id.last100 -> {
                     val prefCategory = findPreference<PreferenceCategory>("list_notifications")
-                    filterValue = when (menuItem.itemId) {
-                        R.id.last25 -> 25
-                        R.id.last50 -> 50
-                        R.id.last100 -> 100
-                        else -> 25
+                    val allNotifications = notificationDao.getAll()
+
+                    if (allNotifications.isNullOrEmpty()) {
+                        menu.removeItem(R.id.search_notifications)
+                        menu.removeItem(R.id.notification_filter)
+                        menu.removeItem(R.id.action_delete)
+                    } else {
+                        val searchViewItem = menu.findItem(R.id.search_notifications)
+                        val searchView: SearchView = searchViewItem.actionView as SearchView
+                        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                            override fun onQueryTextSubmit(query: String?): Boolean {
+                                searchView.clearFocus()
+
+                                return false
+                            }
+
+                            override fun onQueryTextChange(query: String?): Boolean {
+                                var searchList: Array<NotificationItem> = emptyArray()
+                                if (!query.isNullOrEmpty()) {
+                                    for (item in allNotifications) {
+                                        if (item.message.contains(query, true))
+                                            searchList += item
+                                    }
+                                    prefCategory?.title = getString(commonR.string.search_results)
+                                    reloadNotifications(searchList, prefCategory)
+                                } else if (query.isNullOrEmpty()) {
+                                    prefCategory?.title = getString(commonR.string.notifications)
+                                    filterNotifications(filterValue, notificationDao, prefCategory)
+                                }
+                                return false
+                            }
+                        })
                     }
-                    menuItem.isChecked = !menuItem.isChecked
-                    filterNotifications(filterValue, notificationDao, prefCategory)
-                    true
                 }
-                R.id.action_delete -> {
-                    deleteAllConfirmation(notificationDao)
-                    true
+
+                override fun onMenuItemSelected(menuItem: MenuItem): Boolean = when (menuItem.itemId) {
+                    R.id.last25, R.id.last50, R.id.last100 -> {
+                        val prefCategory = findPreference<PreferenceCategory>("list_notifications")
+                        filterValue = when (menuItem.itemId) {
+                            R.id.last25 -> 25
+                            R.id.last50 -> 50
+                            R.id.last100 -> 100
+                            else -> 25
+                        }
+                        menuItem.isChecked = !menuItem.isChecked
+                        filterNotifications(filterValue, notificationDao, prefCategory)
+                        true
+                    }
+                    R.id.action_delete -> {
+                        deleteAllConfirmation(notificationDao)
+                        true
+                    }
+                    else -> false
                 }
-                R.id.get_help -> true
-                else -> false
-            }
-        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
+            },
+            viewLifecycleOwner,
+            Lifecycle.State.RESUMED
+        )
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {

@@ -3,9 +3,8 @@ package io.homeassistant.companion.android.settings
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.view.Menu
 import android.view.MenuItem
-import androidx.appcompat.widget.SearchView
+import androidx.fragment.app.commit
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
@@ -17,7 +16,6 @@ import io.homeassistant.companion.android.settings.notification.NotificationHist
 import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
 import io.homeassistant.companion.android.settings.sensor.SensorDetailFragment
 import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
-import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class SettingsActivity : BaseActivity() {
@@ -26,17 +24,6 @@ class SettingsActivity : BaseActivity() {
         fun newInstance(context: Context): Intent {
             return Intent(context, SettingsActivity::class.java)
         }
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.menu_activity_settings, menu)
-
-        (menu.findItem(R.id.action_search)?.actionView as SearchView).apply {
-            queryHint = getString(commonR.string.search_sensors)
-            maxWidth = Integer.MAX_VALUE
-        }
-
-        return true
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,9 +38,8 @@ class SettingsActivity : BaseActivity() {
 
         if (savedInstanceState == null) {
             val settingsNavigation = intent.getStringExtra("fragment")
-            supportFragmentManager
-                .beginTransaction()
-                .replace(
+            supportFragmentManager.commit {
+                replace(
                     R.id.content,
                     when {
                         settingsNavigation == "websocket" -> WebsocketSettingFragment::class.java
@@ -70,7 +56,7 @@ class SettingsActivity : BaseActivity() {
                         Bundle().apply { putString("id", tileId) }
                     } else null
                 )
-                .commit()
+            }
         }
     }
 
@@ -88,6 +74,7 @@ class SettingsActivity : BaseActivity() {
         }
     }
 
+    /** Used to inject classes before [onCreate] */
     @EntryPoint
     @InstallIn(ActivityComponent::class)
     interface SettingsFragmentFactoryEntryPoint {
