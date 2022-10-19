@@ -171,6 +171,7 @@ class MessagingManager @Inject constructor(
         const val COMMAND_STOP_TTS = "command_stop_tts"
         const val COMMAND_AUTO_SCREEN_BRIGHTNESS = "command_auto_screen_brightness"
         const val COMMAND_SCREEN_BRIGHTNESS_LEVEL = "command_screen_brightness_level"
+        const val COMMAND_SCREEN_OFF_TIMEOUT = "command_screen_off_timeout"
 
         // DND commands
         const val DND_PRIORITY_ONLY = "priority_only"
@@ -257,7 +258,8 @@ class MessagingManager @Inject constructor(
             COMMAND_PERSISTENT_CONNECTION,
             COMMAND_STOP_TTS,
             COMMAND_AUTO_SCREEN_BRIGHTNESS,
-            COMMAND_SCREEN_BRIGHTNESS_LEVEL
+            COMMAND_SCREEN_BRIGHTNESS_LEVEL,
+            COMMAND_SCREEN_OFF_TIMEOUT
         )
         val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
         val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
@@ -583,7 +585,7 @@ class MessagingManager @Inject constructor(
                                 sendNotification(jsonData)
                             }
                     }
-                    COMMAND_SCREEN_BRIGHTNESS_LEVEL -> {
+                    COMMAND_SCREEN_BRIGHTNESS_LEVEL, COMMAND_SCREEN_OFF_TIMEOUT -> {
                         if (!jsonData[COMMAND].isNullOrEmpty() && jsonData[COMMAND]?.toIntOrNull() != null)
                             handleDeviceCommands(jsonData)
                         else
@@ -963,14 +965,14 @@ class MessagingManager @Inject constructor(
             COMMAND_STOP_TTS -> {
                 stopTTS()
             }
-            COMMAND_AUTO_SCREEN_BRIGHTNESS, COMMAND_SCREEN_BRIGHTNESS_LEVEL -> {
+            COMMAND_AUTO_SCREEN_BRIGHTNESS, COMMAND_SCREEN_BRIGHTNESS_LEVEL, COMMAND_SCREEN_OFF_TIMEOUT -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (Settings.System.canWrite(context)) {
-                        if (!processScreenBrightness(data))
+                        if (!processScreenCommands(data))
                             mainScope.launch { sendNotification(data) }
                     } else
                         notifyMissingPermission(data[MESSAGE].toString())
-                } else if (!processScreenBrightness(data))
+                } else if (!processScreenCommands(data))
                     mainScope.launch { sendNotification(data) }
             }
             else -> Log.d(TAG, "No command received")
@@ -2108,22 +2110,25 @@ class MessagingManager @Inject constructor(
         WebsocketManager.start(context)
     }
 
-    private fun processScreenBrightness(data: Map<String, String>): Boolean {
+    private fun processScreenCommands(data: Map<String, String>): Boolean {
         val command = data[COMMAND]
         val contentResolver = context.contentResolver
         val success = Settings.System.putInt(
             contentResolver,
-            if (data[MESSAGE].toString() == COMMAND_SCREEN_BRIGHTNESS_LEVEL)
-                Settings.System.SCREEN_BRIGHTNESS
-            else
-                Settings.System.SCREEN_BRIGHTNESS_MODE,
-            if (data[MESSAGE].toString() == COMMAND_SCREEN_BRIGHTNESS_LEVEL)
-                command!!.toInt().coerceIn(0, 255)
-            else {
-                if (command == TURN_ON)
-                    Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
-                else
-                    Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL
+            when (data[MESSAGE].toString()) {
+                COMMAND_SCREEN_BRIGHTNESS_LEVEL -> Settings.System.SCREEN_BRIGHTNESS
+                COMMAND_AUTO_SCREEN_BRIGHTNESS -> Settings.System.SCREEN_BRIGHTNESS_MODE
+                else -> Settings.System.SCREEN_OFF_TIMEOUT
+            },
+            when (data[MESSAGE].toString()) {
+                COMMAND_SCREEN_BRIGHTNESS_LEVEL -> command!!.toInt().coerceIn(0, 255)
+                COMMAND_AUTO_SCREEN_BRIGHTNESS -> {
+                    if (command == TURN_ON)
+                        Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
+                    else
+                        Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL
+                }
+                else -> command!!.toInt()
             }
         )
         return success
