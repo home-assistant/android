@@ -222,7 +222,9 @@
     <string name="feedback_settings">Feedback Settings</string>
     <string name="filter_notifications">Filter Notifications</string>
     <string name="filter_sensors">Filter sensors</string>
-    <string name="filter_show_only_enabled_sensors">Only enabled sensors</string>
+    <string name="filter_sensors_all">All sensors</string>
+    <string name="filter_sensors_enabled">Enabled sensors</string>
+    <string name="filter_sensors_disabled">Disabled sensors</string>
     <string name="finish">Finish</string>
     <string name="firebase_error_message">This means you will be unable to receive cloud notifications.\n\nLocal notifications will still be available via persistent connection settings in companion app settings</string>
     <string name="firebase_error_title">Firebase Error</string>
