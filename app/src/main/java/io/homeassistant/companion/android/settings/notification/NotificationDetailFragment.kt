@@ -1,7 +1,5 @@
 package io.homeassistant.companion.android.settings.notification
 
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
@@ -9,7 +7,9 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
+import androidx.core.view.MenuHost
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.composethemeadapter.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -36,25 +36,6 @@ class NotificationDetailFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         notification = arguments?.get(ARG_NOTIF) as NotificationItem
         super.onCreate(savedInstanceState)
-        setHasOptionsMenu(true)
-    }
-
-    override fun onPrepareOptionsMenu(menu: Menu) {
-        super.onPrepareOptionsMenu(menu)
-        menu.setGroupVisible(R.id.notification_toolbar_group, true)
-        menu.removeItem(R.id.search_notifications)
-        menu.removeItem(R.id.notification_filter)
-
-        menu.findItem(R.id.get_help)?.let {
-            it.isVisible = true
-            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://companion.home-assistant.io/docs/notifications/notifications-basic"))
-        }
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == R.id.action_delete)
-            deleteConfirmation()
-        return super.onOptionsItemSelected(item)
     }
 
     override fun onCreateView(
@@ -69,6 +50,26 @@ class NotificationDetailFragment : Fragment() {
                 }
             }
         }
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        val menuHost: MenuHost = requireActivity()
+        menuHost.addMenuProvider(object : NotificationMenuProvider() {
+            override fun onPrepareMenu(menu: Menu) {
+                super.onPrepareMenu(menu)
+                menu.removeItem(R.id.search_notifications)
+                menu.removeItem(R.id.notification_filter)
+            }
+
+            override fun onMenuItemSelected(menuItem: MenuItem) = when (menuItem.itemId) {
+                R.id.action_delete -> {
+                    deleteConfirmation()
+                    true
+                }
+                R.id.get_help -> true
+                else -> false
+            }
+        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
     }
 
     private fun deleteConfirmation() {
