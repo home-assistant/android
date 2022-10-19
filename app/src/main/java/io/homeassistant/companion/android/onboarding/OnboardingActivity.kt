@@ -40,6 +40,7 @@ class OnboardingActivity : AppCompatActivity() {
                         NotificationManagerCompat.from(this).areNotificationsEnabled()
                     )
         } else false
+        viewModel.deviceIsWatch = input.isWatch
 
         if (savedInstanceState == null) {
             supportFragmentManager.commit {

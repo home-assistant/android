@@ -49,6 +49,7 @@ class OnboardingViewModel @Inject constructor(
         private set
     var authCode by mutableStateOf("")
         private set
+    var deviceIsWatch by mutableStateOf(false)
     val deviceName = mutableStateOf("")
     val locationTrackingPossible = mutableStateOf(false)
     var locationTrackingEnabled by mutableStateOf(false)

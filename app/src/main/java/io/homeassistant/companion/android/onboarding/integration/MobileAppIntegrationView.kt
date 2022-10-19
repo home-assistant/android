@@ -17,12 +17,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.homeassistant.companion.android.onboarding.OnboardingHeaderView
 import io.homeassistant.companion.android.onboarding.OnboardingViewModel
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -42,10 +45,15 @@ fun MobileAppIntegrationView(
             .padding(16.dp)
     ) {
 
-        Text(
-            text = stringResource(id = commonR.string.connect_to_home_assistant),
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
+        OnboardingHeaderView(
+            icon = if (onboardingViewModel.deviceIsWatch) {
+                CommunityMaterial.Icon3.cmd_watch
+            } else if (LocalConfiguration.current.screenWidthDp.dp >= 600.dp) {
+                CommunityMaterial.Icon3.cmd_tablet
+            } else {
+                CommunityMaterial.Icon.cmd_cellphone
+            },
+            title = stringResource(id = commonR.string.connect_to_home_assistant)
         )
 
         TextField(

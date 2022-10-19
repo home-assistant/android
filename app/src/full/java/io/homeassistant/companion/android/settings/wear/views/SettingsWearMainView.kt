@@ -74,7 +74,8 @@ class SettingsWearMainView : AppCompatActivity() {
                 url = registerUrl,
                 defaultDeviceName = currentNodes.firstOrNull()?.displayName ?: "unknown",
                 locationTrackingPossible = false,
-                notificationsPossible = false
+                notificationsPossible = false,
+                isWatch = true
             ) // While notifications are technically possible, the app can't handle this for the Wear device
         )
     }
