@@ -21,6 +21,7 @@ import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.wear.getAllFlow
+import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.util.RegistriesDataHandler
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
@@ -278,6 +279,7 @@ class MainViewModel @Inject constructor(
         isEnabled: Boolean
     ) {
         sensorDao.setSensorsEnabled(listOf(basicSensor.id), isEnabled)
+        SensorWorker.start(getApplication())
     }
 
     fun getAreaForEntity(entityId: String): AreaRegistryResponse? =
