@@ -1,7 +1,9 @@
 package io.homeassistant.companion.android.sensors
 
+import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
 import android.provider.Settings
 import android.provider.Settings.Global.getInt
 import android.telephony.TelephonyManager
@@ -43,7 +45,9 @@ class MobileDataManager : SensorManager {
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
-        return arrayOf()
+        return if (sensorId == mobileDataRoaming.id)
+            arrayOf(Manifest.permission.READ_PHONE_STATE)
+        else arrayOf()
     }
 
     override fun hasSensor(context: Context): Boolean {
@@ -69,7 +73,11 @@ class MobileDataManager : SensorManager {
         var enabled = false
         val telephonyManager = context.applicationContext.getSystemService<TelephonyManager>()
         if (telephonyManager?.simState == TelephonyManager.SIM_STATE_READY) {
-            enabled = getInt(context.contentResolver, settingKey, 0) == 1
+            enabled = if (sensor.id == mobileDataRoaming.id && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                telephonyManager.isDataRoamingEnabled
+            else {
+                getInt(context.contentResolver, settingKey, 0) == 1
+            }
         }
         onSensorUpdated(
             context,
