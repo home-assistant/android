@@ -42,6 +42,7 @@ import android.webkit.WebView
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
@@ -247,6 +248,14 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         decor = window.decorView as FrameLayout
 
         webView = binding.webview
+
+        val onBackPressed = object : OnBackPressedCallback(webView.canGoBack()) {
+            override fun handleOnBackPressed() {
+                if (webView.canGoBack()) webView.goBack()
+            }
+        }
+        onBackPressedDispatcher.addCallback(this, onBackPressed)
+
         webView.apply {
             // TODO This quick bar workaround only works on Home Assistant core versions <2022.7
             // If not 'fixed' or officially supported: should be removed in Android 2023.1 (GitHub: #2690)
@@ -405,6 +414,15 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                         }
                     }
                     return false
+                }
+
+                override fun doUpdateVisitedHistory(
+                    view: WebView?,
+                    url: String?,
+                    isReload: Boolean
+                ) {
+                    super.doUpdateVisitedHistory(view, url, isReload)
+                    onBackPressed.isEnabled = canGoBack()
                 }
             }
 
@@ -1007,14 +1025,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     override fun relaunchApp() {
         startActivity(Intent(this, LaunchActivity::class.java))
         finish()
-    }
-
-    override fun onBackPressed() {
-        if (webView.canGoBack()) {
-            webView.goBack()
-        } else {
-            super.onBackPressed()
-        }
     }
 
     override fun loadUrl(url: String) {

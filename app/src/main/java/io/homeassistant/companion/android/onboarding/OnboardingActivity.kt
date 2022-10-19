@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.onboarding
 import android.os.Build
 import android.os.Bundle
 import android.view.KeyEvent
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationManagerCompat
@@ -68,13 +69,15 @@ class OnboardingActivity : AppCompatActivity() {
                 }
             }
         }
-    }
 
-    override fun onBackPressed() {
-        if (supportFragmentManager.backStackEntryCount > 0) {
-            supportFragmentManager.popBackStack()
-        } else {
-            super.onBackPressed()
+        val onBackPressed = object : OnBackPressedCallback(supportFragmentManager.backStackEntryCount > 0) {
+            override fun handleOnBackPressed() {
+                supportFragmentManager.popBackStack()
+            }
+        }
+        onBackPressedDispatcher.addCallback(this, onBackPressed)
+        supportFragmentManager.addOnBackStackChangedListener {
+            onBackPressed.isEnabled = supportFragmentManager.backStackEntryCount > 0
         }
     }
 
