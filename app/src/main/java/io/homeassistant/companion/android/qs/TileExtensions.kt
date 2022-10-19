@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.qs
 
-import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.Icon
@@ -13,8 +12,6 @@ import androidx.annotation.RequiresApi
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
 import com.maltaisn.icondialog.pack.IconPack
-import com.maltaisn.icondialog.pack.IconPackLoader
-import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
@@ -40,6 +37,9 @@ abstract class TileExtensions : TileService() {
     abstract fun getTile(): Tile?
 
     abstract fun getTileId(): String
+
+    @Inject
+    lateinit var iconPack: dagger.Lazy<IconPack>
 
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
@@ -99,7 +99,6 @@ abstract class TileExtensions : TileService() {
 
     private suspend fun setTileData(tileId: String, tile: Tile): Boolean {
         Log.d(TAG, "Attempting to set tile data for tile ID: $tileId")
-        val context = applicationContext
         val tileData = tileDao.get(tileId)
         try {
             return if (tileData != null && tileData.isSetup) {
@@ -120,7 +119,7 @@ abstract class TileExtensions : TileService() {
 
                 val iconId = tileData.iconId
                 if (iconId != null) {
-                    val icon = getTileIcon(iconId, context)
+                    val icon = getTileIcon(iconId)
                     tile.icon = Icon.createWithBitmap(icon)
                 }
                 Log.d(TAG, "Tile data set for tile ID: $tileId")
@@ -226,26 +225,17 @@ abstract class TileExtensions : TileService() {
 
     companion object {
         private const val TAG = "TileExtensions"
-        private var iconPack: IconPack? = null
         private val toggleDomains = listOf(
             "cover", "fan", "humidifier", "input_boolean", "light",
             "media_player", "remote", "siren", "switch"
         )
         private val validActiveStates = listOf("on", "open", "locked")
+    }
 
-        private fun getTileIcon(tileIconId: Int, context: Context): Bitmap? {
-            // Create an icon pack and load all drawables.
-            if (iconPack == null) {
-                val loader = IconPackLoader(context)
-                iconPack = createMaterialDesignIconPack(loader)
-                iconPack!!.loadDrawables(loader.drawableLoader)
-            }
-
-            val iconDrawable = iconPack?.icons?.get(tileIconId)?.drawable
-            if (iconDrawable != null) {
-                return DrawableCompat.wrap(iconDrawable).toBitmap()
-            }
-            return null
+    private fun getTileIcon(tileIconId: Int): Bitmap? {
+        val iconDrawable = iconPack.get().icons[tileIconId]?.drawable
+        return iconDrawable?.let {
+            DrawableCompat.wrap(iconDrawable).toBitmap()
         }
     }
 

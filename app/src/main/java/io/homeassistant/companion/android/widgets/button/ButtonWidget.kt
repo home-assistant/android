@@ -22,8 +22,6 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.google.android.material.color.DynamicColors
 import com.maltaisn.icondialog.pack.IconPack
-import com.maltaisn.icondialog.pack.IconPackLoader
-import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -65,12 +63,13 @@ class ButtonWidget : AppWidgetProvider() {
     }
 
     @Inject
+    lateinit var iconPack: dagger.Lazy<IconPack>
+
+    @Inject
     lateinit var integrationUseCase: IntegrationRepository
 
     @Inject
     lateinit var buttonWidgetDao: ButtonWidgetDao
-
-    private var iconPack: IconPack? = null
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -175,12 +174,6 @@ class ButtonWidget : AppWidgetProvider() {
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         }
 
-        // Create an icon pack and load all drawables.
-        if (iconPack == null) {
-            val loader = IconPackLoader(context)
-            iconPack = createMaterialDesignIconPack(loader)
-            iconPack!!.loadDrawables(loader.drawableLoader)
-        }
         val useDynamicColors = widget?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
         return RemoteViews(context.packageName, if (useDynamicColors) R.layout.widget_button_wrapper_dynamiccolor else R.layout.widget_button_wrapper_default).apply {
             // Theming
@@ -194,7 +187,7 @@ class ButtonWidget : AppWidgetProvider() {
             // Content
             val iconId = widget?.iconId ?: 988171 // Lightning bolt
 
-            val iconDrawable = iconPack?.icons?.get(iconId)?.drawable
+            val iconDrawable = iconPack.get().icons[iconId]?.drawable
             if (iconDrawable != null) {
                 val icon = DrawableCompat.wrap(iconDrawable)
                 if (widget?.backgroundType == WidgetBackgroundType.TRANSPARENT) {

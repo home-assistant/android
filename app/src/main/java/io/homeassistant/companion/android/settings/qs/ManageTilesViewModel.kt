@@ -17,8 +17,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.maltaisn.icondialog.data.Icon
 import com.maltaisn.icondialog.pack.IconPack
-import com.maltaisn.icondialog.pack.IconPackLoader
-import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -59,7 +57,8 @@ class ManageTilesViewModel @Inject constructor(
         private const val TAG = "ManageTilesViewModel"
     }
 
-    lateinit var iconPack: IconPack
+    @Inject
+    lateinit var iconPack: dagger.Lazy<IconPack>
 
     private val app = application
 
@@ -103,9 +102,7 @@ class ManageTilesViewModel @Inject constructor(
         }
 
         viewModelScope.launch(Dispatchers.IO) {
-            val loader = IconPackLoader(getApplication())
-            iconPack = createMaterialDesignIconPack(loader)
-            iconPack.loadDrawables(loader.drawableLoader)
+            iconPack.get()
             withContext(Dispatchers.Main) {
                 // The icon pack might not have been initialized when the tile data was loaded
                 selectTile(slots.indexOf(selectedTile))
@@ -140,9 +137,8 @@ class ManageTilesViewModel @Inject constructor(
         tileSubtitle = currentTile.subtitle
         selectedEntityId = currentTile.entityId
         selectIcon(
-            currentTile.iconId?.let {
-                if (::iconPack.isInitialized) iconPack.getIcon(it)
-                else null
+            currentTile.iconId?.let { iconId ->
+                iconPack.get().getIcon(iconId)
             }
         )
     }

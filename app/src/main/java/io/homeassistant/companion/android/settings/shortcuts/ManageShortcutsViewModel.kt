@@ -22,8 +22,6 @@ import androidx.core.graphics.drawable.DrawableCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.maltaisn.icondialog.pack.IconPack
-import com.maltaisn.icondialog.pack.IconPackLoader
-import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -41,8 +39,11 @@ class ManageShortcutsViewModel @Inject constructor(
 
     val app = application
     private val TAG = "ShortcutViewModel"
-    private lateinit var iconPack: IconPack
-    private var shortcutManager = application.applicationContext.getSystemService<ShortcutManager>()!!
+
+    @Inject
+    lateinit var iconPack: dagger.Lazy<IconPack>
+
+    private var shortcutManager = application.getSystemService<ShortcutManager>()!!
     val canPinShortcuts = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && shortcutManager.isRequestPinShortcutSupported
     var pinnedShortcuts: MutableList<ShortcutInfo> = shortcutManager.pinnedShortcuts
         private set
@@ -191,10 +192,7 @@ class ManageShortcutsViewModel @Inject constructor(
     }
 
     private fun getTileIcon(tileIconId: Int): Drawable? {
-        val loader = IconPackLoader(getApplication())
-        iconPack = createMaterialDesignIconPack(loader)
-        iconPack.loadDrawables(loader.drawableLoader)
-        val iconDrawable = iconPack.icons[tileIconId]?.drawable
+        val iconDrawable = iconPack.get().icons[tileIconId]?.drawable
         if (iconDrawable != null) {
             val icon = DrawableCompat.wrap(iconDrawable)
             icon.setColorFilter(app.resources.getColor(R.color.colorAccent), PorterDuff.Mode.SRC_IN)

@@ -31,8 +31,6 @@ import com.maltaisn.icondialog.IconDialog
 import com.maltaisn.icondialog.IconDialogSettings
 import com.maltaisn.icondialog.data.Icon
 import com.maltaisn.icondialog.pack.IconPack
-import com.maltaisn.icondialog.pack.IconPackLoader
-import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -65,7 +63,8 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
     lateinit var buttonWidgetDao: ButtonWidgetDao
     override val dao get() = buttonWidgetDao
 
-    private lateinit var iconPack: IconPack
+    @Inject
+    lateinit var iconPack: dagger.Lazy<IconPack>
 
     private var services = HashMap<String, Service>()
     private var entities = HashMap<String, Entity<Any>>()
@@ -228,8 +227,6 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
         } else {
             binding.backgroundType.setSelection(0)
         }
-        // Create an icon pack loader with application context.
-        val loader = IconPackLoader(this)
 
         val serviceAdapter = SingleItemArrayAdapter<Service>(this) {
             if (it != null) getServiceString(it) else ""
@@ -348,15 +345,12 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
 
         // Do this off the main thread, takes a second or two...
         runOnUiThread {
-            // Create an icon pack and load all drawables.
-            iconPack = createMaterialDesignIconPack(loader)
-            iconPack.loadDrawables(loader.drawableLoader)
             val settings = IconDialogSettings {
                 searchVisibility = IconDialog.SearchVisibility.ALWAYS
             }
             val iconDialog = IconDialog.newInstance(settings)
             val iconId = buttonWidget?.iconId ?: 62017
-            onIconDialogIconsSelected(iconDialog, listOf(iconPack.icons[iconId]!!))
+            onIconDialogIconsSelected(iconDialog, listOf(iconPack.get().icons[iconId]!!))
             binding.widgetConfigIconSelector.setOnClickListener {
                 iconDialog.show(supportFragmentManager, ICON_DIALOG_TAG)
             }
@@ -373,8 +367,8 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
         }
     }
 
-    override val iconDialogIconPack: IconPack?
-        get() = iconPack
+    override val iconDialogIconPack: IconPack
+        get() = iconPack.get()
 
     override fun onIconDialogIconsSelected(dialog: IconDialog, icons: List<Icon>) {
         Log.d(TAG, "Selected icon: ${icons.firstOrNull()}")

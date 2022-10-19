@@ -77,7 +77,7 @@ class ManageTilesFragment : Fragment(), IconDialog.Callback {
     }
 
     override val iconDialogIconPack: IconPack
-        get() = viewModel.iconPack
+        get() = viewModel.iconPack.get()
 
     override fun onIconDialogIconsSelected(dialog: IconDialog, icons: List<com.maltaisn.icondialog.data.Icon>) {
         Log.d(TAG, "Selected icon: ${icons.firstOrNull()}")

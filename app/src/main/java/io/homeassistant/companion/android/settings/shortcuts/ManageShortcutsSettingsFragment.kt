@@ -20,15 +20,12 @@ import com.google.android.material.composethemeadapter.MdcTheme
 import com.maltaisn.icondialog.IconDialog
 import com.maltaisn.icondialog.IconDialogSettings
 import com.maltaisn.icondialog.pack.IconPack
-import com.maltaisn.icondialog.pack.IconPackLoader
-import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.settings.shortcuts.views.ManageShortcutsView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -43,18 +40,16 @@ class ManageShortcutsSettingsFragment : Fragment(), IconDialog.Callback {
     }
 
     val viewModel: ManageShortcutsViewModel by viewModels()
-    private lateinit var iconPack: IconPack
+
+    @Inject
+    lateinit var iconPack: dagger.Lazy<IconPack>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
 
-        lifecycleScope.launch {
-            withContext(Dispatchers.IO) {
-                val loader = IconPackLoader(requireContext())
-                iconPack = createMaterialDesignIconPack(loader)
-                iconPack.loadDrawables(loader.drawableLoader)
-            }
+        lifecycleScope.launch(Dispatchers.IO) {
+            iconPack.get()
         }
     }
 
@@ -97,7 +92,7 @@ class ManageShortcutsSettingsFragment : Fragment(), IconDialog.Callback {
     }
 
     override val iconDialogIconPack: IconPack
-        get() = iconPack
+        get() = iconPack.get()
 
     override fun onIconDialogIconsSelected(dialog: IconDialog, icons: List<com.maltaisn.icondialog.data.Icon>) {
         Log.d(TAG, "Selected icon: ${icons.firstOrNull()}")
