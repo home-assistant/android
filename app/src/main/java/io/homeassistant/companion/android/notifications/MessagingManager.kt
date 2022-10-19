@@ -35,6 +35,7 @@ import android.view.KeyEvent
 import android.widget.RemoteViews
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.biometric.BiometricManager
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
@@ -165,6 +166,7 @@ class MessagingManager @Inject constructor(
         const val COMMAND_WEBVIEW = "command_webview"
         const val COMMAND_KEEP_SCREEN_ON = "keep_screen_on"
         const val COMMAND_LAUNCH_APP = "command_launch_app"
+        const val COMMAND_APP_LOCK = "command_app_lock"
         const val COMMAND_PERSISTENT_CONNECTION = "command_persistent_connection"
         const val COMMAND_STOP_TTS = "command_stop_tts"
         const val COMMAND_AUTO_SCREEN_BRIGHTNESS = "command_auto_screen_brightness"
@@ -225,6 +227,11 @@ class MessagingManager @Inject constructor(
         const val BLE_MAJOR = "ble_major"
         const val BLE_MINOR = "ble_minor"
 
+        // App-lock command parameters:
+        const val APP_LOCK_ENABLED = "app_lock_enabled"
+        const val APP_LOCK_TIMEOUT = "app_lock_timeout"
+        const val HOME_BYPASS_ENABLED = "home_bypass_enabled"
+
         // High accuracy commands
         const val HIGH_ACCURACY_SET_UPDATE_INTERVAL = "high_accuracy_set_update_interval"
         const val FORCE_ON = "force_on"
@@ -246,6 +253,7 @@ class MessagingManager @Inject constructor(
             COMMAND_MEDIA,
             COMMAND_UPDATE_SENSORS,
             COMMAND_LAUNCH_APP,
+            COMMAND_APP_LOCK,
             COMMAND_PERSISTENT_CONNECTION,
             COMMAND_STOP_TTS,
             COMMAND_AUTO_SCREEN_BRIGHTNESS,
@@ -467,6 +475,32 @@ class MessagingManager @Inject constructor(
                                 Log.d(
                                     TAG,
                                     "Invalid activity command received, posting notification to device"
+                                )
+                                sendNotification(jsonData)
+                            }
+                        }
+                    }
+                    COMMAND_APP_LOCK -> {
+                        val app_lock_enable_param_present = jsonData[APP_LOCK_ENABLED] != null
+                        val app_lock_timeout_param_present = jsonData[APP_LOCK_TIMEOUT] != null
+                        val home_bypass_param_present = jsonData[APP_LOCK_ENABLED] != null
+
+                        val app_lock_enable_value = jsonData[APP_LOCK_ENABLED]?.toLowerCase()?.toBooleanStrictOrNull()
+                        val app_lock_timeout_value = jsonData[APP_LOCK_TIMEOUT]?.toIntOrNull()
+                        val home_bypass_value = jsonData[APP_LOCK_ENABLED]?.toLowerCase()?.toBooleanStrictOrNull()
+
+                        val invalid = (!app_lock_enable_param_present && !app_lock_timeout_param_present && !home_bypass_param_present) ||
+                            (app_lock_enable_param_present && app_lock_enable_value == null) ||
+                            (app_lock_timeout_param_present && (app_lock_timeout_value == null || app_lock_timeout_value < 0)) ||
+                            (home_bypass_param_present && home_bypass_value == null)
+
+                        if (!invalid)
+                            handleDeviceCommands(jsonData)
+                        else {
+                            mainScope.launch {
+                                Log.d(
+                                    TAG,
+                                    "Invalid app lock command received, posting notification to device"
                                 )
                                 sendNotification(jsonData)
                             }
@@ -869,6 +903,11 @@ class MessagingManager @Inject constructor(
                         processActivityCommand(data)
                 } else
                     processActivityCommand(data)
+            }
+            COMMAND_APP_LOCK -> {
+                mainScope.launch {
+                    setAppLock(data)
+                }
             }
             COMMAND_WEBVIEW -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -2013,6 +2052,28 @@ class MessagingManager @Inject constructor(
         } catch (e: Exception) {
             Log.e(TAG, "Unable to launch app", e)
             mainScope.launch { sendNotification(data) }
+        }
+    }
+
+    private suspend fun setAppLock(data: Map<String, String>) {
+        val app_lock_enable_value = data[APP_LOCK_ENABLED]?.toLowerCase()?.toBooleanStrictOrNull()
+        val app_lock_timeout_value = data[APP_LOCK_TIMEOUT]?.toIntOrNull()
+        val home_bypass_value = data[APP_LOCK_ENABLED]?.toLowerCase()?.toBooleanStrictOrNull()
+
+        val canAuth = (BiometricManager.from(context).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS)
+        if (canAuth) {
+            if (app_lock_enable_value != null) {
+                authenticationUseCase.setLockEnabled(app_lock_enable_value)
+            }
+            if (app_lock_timeout_value != null) {
+                integrationUseCase.sessionTimeOut(app_lock_timeout_value)
+            }
+            if (home_bypass_value != null) {
+                authenticationUseCase.setLockHomeBypassEnabled(home_bypass_value)
+            }
+        } else {
+            Log.w(TAG, "Not changing App-Lock settings. BiometricManager cannot Authenticate!")
+            sendNotification(data)
         }
     }
 
