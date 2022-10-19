@@ -77,8 +77,7 @@ class SettingsPresenterImpl @Inject constructor(
     override fun getString(key: String, defValue: String?): String? {
         return runBlocking {
             when (key) {
-                "connection_internal" -> (urlUseCase.getUrl(true) ?: "").toString()
-                "connection_external" -> (urlUseCase.getUrl(false) ?: "").toString()
+                "connection_internal" -> (urlUseCase.getUrl(isInternal = true, force = true) ?: "").toString()
                 "registration_name" -> integrationUseCase.getRegistration().deviceName
                 "session_timeout" -> integrationUseCase.getSessionTimeOut().toString()
                 "themes" -> themesManager.getCurrentTheme()
@@ -92,7 +91,6 @@ class SettingsPresenterImpl @Inject constructor(
         mainScope.launch {
             when (key) {
                 "connection_internal" -> urlUseCase.saveUrl(value ?: "", true)
-                "connection_external" -> urlUseCase.saveUrl(value ?: "", false)
                 "session_timeout" -> {
                     try {
                         integrationUseCase.sessionTimeOut(value.toString().toInt())
@@ -142,11 +140,21 @@ class SettingsPresenterImpl @Inject constructor(
     override fun onCreate() {
         mainScope.launch {
             handleInternalUrlStatus(urlUseCase.getHomeWifiSsids())
+            updateExternalUrlStatus()
         }
     }
 
     override fun onFinish() {
         mainScope.cancel()
+    }
+
+    override fun updateExternalUrlStatus() {
+        mainScope.launch {
+            settingsView.updateExternalUrl(
+                urlUseCase.getUrl(false)?.toString() ?: "",
+                urlUseCase.shouldUseCloud() && urlUseCase.canUseCloud()
+            )
+        }
     }
 
     override fun updateInternalUrlStatus() {
