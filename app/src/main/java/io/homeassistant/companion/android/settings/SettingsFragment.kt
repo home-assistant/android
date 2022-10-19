@@ -18,6 +18,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.biometric.BiometricManager
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.lifecycle.lifecycleScope
@@ -71,6 +72,10 @@ class SettingsFragment constructor(
 
     private val requestBackgroundAccessResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         updateBackgroundAccessPref()
+    }
+
+    private val requestNotificationPermissionResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        updateNotificationChannelPrefs()
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
@@ -245,10 +250,17 @@ class SettingsFragment constructor(
             }
         }
 
+        updateNotificationChannelPrefs()
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            findPreference<Preference>("notification_permission")?.let {
+                it.setOnPreferenceClickListener {
+                    openNotificationSettings()
+                    return@setOnPreferenceClickListener true
+                }
+            }
+
             findPreference<Preference>("notification_channels")?.let { pref ->
-                val uiManager = requireContext().getSystemService<UiModeManager>()
-                pref.isVisible = uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION
                 pref.setOnPreferenceClickListener {
                     parentFragmentManager
                         .beginTransaction()
@@ -517,6 +529,23 @@ class SettingsFragment constructor(
         }
     }
 
+    private fun updateNotificationChannelPrefs() {
+        val notificationsEnabled =
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
+                NotificationManagerCompat.from(requireContext()).areNotificationsEnabled()
+
+        findPreference<Preference>("notification_permission")?.let {
+            it.isVisible = !notificationsEnabled
+        }
+        findPreference<Preference>("notification_channels")?.let {
+            val uiManager = requireContext().getSystemService<UiModeManager>()
+            it.isVisible =
+                notificationsEnabled &&
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION
+        }
+    }
+
     @SuppressLint("BatteryLife")
     private fun requestBackgroundAccess() {
         if (!isIgnoringBatteryOptimizations()) {
@@ -525,6 +554,16 @@ class SettingsFragment constructor(
                     Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
                     Uri.parse("package:${activity?.packageName}")
                 )
+            )
+        }
+    }
+
+    private fun openNotificationSettings() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            requestNotificationPermissionResult.launch(
+                Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                    putExtra(Settings.EXTRA_APP_PACKAGE, requireContext().packageName)
+                }
             )
         }
     }

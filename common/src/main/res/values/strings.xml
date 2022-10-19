@@ -390,6 +390,10 @@
     <string name="notification_source">Notification Source</string>
     <string name="notifications">Notifications</string>
     <string name="ok">OK</string>
+    <string name="onboarding_notifications_denied">If you want to enable notifications in the future, you can change this in Settings.</string>
+    <string name="onboarding_notifications_bullet_alert">Get alerted from notifications</string>
+    <string name="onboarding_notifications_bullet_commands">Send commands to your device</string>
+    <string name="onboarding_notifications_subtitle">Enable notifications to create a notify service for your device</string>
     <string name="other_settings">Other Settings</string>
     <string name="other">Other</string>
     <string name="password">Password</string>
@@ -852,6 +856,8 @@
     <string name="websocket_notification_issues">Persistent Connection Issues</string>
     <string name="notification_channels">Notification Channels</string>
     <string name="notification_channels_summary">Manage all notification channels configured on the device. Channels control the behavior of its notifications including visibility and sound.</string>
+    <string name="notification_permission">Notification Permission</string>
+    <string name="notification_permission_summary">Home Assistant does not have permission to send you notifications. Click here to enable sending notifications.</string>
     <string name="info">Information</string>
     <string name="show_changelog">Show Change Log</string>
     <string name="show_changelog_summary">Show the change log dialog from when the app was updated</string>
