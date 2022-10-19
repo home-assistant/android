@@ -2,22 +2,21 @@ package io.homeassistant.companion.android.settings.sensor
 
 import android.Manifest
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.view.LayoutInflater
-import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.ComposeView
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.google.android.material.composethemeadapter.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.LocationPermissionInfoHandler
+import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.settings.sensor.views.SensorDetailView
 
 @AndroidEntryPoint
@@ -38,24 +37,6 @@ class SensorDetailFragment : Fragment() {
     }
     private val permissionsRequest = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
         viewModel.onPermissionsResult(it)
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setHasOptionsMenu(true)
-    }
-
-    override fun onPrepareOptionsMenu(menu: Menu) {
-        super.onPrepareOptionsMenu(menu)
-        menu.setGroupVisible(R.id.senor_detail_toolbar_group, true)
-        menu.removeItem(R.id.action_filter)
-        menu.removeItem(R.id.action_search)
-
-        menu.findItem(R.id.get_help)?.let {
-            val docsLink = viewModel.basicSensor?.docsLink ?: viewModel.sensorManager?.docsLink()
-            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(docsLink))
-            it.isVisible = docsLink != null // should always be true
-        }
     }
 
     override fun onCreateView(
@@ -79,7 +60,8 @@ class SensorDetailFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+        val docsLink = viewModel.basicSensor?.docsLink ?: viewModel.sensorManager?.docsLink()
+        docsLink?.toUri()?.let { addHelpMenuProvider(it) }
 
         viewModel.permissionRequests.observe(viewLifecycleOwner) { permissions ->
             if (permissions.isEmpty()) return@observe

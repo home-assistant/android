@@ -1,18 +1,16 @@
 package io.homeassistant.companion.android.settings.shortcuts
 
-import android.content.Intent
 import android.graphics.PorterDuff
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
-import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.RequiresApi
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.graphics.drawable.DrawableCompat
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -23,8 +21,8 @@ import com.maltaisn.icondialog.pack.IconPack
 import com.maltaisn.icondialog.pack.IconPackLoader
 import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.settings.shortcuts.views.ManageShortcutsView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -47,7 +45,6 @@ class ManageShortcutsSettingsFragment : Fragment(), IconDialog.Callback {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setHasOptionsMenu(true)
 
         lifecycleScope.launch {
             withContext(Dispatchers.IO) {
@@ -58,14 +55,6 @@ class ManageShortcutsSettingsFragment : Fragment(), IconDialog.Callback {
         }
     }
 
-    override fun onPrepareOptionsMenu(menu: Menu) {
-        super.onPrepareOptionsMenu(menu)
-
-        menu.findItem(R.id.get_help)?.let {
-            it.isVisible = true
-            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://companion.home-assistant.io/docs/integrations/android-shortcuts"))
-        }
-    }
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
 
@@ -86,6 +75,10 @@ class ManageShortcutsSettingsFragment : Fragment(), IconDialog.Callback {
                 }
             }
         }
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        addHelpMenuProvider("https://companion.home-assistant.io/docs/integrations/android-shortcuts".toUri())
     }
 
     @RequiresApi(Build.VERSION_CODES.N_MR1)
