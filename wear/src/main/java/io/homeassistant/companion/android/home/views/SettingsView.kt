@@ -22,6 +22,7 @@ import androidx.wear.compose.material.rememberScalingLazyListState
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.previewFavoritesList
@@ -57,6 +58,7 @@ fun SecondarySettingsChip(
 
 @Composable
 fun SettingsView(
+    loadingState: MainViewModel.LoadingState,
     favorites: List<String>,
     onClickSetFavorites: () -> Unit,
     onClearFavorites: () -> Unit,
@@ -89,6 +91,7 @@ fun SettingsView(
                     SecondarySettingsChip(
                         icon = CommunityMaterial.Icon3.cmd_star,
                         label = stringResource(commonR.string.favorite),
+                        enabled = loadingState == MainViewModel.LoadingState.READY,
                         onClick = onClickSetFavorites
                     )
                 }
@@ -232,6 +235,7 @@ fun SettingsView(
 @Composable
 private fun PreviewSettingsView() {
     SettingsView(
+        loadingState = MainViewModel.LoadingState.READY,
         favorites = previewFavoritesList,
         onClickSetFavorites = { /*TODO*/ },
         onClearFavorites = {},

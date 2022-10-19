@@ -9,6 +9,7 @@ interface SettingsPresenter {
     fun getPreferenceDataStore(): PreferenceDataStore
     fun onCreate()
     fun onFinish()
+    fun updateExternalUrlStatus()
     fun updateInternalUrlStatus()
     fun setAppActive(active: Boolean)
     suspend fun getNotificationRateLimits(): RateLimitResponse?

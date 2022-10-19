@@ -23,10 +23,15 @@
                     android:id="@+id/filter_toolbar_group"
                     android:checkableBehavior="single">
                     <item
-                        android:id="@+id/action_show_only_enabled_sensors"
-                        android:checkable="true"
-                        android:icon="@drawable/ic_fact_check_toolbar_filter"
-                        android:title="@string/filter_show_only_enabled_sensors" />
+                        android:id="@+id/action_show_sensors_all"
+                        android:title="@string/filter_sensors_all"
+                        android:checked="true" />
+                    <item
+                        android:id="@+id/action_show_sensors_enabled"
+                        android:title="@string/filter_sensors_enabled" />
+                    <item
+                        android:id="@+id/action_show_sensors_disabled"
+                        android:title="@string/filter_sensors_disabled" />
                 </group>
             </menu>
         </item>

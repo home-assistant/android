@@ -88,7 +88,7 @@ fun MobileAppIntegrationView(
             onClick = onFinishClicked,
             modifier = Modifier.align(Alignment.End)
         ) {
-            Text(stringResource(id = commonR.string.finish))
+            Text(stringResource(id = commonR.string.continue_connect))
         }
     }
 }

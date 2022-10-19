@@ -44,20 +44,19 @@ fun SensorsView(
                     ListHeader(id = commonR.string.sensors)
                 }
                 items(sensorManagers.size, { sensorManagers[it].name }) { index ->
-                    sensorManagers.forEach { manager ->
-                        Row {
-                            Chip(
-                                modifier = Modifier
-                                    .fillMaxWidth(),
-                                colors = ChipDefaults.secondaryChipColors(),
-                                label = {
-                                    Text(
-                                        text = stringResource(manager.name)
-                                    )
-                                },
-                                onClick = { onClickSensorManager(manager) }
-                            )
-                        }
+                    val manager = sensorManagers[index]
+                    Row {
+                        Chip(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            colors = ChipDefaults.secondaryChipColors(),
+                            label = {
+                                Text(
+                                    text = stringResource(manager.name)
+                                )
+                            },
+                            onClick = { onClickSensorManager(manager) }
+                        )
                     }
                 }
             }
