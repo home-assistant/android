@@ -117,6 +117,7 @@ fun LoadHomePage(
             }
             composable(SCREEN_SETTINGS) {
                 SettingsView(
+                    loadingState = mainViewModel.loadingState.value,
                     favorites = mainViewModel.favoriteEntityIds.value,
                     onClickSetFavorites = {
                         swipeDismissableNavController.navigate(
