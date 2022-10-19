@@ -45,6 +45,7 @@ import io.homeassistant.companion.android.settings.sensor.SensorUpdateFrequencyF
 import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSettingsFragment
 import io.homeassistant.companion.android.settings.ssid.SsidFragment
 import io.homeassistant.companion.android.settings.wear.SettingsWearActivity
+import io.homeassistant.companion.android.settings.wear.SettingsWearDetection
 import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
 import kotlinx.coroutines.Dispatchers
@@ -317,18 +318,13 @@ class SettingsFragment constructor(
             }
         }
 
-        val pm = requireContext().packageManager
-        val wearCompanionApps = listOf(
-            "com.google.android.wearable.app",
-            "com.google.android.apps.wear.companion",
-            "com.samsung.android.app.watchmanager",
-            "com.montblanc.summit.companion.android"
-        )
-        findPreference<PreferenceCategory>("wear_category")?.isVisible =
-            BuildConfig.FLAVOR == "full" && wearCompanionApps.any { pm.getLaunchIntentForPackage(it) != null }
-        findPreference<Preference>("wear_settings")?.setOnPreferenceClickListener {
-            startActivity(SettingsWearActivity.newInstance(requireContext()))
-            return@setOnPreferenceClickListener true
+        lifecycleScope.launch {
+            findPreference<PreferenceCategory>("wear_category")?.isVisible =
+                SettingsWearDetection.hasAnyNodes(requireContext())
+            findPreference<Preference>("wear_settings")?.setOnPreferenceClickListener {
+                startActivity(SettingsWearActivity.newInstance(requireContext()))
+                return@setOnPreferenceClickListener true
+            }
         }
 
         findPreference<Preference>("changelog_github")?.let {
