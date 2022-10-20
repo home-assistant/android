@@ -148,15 +148,20 @@ class GeocodeSensorManager : SensorManager {
     private suspend fun Geocoder.getFromLocationAwait(latitude: Double, longitude: Double, maxResults: Int): List<Address> {
         return if (SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             suspendCoroutine { cont ->
-                getFromLocation(latitude, longitude, maxResults, object : Geocoder.GeocodeListener {
-                    override fun onGeocode(addresses: List<Address>) {
-                        cont.resume(addresses)
-                    }
+                getFromLocation(
+                    latitude,
+                    longitude,
+                    maxResults,
+                    object : Geocoder.GeocodeListener {
+                        override fun onGeocode(addresses: List<Address>) {
+                            cont.resume(addresses)
+                        }
 
-                    override fun onError(errorMessage: String?) {
-                        cont.resumeWithException(Error(errorMessage))
+                        override fun onError(errorMessage: String?) {
+                            cont.resumeWithException(Error(errorMessage))
+                        }
                     }
-                })
+                )
             }
         } else {
             getFromLocation(latitude, longitude, maxResults).orEmpty()
