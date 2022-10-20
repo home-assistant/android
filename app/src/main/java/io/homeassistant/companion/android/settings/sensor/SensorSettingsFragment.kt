@@ -91,14 +91,7 @@ class SensorSettingsFragment : Fragment() {
                         viewModel.setSensorsSearchQuery(null)
                     }
 
-                    when (viewModel.sensorFilter) {
-                        SensorSettingsViewModel.SensorFilter.ALL ->
-                            menu.findItem(R.id.action_show_sensors_all)?.isChecked = true
-                        SensorSettingsViewModel.SensorFilter.ENABLED ->
-                            menu.findItem(R.id.action_show_sensors_enabled)?.isChecked = true
-                        SensorSettingsViewModel.SensorFilter.DISABLED ->
-                            menu.findItem(R.id.action_show_sensors_disabled)?.isChecked = true
-                    }
+                    menu.findItem(viewModel.sensorFilter.menuItemId)?.isChecked = true
 
                     menu.findItem(R.id.get_help)?.let {
                         it.isVisible = true
@@ -109,13 +102,7 @@ class SensorSettingsFragment : Fragment() {
                 override fun onMenuItemSelected(menuItem: MenuItem) = when (menuItem.itemId) {
                     R.id.action_show_sensors_all, R.id.action_show_sensors_enabled, R.id.action_show_sensors_disabled -> {
                         menuItem.isChecked = !menuItem.isChecked
-                        viewModel.setSensorFilterChoice(
-                            when (menuItem.itemId) {
-                                R.id.action_show_sensors_enabled -> SensorSettingsViewModel.SensorFilter.ENABLED
-                                R.id.action_show_sensors_disabled -> SensorSettingsViewModel.SensorFilter.DISABLED
-                                else -> SensorSettingsViewModel.SensorFilter.ALL
-                            }
-                        )
+                        viewModel.setSensorFilterChoice(menuItem.itemId)
                         true
                     }
                     else -> false
