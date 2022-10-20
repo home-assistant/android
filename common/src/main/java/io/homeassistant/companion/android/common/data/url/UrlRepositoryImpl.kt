@@ -20,9 +20,11 @@ class UrlRepositoryImpl @Inject constructor(
 
     companion object {
         private const val PREF_CLOUDHOOK_URL = "cloudhook_url"
+        private const val PREF_CLOUD_UI_URL = "remote_ui_url"
         private const val PREF_REMOTE_URL = "remote_url"
         private const val PREF_WEBHOOK_ID = "webhook_id"
         private const val PREF_LOCAL_URL = "local_url"
+        private const val PREF_USE_CLOUD = "use_cloud"
         private const val PREF_WIFI_SSIDS = "wifi_ssids"
         private const val PREF_PRIORITIZE_INTERNAL = "prioritize_internal"
         private const val TAG = "UrlRepository"
@@ -76,18 +78,29 @@ class UrlRepositoryImpl @Inject constructor(
     ) {
         localStorage.putString(PREF_CLOUDHOOK_URL, cloudHookUrl)
         localStorage.putString(PREF_WEBHOOK_ID, webhookId)
-        remoteUiUrl?.let {
-            localStorage.putString(PREF_REMOTE_URL, it)
-        }
+        localStorage.putString(PREF_CLOUD_UI_URL, remoteUiUrl)
+        localStorage.putBoolean(PREF_USE_CLOUD, remoteUiUrl != null)
     }
 
-    override suspend fun getUrl(isInternal: Boolean?): URL? {
+    override suspend fun updateCloudUrls(
+        cloudhookUrl: String?,
+        remoteUiUrl: String?
+    ) {
+        localStorage.putString(PREF_CLOUDHOOK_URL, cloudhookUrl)
+        localStorage.putString(PREF_CLOUD_UI_URL, remoteUiUrl)
+    }
+
+    override suspend fun getUrl(isInternal: Boolean?, force: Boolean): URL? {
         val internal = localStorage.getString(PREF_LOCAL_URL)?.toHttpUrlOrNull()?.toUrl()
         val external = localStorage.getString(PREF_REMOTE_URL)?.toHttpUrlOrNull()?.toUrl()
+        val cloud = localStorage.getString(PREF_CLOUD_UI_URL)?.toHttpUrlOrNull()?.toUrl()
 
-        return if (isInternal ?: isInternal() && internal != null) {
+        return if (isInternal ?: isInternal() && (internal != null || force)) {
             Log.d(TAG, "Using internal URL")
             internal
+        } else if (!force && shouldUseCloud() && cloud != null) {
+            Log.d(TAG, "Using cloud / remote UI URL")
+            cloud
         } else {
             Log.d(TAG, "Using external URL")
             external
@@ -108,6 +121,18 @@ class UrlRepositoryImpl @Inject constructor(
             )
         }
         localStorage.putString(if (isInternal ?: isInternal()) PREF_LOCAL_URL else PREF_REMOTE_URL, trimUrl)
+    }
+
+    override suspend fun canUseCloud(): Boolean {
+        return !localStorage.getString(PREF_CLOUD_UI_URL).isNullOrBlank()
+    }
+
+    override suspend fun shouldUseCloud(): Boolean {
+        return localStorage.getBoolean(PREF_USE_CLOUD)
+    }
+
+    override suspend fun setUseCloud(use: Boolean) {
+        localStorage.putBoolean(PREF_USE_CLOUD, use)
     }
 
     override suspend fun getHomeWifiSsids(): Set<String> {

@@ -1,8 +1,10 @@
 package io.homeassistant.companion.android.settings.sensor
 
 import android.app.Application
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,16 +21,21 @@ class SensorSettingsViewModel @Inject constructor(
 ) :
     AndroidViewModel(application) {
 
+    enum class SensorFilter {
+        ALL,
+        ENABLED,
+        DISABLED
+    }
+
     private var sensorsList = emptyList<Sensor>()
     var sensors = mutableStateListOf<Sensor>()
 
     var searchQuery: String? = null
-    var showOnlyEnabledSensors = mutableStateOf(false)
+    var sensorFilter by mutableStateOf(SensorFilter.ALL)
         private set
 
     init {
         viewModelScope.launch {
-            // TODO: For some reason we can't inject the sensor dao into this view model.
             sensorDao.getAllFlow().collect {
                 sensorsList = it
                 filterSensorsList()
@@ -41,8 +48,8 @@ class SensorSettingsViewModel @Inject constructor(
         filterSensorsList()
     }
 
-    fun setShowOnlyEnabledSensors(onlyEnabled: Boolean) {
-        showOnlyEnabledSensors.value = onlyEnabled
+    fun setSensorFilterChoice(filter: SensorFilter) {
+        sensorFilter = filter
         filterSensorsList()
     }
 
@@ -61,7 +68,11 @@ class SensorSettingsViewModel @Inject constructor(
                                         app.getString(manager.name).contains(searchQuery!!, true)
                                     )
                             ) &&
-                            (!showOnlyEnabledSensors.value || manager.isEnabled(app.applicationContext, sensor.id))
+                            (
+                                sensorFilter == SensorFilter.ALL ||
+                                    (sensorFilter == SensorFilter.ENABLED && manager.isEnabled(app.applicationContext, sensor.id)) ||
+                                    (sensorFilter == SensorFilter.DISABLED && !manager.isEnabled(app.applicationContext, sensor.id))
+                                )
                     }
                     .mapNotNull { sensor -> sensorsList.firstOrNull { it.id == sensor.id } }
             )

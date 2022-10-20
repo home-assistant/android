@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -16,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
@@ -128,9 +130,19 @@ fun MainView(
 
                 when (mainViewModel.loadingState.value) {
                     MainViewModel.LoadingState.LOADING -> {
+                        if (favoriteEntityIds.isEmpty()) {
+                            // Add a Spacer to prevent settings being pushed to the screen center
+                            item { Spacer(modifier = Modifier.fillMaxWidth()) }
+                        }
                         item {
+                            val minHeight =
+                                if (favoriteEntityIds.isEmpty()) LocalConfiguration.current.screenHeightDp - 64
+                                else 0
                             Column(
-                                modifier = Modifier.fillMaxSize(),
+                                modifier = Modifier
+                                    .heightIn(min = minHeight.dp)
+                                    .fillMaxSize()
+                                    .padding(vertical = if (favoriteEntityIds.isEmpty()) 0.dp else 32.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Center
                             ) {
@@ -299,27 +311,25 @@ fun MainView(
                     }
                 }
 
-                if (mainViewModel.loadingState.value != MainViewModel.LoadingState.LOADING) {
-                    // Settings
-                    item {
-                        Chip(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            icon = {
-                                Image(
-                                    asset = CommunityMaterial.Icon.cmd_cog,
-                                    colorFilter = ColorFilter.tint(Color.White)
-                                )
-                            },
-                            label = {
-                                Text(
-                                    text = stringResource(id = commonR.string.settings)
-                                )
-                            },
-                            onClick = onSettingsClicked,
-                            colors = ChipDefaults.secondaryChipColors()
-                        )
-                    }
+                // Settings
+                item {
+                    Chip(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        icon = {
+                            Image(
+                                asset = CommunityMaterial.Icon.cmd_cog,
+                                colorFilter = ColorFilter.tint(Color.White)
+                            )
+                        },
+                        label = {
+                            Text(
+                                text = stringResource(id = commonR.string.settings)
+                            )
+                        },
+                        onClick = onSettingsClicked,
+                        colors = ChipDefaults.secondaryChipColors()
+                    )
                 }
             }
         }

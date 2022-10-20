@@ -15,12 +15,18 @@ class DisplaySensorManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_screen_brightness,
             commonR.string.sensor_description_screen_brightness,
-            statelessIcon = "mdi:brightness-6"
+            statelessIcon = "mdi:brightness-6",
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#screen-brightness-sensor"
         )
-    }
 
-    override fun docsLink(): String {
-        return "https://companion.home-assistant.io/docs/core/sensors#screen-brightness-sensor"
+        val screenOffTimeout = SensorManager.BasicSensor(
+            "screen_off_timeout",
+            "sensor",
+            commonR.string.sensor_name_screen_off_timeout,
+            commonR.string.sensor_description_screen_off_timeout,
+            "mdi:cellphone-off",
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#screen-off-timeout-sensor"
+        )
     }
 
     override val enabledByDefault: Boolean
@@ -29,7 +35,7 @@ class DisplaySensorManager : SensorManager {
         get() = commonR.string.sensor_name_display_sensors
 
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        return listOf(screenBrightness)
+        return listOf(screenBrightness, screenOffTimeout)
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
@@ -40,6 +46,7 @@ class DisplaySensorManager : SensorManager {
         context: Context
     ) {
         updateScreenBrightness(context)
+        updateScreenTimeout(context)
     }
 
     private fun updateScreenBrightness(context: Context) {
@@ -69,6 +76,28 @@ class DisplaySensorManager : SensorManager {
             mapOf(
                 "automatic" to auto
             )
+        )
+    }
+
+    private fun updateScreenTimeout(context: Context) {
+        if (!isEnabled(context, screenOffTimeout.id))
+            return
+
+        var timeout = 0
+
+        try {
+            timeout =
+                Settings.System.getInt(context.contentResolver, Settings.System.SCREEN_OFF_TIMEOUT)
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to get screen off timeout setting", e)
+        }
+
+        onSensorUpdated(
+            context,
+            screenOffTimeout,
+            timeout,
+            screenOffTimeout.statelessIcon,
+            mapOf()
         )
     }
 }

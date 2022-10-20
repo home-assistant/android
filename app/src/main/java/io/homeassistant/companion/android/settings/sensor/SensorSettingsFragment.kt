@@ -91,9 +91,13 @@ class SensorSettingsFragment : Fragment() {
                         viewModel.setSensorsSearchQuery(null)
                     }
 
-                    if (viewModel.showOnlyEnabledSensors.value) {
-                        val checkable = menu.findItem(R.id.action_show_only_enabled_sensors)
-                        checkable?.isChecked = true
+                    when (viewModel.sensorFilter) {
+                        SensorSettingsViewModel.SensorFilter.ALL ->
+                            menu.findItem(R.id.action_show_sensors_all)?.isChecked = true
+                        SensorSettingsViewModel.SensorFilter.ENABLED ->
+                            menu.findItem(R.id.action_show_sensors_enabled)?.isChecked = true
+                        SensorSettingsViewModel.SensorFilter.DISABLED ->
+                            menu.findItem(R.id.action_show_sensors_disabled)?.isChecked = true
                     }
 
                     menu.findItem(R.id.get_help)?.let {
@@ -103,9 +107,15 @@ class SensorSettingsFragment : Fragment() {
                 }
 
                 override fun onMenuItemSelected(menuItem: MenuItem) = when (menuItem.itemId) {
-                    R.id.action_show_only_enabled_sensors -> {
+                    R.id.action_show_sensors_all, R.id.action_show_sensors_enabled, R.id.action_show_sensors_disabled -> {
                         menuItem.isChecked = !menuItem.isChecked
-                        viewModel.setShowOnlyEnabledSensors(menuItem.isChecked)
+                        viewModel.setSensorFilterChoice(
+                            when (menuItem.itemId) {
+                                R.id.action_show_sensors_enabled -> SensorSettingsViewModel.SensorFilter.ENABLED
+                                R.id.action_show_sensors_disabled -> SensorSettingsViewModel.SensorFilter.DISABLED
+                                else -> SensorSettingsViewModel.SensorFilter.ALL
+                            }
+                        )
                         true
                     }
                     else -> false
