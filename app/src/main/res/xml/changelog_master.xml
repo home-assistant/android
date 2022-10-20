@@ -2,6 +2,7 @@
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
     <release version="2022.11 - Phone" versioncode="2">
+        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Mobile data roaming sensor now requires phone permission on devices running Android 10+</change>
         <change>Add notification commands to control app lock setting and screen timeout</change>
         <chagne>Add a screen timeout sensor</chagne>
         <change>Add additional filters in Manage Sensors: All, Enabled or Disabled</change>
