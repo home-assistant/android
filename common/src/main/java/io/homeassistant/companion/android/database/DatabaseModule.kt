@@ -11,6 +11,7 @@ import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.settings.SettingsDao
+import io.homeassistant.companion.android.database.wear.CachesDao
 import io.homeassistant.companion.android.database.wear.EntityStateComplicationsDao
 import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
@@ -60,6 +61,9 @@ object DatabaseModule {
 
     @Provides
     fun provideFavoritesDao(database: AppDatabase): FavoritesDao = database.favoritesDao()
+
+    @Provides
+    fun provideCachesDao(database: AppDatabase): CachesDao = database.cachesDao()
 
     @Provides
     fun provideSettingsDao(database: AppDatabase): SettingsDao = database.settingsDao()

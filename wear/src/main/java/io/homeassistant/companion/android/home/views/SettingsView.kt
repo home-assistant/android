@@ -65,6 +65,7 @@ fun SettingsView(
     onClickSetShortcuts: () -> Unit,
     onClickSensors: () -> Unit,
     onClickLogout: () -> Unit,
+    onClickClearCache: () -> Unit,
     isHapticEnabled: Boolean,
     isToastEnabled: Boolean,
     onHapticEnabled: (Boolean) -> Unit,
@@ -226,6 +227,18 @@ fun SettingsView(
                         )
                     )
                 }
+                item {
+                    ListHeader(
+                        id = commonR.string.cache
+                    )
+                }
+                item {
+                    SecondarySettingsChip(
+                        icon =  CommunityMaterial.Icon.cmd_database_remove,
+                        label = stringResource(id = commonR.string.cache_clear),
+                        onClick = onClickClearCache
+                    )
+                }
             }
         }
     }
@@ -242,6 +255,7 @@ private fun PreviewSettingsView() {
         onClickSetShortcuts = {},
         onClickSensors = {},
         onClickLogout = {},
+        onClickClearCache = {},
         isHapticEnabled = true,
         isToastEnabled = false,
         onHapticEnabled = {},

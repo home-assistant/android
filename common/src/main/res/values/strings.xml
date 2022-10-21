@@ -97,6 +97,8 @@
     <string name="buttons">Buttons</string>
     <string name="button_forward">Next</string>
     <string name="button_widget_desc">Call any service</string>
+    <string name="cache">Cache</string>
+    <string name="cache_clear">Clear Cache</string>
     <string name="calendar">Calendar</string>
     <string name="camera_widgets">Camera Widgets</string>
     <string name="camera_widget_desc">Displays the latest image from the camera</string>

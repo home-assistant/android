@@ -136,6 +136,7 @@ fun LoadHomePage(
                         )
                     },
                     onClickLogout = { mainViewModel.logout() },
+                    onClickClearCache = { mainViewModel.clearCache() },
                     isHapticEnabled = mainViewModel.isHapticEnabled.value,
                     isToastEnabled = mainViewModel.isToastEnabled.value,
                     onHapticEnabled = { mainViewModel.setHapticEnabled(it) },
@@ -149,8 +150,10 @@ fun LoadHomePage(
                 ) { entityId, isSelected ->
                     if (isSelected) {
                         mainViewModel.addFavoriteEntity(entityId)
+                        mainViewModel.addCachedEntity(entityId)
                     } else {
                         mainViewModel.removeFavoriteEntity(entityId)
+                        mainViewModel.removeCachedEntity(entityId)
                     }
                 }
             }

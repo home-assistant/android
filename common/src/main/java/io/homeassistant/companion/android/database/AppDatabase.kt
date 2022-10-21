@@ -43,6 +43,8 @@ import io.homeassistant.companion.android.database.wear.EntityStateComplications
 import io.homeassistant.companion.android.database.wear.EntityStateComplicationsDao
 import io.homeassistant.companion.android.database.wear.Favorites
 import io.homeassistant.companion.android.database.wear.FavoritesDao
+import io.homeassistant.companion.android.database.wear.Caches
+import io.homeassistant.companion.android.database.wear.CachesDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
@@ -71,6 +73,7 @@ import io.homeassistant.companion.android.common.R as commonR
         NotificationItem::class,
         TileEntity::class,
         Favorites::class,
+        Caches::class,
         EntityStateComplications::class,
         Setting::class
     ],
@@ -105,6 +108,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun notificationDao(): NotificationDao
     abstract fun tileDao(): TileDao
     abstract fun favoritesDao(): FavoritesDao
+    abstract fun cachesDao(): CachesDao
     abstract fun entityStateComplicationsDao(): EntityStateComplicationsDao
     abstract fun settingsDao(): SettingsDao
 
@@ -153,7 +157,8 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_20_21,
                     MIGRATION_21_22,
                     MIGRATION_22_23,
-                    MIGRATION_23_24
+                    MIGRATION_23_24,
+                    MIGRATION_24_25,
                 )
                 .fallbackToDestructiveMigration()
                 .build()
@@ -509,6 +514,12 @@ abstract class AppDatabase : RoomDatabase() {
         private val MIGRATION_23_24 = object : Migration(23, 24) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE `settings` ADD `sensorUpdateFrequency` TEXT NOT NULL DEFAULT 'NORMAL'")
+            }
+        }
+
+        private val MIGRATION_24_25 = object : Migration(24, 25) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("CREATE TABLE IF NOT EXISTS `caches` (`id` TEXT PRIMARY KEY NOT NULL, `friendly_name` TEXT NOT NULL, `icon` TEXT)")
             }
         }
 
