@@ -19,10 +19,9 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.En
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.database.sensor.SensorDao
+import io.homeassistant.companion.android.database.wear.FavoriteCaches
+import io.homeassistant.companion.android.database.wear.FavoriteCachesDao
 import io.homeassistant.companion.android.database.wear.FavoritesDao
-import io.homeassistant.companion.android.database.wear.CachesDao
-import io.homeassistant.companion.android.database.wear.Caches
-import io.homeassistant.companion.android.database.wear.getAll
 import io.homeassistant.companion.android.database.wear.getAllFlow
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.util.RegistriesDataHandler
@@ -34,7 +33,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val favoritesDao: FavoritesDao,
-    private val cachesDao: CachesDao,
+    private val FavoriteCachesDao: FavoriteCachesDao,
     private val sensorsDao: SensorDao,
     application: Application
 ) : AndroidViewModel(application) {
@@ -67,7 +66,6 @@ class MainViewModel @Inject constructor(
      * IDs of favorites in the Favorites database.
      */
     val favoriteEntityIds = favoritesDao.getAllFlow().collectAsState()
-    val cache = cachesDao
 
     var shortcutEntities = mutableStateListOf<SimplifiedEntity>()
         private set
@@ -141,13 +139,13 @@ class MainViewModel @Inject constructor(
                 }
                 deviceRegistry = getDeviceRegistry.await()
                 entityRegistry = getEntityRegistry.await()
-                val allFavorites = favoritesDao.getAll()
+
                 getEntities.await()?.forEach {
                     if (supportedDomains().contains(it.domain)) {
                         entities[it.entityId] = it
-                        //add to cache if part of favorites
-                        if (allFavorites.contains(it.entityId)) {
-                            addCachedEntity(it.entityId)
+                        // add to cache if part of favorites
+                        if (favoriteEntityIds.value.contains(it.entityId)) {
+                            addCachedFavorite(it.entityId)
                         }
                     }
                 }
@@ -368,40 +366,45 @@ class MainViewModel @Inject constructor(
     fun addFavoriteEntity(entityId: String) {
         viewModelScope.launch {
             favoritesDao.addToEnd(entityId)
+            addCachedFavorite(entityId)
         }
     }
 
     fun removeFavoriteEntity(entityId: String) {
         viewModelScope.launch {
             favoritesDao.delete(entityId)
+            removeCachedFavorite(entityId)
         }
     }
 
-    fun addCachedEntity(entityId: String) {
+    fun getCachedEntity(entityId: String): FavoriteCaches =
+        FavoriteCachesDao.get(entityId)
+
+    private fun addCachedFavorite(entityId: String) {
         viewModelScope.launch {
             val entity = entities[entityId]
             val attributes = entity?.attributes as Map<*, *>
-            var icon:String? = attributes["icon"] as String?
-            cachesDao.add(Caches(entityId, attributes["friendly_name"].toString(), icon))
+            var icon: String? = attributes["icon"] as String?
+            FavoriteCachesDao.add(FavoriteCaches(entityId, attributes["friendly_name"].toString(), icon))
         }
     }
 
-    fun removeCachedEntity(entityId: String) {
+    private fun removeCachedFavorite(entityId: String) {
         viewModelScope.launch {
-            cachesDao.delete((entityId))
+            FavoriteCachesDao.delete((entityId))
         }
     }
 
     fun logout() {
         homePresenter.onLogoutClicked()
 
-        //also clear cache when logging out
+        // also clear cache when logging out
         clearCache()
     }
 
     fun clearCache() {
         viewModelScope.launch {
-            cachesDao.deleteAll()
+            FavoriteCachesDao.deleteAll()
         }
     }
 

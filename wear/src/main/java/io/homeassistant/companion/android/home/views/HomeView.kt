@@ -150,10 +150,8 @@ fun LoadHomePage(
                 ) { entityId, isSelected ->
                     if (isSelected) {
                         mainViewModel.addFavoriteEntity(entityId)
-                        mainViewModel.addCachedEntity(entityId)
                     } else {
                         mainViewModel.removeFavoriteEntity(entityId)
-                        mainViewModel.removeCachedEntity(entityId)
                     }
                 }
             }

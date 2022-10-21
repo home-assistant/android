@@ -88,9 +88,9 @@ fun MainView(
                     if (expandedFavorites) {
                         items(favoriteEntityIds.size) { index ->
                             val favoriteEntityID = favoriteEntityIds[index].split(",")[0]
-                            val cached = mainViewModel.cache.get((favoriteEntityID))
                             if (mainViewModel.entities.isEmpty()) {
-                                // Use a normal chip when we don't have the state of the entity
+                                // when we don't have the state of the entity, create a Chip from cache as we don't have the state yet
+                                val cached = mainViewModel.getCachedEntity((favoriteEntityID))
                                 Chip(
                                     modifier = Modifier
                                         .fillMaxWidth(),
@@ -102,7 +102,7 @@ fun MainView(
                                     },
                                     label = {
                                         Text(
-                                            text = cached?.friendly_name ?: favoriteEntityID,
+                                            text = cached?.friendlyName ?: favoriteEntityID,
                                             maxLines = 2,
                                             overflow = TextOverflow.Ellipsis
                                         )

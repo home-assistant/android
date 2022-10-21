@@ -5,15 +5,15 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 /**
- * Represents a favorite entity
+ * Represents a cached favorite entity
  */
-@Entity(tableName = "cache")
-data class Caches(
+@Entity(tableName = "favorite_cache")
+data class FavoriteCaches(
     @PrimaryKey
     @ColumnInfo(name = "id")
     val id: String,
     @ColumnInfo(name = "friendly_name")
-    val friendly_name: String,
+    val friendlyName: String,
     @ColumnInfo(name = "icon")
     val icon: String?
 )

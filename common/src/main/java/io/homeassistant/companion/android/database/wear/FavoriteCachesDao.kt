@@ -4,21 +4,19 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Update
 
 @Dao
-interface CachesDao {
+interface FavoriteCachesDao {
 
-    @Query("SELECT * FROM cache where id = :id LIMIT 1")
-    fun get(id: String): Caches
+    @Query("SELECT * FROM favorite_cache where id = :id LIMIT 1")
+    fun get(id: String): FavoriteCaches
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun add(cache: Caches)
+    fun add(cache: FavoriteCaches)
 
-    @Query("DELETE FROM cache where id = :id")
+    @Query("DELETE FROM favorite_cache where id = :id")
     fun delete(id: String)
 
-    @Query("DELETE FROM cache")
+    @Query("DELETE FROM favorite_cache")
     fun deleteAll()
-
 }

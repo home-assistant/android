@@ -234,7 +234,7 @@ fun SettingsView(
                 }
                 item {
                     SecondarySettingsChip(
-                        icon =  CommunityMaterial.Icon.cmd_database_remove,
+                        icon = CommunityMaterial.Icon.cmd_database_remove,
                         label = stringResource(id = commonR.string.cache_clear),
                         onClick = onClickClearCache
                     )

@@ -1,8 +1,8 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 33,
-    "identityHash": "5eab11aa0967d84bc4c14bdf053eb574",
+    "version": 34,
+    "identityHash": "1e2b35e07bb5b94e4b92b2e7b5f291ca",
     "entities": [
       {
         "tableName": "sensor_attributes",
@@ -660,6 +660,38 @@
         "foreignKeys": []
       },
       {
+        "tableName": "favorite_cache",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `friendly_name` TEXT NOT NULL, `icon` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "friendlyName",
+            "columnName": "friendly_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "icon",
+            "columnName": "icon",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
         "tableName": "entityStateComplications",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `entityId` TEXT NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
@@ -721,7 +753,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5eab11aa0967d84bc4c14bdf053eb574')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1e2b35e07bb5b94e4b92b2e7b5f291ca')"
     ]
   }
 }

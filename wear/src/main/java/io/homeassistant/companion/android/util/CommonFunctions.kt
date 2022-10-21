@@ -31,7 +31,7 @@ fun stringForDomain(domain: String, context: Context): String? =
         )
         )[domain]?.let { context.getString(it) }
 
-fun getIcon(icon: String?, domain: String, context: Context?): IIcon? {
+fun getIcon(icon: String?, domain: String, context: Context): IIcon? {
     val simpleEntity = Entity(
         "",
         "",
@@ -142,7 +142,7 @@ fun getIcon(entity: Entity<Map<String, Any>>?, domain: String, context: Context?
     }
 }
 
-fun getIconFromMdiString(icon:String, context: Context?): IIcon {
+fun getIconFromMdiString(icon: String, context: Context?): IIcon {
     val mdiIcon = icon.split(":")[1]
     if (context == null) {
         CommunityMaterial.getIcon("cmd_$mdiIcon")
