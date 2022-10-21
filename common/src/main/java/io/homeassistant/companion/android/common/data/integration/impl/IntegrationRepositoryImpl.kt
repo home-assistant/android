@@ -766,6 +766,7 @@ class IntegrationRepositoryImpl @Inject constructor(
             UpdateLocationRequest(
                 updateLocation.gps,
                 updateLocation.gpsAccuracy,
+                updateLocation.locationName,
                 updateLocation.speed,
                 updateLocation.altitude,
                 updateLocation.course,
