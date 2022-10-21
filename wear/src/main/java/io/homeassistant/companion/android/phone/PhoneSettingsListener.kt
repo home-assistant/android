@@ -114,6 +114,7 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
             val authCode = dataMap.getString("AuthCode", "")
             val deviceName = dataMap.getString("DeviceName")
             val deviceTrackingEnabled = dataMap.getBoolean("LocationTracking")
+            val notificationsEnabled = dataMap.getString("Notifications")
 
             urlRepository.saveUrl(url)
             authenticationRepository.registerAuthorizationCode(authCode)

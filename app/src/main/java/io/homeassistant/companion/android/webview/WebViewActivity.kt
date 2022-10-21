@@ -42,6 +42,7 @@ import android.webkit.WebView
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
@@ -193,7 +194,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var videoHeight = 0
     private var firstAuthTime: Long = 0
     private var resourceURL: String = ""
-    private var unlocked = false
+    private var appLocked = true
     private var exoPlayer: SimpleExoPlayer? = null
     private var isExoFullScreen = false
     private var exoTop: Int = 0 // These margins are from the DOM and scaled to screen
@@ -224,7 +225,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         binding.blurView.setupWith(binding.root)
             .setBlurAlgorithm(RenderScriptBlur(this))
-            .setBlurRadius(5f)
+            .setBlurRadius(8f)
             .setHasFixedTransformationMatrix(false)
 
         exoPlayerView = binding.exoplayerView
@@ -237,16 +238,22 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         playerBinding = ExoPlayerViewBinding.bind(exoPlayerView)
 
-        if (!presenter.isLockEnabled()) {
-            binding.blurView.setBlurEnabled(false)
-            unlocked = true
-        }
+        appLocked = presenter.isAppLocked()
+        binding.blurView.setBlurEnabled(appLocked)
 
         authenticator = Authenticator(this, this, ::authenticationResult)
 
         decor = window.decorView as FrameLayout
 
         webView = binding.webview
+
+        val onBackPressed = object : OnBackPressedCallback(webView.canGoBack()) {
+            override fun handleOnBackPressed() {
+                if (webView.canGoBack()) webView.goBack()
+            }
+        }
+        onBackPressedDispatcher.addCallback(this, onBackPressed)
+
         webView.apply {
             // TODO This quick bar workaround only works on Home Assistant core versions <2022.7
             // If not 'fixed' or officially supported: should be removed in Android 2023.1 (GitHub: #2690)
@@ -264,11 +271,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     ) {
                         dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_E))
                     }
-                    return !unlocked
+                    return appLocked
                 }
 
                 override fun onMotionEventHandled(v: View?, event: MotionEvent?): Boolean {
-                    return !unlocked
+                    return appLocked
                 }
             })
 
@@ -405,6 +412,15 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                         }
                     }
                     return false
+                }
+
+                override fun doUpdateVisitedHistory(
+                    view: WebView?,
+                    url: String?,
+                    isReload: Boolean
+                ) {
+                    super.doUpdateVisitedHistory(view, url, isReload)
+                    onBackPressed.isEnabled = canGoBack()
                 }
             }
 
@@ -680,12 +696,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         super.onResume()
         if ((currentLang != languagesManager.getCurrentLang()) || currentAutoplay != presenter.isAutoPlayVideoEnabled())
             recreate()
-        if ((!unlocked && !presenter.isLockEnabled()) ||
-            (!unlocked && presenter.isLockEnabled() && System.currentTimeMillis() < presenter.getSessionExpireMillis())
-        ) {
-            unlocked = true
-            binding.blurView.setBlurEnabled(false)
-        }
+
+        appLocked = presenter.isAppLocked()
+        binding.blurView.setBlurEnabled(appLocked)
 
         enablePinchToZoom()
 
@@ -705,6 +718,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     override fun onPause() {
         super.onPause()
         SensorWorker.start(this)
+        presenter.setAppActive(false)
     }
 
     private fun checkAndWarnForDisabledLocation() {
@@ -921,7 +935,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         when (result) {
             Authenticator.SUCCESS -> {
                 Log.d(TAG, "Authentication successful, unlocking app")
-                unlocked = true
+                appLocked = false
+                presenter.setAppActive(true)
                 binding.blurView.setBlurEnabled(false)
             }
             Authenticator.CANCELED -> {
@@ -935,13 +950,13 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) {
-            if (presenter.isLockEnabled() && !unlocked)
-                if ((System.currentTimeMillis() > presenter.getSessionExpireMillis())) {
-                    binding.blurView.setBlurEnabled(true)
-                    authenticator.authenticate(getString(commonR.string.biometric_title))
-                } else {
-                    binding.blurView.setBlurEnabled(false)
-                }
+            appLocked = presenter.isAppLocked()
+            if (appLocked) {
+                binding.blurView.setBlurEnabled(true)
+                authenticator.authenticate(getString(commonR.string.biometric_title))
+            } else {
+                binding.blurView.setBlurEnabled(false)
+            }
 
             val path = intent.getStringExtra(EXTRA_PATH)
             presenter.onViewReady(path)
@@ -985,8 +1000,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        presenter.setSessionExpireMillis((System.currentTimeMillis() + (presenter.sessionTimeOut() * 1000)))
-        unlocked = false
+        presenter.setAppActive(false)
         videoHeight = decor.height
         val bounds = Rect(0, 0, 1920, 1080)
         if (isVideoFullScreen or isExoFullScreen) {
@@ -1007,14 +1021,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     override fun relaunchApp() {
         startActivity(Intent(this, LaunchActivity::class.java))
         finish()
-    }
-
-    override fun onBackPressed() {
-        if (webView.canGoBack()) {
-            webView.goBack()
-        } else {
-            super.onBackPressed()
-        }
     }
 
     override fun loadUrl(url: String) {

@@ -20,6 +20,7 @@ import io.homeassistant.companion.android.common.data.websocket.WebSocketRequest
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DomainResponse
@@ -70,6 +71,7 @@ class WebSocketRepositoryImpl @Inject constructor(
         private const val TAG = "WebSocketRepository"
 
         private const val SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS = "subscribe_events"
+        private const val SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES = "subscribe_entities"
         private const val SUBSCRIBE_TYPE_SUBSCRIBE_TRIGGER = "subscribe_trigger"
         private const val SUBSCRIBE_TYPE_RENDER_TEMPLATE = "render_template"
         private const val SUBSCRIBE_TYPE_PUSH_NOTIFICATION_CHANNEL =
@@ -179,6 +181,12 @@ class WebSocketRepositoryImpl @Inject constructor(
     override suspend fun getStateChanges(entityIds: List<String>): Flow<TriggerEvent>? =
         subscribeToTrigger("state", mapOf("entity_id" to entityIds))
 
+    override suspend fun getCompressedStateAndChanges(): Flow<CompressedStateChangedEvent>? =
+        subscribeTo(SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES)
+
+    override suspend fun getCompressedStateAndChanges(entityIds: List<String>): Flow<CompressedStateChangedEvent>? =
+        subscribeTo(SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES, mapOf("entity_ids" to entityIds))
+
     override suspend fun getAreaRegistryUpdates(): Flow<AreaRegistryUpdatedEvent>? =
         subscribeToEventsForType(EVENT_AREA_REGISTRY_UPDATED)
 
@@ -215,7 +223,7 @@ class WebSocketRepositoryImpl @Inject constructor(
      */
     private suspend fun <T : Any> subscribeTo(
         type: String,
-        data: Map<Any, Any>,
+        data: Map<Any, Any> = mapOf(),
         timeout: Long = 0
     ): Flow<T>? {
         val subscribeMessage = mapOf(
@@ -429,6 +437,8 @@ class WebSocketRepositoryImpl @Inject constructor(
                         response.event,
                         object : TypeReference<Map<String, Any>>() {}
                     )
+                } else if (subscriptionType == SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES) {
+                    mapper.convertValue(response.event, CompressedStateChangedEvent::class.java)
                 } else if (subscriptionType == SUBSCRIBE_TYPE_RENDER_TEMPLATE) {
                     mapper.convertValue(response.event, TemplateUpdatedEvent::class.java)
                 } else if (subscriptionType == SUBSCRIBE_TYPE_SUBSCRIBE_TRIGGER) {

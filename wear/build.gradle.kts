@@ -111,7 +111,7 @@ dependencies {
     implementation("com.mikepenz:iconics-core:5.3.4")
     implementation("androidx.appcompat:appcompat:1.5.1")
     implementation("com.mikepenz:community-material-typeface:7.0.96.0-kotlin@aar")
-    implementation("com.mikepenz:iconics-compose:5.3.4")
+    implementation("com.mikepenz:iconics-compose:5.4.0")
 
     implementation("androidx.activity:activity-ktx:1.6.0")
     implementation("androidx.activity:activity-compose:1.6.0")

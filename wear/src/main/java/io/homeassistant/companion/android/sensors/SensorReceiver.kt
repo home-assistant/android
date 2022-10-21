@@ -3,9 +3,11 @@ package io.homeassistant.companion.android.sensors
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.net.wifi.WifiManager
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.sensors.BatterySensorManager
+import io.homeassistant.companion.android.common.sensors.NetworkSensorManager
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
 
@@ -24,7 +26,8 @@ class SensorReceiver : SensorReceiverBase() {
     companion object {
         const val TAG = "SensorReceiver"
         val MANAGERS = listOf(
-            BatterySensorManager()
+            BatterySensorManager(),
+            NetworkSensorManager()
         )
 
         const val ACTION_REQUEST_SENSORS_UPDATE =
@@ -33,7 +36,9 @@ class SensorReceiver : SensorReceiverBase() {
 
     // Suppress Lint because we only register for the receiver if the android version matches the intent
     @SuppressLint("InlinedApi")
-    override val skippableActions = mapOf<String, String>()
+    override val skippableActions = mapOf(
+        WifiManager.WIFI_STATE_CHANGED_ACTION to NetworkSensorManager.wifiState.id
+    )
 
     override fun getSensorSettingsIntent(context: Context, id: String): Intent? = null
 }

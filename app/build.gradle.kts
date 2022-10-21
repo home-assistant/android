@@ -23,7 +23,7 @@ android {
     defaultConfig {
         applicationId = "io.homeassistant.companion.android"
         minSdk = 21
-        targetSdk = 31
+        targetSdk = 33
 
         versionName = System.getenv("VERSION") ?: "LOCAL"
         versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
@@ -165,7 +165,7 @@ dependencies {
     "fullImplementation"(platform("com.google.firebase:firebase-bom:30.4.1"))
     "fullImplementation"("com.google.firebase:firebase-analytics")
     "fullImplementation"("com.google.firebase:firebase-messaging")
-    "fullImplementation"("io.sentry:sentry-android:6.4.2")
+    "fullImplementation"("io.sentry:sentry-android:6.5.0")
     "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
     "fullImplementation"("com.google.android.gms:play-services-wearable:18.0.0")
     "fullImplementation"("androidx.wear:wear-remote-interactions:1.0.0")
@@ -197,8 +197,9 @@ dependencies {
     implementation("com.google.accompanist:accompanist-appcompat-theme:0.25.1")
 
     implementation("com.mikepenz:iconics-core:5.3.4")
-    implementation("com.mikepenz:iconics-compose:5.3.4")
+    implementation("com.mikepenz:iconics-compose:5.4.0")
     implementation("com.mikepenz:community-material-typeface:7.0.96.0-kotlin@aar")
+
     "fullImplementation"("org.burnoutcrew.composereorderable:reorderable:0.9.2")
     implementation("com.github.AppDevNext:ChangeLog:3.4")
 }

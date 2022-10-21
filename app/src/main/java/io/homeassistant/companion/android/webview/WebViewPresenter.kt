@@ -21,13 +21,13 @@ interface WebViewPresenter {
     fun isPinchToZoomEnabled(): Boolean
     fun isWebViewDebugEnabled(): Boolean
 
+    fun isAppLocked(): Boolean
+    fun setAppActive(active: Boolean)
+
     fun isLockEnabled(): Boolean
     fun isAutoPlayVideoEnabled(): Boolean
 
     fun sessionTimeOut(): Int
-
-    fun setSessionExpireMillis(value: Long)
-    fun getSessionExpireMillis(): Long
 
     fun onFinish()
 
