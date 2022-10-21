@@ -17,7 +17,7 @@ class TheaterModeSensorManager : SensorManager {
             commonR.string.sensor_description_theater_mode,
             "mdi:movie-open",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.WORKER
         )
     }
 

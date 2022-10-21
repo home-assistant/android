@@ -18,7 +18,7 @@ class BedtimeModeSensorManager : SensorManager {
             commonR.string.sensor_description_bedtime_mode,
             "mdi:sleep",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.WORKER
         )
     }
 
