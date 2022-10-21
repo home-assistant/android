@@ -72,7 +72,7 @@ fun getIcon(entity: Entity<Map<String, Any>>?, domain: String, context: Context)
             "camera" -> CommunityMaterial.Icon3.cmd_video
             "climate" -> CommunityMaterial.Icon3.cmd_thermostat
             "configurator" -> CommunityMaterial.Icon.cmd_cog
-            "conversation" -> CommunityMaterial.Icon3.cmd_text_to_speech
+            "conversation" -> CommunityMaterial.Icon3.cmd_microphone_message
             "cover" -> coverIcon(compareState, entity)
             "counter" -> CommunityMaterial.Icon.cmd_counter
             "fan" -> CommunityMaterial.Icon2.cmd_fan
