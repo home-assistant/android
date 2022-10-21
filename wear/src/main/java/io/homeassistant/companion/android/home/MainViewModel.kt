@@ -384,7 +384,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             val entity = entities[entityId]
             val attributes = entity?.attributes as Map<*, *>
-            var icon: String? = attributes["icon"] as String?
+            val icon = attributes["icon"] as String?
             FavoriteCachesDao.add(FavoriteCaches(entityId, attributes["friendly_name"].toString(), icon))
         }
     }
