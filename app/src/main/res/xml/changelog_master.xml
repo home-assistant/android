@@ -3,6 +3,7 @@
     tools:ignore="MissingDefaultResource">
     <release version="2022.11 - Phone" versioncode="2">
         <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Mobile data roaming sensor now requires phone permission on devices running Android 10+</change>
+        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Notification command to turn bluetooth on and off no longer works on Android 13+ devices. BLE transmitter and Beacon Monitor commands are not impacted by this.</change>
         <change>Add notification commands to control app lock setting and screen timeout</change>
         <chagne>Add a screen timeout sensor</chagne>
         <change>Add additional filters in Manage Sensors: All, Enabled or Disabled</change>
