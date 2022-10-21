@@ -333,9 +333,9 @@
     <string name="manage_wear_device">Manage device %1$s</string>
     <string name="manage_widgets_summary">Edit your widgets, adding/deleting can only be done from the home screen</string>
     <string name="manage_widgets">Manage Widgets</string>
-    <string name="manual_desc">Enter the URL of your Home Assistant server. Make sure the URL includes the protocol and port. For example:\n\nhttp://homeassistant.local:8123 or \nhttps://example.duckdns.org.</string>
+    <string name="manual_desc">Enter the URL of your Home Assistant server. Make sure it includes the protocol and port. For example:\n\nhttp://homeassistant.local:8123 or \nhttps://example.duckdns.org.</string>
     <string name="manual_setup">Enter address manually</string>
-    <string name="manual_title">What is your Home Assistant URL?</string>
+    <string name="manual_title">What is your Home Assistant address?</string>
     <string name="map">Map</string>
     <string name="maximum">Maximum</string>
     <string name="media_player">Media player</string>
@@ -457,7 +457,7 @@
     <string name="security">Security</string>
     <string name="select">Select</string>
     <string name="select_entity_to_display">Select Entity to display</string>
-    <string name="select_instance">Select the instance you would like to connect to:</string>
+    <string name="select_instance">Select your Home Assistant server</string>
     <string name="sensor_description_active_notification_count">Total count of active notifications that are visible to the user including silent, persistent and the Sensor Worker notifications.</string>
     <string name="sensor_description_app_importance">If the app is in the foreground, background or any other state it can be.</string>
     <string name="sensor_description_app_inactive">Whether the app is currently considered inactive by the system</string>
@@ -792,7 +792,6 @@
     <string name="welcome_hass_desc">This app connects to your Home Assistant server and allows integrating data about you and your phone.\n\nHome Assistant is free and open source home automation software with a focus on local control and privacy.</string>
     <string name="welcome_hass">Welcome to Home Assistant Companion!</string>
     <string name="what_is_this_crash">Unable to load Home Assistant home page, do you have a browser installed?</string>
-    <string name="what_is_this">What is this?</string>
     <string name="widget_attribute_separator_label">Separator between attributes:</string>
     <string name="widget_background_type_label">Widget theme:</string>
     <string name="widget_background_type_daynight">Light/dark theme</string>
