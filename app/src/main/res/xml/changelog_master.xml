@@ -6,12 +6,14 @@
         <change>Add notification commands to control app lock setting and screen timeout</change>
         <chagne>Add a screen timeout sensor</chagne>
         <change>Add additional filters in Manage Sensors: All, Enabled or Disabled</change>
+        <change>Apply app lock to settings screens</change>
+        <change>Add new sensor setting for Background Location to only send zone name instead of GPS coordinates</change>
         <change>Only show Wear OS settings when device is connected, instead of relying on what app is installed</change>
         <change>Improve user experience when Nabu Casa cloud is used</change>
         <change>Bug fixes, performance improvements, design tweaks and dependency updates</change>
     </release>
     <release version="2022.11 - Wear" versioncode="1">
-        <change>Add network sensors</change>
+        <change>Add App, Audio, Bedtime mode (Wear OS 3 Only), Do Not Disturb, Last Update, Network, Next Alarm, Power, Steps and Theater mode sensors</change>
         <change>Allow settings to always be accessible, even when loading</change>
         <change>Bug fixes and dependency updates</change>
     </release>
