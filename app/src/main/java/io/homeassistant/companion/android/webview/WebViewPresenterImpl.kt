@@ -157,6 +157,18 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
+    override fun isAppLocked(): Boolean {
+        return runBlocking {
+            integrationUseCase.isAppLocked()
+        }
+    }
+
+    override fun setAppActive(active: Boolean) {
+        return runBlocking {
+            integrationUseCase.setAppActive(active)
+        }
+    }
+
     override fun isLockEnabled(): Boolean {
         return runBlocking {
             authenticationUseCase.isLockEnabled()
@@ -172,18 +184,6 @@ class WebViewPresenterImpl @Inject constructor(
     override fun sessionTimeOut(): Int {
         return runBlocking {
             integrationUseCase.getSessionTimeOut()
-        }
-    }
-
-    override fun setSessionExpireMillis(value: Long) {
-        mainScope.launch {
-            integrationUseCase.setSessionExpireMillis(value)
-        }
-    }
-
-    override fun getSessionExpireMillis(): Long {
-        return runBlocking {
-            integrationUseCase.getSessionExpireMillis()
         }
     }
 

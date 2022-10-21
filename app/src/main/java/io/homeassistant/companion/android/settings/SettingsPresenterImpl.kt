@@ -173,27 +173,9 @@ class SettingsPresenterImpl @Inject constructor(
         settingsView.updateSsids(ssids)
     }
 
-    override fun isLockEnabled(): Boolean {
-        return runBlocking {
-            authenticationUseCase.isLockEnabled()
-        }
-    }
-
-    override fun sessionTimeOut(): Int {
-        return runBlocking {
-            integrationUseCase.getSessionTimeOut()
-        }
-    }
-
-    override fun setSessionExpireMillis(value: Long) {
-        mainScope.launch {
-            integrationUseCase.setSessionExpireMillis(value)
-        }
-    }
-
-    override fun getSessionExpireMillis(): Long {
-        return runBlocking {
-            integrationUseCase.getSessionExpireMillis()
+    override fun setAppActive(active: Boolean) {
+        runBlocking {
+            integrationUseCase.setAppActive(active)
         }
     }
 

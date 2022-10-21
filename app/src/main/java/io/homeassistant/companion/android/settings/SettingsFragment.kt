@@ -17,7 +17,6 @@ import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
-import androidx.biometric.BiometricManager
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
@@ -69,9 +68,6 @@ class SettingsFragment constructor(
         private const val BACKGROUND_LOCATION_REQUEST_CODE = 1
     }
 
-    private lateinit var authenticator: Authenticator
-    private var setLock = false
-
     private val requestBackgroundAccessResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         updateBackgroundAccessPref()
     }
@@ -82,8 +78,6 @@ class SettingsFragment constructor(
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         presenter.init(this)
-
-        authenticator = Authenticator(requireContext(), requireActivity(), ::authenticationResult)
 
         preferenceManager.preferenceDataStore = presenter.getPreferenceDataStore()
 
@@ -102,18 +96,17 @@ class SettingsFragment constructor(
         }
 
         findPreference<SwitchPreference>("app_lock")?.setOnPreferenceChangeListener { _, newValue ->
-            var isValid: Boolean
+            val isValid: Boolean
             if (newValue == false) {
                 isValid = true
                 findPreference<SwitchPreference>("app_lock_home_bypass")?.isVisible = false
                 findPreference<EditTextPreference>("session_timeout")?.isVisible = false
             } else {
-                isValid = true
-                if (BiometricManager.from(requireActivity()).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS) {
-                    setLock = true
-                    authenticator.authenticate(getString(commonR.string.biometric_set_title))
-                } else {
-                    isValid = false
+                val settingsActivity = requireActivity() as SettingsActivity
+                val canAuth = settingsActivity.requestAuthentication(getString(commonR.string.biometric_set_title), ::setLockAuthenticationResult)
+                isValid = canAuth
+
+                if (!canAuth) {
                     AlertDialog.Builder(requireActivity())
                         .setTitle(commonR.string.set_lock_title)
                         .setMessage(commonR.string.set_lock_message)
@@ -493,13 +486,17 @@ class SettingsFragment constructor(
             .commit()
     }
 
-    private fun authenticationResult(result: Int) {
+    private fun setLockAuthenticationResult(result: Int): Boolean {
         val success = result == Authenticator.SUCCESS
         val switchLock = findPreference<SwitchPreference>("app_lock")
         switchLock?.isChecked = success
 
+        // Prevent requesting authentication after just enabling the app lock
+        presenter.setAppActive(success)
+
         findPreference<SwitchPreference>("app_lock_home_bypass")?.isVisible = success
         findPreference<EditTextPreference>("session_timeout")?.isVisible = success
+        return (result == Authenticator.SUCCESS || result == Authenticator.CANCELED)
     }
 
     private fun removeSystemFromThemesIfNeeded() {
