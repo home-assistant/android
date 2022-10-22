@@ -66,6 +66,7 @@ class MainViewModel @Inject constructor(
      * IDs of favorites in the Favorites database.
      */
     val favoriteEntityIds = favoritesDao.getAllFlow().collectAsState()
+    private val favoriteCaches = favoriteCachesDao.getAll()
 
     var shortcutEntities = mutableStateListOf<SimplifiedEntity>()
         private set
@@ -377,21 +378,21 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun getCachedEntity(entityId: String): FavoriteCaches =
-        FavoriteCachesDao.get(entityId)
+    fun getCachedEntity(entityId: String): FavoriteCaches? =
+        favoriteCaches.find { it.id == entityId }
 
     private fun addCachedFavorite(entityId: String) {
         viewModelScope.launch {
             val entity = entities[entityId]
             val attributes = entity?.attributes as Map<*, *>
             val icon = attributes["icon"] as String?
-            FavoriteCachesDao.add(FavoriteCaches(entityId, attributes["friendly_name"].toString(), icon))
+            favoriteCachesDao.add(FavoriteCaches(entityId, attributes["friendly_name"].toString(), icon))
         }
     }
 
     private fun removeCachedFavorite(entityId: String) {
         viewModelScope.launch {
-            FavoriteCachesDao.delete((entityId))
+            favoriteCachesDao.delete((entityId))
         }
     }
 
@@ -404,7 +405,7 @@ class MainViewModel @Inject constructor(
 
     fun clearCache() {
         viewModelScope.launch {
-            FavoriteCachesDao.deleteAll()
+            favoriteCachesDao.deleteAll()
         }
     }
 

@@ -43,7 +43,7 @@ fun getIcon(icon: String?, domain: String, context: Context): IIcon? {
     return getIcon(simpleEntity as Entity<Map<String, Any>>, domain, context)
 }
 
-fun getIcon(entity: Entity<Map<String, Any>>?, domain: String, context: Context?): IIcon? {
+fun getIcon(entity: Entity<Map<String, Any>>?, domain: String, context: Context): IIcon? {
     val icon = entity?.attributes?.get("icon") as? String
     return if (icon?.startsWith("mdi") == true) {
         getIconFromMdiString(icon, context)
