@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.home.views
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
@@ -31,7 +32,9 @@ fun SensorManagerUi(
             },
             timeText = { TimeText(!scalingLazyListState.isScrollInProgress) }
         ) {
-            val availableSensors = sensorManager.getAvailableSensors(LocalContext.current)
+            val availableSensors = sensorManager
+                .getAvailableSensors(LocalContext.current)
+                .sortedBy { stringResource(it.name) }
             ThemeLazyColumn(
                 state = scalingLazyListState
             ) {
