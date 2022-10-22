@@ -9,7 +9,7 @@ import androidx.room.Query
 interface FavoriteCachesDao {
 
     @Query("SELECT * FROM favorite_cache where id = :id LIMIT 1")
-    fun get(id: String): FavoriteCaches
+    fun get(id: String): FavoriteCaches?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun add(cache: FavoriteCaches)

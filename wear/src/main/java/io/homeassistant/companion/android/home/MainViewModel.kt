@@ -33,7 +33,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val favoritesDao: FavoritesDao,
-    private val FavoriteCachesDao: FavoriteCachesDao,
+    private val favoriteCachesDao: FavoriteCachesDao,
     private val sensorsDao: SensorDao,
     application: Application
 ) : AndroidViewModel(application) {
