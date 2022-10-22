@@ -2,8 +2,10 @@ package io.homeassistant.companion.android.home.views
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
@@ -23,7 +25,14 @@ fun SensorManagerUi(
     onSensorClicked: (String, Boolean) -> Unit,
 ) {
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
-
+    val context = LocalContext.current
+    val availableSensors by remember {
+        mutableStateOf(
+            sensorManager
+                .getAvailableSensors(context)
+                .sortedBy { context.getString(it.name) }
+        )
+    }
     WearAppTheme {
         Scaffold(
             positionIndicator = {
@@ -32,9 +41,6 @@ fun SensorManagerUi(
             },
             timeText = { TimeText(!scalingLazyListState.isScrollInProgress) }
         ) {
-            val availableSensors = sensorManager
-                .getAvailableSensors(LocalContext.current)
-                .sortedBy { stringResource(it.name) }
             ThemeLazyColumn(
                 state = scalingLazyListState
             ) {
