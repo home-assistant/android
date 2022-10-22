@@ -142,12 +142,9 @@ fun getIcon(entity: Entity<Map<String, Any>>?, domain: String, context: Context)
     }
 }
 
-fun getIconFromMdiString(icon: String, context: Context?): IIcon {
+fun getIconFromMdiString(icon: String, context: Context): IIcon {
     val mdiIcon = icon.split(":")[1]
-    if (context == null) {
-        CommunityMaterial.getIcon("cmd_$mdiIcon")
-    }
-    return IconicsDrawable(context!!, "cmd-$mdiIcon").icon ?: CommunityMaterial.Icon.cmd_bookmark
+    return IconicsDrawable(context, "cmd-$mdiIcon").icon ?: CommunityMaterial.Icon.cmd_bookmark
 }
 
 private fun coverIcon(state: String?, entity: Entity<Map<String, Any>>?): IIcon? {
