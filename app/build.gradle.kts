@@ -163,7 +163,6 @@ dependencies {
 
     "fullImplementation"("com.google.android.gms:play-services-location:20.0.0")
     "fullImplementation"(platform("com.google.firebase:firebase-bom:30.4.1"))
-    "fullImplementation"("com.google.firebase:firebase-analytics")
     "fullImplementation"("com.google.firebase:firebase-messaging")
     "fullImplementation"("io.sentry:sentry-android:6.5.0")
     "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
