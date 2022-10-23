@@ -289,7 +289,8 @@
 
         <activity
             android:name=".onboarding.OnboardingActivity"
-            android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation" />
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation"
+            android:theme="@style/Theme.HomeAssistant.Config" />
 
         <activity
             android:name=".settings.wear.SettingsWearActivity"
