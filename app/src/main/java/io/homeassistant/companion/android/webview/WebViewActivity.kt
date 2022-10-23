@@ -637,7 +637,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         // This enables the ability to have the launch screen behind the WebView until the web frontend gets rendered
         binding.webview.setBackgroundColor(Color.TRANSPARENT)
 
-        themesManager.setThemeForWebView()
+        themesManager.setThemeForWebView(this, webView.settings)
 
         val cookieManager = CookieManager.getInstance()
         cookieManager.setAcceptCookie(true)
