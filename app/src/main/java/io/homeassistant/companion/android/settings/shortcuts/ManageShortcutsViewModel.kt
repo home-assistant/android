@@ -4,8 +4,6 @@ import android.app.Application
 import android.content.Intent
 import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
-import android.graphics.PorterDuff
-import android.graphics.drawable.Drawable
 import android.graphics.drawable.Icon
 import android.os.Build
 import android.util.Log
@@ -18,12 +16,8 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.getSystemService
-import androidx.core.graphics.drawable.DrawableCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.maltaisn.icondialog.pack.IconPack
-import com.maltaisn.icondialog.pack.IconPackLoader
-import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
@@ -31,6 +25,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.themes.mdiName
 import io.homeassistant.companion.android.webview.WebViewActivity
 import io.homeassistant.companion.android.widgets.assist.AssistShortcutActivity
 import kotlinx.coroutines.launch
@@ -45,7 +40,6 @@ class ManageShortcutsViewModel @Inject constructor(
 
     val app = application
     private val TAG = "ShortcutViewModel"
-    private lateinit var iconPack: IconPack
     private var shortcutManager = application.applicationContext.getSystemService<ShortcutManager>()!!
     val canPinShortcuts = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && shortcutManager.isRequestPinShortcutSupported
     var pinnedShortcuts = shortcutManager.pinnedShortcuts
@@ -129,7 +123,7 @@ class ManageShortcutsViewModel @Inject constructor(
         intent.action = shortcutPath
         intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
-        icon?.let { intent.putExtra("iconName", icon.name) }
+        icon?.let { intent.putExtra("iconName", icon.mdiName) }
 
         val shortcut = ShortcutInfo.Builder(getApplication(), shortcutId)
             .setShortLabel(shortcutLabel)
@@ -139,10 +133,7 @@ class ManageShortcutsViewModel @Inject constructor(
                     val bitmap = IconicsDrawable(getApplication(), icon).toBitmap()
                     Icon.createWithBitmap(bitmap)
                 } else {
-                    Icon.createWithResource(
-                        getApplication(),
-                        R.drawable.ic_stat_ic_notification_blue
-                    )
+                    Icon.createWithResource(getApplication(), R.drawable.ic_stat_ic_notification_blue)
                 }
             )
             .setIntent(intent)
@@ -180,16 +171,7 @@ class ManageShortcutsViewModel @Inject constructor(
         for (item in pinnedShortcuts) {
             if (item.id == shortcutId) {
                 shortcuts.last().id.value = item.id
-                shortcuts.last().serverId.value = item.intent?.extras?.getInt("server", currentServerId) ?: currentServerId
-                shortcuts.last().label.value = item.shortLabel.toString()
-                shortcuts.last().desc.value = item.longLabel.toString()
-                shortcuts.last().path.value = item.intent?.action.toString()
-                shortcuts.last().selectedIcon.value = item.intent?.extras?.getString("iconName")?.let { CommunityMaterial.getIcon(it) }
-                if (shortcuts.last().path.value.startsWith("entityId:"))
-                    shortcuts.last().type.value = "entityId"
-                } else {
-                    shortcuts.last().type.value = "lovelace"
-                }
+                shortcuts.last().setData(item)
             }
         }
     }
@@ -199,18 +181,22 @@ class ManageShortcutsViewModel @Inject constructor(
             for (item in dynamicShortcuts) {
                 if (item.id == shortcutId) {
                     Log.d(TAG, "setting ${item.id} data")
-                    shortcuts[index].serverId.value = item.intent?.extras?.getInt("server", currentServerId) ?: currentServerId
-                    shortcuts[index].label.value = item.shortLabel.toString()
-                    shortcuts[index].desc.value = item.longLabel.toString()
-                    shortcuts[index].path.value = item.intent?.action.toString()
-                    shortcuts[index].selectedIcon.value = item.intent?.extras?.getString("iconName")?.let { CommunityMaterial.getIcon(it) }
-                    if (shortcuts[index].path.value.startsWith("entityId:"))
-                        shortcuts[index].type.value = "entityId"
-                    } else {
-                        shortcuts[index].type.value = "lovelace"
-                    }
+                    shortcuts[index].setData(item)
                 }
             }
+        }
+    }
+
+    private fun Shortcut.setData(item: ShortcutInfo) {
+        serverId.value = item.intent?.extras?.getInt("server", currentServerId) ?: currentServerId
+        label.value = item.shortLabel.toString()
+        desc.value = item.longLabel.toString()
+        path.value = item.intent?.action.toString()
+        selectedIcon.value = item.intent?.extras?.getString("iconName")?.let { CommunityMaterial.getIcon(it) }
+        if (path.value.startsWith("entityId:")) {
+            type.value = "entityId"
+        } else {
+            type.value = "lovelace"
         }
     }
 
