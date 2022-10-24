@@ -172,9 +172,16 @@ open class HomeAssistantApplication : Application() {
         val allSettings = sensorDao.getSettings(LastUpdateManager.lastUpdate.id)
         for (setting in allSettings) {
             if (setting.value != "" && setting.value != "SensorWorker") {
+                val settingSplit = setting.value.split(',')
                 registerReceiver(
                     sensorReceiver,
-                    IntentFilter(setting.value)
+                    IntentFilter().apply {
+                        addAction(settingSplit[0])
+                        if (settingSplit.size > 1) {
+                            val categories = settingSplit.minus(settingSplit[0])
+                            categories.forEach { addCategory(it) }
+                        }
+                    }
                 )
             }
         }

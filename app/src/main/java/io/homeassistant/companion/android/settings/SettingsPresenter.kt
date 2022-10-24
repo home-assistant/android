@@ -9,13 +9,11 @@ interface SettingsPresenter {
     fun getPreferenceDataStore(): PreferenceDataStore
     fun onCreate()
     fun onFinish()
+    fun updateExternalUrlStatus()
     fun updateInternalUrlStatus()
-    fun isLockEnabled(): Boolean
-    fun sessionTimeOut(): Int
+    fun setAppActive(active: Boolean)
     suspend fun getNotificationRateLimits(): RateLimitResponse?
 
-    fun setSessionExpireMillis(value: Long)
-    fun getSessionExpireMillis(): Long
     fun isSsidUsed(): Boolean
     fun clearSsids()
     fun showChangeLog(context: Context)

@@ -10,11 +10,17 @@ import android.net.wifi.WifiManager
 import android.os.PowerManager
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.common.sensors.AppSensorManager
+import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.sensors.BatterySensorManager
+import io.homeassistant.companion.android.common.sensors.DNDSensorManager
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
 import io.homeassistant.companion.android.common.sensors.NetworkSensorManager
+import io.homeassistant.companion.android.common.sensors.NextAlarmManager
+import io.homeassistant.companion.android.common.sensors.PowerSensorManager
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
+import io.homeassistant.companion.android.common.sensors.StepsSensorManager
 import io.homeassistant.companion.android.settings.SettingsActivity
 
 @AndroidEntryPoint
@@ -37,7 +43,9 @@ class SensorReceiver : SensorReceiverBase() {
             AudioSensorManager(),
             BatterySensorManager(),
             BluetoothSensorManager(),
+            DisplaySensorManager(),
             DNDSensorManager(),
+            DynamicColorSensorManager(),
             DevicePolicyManager(),
             GeocodeSensorManager(),
             KeyguardSensorManager(),

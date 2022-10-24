@@ -49,9 +49,12 @@ class OnboardingViewModel @Inject constructor(
         private set
     var authCode by mutableStateOf("")
         private set
+    var deviceIsWatch by mutableStateOf(false)
     val deviceName = mutableStateOf("")
     val locationTrackingPossible = mutableStateOf(false)
     var locationTrackingEnabled by mutableStateOf(false)
+    val notificationsPossible = mutableStateOf(true)
+    var notificationsEnabled by mutableStateOf(false)
 
     fun onManualUrlUpdated(url: String) {
         manualUrl.value = url
@@ -79,6 +82,18 @@ class OnboardingViewModel @Inject constructor(
         }
         locationTrackingEnabled = enabled
     }
+
+    fun setNotifications(enabled: Boolean) {
+        notificationsEnabled = enabled
+    }
+
+    fun getOutput() = OnboardApp.Output(
+        url = manualUrl.value,
+        authCode = authCode,
+        deviceName = deviceName.value,
+        deviceTrackingEnabled = locationTrackingEnabled,
+        notificationsEnabled = notificationsEnabled
+    )
 
     override fun onCleared() {
         _homeAssistantSearcher.stopSearch()

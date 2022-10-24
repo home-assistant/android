@@ -80,7 +80,11 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_SEC_WARNING_NEXT = "sec_warning_last"
         private const val TAG = "IntegrationRepository"
         private const val RATE_LIMIT_URL = BuildConfig.RATE_LIMIT_URL
+
+        private const val APPLOCK_TIMEOUT_GRACE_MS = 1000
     }
+
+    private var appActive = false
 
     override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {
         val request = createUpdateRegistrationRequest(deviceRegistration)
@@ -179,7 +183,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         else throw IntegrationException("Error calling integration request render_template")
     }
 
-    override suspend fun getTemplateUpdates(template: String): Flow<String>? {
+    override suspend fun getTemplateUpdates(template: String): Flow<String?>? {
         return webSocketRepository.getTemplateUpdates(template)
             ?.map {
                 it.result
@@ -373,6 +377,25 @@ class IntegrationRepositoryImpl @Inject constructor(
         localStorage.putBoolean(PREF_AUTOPLAY_VIDEO, enabled)
     }
 
+    override suspend fun isAppLocked(): Boolean {
+        val lockEnabled = authenticationRepository.isLockEnabled()
+        val sessionExpireMillis = getSessionExpireMillis()
+        val currentMillis = System.currentTimeMillis()
+        val sessionExpired = currentMillis > sessionExpireMillis
+        val appLocked = lockEnabled && !appActive && sessionExpired
+
+        Log.d(TAG, "isAppLocked(): $appLocked. (LockEnabled: $lockEnabled, appActive: $appActive, expireMillis: $sessionExpireMillis, currentMillis: $currentMillis)")
+        return appLocked
+    }
+
+    override suspend fun setAppActive(active: Boolean) {
+        if (!active) {
+            setSessionExpireMillis(System.currentTimeMillis() + (getSessionTimeOut() * 1000) + APPLOCK_TIMEOUT_GRACE_MS)
+        }
+        Log.d(TAG, "setAppActive(): $active")
+        appActive = active
+    }
+
     override suspend fun sessionTimeOut(value: Int) {
         localStorage.putInt(PREF_SESSION_TIMEOUT, value)
     }
@@ -382,10 +405,11 @@ class IntegrationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun setSessionExpireMillis(value: Long) {
+        Log.d(TAG, "setSessionExpireMillis(): $value")
         localStorage.putLong(PREF_SESSION_EXPIRE, value)
     }
 
-    override suspend fun getSessionExpireMillis(): Long {
+    private suspend fun getSessionExpireMillis(): Long {
         return localStorage.getLong(PREF_SESSION_EXPIRE) ?: 0
     }
 
@@ -540,6 +564,7 @@ class IntegrationRepositoryImpl @Inject constructor(
                     PREF_CHECK_SENSOR_REGISTRATION_NEXT,
                     System.currentTimeMillis() + TimeUnit.HOURS.toMillis(4)
                 )
+                urlRepository.updateCloudUrls(response.cloudhookUrl, response.remoteUiUrl)
                 return response
             }
         }
@@ -741,6 +766,7 @@ class IntegrationRepositoryImpl @Inject constructor(
             UpdateLocationRequest(
                 updateLocation.gps,
                 updateLocation.gpsAccuracy,
+                updateLocation.locationName,
                 updateLocation.speed,
                 updateLocation.altitude,
                 updateLocation.course,

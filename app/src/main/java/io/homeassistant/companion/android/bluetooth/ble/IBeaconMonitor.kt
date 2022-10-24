@@ -10,6 +10,8 @@ const val MAX_SKIPPED_UPDATED = 10
 
 data class IBeacon(
     var uuid: String,
+    var major: String,
+    var minor: String,
     var distance: Double,
     var rssi: Double,
     var skippedUpdated: Int,
@@ -28,16 +30,18 @@ class IBeaconMonitor {
         var tmp: Map<String, IBeacon> = linkedMapOf()
         for (existingBeacon in beacons) {
             existingBeacon.skippedUpdated++
-            tmp += Pair(existingBeacon.uuid, existingBeacon)
+            tmp += Pair(name(existingBeacon.uuid, existingBeacon.major, existingBeacon.minor), existingBeacon)
         }
         for (newBeacon in newBeacons) {
             val uuid = newBeacon.id1.toString()
+            val major = newBeacon.id2.toString()
+            val minor = newBeacon.id3.toString()
             val distance = round(newBeacon.distance * 100) / 100
             val rssi = newBeacon.runningAverageRssi
-            if (!tmp.contains(uuid)) { // we found a new beacon
+            if (!tmp.contains(name(uuid, major, minor))) { // we found a new beacon
                 requireUpdate = true
             }
-            tmp += Pair(uuid, IBeacon(uuid, distance, rssi, 0))
+            tmp += Pair(name(uuid, major, minor), IBeacon(uuid, major, minor, distance, rssi, 0))
         }
         val sorted = sort(tmp.values).toMutableList()
         if (requireUpdate) {
@@ -54,13 +58,14 @@ class IBeaconMonitor {
             sendUpdate(context, sorted)
             return
         }
-        assert(sorted.count() == beacons.count())
         beacons.forEachIndexed foreach@{ i, existingBeacon ->
-            if (sorted[i].uuid != existingBeacon.uuid || // the distance order switched
-                kotlin.math.abs(sorted[i].distance - existingBeacon.distance) > 0.5 // the distance difference is greater than 0.5m
-            ) {
-                requireUpdate = true
-                return@foreach
+            if (i < sorted.size) {
+                if (name(sorted[i].uuid, sorted[i].major, sorted[i].minor) != name(existingBeacon.uuid, existingBeacon.major, existingBeacon.minor) || // the distance order switched
+                    kotlin.math.abs(sorted[i].distance - existingBeacon.distance) > 0.5 // the distance difference is greater than 0.5m
+                ) {
+                    requireUpdate = true
+                    return@foreach
+                }
             }
         }
         if (requireUpdate) {
@@ -71,7 +76,7 @@ class IBeaconMonitor {
 
     private fun sendUpdate(context: Context, tmp: List<IBeacon>) {
         beacons = tmp
-        sensorManager!!.updateBeaconMonitoringSensor(context)
+        sensorManager.updateBeaconMonitoringSensor(context)
         SensorWorker.start(context)
     }
 }

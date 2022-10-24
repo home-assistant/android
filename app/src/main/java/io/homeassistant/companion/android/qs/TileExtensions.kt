@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.qs
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.Icon
 import android.os.Build
@@ -14,9 +15,16 @@ import androidx.core.graphics.drawable.toBitmap
 import com.maltaisn.icondialog.pack.IconPack
 import com.maltaisn.icondialog.pack.IconPackLoader
 import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.qs.TileDao
+import io.homeassistant.companion.android.database.qs.TileEntity
+import io.homeassistant.companion.android.database.qs.isSetup
+import io.homeassistant.companion.android.settings.SettingsActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -54,10 +62,23 @@ abstract class TileExtensions : TileService() {
     override fun onTileAdded() {
         super.onTileAdded()
         Log.d(TAG, "Tile: ${getTileId()} added")
+        handleInject()
         getTile()?.let { tile ->
             mainScope.launch {
                 setTileData(getTileId(), tile)
             }
+        }
+        MainScope().launch {
+            setTileAdded(getTileId(), true)
+        }
+    }
+
+    override fun onTileRemoved() {
+        super.onTileRemoved()
+        Log.d(TAG, "Tile: ${getTileId()} removed")
+        handleInject()
+        MainScope().launch {
+            setTileAdded(getTileId(), false)
         }
     }
 
@@ -81,7 +102,7 @@ abstract class TileExtensions : TileService() {
         val context = applicationContext
         val tileData = tileDao.get(tileId)
         try {
-            return if (tileData != null) {
+            return if (tileData != null && tileData.isSetup) {
                 tile.label = tileData.label
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     tile.subtitle = tileData.subtitle
@@ -106,8 +127,17 @@ abstract class TileExtensions : TileService() {
                 tile.updateTile()
                 true
             } else {
-                Log.d(TAG, "No tile data found for tile ID: $tileId")
-                tile.state = Tile.STATE_UNAVAILABLE
+                if (tileData != null) {
+                    Log.d(TAG, "Tile data found but not setup for tile ID: $tileId")
+                } else {
+                    Log.d(TAG, "No tile data found for tile ID: $tileId")
+                }
+                tile.state =
+                    if (integrationUseCase.isRegistered()) Tile.STATE_INACTIVE
+                    else Tile.STATE_UNAVAILABLE
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    tile.subtitle = getString(commonR.string.tile_not_setup)
+                }
                 tile.updateTile()
                 false
             }
@@ -162,17 +192,35 @@ abstract class TileExtensions : TileService() {
             tile.state = Tile.STATE_INACTIVE
             tile.updateTile()
         } else {
-            tile.state = Tile.STATE_UNAVAILABLE
-            tile.updateTile()
             Log.d(TAG, "No tile data found for tile ID: $tileId")
             withContext(Dispatchers.Main) {
-                Toast.makeText(
-                    context,
-                    commonR.string.tile_data_missing,
-                    Toast.LENGTH_SHORT
+                startActivityAndCollapse(
+                    SettingsActivity.newInstance(context).apply {
+                        putExtra("fragment", "tiles/$tileId")
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
+                    }
                 )
-                    .show()
             }
+        }
+    }
+
+    private suspend fun setTileAdded(tileId: String, added: Boolean) {
+        tileDao.get(tileId)?.let {
+            tileDao.add(it.copy(added = added))
+        } ?: run {
+            if (added) { // Store an empty tile in the database to track added
+                tileDao.add(
+                    TileEntity(
+                        tileId = tileId,
+                        added = added,
+                        iconId = null,
+                        entityId = "",
+                        label = "",
+                        subtitle = null
+                    )
+                )
+            } // else if it doesn't exist and is removed we don't have to save anything
         }
     }
 
@@ -199,5 +247,22 @@ abstract class TileExtensions : TileService() {
             }
             return null
         }
+    }
+
+    private fun handleInject() {
+        // onTileAdded/onTileRemoved might be called outside onCreate - onDestroy, which usually
+        // handles injection. Because we need the DAO to save added/removed, inject it if required.
+        if (!this::tileDao.isInitialized) {
+            tileDao = EntryPointAccessors.fromApplication(
+                this@TileExtensions.applicationContext,
+                TileExtensionsEntryPoint::class.java
+            ).tileDao()
+        }
+    }
+
+    @EntryPoint
+    @InstallIn(SingletonComponent::class)
+    interface TileExtensionsEntryPoint {
+        fun tileDao(): TileDao
     }
 }

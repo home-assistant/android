@@ -52,9 +52,8 @@ class SettingsWearMainView : AppCompatActivity() {
             LoadSettingsHomeView(
                 settingsWearViewModel,
                 currentNodes.firstOrNull()?.displayName ?: "unknown",
-                this::loginWearOs,
-                this::onBackPressed
-            )
+                this::loginWearOs
+            ) { onBackPressedDispatcher.onBackPressed() }
         }
 
         if (registerUrl != null) {
@@ -74,15 +73,17 @@ class SettingsWearMainView : AppCompatActivity() {
             OnboardApp.Input(
                 url = registerUrl,
                 defaultDeviceName = currentNodes.firstOrNull()?.displayName ?: "unknown",
-                locationTrackingPossible = false
-            )
+                locationTrackingPossible = false,
+                notificationsPossible = false,
+                isWatch = true
+            ) // While notifications are technically possible, the app can't handle this for the Wear device
         )
     }
 
     private fun onOnboardingComplete(result: OnboardApp.Output?) {
         if (result != null) {
-            val (url, authCode, deviceName, deviceTrackingEnabled) = result
-            settingsWearViewModel.sendAuthToWear(url, authCode, deviceName, deviceTrackingEnabled)
+            val (url, authCode, deviceName, deviceTrackingEnabled, _) = result
+            settingsWearViewModel.sendAuthToWear(url, authCode, deviceName, deviceTrackingEnabled, true)
         } else
             Log.e(TAG, "onOnboardingComplete: Activity result returned null intent data")
     }

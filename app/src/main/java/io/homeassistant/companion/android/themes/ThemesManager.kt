@@ -1,12 +1,7 @@
 package io.homeassistant.companion.android.themes
 
-import android.content.Context
-import android.content.res.Configuration
 import android.os.Build
-import android.webkit.WebSettings
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.webkit.WebSettingsCompat
-import androidx.webkit.WebViewFeature
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
@@ -40,52 +35,9 @@ class ThemesManager @Inject constructor(
         }
     }
 
-    fun setThemeForWebView(context: Context, webSettings: WebSettings) {
-        if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK_STRATEGY) &&
-            WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK)
-        ) {
-            val theme = getCurrentTheme()
-
-            setNightModeBasedOnTheme(theme)
-
-            WebSettingsCompat.setForceDarkStrategy(
-                webSettings,
-                WebSettingsCompat.DARK_STRATEGY_WEB_THEME_DARKENING_ONLY
-            )
-            when (theme) {
-                "newTheme" -> {
-                    // Just a template for custom themes
-                    // context.setTheme(android.R.style.newTheme);
-                }
-                "dark" -> {
-                    WebSettingsCompat.setForceDark(
-                        webSettings,
-                        WebSettingsCompat.FORCE_DARK_ON
-                    )
-                }
-                "android", "system" -> {
-                    val nightModeFlags =
-                        context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
-                    if (nightModeFlags == Configuration.UI_MODE_NIGHT_YES) {
-                        WebSettingsCompat.setForceDark(
-                            webSettings,
-                            WebSettingsCompat.FORCE_DARK_ON
-                        )
-                    } else {
-                        WebSettingsCompat.setForceDark(
-                            webSettings,
-                            WebSettingsCompat.FORCE_DARK_OFF
-                        )
-                    }
-                }
-                else -> {
-                    WebSettingsCompat.setForceDark(
-                        webSettings,
-                        WebSettingsCompat.FORCE_DARK_OFF
-                    )
-                }
-            }
-        }
+    fun setThemeForWebView() {
+        val theme = getCurrentTheme()
+        setNightModeBasedOnTheme(theme)
     }
 
     private fun setNightModeBasedOnTheme(theme: String?) {

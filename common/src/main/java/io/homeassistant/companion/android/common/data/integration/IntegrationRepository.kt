@@ -15,7 +15,7 @@ interface IntegrationRepository {
     suspend fun getNotificationRateLimits(): RateLimitResponse
 
     suspend fun renderTemplate(template: String, variables: Map<String, String>): String?
-    suspend fun getTemplateUpdates(template: String): Flow<String>?
+    suspend fun getTemplateUpdates(template: String): Flow<String?>?
 
     suspend fun updateLocation(updateLocation: UpdateLocation)
 
@@ -36,11 +36,13 @@ interface IntegrationRepository {
     suspend fun setWebViewDebugEnabled(enabled: Boolean)
     suspend fun isWebViewDebugEnabled(): Boolean
 
+    suspend fun isAppLocked(): Boolean
+    suspend fun setAppActive(active: Boolean)
+
     suspend fun sessionTimeOut(value: Int)
     suspend fun getSessionTimeOut(): Int
 
     suspend fun setSessionExpireMillis(value: Long)
-    suspend fun getSessionExpireMillis(): Long
 
     suspend fun setControlsAuthRequired(setting: ControlsAuthRequiredSetting)
     suspend fun getControlsAuthRequired(): ControlsAuthRequiredSetting

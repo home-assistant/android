@@ -4,11 +4,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <PreferenceCategory
         android:title="@string/pref_connection_title">
-        <EditTextPreference
+        <Preference
             android:key="connection_external"
             android:icon="@drawable/ic_globe"
-            android:title="@string/pref_connection_url"
-            app:useSimpleSummaryProvider="true"/>
+            android:title="@string/pref_connection_url"/>
         <Preference
             android:key="connection_internal_ssids"
             android:icon="@drawable/ic_wifi"
@@ -129,6 +128,12 @@
         android:title="@string/notifications"
         android:key="notifications"
         app:isPreferenceVisible="false">
+        <Preference
+            android:key="notification_permission"
+            android:title="@string/notification_permission"
+            android:summary="@string/notification_permission_summary"
+            app:isPreferenceVisible="false"
+            android:icon="@drawable/ic_notification_off" />
         <Preference
             android:key="notification_channels"
             android:title="@string/notification_channels"

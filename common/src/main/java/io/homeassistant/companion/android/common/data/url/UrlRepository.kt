@@ -4,15 +4,28 @@ import java.net.URL
 
 interface UrlRepository {
 
+    companion object {
+        const val BSSID_PREFIX = "BSSID:"
+        const val INVALID_BSSID = "02:00:00:00:00:00"
+    }
+
     suspend fun getWebhookId(): String?
 
     suspend fun getApiUrls(): Array<URL>
 
     suspend fun saveRegistrationUrls(cloudHookUrl: String?, remoteUiUrl: String?, webhookId: String)
 
-    suspend fun getUrl(isInternal: Boolean? = null): URL?
+    suspend fun updateCloudUrls(cloudhookUrl: String?, remoteUiUrl: String?)
+
+    suspend fun getUrl(isInternal: Boolean? = null, force: Boolean = false): URL?
 
     suspend fun saveUrl(url: String, isInternal: Boolean? = null)
+
+    suspend fun canUseCloud(): Boolean
+
+    suspend fun shouldUseCloud(): Boolean
+
+    suspend fun setUseCloud(use: Boolean)
 
     suspend fun getHomeWifiSsids(): Set<String>
 

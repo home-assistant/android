@@ -20,6 +20,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.net.URL
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -39,7 +40,7 @@ object CameraControl : HaControl {
                 "idle" -> context.getString(commonR.string.state_idle)
                 "recording" -> context.getString(commonR.string.state_recording)
                 "streaming" -> context.getString(commonR.string.state_streaming)
-                else -> entity.state
+                else -> entity.state.capitalize(Locale.getDefault())
             }
         )
 
@@ -54,7 +55,7 @@ object CameraControl : HaControl {
         control.setControlTemplate(
             ThumbnailTemplate(
                 entity.entityId,
-                entity.state != "idle",
+                entity.state != "unavailable" && image != null,
                 icon,
                 context.getString(commonR.string.widget_camera_contentdescription)
             )

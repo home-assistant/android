@@ -18,6 +18,7 @@ class GeocodeSensorManager : SensorManager {
 
     companion object {
         private const val SETTING_ACCURACY = "geocode_minimum_accuracy"
+        const val SETTINGS_INCLUDE_LOCATION = "geocode_include_location_updates"
         private const val DEFAULT_MINIMUM_ACCURACY = 200
         private const val TAG = "GeocodeSM"
         val geocodedLocation = SensorManager.BasicSensor(

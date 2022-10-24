@@ -1,29 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2022.8 - Phone" versioncode="2">
-        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; TTS and notification commands have new formats, refer to the companion docs for updated format.</change>
-        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Add friendly BT name next to the mac address if we have it for BT connection sensor.</change>
-        <change>Deprecates 3 finger swipe down gesture for HA Core 2022.7+</change>
-        <change>Add support for TLS client authentication, refer to the companion docs for setup instructions</change>
-        <change>Fire an event when a notification is received</change>
-        <change>Allow UUID, Major and Minor to be changed via notification command for BLE transmitter</change>
-        <change>Add notification command to stop Text to Speech notifications</change>
-        <change>Add camera domain to device controls for devices on Android 12+</change>
-        <change>Add lock domain to Quick Setting Tiles</change>
-        <change>Show battery charging status in battery level sensor icon</change>
-        <change>Move prioritize internal to new Home WiFi SSID screen</change>
-        <change>Only apply prioritize internal to WebView when location is disabled on the device</change>
-        <change>Add themed icon for supported devices (Android 13+)</change>
-        <change>Add a battery power sensor</change>
-        <change>Add additional attributes for notification sensors</change>
-        <change>Add attribute to network type sensor to indicate if current network is a metered connection</change>
-        <change>Update geocoded location sensor when we send a location update, also only send a sensor update when accuracy is met and location is from a recent report</change>
+    <release version="2022.11 - Phone" versioncode="2">
+        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Mobile data roaming sensor now requires phone permission on devices running Android 10+</change>
+        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Notification command to turn bluetooth on and off no longer works on Android 13+ devices. BLE transmitter and Beacon Monitor commands are not impacted by this.</change>
+        <change>Add notification commands to control app lock setting and screen timeout</change>
+        <chagne>Add a screen timeout sensor</chagne>
+        <change>Add additional filters in Manage Sensors: All, Enabled or Disabled</change>
+        <change>Apply app lock to settings screens</change>
+        <change>Add new sensor setting for Background Location to only send zone name instead of GPS coordinates</change>
+        <change>Only show Wear OS settings when device is connected, instead of relying on what app is installed</change>
+        <change>Improve user experience when Nabu Casa cloud is used</change>
         <change>Bug fixes, performance improvements, design tweaks and dependency updates</change>
     </release>
-    <release version="2022.8 - Wear" versioncode="1">
-        <change>Add support for entity states in complications</change>
-        <change>Allow HTML styling on template tile</change>
-        <change>Show entity state in chip background</change>
+    <release version="2022.11 - Wear" versioncode="1">
+        <change>Add App, Audio, Bedtime mode (Wear OS 3 Only), Do Not Disturb, Last Update, Network, Next Alarm, Power, Steps and Theater mode sensors</change>
+        <change>Allow settings to always be accessible, even when loading</change>
+        <change>Bug fixes and dependency updates</change>
     </release>
 </changelog>
