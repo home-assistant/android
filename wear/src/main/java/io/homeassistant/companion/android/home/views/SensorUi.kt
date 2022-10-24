@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.Text
@@ -92,7 +93,7 @@ fun SensorUi(
     )
 }
 
-@Preview
+@Preview(device = Devices.WEAR_OS_LARGE_ROUND)
 @Composable
 private fun PreviewSensorUI() {
     CompositionLocalProvider {

@@ -16,6 +16,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Icon
@@ -346,7 +347,7 @@ private fun onSliderChangedFeedback(
     )
 }
 
-@Preview
+@Preview(device = Devices.WEAR_OS_LARGE_ROUND)
 @Composable
 private fun PreviewDetailsPaneView() {
     CompositionLocalProvider {

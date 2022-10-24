@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
@@ -69,7 +70,7 @@ fun SensorManagerUi(
     }
 }
 
-@Preview
+@Preview(device = Devices.WEAR_OS_LARGE_ROUND)
 @Composable
 private fun PreviewSensorManagerUI() {
     CompositionLocalProvider {
