@@ -81,9 +81,16 @@ open class HomeAssistantApplication : Application() {
             sensorReceiver,
             IntentFilter().apply {
                 addAction(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED)
+            }
+        )
+
+        registerReceiver(
+            sensorReceiver,
+            IntentFilter().apply {
                 addAction("android.os.UpdateLock.UPDATE_LOCK_CHANGED")
             }
         )
+
         // Update complications when the screen is on
         val complicationReceiver = ComplicationReceiver()
 
