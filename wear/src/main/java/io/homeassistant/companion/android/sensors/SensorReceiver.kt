@@ -47,7 +47,8 @@ class SensorReceiver : SensorReceiverBase() {
             OnBodySensorManager(),
             PowerSensorManager(),
             StepsSensorManager(),
-            TheaterModeSensorManager()
+            TheaterModeSensorManager(),
+            TouchLockSensorManager()
         )
 
         const val ACTION_REQUEST_SENSORS_UPDATE =
@@ -67,6 +68,7 @@ class SensorReceiver : SensorReceiverBase() {
         AudioManager.ACTION_MICROPHONE_MUTE_CHANGED to AudioSensorManager.micMuted.id,
         AudioManager.ACTION_SPEAKERPHONE_STATE_CHANGED to AudioSensorManager.speakerphoneState.id,
         AudioManager.RINGER_MODE_CHANGED_ACTION to AudioSensorManager.audioSensor.id,
+        "android.os.UpdateLock.UPDATE_LOCK_CHANGED" to TouchLockSensorManager.touchLock.id
     )
 
     override fun getSensorSettingsIntent(context: Context, id: String): Intent? = null
