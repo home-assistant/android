@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.util.icondialog
 import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.ITypeface
 import java.text.Normalizer
-import java.util.*
+import java.util.Locale
 
 /**
  * Normalize [this] string, removing all diacritics, all unicode characters, hyphens,
@@ -68,7 +68,6 @@ class DefaultIconFilter(
             .filter { icon -> matchesSearch(icon, terms) }
             .map { key -> pack.getIcon(key) }
     }
-
 
     /**
      * Check if an [icon] name matches any of the search [terms].

@@ -19,7 +19,6 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.google.accompanist.themeadapter.material.MdcTheme
 import com.mikepenz.iconics.typeface.IIcon
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.settings.shortcuts.views.ManageShortcutsView
@@ -66,7 +65,6 @@ class ManageShortcutsSettingsFragment : Fragment() {
                     var showingTag by remember { mutableStateOf<String?>(null) }
                     showingTag?.let { tag ->
                         IconDialog(
-                            typeface = CommunityMaterial,
                             onSelect = {
                                 onIconDialogIconsSelected(tag, it)
                                 showingTag = null

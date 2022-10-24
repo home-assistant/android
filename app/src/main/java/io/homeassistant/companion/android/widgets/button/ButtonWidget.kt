@@ -56,7 +56,6 @@ class ButtonWidget : AppWidgetProvider() {
         internal const val EXTRA_SERVICE = "EXTRA_SERVICE"
         internal const val EXTRA_SERVICE_DATA = "EXTRA_SERVICE_DATA"
         internal const val EXTRA_LABEL = "EXTRA_LABEL"
-        internal const val EXTRA_ICON_ID = "EXTRA_ICON"
         internal const val EXTRA_ICON_NAME = "EXTRA_ICON_NAME"
         internal const val EXTRA_BACKGROUND_TYPE = "EXTRA_BACKGROUND_TYPE"
         internal const val EXTRA_TEXT_COLOR = "EXTRA_TEXT_COLOR"

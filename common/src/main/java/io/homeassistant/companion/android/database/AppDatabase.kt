@@ -1,9 +1,12 @@
 package io.homeassistant.companion.android.database
 
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.ContentValues
 import android.content.Context
+import android.content.res.AssetManager
+import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.os.Build
 import android.os.Handler
@@ -14,6 +17,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.edit
 import androidx.core.content.getSystemService
+import androidx.core.database.getStringOrNull
 import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.OnConflictStrategy
@@ -87,7 +91,7 @@ import io.homeassistant.companion.android.common.R as commonR
         Server::class,
         Setting::class
     ],
-    version = 40,
+    version = 41,
     autoMigrations = [
         AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
@@ -175,10 +179,23 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_20_21,
                     MIGRATION_21_22,
                     MIGRATION_22_23,
-                    MIGRATION_23_24
+                    MIGRATION_23_24,
+                    Migration40to41(context.assets)
                 )
                 .fallbackToDestructiveMigration()
                 .build()
+        }
+
+        private fun <T> Cursor.map(transform: (Cursor) -> T): List<T> {
+            return if (moveToFirst()) {
+                val results = mutableListOf<T>()
+                while (moveToNext()) {
+                    results.add(transform(this))
+                }
+                results
+            } else {
+                emptyList()
+            }
         }
 
         private val MIGRATION_1_2 = object : Migration(1, 2) {
@@ -210,22 +227,22 @@ abstract class AppDatabase : RoomDatabase() {
         }
 
         private val MIGRATION_5_6 = object : Migration(5, 6) {
+            @SuppressLint("Range")
             override fun migrate(database: SupportSQLiteDatabase) {
                 try {
-                    val contentValues: ArrayList<ContentValues> = ArrayList()
                     val widgets = database.query("SELECT * FROM `static_widget`")
                     widgets.use {
                         if (widgets.count > 0) {
-                            while (widgets.moveToNext()) {
-                                val cv = ContentValues()
-                                cv.put("id", widgets.getInt(widgets.getColumnIndex("id")))
-                                cv.put("entity_id", widgets.getString(widgets.getColumnIndex("entity_id")))
-                                cv.put("attribute_ids", widgets.getString(widgets.getColumnIndex("attribute_id")))
-                                cv.put("label", widgets.getString(widgets.getColumnIndex("label")))
-                                cv.put("text_size", widgets.getFloat(widgets.getColumnIndex("text_size")))
-                                cv.put("state_separator", widgets.getString(widgets.getColumnIndex("separator")))
-                                cv.put("attribute_separator", " ")
-                                contentValues.add(cv)
+                            val contentValues = widgets.map { widgets ->
+                                ContentValues().apply {
+                                    put("id", widgets.getInt(widgets.getColumnIndex("id")))
+                                    put("entity_id", widgets.getString(widgets.getColumnIndex("entity_id")))
+                                    put("attribute_ids", widgets.getString(widgets.getColumnIndex("attribute_id")))
+                                    put("label", widgets.getString(widgets.getColumnIndex("label")))
+                                    put("text_size", widgets.getFloat(widgets.getColumnIndex("text_size")))
+                                    put("state_separator", widgets.getString(widgets.getColumnIndex("separator")))
+                                    put("attribute_separator", " ")
+                                }
                             }
                             database.execSQL("DROP TABLE IF EXISTS `static_widget`")
                             database.execSQL("CREATE TABLE IF NOT EXISTS `static_widget` (`id` INTEGER NOT NULL, `entity_id` TEXT NOT NULL, `attribute_ids` TEXT, `label` TEXT, `text_size` FLOAT NOT NULL DEFAULT '30', `state_separator` TEXT NOT NULL DEFAULT '', `attribute_separator` TEXT NOT NULL DEFAULT '', PRIMARY KEY(`id`))")
@@ -245,44 +262,38 @@ abstract class AppDatabase : RoomDatabase() {
         }
 
         private val MIGRATION_6_7 = object : Migration(6, 7) {
+            @SuppressLint("Range")
             override fun migrate(database: SupportSQLiteDatabase) {
-                val cursor = database.query("SELECT * FROM sensors")
-                val sensors = mutableListOf<ContentValues>()
-                var migrationSuccessful = false
                 var migrationFailed = false
-                try {
-                    if (cursor.moveToFirst()) {
-                        while (cursor.moveToNext()) {
-                            sensors.add(
-                                ContentValues().also {
-                                    it.put("id", cursor.getString(cursor.getColumnIndex("unique_id")))
-                                    it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
-                                    it.put(
-                                        "registered",
-                                        cursor.getInt(cursor.getColumnIndex("registered"))
-                                    )
-                                    it.put("state", "")
-                                    it.put("state_type", "")
-                                    it.put("type", "")
-                                    it.put("icon", "")
-                                    it.put("name", "")
-                                    it.put("device_class", "")
-                                }
-                            )
+                val sensors = try {
+                    database.query("SELECT * FROM sensors").use { cursor ->
+                        cursor.map {
+                            ContentValues().also {
+                                it.put("id", cursor.getString(cursor.getColumnIndex("unique_id")))
+                                it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
+                                it.put(
+                                    "registered",
+                                    cursor.getInt(cursor.getColumnIndex("registered"))
+                                )
+                                it.put("state", "")
+                                it.put("state_type", "")
+                                it.put("type", "")
+                                it.put("icon", "")
+                                it.put("name", "")
+                                it.put("device_class", "")
+                            }
                         }
-                        migrationSuccessful = true
                     }
-                    cursor.close()
                 } catch (e: Exception) {
                     migrationFailed = true
                     Log.e(TAG, "Unable to migrate, proceeding with recreating the table", e)
+                    null
                 }
                 database.execSQL("DROP TABLE IF EXISTS `sensors`")
                 database.execSQL("CREATE TABLE IF NOT EXISTS `sensors` (`id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, `state_type` TEXT NOT NULL, `type` TEXT NOT NULL, `icon` TEXT NOT NULL, `name` TEXT NOT NULL, `device_class` TEXT, `unit_of_measurement` TEXT, PRIMARY KEY(`id`))")
-                if (migrationSuccessful) {
-                    sensors.forEach {
-                        database.insert("sensors", OnConflictStrategy.REPLACE, it)
-                    }
+
+                sensors?.forEach {
+                    database.insert("sensors", OnConflictStrategy.REPLACE, it)
                 }
                 if (migrationFailed) {
                     notifyMigrationFailed()
@@ -305,44 +316,38 @@ abstract class AppDatabase : RoomDatabase() {
         }
 
         private val MIGRATION_9_10 = object : Migration(9, 10) {
+            @SuppressLint("Range")
             override fun migrate(database: SupportSQLiteDatabase) {
-                val cursor = database.query("SELECT * FROM sensors")
-                val sensors = mutableListOf<ContentValues>()
-                var migrationSuccessful = false
                 var migrationFailed = false
-                try {
-                    if (cursor.moveToFirst()) {
-                        while (cursor.moveToNext()) {
-                            sensors.add(
-                                ContentValues().also {
-                                    it.put("id", cursor.getString(cursor.getColumnIndex("id")))
-                                    it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
-                                    it.put(
-                                        "registered",
-                                        cursor.getInt(cursor.getColumnIndex("registered"))
-                                    )
-                                    it.put("state", "")
-                                    it.put("last_sent_state", "")
-                                    it.put("state_type", "")
-                                    it.put("type", "")
-                                    it.put("icon", "")
-                                    it.put("name", "")
-                                }
-                            )
+                val sensors = try {
+                    database.query("SELECT * FROM sensors").use { cursor ->
+                        cursor.map {
+                            ContentValues().also {
+                                it.put("id", cursor.getString(cursor.getColumnIndex("id")))
+                                it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
+                                it.put(
+                                    "registered",
+                                    cursor.getInt(cursor.getColumnIndex("registered"))
+                                )
+                                it.put("state", "")
+                                it.put("last_sent_state", "")
+                                it.put("state_type", "")
+                                it.put("type", "")
+                                it.put("icon", "")
+                                it.put("name", "")
+                            }
                         }
-                        migrationSuccessful = true
                     }
-                    cursor.close()
                 } catch (e: Exception) {
                     migrationFailed = true
                     Log.e(TAG, "Unable to migrate, proceeding with recreating the table", e)
+                    null
                 }
                 database.execSQL("DROP TABLE IF EXISTS `sensors`")
                 database.execSQL("CREATE TABLE IF NOT EXISTS `sensors` (`id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, `last_sent_state` TEXT NOT NULL, `state_type` TEXT NOT NULL, `type` TEXT NOT NULL, `icon` TEXT NOT NULL, `name` TEXT NOT NULL, `device_class` TEXT, `unit_of_measurement` TEXT, PRIMARY KEY(`id`))")
-                if (migrationSuccessful) {
-                    sensors.forEach {
-                        database.insert("sensors", OnConflictStrategy.REPLACE, it)
-                    }
+
+                sensors?.forEach {
+                    database.insert("sensors", OnConflictStrategy.REPLACE, it)
                 }
                 if (migrationFailed) {
                     notifyMigrationFailed()
@@ -388,6 +393,7 @@ abstract class AppDatabase : RoomDatabase() {
         }
 
         private val MIGRATION_16_17 = object : Migration(16, 17) {
+            @SuppressLint("Range")
             override fun migrate(database: SupportSQLiteDatabase) {
                 val cursor = database.query("SELECT * FROM sensor_settings")
                 val sensorSettings = mutableListOf<ContentValues>()
@@ -472,19 +478,17 @@ abstract class AppDatabase : RoomDatabase() {
                                 }
                             )
                         }
-                        migrationSuccessful = true
                     }
-                    cursor.close()
                 } catch (e: Exception) {
                     migrationFailed = true
                     Log.e(TAG, "Unable to migrate, proceeding with recreating the table", e)
+                    null
                 }
                 database.execSQL("DROP TABLE IF EXISTS `sensor_settings`")
                 database.execSQL("CREATE TABLE IF NOT EXISTS `sensor_settings` (`sensor_id` TEXT NOT NULL, `name` TEXT NOT NULL, `value` TEXT NOT NULL, `value_type` TEXT NOT NULL DEFAULT 'string', `entries` TEXT NOT NULL, `enabled` INTEGER NOT NULL DEFAULT '1', PRIMARY KEY(`sensor_id`, `name`))")
-                if (migrationSuccessful) {
-                    sensorSettings.forEach {
-                        database.insert("sensor_settings", OnConflictStrategy.REPLACE, it)
-                    }
+
+                sensorSettings?.forEach {
+                    database.insert("sensor_settings", OnConflictStrategy.REPLACE, it)
                 }
                 if (migrationFailed) {
                     notifyMigrationFailed()
@@ -808,6 +812,79 @@ abstract class AppDatabase : RoomDatabase() {
                         }
                     }
                 }
+            }
+        }
+
+        class Migration40to41(assets: AssetManager) : Migration(40, 41) {
+            private val iconIdToName: Map<Int, String> by lazy { IconDialogCompat(assets).loadAllIcons() }
+
+            private fun Cursor.getIconName(columnIndex: Int): String {
+                val iconId = getInt(columnIndex)
+                return iconIdToName.getValue(iconId)
+            }
+
+            @SuppressLint("Range")
+            override fun migrate(database: SupportSQLiteDatabase) {
+                var migrationFailed = false
+                val widgets = try {
+                    database.query("SELECT * FROM button_widgets").use { cursor ->
+                        cursor.map {
+                            ContentValues().apply {
+                                put("id", cursor.getString(cursor.getColumnIndex("id")))
+                                put("domain", cursor.getString(cursor.getColumnIndex("domain")))
+                                put("service", cursor.getString(cursor.getColumnIndex("service")))
+                                put("service_data", cursor.getString(cursor.getColumnIndex("service_data")))
+                                put("label", cursor.getStringOrNull(cursor.getColumnIndex("label")))
+                                put("background_type", cursor.getString(cursor.getColumnIndex("background_type")))
+                                put("textColor", cursor.getStringOrNull(cursor.getColumnIndex("textColor")))
+                                put("textColor", cursor.getInt(cursor.getColumnIndex("requireAuthentication")))
+
+                                put("iconName", cursor.getIconName(cursor.getColumnIndex("icon_id")))
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    migrationFailed = true
+                    Log.e(TAG, "Unable to migrate, proceeding with recreating the table", e)
+                    null
+                }
+                database.execSQL("DROP TABLE IF EXISTS `button_widgets`")
+                database.execSQL("CREATE TABLE IF NOT EXISTS `button_widgets` (`id` INTEGER NOT NULL, `iconName` TEXT NOT NULL, `domain` TEXT NOT NULL, `service` TEXT NOT NULL, `service_data` TEXT NOT NULL, `label` TEXT, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, `require_authentication` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`id`))")
+                widgets?.forEach {
+                    database.insert("button_widgets", OnConflictStrategy.REPLACE, it)
+                }
+
+                val tiles = try {
+                    database.query("SELECT * FROM qs_tiles").use { cursor ->
+                        cursor.map {
+                            ContentValues().apply {
+                                put("id", cursor.getString(cursor.getColumnIndex("id")))
+                                put("tileId", cursor.getString(cursor.getColumnIndex("tileId")))
+                                put("added", cursor.getInt(cursor.getColumnIndex("added")))
+                                put("entityId", cursor.getString(cursor.getColumnIndex("entityId")))
+                                put("label", cursor.getString(cursor.getColumnIndex("label")))
+                                put("subtitle", cursor.getStringOrNull(cursor.getColumnIndex("subtitle")))
+
+                                val oldIconColumn = cursor.getColumnIndex("icon_id")
+                                if (!cursor.isNull(oldIconColumn)) {
+                                    put("iconName", cursor.getIconName(oldIconColumn))
+                                }
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    migrationFailed = true
+                    Log.e(TAG, "Unable to migrate, proceeding with recreating the table", e)
+                    null
+                }
+                database.execSQL("DROP TABLE IF EXISTS `qs_tiles`")
+                database.execSQL("CREATE TABLE IF NOT EXISTS `qs_tiles` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `tileId` TEXT NOT NULL, `added` INTEGER NOT NULL DEFAULT 1, `iconName` TEXT, `entityId` TEXT NOT NULL, `label` TEXT NOT NULL, `subtitle` TEXT)")
+                tiles?.forEach {
+                    database.insert("qs_tiles", OnConflictStrategy.REPLACE, it)
+                }
+
+                if (migrationFailed)
+                    notifyMigrationFailed()
             }
         }
 

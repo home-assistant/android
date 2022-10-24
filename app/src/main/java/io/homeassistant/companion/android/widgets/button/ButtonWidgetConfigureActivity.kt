@@ -19,6 +19,7 @@ import android.widget.AutoCompleteTextView
 import android.widget.EditText
 import android.widget.Spinner
 import androidx.appcompat.app.AlertDialog
+import androidx.compose.ui.platform.ComposeView
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.core.graphics.drawable.DrawableCompat
@@ -33,6 +34,7 @@ import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.Service
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
@@ -40,6 +42,7 @@ import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetButtonConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.util.getHexForColor
+import io.homeassistant.companion.android.util.icondialog.IconDialogContent
 import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import io.homeassistant.companion.android.util.icondialog.mdiName
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
@@ -54,7 +57,6 @@ import io.homeassistant.companion.android.common.R as commonR
 class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     companion object {
         private const val TAG: String = "ButtonWidgetConfigAct"
-        private const val ICON_DIALOG_TAG = "icon-dialog"
         private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.button.ButtonWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
     }
 
@@ -347,7 +349,21 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             val icon = CommunityMaterial.getIconByMdiName(iconName)
             onIconDialogIconsSelected(icon)
             binding.widgetConfigIconSelector.setOnClickListener {
-                iconDialog.show(supportFragmentManager, ICON_DIALOG_TAG)
+                var alertDialog: AlertDialog? = null
+
+                val view = layoutInflater.inflate(R.layout.dialog_icon, binding.root, false) as ComposeView
+                view.setContent {
+                    IconDialogContent(
+                        onSelect = {
+                            onIconDialogIconsSelected(it)
+                            alertDialog?.hide()
+                        }
+                    )
+                }
+
+                alertDialog = AlertDialog.Builder(this)
+                    .setView(view)
+                    .show()
             }
         }
     }

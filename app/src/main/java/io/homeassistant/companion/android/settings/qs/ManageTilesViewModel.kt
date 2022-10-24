@@ -157,7 +157,7 @@ class ManageTilesViewModel @Inject constructor(
     var selectedShouldVibrate by mutableStateOf(false)
     var tileAuthRequired by mutableStateOf(false)
 
-    private var selectedIcon: IIcon? = null
+    var selectedIcon: IIcon? = null
     private var selectedTileId = 0
     private var selectedTileAdded = false
 
