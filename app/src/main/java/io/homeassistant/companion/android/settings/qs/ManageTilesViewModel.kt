@@ -72,7 +72,7 @@ class ManageTilesViewModel @Inject constructor(
     var submitButtonLabel by mutableStateOf(commonR.string.tile_save)
         private set
 
-    private var selectedIcon: IIcon? = null
+    var selectedIcon: IIcon? = null
     private var selectedTileId = 0
     private var selectedTileAdded = false
 

@@ -8,7 +8,7 @@ import androidx.room.PrimaryKey
 data class ButtonWidgetEntity(
     @PrimaryKey
     override val id: Int,
-    @ColumnInfo(name = "icon_name")
+    @ColumnInfo(name = "iconName")
     val iconName: String,
     @ColumnInfo(name = "domain")
     val domain: String,

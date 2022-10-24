@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.settings.qs.views
 
 import android.os.Build
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,13 +26,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.graphics.drawable.toBitmap
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.settings.qs.ManageTilesViewModel
 import kotlinx.coroutines.flow.launchIn
@@ -123,12 +120,9 @@ fun ManageTilesView(
                     OutlinedButton(
                         onClick = { onShowIconDialog(viewModel.selectedTile.id) }
                     ) {
-                        val iconBitmap = remember(viewModel.selectedIconDrawable) {
-                            viewModel.selectedIconDrawable?.toBitmap()?.asImageBitmap()
-                        }
-                        iconBitmap?.let {
-                            Image(
-                                iconBitmap,
+                        viewModel.selectedIcon?.let { icon ->
+                            com.mikepenz.iconics.compose.Image(
+                                icon,
                                 contentDescription = stringResource(id = R.string.tile_icon),
                                 colorFilter = ColorFilter.tint(colorResource(R.color.colorAccent))
                             )
