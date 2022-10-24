@@ -12,8 +12,9 @@ data class TileEntity(
     val tileId: String,
     @ColumnInfo(name = "added", defaultValue = "1")
     val added: Boolean,
-    @ColumnInfo(name = "icon_id")
-    val iconId: Int?,
+    /** Icon name, such as "mdi:account-alert" */
+    @ColumnInfo(name = "iconName")
+    val iconName: String?,
     @ColumnInfo(name = "entityId")
     val entityId: String,
     @ColumnInfo(name = "label")

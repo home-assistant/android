@@ -12,9 +12,8 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
-import com.maltaisn.icondialog.pack.IconPack
-import com.maltaisn.icondialog.pack.IconPackLoader
-import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
+import com.mikepenz.iconics.IconicsDrawable
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
@@ -25,6 +24,7 @@ import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.TileEntity
 import io.homeassistant.companion.android.database.qs.isSetup
 import io.homeassistant.companion.android.settings.SettingsActivity
+import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -118,9 +118,9 @@ abstract class TileExtensions : TileService() {
                 } else
                     tile.state = Tile.STATE_INACTIVE
 
-                val iconId = tileData.iconId
-                if (iconId != null) {
-                    val icon = getTileIcon(iconId, context)
+                val iconName = tileData.iconName
+                if (iconName != null) {
+                    val icon = getTileIcon(iconName, context)
                     tile.icon = Icon.createWithBitmap(icon)
                 }
                 Log.d(TAG, "Tile data set for tile ID: $tileId")
@@ -214,7 +214,7 @@ abstract class TileExtensions : TileService() {
                     TileEntity(
                         tileId = tileId,
                         added = added,
-                        iconId = null,
+                        iconName = null,
                         entityId = "",
                         label = "",
                         subtitle = null
@@ -226,26 +226,16 @@ abstract class TileExtensions : TileService() {
 
     companion object {
         private const val TAG = "TileExtensions"
-        private var iconPack: IconPack? = null
         private val toggleDomains = listOf(
             "cover", "fan", "humidifier", "input_boolean", "light",
             "media_player", "remote", "siren", "switch"
         )
         private val validActiveStates = listOf("on", "open", "locked")
 
-        private fun getTileIcon(tileIconId: Int, context: Context): Bitmap? {
-            // Create an icon pack and load all drawables.
-            if (iconPack == null) {
-                val loader = IconPackLoader(context)
-                iconPack = createMaterialDesignIconPack(loader)
-                iconPack!!.loadDrawables(loader.drawableLoader)
-            }
-
-            val iconDrawable = iconPack?.icons?.get(tileIconId)?.drawable
-            if (iconDrawable != null) {
-                return DrawableCompat.wrap(iconDrawable).toBitmap()
-            }
-            return null
+        private fun getTileIcon(tileIconName: String, context: Context): Bitmap {
+            val icon = CommunityMaterial.getIconByMdiName(tileIconName)
+            val iconDrawable = IconicsDrawable(context, icon)
+            return DrawableCompat.wrap(iconDrawable).toBitmap()
         }
     }
 

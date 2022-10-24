@@ -3,22 +3,19 @@ package io.homeassistant.companion.android.settings.qs
 import android.app.Application
 import android.app.StatusBarManager
 import android.content.ComponentName
+import android.graphics.drawable.Icon
 import android.os.Build
 import android.util.Log
-import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.getSystemService
-import androidx.core.graphics.drawable.DrawableCompat
-import androidx.core.graphics.drawable.toBitmapOrNull
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import com.maltaisn.icondialog.data.Icon
-import com.maltaisn.icondialog.pack.IconPack
-import com.maltaisn.icondialog.pack.IconPackLoader
-import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
+import com.mikepenz.iconics.IconicsDrawable
+import com.mikepenz.iconics.typeface.IIcon
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -38,11 +35,12 @@ import io.homeassistant.companion.android.qs.Tile6Service
 import io.homeassistant.companion.android.qs.Tile7Service
 import io.homeassistant.companion.android.qs.Tile8Service
 import io.homeassistant.companion.android.qs.Tile9Service
+import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
+import io.homeassistant.companion.android.util.icondialog.mdiName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.util.concurrent.Executors
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
@@ -59,8 +57,6 @@ class ManageTilesViewModel @Inject constructor(
         private const val TAG = "ManageTilesViewModel"
     }
 
-    lateinit var iconPack: IconPack
-
     private val app = application
 
     val slots = loadTileSlots(application.resources)
@@ -70,15 +66,13 @@ class ManageTilesViewModel @Inject constructor(
 
     var sortedEntities by mutableStateOf<List<Entity<*>>>(emptyList())
         private set
-    var selectedIconDrawable by mutableStateOf(AppCompatResources.getDrawable(application, commonR.drawable.ic_stat_ic_notification))
-        private set
     var selectedEntityId by mutableStateOf("")
     var tileLabel by mutableStateOf("")
     var tileSubtitle by mutableStateOf<String?>(null)
     var submitButtonLabel by mutableStateOf(commonR.string.tile_save)
         private set
 
-    private var selectedIcon: Int? = null
+    private var selectedIcon: IIcon? = null
     private var selectedTileId = 0
     private var selectedTileAdded = false
 
@@ -101,16 +95,6 @@ class ManageTilesViewModel @Inject constructor(
             sortedEntities = integrationUseCase.getEntities().orEmpty()
                 .filter { it.domain in ManageTilesFragment.validDomains }
         }
-
-        viewModelScope.launch(Dispatchers.IO) {
-            val loader = IconPackLoader(getApplication())
-            iconPack = createMaterialDesignIconPack(loader)
-            iconPack.loadDrawables(loader.drawableLoader)
-            withContext(Dispatchers.Main) {
-                // The icon pack might not have been initialized when the tile data was loaded
-                selectTile(slots.indexOf(selectedTile))
-            }
-        }
     }
 
     fun selectTile(index: Int) {
@@ -130,9 +114,8 @@ class ManageTilesViewModel @Inject constructor(
         }
     }
 
-    fun selectIcon(icon: Icon?) {
-        selectedIcon = icon?.id
-        selectedIconDrawable = icon?.drawable?.let { DrawableCompat.wrap(it) }
+    fun selectIcon(icon: IIcon?) {
+        selectedIcon = icon
     }
 
     private fun updateExistingTileFields(currentTile: TileEntity) {
@@ -140,10 +123,7 @@ class ManageTilesViewModel @Inject constructor(
         tileSubtitle = currentTile.subtitle
         selectedEntityId = currentTile.entityId
         selectIcon(
-            currentTile.iconId?.let {
-                if (::iconPack.isInitialized) iconPack.getIcon(it)
-                else null
-            }
+            currentTile.iconName?.let { CommunityMaterial.getIconByMdiName(it) }
         )
     }
 
@@ -153,7 +133,7 @@ class ManageTilesViewModel @Inject constructor(
                 id = selectedTileId,
                 tileId = selectedTile.id,
                 added = selectedTileAdded,
-                iconId = selectedIcon,
+                iconName = selectedIcon?.mdiName,
                 entityId = selectedEntityId,
                 label = tileLabel,
                 subtitle = tileSubtitle
@@ -176,11 +156,10 @@ class ManageTilesViewModel @Inject constructor(
                     Tile12Service.TILE_ID -> Tile12Service::class.java
                     else -> Tile1Service::class.java
                 }
-                val icon = selectedIconDrawable?.let {
-                    it.toBitmapOrNull(it.intrinsicWidth, it.intrinsicHeight)?.let { bitmap ->
-                        android.graphics.drawable.Icon.createWithBitmap(bitmap)
-                    }
-                } ?: android.graphics.drawable.Icon.createWithResource(app, commonR.drawable.ic_stat_ic_notification)
+                val icon = selectedIcon?.let {
+                    val bitmap = IconicsDrawable(getApplication(), it).toBitmap()
+                    Icon.createWithBitmap(bitmap)
+                } ?: Icon.createWithResource(app, commonR.drawable.ic_stat_ic_notification)
 
                 statusBarManager?.requestAddTileService(
                     ComponentName(app, service),
