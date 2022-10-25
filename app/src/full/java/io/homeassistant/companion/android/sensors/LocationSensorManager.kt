@@ -874,13 +874,11 @@ class LocationSensorManager : LocationSensorManagerBase() {
     }
 
     private fun createLocationRequest(): LocationRequest {
-        val locationRequest = LocationRequest.create()
-
-        locationRequest.interval = DEFAULT_LOCATION_INTERVAL // Every 60 seconds
-        locationRequest.fastestInterval = DEFAULT_LOCATION_FAST_INTERVAL // Every 30 seconds
-        locationRequest.maxWaitTime = DEFAULT_LOCATION_MAX_WAIT_TIME // Every ~3.5 minutes
-
-        locationRequest.priority = Priority.PRIORITY_BALANCED_POWER_ACCURACY
+        val locationRequest = LocationRequest.Builder(DEFAULT_LOCATION_INTERVAL).apply {
+            setMaxUpdateAgeMillis(DEFAULT_LOCATION_MAX_WAIT_TIME)
+            setMinUpdateIntervalMillis(DEFAULT_LOCATION_FAST_INTERVAL)
+            setPriority(Priority.PRIORITY_BALANCED_POWER_ACCURACY)
+        }.build()
 
         return locationRequest
     }
@@ -1020,12 +1018,11 @@ class LocationSensorManager : LocationSensorManagerBase() {
         sensorDao.add(Attribute(singleAccurateLocation.id, "lastAccurateLocationRequest", now.toString(), "string"))
 
         val maxRetries = 5
-        val request = createLocationRequest().apply {
-            priority = Priority.PRIORITY_HIGH_ACCURACY
-            numUpdates = maxRetries
-            interval = 10000
-            fastestInterval = 5000
-        }
+        val request = LocationRequest.Builder(10000).apply {
+            setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+            setMaxUpdates(maxRetries)
+            setMinUpdateIntervalMillis(5000)
+        }.build()
         LocationServices.getFusedLocationProviderClient(latestContext)
             .requestLocationUpdates(
                 request,
