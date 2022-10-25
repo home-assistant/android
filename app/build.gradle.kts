@@ -162,7 +162,7 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.10.0")
     implementation("com.squareup.picasso:picasso:2.8")
 
-    "fullImplementation"("com.google.android.gms:play-services-location:20.0.0")
+    "fullImplementation"("com.google.android.gms:play-services-location:21.0.0")
     "fullImplementation"(platform("com.google.firebase:firebase-bom:30.4.1"))
     "fullImplementation"("com.google.firebase:firebase-messaging")
     "fullImplementation"("io.sentry:sentry-android:6.6.0")
