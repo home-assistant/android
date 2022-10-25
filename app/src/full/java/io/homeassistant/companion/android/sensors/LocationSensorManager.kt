@@ -874,9 +874,9 @@ class LocationSensorManager : LocationSensorManagerBase() {
     }
 
     private fun createLocationRequest(): LocationRequest {
-        val locationRequest = LocationRequest.Builder(DEFAULT_LOCATION_INTERVAL).apply {
-            setMaxUpdateAgeMillis(DEFAULT_LOCATION_MAX_WAIT_TIME)
-            setMinUpdateIntervalMillis(DEFAULT_LOCATION_FAST_INTERVAL)
+        val locationRequest = LocationRequest.Builder(DEFAULT_LOCATION_INTERVAL).apply { // every 60 seconds
+            setMaxUpdateAgeMillis(DEFAULT_LOCATION_MAX_WAIT_TIME) // every ~3.5 minutes
+            setMinUpdateIntervalMillis(DEFAULT_LOCATION_FAST_INTERVAL) // every 30 seconds
             setPriority(Priority.PRIORITY_BALANCED_POWER_ACCURACY)
         }.build()
 
