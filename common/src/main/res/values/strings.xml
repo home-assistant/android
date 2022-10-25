@@ -941,5 +941,5 @@
     <string name="sensor_name_theater_mode">Theater Mode</string>
     <string name="sensor_description_theater_mode">Whether theater mode is enabled on the device. For best results enable the interactive sensor.</string>
 	<string name="sensor_name_wet_mode">Wet Mode</string>
-	<string name="sensor_description_wet_mode">Wether the device is currently in Wet Mode (or Touch Lock)</string>
+	<string name="sensor_description_wet_mode">Wether the device has Wet Mode (or Touch Lock) enabled</string>
 </resources>
