@@ -84,7 +84,7 @@ open class HomeAssistantApplication : Application() {
             }
         )
 
-		// Listen to changes to Wet Mode State
+        // Listen to changes to Wet Mode State
         registerReceiver(
             sensorReceiver,
             IntentFilter().apply {

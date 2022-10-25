@@ -12,7 +12,7 @@ class WetModeSensorManager : SensorManager {
             "wet_mode",
             "binary_sensor",
             commonR.string.sensor_name_wet_mode,
-            commonR.string.sensor_description_wet_mod,
+            commonR.string.sensor_description_wet_mode,
             "mdi:water-off",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT

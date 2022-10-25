@@ -48,7 +48,7 @@ class SensorReceiver : SensorReceiverBase() {
             PowerSensorManager(),
             StepsSensorManager(),
             TheaterModeSensorManager(),
-			WetModeSensorManager()
+            WetModeSensorManager()
         )
 
         const val ACTION_REQUEST_SENSORS_UPDATE =
@@ -68,7 +68,7 @@ class SensorReceiver : SensorReceiverBase() {
         AudioManager.ACTION_MICROPHONE_MUTE_CHANGED to AudioSensorManager.micMuted.id,
         AudioManager.ACTION_SPEAKERPHONE_STATE_CHANGED to AudioSensorManager.speakerphoneState.id,
         AudioManager.RINGER_MODE_CHANGED_ACTION to AudioSensorManager.audioSensor.id,
-		"com.google.android.clockwork.actions.WET_MODE_STARTED" to WetModeSensorManager.wetModeSensor.id,
+        "com.google.android.clockwork.actions.WET_MODE_STARTED" to WetModeSensorManager.wetModeSensor.id,
         "com.google.android.clockwork.actions.WET_MODE_ENDED" to WetModeSensorManager.wetModeSensor.id
     )
 
