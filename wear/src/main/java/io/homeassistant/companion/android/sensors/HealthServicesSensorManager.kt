@@ -60,12 +60,6 @@ class HealthServicesSensorManager : SensorManager {
 
     override fun requestSensorUpdate(context: Context) {
         latestContext = context
-
-        if (healthClient == null) healthClient = HealthServices.getClient(latestContext)
-        if (passiveMonitoringClient == null) passiveMonitoringClient = healthClient?.passiveMonitoringClient
-        passiveListenerConfig = PassiveListenerConfig.builder()
-            .setShouldUserActivityInfoBeRequested(isEnabled(latestContext, userActivityState.id))
-            .build()
         updateUserActivityState()
     }
 
@@ -75,6 +69,12 @@ class HealthServicesSensorManager : SensorManager {
             callBackRegistered = false
             return
         }
+
+        if (healthClient == null) healthClient = HealthServices.getClient(latestContext)
+        if (passiveMonitoringClient == null) passiveMonitoringClient = healthClient?.passiveMonitoringClient
+        passiveListenerConfig = PassiveListenerConfig.builder()
+            .setShouldUserActivityInfoBeRequested(isEnabled(latestContext, userActivityState.id))
+            .build()
 
         val passiveListenerCallback: PassiveListenerCallback = object : PassiveListenerCallback {
             override fun onUserActivityInfoReceived(info: UserActivityInfo) {
