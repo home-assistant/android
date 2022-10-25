@@ -13,6 +13,8 @@ import androidx.health.services.client.data.PassiveListenerConfig
 import androidx.health.services.client.data.UserActivityInfo
 import androidx.health.services.client.data.UserActivityState
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.database.AppDatabase
+import kotlinx.coroutines.runBlocking
 import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.R)
@@ -91,7 +93,7 @@ class HealthServicesSensorManager : SensorManager {
                     when (info.userActivityState) {
                         UserActivityState.USER_ACTIVITY_EXERCISE -> "mdi:run"
                         UserActivityState.USER_ACTIVITY_ASLEEP -> "mdi:sleep"
-                        UserActivityState.USER_ACTIVITY_PASSIVE -> "mdi:walk"
+                        UserActivityState.USER_ACTIVITY_PASSIVE -> "mdi:human-handsdown"
                         else -> userActivityState.statelessIcon
                     },
                     mapOf(
@@ -101,6 +103,18 @@ class HealthServicesSensorManager : SensorManager {
                 )
 
                 SensorWorker.start(latestContext)
+            }
+
+            override fun onPermissionLost() {
+                val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
+                runBlocking {
+                    sensorDao.setSensorsEnabled(listOf(userActivityState.id), false)
+                }
+            }
+
+            override fun onRegistrationFailed(throwable: Throwable) {
+                Log.e(TAG, "onRegistrationFailed: ", throwable)
+                callBackRegistered = false
             }
         }
 
