@@ -66,7 +66,7 @@ class AuthenticationFragment : Fragment() {
                 MdcTheme {
                     AndroidView({
                         WebView(requireContext()).apply {
-                            themesManager.setThemeForWebView()
+                            themesManager.setThemeForWebView(requireContext(), settings)
                             settings.javaScriptEnabled = true
                             settings.domStorageEnabled = true
                             settings.userAgentString = settings.userAgentString + " ${HomeAssistantApis.USER_AGENT_STRING}"
