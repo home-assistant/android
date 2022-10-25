@@ -66,7 +66,7 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Check for modified DB migrations on branch
+    - name: Check for modified DB schemas on branch
       run: |
         if git diff --name-only --diff-filter=DMR origin/master... | grep "^common/schemas"; then
           echo -e "\n❌ Existing database schema modified, please increase the database version instead"
@@ -101,7 +101,7 @@ jobs:
     - name: Build Debug APK
       run: ./gradlew assembleDebug
 
-    - name: Check for missing/modified DB migrations after build
+    - name: Check for missing/modified DB schemas after build
       run: |
         if [[ $(git status common/schemas --porcelain) ]]; then
           echo $(git status common/schemas --porcelain)
