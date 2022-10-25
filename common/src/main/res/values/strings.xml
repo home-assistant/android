@@ -942,4 +942,7 @@
     <string name="sensor_description_theater_mode">Whether theater mode is enabled on the device. For best results enable the interactive sensor.</string>
     <string name="sensor_name_wet_mode">Wet Mode</string>
     <string name="sensor_description_wet_mode">Whether the device has Wet Mode (or Touch Lock) enabled</string>
+    <string name="sensor_name_activity_state">Activity State</string>
+    <string name="sensor_description_activity_state">The state of user activity as determined by Health Services</string>
+    <string name="sensor_name_health_services">Health Services</string>
 </resources>
