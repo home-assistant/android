@@ -3,8 +3,10 @@ package io.homeassistant.companion.android.onboarding.manual
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
@@ -28,10 +30,12 @@ fun ManualSetupView(
     onboardingViewModel: OnboardingViewModel,
     connectedClicked: () -> Unit
 ) {
+    val scrollState = rememberScrollState()
     val keyboardController = LocalSoftwareKeyboardController.current
 
     Column(
         modifier = Modifier
+            .verticalScroll(scrollState)
             .fillMaxWidth()
             .padding(16.dp)
     ) {

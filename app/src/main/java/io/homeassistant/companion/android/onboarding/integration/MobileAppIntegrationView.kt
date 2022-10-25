@@ -1,12 +1,15 @@
 package io.homeassistant.companion.android.onboarding.integration
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.Switch
 import androidx.compose.material.SwitchDefaults
@@ -37,66 +40,77 @@ fun MobileAppIntegrationView(
     onLocationTrackingChanged: (Boolean) -> Unit,
     onFinishClicked: () -> Unit
 ) {
-
+    val scrollState = rememberScrollState()
     val keyboardController = LocalSoftwareKeyboardController.current
     Column(
         modifier = Modifier
+            .fillMaxHeight()
             .fillMaxWidth()
             .padding(16.dp)
     ) {
-
-        OnboardingHeaderView(
-            icon = if (onboardingViewModel.deviceIsWatch) {
-                CommunityMaterial.Icon3.cmd_watch
-            } else if (LocalConfiguration.current.screenWidthDp.dp >= 600.dp) {
-                CommunityMaterial.Icon3.cmd_tablet
-            } else {
-                CommunityMaterial.Icon.cmd_cellphone
-            },
-            title = stringResource(id = commonR.string.connect_to_home_assistant)
-        )
-
-        TextField(
-            value = onboardingViewModel.deviceName.value,
-            onValueChange = { onboardingViewModel.onDeviceNameUpdated(it) },
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-            label = { Text(stringResource(id = commonR.string.device_name)) },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(
-                onDone = {
-                    keyboardController?.hide()
-                }
+        Column(
+            modifier = Modifier
+                .verticalScroll(scrollState)
+                .fillMaxWidth()
+                .weight(1f)
+        ) {
+            OnboardingHeaderView(
+                icon = if (onboardingViewModel.deviceIsWatch) {
+                    CommunityMaterial.Icon3.cmd_watch
+                } else if (LocalConfiguration.current.screenWidthDp.dp >= 600.dp) {
+                    CommunityMaterial.Icon3.cmd_tablet
+                } else {
+                    CommunityMaterial.Icon.cmd_cellphone
+                },
+                title = stringResource(id = commonR.string.connect_to_home_assistant)
             )
-        )
-        if (onboardingViewModel.locationTrackingPossible.value) {
-            Row {
-                Text(
-                    text = stringResource(commonR.string.enable_location_tracking),
-                    modifier = Modifier
-                        .align(Alignment.CenterVertically)
-                        .weight(1f)
+
+            TextField(
+                value = onboardingViewModel.deviceName.value,
+                onValueChange = { onboardingViewModel.onDeviceNameUpdated(it) },
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                label = { Text(stringResource(id = commonR.string.device_name)) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        keyboardController?.hide()
+                    }
                 )
-                Switch(
-                    checked = onboardingViewModel.locationTrackingEnabled,
-                    onCheckedChange = onLocationTrackingChanged,
-                    colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(commonR.color.colorSwitchUncheckedThumb))
+            )
+            if (onboardingViewModel.locationTrackingPossible.value) {
+                Row {
+                    Text(
+                        text = stringResource(commonR.string.enable_location_tracking),
+                        modifier = Modifier
+                            .align(Alignment.CenterVertically)
+                            .weight(1f)
+                    )
+                    Switch(
+                        checked = onboardingViewModel.locationTrackingEnabled,
+                        onCheckedChange = onLocationTrackingChanged,
+                        colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(commonR.color.colorSwitchUncheckedThumb))
+                    )
+                }
+                Text(
+                    text = stringResource(id = commonR.string.enable_location_tracking_description),
+                    fontWeight = FontWeight.Light
                 )
             }
-            Text(
-                text = stringResource(id = commonR.string.enable_location_tracking_description),
-                fontWeight = FontWeight.Light
-            )
+            TextButton(onClick = openPrivacyPolicy) {
+                Text(stringResource(id = commonR.string.privacy_url))
+            }
         }
-        TextButton(onClick = openPrivacyPolicy) {
-            Text(stringResource(id = commonR.string.privacy_url))
-        }
-        Spacer(modifier = Modifier.weight(1f))
-        Button(
-            onClick = onFinishClicked,
-            modifier = Modifier.align(Alignment.End)
+
+        Row(
+            modifier = Modifier
+                .padding(top = 16.dp)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
         ) {
-            Text(stringResource(id = commonR.string.continue_connect))
+            Button(onClick = onFinishClicked) {
+                Text(stringResource(id = commonR.string.continue_connect))
+            }
         }
     }
 }
