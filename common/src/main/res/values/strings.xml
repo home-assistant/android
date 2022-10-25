@@ -940,4 +940,6 @@
     <string name="sensor_description_bedtime_mode">Whether bedtime mode is enabled on the device. For best results enable either Do Not Disturb or Interactive sensor.</string>
     <string name="sensor_name_theater_mode">Theater Mode</string>
     <string name="sensor_description_theater_mode">Whether theater mode is enabled on the device. For best results enable the interactive sensor.</string>
+    <string name="sensor_name_wet_mode">Wet Mode</string>
+    <string name="sensor_description_wet_mode">Whether the device has Wet Mode (or Touch Lock) enabled</string>
 </resources>
