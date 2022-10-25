@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.media.AudioManager
 import android.net.wifi.WifiManager
+import android.os.Build
 import android.os.PowerManager
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
@@ -35,13 +36,12 @@ class SensorReceiver : SensorReceiverBase() {
 
     companion object {
         const val TAG = "SensorReceiver"
-        val MANAGERS = listOf(
+        private val allManager = listOf(
             AppSensorManager(),
             AudioSensorManager(),
             BatterySensorManager(),
             BedtimeModeSensorManager(),
             DNDSensorManager(),
-            HealthServicesSensorManager(),
             LastUpdateManager(),
             NetworkSensorManager(),
             NextAlarmManager(),
@@ -51,6 +51,10 @@ class SensorReceiver : SensorReceiverBase() {
             TheaterModeSensorManager(),
             WetModeSensorManager()
         )
+        val MANAGERS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
+            allManager.plus(HealthServicesSensorManager())
+        else
+            allManager
 
         const val ACTION_REQUEST_SENSORS_UPDATE =
             "io.homeassistant.companion.android.background.REQUEST_SENSORS_UPDATE"
