@@ -6,10 +6,13 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
@@ -17,6 +20,7 @@ import androidx.wear.compose.material.ToggleChipDefaults
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.sensor.Sensor
+import io.homeassistant.companion.android.util.batterySensorManager
 
 @Composable
 fun SensorUi(
@@ -87,4 +91,16 @@ fun SensorUi(
             )
         }
     )
+}
+
+@Preview(device = Devices.WEAR_OS_LARGE_ROUND)
+@Composable
+private fun PreviewSensorUI() {
+    CompositionLocalProvider {
+        SensorUi(
+            sensor = null,
+            manager = batterySensorManager,
+            basicSensor = batterySensorManager.getAvailableSensors(LocalContext.current).first()
+        ) { _, _ -> }
+    }
 }

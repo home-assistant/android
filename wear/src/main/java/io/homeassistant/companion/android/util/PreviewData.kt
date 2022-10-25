@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.util
 
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.sensors.BatterySensorManager
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import java.util.Calendar
 
@@ -28,3 +29,5 @@ val simplifiedEntity = SimplifiedEntity(previewEntity1.entityId, attributes["fri
 val playPreviewEntityScene1 = Entity("scene.first", "on", mapOf("friendly_name" to "Cleaning mode"), calendar, calendar, mapOf())
 val playPreviewEntityScene2 = Entity("scene.second", "on", mapOf("friendly_name" to "Colorful"), calendar, calendar, mapOf())
 val playPreviewEntityScene3 = Entity("scene.third", "on", mapOf("friendly_name" to "Goodbye"), calendar, calendar, mapOf())
+
+val batterySensorManager = BatterySensorManager()

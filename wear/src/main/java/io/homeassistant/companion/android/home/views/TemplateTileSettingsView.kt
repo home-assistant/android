@@ -2,11 +2,14 @@ package io.homeassistant.companion.android.home.views
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.Text
@@ -61,5 +64,13 @@ fun TemplateTileSettingsView(
                 color = Color.DarkGray
             )
         }
+    }
+}
+
+@Preview(device = Devices.WEAR_OS_LARGE_ROUND)
+@Composable
+private fun PreviewTemplateTileSettingView() {
+    CompositionLocalProvider {
+        TemplateTileSettingsView(templateContent = "test", refreshInterval = 1) {}
     }
 }
