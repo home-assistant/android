@@ -79,8 +79,9 @@ dependencies {
         exclude(group = "org.json", module = "json")
     }
 
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4")
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("androidx.test:core-ktx:1.5.0-beta01")
-    testImplementation("androidx.test.ext:junit-ktx:1.1.3")
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.junit)
+    testImplementation(libs.test.core)
+    testImplementation(libs.test.ext.junit)
+    testImplementation(libs.mockk)
 }
