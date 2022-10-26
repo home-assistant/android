@@ -8,9 +8,6 @@ import androidx.room.Query
 @Dao
 interface NotificationDao {
 
-    @Query("SELECT * FROM notification_history WHERE id = :id")
-    fun get(id: Int): NotificationItem?
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun add(notification: NotificationItem)
 

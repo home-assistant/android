@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.settings.sensor
 
 import android.app.Application
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
@@ -28,7 +27,8 @@ class SensorSettingsViewModel @Inject constructor(
     }
 
     private var sensorsList = emptyList<Sensor>()
-    var sensors = mutableStateListOf<Sensor>()
+    var sensors by mutableStateOf<Map<String, Sensor>>(emptyMap())
+        private set
 
     var searchQuery: String? = null
     var sensorFilter by mutableStateOf(SensorFilter.ALL)
@@ -55,10 +55,9 @@ class SensorSettingsViewModel @Inject constructor(
 
     private fun filterSensorsList() {
         val app = getApplication<Application>()
-        sensors.clear()
-
-        SensorReceiver.MANAGERS.filter { it.hasSensor(app.applicationContext) }.forEach { manager ->
-            sensors.addAll(
+        sensors = SensorReceiver.MANAGERS
+            .filter { it.hasSensor(app.applicationContext) }
+            .flatMap { manager ->
                 manager.getAvailableSensors(app.applicationContext)
                     .filter { sensor ->
                         (
@@ -75,7 +74,7 @@ class SensorSettingsViewModel @Inject constructor(
                                 )
                     }
                     .mapNotNull { sensor -> sensorsList.firstOrNull { it.id == sensor.id } }
-            )
-        }
+            }
+            .associateBy { it.id }
     }
 }

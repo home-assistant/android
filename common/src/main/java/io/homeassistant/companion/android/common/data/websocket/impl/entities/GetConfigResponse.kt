@@ -12,7 +12,7 @@ data class GetConfigResponse(
     val timeZone: String,
     val components: List<String>,
     val version: String,
-    var cloudhookUrl: String?, // only when using webhook
-    var remoteUiUrl: String?, // only when using webhook
+    val cloudhookUrl: String?, // only when using webhook
+    val remoteUiUrl: String?, // only when using webhook
     val entities: Map<String, Map<String, Any>>? // only on core >= 2022.6 when using webhook
 )
