@@ -9,6 +9,9 @@ import androidx.health.services.client.HealthServices
 import androidx.health.services.client.HealthServicesClient
 import androidx.health.services.client.PassiveListenerCallback
 import androidx.health.services.client.PassiveMonitoringClient
+import androidx.health.services.client.data.DataPointContainer
+import androidx.health.services.client.data.DataType
+import androidx.health.services.client.data.ExerciseType
 import androidx.health.services.client.data.PassiveListenerConfig
 import androidx.health.services.client.data.UserActivityInfo
 import androidx.health.services.client.data.UserActivityState
@@ -31,6 +34,16 @@ class HealthServicesSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
+        private val dailyFloors = SensorManager.BasicSensor(
+            "daily_floors",
+            "sensor",
+            commonR.string.sensor_name_daily_floors,
+            commonR.string.sensor_description_daily_floors,
+            "mdi:stairs",
+            unitOfMeasurement = "floors",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+        )
     }
 
     private lateinit var latestContext: Context
@@ -38,6 +51,8 @@ class HealthServicesSensorManager : SensorManager {
     private var passiveMonitoringClient: PassiveMonitoringClient? = null
     private var passiveListenerConfig: PassiveListenerConfig? = null
     private var callBackRegistered = false
+    private var dataTypesRegistered = emptySet<DataType<*, *>>()
+    private var activityStateRegistered = false
 
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/wear-os/#sensors"
@@ -49,7 +64,7 @@ class HealthServicesSensorManager : SensorManager {
         get() = commonR.string.sensor_name_health_services
 
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        return listOf(userActivityState)
+        return listOf(userActivityState, dailyFloors)
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
@@ -62,21 +77,35 @@ class HealthServicesSensorManager : SensorManager {
 
     override fun requestSensorUpdate(context: Context) {
         latestContext = context
-        updateUserActivityState()
+        updateHealthServices()
     }
 
-    private fun updateUserActivityState() {
-        if (!isEnabled(latestContext, userActivityState.id)) {
-            passiveMonitoringClient?.clearPassiveListenerCallbackAsync()
-            callBackRegistered = false
+    private fun updateHealthServices() {
+        val activityState = isEnabled(latestContext, userActivityState.id)
+
+        if (!activityState && !isEnabled(latestContext, dailyFloors.id)) {
+            clearHealthServicesCallBack()
             return
         }
 
         if (healthClient == null) healthClient = HealthServices.getClient(latestContext)
         if (passiveMonitoringClient == null) passiveMonitoringClient = healthClient?.passiveMonitoringClient
+
+        val dataTypes = emptySet<DataType<*, *>>().toMutableSet()
+        if (isEnabled(latestContext, dailyFloors.id))
+            dataTypes += setOf(DataType.FLOORS_DAILY)
+
         passiveListenerConfig = PassiveListenerConfig.builder()
-            .setShouldUserActivityInfoBeRequested(isEnabled(latestContext, userActivityState.id))
+            .setShouldUserActivityInfoBeRequested(activityState)
+            .setDataTypes(dataTypes)
             .build()
+
+        if (dataTypesRegistered != dataTypes || activityStateRegistered != activityState) {
+            clearHealthServicesCallBack()
+        }
+
+        activityStateRegistered = activityState
+        dataTypesRegistered = dataTypes
 
         val passiveListenerCallback: PassiveListenerCallback = object : PassiveListenerCallback {
             override fun onUserActivityInfoReceived(info: UserActivityInfo) {
@@ -90,19 +119,32 @@ class HealthServicesSensorManager : SensorManager {
                         UserActivityState.USER_ACTIVITY_EXERCISE -> "exercise"
                         else -> "unknown"
                     },
-                    when (info.userActivityState) {
-                        UserActivityState.USER_ACTIVITY_EXERCISE -> "mdi:run"
-                        UserActivityState.USER_ACTIVITY_ASLEEP -> "mdi:sleep"
-                        UserActivityState.USER_ACTIVITY_PASSIVE -> "mdi:human-handsdown"
-                        else -> userActivityState.statelessIcon
-                    },
+                    getActivityIcon(info),
                     mapOf(
                         "time" to info.stateChangeTime,
                         "exercise_type" to info.exerciseInfo?.exerciseType?.name
-                    )
+                    ),
+                    forceUpdate = info.userActivityState == UserActivityState.USER_ACTIVITY_EXERCISE
                 )
 
                 SensorWorker.start(latestContext)
+            }
+
+            override fun onNewDataPointsReceived(dataPoints: DataPointContainer) {
+                Log.d(TAG, "New data point received: ${dataPoints.dataTypes}")
+                val floorsDaily = dataPoints.getData(DataType.FLOORS_DAILY)
+
+                if (floorsDaily.isNotEmpty()) {
+                    onSensorUpdated(
+                        latestContext,
+                        dailyFloors,
+                        floorsDaily.first().value,
+                        dailyFloors.statelessIcon,
+                        mapOf()
+                    )
+
+                    SensorWorker.start(latestContext)
+                }
             }
 
             override fun onPermissionLost() {
@@ -116,6 +158,11 @@ class HealthServicesSensorManager : SensorManager {
                 Log.e(TAG, "onRegistrationFailed: ", throwable)
                 callBackRegistered = false
             }
+
+            override fun onRegistered() {
+                Log.d(TAG, "Health services callback successfully registered for the following data types: ${passiveListenerConfig!!.dataTypes} User Activity Info: ${passiveListenerConfig!!.shouldUserActivityInfoBeRequested} Health Events: ${passiveListenerConfig!!.healthEventTypes}")
+                callBackRegistered = true
+            }
         }
 
         if (!callBackRegistered) {
@@ -124,6 +171,61 @@ class HealthServicesSensorManager : SensorManager {
                 passiveListenerCallback
             )
         }
+
+        // Assume the callback is registered to avoid making multiple requests
         callBackRegistered = true
+    }
+
+    private fun clearHealthServicesCallBack() {
+        passiveMonitoringClient?.clearPassiveListenerCallbackAsync()
+        callBackRegistered = false
+    }
+
+    private fun getActivityIcon(info: UserActivityInfo): String {
+        return when (info.userActivityState) {
+            UserActivityState.USER_ACTIVITY_EXERCISE -> {
+                when (info.exerciseInfo?.exerciseType) {
+                    ExerciseType.ALPINE_SKIING, ExerciseType.SKIING -> "mdi:skiing"
+                    ExerciseType.WEIGHTLIFTING, ExerciseType.BARBELL_SHOULDER_PRESS, ExerciseType.BENCH_PRESS -> "mdi:weight-lifter"
+                    ExerciseType.BIKING, ExerciseType.BIKING_STATIONARY, ExerciseType.MOUNTAIN_BIKING -> "mdi:bike"
+                    ExerciseType.SWIMMING_POOL, ExerciseType.SWIMMING_OPEN_WATER -> "mdi:swim"
+                    ExerciseType.BASEBALL -> "mdi:baseball"
+                    ExerciseType.BASKETBALL -> "mdi:basketball"
+                    ExerciseType.FOOTBALL_AMERICAN -> "mdi:football"
+                    ExerciseType.FOOTBALL_AUSTRALIAN -> "mdi:football-australian"
+                    ExerciseType.SOCCER -> "mdi:soccer"
+                    ExerciseType.SKATING, ExerciseType.INLINE_SKATING -> "mdi:skate"
+                    ExerciseType.ROLLER_SKATING -> "mdi:roller-skate"
+                    ExerciseType.SCUBA_DIVING -> "mdi:diving-scuba"
+                    ExerciseType.SAILING -> "mdi:sail-boat"
+                    ExerciseType.RUGBY -> "mdi:rugby"
+                    ExerciseType.ROWING, ExerciseType.ROWING_MACHINE -> "mdi:rowing"
+                    ExerciseType.RACQUETBALL -> "mdi:racquetball"
+                    ExerciseType.HORSE_RIDING -> "mdi:horse-human"
+                    ExerciseType.ICE_HOCKEY, ExerciseType.ROLLER_HOCKEY -> "mdi:hockey-sticks"
+                    ExerciseType.GYMNASTICS -> "mdi:gymnastics"
+                    ExerciseType.DANCING -> "mdi:dance-ballroom"
+                    ExerciseType.CRICKET -> "mdi:cricket"
+                    ExerciseType.JUMP_ROPE -> "mdi:jump-rope"
+                    ExerciseType.JUMPING_JACK -> "mdi:human-handsdown"
+                    ExerciseType.SNOWBOARDING -> "mdi:snowboard"
+                    ExerciseType.MEDITATION -> "mdi:meditation"
+                    ExerciseType.SURFING -> "mdi:surfing"
+                    ExerciseType.TENNIS -> "mdi:tennis"
+                    ExerciseType.TABLE_TENNIS -> "mdi:table-tennis"
+                    ExerciseType.VOLLEYBALL -> "mdi:volleyball"
+                    ExerciseType.HANDBALL -> "mdi:handball"
+                    ExerciseType.YOGA -> "mdi:yoga"
+                    ExerciseType.WATER_POLO -> "mdi:water-polo"
+                    ExerciseType.STAIR_CLIMBING, ExerciseType.STAIR_CLIMBING_MACHINE -> "mdi:stairs"
+                    ExerciseType.PARA_GLIDING -> "mdi:paragliding"
+                    ExerciseType.GOLF -> "mdi:golf"
+                    else -> "mdi:run"
+                }
+            }
+            UserActivityState.USER_ACTIVITY_PASSIVE -> "mdi:human-handsdown"
+            UserActivityState.USER_ACTIVITY_ASLEEP -> "mdi:sleep"
+            else -> userActivityState.statelessIcon
+        }
     }
 }
