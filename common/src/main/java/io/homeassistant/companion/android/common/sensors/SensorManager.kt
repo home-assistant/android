@@ -99,7 +99,13 @@ interface SensorManager {
      */
     fun requestSensorUpdate(context: Context)
 
-    fun getAvailableSensors(context: Context): List<BasicSensor>
+    suspend fun getAvailableSensors(context: Context, intent: Intent?): List<BasicSensor> {
+        return getAvailableSensors(context)
+    }
+
+    fun getAvailableSensors(context: Context): List<BasicSensor> {
+        return emptyList()
+    }
 
     /**
      * Check if the user's device supports this type of sensor

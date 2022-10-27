@@ -7,6 +7,8 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.homeassistant.companion.android.HomeAssistantApplication
+import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.sensors.SensorReceiver
@@ -29,6 +31,7 @@ class SensorSettingsViewModel @Inject constructor(
     private var sensorsList = emptyList<Sensor>()
     var sensors by mutableStateOf<Map<String, Sensor>>(emptyMap())
         private set
+    var availableSensors = emptyList<SensorManager.BasicSensor>()
 
     var searchQuery: String? = null
     var sensorFilter by mutableStateOf(SensorFilter.ALL)
@@ -40,6 +43,17 @@ class SensorSettingsViewModel @Inject constructor(
                 sensorsList = it
                 filterSensorsList()
             }
+        }
+    }
+
+    fun updateManagers(sensorManager: SensorManager) {
+        val context = getApplication<HomeAssistantApplication>().applicationContext
+        viewModelScope.launch {
+            availableSensors = sensorManager.getAvailableSensors(context, null)
+                .filter { basicSensor ->
+                    sensors.any { basicSensor.id == it.value.id }
+                }
+                .sortedBy { context.getString(it.name) }.distinct()
         }
     }
 

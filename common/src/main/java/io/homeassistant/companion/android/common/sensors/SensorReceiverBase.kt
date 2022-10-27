@@ -186,7 +186,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                     Log.e(tag, "Issue requesting updates for ${context.getString(manager.name)}", e)
                 }
             }
-            manager.getAvailableSensors(context).forEach sensorForEach@{ basicSensor ->
+            manager.getAvailableSensors(context, intent).forEach sensorForEach@{ basicSensor ->
                 val fullSensor = sensorDao.getFull(basicSensor.id)
                 val sensor = fullSensor?.sensor ?: return@sensorForEach
                 val sensorCoreEnabled = coreSensorStatus?.get(basicSensor.id)

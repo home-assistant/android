@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.sensors
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -13,10 +14,12 @@ import androidx.health.services.client.data.DataPointContainer
 import androidx.health.services.client.data.DataType
 import androidx.health.services.client.data.ExerciseType
 import androidx.health.services.client.data.PassiveListenerConfig
+import androidx.health.services.client.data.PassiveMonitoringCapabilities
 import androidx.health.services.client.data.UserActivityInfo
 import androidx.health.services.client.data.UserActivityState
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
+import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.runBlocking
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -49,6 +52,7 @@ class HealthServicesSensorManager : SensorManager {
     private lateinit var latestContext: Context
     private var healthClient: HealthServicesClient? = null
     private var passiveMonitoringClient: PassiveMonitoringClient? = null
+    private var passiveMonitoringCapabilities: PassiveMonitoringCapabilities? = null
     private var passiveListenerConfig: PassiveListenerConfig? = null
     private var callBackRegistered = false
     private var dataTypesRegistered = emptySet<DataType<*, *>>()
@@ -63,8 +67,19 @@ class HealthServicesSensorManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_health_services
 
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        return listOf(userActivityState, dailyFloors)
+    override suspend fun getAvailableSensors(context: Context, intent: Intent?): List<SensorManager.BasicSensor> {
+        if (healthClient == null)
+            healthClient = HealthServices.getClient(latestContext)
+        if (passiveMonitoringClient == null)
+            passiveMonitoringClient = healthClient?.passiveMonitoringClient
+        if (passiveMonitoringCapabilities == null)
+            passiveMonitoringCapabilities = passiveMonitoringClient?.getCapabilitiesAsync()?.await()
+
+        val supportedSensors = mutableListOf(userActivityState)
+
+        if (passiveMonitoringCapabilities?.supportedDataTypesPassiveMonitoring?.contains(DataType.FLOORS_DAILY) == true)
+            supportedSensors += supportedSensors.plus(dailyFloors)
+        return supportedSensors
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {

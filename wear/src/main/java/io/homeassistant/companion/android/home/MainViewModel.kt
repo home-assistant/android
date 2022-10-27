@@ -10,6 +10,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
@@ -103,6 +104,8 @@ class MainViewModel @Inject constructor(
         HomePresenterImpl.domainsWithNames[domain]?.let { getApplication<Application>().getString(it) }
 
     val sensors = sensorsDao.getAllFlow().collectAsState()
+
+    var availableSensors = emptyList<SensorManager.BasicSensor>()
 
     private fun loadSettings() {
         viewModelScope.launch {
@@ -261,7 +264,7 @@ class MainViewModel @Inject constructor(
 
     fun enableDisableSensor(sensorManager: SensorManager, sensorId: String, isEnabled: Boolean) {
         viewModelScope.launch {
-            val basicSensor = sensorManager.getAvailableSensors(getApplication())
+            val basicSensor = sensorManager.getAvailableSensors(getApplication(), null)
                 .first { basicSensor -> basicSensor.id == sensorId }
             updateSensorEntity(sensorsDao, basicSensor, isEnabled)
 
@@ -280,6 +283,15 @@ class MainViewModel @Inject constructor(
     ) {
         sensorDao.setSensorsEnabled(listOf(basicSensor.id), isEnabled)
         SensorWorker.start(getApplication())
+    }
+
+    fun updateAllSensors(sensorManager: SensorManager) {
+        viewModelScope.launch {
+            val context = getApplication<HomeAssistantApplication>().applicationContext
+            availableSensors = sensorManager
+                .getAvailableSensors(context, null)
+                .sortedBy { context.getString(it.name) }.distinct()
+        }
     }
 
     fun getAreaForEntity(entityId: String): AreaRegistryResponse? =
