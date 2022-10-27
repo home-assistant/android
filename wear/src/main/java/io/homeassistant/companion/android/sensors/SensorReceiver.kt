@@ -42,6 +42,7 @@ class SensorReceiver : SensorReceiverBase() {
             BatterySensorManager(),
             BedtimeModeSensorManager(),
             DNDSensorManager(),
+            HeartRateSensorManager(),
             LastUpdateManager(),
             NetworkSensorManager(),
             NextAlarmManager(),
