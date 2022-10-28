@@ -6,12 +6,15 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+
     <androidx.wear.widget.WearableRecyclerView
         android:id="@+id/server_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scrollbars="vertical"
         tools:listitem="@layout/listitem_instance">
+
+        <requestFocus />
     </androidx.wear.widget.WearableRecyclerView>
 
     <io.homeassistant.companion.android.util.LoadingView
