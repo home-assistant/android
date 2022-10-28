@@ -334,9 +334,9 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         context: Context,
         sensorId: String
     ) {
-        val sensorManager = managers.firstOrNull { it.getAvailableSensors(context).any { s -> s.id == sensorId } }
+        val sensorManager = managers.firstOrNull { it.getAvailableSensors(context, null).any { s -> s.id == sensorId } }
         sensorManager?.requestSensorUpdate(context)
-        val basicSensor = sensorManager?.getAvailableSensors(context)?.firstOrNull { it.id == sensorId }
+        val basicSensor = sensorManager?.getAvailableSensors(context, null)?.firstOrNull { it.id == sensorId }
         val fullSensor = sensorDao.getFull(sensorId)
         if (
             fullSensor != null && fullSensor.sensor.enabled &&

@@ -58,21 +58,25 @@ class SensorSettingsViewModel @Inject constructor(
     }
 
     fun setSensorsSearchQuery(query: String? = "") {
-        searchQuery = query
-        filterSensorsList()
+        viewModelScope.launch {
+            searchQuery = query
+            filterSensorsList()
+        }
     }
 
     fun setSensorFilterChoice(filter: SensorFilter) {
-        sensorFilter = filter
-        filterSensorsList()
+        viewModelScope.launch {
+            sensorFilter = filter
+            filterSensorsList()
+        }
     }
 
-    private fun filterSensorsList() {
+    private suspend fun filterSensorsList() {
         val app = getApplication<Application>()
         sensors = SensorReceiver.MANAGERS
             .filter { it.hasSensor(app.applicationContext) }
             .flatMap { manager ->
-                manager.getAvailableSensors(app.applicationContext)
+                manager.getAvailableSensors(app.applicationContext, null)
                     .filter { sensor ->
                         (
                             searchQuery.isNullOrEmpty() ||

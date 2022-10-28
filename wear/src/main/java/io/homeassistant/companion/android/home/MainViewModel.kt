@@ -22,6 +22,7 @@ import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.wear.getAllFlow
+import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.util.RegistriesDataHandler
 import kotlinx.coroutines.async
@@ -291,6 +292,16 @@ class MainViewModel @Inject constructor(
             availableSensors = sensorManager
                 .getAvailableSensors(context, null)
                 .sortedBy { context.getString(it.name) }.distinct()
+        }
+    }
+
+    fun initAllSensors() {
+        viewModelScope.launch {
+            for (manager in SensorReceiver.MANAGERS) {
+                for (basicSensor in manager.getAvailableSensors(getApplication(), null)) {
+                    manager.isEnabled(getApplication(), basicSensor.id)
+                }
+            }
         }
     }
 

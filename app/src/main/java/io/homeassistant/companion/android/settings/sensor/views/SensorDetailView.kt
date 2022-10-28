@@ -94,7 +94,7 @@ fun SensorDetailView(
     val sensorEnabled = viewModel.sensor?.sensor?.enabled
         ?: (
             viewModel.basicSensor != null && viewModel.sensorManager?.enabledByDefault == true &&
-                viewModel.sensorManager.checkPermission(context, viewModel.basicSensor.id)
+                viewModel.sensorManager!!.checkPermission(context, viewModel.basicSensor!!.id)
             )
 
     val scaffoldState = rememberScaffoldState()
@@ -115,7 +115,7 @@ fun SensorDetailView(
     Scaffold(scaffoldState = scaffoldState) { contentPadding ->
         if (sensorUpdateTypeInfo && viewModel.basicSensor != null) {
             SensorDetailUpdateInfoDialog(
-                basicSensor = viewModel.basicSensor,
+                basicSensor = viewModel.basicSensor!!,
                 sensorEnabled = sensorEnabled,
                 userSetting = viewModel.settingUpdateFrequency,
                 onDismiss = { sensorUpdateTypeInfo = false }
@@ -132,7 +132,7 @@ fun SensorDetailView(
             if (viewModel.sensorManager != null && viewModel.basicSensor != null) {
                 item {
                     SensorDetailTopPanel(
-                        basicSensor = viewModel.basicSensor,
+                        basicSensor = viewModel.basicSensor!!,
                         dbSensor = viewModel.sensor?.sensor,
                         sensorEnabled = sensorEnabled,
                         onSetEnabled = onSetEnabled
@@ -140,7 +140,7 @@ fun SensorDetailView(
                 }
                 item {
                     Text(
-                        text = stringResource(viewModel.basicSensor.descriptionId),
+                        text = stringResource(viewModel.basicSensor!!.descriptionId),
                         modifier = Modifier.padding(all = 16.dp)
                     )
                 }
@@ -148,7 +148,7 @@ fun SensorDetailView(
                     TransparentChip(
                         modifier = Modifier.padding(start = 16.dp, bottom = 40.dp),
                         text = stringResource(
-                            when (viewModel.basicSensor.updateType) {
+                            when (viewModel.basicSensor!!.updateType) {
                                 SensorManager.BasicSensor.UpdateType.INTENT -> commonR.string.sensor_update_type_chip_intent
                                 SensorManager.BasicSensor.UpdateType.WORKER -> {
                                     when (viewModel.settingUpdateFrequency) {
@@ -202,7 +202,7 @@ fun SensorDetailView(
                                         clickable = setting.enabled,
                                         onClick = { isEnabled ->
                                             onToggleSettingSubmitted(
-                                                SensorSetting(viewModel.basicSensor.id, setting.name, isEnabled.toString(), SensorSettingType.TOGGLE, setting.enabled)
+                                                SensorSetting(viewModel.basicSensor!!.id, setting.name, isEnabled.toString(), SensorSettingType.TOGGLE, setting.enabled)
                                             )
                                         }
                                     )

@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.os.SystemClock
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.health.services.client.HealthServices
@@ -12,7 +13,9 @@ import androidx.health.services.client.PassiveListenerCallback
 import androidx.health.services.client.PassiveMonitoringClient
 import androidx.health.services.client.data.DataPointContainer
 import androidx.health.services.client.data.DataType
+import androidx.health.services.client.data.DeltaDataType
 import androidx.health.services.client.data.ExerciseType
+import androidx.health.services.client.data.IntervalDataPoint
 import androidx.health.services.client.data.PassiveListenerConfig
 import androidx.health.services.client.data.PassiveMonitoringCapabilities
 import androidx.health.services.client.data.UserActivityInfo
@@ -21,6 +24,7 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.runBlocking
+import java.time.Instant
 import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.R)
@@ -68,6 +72,7 @@ class HealthServicesSensorManager : SensorManager {
         get() = commonR.string.sensor_name_health_services
 
     override suspend fun getAvailableSensors(context: Context, intent: Intent?): List<SensorManager.BasicSensor> {
+        latestContext = context
         if (healthClient == null)
             healthClient = HealthServices.getClient(latestContext)
         if (passiveMonitoringClient == null)
@@ -148,12 +153,39 @@ class HealthServicesSensorManager : SensorManager {
             override fun onNewDataPointsReceived(dataPoints: DataPointContainer) {
                 Log.d(TAG, "New data point received: ${dataPoints.dataTypes}")
                 val floorsDaily = dataPoints.getData(DataType.FLOORS_DAILY)
+                val bootInstant =
+                    Instant.ofEpochMilli(System.currentTimeMillis() - SystemClock.elapsedRealtime())
+                var latest = 0
+                var lastIndex = 0
 
+                dataPoints.dataTypes.forEachIndexed { _, dataType ->
+
+                    if (dataType is DeltaDataType<*, *>) {
+                        val data = dataPoints.getData(dataType)
+                        data.forEachIndexed { indexPoint, dataPoint ->
+                            if (dataPoint is IntervalDataPoint) {
+                                val endTime = dataPoint.getEndInstant(bootInstant)
+                                Log.d(
+                                    TAG,
+                                    "Data for ${dataType.name} index: $indexPoint with value: ${dataPoint.value} end time: ${endTime.epochSecond}"
+                                )
+                            }
+                        }
+                    }
+                }
                 if (floorsDaily.isNotEmpty()) {
+                    floorsDaily.forEachIndexed { index, intervalDataPoint ->
+                        val endTime = intervalDataPoint.getEndInstant(bootInstant)
+                        Log.d(TAG, "Daily Floors data index: $index with value: ${intervalDataPoint.value} end time: ${endTime.epochSecond}")
+                        if (endTime.epochSecond > latest) {
+                            latest = endTime.epochSecond.toInt()
+                            lastIndex = index
+                        }
+                    }
                     onSensorUpdated(
                         latestContext,
                         dailyFloors,
-                        floorsDaily.first().value,
+                        floorsDaily[lastIndex].value,
                         dailyFloors.statelessIcon,
                         mapOf()
                     )
