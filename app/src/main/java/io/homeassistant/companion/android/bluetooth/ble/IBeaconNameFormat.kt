@@ -1,5 +1,9 @@
 package io.homeassistant.companion.android.bluetooth.ble
 
-fun <T> name(uuid: T, major: T, minor: T): String {
-    return "${uuid}_${major}_$minor"
+interface IBeaconNameFormat {
+    val uuid: String
+    val major: String
+    val minor: String
 }
+
+val IBeaconNameFormat.name get() = "${uuid}_${major}_$minor"

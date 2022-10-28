@@ -38,7 +38,7 @@ fun SensorListView(
     val listEntries = managers.associateWith { manager ->
         manager.getAvailableSensors(context)
             .filter { basicSensor ->
-                viewModel.sensors.any { basicSensor.id == it.id }
+                basicSensor.id in viewModel.sensors
             }
             .sortedBy { context.getString(it.name) }
     }
@@ -76,7 +76,7 @@ fun SensorListView(
             ) { basicSensor ->
                 SensorRow(
                     basicSensor = basicSensor,
-                    dbSensor = viewModel.sensors.firstOrNull { it.id == basicSensor.id },
+                    dbSensor = viewModel.sensors[basicSensor.id],
                     onSensorClicked = onSensorClicked
                 )
             }

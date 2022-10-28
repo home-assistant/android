@@ -18,7 +18,6 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import java.util.UUID
-import kotlin.collections.ArrayList
 import io.homeassistant.companion.android.common.R as commonR
 
 class BluetoothSensorManager : SensorManager {
@@ -345,7 +344,7 @@ class BluetoothSensorManager : SensorManager {
             if (state != "") state else lastState,
             icon,
             mapOf(
-                "id" to name(bleTransmitterDevice.uuid, bleTransmitterDevice.major, bleTransmitterDevice.minor),
+                "id" to bleTransmitterDevice.name,
                 "Transmitting power" to bleTransmitterDevice.transmitPowerSetting,
                 "Advertise mode" to bleTransmitterDevice.advertiseModeSetting,
                 "Measured power" to bleTransmitterDevice.measuredPowerSetting,
@@ -366,7 +365,7 @@ class BluetoothSensorManager : SensorManager {
         val attr = mutableMapOf<String, Any?>()
         if (BluetoothUtils.isOn(context) && monitoringManager.isMonitoring()) {
             for (beacon: IBeacon in beaconMonitoringDevice.beacons) {
-                attr += Pair(name(beacon.uuid, beacon.major, beacon.minor), beacon.distance)
+                attr += beacon.name to beacon.distance
             }
         }
 

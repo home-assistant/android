@@ -10,7 +10,7 @@ data class Attribute(
     @ColumnInfo(name = "name")
     val name: String,
     @ColumnInfo(name = "value")
-    var value: String,
+    val value: String,
     @ColumnInfo(name = "value_type")
-    var valueType: String
+    val valueType: String
 )

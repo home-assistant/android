@@ -19,7 +19,7 @@ data class SensorWithAttributes(
 ) {
     fun toSensorRegistration(basicSensor: SensorManager.BasicSensor): SensorRegistration<Any> {
         var objectMapper: ObjectMapper? = null
-        val attributes = attributes.map {
+        val attributes = attributes.associate {
             val attributeValue = when (it.valueType) {
                 "listboolean", "listfloat", "listlong", "listint", "liststring" -> {
                     if (objectMapper == null) objectMapper = jacksonObjectMapper()
@@ -41,7 +41,7 @@ data class SensorWithAttributes(
                 else -> throw IllegalArgumentException("Attribute: ${it.name} is of unknown type: ${it.valueType}")
             }
             it.name to attributeValue
-        }.toMap()
+        }
         val state = when (sensor.stateType) {
             "" -> ""
             "boolean" -> sensor.state.toBoolean()
