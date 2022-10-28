@@ -14,7 +14,7 @@
         <change>Bug fixes, performance improvements, design tweaks and dependency updates</change>
     </release>
     <release version="2022.11 - Wear" versioncode="1">
-        <change>Add App, Audio, Bedtime mode (Wear OS 3 Only), Do Not Disturb, Health Services, Last Update, Network, Next Alarm, Power, Steps, Theater mode and Wet mode sensors</change>
+        <change>Add App, Audio, Bedtime mode (Wear OS 3 Only), Do Not Disturb, Last Update, Network, Next Alarm, Power, Steps and Theater mode sensors</change>
         <change>Allow settings to always be accessible, even when loading</change>
         <change>Bug fixes and dependency updates</change>
     </release>
