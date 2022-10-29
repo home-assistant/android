@@ -23,7 +23,7 @@ class BedtimeModeSensorManager : SensorManager {
     }
 
     override fun docsLink(): String {
-        return "https://companion.home-assistant.io/docs/wear-os/#sensors"
+        return "https://companion.home-assistant.io/docs/wear-os/sensors"
     }
     override val enabledByDefault: Boolean
         get() = false
