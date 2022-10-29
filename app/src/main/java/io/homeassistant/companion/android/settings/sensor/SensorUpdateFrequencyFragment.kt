@@ -8,6 +8,7 @@ import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -45,11 +46,13 @@ class SensorUpdateFrequencyFragment : Fragment() {
         return ComposeView(requireContext()).apply {
             setContent {
                 MdcTheme {
-                    val settings = viewModel.getSettingFlow(0)
+                    val settings by viewModel.getSettingFlow(0)
                         .collectAsState(initial = viewModel.getSetting(0))
                     SensorUpdateFrequencyView(
-                        sensorUpdateFrequency = settings.value.sensorUpdateFrequency,
-                        onSettingChanged = { viewModel.updateSensorSetting(0, it) }
+                        sensorUpdateFrequencyBattery = settings.sensorUpdateFrequencyBattery,
+                        sensorUpdateFrequencyPowered = settings.sensorUpdateFrequencyPowered,
+                        onBatteryFrequencyChanged = { viewModel.updateSensorSetting(0, it, settings.sensorUpdateFrequencyPowered) },
+                        onPoweredFrequencyChanged = { viewModel.updateSensorSetting(0, settings.sensorUpdateFrequencyBattery, it) }
                     )
                 }
             }
