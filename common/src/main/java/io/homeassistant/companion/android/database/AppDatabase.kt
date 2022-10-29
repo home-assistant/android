@@ -36,7 +36,6 @@ import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingTypeConverter
 import io.homeassistant.companion.android.database.settings.LocalNotificationSettingConverter
-import io.homeassistant.companion.android.database.settings.LocalSensorSettingConverter
 import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.wear.EntityStateComplications
@@ -74,7 +73,7 @@ import io.homeassistant.companion.android.common.R as commonR
         EntityStateComplications::class,
         Setting::class
     ],
-    version = 33,
+    version = 34,
     autoMigrations = [
         AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
@@ -89,7 +88,6 @@ import io.homeassistant.companion.android.common.R as commonR
 )
 @TypeConverters(
     LocalNotificationSettingConverter::class,
-    LocalSensorSettingConverter::class,
     EntriesTypeConverter::class,
     SensorSettingTypeConverter::class,
     WidgetBackgroundTypeConverter::class
