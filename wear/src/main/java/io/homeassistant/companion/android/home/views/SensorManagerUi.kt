@@ -67,16 +67,18 @@ fun SensorManagerUi(
                         }
                     }
                 } else {
-                    items(allAvailSensors!!.size, { allAvailSensors[it].id }) { index ->
-                        val basicSensor = allAvailSensors[index]
-                        val sensor = currentSensors?.firstOrNull { sensor ->
-                            sensor.id == basicSensor.id
+                    allAvailSensors?.size?.let { int ->
+                        items(int, { allAvailSensors[it].id }) { index ->
+                            val basicSensor = allAvailSensors[index]
+                            val sensor = currentSensors?.firstOrNull { sensor ->
+                                sensor.id == basicSensor.id
+                            }
+                            SensorUi(
+                                sensor = sensor,
+                                manager = sensorManager,
+                                basicSensor = basicSensor,
+                            ) { sensorId, enabled -> onSensorClicked(sensorId, enabled) }
                         }
-                        SensorUi(
-                            sensor = sensor,
-                            manager = sensorManager,
-                            basicSensor = basicSensor,
-                        ) { sensorId, enabled -> onSensorClicked(sensorId, enabled) }
                     }
                 }
             }

@@ -76,7 +76,12 @@ class SensorDetailViewModel @Inject constructor(
     private val _permissionSnackbar = MutableSharedFlow<PermissionSnackbar>()
     var permissionSnackbar = _permissionSnackbar.asSharedFlow()
 
-    var sensorManager: SensorManager? = getSensorManagers()
+    var sensorManager: SensorManager? = runBlocking {
+        SensorReceiver.MANAGERS
+            .find {
+                it.getAvailableSensors(getApplication(), null).any { sensor -> sensor.id == sensorId }
+            }
+    }
     var basicSensor: SensorManager.BasicSensor? = getBasicSensors()
 
     var sensor by mutableStateOf<SensorWithAttributes?>(null)
@@ -112,14 +117,6 @@ class SensorDetailViewModel @Inject constructor(
                 if (!sensorCheckedEnabled) checkSensorEnabled(it)
             }
         }
-    }
-
-    private fun getSensorManagers(): SensorManager? {
-        viewModelScope.launch {
-            sensorManager = SensorReceiver.MANAGERS
-                .find { it.getAvailableSensors(getApplication(), null).any { sensor -> sensor.id == sensorId } }
-        }
-        return sensorManager
     }
 
     private fun getBasicSensors(): SensorManager.BasicSensor? {

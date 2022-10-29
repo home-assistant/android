@@ -53,7 +53,9 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import com.google.android.exoplayer2.DefaultLoadControl
@@ -712,8 +714,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         SensorWorker.start(this)
         WebsocketManager.start(this)
-        ioScope.launch {
-            checkAndWarnForDisabledLocation()
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                checkAndWarnForDisabledLocation()
+            }
         }
         changeLog.showChangeLog(this, false)
     }

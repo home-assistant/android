@@ -99,7 +99,7 @@ interface SensorManager {
      */
     fun requestSensorUpdate(context: Context)
 
-    suspend fun getAvailableSensors(context: Context, intent: Intent?): List<BasicSensor> {
+    suspend fun getAvailableSensors(context: Context, intent: Intent? = null): List<BasicSensor> {
         return getAvailableSensors(context)
     }
 

@@ -63,7 +63,7 @@ class HealthServicesSensorManager : SensorManager {
     private var activityStateRegistered = false
 
     override fun docsLink(): String {
-        return "https://companion.home-assistant.io/docs/wear-os/#sensors"
+        return "https://companion.home-assistant.io/docs/wear-os/sensors#health-services"
     }
     override val enabledByDefault: Boolean
         get() = false
@@ -101,9 +101,10 @@ class HealthServicesSensorManager : SensorManager {
     }
 
     private fun updateHealthServices() {
-        val activityState = isEnabled(latestContext, userActivityState.id)
+        val activityStateEnabled = isEnabled(latestContext, userActivityState.id)
+        val dailyFloorEnabled = isEnabled(latestContext, dailyFloors.id)
 
-        if (!activityState && !isEnabled(latestContext, dailyFloors.id)) {
+        if (!activityStateEnabled && !dailyFloorEnabled) {
             clearHealthServicesCallBack()
             return
         }
@@ -111,20 +112,20 @@ class HealthServicesSensorManager : SensorManager {
         if (healthClient == null) healthClient = HealthServices.getClient(latestContext)
         if (passiveMonitoringClient == null) passiveMonitoringClient = healthClient?.passiveMonitoringClient
 
-        val dataTypes = emptySet<DataType<*, *>>().toMutableSet()
-        if (isEnabled(latestContext, dailyFloors.id))
-            dataTypes += setOf(DataType.FLOORS_DAILY)
+        val dataTypes = mutableSetOf<DataType<*, *>>()
+        if (dailyFloorEnabled)
+            dataTypes += DataType.FLOORS_DAILY
 
         passiveListenerConfig = PassiveListenerConfig.builder()
-            .setShouldUserActivityInfoBeRequested(activityState)
+            .setShouldUserActivityInfoBeRequested(activityStateEnabled)
             .setDataTypes(dataTypes)
             .build()
 
-        if (dataTypesRegistered != dataTypes || activityStateRegistered != activityState) {
+        if (dataTypesRegistered != dataTypes || activityStateRegistered != activityStateEnabled) {
             clearHealthServicesCallBack()
         }
 
-        activityStateRegistered = activityState
+        activityStateRegistered = activityStateEnabled
         dataTypesRegistered = dataTypes
 
         val passiveListenerCallback: PassiveListenerCallback = object : PassiveListenerCallback {
