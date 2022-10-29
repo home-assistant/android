@@ -63,6 +63,7 @@ import io.homeassistant.companion.android.common.R as commonR
 fun SsidView(
     wifiSsids: List<String>,
     prioritizeInternal: Boolean,
+    usingWifi: Boolean,
     activeSsid: String?,
     activeBssid: String?,
     onAddWifiSsid: (String) -> Boolean,
@@ -150,8 +151,12 @@ fun SsidView(
             }
         }
         items(wifiSsids, key = { "ssid.item.$it" }) {
-            val connected = remember(it, activeSsid, activeBssid) {
-                it == activeSsid || (it.startsWith(UrlRepository.BSSID_PREFIX) && it.removePrefix(UrlRepository.BSSID_PREFIX).equals(activeBssid, ignoreCase = true))
+            val connected = remember(it, activeSsid, activeBssid, usingWifi) {
+                usingWifi &&
+                    (
+                        it == activeSsid ||
+                            (it.startsWith(UrlRepository.BSSID_PREFIX) && it.removePrefix(UrlRepository.BSSID_PREFIX).equals(activeBssid, ignoreCase = true))
+                        )
             }
             Row(
                 modifier = Modifier
@@ -251,6 +256,7 @@ private fun PreviewSsidViewEmpty() {
         prioritizeInternal = false,
         activeSsid = "home-assistant-wifi",
         activeBssid = "02:00:00:00:00:00",
+        usingWifi = true,
         onAddWifiSsid = { true },
         onRemoveWifiSsid = {},
         onSetPrioritize = {}
@@ -265,6 +271,7 @@ private fun PreviewSsidViewItems() {
         prioritizeInternal = false,
         activeSsid = "home-assistant-wifi",
         activeBssid = "02:00:00:00:00:00",
+        usingWifi = true,
         onAddWifiSsid = { true },
         onRemoveWifiSsid = {},
         onSetPrioritize = {}

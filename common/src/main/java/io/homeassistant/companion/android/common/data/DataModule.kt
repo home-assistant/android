@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.common.data
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.net.ConnectivityManager
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.provider.Settings
@@ -120,6 +121,10 @@ abstract class DataModule {
             appContext.contentResolver,
             Settings.Secure.ANDROID_ID
         )
+
+        @Provides
+        @Singleton
+        fun connectivityManager(@ApplicationContext appContext: Context) = appContext.getSystemService<ConnectivityManager>()!!
 
         @Provides
         @Singleton
