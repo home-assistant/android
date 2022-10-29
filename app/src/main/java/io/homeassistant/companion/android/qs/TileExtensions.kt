@@ -13,8 +13,6 @@ import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
-import androidx.core.graphics.drawable.DrawableCompat
-import androidx.core.graphics.drawable.toBitmap
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import com.mikepenz.iconics.utils.sizeDp
@@ -328,7 +326,7 @@ abstract class TileExtensions : TileService() {
         if (!tileIconName.isNullOrBlank()) {
             val icon = CommunityMaterial.getIconByMdiName(tileIconName)
             val iconDrawable = IconicsDrawable(context, icon)
-            return DrawableCompat.wrap(iconDrawable).toBitmap()
+            return iconDrawable.toBitmap()
         } else {
             entity?.getIcon(context)?.let {
                 return DrawableCompat.wrap(

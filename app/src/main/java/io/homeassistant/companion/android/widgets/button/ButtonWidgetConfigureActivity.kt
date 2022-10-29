@@ -5,6 +5,8 @@ import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Intent
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
 import android.os.Build
 import android.os.Bundle
 import android.text.Editable
@@ -22,8 +24,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
-import androidx.core.graphics.drawable.DrawableCompat
-import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.toColorInt
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -408,12 +408,9 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     private fun onIconDialogIconsSelected(selectedIcon: IIcon) {
         binding.widgetConfigIconSelector.tag = selectedIcon.mdiName
         val iconDrawable = IconicsDrawable(this, selectedIcon)
+        iconDrawable.colorFilter = PorterDuffColorFilter(ContextCompat.getColor(this, commonR.color.colorIcon), PorterDuff.Mode.SRC_IN)
 
-        val icon = DrawableCompat.wrap(iconDrawable)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            DrawableCompat.setTint(icon, resources.getColor(commonR.color.colorIcon, theme))
-        }
-        binding.widgetConfigIconSelector.setImageBitmap(icon.toBitmap())
+        binding.widgetConfigIconSelector.setImageBitmap(iconDrawable.toBitmap())
     }
 
     private fun onAddWidget() {
