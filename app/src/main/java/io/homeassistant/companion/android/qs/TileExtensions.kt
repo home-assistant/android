@@ -10,8 +10,6 @@ import android.service.quicksettings.TileService
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import androidx.core.graphics.drawable.DrawableCompat
-import androidx.core.graphics.drawable.toBitmap
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.EntryPoint
@@ -235,7 +233,7 @@ abstract class TileExtensions : TileService() {
         private fun getTileIcon(tileIconName: String, context: Context): Bitmap {
             val icon = CommunityMaterial.getIconByMdiName(tileIconName)
             val iconDrawable = IconicsDrawable(context, icon)
-            return DrawableCompat.wrap(iconDrawable).toBitmap()
+            return iconDrawable.toBitmap()
         }
     }
 
