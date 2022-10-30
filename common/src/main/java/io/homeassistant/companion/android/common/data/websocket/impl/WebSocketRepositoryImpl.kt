@@ -418,7 +418,9 @@ class WebSocketRepositoryImpl @Inject constructor(
     private fun handleMessage(response: SocketResponse) {
         val id = response.id!!
         activeMessages[id]?.let {
-            it.onResponse!!.resumeWith(Result.success(response))
+            it.onResponse?.let { cont ->
+                if (cont.isActive) cont.resumeWith(Result.success(response))
+            }
             if (it.eventFlow == null) {
                 activeMessages.remove(id)
             }
@@ -505,7 +507,9 @@ class WebSocketRepositoryImpl @Inject constructor(
                 activeMessages
                     .filterValues { it.eventFlow == null }
                     .forEach {
-                        it.value.onResponse?.resumeWith(Result.failure(IOException()))
+                        it.value.onResponse?.let { cont ->
+                            if (cont.isActive) cont.resumeWith(Result.failure(IOException()))
+                        }
                         activeMessages.remove(it.key)
                     }
             }
