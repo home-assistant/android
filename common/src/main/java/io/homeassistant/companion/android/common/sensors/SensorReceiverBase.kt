@@ -32,8 +32,9 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         const val EXTRA_SENSOR_ID = "sensorId"
 
         fun shouldDoFastUpdates(context: Context): Boolean {
-            // Fast updates were every 1 min so this effectively asks checks if the frequency == 1
-            return SensorWorkerBase.determineUpdateFrequency(context) == 1
+            // Fast updates are anything faster than the min period supported by WorkManager
+            // i.e. faster than every 15mins
+            return SensorWorkerBase.determineUpdateFrequency(context) < 15
         }
     }
 
@@ -106,6 +107,10 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         }
 
         ioScope.launch {
+            if (intent.action == Intent.ACTION_TIME_TICK && !shouldDoFastUpdates(context)) {
+                Log.i(tag, "Skipping faster update because not charging/different preference")
+                return@launch
+            }
             if (intent.action == ACTION_UPDATE_SENSOR) {
                 val sensorId = intent.getStringExtra(EXTRA_SENSOR_ID)
                 if (sensorId != null) {

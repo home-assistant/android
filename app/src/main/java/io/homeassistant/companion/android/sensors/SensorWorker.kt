@@ -24,7 +24,7 @@ class SensorWorker(
     companion object {
         fun start(context: Context) = start(
             context,
-            determineUpdateFrequency(context)
+            maxOf(15, determineUpdateFrequency(context))
         )
 
         fun start(

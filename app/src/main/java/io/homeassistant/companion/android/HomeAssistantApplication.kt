@@ -14,6 +14,7 @@ import dagger.hilt.android.HiltAndroidApp
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
+import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.websocket.WebsocketBroadcastReceiver
@@ -184,6 +185,13 @@ open class HomeAssistantApplication : Application() {
                 )
             }
         }
+        // Register for faster sensor updates if enabled
+        val settingDao = AppDatabase.getInstance(applicationContext).settingsDao().get(0)
+        if (settingDao != null && SensorReceiverBase.shouldDoFastUpdates(applicationContext))
+            registerReceiver(
+                sensorReceiver,
+                IntentFilter(Intent.ACTION_TIME_TICK)
+            )
 
         // Register for changes to the managed profile availability
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
