@@ -4,6 +4,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.ContentValues
 import android.content.Context
+import android.database.sqlite.SQLiteDatabase
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -151,7 +152,8 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_20_21,
                     MIGRATION_21_22,
                     MIGRATION_22_23,
-                    MIGRATION_23_24
+                    MIGRATION_23_24,
+                    MIGRATION_33_34
                 )
                 .fallbackToDestructiveMigration()
                 .build()
@@ -515,6 +517,48 @@ abstract class AppDatabase : RoomDatabase() {
                 // Update 'registered' in the sensors table to set the value to null instead of the previous default of 0
                 // This will force an update to indicate whether a sensor is not registered (null) or registered as disabled (0)
                 db.execSQL("UPDATE `sensors` SET `registered` = NULL")
+            }
+        }
+
+        private val MIGRATION_33_34 = object : Migration(33, 34) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                fun recreateTable() {
+                    db.execSQL("CREATE TABLE IF NOT EXISTS `settings` (`id` INTEGER NOT NULL, `websocketSetting` TEXT NOT NULL, `sensorUpdateFrequencyBattery` INTEGER NOT NULL, `sensorUpdateFrequencyPowered` INTEGER NOT NULL, PRIMARY KEY(`id`))")
+                    db.execSQL("DROP TABLE IF EXISTS `settings`")
+                }
+
+                try {
+                    db.query("SELECT * FROM settings").use {
+                        if(it.moveToFirst()) {
+                            ContentValues().apply {
+                                put("id", it.getInt(it.getColumnIndex("id")))
+                                put("websocketSetting", it.getString(it.getColumnIndex("websocketSetting")))
+                                when(it.getString(it.getColumnIndex("sensorUpdateFrequency"))) {
+                                    // Need to map old update frequency values to the time in minutes they actual represent
+                                    "NORMAL" -> {
+                                        put("sensorUpdateFrequencyBattery", 15)
+                                        put("sensorUpdateFrequencyPowered", 15)
+                                    }
+                                    "FAST_WHILE_CHARGING" -> {
+                                        put("sensorUpdateFrequencyBattery", 15)
+                                        put("sensorUpdateFrequencyPowered", 1)
+                                    }
+                                    "FAST_ALWAYS" -> {
+                                        put("sensorUpdateFrequencyBattery", 1)
+                                        put("sensorUpdateFrequencyPowered", 1)
+                                    }
+                                }
+                            }.also {  cv ->
+                                recreateTable()
+                                db.insert("settings", SQLiteDatabase.CONFLICT_NONE, cv)
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unable to migrate, proceeding with recreating the table", e)
+                    recreateTable() // Data should be regenerated when the activity is started
+                    notifyMigrationFailed()
+                }
             }
         }
 
