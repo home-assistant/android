@@ -35,7 +35,7 @@ fun SensorUpdateFrequencyView(
 
             // List of time periods available for the user to pick
             val options = listOf(
-                1, 5, 10, 15, 20, 30
+                1, 5, 10, 15, 20, 30, 60
             )
 
             Column(
