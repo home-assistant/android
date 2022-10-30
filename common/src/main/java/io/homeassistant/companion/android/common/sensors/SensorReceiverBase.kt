@@ -106,10 +106,6 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         }
 
         ioScope.launch {
-            if (intent.action == Intent.ACTION_TIME_TICK && !shouldDoFastUpdates(context)) {
-                Log.i(tag, "Skipping faster update because not charging/different preference")
-                return@launch
-            }
             if (intent.action == ACTION_UPDATE_SENSOR) {
                 val sensorId = intent.getStringExtra(EXTRA_SENSOR_ID)
                 if (sensorId != null) {

@@ -15,7 +15,6 @@ import io.homeassistant.companion.android.common.data.keychain.KeyChainRepositor
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.websocket.WebsocketBroadcastReceiver
 import io.homeassistant.companion.android.widgets.button.ButtonWidget
@@ -196,14 +195,6 @@ open class HomeAssistantApplication : Application() {
                 }
             )
         }
-
-        // Register for faster sensor updates if enabled
-        val settingDao = AppDatabase.getInstance(applicationContext).settingsDao().get(0)
-        if (settingDao != null && (settingDao.sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_WHILE_CHARGING || settingDao.sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_ALWAYS))
-            registerReceiver(
-                sensorReceiver,
-                IntentFilter(Intent.ACTION_TIME_TICK)
-            )
 
         // Update widgets when the screen turns on, updates are skipped if widgets were not added
         val buttonWidget = ButtonWidget()
