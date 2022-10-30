@@ -33,6 +33,9 @@ interface IntegrationRepository {
     suspend fun setAutoPlayVideo(enabled: Boolean)
     suspend fun isAutoPlayVideoEnabled(): Boolean
 
+    suspend fun setAlwaysShowFirstViewOnAppStart(enabled: Boolean)
+    suspend fun isAlwaysShowFirstViewOnAppStartEnabled(): Boolean
+
     suspend fun setWebViewDebugEnabled(enabled: Boolean)
     suspend fun isWebViewDebugEnabled(): Boolean
 
