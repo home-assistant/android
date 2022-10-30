@@ -23,6 +23,7 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
 
         private const val TAG = "HRSensor"
         private var isListenerRegistered = false
+        private var listenerLastRegistered = 0
         private val skipAccuracy = listOf(
             SENSOR_STATUS_UNRELIABLE,
             SENSOR_STATUS_NO_CONTACT
@@ -74,6 +75,12 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
         if (!isEnabled(latestContext, heartRate.id))
             return
 
+        val now = System.currentTimeMillis()
+        if (listenerLastRegistered + 60000 < now && isListenerRegistered) {
+            Log.d(TAG, "Re-registering listener as it appears to be stuck")
+            mySensorManager.unregisterListener(this)
+            isListenerRegistered = false
+        }
         mySensorManager = latestContext.getSystemService()!!
 
         val heartRateSensor = mySensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE)
@@ -85,6 +92,7 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
             )
             Log.d(TAG, "Heart Rate sensor listener registered")
             isListenerRegistered = true
+            listenerLastRegistered = now.toInt()
         }
     }
 
