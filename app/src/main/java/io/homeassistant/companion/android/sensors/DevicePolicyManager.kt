@@ -30,7 +30,7 @@ class DevicePolicyManager : SensorManager {
     override val name: Int
         get() = R.string.sensor_name_device_policy
 
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(isWorkProfile)
     }
 

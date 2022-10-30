@@ -265,7 +265,7 @@ class MainViewModel @Inject constructor(
 
     fun enableDisableSensor(sensorManager: SensorManager, sensorId: String, isEnabled: Boolean) {
         viewModelScope.launch {
-            val basicSensor = sensorManager.getAvailableSensors(getApplication(), null)
+            val basicSensor = sensorManager.getAvailableSensors(getApplication())
                 .first { basicSensor -> basicSensor.id == sensorId }
             updateSensorEntity(sensorsDao, basicSensor, isEnabled)
 
@@ -290,7 +290,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             val context = getApplication<HomeAssistantApplication>().applicationContext
             availableSensors = sensorManager
-                .getAvailableSensors(context, null)
+                .getAvailableSensors(context)
                 .sortedBy { context.getString(it.name) }.distinct()
         }
     }
@@ -298,7 +298,7 @@ class MainViewModel @Inject constructor(
     fun initAllSensors() {
         viewModelScope.launch {
             for (manager in SensorReceiver.MANAGERS) {
-                for (basicSensor in manager.getAvailableSensors(getApplication(), null)) {
+                for (basicSensor in manager.getAvailableSensors(getApplication())) {
                     manager.isEnabled(getApplication(), basicSensor.id)
                 }
             }

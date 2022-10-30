@@ -49,7 +49,7 @@ class SensorSettingsViewModel @Inject constructor(
     fun updateManagers(sensorManager: SensorManager) {
         val context = getApplication<HomeAssistantApplication>().applicationContext
         viewModelScope.launch {
-            availableSensors = sensorManager.getAvailableSensors(context, null)
+            availableSensors = sensorManager.getAvailableSensors(context)
                 .filter { basicSensor ->
                     sensors.any { basicSensor.id == it.value.id }
                 }
@@ -76,7 +76,7 @@ class SensorSettingsViewModel @Inject constructor(
         sensors = SensorReceiver.MANAGERS
             .filter { it.hasSensor(app.applicationContext) }
             .flatMap { manager ->
-                manager.getAvailableSensors(app.applicationContext, null)
+                manager.getAvailableSensors(app.applicationContext)
                     .filter { sensor ->
                         (
                             searchQuery.isNullOrEmpty() ||

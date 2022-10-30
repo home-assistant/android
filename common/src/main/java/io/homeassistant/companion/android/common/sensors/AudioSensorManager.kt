@@ -138,7 +138,7 @@ class AudioSensorManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_audio
 
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         val allSupportedSensors = listOf(
             audioSensor, audioState, headphoneState, micMuted, speakerphoneState,
             musicActive, volAlarm, volCall, volMusic, volRing, volNotification, volSystem,

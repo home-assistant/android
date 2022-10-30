@@ -53,9 +53,7 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import com.google.android.exoplayer2.DefaultLoadControl
@@ -715,9 +713,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         SensorWorker.start(this)
         WebsocketManager.start(this)
         lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                checkAndWarnForDisabledLocation()
-            }
+            checkAndWarnForDisabledLocation()
         }
         changeLog.showChangeLog(this, false)
     }
@@ -736,7 +732,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             settingsWithLocationPermissions.add(getString(commonR.string.pref_connection_wifi))
         }
         for (manager in SensorReceiver.MANAGERS) {
-            for (basicSensor in manager.getAvailableSensors(this, null)) {
+            for (basicSensor in manager.getAvailableSensors(this)) {
                 if (manager.isEnabled(this, basicSensor.id)) {
                     var permissions = manager.requiredPermissions(basicSensor.id)
 

@@ -21,6 +21,7 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.util.batterySensorManager
+import kotlinx.coroutines.runBlocking
 
 @Composable
 fun SensorUi(
@@ -96,11 +97,12 @@ fun SensorUi(
 @Preview(device = Devices.WEAR_OS_LARGE_ROUND)
 @Composable
 private fun PreviewSensorUI() {
+    val context = LocalContext.current
     CompositionLocalProvider {
         SensorUi(
             sensor = null,
             manager = batterySensorManager,
-            basicSensor = batterySensorManager.getAvailableSensors(LocalContext.current).first()
+            basicSensor = runBlocking { batterySensorManager.getAvailableSensors(context).first() }
         ) { _, _ -> }
     }
 }

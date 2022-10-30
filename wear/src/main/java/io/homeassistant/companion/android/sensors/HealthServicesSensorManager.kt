@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.sensors
 
 import android.Manifest
 import android.content.Context
-import android.content.Intent
 import android.os.Build
 import android.os.SystemClock
 import android.util.Log
@@ -71,7 +70,7 @@ class HealthServicesSensorManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_health_services
 
-    override suspend fun getAvailableSensors(context: Context, intent: Intent?): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         latestContext = context
         if (healthClient == null)
             healthClient = HealthServices.getClient(latestContext)
@@ -168,7 +167,7 @@ class HealthServicesSensorManager : SensorManager {
                                 val endTime = dataPoint.getEndInstant(bootInstant)
                                 Log.d(
                                     TAG,
-                                    "Data for ${dataType.name} index: $indexPoint with value: ${dataPoint.value} end time: ${endTime.epochSecond}"
+                                    "Data for ${dataType.name} index: $indexPoint with value: ${dataPoint.value} end time: ${endTime.toEpochMilli()}"
                                 )
                             }
                         }
@@ -177,9 +176,9 @@ class HealthServicesSensorManager : SensorManager {
                 if (floorsDaily.isNotEmpty()) {
                     floorsDaily.forEachIndexed { index, intervalDataPoint ->
                         val endTime = intervalDataPoint.getEndInstant(bootInstant)
-                        Log.d(TAG, "Daily Floors data index: $index with value: ${intervalDataPoint.value} end time: ${endTime.epochSecond}")
-                        if (endTime.epochSecond > latest) {
-                            latest = endTime.epochSecond.toInt()
+                        Log.d(TAG, "Daily Floors data index: $index with value: ${intervalDataPoint.value} end time: ${endTime.toEpochMilli()}")
+                        if (endTime.toEpochMilli() > latest) {
+                            latest = endTime.toEpochMilli().toInt()
                             lastIndex = index
                         }
                     }

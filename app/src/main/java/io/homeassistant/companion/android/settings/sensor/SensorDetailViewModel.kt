@@ -76,13 +76,17 @@ class SensorDetailViewModel @Inject constructor(
     private val _permissionSnackbar = MutableSharedFlow<PermissionSnackbar>()
     var permissionSnackbar = _permissionSnackbar.asSharedFlow()
 
-    var sensorManager: SensorManager? = runBlocking {
+    val sensorManager: SensorManager? = runBlocking {
         SensorReceiver.MANAGERS
             .find {
-                it.getAvailableSensors(getApplication(), null).any { sensor -> sensor.id == sensorId }
+                it.getAvailableSensors(getApplication()).any { sensor -> sensor.id == sensorId }
             }
     }
-    var basicSensor: SensorManager.BasicSensor? = getBasicSensors()
+
+    val basicSensor: SensorManager.BasicSensor? = runBlocking {
+        sensorManager?.getAvailableSensors(getApplication())
+            ?.find { it.id == sensorId }
+    }
 
     var sensor by mutableStateOf<SensorWithAttributes?>(null)
         private set
@@ -119,17 +123,10 @@ class SensorDetailViewModel @Inject constructor(
         }
     }
 
-    private fun getBasicSensors(): SensorManager.BasicSensor? {
-        viewModelScope.launch {
-            basicSensor = sensorManager?.getAvailableSensors(getApplication(), null)
-                ?.find { it.id == sensorId }
-        }
-        return basicSensor
-    }
     private suspend fun checkSensorEnabled(sensor: SensorWithAttributes?) {
         if (sensorManager != null && basicSensor != null && sensor != null) {
             sensorCheckedEnabled = true
-            val hasPermission = sensorManager!!.checkPermission(getApplication(), basicSensor!!.id)
+            val hasPermission = sensorManager.checkPermission(getApplication(), basicSensor.id)
             val enabled = sensor.sensor.enabled && hasPermission
             updateSensorEntity(enabled)
         }
@@ -144,14 +141,18 @@ class SensorDetailViewModel @Inject constructor(
                 if ((fineLocation || coarseLocation) &&
                     !DisabledLocationHandler.isLocationEnabled(getApplication())
                 ) {
-                    val sensorName = basicSensor?.let { getApplication<Application>().getString(basicSensor!!.name) }.orEmpty()
+                    val sensorName = basicSensor?.let {
+                        getApplication<Application>().getString(
+                            basicSensor.name
+                        )
+                    }.orEmpty()
                     locationPermissionRequests.value = LocationPermissionsDialog(block = true, sensors = arrayOf(sensorName))
                     return
                 } else {
-                    if (!sensorManager!!.checkPermission(getApplication(), sensorId)) {
+                    if (!sensorManager.checkPermission(getApplication(), sensorId)) {
                         if (sensorManager is NetworkSensorManager) {
                             locationPermissionRequests.value = LocationPermissionsDialog(block = false, sensors = emptyArray(), permissions = permissions)
-                        } else if (sensorManager is LastAppSensorManager && !sensorManager!!.checkUsageStatsPermission(getApplication())) {
+                        } else if (sensorManager is LastAppSensorManager && !sensorManager.checkUsageStatsPermission(getApplication())) {
                             permissionRequests.value = permissions
                         } else {
                             permissionRequests.value = permissions

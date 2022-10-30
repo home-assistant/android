@@ -32,7 +32,7 @@ class WetModeSensorManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_wet_mode
 
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(
             wetModeSensor
         )
