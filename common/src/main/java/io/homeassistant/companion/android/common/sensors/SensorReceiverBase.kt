@@ -6,7 +6,6 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.res.Configuration
 import android.os.Build
 import android.util.Log
@@ -24,6 +23,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
+import java.util.Calendar
 import javax.inject.Inject
 
 abstract class SensorReceiverBase : BroadcastReceiver() {
@@ -107,10 +107,27 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         }
 
         ioScope.launch {
-            if (intent.action == Intent.ACTION_TIME_TICK && !shouldDoFastUpdates(context)) {
-                Log.i(tag, "Skipping faster update because not charging/different preference")
-                return@launch
+            if (intent.action == Intent.ACTION_TIME_TICK) {
+                if (!shouldDoFastUpdates(context)) {
+                    Log.i(tag, "Skipping faster update because not charging/different preference")
+                    return@launch
+                }
+
+                // If we still want to do fast update should check if this is our timeslot
+                // TODO: Work out how to find the last update without needing the Last Update Sensor
+                //       As a better approach would be to cancel until enough time has passed since
+                //       the last update compared with the frequency
+                //       Avoiding some of the issues related to Doze mode and reboots
+                val currentMinute = Calendar.getInstance().run {
+                    get(Calendar.HOUR) * 60 + get(Calendar.MINUTE)
+                }
+                val freq = SensorWorkerBase.determineUpdateFrequency(context)
+
+                // time % freq should allow us to determine which ticks to use and which to ignore
+                if (currentMinute % freq != 0)
+                    return@launch
             }
+
             if (intent.action == ACTION_UPDATE_SENSOR) {
                 val sensorId = intent.getStringExtra(EXTRA_SENSOR_ID)
                 if (sensorId != null) {
