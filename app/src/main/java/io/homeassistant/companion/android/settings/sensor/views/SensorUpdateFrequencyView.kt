@@ -12,6 +12,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.util.sensorWorkerChannel
+import io.homeassistant.companion.android.database.settings.UpdateFrequencies
 import io.homeassistant.companion.android.util.compose.InfoNotification
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -32,11 +33,6 @@ fun SensorUpdateFrequencyView(
             Divider()
 
             Spacer(Modifier.height(16.dp))
-
-            // List of time periods available for the user to pick
-            val options = listOf(
-                1, 5, 10, 15, 20, 30, 60
-            )
 
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -61,7 +57,7 @@ fun SensorUpdateFrequencyView(
                         expanded = showBatteryFrequencyDropdown,
                         onDismissRequest = { showBatteryFrequencyDropdown = false }
                     ) {
-                        options.forEach {
+                        UpdateFrequencies.forEach {
                             DropdownMenuItem(onClick = {
                                 onBatteryFrequencyChanged(it)
                                 showBatteryFrequencyDropdown = false
@@ -95,7 +91,7 @@ fun SensorUpdateFrequencyView(
                         expanded = showPoweredFrequencyDropdown,
                         onDismissRequest = { showPoweredFrequencyDropdown = false }
                     ) {
-                        options.forEach {
+                        UpdateFrequencies.forEach {
                             DropdownMenuItem(onClick = {
                                 onPoweredFrequencyChanged(it)
                                 showPoweredFrequencyDropdown = false

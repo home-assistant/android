@@ -16,3 +16,12 @@ data class Setting(
     @ColumnInfo(name = "sensorUpdateFrequencyPowered")
     var sensorUpdateFrequencyPowered: Int /* minutes */
 )
+
+/**
+ * Array containing the various update frequency options
+ */
+val UpdateFrequencies = intArrayOf(
+    1, 2, 5, 10,             // Fast updates
+    15, 20, 30, 45, 60,      // Normal updates
+    60 * 2, 60 * 4, 60 * 12, // Slow updates
+)
