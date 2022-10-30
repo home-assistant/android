@@ -720,7 +720,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             webView.evaluateJavascript(
                 "document.querySelector(\"body > home-assistant\").shadowRoot.querySelector(\"home-assistant-main\").shadowRoot.querySelector(\"#drawer > ha-sidebar\").shadowRoot.querySelector(\"paper-listbox > a:nth-child(1)\").click()",
                 null
-            );
+            )
         }
 
         super.onPause()

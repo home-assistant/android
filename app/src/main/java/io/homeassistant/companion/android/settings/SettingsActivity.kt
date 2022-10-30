@@ -115,8 +115,7 @@ class SettingsActivity : BaseActivity() {
         super.onPause()
         runBlocking {
             integrationUseCase.setAppActive(false)
-            if(integrationUseCase.isAlwaysShowFirstViewOnAppStartEnabled())
-            {
+            if (integrationUseCase.isAlwaysShowFirstViewOnAppStartEnabled()) {
                 finish()
             }
         }
