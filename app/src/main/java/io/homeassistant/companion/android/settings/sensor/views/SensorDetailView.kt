@@ -514,7 +514,9 @@ fun SensorDetailUpdateInfoDialog(
                     val ending   = stringResource(commonR.string.sensor_update_type_info_worker_frequency_ending)
                     val settings = stringResource(commonR.string.sensor_update_type_info_worker_setting, stringResource(commonR.string.sensor_update_frequency))
 
-                    "$battery ($powered) $ending\n\n$settings"
+                    if(batteryUpdateFrequency == poweredUpdateFrequency)
+                        "$battery $ending\n\n$settings"
+                    else "$battery ($powered) $ending\n\n$settings"
                 }
                 SensorManager.BasicSensor.UpdateType.LOCATION -> stringResource(commonR.string.sensor_update_type_info_location)
                 SensorManager.BasicSensor.UpdateType.CUSTOM -> stringResource(commonR.string.sensor_update_type_info_custom)

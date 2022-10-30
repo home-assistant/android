@@ -885,9 +885,9 @@
     <string name="sensor_update_type_chip_intent">Updates instantly</string>
     <plurals name="sensor_update_type_chip_worker_same">
         <item quantity="one">Updates every minute</item>
-        <item quantity="other">Updates every %2$d min</item>
+        <item quantity="other">Updates every %1$d min</item>
     </plurals>
-    <string name="sensor_update_type_chip_worker_different">Updates every %2$d/%2$d min</string>
+    <string name="sensor_update_type_chip_worker_different">Updates every %1$d/%2$d min</string>
     <string name="sensor_update_type_chip_location">About location updates</string>
     <string name="sensor_update_type_chip_custom">Custom update frequency</string>
     <string name="sensor_update_type_info_title">About sensor updates</string>
@@ -895,11 +895,11 @@
     <string name="sensor_update_type_info_intent">This sensor is updated instantly whenever the state changes.</string>
     <plurals name="sensor_update_type_info_worker_frequency_battery">
         <item quantity="one">This sensor\'s state is updated every minute</item>
-        <item quantity="other">This sensor\'s state is updated every %2$d minute</item>
+        <item quantity="other">This sensor\'s state is updated every %1$d minute</item>
     </plurals>
     <plurals name="sensor_update_type_info_worker_frequency_powered">
         <item quantity="one">and every minute when charging</item>
-        <item quantity="other">and every %2$d minutes when charging</item>
+        <item quantity="other">and every %1$d minutes when charging</item>
     </plurals>
     <string name="sensor_update_type_info_worker_frequency_ending">as well as when a sensor that updates instantly is updated.</string>
     <string name="sensor_update_type_info_worker_setting">You can change how often this sensor is updated by using the \'%1$s\' setting.</string>
