@@ -3,6 +3,8 @@ package io.homeassistant.companion.android.common.sensors
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -29,6 +31,21 @@ abstract class SensorWorkerBase(
     companion object {
         const val TAG = "SensorWorker"
         const val NOTIFICATION_ID = 42
+
+        fun determineUpdateFrequency(
+            context: Context
+        ): Int {
+            val settings = AppDatabase.getInstance(context).settingsDao().get(0)
+
+            val batteryStatusIntent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+            val isCharging = batteryStatusIntent?.let { BatterySensorManager.getIsCharging(it) } ?: false
+
+            val freq = if(isCharging) settings?.sensorUpdateFrequencyPowered
+            else settings?.sensorUpdateFrequencyBattery
+
+            return freq ?: 15
+        }
+
     }
 
     private val notificationManager = appContext.getSystemService<NotificationManager>()!!
