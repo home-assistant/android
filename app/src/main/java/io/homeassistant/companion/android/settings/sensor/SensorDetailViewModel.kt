@@ -22,7 +22,6 @@ import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.database.sensor.SensorWithAttributes
-import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.sensors.LastAppSensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
@@ -87,9 +86,8 @@ class SensorDetailViewModel @Inject constructor(
     var sensorSettingsDialog by mutableStateOf<SettingDialogState?>(null)
         private set
 
-    val settingUpdateFrequency by lazy {
-        settingsDao.get(0)?.sensorUpdateFrequency ?: SensorUpdateFrequencySetting.NORMAL
-    }
+    val settingUpdateFrequencyBattery by lazy { settingsDao.get(0)?.sensorUpdateFrequencyBattery ?: 15 }
+    val settingUpdateFrequencyPowered by lazy { settingsDao.get(0)?.sensorUpdateFrequencyPowered ?: 15 }
 
     private val zones by lazy {
         Log.d(TAG, "Get zones from Home Assistant for listing zones in preferences...")

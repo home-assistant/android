@@ -883,17 +883,25 @@
     <string name="sensor_worker_sync_missing_permissions">To enable this sensor, turn it on in the app settings</string>
     <string name="sensor_update_frequency_summary">Change the frequency of updates for sensors that do not update instantly.</string>
     <string name="sensor_update_type_chip_intent">Updates instantly</string>
-    <string name="sensor_update_type_chip_worker_fast_always">Updates every minute</string>
-    <string name="sensor_update_type_chip_worker_fast_charging">Updates every 1 / 15 min</string>
-    <string name="sensor_update_type_chip_worker_normal">Updates every 15 min</string>
+    <plurals name="sensor_update_type_chip_worker_same">
+        <item quantity="one">Updates every minute</item>
+        <item quantity="other">Updates every %2$d min</item>
+    </plurals>
+    <string name="sensor_update_type_chip_worker_different">Updates every %2$d/%2$d min</string>
     <string name="sensor_update_type_chip_location">About location updates</string>
     <string name="sensor_update_type_chip_custom">Custom update frequency</string>
     <string name="sensor_update_type_info_title">About sensor updates</string>
     <string name="sensor_update_type_info_enable">Enable this sensor to send updates to Home Assistant.\n\n</string>
     <string name="sensor_update_type_info_intent">This sensor is updated instantly whenever the state changes.</string>
-    <string name="sensor_update_type_info_worker_fast_always">This sensor\'s state is updated every minute and when a sensor that updates instantly is updated.</string>
-    <string name="sensor_update_type_info_worker_fast_charging">This sensor\'s state is updated every minute while charging, every 15 minutes when not charging, and when a sensor that updates instantly is updated.</string>
-    <string name="sensor_update_type_info_worker_normal">This sensor\'s state is updated every 15 minutes and when a sensor that updates instantly is updated.</string>
+    <plurals name="sensor_update_type_info_worker_frequency_battery">
+        <item quantity="one">This sensor\'s state is updated every minute</item>
+        <item quantity="other">This sensor\'s state is updated every %2$d minute</item>
+    </plurals>
+    <plurals name="sensor_update_type_info_worker_frequency_powered">
+        <item quantity="one">and every minute when charging</item>
+        <item quantity="other">and every %2$d minutes when charging</item>
+    </plurals>
+    <string name="sensor_update_type_info_worker_frequency_ending">as well as when a sensor that updates instantly is updated.</string>
     <string name="sensor_update_type_info_worker_setting">You can change how often this sensor is updated by using the \'%1$s\' setting.</string>
     <string name="sensor_update_type_info_location">For more information about location updates, please check the documentation.</string>
     <string name="sensor_update_type_info_custom">This sensor updates on a non-standard schedule, please check the documentation.</string>

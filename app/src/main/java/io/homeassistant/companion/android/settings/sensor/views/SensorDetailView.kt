@@ -71,14 +71,15 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
-import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.settings.sensor.SensorDetailViewModel
 import io.homeassistant.companion.android.util.compose.MdcAlertDialog
 import io.homeassistant.companion.android.util.compose.TransparentChip
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import androidx.compose.ui.res.pluralStringResource
 import io.homeassistant.companion.android.common.R as commonR
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun SensorDetailView(
     viewModel: SensorDetailViewModel,
@@ -117,7 +118,8 @@ fun SensorDetailView(
             SensorDetailUpdateInfoDialog(
                 basicSensor = viewModel.basicSensor,
                 sensorEnabled = sensorEnabled,
-                userSetting = viewModel.settingUpdateFrequency,
+                batteryUpdateFrequency = viewModel.settingUpdateFrequencyBattery,
+                poweredUpdateFrequency = viewModel.settingUpdateFrequencyPowered,
                 onDismiss = { sensorUpdateTypeInfo = false }
             )
         } else viewModel.sensorSettingsDialog?.let {
@@ -147,20 +149,24 @@ fun SensorDetailView(
                 item {
                     TransparentChip(
                         modifier = Modifier.padding(start = 16.dp, bottom = 40.dp),
-                        text = stringResource(
-                            when (viewModel.basicSensor.updateType) {
-                                SensorManager.BasicSensor.UpdateType.INTENT -> commonR.string.sensor_update_type_chip_intent
-                                SensorManager.BasicSensor.UpdateType.WORKER -> {
-                                    when (viewModel.settingUpdateFrequency) {
-                                        SensorUpdateFrequencySetting.FAST_ALWAYS -> commonR.string.sensor_update_type_chip_worker_fast_always
-                                        SensorUpdateFrequencySetting.FAST_WHILE_CHARGING -> commonR.string.sensor_update_type_chip_worker_fast_charging
-                                        SensorUpdateFrequencySetting.NORMAL -> commonR.string.sensor_update_type_chip_worker_normal
-                                    }
-                                }
-                                SensorManager.BasicSensor.UpdateType.LOCATION -> commonR.string.sensor_update_type_chip_location
-                                SensorManager.BasicSensor.UpdateType.CUSTOM -> commonR.string.sensor_update_type_chip_custom
+                        text = when (viewModel.basicSensor.updateType) {
+                            SensorManager.BasicSensor.UpdateType.INTENT -> stringResource(commonR.string.sensor_update_type_chip_intent)
+                            SensorManager.BasicSensor.UpdateType.WORKER -> {
+                                if(viewModel.settingUpdateFrequencyBattery == viewModel.settingUpdateFrequencyPowered)
+                                    pluralStringResource(
+                                        id = commonR.plurals.sensor_update_type_chip_worker_same,
+                                        count = viewModel.settingUpdateFrequencyPowered,
+                                        viewModel.settingUpdateFrequencyPowered
+                                    )
+                                else stringResource(
+                                    commonR.string.sensor_update_type_chip_worker_different,
+                                    viewModel.settingUpdateFrequencyBattery,
+                                    viewModel.settingUpdateFrequencyPowered
+                                )
                             }
-                        ),
+                            SensorManager.BasicSensor.UpdateType.LOCATION -> stringResource(commonR.string.sensor_update_type_chip_location)
+                            SensorManager.BasicSensor.UpdateType.CUSTOM -> stringResource(commonR.string.sensor_update_type_chip_custom)
+                        },
                         icon = CommunityMaterial.Icon.cmd_clock_fast
                     ) {
                         sensorUpdateTypeInfo = true
@@ -487,11 +493,13 @@ fun SensorDetailSettingDialog(
     )
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun SensorDetailUpdateInfoDialog(
     basicSensor: SensorManager.BasicSensor,
     sensorEnabled: Boolean,
-    userSetting: SensorUpdateFrequencySetting,
+    batteryUpdateFrequency: Int,
+    poweredUpdateFrequency: Int,
     onDismiss: () -> Unit
 ) {
     MdcAlertDialog(
@@ -501,13 +509,12 @@ fun SensorDetailUpdateInfoDialog(
             var infoString = when (basicSensor.updateType) {
                 SensorManager.BasicSensor.UpdateType.INTENT -> stringResource(commonR.string.sensor_update_type_info_intent)
                 SensorManager.BasicSensor.UpdateType.WORKER -> {
-                    "${stringResource(
-                        when (userSetting) {
-                            SensorUpdateFrequencySetting.FAST_ALWAYS -> commonR.string.sensor_update_type_info_worker_fast_always
-                            SensorUpdateFrequencySetting.FAST_WHILE_CHARGING -> commonR.string.sensor_update_type_info_worker_fast_charging
-                            SensorUpdateFrequencySetting.NORMAL -> commonR.string.sensor_update_type_info_worker_normal
-                        }
-                    )}\n\n${stringResource(commonR.string.sensor_update_type_info_worker_setting, stringResource(commonR.string.sensor_update_frequency))}"
+                    val battery  = pluralStringResource(commonR.plurals.sensor_update_type_info_worker_frequency_battery, batteryUpdateFrequency, batteryUpdateFrequency)
+                    val powered  = pluralStringResource(commonR.plurals.sensor_update_type_info_worker_frequency_powered, poweredUpdateFrequency, poweredUpdateFrequency)
+                    val ending   = stringResource(commonR.string.sensor_update_type_info_worker_frequency_ending)
+                    val settings = stringResource(commonR.string.sensor_update_type_info_worker_setting, stringResource(commonR.string.sensor_update_frequency))
+
+                    "$battery ($powered) $ending\n\n$settings"
                 }
                 SensorManager.BasicSensor.UpdateType.LOCATION -> stringResource(commonR.string.sensor_update_type_info_location)
                 SensorManager.BasicSensor.UpdateType.CUSTOM -> stringResource(commonR.string.sensor_update_type_info_custom)
