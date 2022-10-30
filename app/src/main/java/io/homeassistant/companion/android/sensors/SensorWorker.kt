@@ -22,12 +22,20 @@ class SensorWorker(
 ) : SensorWorkerBase(appContext, workerParams) {
 
     companion object {
-        fun start(context: Context) {
+        fun start(context: Context) = start(
+            context,
+            determineUpdateFrequency(context)
+        )
+
+        fun start(
+            context: Context,
+            frequency: Int
+        ) {
             val constraints = Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED).build()
 
             val sensorWorker =
-                PeriodicWorkRequestBuilder<SensorWorker>(15, TimeUnit.MINUTES)
+                PeriodicWorkRequestBuilder<SensorWorker>(frequency.toLong(), TimeUnit.MINUTES)
                     .setConstraints(constraints)
                     .build()
 

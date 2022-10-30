@@ -16,10 +16,8 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
 import io.homeassistant.companion.android.common.util.sensorCoreSyncChannel
-import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.sensor.SensorWithAttributes
-import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -34,16 +32,8 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         const val EXTRA_SENSOR_ID = "sensorId"
 
         fun shouldDoFastUpdates(context: Context): Boolean {
-            val settingDao = AppDatabase.getInstance(context).settingsDao().get(0)
-            return when (settingDao?.sensorUpdateFrequency) {
-                SensorUpdateFrequencySetting.FAST_ALWAYS -> true
-                SensorUpdateFrequencySetting.FAST_WHILE_CHARGING -> {
-                    val batteryStatusIntent =
-                        context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-                    return batteryStatusIntent?.let { BatterySensorManager.getIsCharging(it) } ?: false
-                }
-                else -> false
-            }
+            // Fast updates were every 1 min so this effectively asks checks if the frequency == 1
+            return SensorWorkerBase.determineUpdateFrequency(context) == 1
         }
     }
 
