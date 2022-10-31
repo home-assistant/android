@@ -43,6 +43,11 @@ class HomeAssistantApis @Inject constructor(
                     .build()
             )
         }
+
+        builder.addInterceptor(
+            RedirectInterceptor()
+        )
+
         // Only deal with cookies when on non wear device and for now I don't have a better
         // way to determine if we are really on wear os....
         // TODO: Please fix me.

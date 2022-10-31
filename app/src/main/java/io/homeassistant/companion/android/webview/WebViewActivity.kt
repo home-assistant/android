@@ -212,6 +212,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        checkNew()
+
         binding = ActivityWebviewBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -643,6 +645,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             val webviewPackage = WebViewCompat.getCurrentWebViewPackage(this)
             Log.d(TAG, "Current webview package ${webviewPackage?.packageName} and version ${webviewPackage?.versionName}")
         }
+    }
+
+    private fun checkNew() {
+        homeAssistantApis.okHttpClient.
     }
 
     private fun getAndSetStatusBarNavigationBarColors() {

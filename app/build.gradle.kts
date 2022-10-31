@@ -232,5 +232,5 @@ fun getVersionCode():Int {
 }
 
 fun getVersionName(): String {
-    return SimpleDateFormat("yyyy-MM-dd").format(System.currentTimeMillis())
+    return "v"+SimpleDateFormat("yyyy-MM-dd").format(System.currentTimeMillis())
 }
