@@ -374,7 +374,7 @@ class MainViewModel @Inject constructor(
     fun removeFavoriteEntity(entityId: String) {
         viewModelScope.launch {
             favoritesDao.delete(entityId)
-            removeCachedFavorite(entityId)
+            favoriteCachesDao.delete(entityId)
         }
     }
 
@@ -386,13 +386,8 @@ class MainViewModel @Inject constructor(
             val entity = entities[entityId]
             val attributes = entity?.attributes as Map<*, *>
             val icon = attributes["icon"] as String?
-            favoriteCachesDao.add(FavoriteCaches(entityId, attributes["friendly_name"].toString(), icon))
-        }
-    }
-
-    private fun removeCachedFavorite(entityId: String) {
-        viewModelScope.launch {
-            favoriteCachesDao.delete((entityId))
+            val name = attributes["friendly_name"]?.toString() ?: entityId
+            favoriteCachesDao.add(FavoriteCaches(entityId, name, icon))
         }
     }
 
