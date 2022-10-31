@@ -90,7 +90,7 @@ fun MainView(
                             val favoriteEntityID = favoriteEntityIds[index].split(",")[0]
                             if (mainViewModel.entities.isEmpty()) {
                                 // when we don't have the state of the entity, create a Chip from cache as we don't have the state yet
-                                val cached = mainViewModel.getCachedEntity((favoriteEntityID))
+                                val cached = mainViewModel.getCachedEntity(favoriteEntityID)
                                 Chip(
                                     modifier = Modifier
                                         .fillMaxWidth(),
