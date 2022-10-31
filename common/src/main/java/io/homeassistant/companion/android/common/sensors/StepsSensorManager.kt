@@ -18,6 +18,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
 
         private const val TAG = "StepsSensor"
         private var isListenerRegistered = false
+        private var listenerLastRegistered = 0
         private val stepsSensor = SensorManager.BasicSensor(
             "steps_sensor",
             "sensor",
@@ -71,6 +72,12 @@ class StepsSensorManager : SensorManager, SensorEventListener {
             return
 
         if (checkPermission(latestContext, stepsSensor.id)) {
+            val now = System.currentTimeMillis()
+            if (listenerLastRegistered + 60000 < now && isListenerRegistered) {
+                Log.d(TAG, "Re-registering listener as it appears to be stuck")
+                mySensorManager.unregisterListener(this)
+                isListenerRegistered = false
+            }
             mySensorManager = latestContext.getSystemService()!!
 
             val stepsSensors = mySensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
@@ -82,6 +89,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
                 )
                 Log.d(TAG, "Steps sensor listener registered")
                 isListenerRegistered = true
+                listenerLastRegistered = now.toInt()
             }
         }
     }
