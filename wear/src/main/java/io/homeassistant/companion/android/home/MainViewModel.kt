@@ -287,6 +287,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun updateAllSensors(sensorManager: SensorManager) {
+        availableSensors = emptyList()
         viewModelScope.launch {
             val context = getApplication<HomeAssistantApplication>().applicationContext
             availableSensors = sensorManager
