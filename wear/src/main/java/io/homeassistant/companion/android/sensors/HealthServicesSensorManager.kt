@@ -76,8 +76,10 @@ class HealthServicesSensorManager : SensorManager {
             healthClient = HealthServices.getClient(latestContext)
         if (passiveMonitoringClient == null)
             passiveMonitoringClient = healthClient?.passiveMonitoringClient
-        if (passiveMonitoringCapabilities == null)
+        if (passiveMonitoringCapabilities == null) {
             passiveMonitoringCapabilities = passiveMonitoringClient?.getCapabilitiesAsync()?.await()
+            Log.d(TAG, "Supported capabilities: $passiveMonitoringCapabilities")
+        }
 
         val supportedSensors = mutableListOf(userActivityState)
 
