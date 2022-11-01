@@ -648,7 +648,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     }
 
     private fun checkNew() {
-        homeAssistantApis.okHttpClient.
+        //homeAssistantApis.okHttpClient.
     }
 
     private fun getAndSetStatusBarNavigationBarColors() {
