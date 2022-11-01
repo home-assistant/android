@@ -67,7 +67,8 @@ fun SensorsView(
 
 @Composable
 fun getSensorManagers(): List<SensorManager> {
-    return SensorReceiver.MANAGERS.sortedBy { stringResource(it.name) }.filter { it.hasSensor(LocalContext.current) }
+    val context = LocalContext.current
+    return SensorReceiver.MANAGERS.sortedBy { context.getString(it.name) }.filter { it.hasSensor(context) }
 }
 
 @Preview(device = Devices.WEAR_OS_LARGE_ROUND)
