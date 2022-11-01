@@ -95,7 +95,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.6.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
 
-    implementation("com.google.android.material:material:1.6.1")
+    implementation("com.google.android.material:material:1.7.0")
 
     implementation("androidx.wear:wear:1.2.0")
     implementation("com.google.android.gms:play-services-wearable:18.0.0")
@@ -114,11 +114,12 @@ dependencies {
     implementation("com.mikepenz:community-material-typeface:7.0.96.0-kotlin@aar")
     implementation("com.mikepenz:iconics-compose:5.4.0")
 
-    implementation("androidx.activity:activity-ktx:1.6.0")
-    implementation("androidx.activity:activity-compose:1.6.0")
-    implementation("androidx.compose.compiler:compiler:1.3.1")
-    implementation("androidx.compose.foundation:foundation:1.2.1")
-    implementation("androidx.compose.ui:ui-tooling:1.2.1")
+    implementation("androidx.activity:activity-ktx:1.6.1")
+    implementation("androidx.activity:activity-compose:1.6.1")
+    implementation("androidx.compose.compiler:compiler:1.3.2")
+    implementation(platform("androidx.compose:compose-bom:2022.10.00"))
+    implementation("androidx.compose.foundation:foundation")
+    implementation("androidx.compose.ui:ui-tooling")
     implementation("androidx.wear.compose:compose-foundation:1.0.2")
     implementation("androidx.wear.compose:compose-material:1.0.2")
     implementation("androidx.wear.compose:compose-navigation:1.0.2")
