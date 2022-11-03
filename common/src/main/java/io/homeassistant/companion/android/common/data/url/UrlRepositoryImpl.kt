@@ -171,8 +171,9 @@ class UrlRepositoryImpl @Inject constructor(
 
     override suspend fun isInternal(): Boolean {
         val usesInternalSsid = isHomeWifiSsid()
+        val usesWifi = wifiHelper.isUsingWifi()
         val localUrl = localStorage.getString(PREF_LOCAL_URL)
-        Log.d(TAG, "localUrl is: ${!localUrl.isNullOrBlank()} and usesInternalSsid is: $usesInternalSsid")
-        return !localUrl.isNullOrBlank() && usesInternalSsid
+        Log.d(TAG, "localUrl is: ${!localUrl.isNullOrBlank()}, usesInternalSsid is: $usesInternalSsid, usesWifi is: $usesWifi")
+        return !localUrl.isNullOrBlank() && usesInternalSsid && usesWifi
     }
 }
