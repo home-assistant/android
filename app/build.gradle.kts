@@ -37,7 +37,7 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.1.1"
+        kotlinCompilerExtensionVersion = "1.3.2"
     }
 
     kotlinOptions {
@@ -140,8 +140,8 @@ dependencies {
         exclude(group = "org.json", module = "json")
     }
 
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.21")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.21")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.20")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.7.20")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
     "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
@@ -154,8 +154,8 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.recyclerview:recyclerview:1.2.1")
     implementation("androidx.preference:preference-ktx:1.2.0")
-    implementation("com.google.android.material:material:1.6.1")
-    implementation("androidx.fragment:fragment-ktx:1.5.3")
+    implementation("com.google.android.material:material:1.7.0")
+    implementation("androidx.fragment:fragment-ktx:1.5.4")
 
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.4")
@@ -182,18 +182,19 @@ dependencies {
     }
     "minimalImplementation"("org.chromium.net:cronet-embedded:105.5195.68")
 
-    implementation("androidx.compose.animation:animation:1.2.1")
-    implementation("androidx.compose.compiler:compiler:1.3.1")
-    implementation("androidx.compose.foundation:foundation:1.2.1")
-    implementation("androidx.compose.material:material:1.2.1")
-    implementation("androidx.compose.material:material-icons-core:1.2.1")
-    implementation("androidx.compose.material:material-icons-extended:1.2.1")
-    implementation("androidx.compose.runtime:runtime:1.2.1")
-    implementation("androidx.compose.ui:ui:1.2.1")
-    implementation("androidx.compose.ui:ui-tooling:1.2.1")
-    implementation("androidx.activity:activity-compose:1.6.0")
-    implementation("androidx.navigation:navigation-compose:2.5.2")
-    implementation("com.google.android.material:compose-theme-adapter:1.1.19")
+    implementation(platform("androidx.compose:compose-bom:2022.10.00"))
+    implementation("androidx.compose.animation:animation")
+    implementation("androidx.compose.compiler:compiler:1.3.2")
+    implementation("androidx.compose.foundation:foundation")
+    implementation("androidx.compose.material:material")
+    implementation("androidx.compose.material:material-icons-core")
+    implementation("androidx.compose.material:material-icons-extended")
+    implementation("androidx.compose.runtime:runtime")
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-tooling")
+    implementation("androidx.activity:activity-compose:1.6.1")
+    implementation("androidx.navigation:navigation-compose:2.5.3")
+    implementation("com.google.android.material:compose-theme-adapter:1.1.21")
     implementation("com.google.accompanist:accompanist-appcompat-theme:0.25.1")
 
     implementation("com.mikepenz:iconics-core:5.4.0")
