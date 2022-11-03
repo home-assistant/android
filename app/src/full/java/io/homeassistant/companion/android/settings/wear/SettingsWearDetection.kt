@@ -2,6 +2,8 @@ package io.homeassistant.companion.android.settings.wear
 
 import android.content.Context
 import android.util.Log
+import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.common.api.CommonStatusCodes
 import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.tasks.await
 
@@ -18,7 +20,12 @@ object SettingsWearDetection {
             val nodeClient = Wearable.getNodeClient(context)
             nodeClient.connectedNodes.await().any()
         } catch (e: Exception) {
-            Log.e(TAG, "Exception while discovering nodes", e)
+            if (e is ApiException && e.statusCode == CommonStatusCodes.API_NOT_CONNECTED && e.message?.contains("API_UNAVAILABLE") == true) {
+                // Wearable.API is not available on this device.
+                Log.d(TAG, "API unavailable for discovering nodes (no Wear)",)
+            } else {
+                Log.e(TAG, "Exception while discovering nodes", e)
+            }
             false
         }
     }
