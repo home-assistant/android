@@ -168,6 +168,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             amapLocation = location
             Log.d(TAG, "Amap Location -- ${location.latitude}")
 
+            addressUpdata(latestContext)
             val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
             val sensorSettings = sensorDao.getSettings(backgroundLocation.id)
             val minAccuracy = sensorSettings
@@ -585,5 +586,98 @@ class LocationSensorManager : LocationSensorManagerBase() {
         } else {
             listOf(backgroundLocation, zoneLocation, highAccuracyMode, highAccuracyUpdateInterval)
         }
+    }
+
+    private fun addressUpdata(context: Context) {
+        //var address: Address? = null
+//        try {
+//            if (amapLocation == null) {
+//                Log.e(TAG, "Somehow location is null even though it was successful")
+//                return
+//            }
+//
+//            val sensorDao = AppDatabase.getInstance(context).sensorDao()
+//            val sensorSettings = sensorDao.getSettings(GeocodeSensorManager.geocodedLocation.id)
+//            val minAccuracy = sensorSettings
+//                .firstOrNull { it.name == GeocodeSensorManager.SETTING_ACCURACY }?.value?.toIntOrNull()
+//                ?: GeocodeSensorManager.DEFAULT_MINIMUM_ACCURACY
+//            sensorDao.add(
+//                Setting(
+//                    GeocodeSensorManager.geocodedLocation.id,
+//                    GeocodeSensorManager.SETTING_ACCURACY,
+//                    minAccuracy.toString(),
+//                    "number"
+//                )
+//            )
+//
+//            if (amapLocation!!.accuracy <= minAccuracy)
+//                address = Geocoder(context)
+//                    .getFromLocation(amapLocation!!.latitude, amapLocation!!.longitude, 1)
+//                    .firstOrNull()
+//        } catch (e: java.lang.Exception) {
+//            Log.e(TAG, "Failed to get geocoded location", e)
+//        }
+//        var attributes = address?.let {
+//            mapOf(
+//                "Administrative Area" to it.adminArea,
+//                "Country" to it.countryName,
+//                "ISO Country Code" to it.countryCode,
+//                "Locality" to it.locality,
+//                "Latitude" to it.latitude,
+//                "Longitude" to it.longitude,
+//                "Postal Code" to it.postalCode,
+//                "Sub Administrative Area" to it.subAdminArea,
+//                "Sub Locality" to it.subLocality,
+//                "Sub Thoroughfare" to it.subThoroughfare,
+//                "Thoroughfare" to it.thoroughfare
+//            )
+//        }.orEmpty()
+        var addressStr = amapLocation!!.address
+        // if (attributes.isEmpty()) {
+        val attributes = amapLocation.let {
+            mapOf(
+                "Administrative Area" to it!!.district,
+                "Country" to it.city,
+                "accuracy" to it.accuracy,
+                "altitude" to it.altitude,
+                "bearing" to it.bearing,
+                "provider" to it.provider,
+                "time" to it.time,
+                "Locality" to it.province,
+                "Latitude" to it.latitude,
+                "Longitude" to it.longitude,
+                "Postal Code" to it.cityCode,
+                "Thoroughfare" to it.street,
+                //"ISO Country Code" to it.cityCode,
+                "vertical_accuracy" to if (Build.VERSION.SDK_INT >= 26) it.verticalAccuracyMeters.toInt() else 0,
+            )
+        }
+        // }
+//        val zoneAttr = mapOf(
+//            "accuracy" to geofencingEvent.triggeringLocation.accuracy,
+//            "altitude" to geofencingEvent.triggeringLocation.altitude,
+//            "bearing" to geofencingEvent.triggeringLocation.bearing,
+//            "latitude" to geofencingEvent.triggeringLocation.latitude,
+//            "longitude" to geofencingEvent.triggeringLocation.longitude,
+//            "provider" to geofencingEvent.triggeringLocation.provider,
+//            "time" to geofencingEvent.triggeringLocation.time,
+//            "vertical_accuracy" to if (Build.VERSION.SDK_INT >= 26) geofencingEvent.triggeringLocation.verticalAccuracyMeters.toInt() else 0,
+//            "zone" to zone
+//        )
+        if (TextUtils.isEmpty(addressStr)) {
+            addressStr =
+                amapLocation!!.city + amapLocation!!.district + amapLocation!!.street + amapLocation!!.aoiName + amapLocation!!.floor
+        }
+        if (TextUtils.isEmpty(addressStr)) {
+            Log.d(TAG, "addressStr--" + amapLocation!!.locationDetail)
+            return
+        }
+        onSensorUpdated(
+            context,
+            GeocodeSensorManager.geocodedLocation,
+            addressStr,
+            "mdi:map",
+            attributes
+        )
     }
 }

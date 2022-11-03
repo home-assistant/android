@@ -58,7 +58,7 @@ class GeocodeSensorManager : SensorManager {
     override fun requestSensorUpdate(
         context: Context
     ) {
-        updateGeocodedLocation(context)
+       // updateGeocodedLocation(context)
     }
 
     private fun updateGeocodedLocation(context: Context) {
