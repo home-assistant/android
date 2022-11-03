@@ -152,9 +152,11 @@ class UrlRepositoryImpl @Inject constructor(
     }
 
     override suspend fun isHomeWifiSsid(): Boolean {
+        val wifiSsids = getHomeWifiSsids()
+        if (wifiSsids.isEmpty())
+            return false
         val formattedSsid = wifiHelper.getWifiSsid()?.removeSurrounding("\"")
         val formattedBssid = wifiHelper.getWifiBssid()
-        val wifiSsids = getHomeWifiSsids()
         return (
             formattedSsid != null &&
                 (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || formattedSsid !== WifiManager.UNKNOWN_SSID) &&
