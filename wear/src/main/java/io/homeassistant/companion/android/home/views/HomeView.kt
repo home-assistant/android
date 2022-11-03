@@ -136,7 +136,6 @@ fun LoadHomePage(
                         )
                     },
                     onClickLogout = { mainViewModel.logout() },
-                    onClickClearCache = { mainViewModel.clearCache() },
                     isHapticEnabled = mainViewModel.isHapticEnabled.value,
                     isToastEnabled = mainViewModel.isToastEnabled.value,
                     onHapticEnabled = { mainViewModel.setHapticEnabled(it) },
