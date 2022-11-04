@@ -64,7 +64,6 @@ class SensorSettingsViewModel @Inject constructor(
     private suspend fun filterSensorsList() {
         val app = getApplication<Application>()
         val managers = SensorReceiver.MANAGERS.sortedBy { app.getString(it.name) }
-        var availableSensors: List<SensorManager.BasicSensor>
         sensors = SensorReceiver.MANAGERS
             .filter { it.hasSensor(app.applicationContext) }
             .flatMap { manager ->
@@ -88,12 +87,11 @@ class SensorSettingsViewModel @Inject constructor(
             .associateBy { it.id }
 
         allSensors = managers.associateWith { manager ->
-            availableSensors = manager.getAvailableSensors(app)
+            manager.getAvailableSensors(app)
                 .filter { basicSensor ->
                     sensors.containsKey(basicSensor.id)
                 }
                 .sortedBy { app.getString(it.name) }.distinct()
-            availableSensors
         }
     }
 }
