@@ -15,7 +15,6 @@ import androidx.fragment.app.viewModels
 import com.google.android.material.composethemeadapter.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.sensor.views.SensorListView
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -93,7 +92,6 @@ class SensorSettingsFragment : Fragment() {
                 MdcTheme {
                     SensorListView(
                         viewModel = viewModel,
-                        managers = SensorReceiver.MANAGERS.sortedBy { getString(it.name) },
                         onSensorClicked = { sensor ->
                             parentFragmentManager
                                 .beginTransaction()

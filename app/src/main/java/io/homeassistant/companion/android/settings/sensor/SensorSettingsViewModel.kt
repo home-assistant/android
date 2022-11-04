@@ -7,7 +7,6 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
@@ -31,7 +30,9 @@ class SensorSettingsViewModel @Inject constructor(
     private var sensorsList = emptyList<Sensor>()
     var sensors by mutableStateOf<Map<String, Sensor>>(emptyMap())
         private set
-    var availableSensors = emptyList<SensorManager.BasicSensor>()
+
+    var allSensors by mutableStateOf<Map<SensorManager, List<SensorManager.BasicSensor>>>(emptyMap())
+        private set
 
     var searchQuery: String? = null
     var sensorFilter by mutableStateOf(SensorFilter.ALL)
@@ -43,17 +44,6 @@ class SensorSettingsViewModel @Inject constructor(
                 sensorsList = it
                 filterSensorsList()
             }
-        }
-    }
-
-    fun updateManagers(sensorManager: SensorManager) {
-        val context = getApplication<HomeAssistantApplication>().applicationContext
-        viewModelScope.launch {
-            availableSensors = sensorManager.getAvailableSensors(context)
-                .filter { basicSensor ->
-                    sensors.any { basicSensor.id == it.value.id }
-                }
-                .sortedBy { context.getString(it.name) }.distinct()
         }
     }
 
@@ -73,6 +63,8 @@ class SensorSettingsViewModel @Inject constructor(
 
     private suspend fun filterSensorsList() {
         val app = getApplication<Application>()
+        val managers = SensorReceiver.MANAGERS.sortedBy { app.getString(it.name) }
+        var availableSensors: List<SensorManager.BasicSensor>
         sensors = SensorReceiver.MANAGERS
             .filter { it.hasSensor(app.applicationContext) }
             .flatMap { manager ->
@@ -94,5 +86,14 @@ class SensorSettingsViewModel @Inject constructor(
                     .mapNotNull { sensor -> sensorsList.firstOrNull { it.id == sensor.id } }
             }
             .associateBy { it.id }
+
+        allSensors = managers.associateWith { manager ->
+            availableSensors = manager.getAvailableSensors(app)
+                .filter { basicSensor ->
+                    sensors.containsKey(basicSensor.id)
+                }
+                .sortedBy { app.getString(it.name) }.distinct()
+            availableSensors
+        }
     }
 }
