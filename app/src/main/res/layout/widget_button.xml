@@ -24,7 +24,7 @@
             android:src="@drawable/ic_flash_on_24dp"
             android:contentDescription="@string/widget_button_image_description"
             android:gravity="center"
-            android:tint="@color/colorIcon"
+            android:tint="?colorWidgetPrimary"
             tools:ignore="UseAppTint" />
 
         <LinearLayout
@@ -39,14 +39,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="@string/widget_label_placeholder_text"
+                android:text="@string/widget_label_placeholder_text_button"
                 android:textSize="12sp"
                 android:textAlignment="center"
                 android:gravity="center"
-                android:textColor="@color/colorWidgetButtonLabel"
+                android:textColor="?colorWidgetOnBackground"
                 android:minLines="1"
-                android:maxLines="2"
-                />
+                android:maxLines="2" />
         </LinearLayout>
     </LinearLayout>
 

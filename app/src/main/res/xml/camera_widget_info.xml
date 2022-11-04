@@ -8,5 +8,6 @@
     android:resizeMode="vertical|horizontal"
     android:updatePeriodMillis="3600000"
     android:widgetCategory="home_screen"
+    android:widgetFeatures="reconfigurable"
     android:description="@string/camera_widget_desc"
     android:previewImage="@drawable/widget_example_camera" />

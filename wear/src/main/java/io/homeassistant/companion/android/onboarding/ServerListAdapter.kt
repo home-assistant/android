@@ -68,7 +68,10 @@ class ServerListAdapter(
         }
     }
 
-    override fun getItemCount() = min(servers.size + 3, 4)
+    override fun getItemCount() = min(
+        servers.size + 3,
+        4
+    )
 
     override fun getItemViewType(position: Int): Int {
         return when {

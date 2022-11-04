@@ -5,6 +5,7 @@
         <item>verify_phone_app</item>
         <item>request_authentication_token</item>
         <item>request_home_assistant_instance</item>
+        <item>sign_in_to_home_assistant_instance</item>
         <item>send_home_favorites</item>
         <item>save_home_favorites</item>
     </string-array>

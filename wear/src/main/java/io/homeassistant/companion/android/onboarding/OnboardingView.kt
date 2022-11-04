@@ -1,13 +1,16 @@
 package io.homeassistant.companion.android.onboarding
 
+import androidx.annotation.StringRes
+
 interface OnboardingView {
-    fun startAuthentication(flowId: String)
-    fun startManualSetup()
+    fun startIntegration()
 
     fun onInstanceFound(instance: HomeAssistantInstance)
     fun onInstanceLost(instance: HomeAssistantInstance)
 
     fun showLoading()
 
-    fun showError()
+    fun showContinueOnPhone()
+
+    fun showError(@StringRes message: Int? = null)
 }

@@ -2,20 +2,28 @@ package io.homeassistant.companion.android.widgets.entity
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.util.TypedValue
+import android.view.View
 import android.widget.RemoteViews
-import android.widget.Toast
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.toColorInt
+import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
+import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
+import io.homeassistant.companion.android.util.getAttribute
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
@@ -30,7 +38,17 @@ class EntityWidget : BaseWidgetProvider() {
         internal const val EXTRA_TEXT_SIZE = "EXTRA_TEXT_SIZE"
         internal const val EXTRA_STATE_SEPARATOR = "EXTRA_STATE_SEPARATOR"
         internal const val EXTRA_ATTRIBUTE_SEPARATOR = "EXTRA_ATTRIBUTE_SEPARATOR"
+        internal const val EXTRA_BACKGROUND_TYPE = "EXTRA_BACKGROUND_TYPE"
+        internal const val EXTRA_TEXT_COLOR = "EXTRA_TEXT_COLOR"
+
+        private data class ResolvedText(val text: CharSequence?, val exception: Boolean = false)
     }
+
+    @Inject
+    lateinit var staticWidgetDao: StaticWidgetDao
+
+    override fun getWidgetProvider(context: Context): ComponentName =
+        ComponentName(context, EntityWidget::class.java)
 
     override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity<Map<String, Any>>?): RemoteViews {
         val intent = Intent(context, EntityWidget::class.java).apply {
@@ -38,8 +56,9 @@ class EntityWidget : BaseWidgetProvider() {
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         }
 
-        val views = RemoteViews(context.packageName, R.layout.widget_static).apply {
-            val widget = AppDatabase.getInstance(context).staticWidgetDao().get(appWidgetId)
+        val widget = staticWidgetDao.get(appWidgetId)
+        val useDynamicColors = widget?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
+        val views = RemoteViews(context.packageName, if (useDynamicColors) R.layout.widget_static_wrapper_dynamiccolor else R.layout.widget_static_wrapper_default).apply {
             if (widget != null) {
                 val entityId: String = widget.entityId
                 val attributeIds: String? = widget.attributeIds
@@ -47,6 +66,27 @@ class EntityWidget : BaseWidgetProvider() {
                 val textSize: Float = widget.textSize
                 val stateSeparator: String = widget.stateSeparator
                 val attributeSeparator: String = widget.attributeSeparator
+
+                // Theming
+                if (widget.backgroundType == WidgetBackgroundType.TRANSPARENT) {
+                    var textColor = context.getAttribute(R.attr.colorWidgetOnBackground, ContextCompat.getColor(context, commonR.color.colorWidgetButtonLabel))
+                    widget.textColor?.let { textColor = it.toColorInt() }
+
+                    setInt(R.id.widgetLayout, "setBackgroundColor", Color.TRANSPARENT)
+                    setTextColor(R.id.widgetText, textColor)
+                    setTextColor(R.id.widgetLabel, textColor)
+                }
+
+                // Content
+                val resolvedText = resolveTextToShow(
+                    context,
+                    entityId,
+                    suggestedEntity,
+                    attributeIds,
+                    stateSeparator,
+                    attributeSeparator,
+                    appWidgetId
+                )
                 setTextViewTextSize(
                     R.id.widgetText,
                     TypedValue.COMPLEX_UNIT_SP,
@@ -54,19 +94,15 @@ class EntityWidget : BaseWidgetProvider() {
                 )
                 setTextViewText(
                     R.id.widgetText,
-                    resolveTextToShow(
-                        context,
-                        entityId,
-                        suggestedEntity,
-                        attributeIds,
-                        stateSeparator,
-                        attributeSeparator,
-                        appWidgetId
-                    )
+                    resolvedText.text
                 )
                 setTextViewText(
                     R.id.widgetLabel,
                     label ?: entityId
+                )
+                setViewVisibility(
+                    R.id.widgetStaticError,
+                    if (resolvedText.exception) View.VISIBLE else View.GONE
                 )
                 setOnClickPendingIntent(
                     R.id.widgetTextLayout,
@@ -77,15 +113,17 @@ class EntityWidget : BaseWidgetProvider() {
                         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                     )
                 )
+            } else {
+                setTextViewText(R.id.widgetText, "")
+                setTextViewText(R.id.widgetLabel, "")
             }
         }
 
         return views
     }
 
-    override fun getAllWidgetIds(context: Context): List<Int> {
-        return AppDatabase.getInstance(context).staticWidgetDao().getAll()?.map { it.id }.orEmpty()
-    }
+    override suspend fun getAllWidgetIdsWithEntities(context: Context): Map<Int, List<String>> =
+        staticWidgetDao.getAll().associate { it.id to listOf(it.entityId) }
 
     private suspend fun resolveTextToShow(
         context: Context,
@@ -95,9 +133,9 @@ class EntityWidget : BaseWidgetProvider() {
         stateSeparator: String,
         attributeSeparator: String,
         appWidgetId: Int
-    ): CharSequence? {
-        val staticWidgetDao = AppDatabase.getInstance(context).staticWidgetDao()
+    ): ResolvedText {
         var entity: Entity<Map<String, Any>>? = null
+        var entityCaughtException = false
         try {
             entity = if (suggestedEntity != null && suggestedEntity.entityId == entityId) {
                 suggestedEntity
@@ -106,16 +144,14 @@ class EntityWidget : BaseWidgetProvider() {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Unable to fetch entity", e)
-            if (lastIntent == UPDATE_VIEW)
-                Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
-                    .show()
+            entityCaughtException = true
         }
         if (attributeIds == null) {
             staticWidgetDao.updateWidgetLastUpdate(
                 appWidgetId,
                 entity?.state ?: staticWidgetDao.get(appWidgetId)?.lastUpdate ?: ""
             )
-            return staticWidgetDao.get(appWidgetId)?.lastUpdate
+            return ResolvedText(staticWidgetDao.get(appWidgetId)?.lastUpdate, entityCaughtException)
         }
 
         var fetchedAttributes: Map<*, *>
@@ -128,14 +164,11 @@ class EntityWidget : BaseWidgetProvider() {
                 entity?.state.plus(if (attributeValues.isNotEmpty()) stateSeparator else "")
                     .plus(attributeValues.joinToString(attributeSeparator))
             staticWidgetDao.updateWidgetLastUpdate(appWidgetId, lastUpdate)
-            return lastUpdate
+            return ResolvedText(lastUpdate)
         } catch (e: Exception) {
             Log.e(TAG, "Unable to fetch entity state and attributes", e)
-            if (lastIntent == UPDATE_VIEW)
-                Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
-                    .show()
         }
-        return staticWidgetDao.get(appWidgetId)?.lastUpdate
+        return ResolvedText(staticWidgetDao.get(appWidgetId)?.lastUpdate, true)
     }
 
     override fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
@@ -147,14 +180,15 @@ class EntityWidget : BaseWidgetProvider() {
         val textSizeSelection: String? = extras.getString(EXTRA_TEXT_SIZE)
         val stateSeparatorSelection: String? = extras.getString(EXTRA_STATE_SEPARATOR)
         val attributeSeparatorSelection: String? = extras.getString(EXTRA_ATTRIBUTE_SEPARATOR)
+        val backgroundTypeSelection: WidgetBackgroundType = extras.getSerializable(EXTRA_BACKGROUND_TYPE) as WidgetBackgroundType
+        val textColorSelection: String? = extras.getString(EXTRA_TEXT_COLOR)
 
         if (entitySelection == null) {
             Log.e(TAG, "Did not receive complete service call data")
             return
         }
 
-        mainScope.launch {
-            val staticWidgetDao = AppDatabase.getInstance(context).staticWidgetDao()
+        widgetScope?.launch {
             Log.d(
                 TAG,
                 "Saving entity state config data:" + System.lineSeparator() +
@@ -170,7 +204,9 @@ class EntityWidget : BaseWidgetProvider() {
                     textSizeSelection?.toFloatOrNull() ?: 30F,
                     stateSeparatorSelection ?: "",
                     attributeSeparatorSelection ?: "",
-                    staticWidgetDao.get(appWidgetId)?.lastUpdate ?: ""
+                    staticWidgetDao.get(appWidgetId)?.lastUpdate ?: "",
+                    backgroundTypeSelection,
+                    textColorSelection
                 )
             )
 
@@ -178,21 +214,17 @@ class EntityWidget : BaseWidgetProvider() {
         }
     }
 
-    override fun onEntityStateChanged(context: Context, entity: Entity<*>) {
-        AppDatabase.getInstance(context).staticWidgetDao().getAll().orEmpty().forEach {
-            if (it.entityId == entity.entityId) {
-                mainScope.launch {
-                    val views = getWidgetRemoteViews(context, it.id, entity as Entity<Map<String, Any>>)
-                    AppWidgetManager.getInstance(context).updateAppWidget(it.id, views)
-                }
-            }
+    override suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity<*>) {
+        widgetScope?.launch {
+            val views = getWidgetRemoteViews(context, appWidgetId, entity as Entity<Map<String, Any>>)
+            AppWidgetManager.getInstance(context).updateAppWidget(appWidgetId, views)
         }
     }
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
-        val staticWidgetDao = AppDatabase.getInstance(context).staticWidgetDao()
-        appWidgetIds.forEach { appWidgetId ->
-            staticWidgetDao.delete(appWidgetId)
+        widgetScope?.launch {
+            staticWidgetDao.deleteAll(appWidgetIds)
+            appWidgetIds.forEach { removeSubscription(it) }
         }
     }
 }

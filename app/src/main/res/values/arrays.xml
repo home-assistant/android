@@ -12,10 +12,6 @@
         <item>@string/themes_option_value_light</item>
         <item>@string/themes_option_value_dark</item>
     </string-array>
-    <string-array name="shortcutTypes">
-        <item>@string/entity_id</item>
-        <item>@string/lovelace</item>
-    </string-array>
     <string-array name="tile_ids">
         <item>tile_1</item>
         <item>tile_2</item>

@@ -1,57 +1,75 @@
 package io.homeassistant.companion.android.home.views
 
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
-import androidx.wear.compose.material.ExperimentalWearMaterialApi
+import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
-import androidx.wear.compose.material.ScalingLazyColumn
 import androidx.wear.compose.material.ScalingLazyListState
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
+import androidx.wear.compose.material.ToggleChipDefaults
 import androidx.wear.compose.material.rememberScalingLazyListState
 import com.mikepenz.iconics.compose.Image
+import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.previewFavoritesList
-import io.homeassistant.companion.android.util.scrollHandler
+import io.homeassistant.companion.android.views.ListHeader
+import io.homeassistant.companion.android.views.ThemeLazyColumn
 import io.homeassistant.companion.android.common.R as commonR
 
-@ExperimentalComposeUiApi
-@ExperimentalAnimationApi
-@ExperimentalWearMaterialApi
+@Composable
+fun SecondarySettingsChip(
+    icon: IIcon,
+    label: String,
+    secondaryLabel: String? = null,
+    enabled: Boolean = true,
+    onClick: () -> Unit
+) {
+    Chip(
+        modifier = Modifier.fillMaxWidth(),
+        icon = {
+            Image(
+                asset = icon,
+                colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+            )
+        },
+        colors = ChipDefaults.secondaryChipColors(),
+        label = { Text(text = label) },
+        secondaryLabel = secondaryLabel?.let {
+            { Text(text = secondaryLabel) }
+        },
+        enabled = enabled,
+        onClick = onClick
+    )
+}
+
 @Composable
 fun SettingsView(
     favorites: List<String>,
     onClickSetFavorites: () -> Unit,
     onClearFavorites: () -> Unit,
     onClickSetShortcuts: () -> Unit,
+    onClickSensors: () -> Unit,
     onClickLogout: () -> Unit,
     isHapticEnabled: Boolean,
     isToastEnabled: Boolean,
     onHapticEnabled: (Boolean) -> Unit,
-    onToastEnabled: (Boolean) -> Unit
+    onToastEnabled: (Boolean) -> Unit,
+    onClickTemplateTile: () -> Unit
 ) {
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
-    LocalView.current.requestFocus()
 
     WearAppTheme {
         Scaffold(
@@ -61,65 +79,26 @@ fun SettingsView(
             },
             timeText = { TimeText(!scalingLazyListState.isScrollInProgress) }
         ) {
-            ScalingLazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .scrollHandler(scalingLazyListState),
-                contentPadding = PaddingValues(
-                    top = 24.dp,
-                    start = 8.dp,
-                    end = 8.dp,
-                    bottom = 48.dp
-                ),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
+            ThemeLazyColumn(
                 state = scalingLazyListState
             ) {
                 item {
                     ListHeader(id = commonR.string.favorite_settings)
                 }
                 item {
-                    Chip(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        icon = {
-                            Image(
-                                asset = CommunityMaterial.Icon3.cmd_star,
-                                colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
-                            )
-                        },
-                        colors = ChipDefaults.secondaryChipColors(),
-                        label = {
-                            Text(
-                                text = stringResource(id = commonR.string.favorite)
-                            )
-                        },
+                    SecondarySettingsChip(
+                        icon = CommunityMaterial.Icon3.cmd_star,
+                        label = stringResource(commonR.string.favorite),
                         onClick = onClickSetFavorites
                     )
                 }
                 item {
-                    Chip(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        icon = {
-                            Image(
-                                asset = CommunityMaterial.Icon.cmd_delete,
-                                colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
-                            )
-                        },
-                        colors = ChipDefaults.secondaryChipColors(),
-                        label = {
-                            Text(
-                                text = stringResource(id = commonR.string.clear_favorites),
-                            )
-                        },
-                        onClick = onClearFavorites,
-                        secondaryLabel = {
-                            Text(
-                                text = stringResource(id = commonR.string.irreversible)
-                            )
-                        },
-                        enabled = favorites.isNotEmpty()
+                    SecondarySettingsChip(
+                        icon = CommunityMaterial.Icon.cmd_delete,
+                        label = stringResource(commonR.string.clear_favorites),
+                        secondaryLabel = stringResource(commonR.string.irreversible),
+                        enabled = favorites.isNotEmpty(),
+                        onClick = onClearFavorites
                     )
                 }
                 item {
@@ -130,8 +109,7 @@ fun SettingsView(
                 item {
                     val haptic = LocalHapticFeedback.current
                     ToggleChip(
-                        modifier = Modifier
-                            .fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                         checked = isHapticEnabled,
                         onCheckedChange = {
                             onHapticEnabled(it)
@@ -149,17 +127,23 @@ fun SettingsView(
                                     CommunityMaterial.Icon3.cmd_watch_vibrate_off,
                                 colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
                             )
+                        },
+                        toggleControl = {
+                            Icon(
+                                imageVector = ToggleChipDefaults.checkboxIcon(isHapticEnabled),
+                                contentDescription = if (isHapticEnabled)
+                                    stringResource(commonR.string.enabled)
+                                else
+                                    stringResource(commonR.string.disabled)
+                            )
                         }
                     )
                 }
                 item {
                     ToggleChip(
-                        modifier = Modifier
-                            .fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                         checked = isToastEnabled,
-                        onCheckedChange = {
-                            onToastEnabled(it)
-                        },
+                        onCheckedChange = onToastEnabled,
                         label = {
                             Text(stringResource(commonR.string.setting_toast_label))
                         },
@@ -172,6 +156,15 @@ fun SettingsView(
                                     CommunityMaterial.Icon3.cmd_message_off,
                                 colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
                             )
+                        },
+                        toggleControl = {
+                            Icon(
+                                imageVector = ToggleChipDefaults.checkboxIcon(isToastEnabled),
+                                contentDescription = if (isHapticEnabled)
+                                    stringResource(commonR.string.enabled)
+                                else
+                                    stringResource(commonR.string.disabled)
+                            )
                         }
                     )
                 }
@@ -182,25 +175,31 @@ fun SettingsView(
                     )
                 }
                 item {
-                    Chip(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        icon = {
-                            Image(
-                                asset = CommunityMaterial.Icon3.cmd_star_circle_outline,
-                                colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
-                            )
-                        },
-                        colors = ChipDefaults.secondaryChipColors(),
-                        label = {
-                            Text(
-                                text = stringResource(id = commonR.string.shortcuts)
-                            )
-                        },
+                    SecondarySettingsChip(
+                        icon = CommunityMaterial.Icon3.cmd_star_circle_outline,
+                        label = stringResource(commonR.string.shortcuts_tile),
                         onClick = onClickSetShortcuts
                     )
                 }
-
+                item {
+                    SecondarySettingsChip(
+                        icon = CommunityMaterial.Icon3.cmd_text_box,
+                        label = stringResource(commonR.string.template_tile),
+                        onClick = onClickTemplateTile
+                    )
+                }
+                item {
+                    ListHeader(
+                        id = commonR.string.sensors
+                    )
+                }
+                item {
+                    SecondarySettingsChip(
+                        icon = CommunityMaterial.Icon2.cmd_leak,
+                        label = stringResource(id = commonR.string.sensor_title),
+                        onClick = onClickSensors
+                    )
+                }
                 item {
                     ListHeader(
                         id = commonR.string.account
@@ -208,8 +207,7 @@ fun SettingsView(
                 }
                 item {
                     Chip(
-                        modifier = Modifier
-                            .fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                         icon = {
                             Image(asset = CommunityMaterial.Icon.cmd_exit_run)
                         },
@@ -230,9 +228,6 @@ fun SettingsView(
     }
 }
 
-@ExperimentalComposeUiApi
-@ExperimentalAnimationApi
-@ExperimentalWearMaterialApi
 @Preview
 @Composable
 private fun PreviewSettingsView() {
@@ -241,10 +236,11 @@ private fun PreviewSettingsView() {
         onClickSetFavorites = { /*TODO*/ },
         onClearFavorites = {},
         onClickSetShortcuts = {},
+        onClickSensors = {},
         onClickLogout = {},
         isHapticEnabled = true,
         isToastEnabled = false,
-        {},
-        {}
-    )
+        onHapticEnabled = {},
+        onToastEnabled = {}
+    ) {}
 }

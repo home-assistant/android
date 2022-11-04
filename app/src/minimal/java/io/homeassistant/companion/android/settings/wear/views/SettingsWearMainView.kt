@@ -1,12 +1,10 @@
-package io.homeassistant.companion.android.settings
+package io.homeassistant.companion.android.settings.wear.views
 
 import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.gms.wearable.DataClient
-import com.google.android.gms.wearable.DataEventBuffer
 
-class SettingsWearMainView : AppCompatActivity(), DataClient.OnDataChangedListener {
+class SettingsWearMainView : AppCompatActivity() {
 
     companion object {
         private const val TAG = "SettingsWearMainView"
@@ -14,9 +12,5 @@ class SettingsWearMainView : AppCompatActivity(), DataClient.OnDataChangedListen
         fun newInstance(context: Context): Intent {
             return Intent(context, SettingsWearMainView::class.java)
         }
-    }
-
-    override fun onDataChanged(dataEvents: DataEventBuffer) {
-        // No op
     }
 }

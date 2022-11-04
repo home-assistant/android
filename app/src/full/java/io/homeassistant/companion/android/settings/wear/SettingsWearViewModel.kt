@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.google.android.gms.wearable.CapabilityClient
@@ -22,9 +23,10 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.burnoutcrew.reorderable.ItemPosition
-import org.burnoutcrew.reorderable.move
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -42,18 +44,29 @@ class SettingsWearViewModel @Inject constructor(
 
         private const val KEY_UPDATE_TIME = "UpdateTime"
         private const val KEY_IS_AUTHENTICATED = "isAuthenticated"
+        private const val KEY_SUPPORTED_DOMAINS = "supportedDomains"
         private const val KEY_FAVORITES = "favorites"
+        private const val KEY_TEMPLATE_TILE = "templateTile"
+        private const val KEY_TEMPLATE_TILE_REFRESH_INTERVAL = "templateTileRefreshInterval"
     }
 
     private val objectMapper = jacksonObjectMapper()
 
-    var hasData = mutableStateOf(false)
-        private set
-    var isAuthenticated = mutableStateOf(false)
-        private set
+    private val _hasData = MutableStateFlow(false)
+    val hasData = _hasData.asStateFlow()
+    private val _isAuthenticated = MutableStateFlow(false)
+    val isAuthenticated = _isAuthenticated.asStateFlow()
     var entities = mutableStateMapOf<String, Entity<*>>()
         private set
+    var supportedDomains = mutableStateListOf<String>()
+        private set
     var favoriteEntityIds = mutableStateListOf<String>()
+        private set
+    var templateTileContent = mutableStateOf("")
+        private set
+    var templateTileContentRendered = mutableStateOf("")
+        private set
+    var templateTileRefreshInterval = mutableStateOf(0)
         private set
 
     init {
@@ -96,6 +109,27 @@ class SettingsWearViewModel @Inject constructor(
         Wearable.getDataClient(getApplication<HomeAssistantApplication>()).removeListener(this)
     }
 
+    fun setTemplateContent(template: String) {
+        templateTileContent.value = template
+        if (template.isNotEmpty()) {
+            viewModelScope.launch {
+                try {
+                    templateTileContentRendered.value =
+                        integrationUseCase.renderTemplate(template, mapOf()).toString()
+                } catch (e: Exception) {
+                    Log.e(TAG, "Exception while rendering template", e)
+                    // JsonMappingException suggests that template is not a String (= error)
+                    templateTileContentRendered.value = getApplication<Application>().getString(
+                        if (e.cause is JsonMappingException) commonR.string.template_error
+                        else commonR.string.template_render_error
+                    )
+                }
+            }
+        } else {
+            templateTileContentRendered.value = ""
+        }
+    }
+
     fun onEntitySelected(checked: Boolean, entityId: String) {
         if (checked)
             favoriteEntityIds.add(entityId)
@@ -105,10 +139,12 @@ class SettingsWearViewModel @Inject constructor(
     }
 
     fun onMove(fromItem: ItemPosition, toItem: ItemPosition) {
-        favoriteEntityIds.move(
-            favoriteEntityIds.indexOfFirst { it == fromItem.key },
-            favoriteEntityIds.indexOfFirst { it == toItem.key }
-        )
+        favoriteEntityIds.apply {
+            add(
+                favoriteEntityIds.indexOfFirst { it == toItem.key },
+                removeAt(favoriteEntityIds.indexOfFirst { it == fromItem.key })
+            )
+        }
     }
 
     fun canDragOver(position: ItemPosition) = favoriteEntityIds.any { it == position.key }
@@ -151,8 +187,22 @@ class SettingsWearViewModel @Inject constructor(
         }
 
         Wearable.getDataClient(getApplication<HomeAssistantApplication>()).putDataItem(putDataRequest).apply {
-            addOnSuccessListener { Log.d(TAG, "Successfully sent favorites to wear") }
-            addOnFailureListener { e -> Log.e(TAG, "Failed to send favorites to wear", e) }
+            addOnSuccessListener { Log.d(TAG, "Successfully sent auth to wear") }
+            addOnFailureListener { e -> Log.e(TAG, "Failed to send auth to wear", e) }
+        }
+    }
+
+    fun sendTemplateTileInfo() {
+        val putDataRequest = PutDataMapRequest.create("/updateTemplateTile").run {
+            dataMap.putString(KEY_TEMPLATE_TILE, templateTileContent.value)
+            dataMap.putInt(KEY_TEMPLATE_TILE_REFRESH_INTERVAL, templateTileRefreshInterval.value)
+            setUrgent()
+            asPutDataRequest()
+        }
+
+        Wearable.getDataClient(getApplication<HomeAssistantApplication>()).putDataItem(putDataRequest).apply {
+            addOnSuccessListener { Log.d(TAG, "Successfully sent tile template to wear") }
+            addOnFailureListener { e -> Log.e(TAG, "Failed to send tile template to wear", e) }
         }
     }
 
@@ -173,13 +223,19 @@ class SettingsWearViewModel @Inject constructor(
     }
 
     private fun onLoadConfigFromWear(data: DataMap) {
-        isAuthenticated.value = data.getBoolean(KEY_IS_AUTHENTICATED, false)
+        _isAuthenticated.value = data.getBoolean(KEY_IS_AUTHENTICATED, false)
+        val supportedDomainsList: List<String> =
+            objectMapper.readValue(data.getString(KEY_SUPPORTED_DOMAINS, "[\"input_boolean\", \"light\", \"lock\", \"switch\", \"script\", \"scene\"]"))
+        supportedDomains.clear()
+        supportedDomains.addAll(supportedDomainsList)
         val favoriteEntityIdList: List<String> =
             objectMapper.readValue(data.getString(KEY_FAVORITES, "[]"))
         favoriteEntityIds.clear()
         favoriteEntityIdList.forEach { entityId ->
             favoriteEntityIds.add(entityId)
         }
-        hasData.value = true
+        setTemplateContent(data.getString(KEY_TEMPLATE_TILE, ""))
+        templateTileRefreshInterval.value = data.getInt(KEY_TEMPLATE_TILE_REFRESH_INTERVAL, 0)
+        _hasData.value = true
     }
 }

@@ -12,7 +12,8 @@ class GeocodeSensorManager : SensorManager {
             "geocoded_location",
             "sensor",
             commonR.string.basic_sensor_name_geolocation,
-            commonR.string.sensor_description_geocoded_location
+            commonR.string.sensor_description_geocoded_location,
+            "mdi:map"
         )
     }
 

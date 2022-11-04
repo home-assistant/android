@@ -7,6 +7,14 @@ import io.homeassistant.companion.android.common.data.authentication.SessionStat
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.websocket.WebSocketState
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryUpdatedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryUpdatedEvent
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -15,10 +23,12 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 class HomePresenterImpl @Inject constructor(
     private val authenticationUseCase: AuthenticationRepository,
-    private val integrationUseCase: IntegrationRepository
+    private val integrationUseCase: IntegrationRepository,
+    private val webSocketUseCase: WebSocketRepository
 ) : HomePresenter {
 
     companion object {
@@ -26,9 +36,19 @@ class HomePresenterImpl @Inject constructor(
             "cover", "fan", "humidifier", "input_boolean", "light", "lock",
             "media_player", "remote", "siren", "switch"
         )
-        val supportedDomains = listOf(
-            "input_boolean", "light", "lock", "switch", "script", "scene"
+        val domainsWithNames = mapOf(
+            "button" to commonR.string.buttons,
+            "cover" to commonR.string.covers,
+            "fan" to commonR.string.fans,
+            "input_boolean" to commonR.string.input_booleans,
+            "input_button" to commonR.string.input_buttons,
+            "light" to commonR.string.lights,
+            "lock" to commonR.string.locks,
+            "switch" to commonR.string.switches,
+            "script" to commonR.string.scripts,
+            "scene" to commonR.string.scenes
         )
+        val supportedDomains = domainsWithNames.keys.toList()
         const val TAG = "HomePresenter"
     }
 
@@ -64,6 +84,7 @@ class HomePresenterImpl @Inject constructor(
     override suspend fun onEntityClicked(entityId: String, state: String) {
         val domain = entityId.split(".")[0]
         val serviceName = when (domain) {
+            "button", "input_button" -> "press"
             "lock" -> {
                 // Defaults to locking, to be save
                 if (state == "locked")
@@ -74,16 +95,75 @@ class HomePresenterImpl @Inject constructor(
             in toggleDomains -> "toggle"
             else -> "turn_on"
         }
-        integrationUseCase.callService(
-            domain,
-            serviceName,
-            hashMapOf("entity_id" to entityId)
-        )
+        try {
+            integrationUseCase.callService(
+                domain,
+                serviceName,
+                hashMapOf("entity_id" to entityId)
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception when toggling entity", e)
+        }
     }
 
-    override fun onLogoutClicked() {
+    override suspend fun onFanSpeedChanged(entityId: String, speed: Float) {
+        try {
+            integrationUseCase.callService(
+                entityId.split(".")[0],
+                "set_percentage",
+                hashMapOf(
+                    "entity_id" to entityId,
+                    "percentage" to speed.toInt()
+                )
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception when setting fan speed", e)
+        }
+    }
+
+    override suspend fun onBrightnessChanged(entityId: String, brightness: Float) {
+        try {
+            integrationUseCase.callService(
+                entityId.split(".")[0],
+                "turn_on",
+                hashMapOf(
+                    "entity_id" to entityId,
+                    "brightness" to brightness.toInt()
+                )
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception when setting light brightness", e)
+        }
+    }
+
+    override suspend fun onColorTempChanged(entityId: String, colorTemp: Float) {
+        try {
+            integrationUseCase.callService(
+                entityId.split(".")[0],
+                "turn_on",
+                hashMapOf(
+                    "entity_id" to entityId,
+                    "color_temp" to colorTemp.toInt()
+                )
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception when setting light color temp", e)
+        }
+    }
+
+    override fun onInvalidAuthorization() = finishSession()
+
+    override fun onLogoutClicked() = finishSession()
+
+    private fun finishSession() {
         mainScope.launch {
-            authenticationUseCase.revokeSession()
+            try {
+                authenticationUseCase.revokeSession()
+            } catch (e: Exception) {
+                Log.e(TAG, "Exception while revoking session", e)
+                // Remove local data anyway, the user wants to sign out and we don't need the server for that
+                authenticationUseCase.removeSessionData()
+            }
             view.displayOnBoarding()
         }
     }
@@ -112,6 +192,34 @@ class HomePresenterImpl @Inject constructor(
         return integrationUseCase.isRegistered()
     }
 
+    override fun getWebSocketState(): WebSocketState? {
+        return webSocketUseCase.getConnectionState()
+    }
+
+    override suspend fun getAreaRegistry(): List<AreaRegistryResponse>? {
+        return webSocketUseCase.getAreaRegistry()
+    }
+
+    override suspend fun getDeviceRegistry(): List<DeviceRegistryResponse>? {
+        return webSocketUseCase.getDeviceRegistry()
+    }
+
+    override suspend fun getEntityRegistry(): List<EntityRegistryResponse>? {
+        return webSocketUseCase.getEntityRegistry()
+    }
+
+    override suspend fun getAreaRegistryUpdates(): Flow<AreaRegistryUpdatedEvent>? {
+        return webSocketUseCase.getAreaRegistryUpdates()
+    }
+
+    override suspend fun getDeviceRegistryUpdates(): Flow<DeviceRegistryUpdatedEvent>? {
+        return webSocketUseCase.getDeviceRegistryUpdates()
+    }
+
+    override suspend fun getEntityRegistryUpdates(): Flow<EntityRegistryUpdatedEvent>? {
+        return webSocketUseCase.getEntityRegistryUpdates()
+    }
+
     override suspend fun getTileShortcuts(): List<SimplifiedEntity> {
         return integrationUseCase.getTileShortcuts().map { SimplifiedEntity(it) }
     }
@@ -134,5 +242,29 @@ class HomePresenterImpl @Inject constructor(
 
     override suspend fun setWearToastConfirmation(enabled: Boolean) {
         integrationUseCase.setWearToastConfirmation(enabled)
+    }
+
+    override suspend fun getShowShortcutText(): Boolean {
+        return integrationUseCase.getShowShortcutText()
+    }
+
+    override suspend fun setShowShortcutTextEnabled(enabled: Boolean) {
+        integrationUseCase.setShowShortcutTextEnabled(enabled)
+    }
+
+    override suspend fun getTemplateTileContent(): String {
+        return integrationUseCase.getTemplateTileContent()
+    }
+
+    override suspend fun setTemplateTileContent(content: String) {
+        integrationUseCase.setTemplateTileContent(content)
+    }
+
+    override suspend fun getTemplateTileRefreshInterval(): Int {
+        return integrationUseCase.getTemplateTileRefreshInterval()
+    }
+
+    override suspend fun setTemplateTileRefreshInterval(interval: Int) {
+        integrationUseCase.setTemplateTileRefreshInterval(interval)
     }
 }

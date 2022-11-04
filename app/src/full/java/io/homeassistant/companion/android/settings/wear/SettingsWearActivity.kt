@@ -97,6 +97,7 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
 
     override fun onResume() {
         super.onResume()
+        title = getString(commonR.string.wear_os_settings_title)
         capabilityClient.addListener(this, CAPABILITY_WEAR_APP)
     }
 
@@ -162,7 +163,7 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
             }
             allConnectedNodes.isEmpty() -> {
                 Log.d(TAG, "No devices")
-                binding.informationTextView.text = getString(commonR.string.message_checking)
+                binding.informationTextView.text = getString(commonR.string.message_no_connected_nodes)
                 binding.remoteOpenButton.isInvisible = true
             }
             wearNodesWithApp.isEmpty() -> {
@@ -172,12 +173,12 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
             }
             wearNodesWithApp.size < allConnectedNodes.size -> {
                 Log.d(TAG, "Installed on some devices")
-                startActivity(SettingsWearMainView.newInstance(applicationContext, wearNodesWithApp))
+                startActivity(SettingsWearMainView.newInstance(applicationContext, wearNodesWithApp, getAuthIntentUrl()))
                 finish()
             }
             else -> {
                 Log.d(TAG, "Installed on all devices")
-                startActivity(SettingsWearMainView.newInstance(applicationContext, wearNodesWithApp))
+                startActivity(SettingsWearMainView.newInstance(applicationContext, wearNodesWithApp, getAuthIntentUrl()))
                 finish()
             }
         }
@@ -221,6 +222,17 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
                         Toast.LENGTH_LONG
                     ).show()
                 }
+            }
+        }
+    }
+
+    private fun getAuthIntentUrl(): String? {
+        return intent.data?.let {
+            if (it.scheme == "homeassistant" && it.host == "wear-phone-signin") {
+                // Return empty string if phone sign in was used to open this, indicating no instance selected
+                it.getQueryParameter("url") ?: ""
+            } else {
+                null
             }
         }
     }

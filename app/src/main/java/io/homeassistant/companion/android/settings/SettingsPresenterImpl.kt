@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.settings
 
+import android.content.Context
 import android.util.Log
 import androidx.preference.PreferenceDataStore
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
@@ -10,6 +11,7 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.ThemesManager
+import io.homeassistant.companion.android.util.ChangeLog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -25,7 +27,8 @@ class SettingsPresenterImpl @Inject constructor(
     private val authenticationUseCase: AuthenticationRepository,
     private val prefsRepository: PrefsRepository,
     private val themesManager: ThemesManager,
-    private val langsManager: LanguagesManager
+    private val langsManager: LanguagesManager,
+    private val changeLog: ChangeLog
 ) : SettingsPresenter, PreferenceDataStore() {
 
     companion object {
@@ -44,10 +47,12 @@ class SettingsPresenterImpl @Inject constructor(
             return@runBlocking when (key) {
                 "fullscreen" -> integrationUseCase.isFullScreenEnabled()
                 "keep_screen_on" -> integrationUseCase.isKeepScreenOnEnabled()
-                "app_lock" -> authenticationUseCase.isLockEnabled()
+                "pinch_to_zoom" -> integrationUseCase.isPinchToZoomEnabled()
+                "app_lock" -> authenticationUseCase.isLockEnabledRaw()
+                "app_lock_home_bypass" -> authenticationUseCase.isLockHomeBypassEnabled()
                 "crash_reporting" -> prefsRepository.isCrashReporting()
-                "prioritize_internal" -> urlUseCase.isPrioritizeInternal()
                 "autoplay_video" -> integrationUseCase.isAutoPlayVideoEnabled()
+                "webview_debug" -> integrationUseCase.isWebViewDebugEnabled()
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }
@@ -58,10 +63,12 @@ class SettingsPresenterImpl @Inject constructor(
             when (key) {
                 "fullscreen" -> integrationUseCase.setFullScreenEnabled(value)
                 "keep_screen_on" -> integrationUseCase.setKeepScreenOnEnabled(value)
+                "pinch_to_zoom" -> integrationUseCase.setPinchToZoomEnabled(value)
                 "app_lock" -> authenticationUseCase.setLockEnabled(value)
+                "app_lock_home_bypass" -> authenticationUseCase.setLockHomeBypassEnabled(value)
                 "crash_reporting" -> prefsRepository.setCrashReporting(value)
-                "prioritize_internal" -> urlUseCase.setPrioritizeInternal(value)
                 "autoplay_video" -> integrationUseCase.setAutoPlayVideo(value)
+                "webview_debug" -> integrationUseCase.setWebViewDebugEnabled(value)
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }
@@ -110,27 +117,6 @@ class SettingsPresenterImpl @Inject constructor(
         }
     }
 
-    override fun getStringSet(key: String, defValues: Set<String>?): Set<String> {
-        return runBlocking {
-            when (key) {
-                "connection_internal_ssids" -> urlUseCase.getHomeWifiSsids()
-                else -> throw IllegalArgumentException("No stringSet found by this key: $key")
-            }
-        }
-    }
-
-    override fun putStringSet(key: String, values: Set<String>?) {
-        mainScope.launch {
-            when (key) {
-                "connection_internal_ssids" -> {
-                    val ssids = values ?: emptySet()
-                    urlUseCase.saveHomeWifiSsids(ssids)
-                    handleInternalUrlStatus(ssids)
-                }
-            }
-        }
-    }
-
     override fun getInt(key: String, defValue: Int): Int {
         return runBlocking {
             when (key) {
@@ -163,6 +149,12 @@ class SettingsPresenterImpl @Inject constructor(
         mainScope.cancel()
     }
 
+    override fun updateInternalUrlStatus() {
+        mainScope.launch {
+            handleInternalUrlStatus(urlUseCase.getHomeWifiSsids())
+        }
+    }
+
     private suspend fun handleInternalUrlStatus(ssids: Set<String>) {
         if (ssids.isEmpty()) {
             settingsView.disableInternalConnection()
@@ -170,6 +162,7 @@ class SettingsPresenterImpl @Inject constructor(
         } else {
             settingsView.enableInternalConnection()
         }
+        settingsView.updateSsids(ssids)
     }
 
     override fun isLockEnabled(): Boolean {
@@ -215,5 +208,9 @@ class SettingsPresenterImpl @Inject constructor(
         return runBlocking {
             urlUseCase.getHomeWifiSsids().isNotEmpty()
         }
+    }
+
+    override fun showChangeLog(context: Context) {
+        changeLog.showChangeLog(context, true)
     }
 }

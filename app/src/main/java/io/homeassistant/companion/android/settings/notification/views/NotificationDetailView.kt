@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.settings.notification.views
 
 import android.text.Html
 import android.widget.TextView
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -25,44 +26,36 @@ import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun LoadNotification(notification: NotificationItem) {
-
     val scrollState = rememberScrollState()
+    val valueModifier = Modifier.padding(start = 24.dp)
+
     Column(modifier = Modifier.verticalScroll(scrollState)) {
-        Text(
-            text = stringResource(commonR.string.notification_received_at),
-            fontWeight = FontWeight.ExtraBold,
-            fontSize = 20.sp,
-            modifier = Modifier
-                .padding(top = 30.dp, bottom = 20.dp, start = 10.dp)
-        )
+        NotificationDetailViewHeader(stringId = commonR.string.notification_received_at)
         val cal: Calendar = GregorianCalendar()
         cal.timeInMillis = notification.received
         Text(
             text = cal.time.toString(),
-            modifier = Modifier
-                .padding(start = 20.dp)
+            modifier = valueModifier
         )
+
+        NotificationDetailViewHeader(stringId = commonR.string.notification_source)
         Text(
-            text = stringResource(commonR.string.notification_message),
-            fontWeight = FontWeight.ExtraBold,
-            fontSize = 20.sp,
-            modifier = Modifier
-                .padding(top = 20.dp, bottom = 20.dp, start = 10.dp)
+            text = notification.source,
+            modifier = valueModifier
         )
-        AndroidView(factory = { context ->
-            TextView(context).apply {
-                text = Html.fromHtml(notification.message)
-                setPadding(80, 0, 0, 0)
-                textSize = 16f
-            }
-        })
-        Text(
-            text = stringResource(commonR.string.notification_data),
-            fontWeight = FontWeight.ExtraBold,
-            fontSize = 20.sp,
-            modifier = Modifier
-                .padding(top = 20.dp, bottom = 20.dp, start = 10.dp)
+
+        NotificationDetailViewHeader(stringId = commonR.string.notification_message)
+        AndroidView(
+            factory = { context ->
+                TextView(context).apply {
+                    text = Html.fromHtml(notification.message)
+                    textSize = 16f
+                }
+            },
+            modifier = valueModifier
         )
+
+        NotificationDetailViewHeader(stringId = commonR.string.notification_data)
         val notifData =
             try {
                 val mapper = ObjectMapper()
@@ -72,13 +65,24 @@ fun LoadNotification(notification: NotificationItem) {
             } catch (e: Exception) {
                 notification.data
             }
-
         Text(
             text = notifData,
-            modifier = Modifier
-                .padding(start = 20.dp)
+            modifier = valueModifier.then(Modifier.padding(bottom = 16.dp))
         )
     }
+}
+
+@Composable
+fun NotificationDetailViewHeader(
+    @StringRes stringId: Int
+) {
+    Text(
+        text = stringResource(stringId),
+        fontWeight = FontWeight.ExtraBold,
+        fontSize = 20.sp,
+        modifier = Modifier
+            .padding(top = 32.dp, bottom = 16.dp, start = 16.dp)
+    )
 }
 
 @Preview

@@ -2,8 +2,10 @@ package io.homeassistant.companion.android.common.data.integration.impl
 
 import android.util.Log
 import io.homeassistant.companion.android.common.BuildConfig
+import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
+import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationException
@@ -30,11 +32,9 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.json.JSONArray
-import java.util.regex.Pattern
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Named
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 
 class IntegrationRepositoryImpl @Inject constructor(
     private val integrationService: IntegrationService,
@@ -62,19 +62,24 @@ class IntegrationRepositoryImpl @Inject constructor(
 
         private const val PREF_CHECK_SENSOR_REGISTRATION_NEXT = "sensor_reg_last"
         private const val PREF_TILE_SHORTCUTS = "tile_shortcuts_list"
+        private const val PREF_SHOW_TILE_SHORTCUTS_TEXT = "show_tile_shortcuts_text"
+        private const val PREF_TILE_TEMPLATE = "tile_template"
+        private const val PREF_TILE_TEMPLATE_REFRESH_INTERVAL = "tile_template_refresh_interval"
         private const val PREF_WEAR_HAPTIC_FEEDBACK = "wear_haptic_feedback"
         private const val PREF_WEAR_TOAST_CONFIRMATION = "wear_toast_confirmation"
         private const val PREF_HA_VERSION = "ha_version"
         private const val PREF_AUTOPLAY_VIDEO = "autoplay_video"
         private const val PREF_FULLSCREEN_ENABLED = "fullscreen_enabled"
         private const val PREF_KEEP_SCREEN_ON_ENABLED = "keep_screen_on_enabled"
+        private const val PREF_PINCH_TO_ZOOM_ENABLED = "pinch_to_zoom_enabled"
+        private const val PREF_WEBVIEW_DEBUG_ENABLED = "webview_debug_enabled"
         private const val PREF_SESSION_TIMEOUT = "session_timeout"
         private const val PREF_SESSION_EXPIRE = "session_expire"
+        private const val PREF_CONTROLS_AUTH_REQUIRED = "controls_auth_required"
+        private const val PREF_CONTROLS_AUTH_ENTITIES = "controls_auth_entities"
         private const val PREF_SEC_WARNING_NEXT = "sec_warning_last"
         private const val TAG = "IntegrationRepository"
         private const val RATE_LIMIT_URL = BuildConfig.RATE_LIMIT_URL
-
-        private val VERSION_PATTERN = Pattern.compile("([0-9]{4})\\.([0-9]{1,2})\\.([0-9]{1,2}).*")
     }
 
     override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {
@@ -90,13 +95,13 @@ class IntegrationRepositoryImpl @Inject constructor(
             Log.e(TAG, "Unable to register device due to missing URL")
             return
         }
+        val response =
+            integrationService.registerDevice(
+                url.newBuilder().addPathSegments("api/mobile_app/registrations").build(),
+                authenticationRepository.buildBearerToken(),
+                request
+            )
         try {
-            val response =
-                integrationService.registerDevice(
-                    url.newBuilder().addPathSegments("api/mobile_app/registrations").build(),
-                    authenticationRepository.buildBearerToken(),
-                    request
-                )
             persistDeviceRegistration(deviceRegistration)
             urlRepository.saveRegistrationUrls(
                 response.cloudhookUrl,
@@ -105,7 +110,7 @@ class IntegrationRepositoryImpl @Inject constructor(
             )
             localStorage.putString(PREF_SECRET, response.secret)
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to register device", e)
+            Log.e(TAG, "Unable to save device registration", e)
         }
     }
 
@@ -153,7 +158,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         return urlRepository.getApiUrls().isNotEmpty()
     }
 
-    override suspend fun renderTemplate(template: String, variables: Map<String, String>): String {
+    override suspend fun renderTemplate(template: String, variables: Map<String, String>): String? {
         var causeException: Exception? = null
         for (it in urlRepository.getApiUrls()) {
             try {
@@ -163,7 +168,7 @@ class IntegrationRepositoryImpl @Inject constructor(
                         "render_template",
                         mapOf("template" to Template(template, variables))
                     )
-                ).getValue("template")
+                )["template"]
             } catch (e: Exception) {
                 if (causeException == null) causeException = e
                 // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
@@ -172,6 +177,13 @@ class IntegrationRepositoryImpl @Inject constructor(
 
         if (causeException != null) throw IntegrationException(causeException)
         else throw IntegrationException("Error calling integration request render_template")
+    }
+
+    override suspend fun getTemplateUpdates(template: String): Flow<String?>? {
+        return webSocketRepository.getTemplateUpdates(template)
+            ?.map {
+                it.result
+            }
     }
 
     override suspend fun updateLocation(updateLocation: UpdateLocation) {
@@ -337,6 +349,22 @@ class IntegrationRepositoryImpl @Inject constructor(
         return localStorage.getBoolean(PREF_KEEP_SCREEN_ON_ENABLED)
     }
 
+    override suspend fun setPinchToZoomEnabled(enabled: Boolean) {
+        localStorage.putBoolean(PREF_PINCH_TO_ZOOM_ENABLED, enabled)
+    }
+
+    override suspend fun isPinchToZoomEnabled(): Boolean {
+        return localStorage.getBoolean(PREF_PINCH_TO_ZOOM_ENABLED)
+    }
+
+    override suspend fun setWebViewDebugEnabled(enabled: Boolean) {
+        localStorage.putBoolean(PREF_WEBVIEW_DEBUG_ENABLED, enabled)
+    }
+
+    override suspend fun isWebViewDebugEnabled(): Boolean {
+        return localStorage.getBoolean(PREF_WEBVIEW_DEBUG_ENABLED)
+    }
+
     override suspend fun isAutoPlayVideoEnabled(): Boolean {
         return localStorage.getBoolean(PREF_AUTOPLAY_VIDEO)
     }
@@ -361,6 +389,25 @@ class IntegrationRepositoryImpl @Inject constructor(
         return localStorage.getLong(PREF_SESSION_EXPIRE) ?: 0
     }
 
+    override suspend fun setControlsAuthRequired(setting: ControlsAuthRequiredSetting) {
+        localStorage.putString(PREF_CONTROLS_AUTH_REQUIRED, setting.name)
+    }
+
+    override suspend fun getControlsAuthRequired(): ControlsAuthRequiredSetting {
+        val current = localStorage.getString(PREF_CONTROLS_AUTH_REQUIRED)
+        return ControlsAuthRequiredSetting.values().firstOrNull {
+            it.name == current
+        } ?: ControlsAuthRequiredSetting.NONE
+    }
+
+    override suspend fun setControlsAuthEntities(entities: List<String>) {
+        localStorage.putStringSet(PREF_CONTROLS_AUTH_ENTITIES, entities.toSet())
+    }
+
+    override suspend fun getControlsAuthEntities(): List<String> {
+        return localStorage.getStringSet(PREF_CONTROLS_AUTH_ENTITIES)?.toList() ?: emptyList()
+    }
+
     override suspend fun getTileShortcuts(): List<String> {
         val jsonArray = JSONArray(localStorage.getString(PREF_TILE_SHORTCUTS) ?: "[]")
         return List(jsonArray.length()) {
@@ -370,6 +417,22 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     override suspend fun setTileShortcuts(entities: List<String>) {
         localStorage.putString(PREF_TILE_SHORTCUTS, JSONArray(entities).toString())
+    }
+
+    override suspend fun getTemplateTileContent(): String {
+        return localStorage.getString(PREF_TILE_TEMPLATE) ?: ""
+    }
+
+    override suspend fun setTemplateTileContent(content: String) {
+        localStorage.putString(PREF_TILE_TEMPLATE, content)
+    }
+
+    override suspend fun getTemplateTileRefreshInterval(): Int {
+        return localStorage.getInt(PREF_TILE_TEMPLATE_REFRESH_INTERVAL) ?: 0
+    }
+
+    override suspend fun setTemplateTileRefreshInterval(interval: Int) {
+        localStorage.putInt(PREF_TILE_TEMPLATE_REFRESH_INTERVAL, interval)
     }
 
     override suspend fun setWearHapticFeedback(enabled: Boolean) {
@@ -386,6 +449,14 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     override suspend fun getWearToastConfirmation(): Boolean {
         return localStorage.getBoolean(PREF_WEAR_TOAST_CONFIRMATION)
+    }
+
+    override suspend fun setShowShortcutTextEnabled(enabled: Boolean) {
+        localStorage.putBoolean(PREF_SHOW_TILE_SHORTCUTS_TEXT, enabled)
+    }
+
+    override suspend fun getShowShortcutText(): Boolean {
+        return localStorage.getBoolean(PREF_SHOW_TILE_SHORTCUTS_TEXT)
     }
 
     override suspend fun getNotificationRateLimits(): RateLimitResponse {
@@ -410,7 +481,6 @@ class IntegrationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getHomeAssistantVersion(): String {
-
         val current = System.currentTimeMillis()
         val next = localStorage.getLong(PREF_CHECK_SENSOR_REGISTRATION_NEXT) ?: 0
         if (current <= next)
@@ -418,18 +488,64 @@ class IntegrationRepositoryImpl @Inject constructor(
                 ?: "" // Skip checking HA version as it has not been 4 hours yet
 
         return try {
-            val response: GetConfigResponse? = webSocketRepository.getConfig()
-
-            localStorage.putString(PREF_HA_VERSION, response?.version)
-            localStorage.putLong(
-                PREF_CHECK_SENSOR_REGISTRATION_NEXT,
-                current + (14400000)
-            ) // 4 hours
-            response?.version.toString()
+            webSocketRepository.getConfig()?.let { response ->
+                localStorage.putString(PREF_HA_VERSION, response.version)
+                localStorage.putLong(
+                    PREF_CHECK_SENSOR_REGISTRATION_NEXT,
+                    current + TimeUnit.HOURS.toMillis(4)
+                )
+                response.version
+            } ?: run {
+                Log.e(TAG, "Issue getting config from core.")
+                localStorage.getString(PREF_HA_VERSION) ?: ""
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Issue getting new version from core.", e)
             localStorage.getString(PREF_HA_VERSION) ?: ""
         }
+    }
+
+    override suspend fun isHomeAssistantVersionAtLeast(
+        year: Int,
+        month: Int,
+        release: Int
+    ): Boolean {
+        if (!isRegistered()) return false
+
+        val version = HomeAssistantVersion.fromString(getHomeAssistantVersion())
+        return version?.isAtLeast(year, month, release) ?: false
+    }
+
+    override suspend fun getConfig(): GetConfigResponse {
+        val getConfigRequest =
+            IntegrationRequest(
+                "get_config",
+                null
+            )
+        var response: GetConfigResponse? = null
+        var causeException: Exception? = null
+
+        for (it in urlRepository.getApiUrls()) {
+            try {
+                response = integrationService.getConfig(it.toHttpUrlOrNull()!!, getConfigRequest)
+            } catch (e: Exception) {
+                if (causeException == null) causeException = e
+                // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
+            }
+
+            if (response != null) {
+                // If we have a valid response, also update the cached version
+                localStorage.putString(PREF_HA_VERSION, response.version)
+                localStorage.putLong(
+                    PREF_CHECK_SENSOR_REGISTRATION_NEXT,
+                    System.currentTimeMillis() + TimeUnit.HOURS.toMillis(4)
+                )
+                return response
+            }
+        }
+
+        if (causeException != null) throw IntegrationException(causeException)
+        else throw IntegrationException("Error calling integration request get_config")
     }
 
     override suspend fun getServices(): List<Service>? {
@@ -495,28 +611,29 @@ class IntegrationRepositoryImpl @Inject constructor(
             }
     }
 
-    private suspend fun canRegisterEntityCategoryStateClass(): Boolean {
-        val version = getHomeAssistantVersion()
-        val matches = VERSION_PATTERN.matcher(version)
-        var canRegisterCategoryStateClass = false
-        if (matches.find() && matches.matches()) {
-            val year = Integer.parseInt(matches.group(1) ?: "0")
-            val month = Integer.parseInt(matches.group(2) ?: "0")
-            val release = Integer.parseInt(matches.group(3) ?: "0")
-            canRegisterCategoryStateClass =
-                year > 2021 || (year == 2021 && month >= 11 && release >= 0)
-        }
-        return canRegisterCategoryStateClass
+    override suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity<*>>? {
+        return webSocketRepository.getStateChanges(entityIds)
+            ?.filter { it.toState != null }
+            ?.map {
+                Entity(
+                    it.toState!!.entityId,
+                    it.toState.state,
+                    it.toState.attributes,
+                    it.toState.lastChanged,
+                    it.toState.lastUpdated,
+                    it.toState.context
+                )
+            }
     }
 
     override suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>) {
-
-        val canRegisterCategoryStateClass = canRegisterEntityCategoryStateClass()
+        val canRegisterCategoryStateClass = isHomeAssistantVersionAtLeast(2021, 11, 0)
+        val canRegisterEntityDisabledState = isHomeAssistantVersionAtLeast(2022, 6, 0)
         val integrationRequest = IntegrationRequest(
             "register_sensor",
             SensorRequest(
                 sensorRegistration.uniqueId,
-                sensorRegistration.state,
+                if (canRegisterEntityDisabledState && sensorRegistration.disabled) null else sensorRegistration.state,
                 sensorRegistration.type,
                 sensorRegistration.icon,
                 sensorRegistration.attributes,
@@ -524,7 +641,8 @@ class IntegrationRepositoryImpl @Inject constructor(
                 sensorRegistration.deviceClass,
                 sensorRegistration.unitOfMeasurement,
                 if (canRegisterCategoryStateClass) sensorRegistration.stateClass else null,
-                if (canRegisterCategoryStateClass) sensorRegistration.entityCategory else null
+                if (canRegisterCategoryStateClass) sensorRegistration.entityCategory else null,
+                if (canRegisterEntityDisabledState) sensorRegistration.disabled else null
             )
         )
 
@@ -595,14 +713,13 @@ class IntegrationRepositoryImpl @Inject constructor(
     private suspend fun createUpdateRegistrationRequest(deviceRegistration: DeviceRegistration): RegisterDeviceRequest {
         val oldDeviceRegistration = getRegistration()
         val pushToken = deviceRegistration.pushToken ?: oldDeviceRegistration.pushToken
-        val appData = if (pushToken == null) {
-            null
-        } else {
-            hashMapOf(
-                "push_url" to PUSH_URL,
-                "push_token" to pushToken
-            )
+
+        val appData = mutableMapOf<String, Any>("push_websocket_channel" to true)
+        if (!pushToken.isNullOrBlank()) {
+            appData["push_url"] = PUSH_URL
+            appData["push_token"] = pushToken
         }
+
         return RegisterDeviceRequest(
             null,
             null,

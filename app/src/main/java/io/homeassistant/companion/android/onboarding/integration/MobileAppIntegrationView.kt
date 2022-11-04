@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Button
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Switch
 import androidx.compose.material.SwitchDefaults
 import androidx.compose.material.Text
@@ -19,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.onboarding.OnboardingViewModel
 import io.homeassistant.companion.android.common.R as commonR
 
-@ExperimentalComposeUiApi
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun MobileAppIntegrationView(
     onboardingViewModel: OnboardingViewModel,
@@ -70,9 +70,9 @@ fun MobileAppIntegrationView(
                         .weight(1f)
                 )
                 Switch(
-                    checked = onboardingViewModel.locationTrackingEnabled.value,
+                    checked = onboardingViewModel.locationTrackingEnabled,
                     onCheckedChange = onLocationTrackingChanged,
-                    colors = SwitchDefaults.colors(uncheckedThumbColor = MaterialTheme.colors.secondary)
+                    colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(commonR.color.colorSwitchUncheckedThumb))
                 )
             }
             Text(

@@ -6,13 +6,8 @@ import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.AuthorizationException
 import io.homeassistant.companion.android.common.data.authentication.SessionState
-import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowAuthentication
-import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowCreateEntry
-import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowInit
-import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowRequest
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import java.net.URL
 import javax.inject.Inject
 import javax.inject.Named
 
@@ -29,30 +24,7 @@ class AuthenticationRepositoryImpl @Inject constructor(
         private const val PREF_REFRESH_TOKEN = "refresh_token"
         private const val PREF_TOKEN_TYPE = "token_type"
         private const val PREF_BIOMETRIC_ENABLED = "biometric_enabled"
-    }
-
-    override suspend fun initiateLoginFlow(): LoginFlowInit {
-        val url = urlRepository.getUrl()?.toHttpUrlOrNull().toString()
-        return authenticationService.initializeLogin(
-            url + "auth/login_flow",
-            LoginFlowRequest(
-                AuthenticationService.CLIENT_ID,
-                AuthenticationService.AUTH_CALLBACK,
-                AuthenticationService.HANDLER
-            )
-        )
-    }
-
-    override suspend fun loginAuthentication(flowId: String, username: String, password: String): LoginFlowCreateEntry {
-        val url = urlRepository.getUrl()?.toHttpUrlOrNull().toString()
-        return authenticationService.authenticate(
-            url + AuthenticationService.AUTHENTICATE_BASE_PATH + flowId,
-            LoginFlowAuthentication(
-                AuthenticationService.CLIENT_ID,
-                username,
-                password
-            )
-        )
+        private const val PREF_BIOMETRIC_HOME_BYPASS_ENABLED = "biometric_home_bypass_enabled"
     }
 
     override suspend fun registerAuthorizationCode(authorizationCode: String) {
@@ -98,6 +70,10 @@ class AuthenticationRepositoryImpl @Inject constructor(
             session.refreshToken,
             AuthenticationService.REVOKE_ACTION
         )
+        removeSessionData()
+    }
+
+    override suspend fun removeSessionData() {
         saveSession(null)
         urlRepository.saveUrl("", true)
         urlRepository.saveUrl("", false)
@@ -112,17 +88,15 @@ class AuthenticationRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun buildAuthenticationUrl(callbackUrl: String): URL {
-        val url = urlRepository.getUrl()
-
-        return url!!.toHttpUrlOrNull()!!
+    override suspend fun buildAuthenticationUrl(baseUrl: String, callbackUrl: String): String {
+        return baseUrl.toHttpUrlOrNull()!!
             .newBuilder()
             .addPathSegments("auth/authorize")
             .addEncodedQueryParameter("response_type", "code")
             .addEncodedQueryParameter("client_id", AuthenticationService.CLIENT_ID)
             .addEncodedQueryParameter("redirect_uri", callbackUrl)
             .build()
-            .toUrl()
+            .toString()
     }
 
     override suspend fun buildBearerToken(): String {
@@ -199,7 +173,25 @@ class AuthenticationRepositoryImpl @Inject constructor(
         localStorage.putBoolean(PREF_BIOMETRIC_ENABLED, enabled)
     }
 
-    override suspend fun isLockEnabled(): Boolean {
+    override suspend fun setLockHomeBypassEnabled(enabled: Boolean) {
+        localStorage.putBoolean(PREF_BIOMETRIC_HOME_BYPASS_ENABLED, enabled)
+    }
+
+    override suspend fun isLockEnabledRaw(): Boolean {
         return localStorage.getBoolean(PREF_BIOMETRIC_ENABLED)
+    }
+
+    override suspend fun isLockHomeBypassEnabled(): Boolean {
+        return localStorage.getBoolean(PREF_BIOMETRIC_HOME_BYPASS_ENABLED)
+    }
+
+    override suspend fun isLockEnabled(): Boolean {
+        val raw = isLockEnabledRaw()
+        val bypass = isLockHomeBypassEnabled()
+        if (raw && bypass) {
+            return !(urlRepository.isHomeWifiSsid())
+        } else {
+            return raw
+        }
     }
 }

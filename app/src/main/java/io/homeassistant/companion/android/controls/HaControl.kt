@@ -16,14 +16,21 @@ import io.homeassistant.companion.android.webview.WebViewActivity
 @RequiresApi(Build.VERSION_CODES.R)
 interface HaControl {
 
-    fun createControl(context: Context, entity: Entity<Map<String, Any>>, area: AreaRegistryResponse?): Control {
+    fun createControl(
+        context: Context,
+        entity: Entity<Map<String, Any>>,
+        area: AreaRegistryResponse?,
+        authRequired: Boolean,
+        baseUrl: String?
+    ): Control {
+        val controlPath = "entityId:${entity.entityId}"
         val control = Control.StatefulBuilder(
             entity.entityId,
             PendingIntent.getActivity(
                 context,
-                0,
-                WebViewActivity.newInstance(context.applicationContext, "entityId:${entity.entityId}").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                controlPath.hashCode(),
+                WebViewActivity.newInstance(context.applicationContext, controlPath).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_MUTABLE
             )
         )
         control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
@@ -39,20 +46,24 @@ interface HaControl {
                 else -> context.getString(R.string.state_unknown)
             }
         )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            control.setAuthRequired(authRequired)
+        }
 
-        return provideControlFeatures(context, control, entity, area).build()
+        return provideControlFeatures(context, control, entity, area, baseUrl).build()
     }
 
     fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
         entity: Entity<Map<String, Any>>,
-        area: AreaRegistryResponse?
+        area: AreaRegistryResponse?,
+        baseUrl: String?
     ): Control.StatefulBuilder
 
     fun getDeviceType(entity: Entity<Map<String, Any>>): Int
 
     fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String
 
-    fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean
+    suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean
 }

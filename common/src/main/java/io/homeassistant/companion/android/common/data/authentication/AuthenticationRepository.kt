@@ -1,14 +1,6 @@
 package io.homeassistant.companion.android.common.data.authentication
 
-import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowCreateEntry
-import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowInit
-import java.net.URL
-
 interface AuthenticationRepository {
-
-    suspend fun initiateLoginFlow(): LoginFlowInit
-
-    suspend fun loginAuthentication(flowId: String, username: String, password: String): LoginFlowCreateEntry
 
     suspend fun registerAuthorizationCode(authorizationCode: String)
 
@@ -17,13 +9,17 @@ interface AuthenticationRepository {
     suspend fun retrieveAccessToken(): String
 
     suspend fun revokeSession()
+    suspend fun removeSessionData()
 
     suspend fun getSessionState(): SessionState
 
-    suspend fun buildAuthenticationUrl(callbackUrl: String): URL
+    suspend fun buildAuthenticationUrl(baseUrl: String, callbackUrl: String): String
 
     suspend fun buildBearerToken(): String
 
     suspend fun setLockEnabled(enabled: Boolean)
+    suspend fun setLockHomeBypassEnabled(enabled: Boolean)
+    suspend fun isLockEnabledRaw(): Boolean
+    suspend fun isLockHomeBypassEnabled(): Boolean
     suspend fun isLockEnabled(): Boolean
 }

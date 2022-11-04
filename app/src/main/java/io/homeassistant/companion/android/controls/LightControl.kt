@@ -14,98 +14,83 @@ import android.service.controls.templates.ToggleTemplate
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.getLightBrightness
+import io.homeassistant.companion.android.common.data.integration.supportsLightBrightness
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
-import kotlinx.coroutines.runBlocking
 import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.R)
-class LightControl {
-    companion object : HaControl {
-        private const val SUPPORT_BRIGHTNESS = 1
-        private val NO_BRIGHTNESS_SUPPORT = listOf("unknown", "onoff")
-
-        override fun provideControlFeatures(
-            context: Context,
-            control: Control.StatefulBuilder,
-            entity: Entity<Map<String, Any>>,
-            area: AreaRegistryResponse?
-        ): Control.StatefulBuilder {
-            // On HA Core 2021.5 and later brightness detection has changed
-            // to simplify things in the app lets use both methods for now
-            val supportedColorModes = entity.attributes["supported_color_modes"] as? List<String>
-            val supportsBrightness = if (supportedColorModes == null) false else (supportedColorModes - NO_BRIGHTNESS_SUPPORT).isNotEmpty()
-            val minValue = 0f
-            val maxValue = 100f
-            var currentValue = (entity.attributes["brightness"] as? Number)?.toFloat()?.div(255f)?.times(100) ?: 0f
-            if (currentValue < minValue)
-                currentValue = minValue
-            if (currentValue > maxValue)
-                currentValue = maxValue
-            control.setControlTemplate(
-                if (supportsBrightness || ((entity.attributes["supported_features"] as Int) and SUPPORT_BRIGHTNESS == SUPPORT_BRIGHTNESS))
-                    ToggleRangeTemplate(
+object LightControl : HaControl {
+    override fun provideControlFeatures(
+        context: Context,
+        control: Control.StatefulBuilder,
+        entity: Entity<Map<String, Any>>,
+        area: AreaRegistryResponse?,
+        baseUrl: String?
+    ): Control.StatefulBuilder {
+        val position = entity.getLightBrightness()
+        control.setControlTemplate(
+            if (entity.supportsLightBrightness())
+                ToggleRangeTemplate(
+                    entity.entityId,
+                    entity.state == "on",
+                    "",
+                    RangeTemplate(
                         entity.entityId,
+                        position?.min ?: 0f,
+                        position?.max ?: 100f,
+                        position?.value ?: 0f,
+                        1f,
+                        "%.0f%%"
+                    )
+                )
+            else
+                ToggleTemplate(
+                    entity.entityId,
+                    ControlButton(
                         entity.state == "on",
-                        "",
-                        RangeTemplate(
-                            entity.entityId,
-                            minValue,
-                            maxValue,
-                            currentValue,
-                            1f,
-                            "%.0f%%"
-                        )
+                        "Description"
                     )
-                else
-                    ToggleTemplate(
-                        entity.entityId,
-                        ControlButton(
-                            entity.state == "on",
-                            "Description"
-                        )
+                )
+        )
+        return control
+    }
+
+    override fun getDeviceType(entity: Entity<Map<String, Any>>): Int =
+        DeviceTypes.TYPE_LIGHT
+
+    override fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String =
+        context.getString(commonR.string.domain_light)
+
+    override suspend fun performAction(
+        integrationRepository: IntegrationRepository,
+        action: ControlAction
+    ): Boolean {
+        return when (action) {
+            is BooleanAction -> {
+                integrationRepository.callService(
+                    action.templateId.split(".")[0],
+                    if (action.newState) "turn_on" else "turn_off",
+                    hashMapOf(
+                        "entity_id" to action.templateId
                     )
-            )
-            return control
-        }
-
-        override fun getDeviceType(entity: Entity<Map<String, Any>>): Int =
-            DeviceTypes.TYPE_LIGHT
-
-        override fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String =
-            context.getString(commonR.string.domain_light)
-
-        override fun performAction(
-            integrationRepository: IntegrationRepository,
-            action: ControlAction
-        ): Boolean {
-            return runBlocking {
-                return@runBlocking when (action) {
-                    is BooleanAction -> {
-                        integrationRepository.callService(
-                            action.templateId.split(".")[0],
-                            if (action.newState) "turn_on" else "turn_off",
-                            hashMapOf(
-                                "entity_id" to action.templateId
-                            )
-                        )
-                        true
-                    }
-                    is FloatAction -> {
-                        val convertBrightness = action.newValue.div(100).times(255)
-                        integrationRepository.callService(
-                            action.templateId.split(".")[0],
-                            "turn_on",
-                            hashMapOf(
-                                "entity_id" to action.templateId,
-                                "brightness" to convertBrightness.toInt()
-                            )
-                        )
-                        true
-                    }
-                    else -> {
-                        false
-                    }
-                }
+                )
+                true
+            }
+            is FloatAction -> {
+                val convertBrightness = action.newValue.div(100).times(255)
+                integrationRepository.callService(
+                    action.templateId.split(".")[0],
+                    "turn_on",
+                    hashMapOf(
+                        "entity_id" to action.templateId,
+                        "brightness" to convertBrightness.toInt()
+                    )
+                )
+                true
+            }
+            else -> {
+                false
             }
         }
     }

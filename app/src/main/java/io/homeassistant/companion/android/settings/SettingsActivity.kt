@@ -5,7 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.SearchView
+import androidx.appcompat.widget.SearchView
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
@@ -13,6 +13,10 @@ import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.components.ActivityComponent
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
+import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
+import io.homeassistant.companion.android.settings.sensor.SensorDetailFragment
+import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
@@ -44,10 +48,30 @@ class SettingsActivity : BaseActivity() {
 
         setSupportActionBar(findViewById(R.id.toolbar))
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportFragmentManager
-            .beginTransaction()
-            .replace(R.id.content, SettingsFragment::class.java, null)
-            .commit()
+
+        if (savedInstanceState == null) {
+            val settingsNavigation = intent.getStringExtra("fragment")
+            supportFragmentManager
+                .beginTransaction()
+                .replace(
+                    R.id.content,
+                    when {
+                        settingsNavigation == "websocket" -> WebsocketSettingFragment::class.java
+                        settingsNavigation == "notification_history" -> NotificationHistoryFragment::class.java
+                        settingsNavigation?.startsWith("sensors/") == true -> SensorDetailFragment::class.java
+                        settingsNavigation?.startsWith("tiles/") == true -> ManageTilesFragment::class.java
+                        else -> SettingsFragment::class.java
+                    },
+                    if (settingsNavigation?.startsWith("sensors/") == true) {
+                        val sensorId = settingsNavigation.split("/")[1]
+                        SensorDetailFragment.newInstance(sensorId).arguments
+                    } else if (settingsNavigation?.startsWith("tiles/") == true) {
+                        val tileId = settingsNavigation.split("/")[1]
+                        Bundle().apply { putString("id", tileId) }
+                    } else null
+                )
+                .commit()
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

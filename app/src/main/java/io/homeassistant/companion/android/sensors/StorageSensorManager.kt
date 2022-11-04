@@ -18,6 +18,7 @@ class StorageSensorManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_internal_storage,
             commonR.string.sensor_description_internal_storage,
+            "mdi:harddisk",
             unitOfMeasurement = "%",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
@@ -27,23 +28,16 @@ class StorageSensorManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_external_storage,
             commonR.string.sensor_description_external_storage,
+            "mdi:micro-sd",
             unitOfMeasurement = "%",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
-        val path: File = Environment.getDataDirectory()
-        private val stat = StatFs(path.path)
-        var availableBlocks = stat.availableBlocksLong
-        var blockSize = stat.blockSizeLong
-        var totalBlocks = stat.blockCountLong
-        var blockSizeSD = 0L
-        var availableBlocksSD = 0L
-        var totalBlocksSD = 0L
-        private var externalPath: File? = null
 
-        private fun externalMemoryAvailable(context: Context): File? {
+        private fun getExternalStoragePathIfAvailable(context: Context): File? {
             val pathsSD = context.getExternalFilesDirs(null)
             var removable: Boolean
+            var externalPath: File? = null
             Log.d(TAG, "PATHS SD ${pathsSD.size}")
             for (item in pathsSD) {
                 if (item != null) {
@@ -83,28 +77,25 @@ class StorageSensorManager : SensorManager {
     override fun requestSensorUpdate(
         context: Context
     ) {
-        updateStorageSensor(context)
+        updateInternalStorageSensor(context)
         updateExternalStorageSensor(context)
     }
 
-    private fun updateStorageSensor(context: Context) {
+    private fun updateInternalStorageSensor(context: Context) {
         if (!isEnabled(context, storageSensor.id))
             return
 
-        val totalInternalStorage = getTotalInternalMemorySize()
-        val freeInternalStorage = getAvailableInternalMemorySize()
-        val percentageFreeInternalStorage = getPercentageInternal()
-
-        val icon = "mdi:harddisk"
+        val path = Environment.getDataDirectory()
+        val internalStorageStats = getStorageStats(path)
 
         onSensorUpdated(
             context,
             storageSensor,
-            percentageFreeInternalStorage,
-            icon,
+            internalStorageStats.percentage,
+            storageSensor.statelessIcon,
             mapOf(
-                "Free internal storage" to freeInternalStorage,
-                "Total internal storage" to totalInternalStorage
+                "Free internal storage" to internalStorageStats.freeBytes,
+                "Total internal storage" to internalStorageStats.totalBytes
             )
         )
     }
@@ -113,31 +104,19 @@ class StorageSensorManager : SensorManager {
         if (!isEnabled(context, externalStorage.id))
             return
 
-        externalPath = externalMemoryAvailable(context)
-        var totalExternalStorage = "No SD Card"
-        var freeExternalStorage = "No SD Card"
-        var percentFreeExternal = 0
-
-        if (externalPath != null) {
-            val statSD = StatFs(externalPath.toString())
-            blockSizeSD = statSD.blockSizeLong
-            availableBlocksSD = statSD.availableBlocksLong
-            totalBlocksSD = statSD.blockCountLong
-            totalExternalStorage = getTotalExternalMemorySize()
-            freeExternalStorage = getAvailableExternalMemorySize()
-            percentFreeExternal = ((availableBlocksSD.toDouble() / totalBlocksSD.toDouble()) * 100).roundToInt()
+        val externalStoragePath = getExternalStoragePathIfAvailable(context)
+        val externalStorageStats = externalStoragePath?.let {
+            getStorageStats(it)
         }
-
-        val icon = "mdi:micro-sd"
 
         onSensorUpdated(
             context,
             externalStorage,
-            percentFreeExternal,
-            icon,
+            externalStorageStats?.percentage ?: 0,
+            externalStorage.statelessIcon,
             mapOf(
-                "free_external_storage" to freeExternalStorage,
-                "total_external_storage" to totalExternalStorage
+                "free_external_storage" to (externalStorageStats?.freeBytes ?: "No SD Card"),
+                "total_external_storage" to (externalStorageStats?.totalBytes ?: "No SD Card")
             )
         )
     }
@@ -146,48 +125,34 @@ class StorageSensorManager : SensorManager {
         var suffix = ""
 
         var sizeLong = size
-        if (size >= 1024) {
+        if (sizeLong >= 1024) {
             suffix = "KB"
             sizeLong /= 1024
-            if (size >= 1024) {
+            if (sizeLong >= 1024) {
                 suffix = "MB"
                 sizeLong /= 1024
-                if (size >= 1024) {
+                if (sizeLong >= 1024) {
                     suffix = "GB"
                     sizeLong /= 1024
                 }
             }
         }
 
-        val resultBuffer = StringBuilder(sizeLong.toString())
-
-        var commaOffset = resultBuffer.length - 3
-        while (commaOffset > 0) {
-            resultBuffer.insert(commaOffset, ',')
-            commaOffset -= 3
-        }
-
-        resultBuffer.append(suffix)
-        return resultBuffer.toString()
+        val sizeWithThousandsSeparator = String.format("%,d", sizeLong)
+        return "$sizeWithThousandsSeparator$suffix"
     }
 
-    private fun getTotalInternalMemorySize(): String {
-        return formatSize(totalBlocks * blockSize)
-    }
+    private data class StorageStats(
+        val totalBytes: String,
+        val freeBytes: String,
+        val percentage: Int
+    )
 
-    private fun getAvailableInternalMemorySize(): String {
-        return formatSize(availableBlocks * blockSize)
-    }
-
-    private fun getPercentageInternal(): Int {
-        return ((availableBlocks.toDouble() / totalBlocks.toDouble()) * 100).roundToInt()
-    }
-
-    private fun getAvailableExternalMemorySize(): String {
-        return formatSize(availableBlocksSD * blockSizeSD)
-    }
-
-    private fun getTotalExternalMemorySize(): String {
-        return formatSize(totalBlocksSD * blockSizeSD)
+    private fun getStorageStats(path: File) = with(StatFs(path.path)) {
+        StorageStats(
+            totalBytes = formatSize(blockCountLong * blockSizeLong),
+            freeBytes = formatSize(availableBlocksLong * blockSizeLong),
+            percentage = ((availableBlocksLong.toDouble() / blockCountLong.toDouble()) * 100).roundToInt()
+        )
     }
 }

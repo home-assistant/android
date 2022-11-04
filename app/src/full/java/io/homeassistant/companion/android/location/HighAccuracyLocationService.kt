@@ -18,6 +18,8 @@ import androidx.core.app.NotificationManagerCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import io.homeassistant.companion.android.common.util.highAccuracyChannel
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.util.ForegroundServiceLauncher
 import kotlin.math.abs
@@ -110,10 +112,8 @@ class HighAccuracyLocationService : Service() {
         }
 
         private fun createNotificationBuilder(context: Context) {
-            var channelID = "High accuracy location"
-
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val channel = NotificationChannel(channelID, context.getString(commonR.string.high_accuracy_mode_channel_name), NotificationManager.IMPORTANCE_DEFAULT)
+                val channel = NotificationChannel(highAccuracyChannel, context.getString(commonR.string.high_accuracy_mode_channel_name), NotificationManager.IMPORTANCE_DEFAULT)
                 notificationManagerCompat.createNotificationChannel(channel)
             }
 
@@ -124,7 +124,7 @@ class HighAccuracyLocationService : Service() {
 
             val disablePendingIntent = PendingIntent.getBroadcast(context, 0, disableIntent, PendingIntent.FLAG_MUTABLE)
 
-            notificationBuilder = NotificationCompat.Builder(context, channelID)
+            notificationBuilder = NotificationCompat.Builder(context, highAccuracyChannel)
                 .setSmallIcon(commonR.drawable.ic_stat_ic_notification)
                 .setColor(Color.GRAY)
                 .setOngoing(true)
@@ -183,18 +183,18 @@ class HighAccuracyLocationService : Service() {
 
     private fun getLocationUpdateIntent(): PendingIntent {
         val intent = Intent(this, LocationSensorManager::class.java)
-        intent.action = LocationSensorManager.ACTION_PROCESS_LOCATION
+        intent.action = LocationSensorManager.ACTION_PROCESS_HIGH_ACCURACY_LOCATION
         return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
     }
 
     @SuppressLint("MissingPermission")
     private fun requestLocationUpdates(intervalInSeconds: Int) {
-        val request = LocationRequest()
+        val request = LocationRequest.create()
 
         val intervalInMS = (intervalInSeconds * 1000).toLong()
         request.interval = intervalInMS
         request.fastestInterval = intervalInMS / 2
-        request.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        request.priority = Priority.PRIORITY_HIGH_ACCURACY
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
         fusedLocationProviderClient?.requestLocationUpdates(request, getLocationUpdateIntent())

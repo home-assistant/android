@@ -36,7 +36,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:completionThreshold="0"
-                android:imeOptions="actionNext"
+                android:imeOptions="actionNext|flagNoFullscreen"
                 android:inputType="text" />
         </LinearLayout>
 
@@ -110,6 +110,65 @@
                 android:inputType="text" />
         </LinearLayout>
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:padding="5dp"
+                android:text="@string/widget_background_type_label" />
+
+            <Spinner
+                android:id="@+id/background_type"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/text_color"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:padding="5dp"
+                android:text="@string/widget_text_color_label_icon" />
+
+            <RadioGroup
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <RadioButton
+                    android:id="@+id/text_color_white"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/widget_text_color_white"
+                    android:checked="true"/>
+                <RadioButton
+                    android:id="@+id/text_color_black"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/widget_text_color_black"/>
+            </RadioGroup>
+        </LinearLayout>
+
+        <CheckBox
+            android:id="@+id/widget_checkbox_require_authentication"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/widget_checkbox_require_authentication" />
+
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/add_button"
             android:layout_width="wrap_content"
@@ -117,15 +176,6 @@
             android:layout_gravity="end"
             android:layout_marginTop="8dp"
             android:text="@string/add_widget" />
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/delete_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            android:layout_marginTop="8dp"
-            android:visibility="gone"
-            android:text="@string/delete_widget" />
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

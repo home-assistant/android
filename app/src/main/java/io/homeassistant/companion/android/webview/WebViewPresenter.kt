@@ -1,10 +1,12 @@
 package io.homeassistant.companion.android.webview
 
+import android.content.Context
+
 interface WebViewPresenter {
 
     fun onViewReady(path: String?)
 
-    fun onGetExternalAuth(callback: String, force: Boolean)
+    fun onGetExternalAuth(context: Context, callback: String, force: Boolean)
 
     fun checkSecurityVersion()
 
@@ -15,6 +17,9 @@ interface WebViewPresenter {
     fun isFullScreen(): Boolean
 
     fun isKeepScreenOnEnabled(): Boolean
+
+    fun isPinchToZoomEnabled(): Boolean
+    fun isWebViewDebugEnabled(): Boolean
 
     fun isLockEnabled(): Boolean
     fun isAutoPlayVideoEnabled(): Boolean
@@ -27,6 +32,8 @@ interface WebViewPresenter {
     fun onFinish()
 
     fun isSsidUsed(): Boolean
+
+    fun getAuthorizationHeader(): String
 
     suspend fun parseWebViewColor(webViewColor: String): Int
 }

@@ -7,7 +7,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
-import io.homeassistant.companion.android.BuildConfig
+import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -19,7 +19,8 @@ class LastAppSensorManager : SensorManager {
             "last_used_app",
             "sensor",
             commonR.string.basic_sensor_name_last_used_app,
-            commonR.string.sensor_description_last_used_app
+            commonR.string.sensor_description_last_used_app,
+            "mdi:android"
         )
     }
 
@@ -36,7 +37,7 @@ class LastAppSensorManager : SensorManager {
     }
 
     override fun hasSensor(context: Context): Boolean {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && BuildConfig.FLAVOR != "quest"
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
     }
     @RequiresApi(Build.VERSION_CODES.M)
     override fun requiredPermissions(sensorId: String): Array<String> {
@@ -55,25 +56,28 @@ class LastAppSensorManager : SensorManager {
         if (!isEnabled(context, last_used.id))
             return
 
-        val usageStats = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+        val usageStats = context.getSystemService<UsageStatsManager>()!!
         val current = System.currentTimeMillis()
-        var lastApp = usageStats.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, current - 1000 * 1000, current).maxByOrNull { it.lastTimeUsed }?.packageName ?: "none"
+        val lastApp = usageStats.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, current - 1000 * 1000, current).maxByOrNull { it.lastTimeUsed }?.packageName ?: "none"
+
+        var appLabel = "unknown"
+
         try {
             val pm = context.packageManager
             val appInfo = pm.getApplicationInfo(lastApp, PackageManager.GET_META_DATA)
-            lastApp = pm.getApplicationLabel(appInfo).toString()
+            appLabel = pm.getApplicationLabel(appInfo).toString()
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to get package name for: $lastApp", e)
+            Log.e(TAG, "Unable to get package label for: $lastApp", e)
         }
-
-        val icon = "mdi:android"
 
         onSensorUpdated(
             context,
             last_used,
             lastApp,
-            icon,
-            mapOf()
+            last_used.statelessIcon,
+            mapOf(
+                "Label" to appLabel
+            )
         )
     }
 }

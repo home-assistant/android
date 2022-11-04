@@ -14,17 +14,16 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.ComposeView
+import androidx.core.content.getSystemService
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.google.android.material.composethemeadapter.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.database.sensor.Sensor
+import io.homeassistant.companion.android.common.util.DisabledLocationHandler
+import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.onboarding.OnboardingViewModel
 import io.homeassistant.companion.android.sensors.LocationSensorManager
-import io.homeassistant.companion.android.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
@@ -39,7 +38,6 @@ class MobileAppIntegrationFragment : Fragment() {
     private var dialog: AlertDialog? = null
     private val viewModel by activityViewModels<OnboardingViewModel>()
 
-    @ExperimentalComposeUiApi
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -89,8 +87,7 @@ class MobileAppIntegrationFragment : Fragment() {
             }
         }
 
-        setLocationTracking(checked)
-        viewModel.locationTrackingEnabled.value = checked
+        viewModel.setLocationTracking(checked)
     }
 
     private fun requestPermissions(sensorId: String) {
@@ -129,28 +126,8 @@ class MobileAppIntegrationFragment : Fragment() {
 
         if (requestCode == LOCATION_REQUEST_CODE) {
             val hasPermission = grantResults.all { it == PackageManager.PERMISSION_GRANTED }
-            viewModel.locationTrackingEnabled.value = hasPermission
-            setLocationTracking(hasPermission)
+            viewModel.setLocationTracking(hasPermission)
             requestBackgroundAccess()
-        }
-    }
-
-    private fun setLocationTracking(enabled: Boolean) {
-        val sensorDao = AppDatabase.getInstance(requireContext()).sensorDao()
-        arrayOf(
-            LocationSensorManager.backgroundLocation,
-            LocationSensorManager.zoneLocation,
-            LocationSensorManager.singleAccurateLocation
-        ).forEach { basicSensor ->
-            var sensorEntity = sensorDao.get(basicSensor.id)
-            if (sensorEntity != null) {
-                sensorEntity.enabled = enabled
-                sensorEntity.lastSentState = ""
-                sensorDao.update(sensorEntity)
-            } else {
-                sensorEntity = Sensor(basicSensor.id, enabled, false, "")
-                sensorDao.add(sensorEntity)
-            }
         }
     }
 
@@ -168,19 +145,19 @@ class MobileAppIntegrationFragment : Fragment() {
 
     private fun isIgnoringBatteryOptimizations(): Boolean {
         return Build.VERSION.SDK_INT <= Build.VERSION_CODES.M ||
-            context?.getSystemService(PowerManager::class.java)
+            context?.getSystemService<PowerManager>()
                 ?.isIgnoringBatteryOptimizations(activity?.packageName ?: "")
                 ?: false
     }
 
     private fun onComplete() {
-        val retData = Intent().apply {
-            putExtra("URL", viewModel.manualUrl.value)
-            putExtra("AuthCode", viewModel.authCode.value)
-            putExtra("DeviceName", viewModel.deviceName.value)
-            putExtra("LocationTracking", viewModel.locationTrackingEnabled.value)
-        }
-        activity?.setResult(Activity.RESULT_OK, retData)
+        val retData = OnboardApp.Output(
+            url = viewModel.manualUrl.value,
+            authCode = viewModel.authCode,
+            deviceName = viewModel.deviceName.value,
+            deviceTrackingEnabled = viewModel.locationTrackingEnabled
+        )
+        activity?.setResult(Activity.RESULT_OK, retData.toIntent())
         activity?.finish()
     }
 

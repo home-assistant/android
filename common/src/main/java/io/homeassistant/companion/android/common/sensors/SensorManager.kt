@@ -6,10 +6,13 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Process.myPid
 import android.os.Process.myUid
+import androidx.core.content.getSystemService
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
-import io.homeassistant.companion.android.database.sensor.Sensor
-import io.homeassistant.companion.android.database.sensor.Setting
+import io.homeassistant.companion.android.database.sensor.SensorSetting
+import io.homeassistant.companion.android.database.sensor.SensorSettingType
+import java.util.Locale
 import io.homeassistant.companion.android.common.R as commonR
 
 interface SensorManager {
@@ -30,16 +33,29 @@ interface SensorManager {
         val type: String,
         val name: Int = commonR.string.sensor,
         val descriptionId: Int = commonR.string.sensor_description_none,
+        val statelessIcon: String = "",
         val deviceClass: String? = null,
         val unitOfMeasurement: String? = null,
         val docsLink: String? = null,
         val stateClass: String? = null,
-        val entityCategory: String? = null
-    )
+        val entityCategory: String? = null,
+        val updateType: UpdateType = UpdateType.WORKER
+    ) {
+        enum class UpdateType {
+            INTENT, WORKER, LOCATION, CUSTOM
+        }
+    }
 
+    /**
+     * URL to a documentation page that describes this sensor
+     */
     fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors"
     }
+
+    /**
+     * Get list of Android permissions that are required to use this sensor
+     */
     fun requiredPermissions(sensorId: String): Array<String>
 
     fun checkPermission(context: Context, sensorId: String): Boolean {
@@ -55,44 +71,39 @@ interface SensorManager {
     fun checkUsageStatsPermission(context: Context): Boolean {
         val pm = context.packageManager
         val appInfo = pm.getApplicationInfo(context.packageName, 0)
-        val appOpsManager = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+        val appOpsManager = context.getSystemService<AppOpsManager>()!!
         val mode = appOpsManager.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, appInfo.uid, appInfo.packageName)
         return mode == AppOpsManager.MODE_ALLOWED
     }
 
     fun isEnabled(context: Context, sensorId: String): Boolean {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
-        var sensor = sensorDao.get(sensorId)
         val permission = checkPermission(context, sensorId)
-
-        // If we haven't created the entity yet do so and default to enabled if required
-        if (sensor == null) {
-            sensor = Sensor(sensorId, permission && enabledByDefault, false, "")
-            sensorDao.add(sensor)
-        }
-
-        // If we don't have permission but we are still enabled then we aren't really enabled.
-        if (sensor.enabled && !permission) {
-            sensor.enabled = false
-            sensorDao.update(sensor)
-        }
-
+        val sensor = sensorDao.getOrDefault(sensorId, permission, enabledByDefault)
         return sensor.enabled
     }
 
-    // Request to update a sensor, including any broadcast intent which may have triggered the request
-    // The intent will be null if the update is being done on a timer, rather than as a result
-    // of a broadcast being received.
+    /**
+     * Request to update a sensor, including any broadcast intent which may have triggered the request
+     * The intent will be null if the update is being done on a timer, rather than as a result
+     * of a broadcast being received.
+     */
     fun requestSensorUpdate(context: Context, intent: Intent?) {
         // Few sensors care about the intent, so allow them to just implement the interface that
         // does not get passed that parameter.
         requestSensorUpdate(context)
     }
 
+    /**
+     * Request to update a sensor, without a corresponding broadcast intent.
+     */
     fun requestSensorUpdate(context: Context)
 
     fun getAvailableSensors(context: Context): List<BasicSensor>
 
+    /**
+     * Check if the user's device supports this type of sensor
+     */
     fun hasSensor(context: Context): Boolean {
         return true
     }
@@ -101,7 +112,7 @@ interface SensorManager {
         context: Context,
         sensor: BasicSensor,
         settingName: String,
-        settingType: String,
+        settingType: SensorSettingType,
         default: String,
         enabled: Boolean = true
     ) {
@@ -116,7 +127,7 @@ interface SensorManager {
         return setting?.enabled ?: false
     }
 
-    fun enableDisableSetting(context: Context, sensor: BasicSensor, settingName: String, enabled: Boolean) {
+    suspend fun enableDisableSetting(context: Context, sensor: BasicSensor, settingName: String, enabled: Boolean) {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val settingEnabled = isSettingEnabled(context, sensor, settingName)
         if (enabled && !settingEnabled ||
@@ -126,25 +137,38 @@ interface SensorManager {
         }
     }
 
-    fun getSetting(
+    fun getToggleSetting(
         context: Context,
         sensor: BasicSensor,
         settingName: String,
-        settingType: String,
-        default: String,
+        default: Boolean,
         enabled: Boolean = true
-    ): String {
-        return getSetting(context, sensor, settingName, settingType, arrayListOf(), default, enabled)
+    ): Boolean {
+        return getSetting(context, sensor, settingName, SensorSettingType.TOGGLE, default.toString(), enabled).toBoolean()
     }
 
+    fun getNumberSetting(
+        context: Context,
+        sensor: BasicSensor,
+        settingName: String,
+        default: Int,
+        enabled: Boolean = true
+    ): Int {
+        return getSetting(context, sensor, settingName, SensorSettingType.NUMBER, default.toString(), enabled).toIntOrNull() ?: default
+    }
+
+    /**
+     * Get the stored setting value for...
+     * @param default Value to use if the setting does not exist
+     */
     fun getSetting(
         context: Context,
         sensor: BasicSensor,
         settingName: String,
-        settingType: String,
-        entries: List<String> = arrayListOf(),
+        settingType: SensorSettingType,
         default: String,
-        enabled: Boolean = true
+        enabled: Boolean = true,
+        entries: List<String> = arrayListOf(),
     ): String {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val setting = sensorDao
@@ -152,7 +176,7 @@ interface SensorManager {
             .firstOrNull { it.name == settingName }
             ?.value
         if (setting == null)
-            sensorDao.add(Setting(sensor.id, settingName, default, settingType, entries, enabled))
+            sensorDao.add(SensorSetting(sensor.id, settingName, default, settingType, enabled, entries = entries))
 
         return setting ?: default
     }
@@ -162,47 +186,74 @@ interface SensorManager {
         basicSensor: BasicSensor,
         state: Any,
         mdiIcon: String,
-        attributes: Map<String, Any?>
+        attributes: Map<String, Any?>,
+        forceUpdate: Boolean = false,
     ) {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
-        val sensor = sensorDao.get(basicSensor.id) ?: return
-        sensor.id = basicSensor.id
-        sensor.state = state.toString()
-        sensor.stateType = when (state) {
-            is Boolean -> "boolean"
-            is Int -> "int"
-            is Number -> "float"
-            is String -> "string"
-            else -> throw IllegalArgumentException("Unknown Sensor State Type")
-        }
-        sensor.type = basicSensor.type
-        sensor.icon = mdiIcon
-        sensor.name = basicSensor.name.toString()
-        sensor.deviceClass = basicSensor.deviceClass
-        sensor.unitOfMeasurement = basicSensor.unitOfMeasurement
-        sensor.stateClass = basicSensor.stateClass
-        sensor.entityCategory = basicSensor.entityCategory
+        val sensor = sensorDao.get(basicSensor.id)?.let {
+            it.copy(
+                state = state.toString(),
+                stateType = when (state) {
+                    is Boolean -> "boolean"
+                    is Int -> "int"
+                    is Number -> "float"
+                    is String -> "string"
+                    else -> throw IllegalArgumentException("Unknown Sensor State Type")
+                },
+                type = basicSensor.type,
+                icon = mdiIcon,
+                name = basicSensor.name.toString(),
+                deviceClass = basicSensor.deviceClass,
+                unitOfMeasurement = basicSensor.unitOfMeasurement,
+                stateClass = basicSensor.stateClass,
+                entityCategory = basicSensor.entityCategory,
+                lastSentState = if (forceUpdate) null else it.lastSentState,
+                lastSentIcon = if (forceUpdate) null else it.lastSentIcon,
+            )
+        } ?: return
 
         sensorDao.update(sensor)
-        sensorDao.clearAttributes(basicSensor.id)
+        sensorDao.replaceAllAttributes(
+            basicSensor.id,
+            attributes = attributes.map { item ->
+                val valueType = when (item.value) {
+                    is Boolean -> "boolean"
+                    is Int -> "int"
+                    is Long -> "long"
+                    is Number -> "float"
+                    is List<*> -> {
+                        when {
+                            (item.value as List<*>).all { it is Boolean } -> "listboolean"
+                            (item.value as List<*>).all { it is Int } -> "listint"
+                            (item.value as List<*>).all { it is Long } -> "listlong"
+                            (item.value as List<*>).all { it is Number } -> "listfloat"
+                            else -> "liststring"
+                        }
+                    }
+                    else -> "string" // Always default to String for attributes
+                }
+                val value =
+                    when {
+                        valueType == "liststring" ->
+                            jacksonObjectMapper().writeValueAsString((item.value as List<*>).map { it.toString() })
+                        valueType.startsWith("list") ->
+                            jacksonObjectMapper().writeValueAsString(item.value)
+                        else ->
+                            item.value.toString()
+                    }
 
-        for (item in attributes) {
-            val valueType = when (item.value) {
-                is Boolean -> "boolean"
-                is Int -> "int"
-                is Long -> "long"
-                is Number -> "float"
-                else -> "string" // Always default to String for attributes
-            }
-
-            sensorDao.add(
                 Attribute(
                     basicSensor.id,
                     item.key,
-                    item.value.toString(),
+                    value,
                     valueType
                 )
-            )
-        }
+            }
+        )
     }
+}
+
+fun SensorManager.id(): String {
+    val simpleName = this::class.simpleName ?: this::class.java.name
+    return simpleName.lowercase(Locale.US).replace(" ", "_")
 }

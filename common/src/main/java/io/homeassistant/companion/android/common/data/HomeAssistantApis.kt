@@ -15,16 +15,18 @@ import retrofit2.converter.jackson.JacksonConverterFactory
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-class HomeAssistantApis @Inject constructor(private val urlRepository: UrlRepository) {
+class HomeAssistantApis @Inject constructor(
+    private val urlRepository: UrlRepository,
+    private val tlsHelper: TLSHelper
+) {
     companion object {
         private const val LOCAL_HOST = "http://localhost/"
         private const val USER_AGENT = "User-Agent"
-        private const val USER_AGENT_STRING = "HomeAssistant/Android"
+        val USER_AGENT_STRING = "Home Assistant/${BuildConfig.VERSION_NAME} (Android ${Build.VERSION.RELEASE}; ${Build.MODEL})"
 
         private val CALL_TIMEOUT = 30L
         private val READ_TIMEOUT = 30L
     }
-
     private fun configureOkHttpClient(builder: OkHttpClient.Builder): OkHttpClient.Builder {
         if (BuildConfig.DEBUG) {
             builder.addInterceptor(
@@ -37,10 +39,15 @@ class HomeAssistantApis @Inject constructor(private val urlRepository: UrlReposi
             it.proceed(
                 it.request()
                     .newBuilder()
-                    .header(USER_AGENT, "$USER_AGENT_STRING ${Build.MODEL} ${BuildConfig.VERSION_NAME}")
+                    .header(USER_AGENT, USER_AGENT_STRING)
                     .build()
             )
         }
+
+        builder.addInterceptor(
+            RedirectInterceptor()
+        )
+
         // Only deal with cookies when on non wear device and for now I don't have a better
         // way to determine if we are really on wear os....
         // TODO: Please fix me.
@@ -55,6 +62,8 @@ class HomeAssistantApis @Inject constructor(private val urlRepository: UrlReposi
         }
         builder.callTimeout(CALL_TIMEOUT, TimeUnit.SECONDS)
         builder.readTimeout(READ_TIMEOUT, TimeUnit.SECONDS)
+
+        tlsHelper.setupOkHttpClientSSLSocketFactory(builder)
 
         return builder
     }

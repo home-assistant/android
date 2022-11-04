@@ -7,6 +7,7 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RegisterDeviceRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RegisterDeviceResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import okhttp3.HttpUrl
 import okhttp3.ResponseBody
 import retrofit2.Response
@@ -48,6 +49,12 @@ interface IntegrationService {
         @Url url: HttpUrl,
         @Body request: IntegrationRequest
     ): Array<EntityResponse<ZoneAttributes>>
+
+    @POST
+    suspend fun getConfig(
+        @Url url: HttpUrl,
+        @Body request: IntegrationRequest
+    ): GetConfigResponse
 
     @POST
     suspend fun getRateLimit(

@@ -13,7 +13,9 @@ class DevicePolicyManager : SensorManager {
             "is_work_profile",
             "binary_sensor",
             R.string.sensor_name_work_profile,
-            R.string.sensor_description_work_profile
+            R.string.sensor_description_work_profile,
+            "mdi:briefcase",
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
     }
 
@@ -56,13 +58,11 @@ class DevicePolicyManager : SensorManager {
         if (!isEnabled(context, isWorkProfile.id))
             return
 
-        val icon = "mdi:briefcase"
-
         onSensorUpdated(
             context,
             isWorkProfile,
             isManagedProfileAvailable,
-            icon,
+            isWorkProfile.statelessIcon,
             mapOf()
         )
     }

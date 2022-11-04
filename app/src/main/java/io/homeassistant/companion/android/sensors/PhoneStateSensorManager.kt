@@ -2,11 +2,13 @@ package io.homeassistant.companion.android.sensors
 
 import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
 import android.telephony.SubscriptionInfo
 import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
-import io.homeassistant.companion.android.BuildConfig
+import android.util.Log
+import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -19,7 +21,9 @@ class PhoneStateSensorManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_phone,
             commonR.string.sensor_description_phone_state,
-            docsLink = "https://companion.home-assistant.io/docs/core/sensors#phone-state-sensor"
+            "mdi:phone",
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#phone-state-sensor",
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
 
         val sim_1 = SensorManager.BasicSensor(
@@ -27,7 +31,9 @@ class PhoneStateSensorManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_sim1,
             commonR.string.sensor_description_sim_1,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            "mdi:sim",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
 
         val sim_2 = SensorManager.BasicSensor(
@@ -35,7 +41,9 @@ class PhoneStateSensorManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_sim2,
             commonR.string.sensor_description_sim_2,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            "mdi:sim",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
     }
 
@@ -47,7 +55,7 @@ class PhoneStateSensorManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_phone
     override fun hasSensor(context: Context): Boolean {
-        return BuildConfig.FLAVOR != "quest"
+        return context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
     }
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1)
@@ -73,7 +81,7 @@ class PhoneStateSensorManager : SensorManager {
 
             if (checkPermission(context, phoneState.id)) {
                 val telephonyManager =
-                    (context.applicationContext.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager)
+                    context.applicationContext.getSystemService<TelephonyManager>()!!
 
                 currentPhoneState = when (telephonyManager.callState) {
                     TelephonyManager.CALL_STATE_IDLE -> "idle"
@@ -115,20 +123,24 @@ class PhoneStateSensorManager : SensorManager {
 
             if (checkPermission(context, basicSimSensor.id)) {
                 val subscriptionManager =
-                    (context.applicationContext.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE)) as SubscriptionManager
-                val info: SubscriptionInfo? = subscriptionManager.getActiveSubscriptionInfoForSimSlotIndex(slotIndex)
+                    context.applicationContext.getSystemService<SubscriptionManager>()
+                val info: SubscriptionInfo? =
+                    subscriptionManager?.getActiveSubscriptionInfoForSimSlotIndex(slotIndex)
 
                 if (info != null) {
-                    displayName = info.displayName.toString()
-                    attrs["carrier name"] = info.carrierName
-                    attrs["iso country code"] = info.countryIso
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        attrs["carrier id"] = info.carrierId
-                        attrs["mcc"] = info.mccString.toString()
-                        attrs["mnc"] = info.mncString.toString()
-                        attrs["is opportunistic"] = info.isOpportunistic
-                        if (info.dataRoaming == SubscriptionManager.DATA_ROAMING_ENABLE) attrs["data roaming"] = "enable"
-                        else attrs["data roaming"] = "disable"
+                    try {
+                        displayName = info.displayName?.toString() ?: displayName
+                        attrs["carrier name"] = info.carrierName
+                        attrs["iso country code"] = info.countryIso
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                            attrs["carrier id"] = info.carrierId
+                            attrs["mcc"] = info.mccString.toString()
+                            attrs["mnc"] = info.mncString.toString()
+                            attrs["is opportunistic"] = info.isOpportunistic
+                            attrs["data roaming"] = if (info.dataRoaming == SubscriptionManager.DATA_ROAMING_ENABLE) "enable" else "disable"
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Unable to get SIM data", e)
                     }
                 }
             }
@@ -137,7 +149,7 @@ class PhoneStateSensorManager : SensorManager {
                 context,
                 basicSimSensor,
                 displayName,
-                "mdi:sim",
+                basicSimSensor.statelessIcon,
                 attrs
             )
         }

@@ -14,7 +14,17 @@
         android:layout_height="match_parent"
         android:layout_gravity="center"
         android:gravity="center"
+        android:text="@string/widget_label_placeholder_text_template"
         android:textAlignment="center"
-        android:textColor="@color/colorWidgetButtonLabel"
+        android:textColor="?colorWidgetOnBackground"
         android:textSize="12sp" />
+
+    <ImageView
+        android:id="@+id/widgetTemplateError"
+        android:contentDescription="@string/widget_template_error"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:src="@drawable/ic_sync_problem"
+        android:layout_gravity="center_horizontal|bottom"
+        android:visibility="gone"/>
 </FrameLayout>

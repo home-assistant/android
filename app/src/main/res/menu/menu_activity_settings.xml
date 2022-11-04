@@ -10,7 +10,7 @@
             android:id="@+id/action_search"
             android:icon="@drawable/ic_search_toolbar"
             android:title="@string/search_sensors"
-            app:actionViewClass="android.widget.SearchView"
+            app:actionViewClass="androidx.appcompat.widget.SearchView"
             app:showAsAction="ifRoom" />
 
         <item
@@ -57,7 +57,7 @@
             android:id="@+id/search_notifications"
             android:icon="@drawable/ic_search_toolbar"
             android:title="@string/search_notifications"
-            app:actionViewClass="android.widget.SearchView"
+            app:actionViewClass="androidx.appcompat.widget.SearchView"
             app:showAsAction="ifRoom" />
         <item
             android:id="@+id/notification_filter"

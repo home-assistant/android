@@ -19,6 +19,6 @@ class Tile2Service : TileExtensions() {
     }
 
     companion object {
-        private const val TILE_ID = "tile_2"
+        const val TILE_ID = "tile_2"
     }
 }

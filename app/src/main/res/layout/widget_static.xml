@@ -21,10 +21,10 @@
             android:layout_weight="1"
             android:layout_gravity="center"
             android:gravity="center"
+            android:text="@string/widget_label_placeholder_text_static_state"
             android:textStyle="bold"
             android:textSize="30sp"
-            android:textColor="@color/colorWidgetButtonLabel"
-            />
+            android:textColor="?colorWidgetPrimary" />
 
         <LinearLayout
             android:id="@+id/widgetLabelLayout"
@@ -33,19 +33,27 @@
             android:layout_margin="2dp"
             android:minHeight="32sp">
 
+            <ImageView
+                android:id="@+id/widgetStaticError"
+                android:contentDescription="@string/widget_entity_fetch_error"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_marginEnd="2dp"
+                android:src="@drawable/ic_sync_problem"
+                android:layout_gravity="center_vertical|end"
+                android:visibility="gone"/>
             <TextView
                 android:id="@+id/widgetLabel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="@string/widget_label_placeholder_text"
+                android:text="@string/widget_label_placeholder_text_static_label"
                 android:textSize="12sp"
                 android:textAlignment="center"
-                android:textColor="@color/colorWidgetButtonLabel"
+                android:textColor="?colorWidgetOnBackground"
                 android:gravity="center"
                 android:minLines="1"
-                android:maxLines="2"
-                />
+                android:maxLines="2" />
         </LinearLayout>
     </LinearLayout>
 </FrameLayout>

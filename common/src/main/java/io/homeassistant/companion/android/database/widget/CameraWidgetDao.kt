@@ -4,23 +4,26 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Update
+import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface CameraWidgetDao {
+interface CameraWidgetDao : WidgetDao {
 
     @Query("SELECT * FROM camera_widgets WHERE id = :id")
     fun get(id: Int): CameraWidgetEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun add(cameraWidgetEntity: CameraWidgetEntity)
-
-    @Update
-    fun update(cameraWidgetEntity: CameraWidgetEntity)
+    suspend fun add(cameraWidgetEntity: CameraWidgetEntity)
 
     @Query("DELETE FROM camera_widgets WHERE id = :id")
-    fun delete(id: Int)
+    override suspend fun delete(id: Int)
+
+    @Query("DELETE FROM camera_widgets WHERE id IN (:ids)")
+    suspend fun deleteAll(ids: IntArray)
 
     @Query("SELECT * FROM camera_widgets")
-    fun getAll(): Array<CameraWidgetEntity>?
+    suspend fun getAll(): List<CameraWidgetEntity>
+
+    @Query("SELECT * FROM camera_widgets")
+    fun getAllFlow(): Flow<List<CameraWidgetEntity>>
 }

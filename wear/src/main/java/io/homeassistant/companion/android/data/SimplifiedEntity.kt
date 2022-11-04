@@ -11,6 +11,9 @@ data class SimplifiedEntity(
         entityString.split(",")[2]
     )
 
+    val domain: String
+        get() = entityId.split(".")[0]
+
     val entityString: String
         get() = "$entityId,$friendlyName,$icon"
 }

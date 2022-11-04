@@ -6,9 +6,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.ui.ExperimentalComposeUiApi
-import androidx.wear.compose.material.ExperimentalWearMaterialApi
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.home.views.LoadHomePage
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
@@ -33,9 +30,6 @@ class HomeActivity : ComponentActivity(), HomeView {
         }
     }
 
-    @ExperimentalComposeUiApi
-    @ExperimentalAnimationApi
-    @ExperimentalWearMaterialApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // Get rid of me!

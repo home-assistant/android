@@ -1,5 +1,6 @@
-package io.homeassistant.companion.android.onboarding.views
+package io.homeassistant.companion.android.onboarding.welcome
 
+import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -26,6 +27,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.android.material.composethemeadapter.MdcTheme
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -98,7 +100,10 @@ fun WelcomeView(
 }
 
 @Composable
-@Preview
+@Preview(showSystemUi = true)
+@Preview(showSystemUi = true, uiMode = UI_MODE_NIGHT_YES)
 private fun PreviewWelcome() {
-    WelcomeView(onContinue = {})
+    MdcTheme {
+        WelcomeView(onContinue = {})
+    }
 }

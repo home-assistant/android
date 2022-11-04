@@ -15,49 +15,48 @@ import kotlinx.coroutines.runBlocking
 import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.R)
-class DefaultSliderControl {
-    companion object : HaControl {
-        override fun provideControlFeatures(
-            context: Context,
-            control: Control.StatefulBuilder,
-            entity: Entity<Map<String, Any>>,
-            area: AreaRegistryResponse?
-        ): Control.StatefulBuilder {
-            control.setStatusText("")
-            control.setControlTemplate(
-                RangeTemplate(
-                    entity.entityId,
-                    (entity.attributes["min"] as? Number)?.toFloat() ?: 0f,
-                    (entity.attributes["max"] as? Number)?.toFloat() ?: 1f,
-                    entity.state.toFloatOrNull() ?: 0f,
-                    (entity.attributes["step"] as? Number)?.toFloat() ?: 1f,
-                    null
+object DefaultSliderControl : HaControl {
+    override fun provideControlFeatures(
+        context: Context,
+        control: Control.StatefulBuilder,
+        entity: Entity<Map<String, Any>>,
+        area: AreaRegistryResponse?,
+        baseUrl: String?
+    ): Control.StatefulBuilder {
+        control.setStatusText("")
+        control.setControlTemplate(
+            RangeTemplate(
+                entity.entityId,
+                (entity.attributes["min"] as? Number)?.toFloat() ?: 0f,
+                (entity.attributes["max"] as? Number)?.toFloat() ?: 1f,
+                entity.state.toFloatOrNull() ?: 0f,
+                (entity.attributes["step"] as? Number)?.toFloat() ?: 1f,
+                null
+            )
+        )
+        return control
+    }
+
+    override fun getDeviceType(entity: Entity<Map<String, Any>>): Int =
+        DeviceTypes.TYPE_UNKNOWN
+
+    override fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String =
+        context.getString(commonR.string.domain_input_number)
+
+    override suspend fun performAction(
+        integrationRepository: IntegrationRepository,
+        action: ControlAction
+    ): Boolean {
+        return runBlocking {
+            integrationRepository.callService(
+                action.templateId.split(".")[0],
+                "set_value",
+                hashMapOf(
+                    "entity_id" to action.templateId,
+                    "value" to (action as? FloatAction)?.newValue.toString()
                 )
             )
-            return control
-        }
-
-        override fun getDeviceType(entity: Entity<Map<String, Any>>): Int =
-            DeviceTypes.TYPE_UNKNOWN
-
-        override fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String =
-            context.getString(commonR.string.domain_input_number)
-
-        override fun performAction(
-            integrationRepository: IntegrationRepository,
-            action: ControlAction
-        ): Boolean {
-            return runBlocking {
-                integrationRepository.callService(
-                    action.templateId.split(".")[0],
-                    "set_value",
-                    hashMapOf(
-                        "entity_id" to action.templateId,
-                        "value" to (action as? FloatAction)?.newValue.toString()
-                    )
-                )
-                return@runBlocking true
-            }
+            return@runBlocking true
         }
     }
 }

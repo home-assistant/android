@@ -5,6 +5,7 @@ import android.content.Context
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.provider.Settings
+import androidx.core.content.getSystemService
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -18,6 +19,8 @@ import io.homeassistant.companion.android.common.data.authentication.impl.Authen
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.impl.IntegrationRepositoryImpl
 import io.homeassistant.companion.android.common.data.integration.impl.IntegrationService
+import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
+import io.homeassistant.companion.android.common.data.keychain.KeyChainRepositoryImpl
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepositoryImpl
 import io.homeassistant.companion.android.common.data.url.UrlRepository
@@ -120,7 +123,7 @@ abstract class DataModule {
 
         @Provides
         @Singleton
-        fun wifiManager(@ApplicationContext appContext: Context) = appContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+        fun wifiManager(@ApplicationContext appContext: Context) = appContext.getSystemService<WifiManager>()!!
     }
 
     @Binds
@@ -146,4 +149,8 @@ abstract class DataModule {
     @Binds
     @Singleton
     abstract fun bindWifiRepository(wifiHelper: WifiHelperImpl): WifiHelper
+
+    @Binds
+    @Singleton
+    abstract fun bindKeyChainRepository(keyChainRepository: KeyChainRepositoryImpl): KeyChainRepository
 }

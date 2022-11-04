@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.widgets.camera
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
@@ -12,14 +13,13 @@ import android.os.Looper
 import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
-import android.widget.Toast
+import androidx.core.content.getSystemService
 import com.squareup.picasso.Picasso
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
-import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
 import kotlinx.coroutines.CoroutineScope
@@ -27,7 +27,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class CameraWidget : AppWidgetProvider() {
@@ -49,7 +48,8 @@ class CameraWidget : AppWidgetProvider() {
     @Inject
     lateinit var urlUseCase: UrlRepository
 
-    private lateinit var cameraWidgetDao: CameraWidgetDao
+    @Inject
+    lateinit var cameraWidgetDao: CameraWidgetDao
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -58,7 +58,6 @@ class CameraWidget : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray
     ) {
-        cameraWidgetDao = AppDatabase.getInstance(context).cameraWidgetDao()
         // There may be multiple widgets active, so update all of them
         appWidgetIds.forEach { appWidgetId ->
             updateAppWidget(
@@ -84,14 +83,26 @@ class CameraWidget : AppWidgetProvider() {
         }
     }
 
-    private fun updateAllWidgets(
-        context: Context,
-        cameraWidgetList: Array<CameraWidgetEntity>?
-    ) {
-        if (cameraWidgetList != null) {
-            Log.d(TAG, "Updating all widgets")
-            for (item in cameraWidgetList) {
-                updateAppWidget(context, item.id)
+    private fun updateAllWidgets(context: Context) {
+        mainScope.launch {
+            val appWidgetManager = AppWidgetManager.getInstance(context)
+            val systemWidgetIds = appWidgetManager.getAppWidgetIds(ComponentName(context, CameraWidget::class.java))
+            val dbWidgetList = cameraWidgetDao.getAll()
+
+            val invalidWidgetIds = dbWidgetList
+                .filter { !systemWidgetIds.contains(it.id) }
+                .map { it.id }
+            if (invalidWidgetIds.isNotEmpty()) {
+                Log.i(TAG, "Found widgets $invalidWidgetIds in database, but not in AppWidgetManager - sending onDeleted")
+                onDeleted(context, invalidWidgetIds.toIntArray())
+            }
+
+            val cameraWidgetList = dbWidgetList.filter { systemWidgetIds.contains(it.id) }
+            if (cameraWidgetList.isNotEmpty()) {
+                Log.d(TAG, "Updating all widgets")
+                for (item in cameraWidgetList) {
+                    updateAppWidget(context, item.id, appWidgetManager)
+                }
             }
         }
     }
@@ -105,9 +116,15 @@ class CameraWidget : AppWidgetProvider() {
         return RemoteViews(context.packageName, R.layout.widget_camera).apply {
             val widget = cameraWidgetDao.get(appWidgetId)
             if (widget != null) {
-                val entityId: String = widget.entityId
-
-                val entityPictureUrl = retrieveCameraImageUrl(context, entityId)
+                var entityPictureUrl: String?
+                try {
+                    entityPictureUrl = retrieveCameraImageUrl(widget.entityId)
+                    setViewVisibility(R.id.widgetCameraError, View.GONE)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to fetch entity or entity does not exist", e)
+                    setViewVisibility(R.id.widgetCameraError, View.VISIBLE)
+                    entityPictureUrl = null
+                }
                 val baseUrl = urlUseCase.getUrl().toString().removeSuffix("/")
                 val url = "$baseUrl$entityPictureUrl"
                 if (entityPictureUrl == null) {
@@ -171,16 +188,9 @@ class CameraWidget : AppWidgetProvider() {
         }
     }
 
-    private suspend fun retrieveCameraImageUrl(context: Context, entityId: String): String? {
+    private suspend fun retrieveCameraImageUrl(entityId: String): String? {
         val entity = integrationUseCase.getEntity(entityId)
-        if (entity == null) {
-            Log.e(TAG, "Failed to fetch entity or entity does not exist")
-            if (lastIntent == UPDATE_IMAGE)
-                Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
-            return null
-        }
-
-        return entity.attributes["entity_picture"]?.toString()
+        return entity?.attributes?.get("entity_picture")?.toString()
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -194,14 +204,11 @@ class CameraWidget : AppWidgetProvider() {
                 "AppWidgetId: " + appWidgetId
         )
 
-        cameraWidgetDao = AppDatabase.getInstance(context).cameraWidgetDao()
-        val cameraWidgetList = cameraWidgetDao.getAll()
-
         super.onReceive(context, intent)
         when (lastIntent) {
             RECEIVE_DATA -> saveEntityConfiguration(context, intent.extras, appWidgetId)
             UPDATE_IMAGE -> updateAppWidget(context, appWidgetId)
-            Intent.ACTION_SCREEN_ON -> updateAllWidgets(context, cameraWidgetList)
+            Intent.ACTION_SCREEN_ON -> updateAllWidgets(context)
         }
     }
 
@@ -233,10 +240,9 @@ class CameraWidget : AppWidgetProvider() {
     }
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
-        cameraWidgetDao = AppDatabase.getInstance(context).cameraWidgetDao()
         // When the user deletes the widget, delete the preference associated with it.
-        for (appWidgetId in appWidgetIds) {
-            cameraWidgetDao.delete(appWidgetId)
+        mainScope.launch {
+            cameraWidgetDao.deleteAll(appWidgetIds)
         }
     }
 
@@ -249,8 +255,8 @@ class CameraWidget : AppWidgetProvider() {
     }
 
     private fun isConnectionActive(context: Context): Boolean {
-        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val activeNetworkInfo = connectivityManager.activeNetworkInfo
+        val connectivityManager = context.getSystemService<ConnectivityManager>()
+        val activeNetworkInfo = connectivityManager?.activeNetworkInfo
         return activeNetworkInfo?.isConnected ?: false
     }
 }

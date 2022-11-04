@@ -14,6 +14,7 @@ import io.homeassistant.companion.android.databinding.ActivityMyBinding
 import io.homeassistant.companion.android.webview.WebViewActivity
 
 class MyActivity : BaseActivity() {
+
     companion object {
         val EXTRA_URI = "EXTRA_URI"
 

@@ -4,4 +4,10 @@
         <item name="android:statusBarColor">@color/colorLaunchScreenBackground</item>
         <item name="android:windowLightStatusBar">@bool/isLightMode</item>
     </style>
+
+    <!-- Only start overriding status bar on API 23 because android:windowLightStatusBar isn't available before this version -->
+    <style name="Theme.HomeAssistant.Config" parent="Theme.HomeAssistant">
+        <item name="android:statusBarColor">@color/colorBackground</item>
+        <item name="android:windowLightStatusBar">@bool/isLightMode</item>
+    </style>
 </resources>

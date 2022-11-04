@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "mediaplayctrls_widgets")
 data class MediaPlayerControlsWidgetEntity(
     @PrimaryKey
-    val id: Int,
+    override val id: Int,
     @ColumnInfo(name = "entityId")
     val entityId: String,
     @ColumnInfo(name = "label")
@@ -15,5 +15,13 @@ data class MediaPlayerControlsWidgetEntity(
     @ColumnInfo(name = "showSkip")
     val showSkip: Boolean,
     @ColumnInfo(name = "showSeek")
-    val showSeek: Boolean
-)
+    val showSeek: Boolean,
+    @ColumnInfo(name = "showVolume")
+    val showVolume: Boolean,
+    @ColumnInfo(name = "showSource", defaultValue = "false")
+    val showSource: Boolean,
+    @ColumnInfo(name = "background_type", defaultValue = "DAYNIGHT")
+    override val backgroundType: WidgetBackgroundType = WidgetBackgroundType.DAYNIGHT,
+    @ColumnInfo(name = "text_color")
+    override val textColor: String? = null
+) : WidgetEntity, ThemeableWidgetEntity

@@ -1,9 +1,11 @@
 package io.homeassistant.companion.android.bluetooth.ble
 
-import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
 import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseSettings
 import android.content.Context
+import androidx.core.content.getSystemService
+import io.homeassistant.companion.android.sensors.BluetoothSensorManager
 import org.altbeacon.beacon.Beacon
 import org.altbeacon.beacon.BeaconParser
 import org.altbeacon.beacon.BeaconTransmitter
@@ -53,7 +55,8 @@ object TransmitterManager {
             val parser = BeaconParser().setBeaconLayout(haTransmitter.beaconLayout)
             physicalTransmitter = BeaconTransmitter(context, parser)
         }
-        val bluetoothOn = BluetoothAdapter.getDefaultAdapter().isEnabled
+        val bluetoothAdapter = context.getSystemService<BluetoothManager>()?.adapter
+        val bluetoothOn = bluetoothAdapter?.isEnabled == true
         if (bluetoothOn) {
             val beacon = buildBeacon(haTransmitter)
             if (!physicalTransmitter.isStarted) {
@@ -89,17 +92,17 @@ object TransmitterManager {
 
     private fun getAdvertiseMode(haTransmitter: IBeaconTransmitter) =
         when (haTransmitter.advertiseModeSetting) {
-            "lowLatency" -> AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY
-            "balanced" -> AdvertiseSettings.ADVERTISE_MODE_BALANCED
-            "lowPower" -> AdvertiseSettings.ADVERTISE_MODE_LOW_POWER // explicit for code readability
+            BluetoothSensorManager.BLE_ADVERTISE_LOW_LATENCY -> AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY
+            BluetoothSensorManager.BLE_ADVERTISE_BALANCED -> AdvertiseSettings.ADVERTISE_MODE_BALANCED
+            BluetoothSensorManager.BLE_ADVERTISE_LOW_POWER -> AdvertiseSettings.ADVERTISE_MODE_LOW_POWER // explicit for code readability
             else -> AdvertiseSettings.ADVERTISE_MODE_LOW_POWER
         }
 
     private fun getPowerLevel(haTransmitter: IBeaconTransmitter) =
         when (haTransmitter.transmitPowerSetting) {
-            "high" -> AdvertiseSettings.ADVERTISE_TX_POWER_HIGH
-            "medium" -> AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM
-            "low" -> AdvertiseSettings.ADVERTISE_TX_POWER_LOW
+            BluetoothSensorManager.BLE_TRANSMIT_HIGH -> AdvertiseSettings.ADVERTISE_TX_POWER_HIGH
+            BluetoothSensorManager.BLE_TRANSMIT_MEDIUM -> AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM
+            BluetoothSensorManager.BLE_TRANSMIT_LOW -> AdvertiseSettings.ADVERTISE_TX_POWER_LOW
             else -> AdvertiseSettings.ADVERTISE_TX_POWER_ULTRA_LOW
         }
 

@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.util
 
+import android.net.Uri
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.net.URL
 
@@ -22,7 +23,7 @@ object UrlHandler {
         return Regex("^https?://").containsMatchIn(it.toString())
     }
 
-    fun splitNfcTagId(it: String?): String? {
+    fun splitNfcTagId(it: Uri?): String? {
         val matches =
             Regex("^https?://www\\.home-assistant\\.io/tag/(.*)").find(
                 it.toString()

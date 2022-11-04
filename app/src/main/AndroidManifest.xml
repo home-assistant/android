@@ -1,16 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="io.homeassistant.companion.android">
+    package="io.homeassistant.companion.android"
+    tools:ignore="LeanbackUsesWifi">
 
     <uses-sdk tools:overrideLibrary="androidx.wear.remote.interactions" />
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -18,6 +21,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
@@ -31,7 +35,8 @@
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28"/>
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
@@ -47,21 +52,11 @@
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
 
-    <!--用于进行网络定位-->
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <!--用于访问GPS定位-->
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <!--用于获取运营商信息，用于支持提供运营商信息相关的接口-->
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <!--用于获取wifi的获取权限，wifi信息会用来进行网络定位-->
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
-    <!--用于写入缓存数据到扩展存储卡-->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <!--用于申请调用A-GPS模块-->
     <uses-permission android:name="android.permission.ACCESS_LOCATION_EXTRA_COMMANDS" />
 
     <application
-        android:name=".HomeAssistantApplication"
+        android:name="io.homeassistant.companion.android.HomeAssistantApplication"
         android:allowBackup="true"
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/backup_rules_android12"
@@ -76,6 +71,20 @@
         tools:ignore="GoogleAppIndexingWarning">
 
         <!-- Start things like SensorWorker on device boot -->
+        <receiver android:name=".websocket.WebsocketBroadcastReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.MY_PACKAGE_SUSPENDED" />
+                <action android:name="android.intent.action.MY_PACKAGE_UNSUSPENDED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.app.action.NEXT_ALARM_CLOCK_CHANGED" />
+                <action android:name="android.bluetooth.device.action.ACL_CONNECTED" />
+                <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
+            </intent-filter>
+        </receiver>
         <receiver android:name=".sensors.SensorReceiver"
             android:exported="true">
             <intent-filter>
@@ -96,6 +105,7 @@
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="io.homeassistant.companion.android.widgets.ButtonWidget.CALL_SERVICE" />
+                <action android:name="io.homeassistant.companion.android.widgets.ButtonWidget.CALL_SERVICE_AUTH" />
                 <action android:name="io.homeassistant.companion.android.widgets.ButtonWidget.RECEIVE_DATA" />
             </intent-filter>
 
@@ -158,7 +168,7 @@
                 <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
                 <action android:name="io.homeassistant.companion.android.background.REQUEST_SENSORS_UPDATE" />
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="io.homeassistant.companion.android.widgets.template.BaseWidgetProvider.RECEIVE_DATA" />
+                <action android:name="io.homeassistant.companion.android.widgets.template.TemplateWidget.RECEIVE_DATA" />
             </intent-filter>
 
             <meta-data
@@ -167,24 +177,33 @@
         </receiver>
 
         <activity android:name=".widgets.button.ButtonWidgetConfigureActivity"
+            android:configChanges="orientation|screenSize"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>
         </activity>
+        <activity android:name=".widgets.common.WidgetAuthenticationActivity"
+            android:configChanges="orientation|screenSize"
+            android:exported="true"
+            android:theme="@style/Theme.Transparent">
+        </activity>
         <activity android:name=".widgets.camera.CameraWidgetConfigureActivity"
+            android:configChanges="orientation|screenSize"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>
         </activity>
         <activity android:name=".widgets.entity.EntityWidgetConfigureActivity"
+            android:configChanges="orientation|screenSize"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>
         </activity>
         <activity android:name=".widgets.media_player_controls.MediaPlayerControlsWidgetConfigureActivity"
+            android:configChanges="orientation|screenSize"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
@@ -270,17 +289,30 @@
 
         <activity
             android:name=".onboarding.OnboardingActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden" />
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation" />
 
         <activity
             android:name=".settings.wear.SettingsWearActivity"
             android:parentActivityName=".settings.SettingsActivity"
-            android:configChanges="orientation|screenSize" />
+            android:configChanges="orientation|screenSize"
+            android:exported="true"
+            android:theme="@style/Theme.HomeAssistant.Config">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:scheme="homeassistant"
+                    android:host="wear-phone-signin" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".settings.wear.views.SettingsWearMainView"
             android:parentActivityName=".settings.SettingsActivity"
-            android:configChanges="orientation|screenSize" />
+            android:configChanges="orientation|screenSize"
+            android:theme="@style/Theme.HomeAssistant.Config" />
 
         <service android:name=".onboarding.WearOnboardingListener"
             android:exported="true">
@@ -297,13 +329,14 @@
             android:supportsPictureInPicture="true"
             android:resizeableActivity="true"
             android:exported="false"
-            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout" />
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation" />
 
         <activity
             android:name=".settings.SettingsActivity"
             android:parentActivityName=".webview.WebViewActivity"
             android:exported="false"
-            android:configChanges="orientation|screenSize"/>
+            android:configChanges="orientation|screenSize"
+            android:theme="@style/Theme.HomeAssistant.Config"/>
 
         <activity
             android:name=".nfc.TagReaderActivity"
@@ -334,7 +367,8 @@
         <activity
             android:name=".nfc.NfcSetupActivity"
             android:exported="false"
-            android:label="@string/nfc_title_nfc_setup" />
+            android:label="@string/nfc_title_nfc_setup"
+            android:theme="@style/Theme.HomeAssistant.Config" />
 
         <activity android:name=".share.ShareActivity"
             android:exported="true">
@@ -358,7 +392,7 @@
         <service
             android:name=".qs.Tile1Service"
             android:icon="@drawable/ic_stat_ic_notification"
-            android:label="@string/tile_not_setup"
+            android:label="@string/tile_1"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">
             <intent-filter>
@@ -370,7 +404,7 @@
         <service
             android:name=".qs.Tile2Service"
             android:icon="@drawable/ic_stat_ic_notification"
-            android:label="@string/tile_not_setup"
+            android:label="@string/tile_2"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">
             <intent-filter>
@@ -382,7 +416,7 @@
         <service
             android:name=".qs.Tile3Service"
             android:icon="@drawable/ic_stat_ic_notification"
-            android:label="@string/tile_not_setup"
+            android:label="@string/tile_3"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">
             <intent-filter>
@@ -394,7 +428,7 @@
         <service
             android:name=".qs.Tile4Service"
             android:icon="@drawable/ic_stat_ic_notification"
-            android:label="@string/tile_not_setup"
+            android:label="@string/tile_4"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">
             <intent-filter>
@@ -406,7 +440,7 @@
         <service
             android:name=".qs.Tile5Service"
             android:icon="@drawable/ic_stat_ic_notification"
-            android:label="@string/tile_not_setup"
+            android:label="@string/tile_5"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">
             <intent-filter>
@@ -418,7 +452,7 @@
         <service
             android:name=".qs.Tile6Service"
             android:icon="@drawable/ic_stat_ic_notification"
-            android:label="@string/tile_not_setup"
+            android:label="@string/tile_6"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">
             <intent-filter>
@@ -430,7 +464,7 @@
         <service
             android:name=".qs.Tile7Service"
             android:icon="@drawable/ic_stat_ic_notification"
-            android:label="@string/tile_not_setup"
+            android:label="@string/tile_7"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">
             <intent-filter>
@@ -442,7 +476,7 @@
         <service
             android:name=".qs.Tile8Service"
             android:icon="@drawable/ic_stat_ic_notification"
-            android:label="@string/tile_not_setup"
+            android:label="@string/tile_8"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">
             <intent-filter>
@@ -454,7 +488,7 @@
         <service
             android:name=".qs.Tile9Service"
             android:icon="@drawable/ic_stat_ic_notification"
-            android:label="@string/tile_not_setup"
+            android:label="@string/tile_9"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">
             <intent-filter>
@@ -466,7 +500,7 @@
         <service
             android:name=".qs.Tile10Service"
             android:icon="@drawable/ic_stat_ic_notification"
-            android:label="@string/tile_not_setup"
+            android:label="@string/tile_10"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">
             <intent-filter>
@@ -478,7 +512,7 @@
         <service
             android:name=".qs.Tile11Service"
             android:icon="@drawable/ic_stat_ic_notification"
-            android:label="@string/tile_not_setup"
+            android:label="@string/tile_11"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">
             <intent-filter>
@@ -490,7 +524,7 @@
         <service
             android:name=".qs.Tile12Service"
             android:icon="@drawable/ic_stat_ic_notification"
-            android:label="@string/tile_not_setup"
+            android:label="@string/tile_12"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">
             <intent-filter>
@@ -498,6 +532,16 @@
                     android:name="android.service.quicksettings.action.QS_TILE"/>
             </intent-filter>
         </service>
+
+        <receiver
+            android:name=".notifications.NotificationActionReceiver"
+            android:enabled="true"
+            android:exported="true" />
+
+        <receiver
+            android:name=".notifications.NotificationDeleteReceiver"
+            android:enabled="true"
+            android:exported="true" />
     </application>
 
 </manifest>
