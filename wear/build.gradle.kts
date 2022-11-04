@@ -66,9 +66,6 @@ android {
 
     kotlinOptions {
         jvmTarget = "11"
-        // Temporarily required to implement an interface from Compose because they use @JvmDefault
-        // Remove when kotlin-gradle-plugin is >=1.6.20 (https://issuetracker.google.com/issues/217593040)
-        freeCompilerArgs = freeCompilerArgs + "-Xjvm-default=all"
     }
 
     lint {
