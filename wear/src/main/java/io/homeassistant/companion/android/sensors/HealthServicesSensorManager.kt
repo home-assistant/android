@@ -84,7 +84,7 @@ class HealthServicesSensorManager : SensorManager {
         val supportedSensors = mutableListOf(userActivityState)
 
         if (passiveMonitoringCapabilities?.supportedDataTypesPassiveMonitoring?.contains(DataType.FLOORS_DAILY) == true)
-            supportedSensors += supportedSensors.plus(dailyFloors)
+            supportedSensors += dailyFloors
         return supportedSensors
     }
 
