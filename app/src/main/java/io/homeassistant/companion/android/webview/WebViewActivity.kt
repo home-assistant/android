@@ -723,7 +723,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     override fun onPause() {
         super.onPause()
-
         SensorWorker.start(this)
         presenter.setAppActive(false)
     }
@@ -1406,7 +1405,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         ) {
             Log.d(TAG, "Show first view of dashboard.")
             webView.evaluateJavascript(
-                "document.querySelector(\"body > home-assistant\").shadowRoot.querySelector(\"home-assistant-main\").shadowRoot.querySelector(\"#drawer > ha-sidebar\").shadowRoot.querySelector(\"paper-listbox > a:nth-child(1)\").click();",
+                """
+                    document.querySelector('body > home-assistant').shadowRoot.querySelector('home-assistant-main').shadowRoot.querySelector('#drawer > ha-sidebar').shadowRoot.querySelector('paper-listbox > a:nth-child(1)').click();
+                    window.scrollTo(0, 0);
+                    """,
                 null
             )
         }
