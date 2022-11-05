@@ -73,7 +73,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
 
         if (checkPermission(latestContext, stepsSensor.id)) {
             val now = System.currentTimeMillis()
-            if (listenerLastRegistered + 60000 < now && isListenerRegistered) {
+            if (listenerLastRegistered + SensorManager.SENSOR_LISTENER_TIMEOUT < now && isListenerRegistered) {
                 Log.d(TAG, "Re-registering listener as it appears to be stuck")
                 mySensorManager.unregisterListener(this)
                 isListenerRegistered = false

@@ -22,7 +22,8 @@ class OnBodySensorManager : SensorManager, SensorEventListener {
             commonR.string.sensor_name_on_body,
             commonR.string.sensor_description_on_body,
             "mdi:account",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
     }
 
