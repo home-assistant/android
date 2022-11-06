@@ -26,6 +26,9 @@ class SsidViewModel @Inject constructor(
     var prioritizeInternal by mutableStateOf(false)
         private set
 
+    var usingWifi by mutableStateOf(false)
+        private set
+
     var activeSsid by mutableStateOf<String?>(null)
         private set
 
@@ -37,6 +40,7 @@ class SsidViewModel @Inject constructor(
             wifiSsids.clear()
             wifiSsids.addAll(urlRepository.getHomeWifiSsids())
             prioritizeInternal = urlRepository.isPrioritizeInternal()
+            usingWifi = wifiHelper.isUsingWifi()
             activeSsid = wifiHelper.getWifiSsid()?.removeSurrounding("\"")
             activeBssid = wifiHelper.getWifiBssid()
         }

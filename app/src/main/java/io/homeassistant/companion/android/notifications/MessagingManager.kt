@@ -1540,7 +1540,7 @@ class MessagingManager @Inject constructor(
                     run frameLoop@{
                         for (timeInMicroSeconds in VIDEO_START_MICROSECONDS until durationInMicroSeconds step VIDEO_INCREMENT_MICROSECONDS) {
                             // Max size in bytes for notification GIF
-                            val maxSize = (2500000 - singleFrame)
+                            val maxSize = (5000000 - singleFrame)
                             if (processingFramesSize >= maxSize) {
                                 return@frameLoop
                             }

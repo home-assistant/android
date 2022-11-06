@@ -158,7 +158,7 @@ class GeocodeSensorManager : SensorManager {
                         }
 
                         override fun onError(errorMessage: String?) {
-                            cont.resumeWithException(Error(errorMessage))
+                            cont.resumeWithException(Exception(errorMessage))
                         }
                     }
                 )

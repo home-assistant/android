@@ -21,7 +21,7 @@ class WetModeSensorManager : SensorManager {
     }
 
     override fun docsLink(): String {
-        return "https://companion.home-assistant.io/docs/wear-os/#sensors"
+        return "https://companion.home-assistant.io/docs/wear-os/sensors"
     }
 
     private var wetModeEnabled: Boolean = false
