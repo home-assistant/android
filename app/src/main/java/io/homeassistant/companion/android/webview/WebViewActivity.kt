@@ -1400,12 +1400,16 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     private fun openFirstViewOnDashboardIfNeeded() {
         if (presenter.isAlwaysShowFirstViewOnAppStartEnabled() &&
-            webView.url?.contains(Regex("://.*/config/")) == false &&
             LivecycleHandler.isAppInBackground()
         ) {
-            Log.d(TAG, "Show first view of dashboard.")
-            webView.evaluateJavascript(
-                """
+            // Pattern matches urls which are NOT allowed to show the first view after app is started
+            // This is
+            // /config/* as these are the settings of HA but NOT /config/dashboard. This is just the overview of the HA settings
+            // /hassio/* as these are the addons section of HA settings.
+            if (webView.url?.matches(".*://.*/(config/(?!.*\\bdashboard\\b)|hassio)/*.*".toRegex()) == false) {
+                Log.d(TAG, "Show first view of default dashboard.")
+                webView.evaluateJavascript(
+                    """
                     var anchor = 'a:nth-child(1)';
                     var defaultPanel = window.localStorage.getItem('defaultPanel')?.replaceAll('"',"");
                     if(defaultPanel) anchor = 'a[href="/' + defaultPanel + '"]';
@@ -1414,8 +1418,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                                                    .shadowRoot.querySelector('paper-listbox > ' + anchor).click();
                     window.scrollTo(0, 0);
                     """,
-                null
-            )
+                    null
+                )
+            } else Log.d(TAG, "User is in the Home Assistant config. Will not show first view of the default dashboard.")
         }
     }
 }
