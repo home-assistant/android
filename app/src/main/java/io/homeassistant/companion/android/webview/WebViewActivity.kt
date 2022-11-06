@@ -1406,7 +1406,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             Log.d(TAG, "Show first view of dashboard.")
             webView.evaluateJavascript(
                 """
-                    document.querySelector('body > home-assistant').shadowRoot.querySelector('home-assistant-main').shadowRoot.querySelector('#drawer > ha-sidebar').shadowRoot.querySelector('paper-listbox > a:nth-child(1)').click();
+                    var anchor = 'a:nth-child(1)';
+                    var defaultPanel = window.localStorage.getItem('defaultPanel')?.replaceAll('"',"");
+                    if(defaultPanel) anchor = 'a[href="/' + defaultPanel + '"]';
+                    document.querySelector('body > home-assistant').shadowRoot.querySelector('home-assistant-main')
+                                                                   .shadowRoot.querySelector('#drawer > ha-sidebar')
+                                                                   .shadowRoot.querySelector('paper-listbox > ' + anchor).click();
                     window.scrollTo(0, 0);
                     """,
                 null
