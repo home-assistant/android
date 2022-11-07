@@ -162,37 +162,41 @@ class MainViewModel @Inject constructor(
     }
 
     suspend fun entityUpdates() {
-        homePresenter.getEntityUpdates()?.collect {
-            if (supportedDomains().contains(it.domain)) {
-                entities[it.entityId] = it
-                updateEntityDomains()
+        if (loadingState.value != LoadingState.LOADING)
+            homePresenter.getEntityUpdates()?.collect {
+                if (supportedDomains().contains(it.domain)) {
+                    entities[it.entityId] = it
+                    updateEntityDomains()
+                }
             }
-        }
     }
 
     suspend fun areaUpdates() {
-        homePresenter.getAreaRegistryUpdates()?.collect {
-            areaRegistry = homePresenter.getAreaRegistry()
-            areas.clear()
-            areaRegistry?.let {
-                areas.addAll(it)
+        if (loadingState.value != LoadingState.LOADING)
+            homePresenter.getAreaRegistryUpdates()?.collect {
+                areaRegistry = homePresenter.getAreaRegistry()
+                areas.clear()
+                areaRegistry?.let {
+                    areas.addAll(it)
+                }
+                updateEntityDomains()
             }
-            updateEntityDomains()
-        }
     }
 
     suspend fun deviceUpdates() {
-        homePresenter.getDeviceRegistryUpdates()?.collect {
-            deviceRegistry = homePresenter.getDeviceRegistry()
-            updateEntityDomains()
-        }
+        if (loadingState.value != LoadingState.LOADING)
+            homePresenter.getDeviceRegistryUpdates()?.collect {
+                deviceRegistry = homePresenter.getDeviceRegistry()
+                updateEntityDomains()
+            }
     }
 
     suspend fun entityRegistryUpdates() {
-        homePresenter.getEntityRegistryUpdates()?.collect {
-            entityRegistry = homePresenter.getEntityRegistry()
-            updateEntityDomains()
-        }
+        if (loadingState.value != LoadingState.LOADING)
+            homePresenter.getEntityRegistryUpdates()?.collect {
+                entityRegistry = homePresenter.getEntityRegistry()
+                updateEntityDomains()
+            }
     }
 
     fun updateEntityDomains() {
