@@ -88,7 +88,7 @@ import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.ChangeLog
 import io.homeassistant.companion.android.util.DataUriDownloadManager
-import io.homeassistant.companion.android.util.LivecycleHandler
+import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.util.OnSwipeListener
 import io.homeassistant.companion.android.util.TLSWebViewClient
 import io.homeassistant.companion.android.util.isStarted
@@ -1400,7 +1400,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     private fun openFirstViewOnDashboardIfNeeded() {
         if (presenter.isAlwaysShowFirstViewOnAppStartEnabled() &&
-            LivecycleHandler.isAppInBackground()
+            LifecycleHandler.isAppInBackground()
         ) {
             // Pattern matches urls which are NOT allowed to show the first view after app is started
             // This is

@@ -4,7 +4,7 @@ import android.app.Activity
 import android.app.Application
 import android.os.Bundle
 
-object LivecycleHandler : Application.ActivityLifecycleCallbacks {
+object LifecycleHandler : Application.ActivityLifecycleCallbacks {
     private var activityReferences = 0
     private var isActivityChangingConfigurations = false
     override fun onActivityCreated(activity: Activity, bundle: Bundle?) {
