@@ -1406,7 +1406,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             // This is
             // /config/* as these are the settings of HA but NOT /config/dashboard. This is just the overview of the HA settings
             // /hassio/* as these are the addons section of HA settings.
-            if (webView.url?.matches(".*://.*/(config/(?!.*\\bdashboard\\b)|hassio)/*.*".toRegex()) == false) {
+            if (webView.url?.matches(".*://.*/(config/(?!\\bdashboard\\b)|hassio)/*.*".toRegex()) == false) {
                 Log.d(TAG, "Show first view of default dashboard.")
                 webView.evaluateJavascript(
                     """
