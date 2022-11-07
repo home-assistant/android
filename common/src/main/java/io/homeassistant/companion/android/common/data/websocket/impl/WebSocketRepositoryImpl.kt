@@ -60,6 +60,7 @@ import okio.ByteString
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
+import kotlin.coroutines.resumeWithException
 
 class WebSocketRepositoryImpl @Inject constructor(
     private val okHttpClient: OkHttpClient,
@@ -378,21 +379,26 @@ class WebSocketRepositoryImpl @Inject constructor(
     private suspend fun sendMessage(request: WebSocketRequest): SocketResponse? {
         return if (connect()) {
             withTimeoutOrNull(30000) {
-                suspendCancellableCoroutine { cont ->
-                    // Lock on the connection so that we fully send before allowing another send.
-                    // This should prevent out of order errors.
-                    connection?.let {
-                        synchronized(it) {
-                            val requestId = id.getAndIncrement()
-                            val outbound = request.message.plus("id" to requestId)
-                            Log.d(TAG, "Sending message $requestId: $outbound")
-                            activeMessages[requestId] = request.apply {
-                                onResponse = cont
+                try {
+                    suspendCancellableCoroutine { cont ->
+                        // Lock on the connection so that we fully send before allowing another send.
+                        // This should prevent out of order errors.
+                        connection?.let {
+                            synchronized(it) {
+                                val requestId = id.getAndIncrement()
+                                val outbound = request.message.plus("id" to requestId)
+                                Log.d(TAG, "Sending message $requestId: $outbound")
+                                activeMessages[requestId] = request.apply {
+                                    onResponse = cont
+                                }
+                                connection?.send(mapper.writeValueAsString(outbound))
+                                Log.d(TAG, "Message number $requestId sent")
                             }
-                            connection?.send(mapper.writeValueAsString(outbound))
-                            Log.d(TAG, "Message number $requestId sent")
                         }
                     }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Exception while sending message", e)
+                    null
                 }
             }
         } else {
@@ -508,7 +514,7 @@ class WebSocketRepositoryImpl @Inject constructor(
                     .filterValues { it.eventFlow == null }
                     .forEach {
                         it.value.onResponse?.let { cont ->
-                            if (cont.isActive) cont.resumeWith(Result.failure(IOException()))
+                            if (cont.isActive) cont.resumeWithException(IOException())
                         }
                         activeMessages.remove(it.key)
                     }
