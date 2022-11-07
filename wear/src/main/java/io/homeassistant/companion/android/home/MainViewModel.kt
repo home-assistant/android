@@ -154,42 +154,44 @@ class MainViewModel @Inject constructor(
                 } else {
                     LoadingState.ERROR
                 }
-
-                // Listen for updates
-                viewModelScope.launch {
-                    homePresenter.getEntityUpdates()?.collect {
-                        if (supportedDomains().contains(it.domain)) {
-                            entities[it.entityId] = it
-                            updateEntityDomains()
-                        }
-                    }
-                }
-                viewModelScope.launch {
-                    homePresenter.getAreaRegistryUpdates()?.collect {
-                        areaRegistry = homePresenter.getAreaRegistry()
-                        areas.clear()
-                        areaRegistry?.let {
-                            areas.addAll(it)
-                        }
-                        updateEntityDomains()
-                    }
-                }
-                viewModelScope.launch {
-                    homePresenter.getDeviceRegistryUpdates()?.collect {
-                        deviceRegistry = homePresenter.getDeviceRegistry()
-                        updateEntityDomains()
-                    }
-                }
-                viewModelScope.launch {
-                    homePresenter.getEntityRegistryUpdates()?.collect {
-                        entityRegistry = homePresenter.getEntityRegistry()
-                        updateEntityDomains()
-                    }
-                }
             } catch (e: Exception) {
                 Log.e(TAG, "Exception while loading entities", e)
                 loadingState.value = LoadingState.ERROR
             }
+        }
+    }
+
+    suspend fun entityUpdates() {
+        homePresenter.getEntityUpdates()?.collect {
+            if (supportedDomains().contains(it.domain)) {
+                entities[it.entityId] = it
+                updateEntityDomains()
+            }
+        }
+    }
+
+    suspend fun areaUpdates() {
+        homePresenter.getAreaRegistryUpdates()?.collect {
+            areaRegistry = homePresenter.getAreaRegistry()
+            areas.clear()
+            areaRegistry?.let {
+                areas.addAll(it)
+            }
+            updateEntityDomains()
+        }
+    }
+
+    suspend fun deviceUpdates() {
+        homePresenter.getDeviceRegistryUpdates()?.collect {
+            deviceRegistry = homePresenter.getDeviceRegistry()
+            updateEntityDomains()
+        }
+    }
+
+    suspend fun entityRegistryUpdates() {
+        homePresenter.getEntityRegistryUpdates()?.collect {
+            entityRegistry = homePresenter.getEntityRegistry()
+            updateEntityDomains()
         }
     }
 
