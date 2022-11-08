@@ -398,7 +398,7 @@ class MainViewModel @Inject constructor(
         clearCache()
     }
 
-    fun clearCache() {
+    private fun clearCache() {
         viewModelScope.launch {
             favoriteCachesDao.deleteAll()
         }
