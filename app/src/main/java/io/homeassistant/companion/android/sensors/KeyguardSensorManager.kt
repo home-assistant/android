@@ -54,7 +54,7 @@ class KeyguardSensorManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_keyguard
 
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return when {
             (Build.VERSION.SDK_INT >= 23) -> listOf(deviceLocked, deviceSecure, keyguardLocked, keyguardSecure)
             (Build.VERSION.SDK_INT >= 22) -> listOf(deviceLocked, keyguardLocked, keyguardSecure)

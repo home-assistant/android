@@ -947,4 +947,6 @@
     <string name="sensor_name_health_services">Health Services</string>
     <string name="sensor_name_heart_rate">Heart Rate</string>
     <string name="sensor_description_heart_rate">Current heart rate in beats per minute, an attribute also exists for the reported accuracy from the sensor</string>
+    <string name="sensor_name_daily_floors">Daily Floors</string>
+    <string name="sensor_description_daily_floors">The total number floors climbed over a day, where the previous day ends and a new day begins at 12:00 AM local time</string>
 </resources>

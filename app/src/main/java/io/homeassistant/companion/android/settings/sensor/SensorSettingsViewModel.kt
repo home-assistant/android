@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.sensors.SensorReceiver
@@ -30,6 +31,9 @@ class SensorSettingsViewModel @Inject constructor(
     var sensors by mutableStateOf<Map<String, Sensor>>(emptyMap())
         private set
 
+    var allSensors by mutableStateOf<Map<SensorManager, List<SensorManager.BasicSensor>>>(emptyMap())
+        private set
+
     var searchQuery: String? = null
     var sensorFilter by mutableStateOf(SensorFilter.ALL)
         private set
@@ -44,17 +48,22 @@ class SensorSettingsViewModel @Inject constructor(
     }
 
     fun setSensorsSearchQuery(query: String? = "") {
-        searchQuery = query
-        filterSensorsList()
+        viewModelScope.launch {
+            searchQuery = query
+            filterSensorsList()
+        }
     }
 
     fun setSensorFilterChoice(filter: SensorFilter) {
-        sensorFilter = filter
-        filterSensorsList()
+        viewModelScope.launch {
+            sensorFilter = filter
+            filterSensorsList()
+        }
     }
 
-    private fun filterSensorsList() {
+    private suspend fun filterSensorsList() {
         val app = getApplication<Application>()
+        val managers = SensorReceiver.MANAGERS.sortedBy { app.getString(it.name) }
         sensors = SensorReceiver.MANAGERS
             .filter { it.hasSensor(app.applicationContext) }
             .flatMap { manager ->
@@ -76,5 +85,13 @@ class SensorSettingsViewModel @Inject constructor(
                     .mapNotNull { sensor -> sensorsList.firstOrNull { it.id == sensor.id } }
             }
             .associateBy { it.id }
+
+        allSensors = managers.associateWith { manager ->
+            manager.getAvailableSensors(app)
+                .filter { basicSensor ->
+                    sensors.containsKey(basicSensor.id)
+                }
+                .sortedBy { app.getString(it.name) }.distinct()
+        }
     }
 }

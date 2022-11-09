@@ -67,7 +67,7 @@ class TrafficStatsManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_traffic_stats
 
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return if (hasCellular) {
             listOf(rxBytesMobile, txBytesMobile, rxBytesTotal, txBytesTotal)
         } else listOf(rxBytesTotal, txBytesTotal)

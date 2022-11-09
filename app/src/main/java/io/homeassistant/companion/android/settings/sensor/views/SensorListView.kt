@@ -31,20 +31,11 @@ import io.homeassistant.companion.android.common.R as commonR
 @Composable
 fun SensorListView(
     viewModel: SensorSettingsViewModel,
-    managers: List<SensorManager>,
     onSensorClicked: (String) -> Unit
 ) {
-    val context = LocalContext.current
-    val listEntries = managers.associateWith { manager ->
-        manager.getAvailableSensors(context)
-            .filter { basicSensor ->
-                basicSensor.id in viewModel.sensors
-            }
-            .sortedBy { context.getString(it.name) }
-    }
 
     LazyColumn {
-        listEntries.forEach { (manager, currentSensors) ->
+        viewModel.allSensors.forEach { (manager, currentSensors) ->
             stickyHeader(
                 key = manager.id()
             ) {
@@ -80,7 +71,7 @@ fun SensorListView(
                     onSensorClicked = onSensorClicked
                 )
             }
-            if (currentSensors.any() && manager.id() != listEntries.keys.last().id()) {
+            if (currentSensors.any() && manager.id() != viewModel.allSensors.keys.last().id()) {
                 item {
                     Divider()
                 }

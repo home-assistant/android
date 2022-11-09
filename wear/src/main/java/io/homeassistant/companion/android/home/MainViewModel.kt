@@ -10,6 +10,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
@@ -23,6 +24,7 @@ import io.homeassistant.companion.android.database.wear.FavoriteCaches
 import io.homeassistant.companion.android.database.wear.FavoriteCachesDao
 import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.wear.getAllFlow
+import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.util.RegistriesDataHandler
 import kotlinx.coroutines.async
@@ -107,6 +109,8 @@ class MainViewModel @Inject constructor(
         HomePresenterImpl.domainsWithNames[domain]?.let { getApplication<Application>().getString(it) }
 
     val sensors = sensorsDao.getAllFlow().collectAsState()
+
+    var availableSensors = emptyList<SensorManager.BasicSensor>()
 
     private fun loadSettings() {
         viewModelScope.launch {
@@ -289,6 +293,26 @@ class MainViewModel @Inject constructor(
     ) {
         sensorDao.setSensorsEnabled(listOf(basicSensor.id), isEnabled)
         SensorWorker.start(getApplication())
+    }
+
+    fun updateAllSensors(sensorManager: SensorManager) {
+        availableSensors = emptyList()
+        viewModelScope.launch {
+            val context = getApplication<HomeAssistantApplication>().applicationContext
+            availableSensors = sensorManager
+                .getAvailableSensors(context)
+                .sortedBy { context.getString(it.name) }.distinct()
+        }
+    }
+
+    fun initAllSensors() {
+        viewModelScope.launch {
+            for (manager in SensorReceiver.MANAGERS) {
+                for (basicSensor in manager.getAvailableSensors(getApplication())) {
+                    manager.isEnabled(getApplication(), basicSensor.id)
+                }
+            }
+        }
     }
 
     fun getAreaForEntity(entityId: String): AreaRegistryResponse? =

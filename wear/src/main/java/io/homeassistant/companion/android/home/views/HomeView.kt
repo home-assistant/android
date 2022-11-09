@@ -222,8 +222,10 @@ fun LoadHomePage(
                 val sensorManager = getSensorManagers().first { sensorManager ->
                     sensorManager.id() == sensorManagerId
                 }
+                mainViewModel.updateAllSensors(sensorManager)
                 SensorManagerUi(
                     allSensors = mainViewModel.sensors.value,
+                    allAvailSensors = mainViewModel.availableSensors,
                     sensorManager = sensorManager,
                 ) { sensorId, isEnabled ->
                     mainViewModel.enableDisableSensor(sensorManager, sensorId, isEnabled)

@@ -41,7 +41,7 @@ class PressureSensorManager : SensorManager, SensorEventListener {
     override val name: Int
         get() = commonR.string.sensor_name_pressure
 
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(pressureSensor)
     }
 

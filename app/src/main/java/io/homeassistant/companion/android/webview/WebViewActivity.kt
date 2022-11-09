@@ -44,6 +44,7 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -711,7 +712,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         SensorWorker.start(this)
         WebsocketManager.start(this)
-        checkAndWarnForDisabledLocation()
+        lifecycleScope.launch {
+            checkAndWarnForDisabledLocation()
+        }
         changeLog.showChangeLog(this, false)
     }
 
@@ -721,7 +724,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         presenter.setAppActive(false)
     }
 
-    private fun checkAndWarnForDisabledLocation() {
+    private suspend fun checkAndWarnForDisabledLocation() {
         var showLocationDisabledWarning = false
         var settingsWithLocationPermissions = mutableListOf<String>()
         if (!DisabledLocationHandler.isLocationEnabled(this) && presenter.isSsidUsed()) {
@@ -980,10 +983,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onPictureInPictureModeChanged(
         isInPictureInPictureMode: Boolean,
         newConfig: Configuration
     ) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
         if (exoPlayerView.visibility != View.VISIBLE) {
             if (isInPictureInPictureMode) {
                 (decor.getChildAt(3) as FrameLayout).layoutParams.height =

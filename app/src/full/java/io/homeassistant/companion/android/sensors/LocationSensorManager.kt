@@ -654,7 +654,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
         }
     }
 
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return if (DisabledLocationHandler.hasGPS(context)) {
             listOf(singleAccurateLocation, backgroundLocation, zoneLocation, highAccuracyMode, highAccuracyUpdateInterval)
         } else {
