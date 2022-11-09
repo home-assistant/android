@@ -17,6 +17,7 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
 
         private const val TAG = "ProximitySensor"
         private var isListenerRegistered = false
+        private var listenerLastRegistered = 0
         private val proximitySensor = SensorManager.BasicSensor(
             "proximity_sensor",
             "sensor",
@@ -62,6 +63,13 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
         if (!isEnabled(latestContext, proximitySensor.id))
             return
 
+        val now = System.currentTimeMillis()
+        if (listenerLastRegistered + SensorManager.SENSOR_LISTENER_TIMEOUT < now && isListenerRegistered) {
+            Log.d(TAG, "Re-registering listener as it appears to be stuck")
+            mySensorManager.unregisterListener(this)
+            isListenerRegistered = false
+        }
+
         mySensorManager = latestContext.getSystemService()!!
 
         val proximitySensors = mySensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY)
@@ -73,6 +81,7 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
             )
             Log.d(TAG, "Proximity sensor listener registered")
             isListenerRegistered = true
+            listenerLastRegistered = now.toInt()
             maxRange = proximitySensors.maximumRange.roundToInt()
         }
     }

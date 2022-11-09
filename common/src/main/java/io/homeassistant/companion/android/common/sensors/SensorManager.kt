@@ -23,6 +23,7 @@ interface SensorManager {
         const val STATE_CLASS_MEASUREMENT = "measurement"
         const val STATE_CLASS_TOTAL = "total"
         const val STATE_CLASS_TOTAL_INCREASING = "total_increasing"
+        const val SENSOR_LISTENER_TIMEOUT = 60000
     }
 
     val name: Int
