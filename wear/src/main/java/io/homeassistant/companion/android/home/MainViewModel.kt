@@ -162,6 +162,8 @@ class MainViewModel @Inject constructor(
     }
 
     suspend fun entityUpdates() {
+        if (!homePresenter.isConnected())
+            return
         homePresenter.getEntityUpdates()?.collect {
             if (supportedDomains().contains(it.domain)) {
                 entities[it.entityId] = it
@@ -171,6 +173,8 @@ class MainViewModel @Inject constructor(
     }
 
     suspend fun areaUpdates() {
+        if (!homePresenter.isConnected())
+            return
         homePresenter.getAreaRegistryUpdates()?.collect {
             areaRegistry = homePresenter.getAreaRegistry()
             areas.clear()
@@ -182,6 +186,8 @@ class MainViewModel @Inject constructor(
     }
 
     suspend fun deviceUpdates() {
+        if (!homePresenter.isConnected())
+            return
         homePresenter.getDeviceRegistryUpdates()?.collect {
             deviceRegistry = homePresenter.getDeviceRegistry()
             updateEntityDomains()
@@ -189,6 +195,8 @@ class MainViewModel @Inject constructor(
     }
 
     suspend fun entityRegistryUpdates() {
+        if (!homePresenter.isConnected())
+            return
         homePresenter.getEntityRegistryUpdates()?.collect {
             entityRegistry = homePresenter.getEntityRegistry()
             updateEntityDomains()
