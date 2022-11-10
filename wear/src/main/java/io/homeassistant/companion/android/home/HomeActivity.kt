@@ -48,22 +48,10 @@ class HomeActivity : ComponentActivity(), HomeView {
 
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                mainViewModel.entityUpdates()
-            }
-        }
-        lifecycleScope.launch {
-            lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                mainViewModel.areaUpdates()
-            }
-        }
-        lifecycleScope.launch {
-            lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                mainViewModel.deviceUpdates()
-            }
-        }
-        lifecycleScope.launch {
-            lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                mainViewModel.entityRegistryUpdates()
+                launch { mainViewModel.entityUpdates() }
+                launch { mainViewModel.areaUpdates() }
+                launch { mainViewModel.deviceUpdates() }
+                launch { mainViewModel.entityRegistryUpdates() }
             }
         }
     }
