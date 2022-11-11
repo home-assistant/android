@@ -225,12 +225,12 @@ class HealthServicesSensorManager : SensorManager {
                     }
                 }
 
-                if (
-                    processDataPoint(floorsDaily, dailyFloors) ||
-                    processDataPoint(distanceDaily, dailyDistance) ||
-                    processDataPoint(caloriesDaily, dailyCalories) ||
-                    processDataPoint(stepsDaily, dailySteps)
-                )
+                val hasFloorData = processDataPoint(floorsDaily, dailyFloors)
+                val hasDistanceData = processDataPoint(distanceDaily, dailyDistance)
+                val hasCalorieData = processDataPoint(caloriesDaily, dailyCalories)
+                val hasStepData = processDataPoint(stepsDaily, dailySteps)
+
+                if (hasFloorData || hasDistanceData || hasCalorieData || hasStepData)
                     SensorWorker.start(latestContext)
             }
 
