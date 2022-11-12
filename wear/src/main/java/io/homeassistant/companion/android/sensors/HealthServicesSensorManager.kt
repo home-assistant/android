@@ -50,6 +50,36 @@ class HealthServicesSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
+        private val dailyDistance = SensorManager.BasicSensor(
+            "daily_distance",
+            "sensor",
+            commonR.string.sensor_name_daily_distance,
+            commonR.string.sensor_description_daily_distance,
+            "mdi:map-marker-distance",
+            unitOfMeasurement = "m",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+        )
+        private val dailyCalories = SensorManager.BasicSensor(
+            "daily_calories",
+            "sensor",
+            commonR.string.sensor_name_daily_calories,
+            commonR.string.sensor_description_daily_calories,
+            "mdi:fire",
+            unitOfMeasurement = "kcal",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+        )
+        private val dailySteps = SensorManager.BasicSensor(
+            "daily_steps",
+            "sensor",
+            commonR.string.sensor_name_daily_steps,
+            commonR.string.sensor_description_daily_steps,
+            "mdi:shoe-print",
+            unitOfMeasurement = "steps",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+        )
     }
 
     private lateinit var latestContext: Context
@@ -85,6 +115,12 @@ class HealthServicesSensorManager : SensorManager {
 
         if (passiveMonitoringCapabilities?.supportedDataTypesPassiveMonitoring?.contains(DataType.FLOORS_DAILY) == true)
             supportedSensors += dailyFloors
+        if (passiveMonitoringCapabilities?.supportedDataTypesPassiveMonitoring?.contains(DataType.DISTANCE_DAILY) == true)
+            supportedSensors += dailyDistance
+        if (passiveMonitoringCapabilities?.supportedDataTypesPassiveMonitoring?.contains(DataType.CALORIES_DAILY) == true)
+            supportedSensors += dailyCalories
+        if (passiveMonitoringCapabilities?.supportedDataTypesPassiveMonitoring?.contains(DataType.STEPS_DAILY) == true)
+            supportedSensors += dailySteps
         return supportedSensors
     }
 
@@ -104,8 +140,14 @@ class HealthServicesSensorManager : SensorManager {
     private fun updateHealthServices() {
         val activityStateEnabled = isEnabled(latestContext, userActivityState.id)
         val dailyFloorEnabled = isEnabled(latestContext, dailyFloors.id)
+        val dailyDistanceEnabled = isEnabled(latestContext, dailyDistance.id)
+        val dailyCaloriesEnabled = isEnabled(latestContext, dailyCalories.id)
+        val dailyStepsEnabled = isEnabled(latestContext, dailySteps.id)
 
-        if (!activityStateEnabled && !dailyFloorEnabled) {
+        if (
+            !activityStateEnabled && !dailyFloorEnabled && !dailyDistanceEnabled &&
+            !dailyCaloriesEnabled && !dailyStepsEnabled
+        ) {
             clearHealthServicesCallBack()
             return
         }
@@ -116,6 +158,12 @@ class HealthServicesSensorManager : SensorManager {
         val dataTypes = mutableSetOf<DataType<*, *>>()
         if (dailyFloorEnabled)
             dataTypes += DataType.FLOORS_DAILY
+        if (dailyDistanceEnabled)
+            dataTypes += DataType.DISTANCE_DAILY
+        if (dailyCaloriesEnabled)
+            dataTypes += DataType.CALORIES_DAILY
+        if (dailyStepsEnabled)
+            dataTypes += DataType.STEPS_DAILY
 
         passiveListenerConfig = PassiveListenerConfig.builder()
             .setShouldUserActivityInfoBeRequested(activityStateEnabled)
@@ -155,10 +203,11 @@ class HealthServicesSensorManager : SensorManager {
             override fun onNewDataPointsReceived(dataPoints: DataPointContainer) {
                 Log.d(TAG, "New data point received: ${dataPoints.dataTypes}")
                 val floorsDaily = dataPoints.getData(DataType.FLOORS_DAILY)
+                val distanceDaily = dataPoints.getData(DataType.DISTANCE_DAILY)
+                val caloriesDaily = dataPoints.getData(DataType.CALORIES_DAILY)
+                val stepsDaily = dataPoints.getData(DataType.STEPS_DAILY)
                 val bootInstant =
                     Instant.ofEpochMilli(System.currentTimeMillis() - SystemClock.elapsedRealtime())
-                var latest = 0
-                var lastIndex = 0
 
                 dataPoints.dataTypes.forEachIndexed { _, dataType ->
 
@@ -175,25 +224,14 @@ class HealthServicesSensorManager : SensorManager {
                         }
                     }
                 }
-                if (floorsDaily.isNotEmpty()) {
-                    floorsDaily.forEachIndexed { index, intervalDataPoint ->
-                        val endTime = intervalDataPoint.getEndInstant(bootInstant)
-                        Log.d(TAG, "Daily Floors data index: $index with value: ${intervalDataPoint.value} end time: ${endTime.toEpochMilli()}")
-                        if (endTime.toEpochMilli() > latest) {
-                            latest = endTime.toEpochMilli().toInt()
-                            lastIndex = index
-                        }
-                    }
-                    onSensorUpdated(
-                        latestContext,
-                        dailyFloors,
-                        floorsDaily[lastIndex].value,
-                        dailyFloors.statelessIcon,
-                        mapOf()
-                    )
 
+                val hasFloorData = processDataPoint(floorsDaily, dailyFloors)
+                val hasDistanceData = processDataPoint(distanceDaily, dailyDistance)
+                val hasCalorieData = processDataPoint(caloriesDaily, dailyCalories)
+                val hasStepData = processDataPoint(stepsDaily, dailySteps)
+
+                if (hasFloorData || hasDistanceData || hasCalorieData || hasStepData)
                     SensorWorker.start(latestContext)
-                }
             }
 
             override fun onPermissionLost() {
@@ -276,5 +314,36 @@ class HealthServicesSensorManager : SensorManager {
             UserActivityState.USER_ACTIVITY_ASLEEP -> "mdi:sleep"
             else -> userActivityState.statelessIcon
         }
+    }
+
+    private fun processDataPoint(
+        dataPoints: List<IntervalDataPoint<*>>,
+        basicSensor: SensorManager.BasicSensor
+    ): Boolean {
+        var sendUpdate = false
+        var latest = 0
+        var lastIndex = 0
+        val bootInstant =
+            Instant.ofEpochMilli(System.currentTimeMillis() - SystemClock.elapsedRealtime())
+
+        if (dataPoints.isNotEmpty()) {
+            dataPoints.forEachIndexed { index, intervalDataPoint ->
+                val endTime = intervalDataPoint.getEndInstant(bootInstant)
+                Log.d(TAG, "${basicSensor.id} data index: $index with value: ${intervalDataPoint.value} end time: ${endTime.toEpochMilli()}")
+                if (endTime.toEpochMilli() > latest) {
+                    latest = endTime.toEpochMilli().toInt()
+                    lastIndex = index
+                    sendUpdate = true
+                }
+            }
+            onSensorUpdated(
+                latestContext,
+                basicSensor,
+                dataPoints[lastIndex].value,
+                basicSensor.statelessIcon,
+                mapOf()
+            )
+        }
+        return sendUpdate
     }
 }
