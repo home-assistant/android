@@ -58,6 +58,7 @@ import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okio.ByteString
 import java.io.IOException
+import java.util.Collections
 import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
 import kotlin.coroutines.resumeWithException
@@ -89,7 +90,7 @@ class WebSocketRepositoryImpl @Inject constructor(
     private val mapper = jacksonObjectMapper()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
         .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
-    private val activeMessages = mutableMapOf<Long, WebSocketRequest>()
+    private val activeMessages = Collections.synchronizedMap(mutableMapOf<Long, WebSocketRequest>())
     private val id = AtomicLong(1)
     private var connection: WebSocket? = null
     private var connectionState: WebSocketState? = null
@@ -232,7 +233,10 @@ class WebSocketRepositoryImpl @Inject constructor(
         ).plus(data)
 
         eventSubscriptionMutex.withLock {
-            if (activeMessages.values.none { it.message == subscribeMessage }) {
+            val isNewMessage = synchronized(activeMessages) {
+                activeMessages.values.none { it.message == subscribeMessage }
+            }
+            if (isNewMessage) {
                 val channel = Channel<Any>(capacity = Channel.BUFFERED)
                 val flow = callbackFlow<T> {
                     val producer = this as ProducerScope<Any>
@@ -245,12 +249,14 @@ class WebSocketRepositoryImpl @Inject constructor(
                         ioScope.launch {
                             var subscription: Long? = null
                             eventSubscriptionMutex.withLock {
-                                activeMessages.entries.firstOrNull { it.value.message == subscribeMessage }
-                                    ?.let {
-                                        subscription = it.key
-                                        channel.close()
-                                        activeMessages.remove(subscription)
-                                    }
+                                synchronized(activeMessages) {
+                                    activeMessages.entries.firstOrNull { it.value.message == subscribeMessage }
+                                        ?.let {
+                                            subscription = it.key
+                                            channel.close()
+                                            activeMessages.remove(subscription)
+                                        }
+                                }
                             }
                             subscription?.let {
                                 Log.d(TAG, "Unsubscribing from $type with data $data")
@@ -276,14 +282,18 @@ class WebSocketRepositoryImpl @Inject constructor(
                 val response = sendMessage(webSocketRequest)
                 if (response == null || response.success != true) {
                     Log.e(TAG, "Unable to subscribe to $type with data $data")
-                    activeMessages.entries
-                        .firstOrNull { it.value.message == subscribeMessage }
-                        ?.let { activeMessages.remove(it.key) }
+                    synchronized(activeMessages) {
+                        activeMessages.entries
+                            .firstOrNull { it.value.message == subscribeMessage }
+                            ?.let { activeMessages.remove(it.key) }
+                    }
                     return null
                 }
             }
         }
-        return activeMessages.values.find { it.message == subscribeMessage }?.eventFlow as? Flow<T>
+        return synchronized(activeMessages) {
+            activeMessages.values.find { it.message == subscribeMessage }?.eventFlow as? Flow<T>
+        }
     }
 
     override suspend fun getNotifications(): Flow<Map<String, Any>>? =
@@ -510,23 +520,30 @@ class WebSocketRepositoryImpl @Inject constructor(
                 connectionHaVersion = null
                 if (connectionState != WebSocketState.CLOSED_AUTH)
                     connectionState = WebSocketState.CLOSED_OTHER
-                activeMessages
-                    .filterValues { it.eventFlow == null }
-                    .forEach {
-                        it.value.onResponse?.let { cont ->
-                            if (cont.isActive) cont.resumeWithException(IOException())
+                synchronized(activeMessages) {
+                    activeMessages
+                        .filterValues { it.eventFlow == null }
+                        .forEach {
+                            it.value.onResponse?.let { cont ->
+                                if (cont.isActive) cont.resumeWithException(IOException())
+                            }
+                            activeMessages.remove(it.key)
                         }
-                        activeMessages.remove(it.key)
-                    }
+                }
             }
         }
         // If we still have flows flowing
-        if (activeMessages.any { it.value.eventFlow != null } && ioScope.isActive) {
+        val hasFlowMessages = synchronized(activeMessages) {
+            activeMessages.any { it.value.eventFlow != null }
+        }
+        if (hasFlowMessages && ioScope.isActive) {
             ioScope.launch {
                 delay(10000)
                 if (connect()) {
                     Log.d(TAG, "Resubscribing to active subscriptions...")
-                    activeMessages.filterValues { it.eventFlow != null }.forEach { (oldId, oldMessage) ->
+                    synchronized(activeMessages) {
+                        activeMessages.filterValues { it.eventFlow != null }.entries
+                    }.forEach { (oldId, oldMessage) ->
                         val response = sendMessage(oldMessage)
                         if (response == null || response.success != true) {
                             Log.e(TAG, "Issue re-registering subscription with ${oldMessage.message}")
