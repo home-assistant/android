@@ -17,7 +17,7 @@ buildscript {
         classpath("com.google.firebase:firebase-appdistribution-gradle:3.1.0")
         classpath("de.mannodermaus.gradle.plugins:android-junit5:1.8.2.1")
         classpath("com.github.triplet.gradle:play-publisher:3.7.0")
-        classpath("com.google.dagger:hilt-android-gradle-plugin:2.44")
+        classpath("com.google.dagger:hilt-android-gradle-plugin:2.44.1")
     }
 }
 
