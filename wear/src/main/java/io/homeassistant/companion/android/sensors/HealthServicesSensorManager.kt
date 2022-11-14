@@ -90,6 +90,7 @@ class HealthServicesSensorManager : SensorManager {
     private var callBackRegistered = false
     private var dataTypesRegistered = emptySet<DataType<*, *>>()
     private var activityStateRegistered = false
+    private var lastUpdateSent = 0L
 
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/wear-os/sensors#health-services"
@@ -230,8 +231,12 @@ class HealthServicesSensorManager : SensorManager {
                 val hasCalorieData = processDataPoint(caloriesDaily, dailyCalories)
                 val hasStepData = processDataPoint(stepsDaily, dailySteps)
 
-                if (hasFloorData || hasDistanceData || hasCalorieData || hasStepData)
+                val now = System.currentTimeMillis()
+                if ((hasFloorData || hasDistanceData || hasCalorieData || hasStepData) && lastUpdateSent + 900000 < now) {
+                    lastUpdateSent = now
+                    Log.d(TAG, "Sending update")
                     SensorWorker.start(latestContext)
+                }
             }
 
             override fun onPermissionLost() {
@@ -325,6 +330,7 @@ class HealthServicesSensorManager : SensorManager {
         var lastIndex = 0
         val bootInstant =
             Instant.ofEpochMilli(System.currentTimeMillis() - SystemClock.elapsedRealtime())
+        val sensor = AppDatabase.getInstance(latestContext).sensorDao().get(basicSensor.id)
 
         if (dataPoints.isNotEmpty()) {
             dataPoints.forEachIndexed { index, intervalDataPoint ->
@@ -333,7 +339,7 @@ class HealthServicesSensorManager : SensorManager {
                 if (endTime.toEpochMilli() > latest) {
                     latest = endTime.toEpochMilli().toInt()
                     lastIndex = index
-                    sendUpdate = true
+                    sendUpdate = intervalDataPoint.value != sensor?.lastSentState
                 }
             }
             onSensorUpdated(
