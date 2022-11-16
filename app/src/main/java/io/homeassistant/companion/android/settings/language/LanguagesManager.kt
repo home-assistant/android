@@ -1,42 +1,38 @@
 package io.homeassistant.companion.android.settings.language
 
 import android.content.Context
-import android.content.ContextWrapper
-import android.content.res.Configuration
-import android.content.res.Resources
 import android.os.Build
-import android.os.LocaleList
+import android.util.Log
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import kotlinx.coroutines.runBlocking
-import java.util.Locale
+import org.xmlpull.v1.XmlPullParser
 import javax.inject.Inject
 
 class LanguagesManager @Inject constructor(
     private var prefs: PrefsRepository
 ) {
     companion object {
-        private const val DEF_LOCALE = "default"
-    }
+        private const val TAG = "LanguagesManager"
 
-    fun getAppVersion(): String? {
-        return runBlocking {
-            prefs.getAppVersion()
-        }
-    }
-
-    fun saveAppVersion(ver: String) {
-        return runBlocking {
-            prefs.saveAppVersion(ver)
-        }
+        const val DEF_LOCALE = "default"
+        private const val SYSTEM_MANAGES_LOCALE = "system_managed"
     }
 
     fun getCurrentLang(): String {
         return runBlocking {
             val lang = prefs.getCurrentLang()
-            if (lang.isNullOrEmpty()) {
-                prefs.saveLang(DEF_LOCALE)
-                DEF_LOCALE
-            } else lang
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                migrateLangToAndroidX()
+                AppCompatDelegate.getApplicationLocales().toLanguageTags().ifEmpty { DEF_LOCALE }
+            } else {
+                if (lang.isNullOrEmpty()) {
+                    prefs.saveLang(DEF_LOCALE)
+                    DEF_LOCALE
+                } else lang
+            }
         }
     }
 
@@ -44,81 +40,61 @@ class LanguagesManager @Inject constructor(
         return runBlocking {
             if (!lang.isNullOrEmpty()) {
                 val currentLang = getCurrentLang()
-                if (currentLang != lang) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    val languages =
+                        if (lang == DEF_LOCALE) LocaleListCompat.getEmptyLocaleList()
+                        else LocaleListCompat.forLanguageTags(lang)
+                    AppCompatDelegate.setApplicationLocales(languages) // Applying will also save it
+                } else if (currentLang != lang) {
                     prefs.saveLang(lang)
+                    applyCurrentLang()
                 }
             }
         }
     }
 
-    fun getLocales(): String? {
+    fun applyCurrentLang() = runBlocking {
+        migrateLangToAndroidX()
+
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.TIRAMISU) {
+            val lang = getCurrentLang()
+            val languages =
+                if (lang == DEF_LOCALE) LocaleListCompat.getEmptyLocaleList()
+                else LocaleListCompat.forLanguageTags(lang)
+            AppCompatDelegate.setApplicationLocales(languages)
+        } // else on Android 13+ the system will manage the app's language
+    }
+
+    private suspend fun migrateLangToAndroidX() {
+        // First run on Android 13: save in AndroidX, update app preference
+        val lang = prefs.getCurrentLang()
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || lang == SYSTEM_MANAGES_LOCALE) return
+
+        val languages =
+            if (lang == DEF_LOCALE) LocaleListCompat.getEmptyLocaleList()
+            else LocaleListCompat.forLanguageTags(lang)
+        AppCompatDelegate.setApplicationLocales(languages)
+        prefs.saveLang(SYSTEM_MANAGES_LOCALE)
+    }
+
+    fun getLocaleTags(context: Context): List<String> {
         return runBlocking {
-            prefs.getLocales()
-        }
-    }
-
-    fun saveLocales(locales: String) {
-        return runBlocking {
-            prefs.saveLocales(locales)
-        }
-    }
-
-    private fun makeLocale(lang: String): Locale {
-        return if (lang.contains('-')) {
-            Locale(lang.split('-')[0], lang.split('-')[1])
-        } else {
-            Locale(lang)
-        }
-    }
-
-    private fun getDefaultLocale(config: Configuration): Locale {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            config.locales.get(0)
-        } else {
-            config.locale
-        }
-    }
-
-    private fun getDeviceLocale(): Locale {
-        return getDefaultLocale(Resources.getSystem().configuration)
-    }
-
-    private fun getApplicationLocale(context: Context): Locale {
-        return getDefaultLocale(context.resources.configuration)
-    }
-
-    fun getContextWrapper(context: Context): ContextWrapper {
-        return when {
-            getCurrentLang() == DEF_LOCALE && getApplicationLocale(context) != getDeviceLocale() -> {
-                ContextWrapper(updateContext(context, getDeviceLocale()))
+            val languagesList = mutableListOf<String>()
+            try {
+                context.resources.getXml(R.xml.locales_config).use {
+                    var tagType = it.eventType
+                    while (tagType != XmlPullParser.END_DOCUMENT) {
+                        if (tagType == XmlPullParser.START_TAG && it.name == "locale") {
+                            languagesList += it.getAttributeValue("http://schemas.android.com/apk/res/android", "name")
+                        }
+                        tagType = it.next()
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Exception while parsing locale config XML", e)
             }
-            getCurrentLang() != DEF_LOCALE -> {
-                val locale = makeLocale(getCurrentLang())
-                ContextWrapper(updateContext(context, locale))
-            }
-            else -> {
-                ContextWrapper(context)
-            }
-        }
-    }
 
-    private fun updateContext(context: Context, locale: Locale): Context {
-        val resources: Resources = context.resources
-        val configuration: Configuration = resources.configuration
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            val localeList = LocaleList(locale)
-            LocaleList.setDefault(localeList)
-            configuration.setLocales(localeList)
-        } else {
-            configuration.locale = locale
+            languagesList
         }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
-            context.createConfigurationContext(configuration)
-        } else {
-            resources.updateConfiguration(configuration, resources.displayMetrics)
-        }
-        return context
     }
 }

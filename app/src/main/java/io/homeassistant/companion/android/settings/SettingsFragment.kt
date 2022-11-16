@@ -437,7 +437,7 @@ class SettingsFragment constructor(
     }
 
     override fun onLangSettingsChanged() {
-        requireActivity().recreate()
+        // TODO check if language is installed when using splits
     }
 
     private fun onDisplaySsidScreen() {
