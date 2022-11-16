@@ -48,7 +48,7 @@ class HealthServicesSensorManager : SensorManager {
             "mdi:stairs",
             unitOfMeasurement = "floors",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.CUSTOM
+            updateType = SensorManager.BasicSensor.UpdateType.WORKER
         )
         private val dailyDistance = SensorManager.BasicSensor(
             "daily_distance",
@@ -58,7 +58,7 @@ class HealthServicesSensorManager : SensorManager {
             "mdi:map-marker-distance",
             unitOfMeasurement = "m",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.CUSTOM
+            updateType = SensorManager.BasicSensor.UpdateType.WORKER
         )
         private val dailyCalories = SensorManager.BasicSensor(
             "daily_calories",
@@ -68,7 +68,7 @@ class HealthServicesSensorManager : SensorManager {
             "mdi:fire",
             unitOfMeasurement = "kcal",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.CUSTOM
+            updateType = SensorManager.BasicSensor.UpdateType.WORKER
         )
         private val dailySteps = SensorManager.BasicSensor(
             "daily_steps",
@@ -78,7 +78,7 @@ class HealthServicesSensorManager : SensorManager {
             "mdi:shoe-print",
             unitOfMeasurement = "steps",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.CUSTOM
+            updateType = SensorManager.BasicSensor.UpdateType.WORKER
         )
     }
 
