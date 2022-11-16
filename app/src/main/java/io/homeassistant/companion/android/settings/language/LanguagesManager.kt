@@ -5,11 +5,11 @@ import android.os.Build
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import kotlinx.coroutines.runBlocking
 import org.xmlpull.v1.XmlPullParser
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 class LanguagesManager @Inject constructor(
     private var prefs: PrefsRepository
@@ -81,7 +81,7 @@ class LanguagesManager @Inject constructor(
         return runBlocking {
             val languagesList = mutableListOf<String>()
             try {
-                context.resources.getXml(R.xml.locales_config).use {
+                context.resources.getXml(commonR.xml.locales_config).use {
                     var tagType = it.eventType
                     while (tagType != XmlPullParser.END_DOCUMENT) {
                         if (tagType == XmlPullParser.START_TAG && it.name == "locale") {
