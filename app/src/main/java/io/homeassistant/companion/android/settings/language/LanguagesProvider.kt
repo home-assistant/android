@@ -16,7 +16,11 @@ class LanguagesProvider @Inject constructor(
         val locales = langManager.getLocaleTags(context)
         locales.forEach {
             val locale = makeLocale(it)
-            listAppLocales[locale.getDisplayLanguage(locale)] = it
+            var display = locale.getDisplayLanguage(locale).replaceFirstChar { char ->
+                if (char.isLowerCase()) char.titlecase(locale) else char.toString()
+            }
+            if (locale.country.isNotBlank()) display += " (${locale.getDisplayCountry(locale)})"
+            listAppLocales[display] = it
         }
 
         val languages = mutableMapOf(resources.getString(commonR.string.lang_option_label_default) to LanguagesManager.DEF_LOCALE)
