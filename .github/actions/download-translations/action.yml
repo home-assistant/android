@@ -35,4 +35,17 @@ runs:
 
         echo "Download Complete, unzipping"
         unzip -n strings.zip
+        echo "Unzipped strings, generating locales_config.xml"
+        
+        XML_START='<?xml version="1.0" encoding="utf-8"?>\n<locale-config xmlns:android="http://schemas.android.com/apk/res/android">\n'
+        XML_LOCALES=''
+        XML_END='</locale-config>'
+        for i in common/src/main/res/values*/strings.xml; do
+          FOLDER="$(basename $(dirname $i))"
+          CODE="${FOLDER#*-}"
+          if [ "$CODE" == "values" ]; then CODE="en"; fi
+          XML_LOCALES="$XML_LOCALES    <locale android:name=\"$CODE\"/>\n"
+        done
+        printf "$XML_START$XML_LOCALES$XML_END" > common/src/main/res/xml/locales_config.xml
+        
         echo "Complete"
