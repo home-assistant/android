@@ -42,7 +42,8 @@ runs:
         XML_END='</locale-config>'
         for i in common/src/main/res/values*/strings.xml; do
           FOLDER="$(basename $(dirname $i))"
-          CODE="${FOLDER#*-}"
+          CODE="${FOLDER#*-}" # remove "values-"
+          CODE="${CODE/-r/-}" # replace region "-rXX" with "-XX"
           if [ "$CODE" == "values" ]; then CODE="en"; fi
           XML_LOCALES="$XML_LOCALES    <locale android:name=\"$CODE\"/>\n"
         done
