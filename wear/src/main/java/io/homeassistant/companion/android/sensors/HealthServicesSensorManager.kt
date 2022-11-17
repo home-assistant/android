@@ -48,7 +48,7 @@ class HealthServicesSensorManager : SensorManager {
             "mdi:stairs",
             unitOfMeasurement = "floors",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.WORKER
         )
         private val dailyDistance = SensorManager.BasicSensor(
             "daily_distance",
@@ -58,7 +58,7 @@ class HealthServicesSensorManager : SensorManager {
             "mdi:map-marker-distance",
             unitOfMeasurement = "m",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.WORKER
         )
         private val dailyCalories = SensorManager.BasicSensor(
             "daily_calories",
@@ -68,7 +68,7 @@ class HealthServicesSensorManager : SensorManager {
             "mdi:fire",
             unitOfMeasurement = "kcal",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.WORKER
         )
         private val dailySteps = SensorManager.BasicSensor(
             "daily_steps",
@@ -78,7 +78,7 @@ class HealthServicesSensorManager : SensorManager {
             "mdi:shoe-print",
             unitOfMeasurement = "steps",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.WORKER
         )
     }
 
@@ -225,13 +225,10 @@ class HealthServicesSensorManager : SensorManager {
                     }
                 }
 
-                val hasFloorData = processDataPoint(floorsDaily, dailyFloors)
-                val hasDistanceData = processDataPoint(distanceDaily, dailyDistance)
-                val hasCalorieData = processDataPoint(caloriesDaily, dailyCalories)
-                val hasStepData = processDataPoint(stepsDaily, dailySteps)
-
-                if (hasFloorData || hasDistanceData || hasCalorieData || hasStepData)
-                    SensorWorker.start(latestContext)
+                processDataPoint(floorsDaily, dailyFloors)
+                processDataPoint(distanceDaily, dailyDistance)
+                processDataPoint(caloriesDaily, dailyCalories)
+                processDataPoint(stepsDaily, dailySteps)
             }
 
             override fun onPermissionLost() {
@@ -319,8 +316,7 @@ class HealthServicesSensorManager : SensorManager {
     private fun processDataPoint(
         dataPoints: List<IntervalDataPoint<*>>,
         basicSensor: SensorManager.BasicSensor
-    ): Boolean {
-        var sendUpdate = false
+    ) {
         var latest = 0
         var lastIndex = 0
         val bootInstant =
@@ -333,7 +329,6 @@ class HealthServicesSensorManager : SensorManager {
                 if (endTime.toEpochMilli() > latest) {
                     latest = endTime.toEpochMilli().toInt()
                     lastIndex = index
-                    sendUpdate = true
                 }
             }
             onSensorUpdated(
@@ -344,6 +339,5 @@ class HealthServicesSensorManager : SensorManager {
                 mapOf()
             )
         }
-        return sendUpdate
     }
 }
