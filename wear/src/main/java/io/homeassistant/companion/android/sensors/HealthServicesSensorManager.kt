@@ -56,6 +56,7 @@ class HealthServicesSensorManager : SensorManager {
             commonR.string.sensor_name_daily_distance,
             commonR.string.sensor_description_daily_distance,
             "mdi:map-marker-distance",
+            "distance",
             unitOfMeasurement = "m",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.WORKER
