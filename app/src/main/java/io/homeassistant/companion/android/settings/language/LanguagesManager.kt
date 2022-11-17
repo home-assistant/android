@@ -25,7 +25,7 @@ class LanguagesManager @Inject constructor(
         return runBlocking {
             val lang = prefs.getCurrentLang()
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                migrateLangToAndroidX()
+                migrateLangSetting()
                 AppCompatDelegate.getApplicationLocales().toLanguageTags().ifEmpty { DEF_LOCALE }
             } else {
                 if (lang.isNullOrEmpty()) {
@@ -54,7 +54,7 @@ class LanguagesManager @Inject constructor(
     }
 
     fun applyCurrentLang() = runBlocking {
-        migrateLangToAndroidX()
+        migrateLangSetting()
 
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.TIRAMISU) {
             val lang = getCurrentLang()
@@ -65,11 +65,12 @@ class LanguagesManager @Inject constructor(
         } // else on Android 13+ the system will manage the app's language
     }
 
-    private suspend fun migrateLangToAndroidX() {
-        // First run on Android 13: save in AndroidX, update app preference
+    private suspend fun migrateLangSetting() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
         val lang = prefs.getCurrentLang()
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || lang == SYSTEM_MANAGES_LOCALE) return
+        if (lang == SYSTEM_MANAGES_LOCALE) return
 
+        // First run on Android 13: save in AndroidX, update app preference
         val languages =
             if (lang == DEF_LOCALE) LocaleListCompat.getEmptyLocaleList()
             else LocaleListCompat.forLanguageTags(lang)
