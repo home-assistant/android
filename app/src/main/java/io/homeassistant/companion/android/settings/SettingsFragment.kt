@@ -436,10 +436,6 @@ class SettingsFragment constructor(
         }
     }
 
-    override fun onLangSettingsChanged() {
-        // TODO check if language is installed when using splits
-    }
-
     private fun onDisplaySsidScreen() {
         val permissionsToCheck: Array<String> = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)

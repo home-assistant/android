@@ -29,6 +29,12 @@ android {
         versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
 
         manifestPlaceholders["sentryRelease"] = "$applicationId@$versionName"
+
+        bundle {
+            language {
+                enableSplit = false
+            }
+        }
     }
 
     buildFeatures {
