@@ -350,7 +350,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             highAccuracyUpdateInterval.statelessIcon,
             mapOf()
         )
-        SensorWorker.start(latestContext)
+        SensorReceiver.updateAllSensors(latestContext)
         HighAccuracyLocationService.restartService(latestContext, intervalInSeconds)
     }
 
@@ -369,7 +369,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             highAccuracyUpdateInterval.statelessIcon,
             mapOf()
         )
-        SensorWorker.start(latestContext)
+        SensorReceiver.updateAllSensors(latestContext)
         HighAccuracyLocationService.startService(latestContext, intervalInSeconds)
     }
 
@@ -381,7 +381,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             highAccuracyMode.statelessIcon,
             mapOf()
         )
-        SensorWorker.start(latestContext)
+        SensorReceiver.updateAllSensors(latestContext)
         HighAccuracyLocationService.stopService(latestContext)
     }
 

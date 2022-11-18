@@ -93,6 +93,6 @@ class OnBodySensorManager : SensorManager, SensorEventListener {
         }
 
         // Send update immediately
-        SensorWorker.start(latestContext)
+        SensorReceiver.updateAllSensors(latestContext)
     }
 }

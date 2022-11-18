@@ -38,6 +38,7 @@
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
                 <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
                 <action android:name="android.app.action.NEXT_ALARM_CLOCK_CHANGED" />
+                <action android:name="io.homeassistant.companion.android.UPDATE_SENSORS" />
             </intent-filter>
         </receiver>
         <uses-library

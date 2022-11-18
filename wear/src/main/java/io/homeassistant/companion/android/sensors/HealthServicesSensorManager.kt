@@ -197,7 +197,7 @@ class HealthServicesSensorManager : SensorManager {
                     forceUpdate = info.userActivityState == UserActivityState.USER_ACTIVITY_EXERCISE
                 )
 
-                SensorWorker.start(latestContext)
+                SensorReceiver.updateAllSensors(latestContext)
             }
 
             override fun onNewDataPointsReceived(dataPoints: DataPointContainer) {

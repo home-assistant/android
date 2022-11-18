@@ -31,6 +31,7 @@ import javax.inject.Inject
 abstract class SensorReceiverBase : BroadcastReceiver() {
     companion object {
         const val ACTION_UPDATE_SENSOR = "io.homeassistant.companion.android.UPDATE_SENSOR"
+        const val ACTION_UPDATE_SENSORS = "io.homeassistant.companion.android.UPDATE_SENSORS"
         const val EXTRA_SENSOR_ID = "sensorId"
 
         fun shouldDoFastUpdates(context: Context): Boolean {
