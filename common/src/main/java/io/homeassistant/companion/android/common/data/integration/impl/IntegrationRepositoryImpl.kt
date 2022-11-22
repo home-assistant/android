@@ -654,6 +654,7 @@ class IntegrationRepositoryImpl @Inject constructor(
     override suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>) {
         val canRegisterCategoryStateClass = isHomeAssistantVersionAtLeast(2021, 11, 0)
         val canRegisterEntityDisabledState = isHomeAssistantVersionAtLeast(2022, 6, 0)
+        val canRegisterDeviceClassDistance = isHomeAssistantVersionAtLeast(2022, 10, 0)
         val integrationRequest = IntegrationRequest(
             "register_sensor",
             SensorRequest(
@@ -663,7 +664,10 @@ class IntegrationRepositoryImpl @Inject constructor(
                 sensorRegistration.icon,
                 sensorRegistration.attributes,
                 sensorRegistration.name,
-                sensorRegistration.deviceClass,
+                when (sensorRegistration.deviceClass) {
+                    "distance" -> if (canRegisterDeviceClassDistance) sensorRegistration.deviceClass else null
+                    else -> sensorRegistration.deviceClass
+                },
                 sensorRegistration.unitOfMeasurement,
                 if (canRegisterCategoryStateClass) sensorRegistration.stateClass else null,
                 if (canRegisterCategoryStateClass) sensorRegistration.entityCategory else null,
