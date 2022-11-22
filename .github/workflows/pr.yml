@@ -112,6 +112,6 @@ jobs:
         fi
     
     - name: Archive Debug Build
-      uses: kittaakos/upload-artifact-as-is@v0
+      uses: actions/upload-artifact@v3
       with:
         path: ./**/*.apk
