@@ -106,10 +106,7 @@ class SettingsPresenterImpl @Inject constructor(
                     }
                 }
                 "themes" -> themesManager.saveTheme(value)
-                "languages" -> {
-                    langsManager.saveLang(value)
-                    settingsView.onLangSettingsChanged()
-                }
+                "languages" -> langsManager.saveLang(value)
                 else -> throw IllegalArgumentException("No string found by this key: $key")
             }
         }

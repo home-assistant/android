@@ -85,7 +85,6 @@ import io.homeassistant.companion.android.nfc.WriteNfcTag
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.SettingsActivity
-import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.ChangeLog
 import io.homeassistant.companion.android.util.DataUriDownloadManager
@@ -163,9 +162,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     @Inject
     lateinit var changeLog: ChangeLog
-
-    @Inject
-    lateinit var languagesManager: LanguagesManager
 
     @Inject
     lateinit var urlRepository: UrlRepository
@@ -651,7 +647,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         if (presenter.isKeepScreenOnEnabled())
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
-        currentLang = languagesManager.getCurrentLang()
         currentAutoplay = presenter.isAutoPlayVideoEnabled()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -693,7 +688,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     override fun onResume() {
         super.onResume()
-        if ((currentLang != languagesManager.getCurrentLang()) || currentAutoplay != presenter.isAutoPlayVideoEnabled())
+        if (currentAutoplay != presenter.isAutoPlayVideoEnabled())
             recreate()
 
         appLocked = presenter.isAppLocked()
