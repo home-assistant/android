@@ -101,7 +101,10 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
-        if (event?.sensor?.type == Sensor.TYPE_HEART_RATE && event.accuracy !in skipAccuracy) {
+        if (
+            event?.sensor?.type == Sensor.TYPE_HEART_RATE && event.accuracy !in skipAccuracy &&
+            event.values[0].roundToInt() >= 0
+        ) {
             onSensorUpdated(
                 latestContext,
                 heartRate,
