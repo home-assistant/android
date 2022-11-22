@@ -13,6 +13,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.home.views.LoadHomePage
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationActivity
+import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -64,7 +65,7 @@ class HomeActivity : ComponentActivity(), HomeView {
 
     override fun onPause() {
         super.onPause()
-        SensorWorker.start(this)
+        SensorReceiver.updateAllSensors(this)
     }
 
     override fun onDestroy() {

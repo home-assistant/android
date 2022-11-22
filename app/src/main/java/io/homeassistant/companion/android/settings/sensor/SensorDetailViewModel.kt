@@ -27,7 +27,6 @@ import io.homeassistant.companion.android.database.settings.SensorUpdateFrequenc
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.sensors.LastAppSensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
-import io.homeassistant.companion.android.sensors.SensorWorker
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -232,7 +231,7 @@ class SensorDetailViewModel @Inject constructor(
     }
 
     private fun refreshSensorData() {
-        SensorWorker.start(getApplication())
+        SensorReceiver.updateAllSensors(getApplication())
     }
 
     fun getSettingTranslatedTitle(key: String): String {

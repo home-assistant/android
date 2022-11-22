@@ -159,7 +159,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         )
 
         // Need to send update!
-        SensorWorker.start(applicationContext)
+        SensorReceiver.updateAllSensors(applicationContext)
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification) {
@@ -217,7 +217,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         )
 
         // Need to send update!
-        SensorWorker.start(applicationContext)
+        SensorReceiver.updateAllSensors(applicationContext)
     }
 
     private fun updateActiveNotificationCount() {

@@ -63,7 +63,7 @@ import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.NotificationSensorManager
-import io.homeassistant.companion.android.sensors.SensorWorker
+import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.UrlHandler
 import io.homeassistant.companion.android.websocket.WebsocketManager
@@ -537,7 +537,7 @@ class MessagingManager @Inject constructor(
                             }
                         }
                     }
-                    COMMAND_UPDATE_SENSORS -> SensorWorker.start(context)
+                    COMMAND_UPDATE_SENSORS -> SensorReceiver.updateAllSensors(context)
                     COMMAND_LAUNCH_APP -> {
                         if (!jsonData[PACKAGE_NAME].isNullOrEmpty()) {
                             handleDeviceCommands(jsonData)
@@ -867,7 +867,7 @@ class MessagingManager @Inject constructor(
                         )
                     }
                     BluetoothSensorManager().requestSensorUpdate(context)
-                    SensorWorker.start(context)
+                    SensorReceiver.updateAllSensors(context)
                 }
             }
             COMMAND_BEACON_MONITOR -> {

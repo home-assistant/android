@@ -71,6 +71,12 @@ class SensorReceiver : SensorReceiverBase() {
 
         const val ACTION_REQUEST_SENSORS_UPDATE =
             "io.homeassistant.companion.android.background.REQUEST_SENSORS_UPDATE"
+
+        fun updateAllSensors(context: Context) {
+            val intent = Intent(context, SensorReceiver::class.java)
+            intent.action = ACTION_UPDATE_SENSORS
+            context.sendBroadcast(intent)
+        }
     }
 
     // Suppress Lint because we only register for the receiver if the android version matches the intent

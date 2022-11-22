@@ -135,7 +135,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
                 )
 
                 // Send the update immediately
-                SensorWorker.start(context)
+                SensorReceiver.updateAllSensors(context)
             }
         }
         if (SleepSegmentEvent.hasEvents(intent) && isEnabled(context, sleepSegment.id)) {

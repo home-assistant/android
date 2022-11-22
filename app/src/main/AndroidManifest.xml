@@ -99,6 +99,7 @@
                 <action android:name="android.app.action.NEXT_ALARM_CLOCK_CHANGED" />
                 <action android:name="android.bluetooth.device.action.ACL_CONNECTED" />
                 <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
+                <action android:name="io.homeassistant.companion.android.UPDATE_SENSORS" />
             </intent-filter>
         </receiver>
 
