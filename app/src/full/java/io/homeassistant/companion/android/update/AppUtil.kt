@@ -1,0 +1,130 @@
+package io.homeassistant.companion.android.update
+
+import android.annotation.SuppressLint
+import android.app.Activity
+import android.app.DownloadManager
+import android.content.Context
+import android.content.ContextWrapper
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.os.StrictMode
+import android.os.StrictMode.VmPolicy
+import android.provider.Settings
+import android.view.View
+import androidx.core.content.FileProvider
+import java.io.File
+import java.util.*
+
+
+object AppUtil {
+    private var mDownloadId: Long = 0
+
+    fun getActivityFromView(view: View): Activity? {
+        var context: Context = view.context
+        while (context is ContextWrapper) {
+            if (context is Activity) {
+                return context
+            }
+            context = context.baseContext
+        }
+        return null
+    }
+
+    fun downLoadApk(context: Context, url: String, describeStr: String) {
+        // 得到系统的下载管理
+        clearCurrentTask(context)
+        val saveFile = apkFile(context)
+        val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+        val uri = Uri.parse(url)
+        // 以下两行代码可以让下载的apk文件被直接安装而不用使用Fileprovider,系统7.0或者以上才启动。
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            val localBuilder = VmPolicy.Builder()
+            StrictMode.setVmPolicy(localBuilder.build())
+        }
+        val requestApk = DownloadManager.Request(uri)
+        // 设置在什么网络下下载
+        requestApk.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE or DownloadManager.Request.NETWORK_WIFI)
+        // 下载中和下载完后都显示通知栏
+        requestApk.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+        if (saveFile.exists()) {    //判断文件是否存在，存在的话先删除
+            saveFile.delete()
+        }
+        requestApk.setDestinationUri(Uri.fromFile(saveFile))
+        // 设置下载中通知栏的提示消息
+        requestApk.setTitle(describeStr)
+        // 设置设置下载中通知栏提示的介绍
+        requestApk.setDescription("更新中")
+
+        // 7.0以上的系统适配
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            requestApk.setRequiresDeviceIdle(false)
+            requestApk.setRequiresCharging(false)
+        }
+        // 启动下载,该方法返回系统为当前下载请求分配的一个唯一的ID
+        mDownloadId = downloadManager.enqueue(requestApk)
+    }
+
+    private fun clearCurrentTask(mContext: Context) {
+        if (mDownloadId == 0L) return
+        val dm = mContext.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+        try {
+            dm.remove(mDownloadId)
+        } catch (ex: IllegalArgumentException) {
+            ex.printStackTrace()
+        }
+    }
+
+    @SuppressLint("QueryPermissionsNeeded")
+    fun installApk(context: Context) {
+        mDownloadId = 0
+        val saveFile: File = apkFile(context)
+        val intent = Intent(Intent.ACTION_VIEW)
+        if (saveFile.exists()) {
+            // 兼容7.0
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                val contentUri = FileProvider.getUriForFile(
+                    context,
+                    context.packageName + ".fileprovider",
+                    saveFile
+                )
+                intent.setDataAndType(contentUri, "application/vnd.android.package-archive")
+                // 兼容8.0 测试发现小米会自动请求权限
+//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//                    val hasInstallPermission = context.packageManager.canRequestPackageInstalls()
+//                    if (!hasInstallPermission) {
+//                        // 没有权限
+//                        Toast.makeText(context, "没有安装权限，请在设置中开启！", Toast.LENGTH_LONG).show()
+//                        //return
+//                    }
+//                }
+            } else {
+                // <7.0
+                intent.setDataAndType(
+                    Uri.fromFile(saveFile),
+                    "application/vnd.android.package-archive"
+                )
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            // activity任务栈中Activity的个数>0
+            if (context.packageManager.queryIntentActivities(intent, 0).size > 0) {
+                context.startActivity(intent)
+            }
+        }
+    }
+
+    private fun apkFile(context: Context): File {
+        val dir = File(context.externalCacheDir, "download")
+        if (!dir.exists()) {
+            dir.mkdir()
+        }
+        // 创建文件
+        return File(dir, "temp.apk")
+    }
+
+    fun getDownloadId(): Long {
+        return mDownloadId
+    }
+
+}

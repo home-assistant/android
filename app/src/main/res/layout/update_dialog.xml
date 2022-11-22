@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:layout_marginLeft="20dp"
+              android:layout_marginRight="20dp"
+              android:background="#fff"
+              android:orientation="vertical"
+              android:paddingTop="20dp">
+
+    <TextView
+            android:id="@+id/hint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:text="发现新版本\n有新版本了，赶快更新看看"
+            android:gravity="center"
+            android:textColor="#191919"
+            android:textSize="16sp"/>
+
+    <ProgressBar
+            android:id="@+id/progress"
+            style="@style/update_progress_horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="6dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="10dp"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:max="100"
+            android:progress="0"/>
+
+    <View
+            android:layout_width="match_parent"
+            android:layout_height="0.5dp"
+            android:layout_marginTop="10dp"
+            android:background="#D6D6D6"/>
+
+    <LinearLayout
+            android:id="@+id/layoutBtn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+        <TextView
+                android:id="@+id/clean"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:padding="10dp"
+                android:gravity="center"
+                android:textColor="#000"
+                android:textSize="16sp"
+                android:background="?android:attr/selectableItemBackground"
+                android:text="取消"
+                android:visibility="gone"/>
+        <TextView
+                android:id="@+id/go"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:padding="10dp"
+                android:gravity="center"
+                android:textColor="#F61C1C"
+                android:background="?android:attr/selectableItemBackground"
+                android:textSize="16sp"
+                android:text="更新"/>
+    </LinearLayout>
+
+</LinearLayout>

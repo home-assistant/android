@@ -115,4 +115,27 @@
         <item name="android:windowIsFloating">true</item>
         <item name="android:backgroundDimEnabled">false</item>
     </style>
+
+    <style name="Update.Dialog" parent="Theme.AppCompat.Dialog">
+        <item name="android:windowBackground">#fff</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+
+    <style name="update_TranslucentTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowBackground">#00000000</item>
+        <item name="android:windowIsTranslucent">true</item>
+    </style>
+
+    <style name="update_progress_horizontal" parent="Widget.AppCompat.ProgressBar.Horizontal">
+        <item name="android:indeterminateOnly">false</item>
+        <!--进度条的进度颜色drawable文件-->
+        <item name="android:progressDrawable">@drawable/update_progress</item>
+        <!--进度条的最小高度-->
+        <item name="android:minHeight">6dp</item>
+        <!--进度条的最大高度-->
+        <item name="android:maxHeight">6dp</item>
+    </style>
+
 </resources>

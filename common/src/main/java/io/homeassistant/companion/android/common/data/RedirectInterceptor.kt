@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.common.data
 
-import android.util.Log
 import okhttp3.Interceptor
 import okhttp3.Response
 import okhttp3.ResponseBody
