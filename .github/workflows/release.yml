@@ -134,7 +134,7 @@ jobs:
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
         with:
-          version: ${{ steps.rel_number.outputs.version }}
+          version: io.homeassistant.companion.android@${{ steps.rel_number.outputs.version }}
           environment: Production
 
   play_publish:
