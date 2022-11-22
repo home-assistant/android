@@ -6,6 +6,11 @@
 
 同时修复官方app的UA问题，导致部分前端组件异常（如 高德地图）
 
+### 高德地理编码api免费每日有使用上线，如果地理编码出不来了可以下载源码进行修改。已经升级账号，一般情况下不会达到上限
+
+* 欢迎捐赠，以便地理编码功能可以持续服务
+* ![](ali.png) ![](wx.jpeg)
+
 ## Documentation
 If you are looking for documentation around the companion applications check out the [Home Assistant Companion Documentation](https://companion.home-assistant.io/).  This will provide you instructions on using the applications.
 
