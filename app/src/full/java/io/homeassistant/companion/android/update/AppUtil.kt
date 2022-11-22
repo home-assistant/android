@@ -86,7 +86,7 @@ object AppUtil {
                 intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
                 val contentUri = FileProvider.getUriForFile(
                     context,
-                    context.packageName + ".fileprovider",
+                    context.packageName + ".provider",
                     saveFile
                 )
                 intent.setDataAndType(contentUri, "application/vnd.android.package-archive")
