@@ -108,9 +108,9 @@ class ButtonWidget : AppWidgetProvider() {
                 for (item in buttonWidgetEntityList) {
                     val views = getWidgetRemoteViews(context, item.id)
 
+                    setLabelVisibility(views, item)
                     views.setViewVisibility(R.id.widgetProgressBar, View.INVISIBLE)
                     views.setViewVisibility(R.id.widgetImageButtonLayout, View.VISIBLE)
-                    views.setViewVisibility(R.id.widgetLabelLayout, View.VISIBLE)
                     appWidgetManager.updateAppWidget(item.id, views)
                 }
             }
@@ -191,6 +191,9 @@ class ButtonWidget : AppWidgetProvider() {
             }
             setWidgetBackground(this, widget)
 
+            // Label
+            setLabelVisibility(this, widget)
+
             // Content
             val iconId = widget?.iconId ?: 988171 // Lightning bolt
 
@@ -251,6 +254,11 @@ class ButtonWidget : AppWidgetProvider() {
                 views.setInt(R.id.widgetLayout, "setBackgroundResource", R.drawable.widget_button_background)
             }
         }
+    }
+
+    private fun setLabelVisibility(views: RemoteViews,widget: ButtonWidgetEntity?) {
+        val labelVisibility = if (widget?.label.isNullOrBlank()) View.GONE else View.VISIBLE
+        views.setViewVisibility(R.id.widgetLabelLayout, labelVisibility)
     }
 
     private fun callConfiguredService(context: Context, appWidgetId: Int) {
@@ -338,7 +346,7 @@ class ButtonWidget : AppWidgetProvider() {
             // Set a timer to change it back after 1 second
             Handler(Looper.getMainLooper()).postDelayed(
                 {
-                    views.setViewVisibility(R.id.widgetLabelLayout, View.VISIBLE)
+                    setLabelVisibility(views, widget)
                     setWidgetBackground(views, widget)
                     appWidgetManager.updateAppWidget(appWidgetId, views)
                 },
