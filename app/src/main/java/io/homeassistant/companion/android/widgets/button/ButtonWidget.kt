@@ -256,7 +256,7 @@ class ButtonWidget : AppWidgetProvider() {
         }
     }
 
-    private fun setLabelVisibility(views: RemoteViews,widget: ButtonWidgetEntity?) {
+    private fun setLabelVisibility(views: RemoteViews, widget: ButtonWidgetEntity?) {
         val labelVisibility = if (widget?.label.isNullOrBlank()) View.GONE else View.VISIBLE
         views.setViewVisibility(R.id.widgetLabelLayout, labelVisibility)
     }
