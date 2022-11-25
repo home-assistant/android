@@ -176,7 +176,7 @@ class MainViewModel @Inject constructor(
     suspend fun entityUpdates() {
         if (!homePresenter.isConnected())
             return
-        homePresenter.getEntityUpdates()?.collect {
+        homePresenter.getEntityUpdates(favoriteEntityIds.value)?.collect {
             if (supportedDomains().contains(it.domain)) {
                 entities[it.entityId] = it
                 updateEntityDomains()
@@ -215,7 +215,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun updateEntityDomains() {
+    private fun updateEntityDomains() {
         val entitiesList = entities.values.toList().sortedBy { it.entityId }
         val areasList = areaRegistry.orEmpty().sortedBy { it.name }
         val domainsList = entitiesList.map { it.domain }.distinct()

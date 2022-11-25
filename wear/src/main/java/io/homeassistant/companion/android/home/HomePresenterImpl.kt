@@ -77,8 +77,8 @@ class HomePresenterImpl @Inject constructor(
         return integrationUseCase.getEntities()
     }
 
-    override suspend fun getEntityUpdates(): Flow<Entity<*>>? {
-        return integrationUseCase.getEntityUpdates()
+    override suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity<*>>? {
+        return integrationUseCase.getEntityUpdates(entityIds)
     }
 
     override suspend fun onEntityClicked(entityId: String, state: String) {
