@@ -38,11 +38,11 @@
                 android:id="@+id/widgetLabel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="bottom|center_horizontal"
+                android:layout_gravity="center"
                 android:text="@string/widget_label_placeholder_text_button"
                 android:textSize="12sp"
                 android:textAlignment="center"
-                android:gravity="top|center_horizontal"
+                android:gravity="center"
                 android:textColor="?colorWidgetOnBackground"
                 android:minLines="1"
                 android:maxLines="2" />
