@@ -136,7 +136,23 @@ abstract class AppSensorManagerBase : SensorManager {
         }
     }
 
-    abstract fun updateCurrentVersion(context: Context)
+    abstract fun getCurrentVersion(): String
+
+    private fun updateCurrentVersion(context: Context) {
+
+        if (!isEnabled(context, currentVersion.id))
+            return
+
+        val state = getCurrentVersion()
+
+        onSensorUpdated(
+            context,
+            currentVersion,
+            state,
+            currentVersion.statelessIcon,
+            mapOf()
+        )
+    }
 
     private fun updateAppRxGb(context: Context, appUid: Int) {
 
