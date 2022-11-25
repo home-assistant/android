@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.sensors
+package io.homeassistant.companion.android.common.sensors
 
 import android.app.ActivityManager
 import android.app.usage.UsageStatsManager
@@ -9,8 +9,7 @@ import android.os.Process
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
-import io.homeassistant.companion.android.BuildConfig
-import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.BuildConfig
 import java.math.RoundingMode
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -101,7 +100,7 @@ class AppSensorManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_app_sensor
 
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return when {
             (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) ->
                 listOf(

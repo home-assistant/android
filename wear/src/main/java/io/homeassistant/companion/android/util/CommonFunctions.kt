@@ -46,8 +46,7 @@ fun getIcon(icon: String?, domain: String, context: Context): IIcon? {
 fun getIcon(entity: Entity<Map<String, Any>>?, domain: String, context: Context): IIcon? {
     val icon = entity?.attributes?.get("icon") as? String
     return if (icon?.startsWith("mdi") == true) {
-        val mdiIcon = icon.split(":")[1]
-        IconicsDrawable(context, "cmd-$mdiIcon").icon
+        getIconFromMdiString(icon, context)
     } else {
         /**
          * Return a default icon for the domain that matches the icon used in the frontend, see
@@ -72,7 +71,7 @@ fun getIcon(entity: Entity<Map<String, Any>>?, domain: String, context: Context)
             "camera" -> CommunityMaterial.Icon3.cmd_video
             "climate" -> CommunityMaterial.Icon3.cmd_thermostat
             "configurator" -> CommunityMaterial.Icon.cmd_cog
-            "conversation" -> CommunityMaterial.Icon3.cmd_text_to_speech
+            "conversation" -> CommunityMaterial.Icon3.cmd_microphone_message
             "cover" -> coverIcon(compareState, entity)
             "counter" -> CommunityMaterial.Icon.cmd_counter
             "fan" -> CommunityMaterial.Icon2.cmd_fan
@@ -141,6 +140,11 @@ fun getIcon(entity: Entity<Map<String, Any>>?, domain: String, context: Context)
             else -> CommunityMaterial.Icon.cmd_bookmark
         }
     }
+}
+
+fun getIconFromMdiString(icon: String, context: Context): IIcon {
+    val mdiIcon = icon.split(":")[1]
+    return IconicsDrawable(context, "cmd-$mdiIcon").icon ?: CommunityMaterial.Icon.cmd_bookmark
 }
 
 private fun coverIcon(state: String?, entity: Entity<Map<String, Any>>?): IIcon? {

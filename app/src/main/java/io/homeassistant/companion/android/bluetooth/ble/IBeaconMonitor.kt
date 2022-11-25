@@ -2,42 +2,49 @@ package io.homeassistant.companion.android.bluetooth.ble
 
 import android.content.Context
 import io.homeassistant.companion.android.sensors.BluetoothSensorManager
-import io.homeassistant.companion.android.sensors.SensorWorker
+import io.homeassistant.companion.android.sensors.SensorReceiver
 import org.altbeacon.beacon.Beacon
+import kotlin.math.abs
 import kotlin.math.round
 
 const val MAX_SKIPPED_UPDATED = 10
 
 data class IBeacon(
-    var uuid: String,
-    var distance: Double,
-    var rssi: Double,
+    override val uuid: String,
+    override val major: String,
+    override val minor: String,
+    val distance: Double,
+    val rssi: Double,
     var skippedUpdated: Int,
-)
+) : IBeaconNameFormat
 
 class IBeaconMonitor {
     lateinit var sensorManager: BluetoothSensorManager
     var beacons: List<IBeacon> = listOf()
 
-    fun sort(tmp: Collection<IBeacon>): Collection<IBeacon> {
+    private fun sort(tmp: Collection<IBeacon>): Collection<IBeacon> {
         return tmp.sortedBy { it.distance }
     }
 
     fun setBeacons(context: Context, newBeacons: Collection<Beacon>) {
         var requireUpdate = false
-        var tmp: Map<String, IBeacon> = linkedMapOf()
+        val tmp = mutableMapOf<String, IBeacon>()
         for (existingBeacon in beacons) {
             existingBeacon.skippedUpdated++
-            tmp += Pair(existingBeacon.uuid, existingBeacon)
+            tmp += existingBeacon.name to existingBeacon
         }
         for (newBeacon in newBeacons) {
             val uuid = newBeacon.id1.toString()
+            val major = newBeacon.id2.toString()
+            val minor = newBeacon.id3.toString()
             val distance = round(newBeacon.distance * 100) / 100
             val rssi = newBeacon.runningAverageRssi
-            if (!tmp.contains(uuid)) { // we found a new beacon
+
+            val beacon = IBeacon(uuid, major, minor, distance, rssi, 0)
+            if (beacon.name !in tmp) { // we found a new beacon
                 requireUpdate = true
             }
-            tmp += Pair(uuid, IBeacon(uuid, distance, rssi, 0))
+            tmp += beacon.name to beacon
         }
         val sorted = sort(tmp.values).toMutableList()
         if (requireUpdate) {
@@ -54,13 +61,14 @@ class IBeaconMonitor {
             sendUpdate(context, sorted)
             return
         }
-        assert(sorted.count() == beacons.count())
-        beacons.forEachIndexed foreach@{ i, existingBeacon ->
-            if (sorted[i].uuid != existingBeacon.uuid || // the distance order switched
-                kotlin.math.abs(sorted[i].distance - existingBeacon.distance) > 0.5 // the distance difference is greater than 0.5m
-            ) {
-                requireUpdate = true
-                return@foreach
+        for ((i, existingBeacon) in beacons.withIndex()) {
+            if (i < sorted.size) {
+                if (sorted[i].name != existingBeacon.name || // the distance order switched
+                    abs(sorted[i].distance - existingBeacon.distance) > 0.5 // the distance difference is greater than 0.5m
+                ) {
+                    requireUpdate = true
+                    break
+                }
             }
         }
         if (requireUpdate) {
@@ -71,7 +79,7 @@ class IBeaconMonitor {
 
     private fun sendUpdate(context: Context, tmp: List<IBeacon>) {
         beacons = tmp
-        sensorManager!!.updateBeaconMonitoringSensor(context)
-        SensorWorker.start(context)
+        sensorManager.updateBeaconMonitoringSensor(context)
+        SensorReceiver.updateAllSensors(context)
     }
 }

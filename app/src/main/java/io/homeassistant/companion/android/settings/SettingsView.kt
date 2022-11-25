@@ -6,7 +6,7 @@ interface SettingsView {
 
     fun enableInternalConnection()
 
-    fun updateSsids(ssids: Set<String>)
+    fun updateExternalUrl(url: String, useCloud: Boolean)
 
-    fun onLangSettingsChanged()
+    fun updateSsids(ssids: Set<String>)
 }

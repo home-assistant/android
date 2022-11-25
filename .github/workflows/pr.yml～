@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK 11
-        uses: actions/setup-java@v3.5.0
+        uses: actions/setup-java@v3.6.0
         with:
           distribution: 'adopt'
           java-version: '11'
@@ -37,7 +37,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK 11
-        uses: actions/setup-java@v3.5.0
+        uses: actions/setup-java@v3.6.0
         with:
           distribution: 'adopt'
           java-version: '11'
@@ -66,8 +66,17 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: Check for modified DB schemas on branch
+      run: |
+        if git diff --name-only --diff-filter=DMR origin/master... | grep "^common/schemas"; then
+          echo -e "\n❌ Existing database schema modified, please increase the database version instead"
+          exit 1
+        else
+          echo -e "\n✔️ No changed database schemas on branch"
+        fi
+
     - name: Set up JDK 11
-      uses: actions/setup-java@v3.5.0
+      uses: actions/setup-java@v3.6.0
       with:
         distribution: 'adopt'
         java-version: '11'
@@ -91,8 +100,18 @@ jobs:
 
     - name: Build Debug APK
       run: ./gradlew assembleDebug
+
+    - name: Check for missing/modified DB schemas after build
+      run: |
+        if [[ $(git status common/schemas --porcelain) ]]; then
+          echo $(git status common/schemas --porcelain)
+          echo -e "\n❌ Found uncommitted changes in database schema directory, please make sure to include all changes in your commit(s)"
+          exit 1;
+        else
+          echo -e "\n✔️ No changes in database schema directory after build"
+        fi
     
     - name: Archive Debug Build
-      uses: kittaakos/upload-artifact-as-is@v0
+      uses: actions/upload-artifact@v3
       with:
         path: ./**/*.apk

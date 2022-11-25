@@ -103,7 +103,7 @@ class BatterySensorManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_battery
 
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(
             batteryLevel,
             batteryState,

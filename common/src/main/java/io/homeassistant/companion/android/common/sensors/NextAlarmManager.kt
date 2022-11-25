@@ -1,10 +1,9 @@
-package io.homeassistant.companion.android.sensors
+package io.homeassistant.companion.android.common.sensors
 
 import android.app.AlarmManager
 import android.content.Context
 import android.util.Log
 import androidx.core.content.getSystemService
-import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
@@ -39,7 +38,7 @@ class NextAlarmManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_alarm
 
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(nextAlarm)
     }
 

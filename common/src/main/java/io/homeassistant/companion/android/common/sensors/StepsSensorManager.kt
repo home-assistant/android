@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.sensors
+package io.homeassistant.companion.android.common.sensors
 
 import android.Manifest
 import android.content.Context
@@ -10,7 +10,6 @@ import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import android.os.Build
 import android.util.Log
 import androidx.core.content.getSystemService
-import io.homeassistant.companion.android.common.sensors.SensorManager
 import kotlin.math.roundToInt
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -19,6 +18,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
 
         private const val TAG = "StepsSensor"
         private var isListenerRegistered = false
+        private var listenerLastRegistered = 0
         private val stepsSensor = SensorManager.BasicSensor(
             "steps_sensor",
             "sensor",
@@ -40,7 +40,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
     override val name: Int
         get() = commonR.string.sensor_name_steps
 
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(stepsSensor)
     }
 
@@ -72,6 +72,12 @@ class StepsSensorManager : SensorManager, SensorEventListener {
             return
 
         if (checkPermission(latestContext, stepsSensor.id)) {
+            val now = System.currentTimeMillis()
+            if (listenerLastRegistered + SensorManager.SENSOR_LISTENER_TIMEOUT < now && isListenerRegistered) {
+                Log.d(TAG, "Re-registering listener as it appears to be stuck")
+                mySensorManager.unregisterListener(this)
+                isListenerRegistered = false
+            }
             mySensorManager = latestContext.getSystemService()!!
 
             val stepsSensors = mySensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
@@ -83,6 +89,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
                 )
                 Log.d(TAG, "Steps sensor listener registered")
                 isListenerRegistered = true
+                listenerLastRegistered = now.toInt()
             }
         }
     }

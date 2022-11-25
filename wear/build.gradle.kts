@@ -8,6 +8,8 @@ plugins {
 }
 
 android {
+    namespace = "io.homeassistant.companion.android"
+
     compileSdk = 33
 
     defaultConfig {
@@ -32,7 +34,7 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.1.1"
+        kotlinCompilerExtensionVersion = "1.3.2"
     }
 
     compileOptions {
@@ -64,9 +66,6 @@ android {
 
     kotlinOptions {
         jvmTarget = "11"
-        // Temporarily required to implement an interface from Compose because they use @JvmDefault
-        // Remove when kotlin-gradle-plugin is >=1.6.20 (https://issuetracker.google.com/issues/217593040)
-        freeCompilerArgs = freeCompilerArgs + "-Xjvm-default=all"
     }
 
     lint {
@@ -88,41 +87,44 @@ play {
 dependencies {
     implementation(project(":common"))
 
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.21")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.20")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.6.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
 
-    implementation("com.google.android.material:material:1.6.1")
+    implementation("com.google.android.material:material:1.7.0")
 
     implementation("androidx.wear:wear:1.2.0")
-    implementation("com.google.android.gms:play-services-wearable:17.1.0")
+    implementation("com.google.android.gms:play-services-wearable:18.0.0")
     implementation("androidx.wear:wear-input:1.2.0-alpha02")
     implementation("androidx.wear:wear-remote-interactions:1.0.0")
     implementation("androidx.wear:wear-phone-interactions:1.0.1")
-    compileOnly("com.google.android.wearable:wearable:2.9.0")
 
-    implementation("com.google.dagger:hilt-android:2.43.2")
-    kapt("com.google.dagger:hilt-android-compiler:2.43.2")
+    implementation("com.google.dagger:hilt-android:2.44.2")
+    kapt("com.google.dagger:hilt-android-compiler:2.44.2")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.4")
     implementation("com.squareup.okhttp3:okhttp:4.10.0")
 
-    implementation("com.mikepenz:iconics-core:5.3.4")
-    implementation("androidx.appcompat:appcompat:1.5.0")
-    implementation("com.mikepenz:community-material-typeface:6.4.95.0-kotlin@aar")
-    implementation("com.mikepenz:iconics-compose:5.3.4")
+    implementation("com.mikepenz:iconics-core:5.4.0")
+    implementation("androidx.appcompat:appcompat:1.5.1")
+    implementation("com.mikepenz:community-material-typeface:7.0.96.0-kotlin@aar")
+    implementation("com.mikepenz:iconics-compose:5.4.0")
 
-    implementation("androidx.activity:activity-ktx:1.5.1")
-    implementation("androidx.activity:activity-compose:1.5.1")
-    implementation("androidx.compose.compiler:compiler:1.3.0")
-    implementation("androidx.compose.foundation:foundation:1.2.1")
-    implementation("androidx.compose.ui:ui-tooling:1.2.1")
-    implementation("androidx.wear.compose:compose-foundation:1.0.0")
-    implementation("androidx.wear.compose:compose-material:1.0.0")
-    implementation("androidx.wear.compose:compose-navigation:1.0.0")
+    implementation("androidx.activity:activity-ktx:1.6.1")
+    implementation("androidx.activity:activity-compose:1.6.1")
+    implementation("androidx.compose.compiler:compiler:1.3.2")
+    implementation(platform("androidx.compose:compose-bom:2022.10.00"))
+    implementation("androidx.compose.foundation:foundation")
+    implementation("androidx.compose.ui:ui-tooling")
+    implementation("androidx.wear.compose:compose-foundation:1.0.2")
+    implementation("androidx.wear.compose:compose-material:1.0.2")
+    implementation("androidx.wear.compose:compose-navigation:1.0.2")
 
     implementation("com.google.guava:guava:31.1-android")
-    implementation("androidx.wear.tiles:tiles:1.0.1")
+    implementation("androidx.wear.tiles:tiles:1.1.0")
 
     implementation("androidx.wear.watchface:watchface-complications-data-source-ktx:1.1.1")
+
+    implementation("androidx.health:health-services-client:1.0.0-beta01")
 }

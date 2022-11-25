@@ -17,7 +17,7 @@ import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
-import androidx.biometric.BiometricManager
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.lifecycle.lifecycleScope
@@ -43,7 +43,9 @@ import io.homeassistant.companion.android.settings.sensor.SensorSettingsFragment
 import io.homeassistant.companion.android.settings.sensor.SensorUpdateFrequencyFragment
 import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSettingsFragment
 import io.homeassistant.companion.android.settings.ssid.SsidFragment
+import io.homeassistant.companion.android.settings.url.ExternalUrlFragment
 import io.homeassistant.companion.android.settings.wear.SettingsWearActivity
+import io.homeassistant.companion.android.settings.wear.SettingsWearDetection
 import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
 import kotlinx.coroutines.Dispatchers
@@ -66,17 +68,16 @@ class SettingsFragment constructor(
         private const val BACKGROUND_LOCATION_REQUEST_CODE = 1
     }
 
-    private lateinit var authenticator: Authenticator
-    private var setLock = false
-
     private val requestBackgroundAccessResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         updateBackgroundAccessPref()
     }
 
+    private val requestNotificationPermissionResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        updateNotificationChannelPrefs()
+    }
+
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         presenter.init(this)
-
-        authenticator = Authenticator(requireContext(), requireActivity(), ::authenticationResult)
 
         preferenceManager.preferenceDataStore = presenter.getPreferenceDataStore()
 
@@ -95,18 +96,17 @@ class SettingsFragment constructor(
         }
 
         findPreference<SwitchPreference>("app_lock")?.setOnPreferenceChangeListener { _, newValue ->
-            var isValid: Boolean
+            val isValid: Boolean
             if (newValue == false) {
                 isValid = true
                 findPreference<SwitchPreference>("app_lock_home_bypass")?.isVisible = false
                 findPreference<EditTextPreference>("session_timeout")?.isVisible = false
             } else {
-                isValid = true
-                if (BiometricManager.from(requireActivity()).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS) {
-                    setLock = true
-                    authenticator.authenticate(getString(commonR.string.biometric_set_title))
-                } else {
-                    isValid = false
+                val settingsActivity = requireActivity() as SettingsActivity
+                val canAuth = settingsActivity.requestAuthentication(getString(commonR.string.biometric_set_title), ::setLockAuthenticationResult)
+                isValid = canAuth
+
+                if (!canAuth) {
                     AlertDialog.Builder(requireActivity())
                         .setTitle(commonR.string.set_lock_title)
                         .setMessage(commonR.string.set_lock_message)
@@ -146,8 +146,14 @@ class SettingsFragment constructor(
                 onChangeUrlValidator
         }
 
-        findPreference<EditTextPreference>("connection_external")?.onPreferenceChangeListener =
-            onChangeUrlValidator
+        findPreference<Preference>("connection_external")?.setOnPreferenceClickListener {
+            parentFragmentManager
+                .beginTransaction()
+                .replace(R.id.content, ExternalUrlFragment::class.java, null)
+                .addToBackStack(getString(commonR.string.input_url))
+                .commit()
+            return@setOnPreferenceClickListener true
+        }
 
         findPreference<Preference>("connection_internal_ssids")?.let {
             it.setOnPreferenceClickListener {
@@ -245,10 +251,17 @@ class SettingsFragment constructor(
             }
         }
 
+        updateNotificationChannelPrefs()
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            findPreference<Preference>("notification_permission")?.let {
+                it.setOnPreferenceClickListener {
+                    openNotificationSettings()
+                    return@setOnPreferenceClickListener true
+                }
+            }
+
             findPreference<Preference>("notification_channels")?.let { pref ->
-                val uiManager = requireContext().getSystemService<UiModeManager>()
-                pref.isVisible = uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION
                 pref.setOnPreferenceClickListener {
                     parentFragmentManager
                         .beginTransaction()
@@ -305,17 +318,13 @@ class SettingsFragment constructor(
             }
         }
 
-        val pm = requireContext().packageManager
-        val wearCompanionApps = listOf(
-            "com.google.android.wearable.app",
-            "com.samsung.android.app.watchmanager",
-            "com.montblanc.summit.companion.android"
-        )
-        findPreference<PreferenceCategory>("wear_category")?.isVisible =
-            BuildConfig.FLAVOR == "full" && wearCompanionApps.any { pm.getLaunchIntentForPackage(it) != null }
-        findPreference<Preference>("wear_settings")?.setOnPreferenceClickListener {
-            startActivity(SettingsWearActivity.newInstance(requireContext()))
-            return@setOnPreferenceClickListener true
+        lifecycleScope.launch {
+            findPreference<PreferenceCategory>("wear_category")?.isVisible =
+                SettingsWearDetection.hasAnyNodes(requireContext())
+            findPreference<Preference>("wear_settings")?.setOnPreferenceClickListener {
+                startActivity(SettingsWearActivity.newInstance(requireContext()))
+                return@setOnPreferenceClickListener true
+            }
         }
 
         findPreference<Preference>("changelog_github")?.let {
@@ -411,16 +420,20 @@ class SettingsFragment constructor(
         }
     }
 
+    override fun updateExternalUrl(url: String, useCloud: Boolean) {
+        findPreference<Preference>("connection_external")?.let {
+            it.summary =
+                if (useCloud) getString(commonR.string.input_cloud)
+                else url
+        }
+    }
+
     override fun updateSsids(ssids: Set<String>) {
         findPreference<Preference>("connection_internal_ssids")?.let {
             it.summary =
                 if (ssids.isEmpty()) getString(commonR.string.pref_connection_ssids_empty)
                 else ssids.joinToString()
         }
-    }
-
-    override fun onLangSettingsChanged() {
-        requireActivity().recreate()
     }
 
     private fun onDisplaySsidScreen() {
@@ -469,13 +482,17 @@ class SettingsFragment constructor(
             .commit()
     }
 
-    private fun authenticationResult(result: Int) {
+    private fun setLockAuthenticationResult(result: Int): Boolean {
         val success = result == Authenticator.SUCCESS
         val switchLock = findPreference<SwitchPreference>("app_lock")
         switchLock?.isChecked = success
 
+        // Prevent requesting authentication after just enabling the app lock
+        presenter.setAppActive(success)
+
         findPreference<SwitchPreference>("app_lock_home_bypass")?.isVisible = success
         findPreference<EditTextPreference>("session_timeout")?.isVisible = success
+        return (result == Authenticator.SUCCESS || result == Authenticator.CANCELED)
     }
 
     private fun removeSystemFromThemesIfNeeded() {
@@ -516,6 +533,23 @@ class SettingsFragment constructor(
         }
     }
 
+    private fun updateNotificationChannelPrefs() {
+        val notificationsEnabled =
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
+                NotificationManagerCompat.from(requireContext()).areNotificationsEnabled()
+
+        findPreference<Preference>("notification_permission")?.let {
+            it.isVisible = !notificationsEnabled
+        }
+        findPreference<Preference>("notification_channels")?.let {
+            val uiManager = requireContext().getSystemService<UiModeManager>()
+            it.isVisible =
+                notificationsEnabled &&
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION
+        }
+    }
+
     @SuppressLint("BatteryLife")
     private fun requestBackgroundAccess() {
         if (!isIgnoringBatteryOptimizations()) {
@@ -524,6 +558,16 @@ class SettingsFragment constructor(
                     Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
                     Uri.parse("package:${activity?.packageName}")
                 )
+            )
+        }
+    }
+
+    private fun openNotificationSettings() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            requestNotificationPermissionResult.launch(
+                Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                    putExtra(Settings.EXTRA_APP_PACKAGE, requireContext().packageName)
+                }
             )
         }
     }
@@ -592,6 +636,7 @@ class SettingsFragment constructor(
         super.onResume()
         activity?.title = getString(commonR.string.companion_app)
 
+        presenter.updateExternalUrlStatus()
         presenter.updateInternalUrlStatus()
     }
 }

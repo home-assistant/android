@@ -47,9 +47,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.R as commonR
 
 @OptIn(
@@ -61,7 +63,9 @@ import io.homeassistant.companion.android.common.R as commonR
 fun SsidView(
     wifiSsids: List<String>,
     prioritizeInternal: Boolean,
-    activeSsid: String,
+    usingWifi: Boolean,
+    activeSsid: String?,
+    activeBssid: String?,
     onAddWifiSsid: (String) -> Boolean,
     onRemoveWifiSsid: (String) -> Unit,
     onSetPrioritize: (Boolean) -> Unit
@@ -125,7 +129,7 @@ fun SsidView(
         }
 
         if (
-            activeSsid.isNotBlank() &&
+            activeSsid?.isNotBlank() == true &&
             wifiSsids.none { it == activeSsid } &&
             (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || activeSsid !== WifiManager.UNKNOWN_SSID)
         ) {
@@ -147,7 +151,13 @@ fun SsidView(
             }
         }
         items(wifiSsids, key = { "ssid.item.$it" }) {
-            val connected = it == activeSsid
+            val connected = remember(it, activeSsid, activeBssid, usingWifi) {
+                usingWifi &&
+                    (
+                        it == activeSsid ||
+                            (it.startsWith(UrlRepository.BSSID_PREFIX) && it.removePrefix(UrlRepository.BSSID_PREFIX).equals(activeBssid, ignoreCase = true))
+                        )
+            }
             Row(
                 modifier = Modifier
                     .heightIn(min = 56.dp)
@@ -163,7 +173,12 @@ fun SsidView(
                     else LocalContentColor.current.copy(alpha = LocalContentAlpha.current)
                 )
                 Text(
-                    text = it,
+                    text =
+                    if (it.startsWith(UrlRepository.BSSID_PREFIX)) it.removePrefix(UrlRepository.BSSID_PREFIX)
+                    else it,
+                    fontFamily =
+                    if (it.startsWith(UrlRepository.BSSID_PREFIX)) FontFamily.Monospace
+                    else null,
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .weight(1f)
@@ -240,6 +255,8 @@ private fun PreviewSsidViewEmpty() {
         wifiSsids = emptyList(),
         prioritizeInternal = false,
         activeSsid = "home-assistant-wifi",
+        activeBssid = "02:00:00:00:00:00",
+        usingWifi = true,
         onAddWifiSsid = { true },
         onRemoveWifiSsid = {},
         onSetPrioritize = {}
@@ -250,9 +267,11 @@ private fun PreviewSsidViewEmpty() {
 @Composable
 private fun PreviewSsidViewItems() {
     SsidView(
-        wifiSsids = listOf("home-assistant-wifi", "wifi-one", "wifi-two"),
+        wifiSsids = listOf("home-assistant-wifi", "wifi-one", "BSSID:1A:2B:3C:4D:5E:6F"),
         prioritizeInternal = false,
         activeSsid = "home-assistant-wifi",
+        activeBssid = "02:00:00:00:00:00",
+        usingWifi = true,
         onAddWifiSsid = { true },
         onRemoveWifiSsid = {},
         onSetPrioritize = {}

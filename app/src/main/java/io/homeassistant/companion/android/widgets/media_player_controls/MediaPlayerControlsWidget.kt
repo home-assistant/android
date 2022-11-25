@@ -5,7 +5,6 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
 import android.net.ConnectivityManager
 import android.os.Bundle
 import android.os.Handler
@@ -17,6 +16,7 @@ import android.widget.Toast
 import androidx.core.content.getSystemService
 import com.google.android.material.color.DynamicColors
 import com.mikepenz.iconics.IconicsDrawable
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import com.squareup.picasso.Picasso
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
@@ -176,7 +176,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                 val artist = (entity?.attributes?.get("media_artist") ?: entity?.attributes?.get("media_album_artist"))?.toString()
                 val title = entity?.attributes?.get("media_title")?.toString()
                 val album = entity?.attributes?.get("media_album_name")?.toString()
-                var icon = entity?.attributes?.get("icon")?.toString()
+                val icon = entity?.attributes?.get("icon")?.toString()
 
                 if ((artist != null || album != null) && title != null) {
                     setTextViewText(
@@ -231,15 +231,16 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                     )
                 }
 
-                if (icon == null || !icon.startsWith("mdi") || !icon.contains(":")) {
-                    icon = "mdi:cast"
+                var iconBitmap = IconicsDrawable(context, CommunityMaterial.Icon.cmd_cast).toBitmap()
+                if (icon?.startsWith("mdi") == true && icon.substringAfter(":").isNotBlank()) {
+                    val iconDrawable = IconicsDrawable(context, "cmd-${icon.substringAfter(":")}")
+                    if (iconDrawable.icon != null)
+                        iconBitmap = iconDrawable.toBitmap()
                 }
 
-                val iconName = icon.split(":")[1]
-                val iconDrawable: Bitmap = IconicsDrawable(context, "cmd-$iconName").toBitmap()
                 setImageViewBitmap(
                     R.id.widgetSourceIcon,
-                    iconDrawable
+                    iconBitmap
                 )
 
                 val entityPictureUrl = entity?.attributes?.get("entity_picture")?.toString()

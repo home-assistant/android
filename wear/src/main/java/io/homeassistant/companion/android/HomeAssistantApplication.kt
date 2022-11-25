@@ -1,8 +1,13 @@
 package io.homeassistant.companion.android
 
 import android.app.Application
+import android.app.NotificationManager
 import android.content.Intent
 import android.content.IntentFilter
+import android.media.AudioManager
+import android.net.wifi.WifiManager
+import android.os.Build
+import android.os.PowerManager
 import dagger.hilt.android.HiltAndroidApp
 import io.homeassistant.companion.android.complications.ComplicationReceiver
 import io.homeassistant.companion.android.sensors.SensorReceiver
@@ -26,6 +31,67 @@ open class HomeAssistantApplication : Application() {
             }
         )
 
+        // This will trigger an update any time the wifi state has changed
+        registerReceiver(
+            sensorReceiver,
+            IntentFilter().apply {
+                addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION)
+                addAction(WifiManager.WIFI_STATE_CHANGED_ACTION)
+            }
+        )
+
+        // This will trigger for DND changes, including bedtime and theater mode
+        registerReceiver(
+            sensorReceiver,
+            IntentFilter(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED)
+        )
+
+        // Listen to changes to the audio input/output on the device
+        registerReceiver(
+            sensorReceiver,
+            IntentFilter().apply {
+                addAction(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
+                addAction(AudioManager.ACTION_HEADSET_PLUG)
+                addAction(AudioManager.RINGER_MODE_CHANGED_ACTION)
+            }
+        )
+
+        // Add extra audio receiver for devices that support it
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            registerReceiver(
+                sensorReceiver,
+                IntentFilter().apply {
+                    addAction(AudioManager.ACTION_MICROPHONE_MUTE_CHANGED)
+                    addAction(AudioManager.ACTION_SPEAKERPHONE_STATE_CHANGED)
+                }
+            )
+        }
+
+        // This will cause interactive and power save to update upon a state change
+        registerReceiver(
+            sensorReceiver,
+            IntentFilter().apply {
+                addAction(Intent.ACTION_SCREEN_OFF)
+                addAction(Intent.ACTION_SCREEN_ON)
+                addAction(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED)
+            }
+        )
+
+        registerReceiver(
+            sensorReceiver,
+            IntentFilter().apply {
+                addAction(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED)
+            }
+        )
+
+        // Listen to changes to Wet Mode State
+        registerReceiver(
+            sensorReceiver,
+            IntentFilter().apply {
+                addAction("com.google.android.clockwork.actions.WET_MODE_STARTED")
+                addAction("com.google.android.clockwork.actions.WET_MODE_ENDED")
+            }
+        )
         // Update complications when the screen is on
         val complicationReceiver = ComplicationReceiver()
 

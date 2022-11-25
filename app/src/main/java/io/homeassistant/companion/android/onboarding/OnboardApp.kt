@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.onboarding
 
 import android.content.Context
 import android.content.Intent
-import android.icu.util.Output
 import android.os.Build
 import androidx.activity.result.contract.ActivityResultContract
 import io.homeassistant.companion.android.BuildConfig
@@ -13,25 +12,32 @@ class OnboardApp : ActivityResultContract<OnboardApp.Input, OnboardApp.Output?>(
         private const val EXTRA_URL = "extra_url"
         private const val EXTRA_DEFAULT_DEVICE_NAME = "extra_default_device_name"
         private const val EXTRA_LOCATION_TRACKING_POSSIBLE = "location_tracking_possible"
+        private const val EXTRA_NOTIFICATIONS_POSSIBLE = "notifications_possible"
+        private const val EXTRA_IS_WATCH = "extra_is_watch"
 
         fun parseInput(intent: Intent): Input = Input(
             url = intent.getStringExtra(EXTRA_URL),
             defaultDeviceName = intent.getStringExtra(EXTRA_DEFAULT_DEVICE_NAME) ?: Build.MODEL,
             locationTrackingPossible = intent.getBooleanExtra(EXTRA_LOCATION_TRACKING_POSSIBLE, false),
+            notificationsPossible = intent.getBooleanExtra(EXTRA_NOTIFICATIONS_POSSIBLE, true),
+            isWatch = intent.getBooleanExtra(EXTRA_IS_WATCH, false)
         )
     }
 
     data class Input(
         val url: String? = null,
         val defaultDeviceName: String = Build.MODEL,
-        val locationTrackingPossible: Boolean = BuildConfig.FLAVOR == "full"
+        val locationTrackingPossible: Boolean = BuildConfig.FLAVOR == "full",
+        val notificationsPossible: Boolean = true,
+        val isWatch: Boolean = false
     )
 
     data class Output(
         val url: String,
         val authCode: String,
         val deviceName: String,
-        val deviceTrackingEnabled: Boolean
+        val deviceTrackingEnabled: Boolean,
+        val notificationsEnabled: Boolean
     ) {
         fun toIntent(): Intent {
             return Intent().apply {
@@ -39,6 +45,7 @@ class OnboardApp : ActivityResultContract<OnboardApp.Input, OnboardApp.Output?>(
                 putExtra("AuthCode", authCode)
                 putExtra("DeviceName", deviceName)
                 putExtra("LocationTracking", deviceTrackingEnabled)
+                putExtra("Notifications", notificationsEnabled)
             }
         }
     }
@@ -48,6 +55,8 @@ class OnboardApp : ActivityResultContract<OnboardApp.Input, OnboardApp.Output?>(
             putExtra(EXTRA_URL, input.url)
             putExtra(EXTRA_DEFAULT_DEVICE_NAME, input.defaultDeviceName)
             putExtra(EXTRA_LOCATION_TRACKING_POSSIBLE, input.locationTrackingPossible)
+            putExtra(EXTRA_NOTIFICATIONS_POSSIBLE, input.notificationsPossible)
+            putExtra(EXTRA_IS_WATCH, input.isWatch)
         }
     }
 
@@ -60,11 +69,13 @@ class OnboardApp : ActivityResultContract<OnboardApp.Input, OnboardApp.Output?>(
         val authCode = intent.getStringExtra("AuthCode").toString()
         val deviceName = intent.getStringExtra("DeviceName").toString()
         val deviceTrackingEnabled = intent.getBooleanExtra("LocationTracking", false)
+        val notificationsEnabled = intent.getBooleanExtra("Notifications", true)
         return Output(
             url = url,
             authCode = authCode,
             deviceName = deviceName,
-            deviceTrackingEnabled = deviceTrackingEnabled
+            deviceTrackingEnabled = deviceTrackingEnabled,
+            notificationsEnabled = notificationsEnabled
         )
     }
 }

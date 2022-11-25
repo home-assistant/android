@@ -28,6 +28,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -80,9 +81,11 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
             asPutDataRequest()
         }
 
-        Wearable.getDataClient(this@PhoneSettingsListener).putDataItem(putDataRequest).apply {
-            addOnSuccessListener { Log.d(TAG, "Successfully sent /config to device") }
-            addOnFailureListener { e -> Log.e(TAG, "Failed to send /config to device", e) }
+        try {
+            Wearable.getDataClient(this@PhoneSettingsListener).putDataItem(putDataRequest).await()
+            Log.d(TAG, "Successfully sent /config to device")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to send /config to device", e)
         }
     }
 
@@ -110,10 +113,11 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
 
     private fun login(dataMap: DataMap) = mainScope.launch {
         try {
-            val url = dataMap.getString("URL")
-            val authCode = dataMap.getString("AuthCode")
+            val url = dataMap.getString("URL", "")
+            val authCode = dataMap.getString("AuthCode", "")
             val deviceName = dataMap.getString("DeviceName")
             val deviceTrackingEnabled = dataMap.getBoolean("LocationTracking")
+            val notificationsEnabled = dataMap.getString("Notifications")
 
             urlRepository.saveUrl(url)
             authenticationRepository.registerAuthorizationCode(authCode)

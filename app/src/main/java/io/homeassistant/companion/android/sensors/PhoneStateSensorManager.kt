@@ -57,7 +57,7 @@ class PhoneStateSensorManager : SensorManager {
     override fun hasSensor(context: Context): Boolean {
         return context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
     }
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1)
             listOf(phoneState, sim_1, sim_2)
         else listOf(phoneState)

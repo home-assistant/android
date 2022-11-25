@@ -1,11 +1,10 @@
-package io.homeassistant.companion.android.sensors
+package io.homeassistant.companion.android.common.sensors
 
 import android.content.Context
 import android.os.Build
 import android.os.PowerManager
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
-import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.R as commonR
 
 class PowerSensorManager : SensorManager {
@@ -50,7 +49,7 @@ class PowerSensorManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_power
 
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             listOf(interactiveDevice, doze, powerSave)
         } else {
@@ -105,7 +104,9 @@ class PowerSensorManager : SensorManager {
             dozeState,
             icon,
             mapOf(
-                "ignoring_battery_optimizations" to powerManager.isIgnoringBatteryOptimizations(packageName)
+                "ignoring_battery_optimizations" to powerManager.isIgnoringBatteryOptimizations(
+                    packageName
+                )
             )
         )
     }

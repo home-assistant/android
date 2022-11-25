@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.sensors
+package io.homeassistant.companion.android.common.sensors
 
 import android.content.Context
 import android.media.AudioDeviceInfo
@@ -6,7 +6,6 @@ import android.media.AudioManager
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
-import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.R as commonR
 
 class AudioSensorManager : SensorManager {
@@ -139,7 +138,7 @@ class AudioSensorManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_audio
 
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         val allSupportedSensors = listOf(
             audioSensor, audioState, headphoneState, micMuted, speakerphoneState,
             musicActive, volAlarm, volCall, volMusic, volRing, volNotification, volSystem,
@@ -218,7 +217,7 @@ class AudioSensorManager : SensorManager {
             AudioManager.MODE_RINGTONE -> "mdi:phone-ring"
             AudioManager.MODE_IN_CALL -> "mdi:phone"
             AudioManager.MODE_IN_COMMUNICATION -> "mdi:message-video"
-            AudioManager.MODE_CALL_SCREENING -> "mdi:text-to-speech"
+            AudioManager.MODE_CALL_SCREENING -> "mdi:microphone-message"
             else -> "mdi:volume-low"
         }
 

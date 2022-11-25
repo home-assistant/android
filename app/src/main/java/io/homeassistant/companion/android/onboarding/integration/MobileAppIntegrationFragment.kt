@@ -20,9 +20,10 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.google.android.material.composethemeadapter.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
-import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.onboarding.OnboardingViewModel
+import io.homeassistant.companion.android.onboarding.notifications.NotificationPermissionFragment
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -151,14 +152,16 @@ class MobileAppIntegrationFragment : Fragment() {
     }
 
     private fun onComplete() {
-        val retData = OnboardApp.Output(
-            url = viewModel.manualUrl.value,
-            authCode = viewModel.authCode,
-            deviceName = viewModel.deviceName.value,
-            deviceTrackingEnabled = viewModel.locationTrackingEnabled
-        )
-        activity?.setResult(Activity.RESULT_OK, retData.toIntent())
-        activity?.finish()
+        if (viewModel.notificationsPossible.value != viewModel.notificationsEnabled) {
+            parentFragmentManager
+                .beginTransaction()
+                .replace(R.id.content, NotificationPermissionFragment::class.java, null)
+                .addToBackStack(null)
+                .commit()
+        } else { // Complete onboarding
+            activity?.setResult(Activity.RESULT_OK, viewModel.getOutput().toIntent())
+            activity?.finish()
+        }
     }
 
     private fun openPrivacyPolicy() {

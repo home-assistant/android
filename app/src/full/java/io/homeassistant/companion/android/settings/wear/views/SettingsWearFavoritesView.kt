@@ -47,7 +47,7 @@ fun LoadWearFavoritesSettings(
 ) {
     val reorderState = rememberReorderableLazyListState(
         onMove = { from, to -> settingsWearViewModel.onMove(from, to) },
-        canDragOver = { settingsWearViewModel.canDragOver(it) },
+        canDragOver = { draggedOver, _ -> settingsWearViewModel.canDragOver(draggedOver) },
         onDragEnd = { _, _ ->
             settingsWearViewModel.sendHomeFavorites(settingsWearViewModel.favoriteEntityIds.toList())
         }

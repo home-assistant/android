@@ -3,10 +3,13 @@ package io.homeassistant.companion.android.onboarding
 import android.os.Build
 import android.os.Bundle
 import android.view.KeyEvent
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.NotificationManagerCompat
 import androidx.fragment.app.commit
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationFragment
 import io.homeassistant.companion.android.onboarding.discovery.DiscoveryFragment
@@ -29,6 +32,15 @@ class OnboardingActivity : AppCompatActivity() {
         val input = OnboardApp.parseInput(intent)
         viewModel.deviceName.value = input.defaultDeviceName
         viewModel.locationTrackingPossible.value = input.locationTrackingPossible
+        viewModel.notificationsPossible.value = input.notificationsPossible
+        viewModel.notificationsEnabled = if (input.notificationsPossible) {
+            BuildConfig.FLAVOR == "full" &&
+                (
+                    Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+                        NotificationManagerCompat.from(this).areNotificationsEnabled()
+                    )
+        } else false
+        viewModel.deviceIsWatch = input.isWatch
 
         if (savedInstanceState == null) {
             supportFragmentManager.commit {
@@ -58,13 +70,15 @@ class OnboardingActivity : AppCompatActivity() {
                 }
             }
         }
-    }
 
-    override fun onBackPressed() {
-        if (supportFragmentManager.backStackEntryCount > 0) {
-            supportFragmentManager.popBackStack()
-        } else {
-            super.onBackPressed()
+        val onBackPressed = object : OnBackPressedCallback(supportFragmentManager.backStackEntryCount > 0) {
+            override fun handleOnBackPressed() {
+                supportFragmentManager.popBackStack()
+            }
+        }
+        onBackPressedDispatcher.addCallback(this, onBackPressed)
+        supportFragmentManager.addOnBackStackChangedListener {
+            onBackPressed.isEnabled = supportFragmentManager.backStackEntryCount > 0
         }
     }
 

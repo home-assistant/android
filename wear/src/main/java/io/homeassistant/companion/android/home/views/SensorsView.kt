@@ -7,6 +7,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
@@ -44,20 +45,19 @@ fun SensorsView(
                     ListHeader(id = commonR.string.sensors)
                 }
                 items(sensorManagers.size, { sensorManagers[it].name }) { index ->
-                    sensorManagers.forEach { manager ->
-                        Row {
-                            Chip(
-                                modifier = Modifier
-                                    .fillMaxWidth(),
-                                colors = ChipDefaults.secondaryChipColors(),
-                                label = {
-                                    Text(
-                                        text = stringResource(manager.name)
-                                    )
-                                },
-                                onClick = { onClickSensorManager(manager) }
-                            )
-                        }
+                    val manager = sensorManagers[index]
+                    Row {
+                        Chip(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            colors = ChipDefaults.secondaryChipColors(),
+                            label = {
+                                Text(
+                                    text = stringResource(manager.name)
+                                )
+                            },
+                            onClick = { onClickSensorManager(manager) }
+                        )
                     }
                 }
             }
@@ -67,10 +67,11 @@ fun SensorsView(
 
 @Composable
 fun getSensorManagers(): List<SensorManager> {
-    return SensorReceiver.MANAGERS.sortedBy { stringResource(it.name) }.filter { it.hasSensor(LocalContext.current) }
+    val context = LocalContext.current
+    return SensorReceiver.MANAGERS.sortedBy { context.getString(it.name) }.filter { it.hasSensor(context) }
 }
 
-@Preview
+@Preview(device = Devices.WEAR_OS_LARGE_ROUND)
 @Composable
 private fun PreviewSensorsView() {
     CompositionLocalProvider {

@@ -13,6 +13,8 @@ val versionName = "LOCAL"
 val versionCode = 1
 
 android {
+    namespace = "io.homeassistant.companion.android.common"
+
     compileSdk = 33
 
     defaultConfig {
@@ -53,12 +55,12 @@ android {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.21")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.21")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.20")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.7.20")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
 
-    implementation("com.google.dagger:hilt-android:2.43.2")
-    kapt("com.google.dagger:hilt-android-compiler:2.43.2")
+    implementation("com.google.dagger:hilt-android:2.44.2")
+    kapt("com.google.dagger:hilt-android-compiler:2.44.2")
 
     api("androidx.room:room-runtime:2.4.3")
     api("androidx.room:room-ktx:2.4.3")

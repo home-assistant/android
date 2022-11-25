@@ -32,5 +32,5 @@ runs:
         echo Number Tags $TAGS
         echo Version $VERSION
         echo Version Code $VC
-        echo ::set-output name=version::$VERSION
-        echo ::set-output name=version-code::$VC
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "version-code=$VC" >> $GITHUB_OUTPUT

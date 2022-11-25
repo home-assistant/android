@@ -8,6 +8,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
@@ -22,6 +23,7 @@ import androidx.wear.compose.material.rememberScalingLazyListState
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.previewFavoritesList
@@ -57,6 +59,7 @@ fun SecondarySettingsChip(
 
 @Composable
 fun SettingsView(
+    loadingState: MainViewModel.LoadingState,
     favorites: List<String>,
     onClickSetFavorites: () -> Unit,
     onClearFavorites: () -> Unit,
@@ -89,6 +92,7 @@ fun SettingsView(
                     SecondarySettingsChip(
                         icon = CommunityMaterial.Icon3.cmd_star,
                         label = stringResource(commonR.string.favorite),
+                        enabled = loadingState == MainViewModel.LoadingState.READY,
                         onClick = onClickSetFavorites
                     )
                 }
@@ -228,10 +232,11 @@ fun SettingsView(
     }
 }
 
-@Preview
+@Preview(device = Devices.WEAR_OS_LARGE_ROUND)
 @Composable
 private fun PreviewSettingsView() {
     SettingsView(
+        loadingState = MainViewModel.LoadingState.READY,
         favorites = previewFavoritesList,
         onClickSetFavorites = { /*TODO*/ },
         onClearFavorites = {},

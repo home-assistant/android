@@ -40,49 +40,37 @@ class ThemesManager @Inject constructor(
         }
     }
 
+    @Suppress("DEPRECATION")
     fun setThemeForWebView(context: Context, webSettings: WebSettings) {
-        if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK_STRATEGY) &&
-            WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK)
+        val theme = getCurrentTheme()
+        setNightModeBasedOnTheme(theme)
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU &&
+            WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK) &&
+            WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK_STRATEGY)
         ) {
-            val theme = getCurrentTheme()
-
-            setNightModeBasedOnTheme(theme)
-
+            // While an up-to-date official WebView respects the app light/dark theme automatically,
+            // some users are running forks where this doesn't seem to work or are reportedly
+            // unable to update. These deprecated settings are set to preserve compatibility for
+            // those users. Issue: https://github.com/home-assistant/android/issues/2985
             WebSettingsCompat.setForceDarkStrategy(
-                webSettings,
-                WebSettingsCompat.DARK_STRATEGY_WEB_THEME_DARKENING_ONLY
+                webSettings, WebSettingsCompat.DARK_STRATEGY_WEB_THEME_DARKENING_ONLY
             )
             when (theme) {
-                "newTheme" -> {
-                    // Just a template for custom themes
-                    // context.setTheme(android.R.style.newTheme);
-                }
                 "dark" -> {
-                    WebSettingsCompat.setForceDark(
-                        webSettings,
-                        WebSettingsCompat.FORCE_DARK_ON
-                    )
+                    WebSettingsCompat.setForceDark(webSettings, WebSettingsCompat.FORCE_DARK_ON)
                 }
                 "android", "system" -> {
                     val nightModeFlags =
                         context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
                     if (nightModeFlags == Configuration.UI_MODE_NIGHT_YES) {
-                        WebSettingsCompat.setForceDark(
-                            webSettings,
-                            WebSettingsCompat.FORCE_DARK_ON
-                        )
+                        WebSettingsCompat.setForceDark(webSettings, WebSettingsCompat.FORCE_DARK_ON)
                     } else {
-                        WebSettingsCompat.setForceDark(
-                            webSettings,
-                            WebSettingsCompat.FORCE_DARK_OFF
-                        )
+                        WebSettingsCompat.setForceDark(webSettings, WebSettingsCompat.FORCE_DARK_OFF)
                     }
                 }
                 else -> {
-                    WebSettingsCompat.setForceDark(
-                        webSettings,
-                        WebSettingsCompat.FORCE_DARK_OFF
-                    )
+                    WebSettingsCompat.setForceDark(webSettings, WebSettingsCompat.FORCE_DARK_OFF)
                 }
             }
         }

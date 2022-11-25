@@ -9,6 +9,7 @@ import io.homeassistant.companion.android.bluetooth.ble.IBeaconTransmitter
 import io.homeassistant.companion.android.bluetooth.ble.KalmanFilter
 import io.homeassistant.companion.android.bluetooth.ble.MonitoringManager
 import io.homeassistant.companion.android.bluetooth.ble.TransmitterManager
+import io.homeassistant.companion.android.bluetooth.ble.name
 import io.homeassistant.companion.android.common.bluetooth.BluetoothDevice
 import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils
 import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils.supportsTransmitter
@@ -16,9 +17,7 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
-import kotlinx.coroutines.runBlocking
 import java.util.UUID
-import kotlin.collections.ArrayList
 import io.homeassistant.companion.android.common.R as commonR
 
 class BluetoothSensorManager : SensorManager {
@@ -135,7 +134,7 @@ class BluetoothSensorManager : SensorManager {
         get() = false
     override val name: Int
         get() = commonR.string.sensor_name_bluetooth
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(bluetoothConnection, bluetoothState, bleTransmitter, beaconMonitor)
     }
 
@@ -143,9 +142,16 @@ class BluetoothSensorManager : SensorManager {
         return when {
             (sensorId == bleTransmitter.id && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) -> {
                 arrayOf(
-                    Manifest.permission.BLUETOOTH,
                     Manifest.permission.BLUETOOTH_ADVERTISE,
                     Manifest.permission.BLUETOOTH_CONNECT
+                )
+            }
+            (sensorId == beaconMonitor.id && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) -> {
+                arrayOf(
+                    Manifest.permission.BLUETOOTH,
+                    Manifest.permission.BLUETOOTH_ADMIN,
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
                 )
             }
             (sensorId == beaconMonitor.id && Build.VERSION.SDK_INT <= Build.VERSION_CODES.R) -> {
@@ -159,14 +165,15 @@ class BluetoothSensorManager : SensorManager {
             }
             (sensorId == beaconMonitor.id && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) -> {
                 arrayOf(
-                    Manifest.permission.BLUETOOTH,
+                    Manifest.permission.BLUETOOTH_CONNECT,
                     Manifest.permission.BLUETOOTH_SCAN,
                     Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
                 )
             }
             (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) -> {
                 arrayOf(
-                    Manifest.permission.BLUETOOTH,
                     Manifest.permission.BLUETOOTH_CONNECT
                 )
             }
@@ -295,7 +302,7 @@ class BluetoothSensorManager : SensorManager {
         KalmanFilter.maxIterations = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_FILTER_ITERATIONS, SensorSettingType.NUMBER, DEFAULT_BEACON_MONITOR_FILTER_ITERATIONS).toIntOrNull() ?: DEFAULT_BEACON_MONITOR_FILTER_ITERATIONS.toInt()
         KalmanFilter.rssiMultiplier = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER, SensorSettingType.NUMBER, DEFAULT_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER).toDoubleOrNull() ?: DEFAULT_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER.toDouble()
 
-        var restart = monitoringManager.isMonitoring() &&
+        val restart = monitoringManager.isMonitoring() &&
             (monitoringManager.scanPeriod != scanPeriod || monitoringManager.scanInterval != scanInterval)
         monitoringManager.scanPeriod = scanPeriod
         monitoringManager.scanInterval = scanInterval
@@ -337,7 +344,7 @@ class BluetoothSensorManager : SensorManager {
             if (state != "") state else lastState,
             icon,
             mapOf(
-                "id" to bleTransmitterDevice.uuid + "-" + bleTransmitterDevice.major + "-" + bleTransmitterDevice.minor,
+                "id" to bleTransmitterDevice.name,
                 "Transmitting power" to bleTransmitterDevice.transmitPowerSetting,
                 "Advertise mode" to bleTransmitterDevice.advertiseModeSetting,
                 "Measured power" to bleTransmitterDevice.measuredPowerSetting,
@@ -353,19 +360,13 @@ class BluetoothSensorManager : SensorManager {
 
         val icon = if (monitoringManager.isMonitoring()) "mdi:bluetooth" else "mdi:bluetooth-off"
 
-        var state = if (!BluetoothUtils.isOn(context)) "Bluetooth is turned off" else if (monitoringManager.isMonitoring()) "Monitoring" else "Stopped"
+        val state = if (!BluetoothUtils.isOn(context)) "Bluetooth is turned off" else if (monitoringManager.isMonitoring()) "Monitoring" else "Stopped"
 
-        var attr: Map<String, Any?> = mapOf()
+        val attr = mutableMapOf<String, Any?>()
         if (BluetoothUtils.isOn(context) && monitoringManager.isMonitoring()) {
             for (beacon: IBeacon in beaconMonitoringDevice.beacons) {
-                attr += Pair(beacon.uuid, beacon.distance)
+                attr += beacon.name to beacon.distance
             }
-        }
-
-        // reset the last_sent_state of the sensor so it won't skip the update of attributes
-        val sensorDao = AppDatabase.getInstance(context).sensorDao()
-        runBlocking {
-            sensorDao.updateLastSentStateAndIcon(beaconMonitor.id, null, null)
         }
 
         onSensorUpdated(
@@ -373,7 +374,8 @@ class BluetoothSensorManager : SensorManager {
             beaconMonitor,
             state,
             icon,
-            attr
+            attr,
+            forceUpdate = true
         )
     }
 
