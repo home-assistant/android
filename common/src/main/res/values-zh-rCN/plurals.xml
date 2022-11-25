@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="entities_found">
+        <item quantity="other">%d 实例被找到</item>
+    </plurals>
+    <plurals name="exo_controls_fastforward_by_amount_description">
+        <item quantity="other">快进 %d 秒</item>
+        <item quantity="one">快进 %d 秒</item>
+    </plurals>
+    <plurals name="exo_controls_rewind_by_amount_description">
+        <item quantity="other">快退 %d 秒</item>
+        <item quantity="one">快退 %d 秒</item>
+    </plurals>
+    <plurals name="interval_hours">
+        <item quantity="other">小时</item>
+    </plurals>
+    <plurals name="interval_minutes">
+        <item quantity="other">分</item>
+    </plurals>
+    <plurals name="interval_seconds">
+        <item quantity="other">秒</item>
+    </plurals>
+    <plurals name="mtrl_badge_content_description">
+        <item quantity="other">%d 条新通知</item>
+        <item quantity="one">%d 条新通知</item>
+    </plurals>
+</resources>
