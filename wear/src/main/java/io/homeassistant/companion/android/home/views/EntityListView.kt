@@ -57,7 +57,6 @@ fun EntityViewList(
                         items(filtered, key = { it.entityId }) { entity ->
                             EntityUi(
                                 entity,
-                                false,
                                 onEntityClicked,
                                 isHapticEnabled,
                                 isToastEnabled

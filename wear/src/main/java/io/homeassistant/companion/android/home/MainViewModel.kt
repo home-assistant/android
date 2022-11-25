@@ -176,7 +176,8 @@ class MainViewModel @Inject constructor(
     suspend fun entityUpdates() {
         if (!homePresenter.isConnected())
             return
-        homePresenter.getEntityUpdates(favoriteEntityIds.value)?.collect {
+        val neededEntities = entityRegistry.orEmpty().map { it.entityId }.filter { it.split(".")[0] in supportedDomains() }
+        homePresenter.getEntityUpdates(neededEntities)?.collect {
             if (supportedDomains().contains(it.domain)) {
                 entities[it.entityId] = it
                 updateEntityDomains()

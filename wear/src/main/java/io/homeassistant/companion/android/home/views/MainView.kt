@@ -119,7 +119,6 @@ fun MainView(
                                     ?.let {
                                         EntityUi(
                                             mainViewModel.entities[favoriteEntityID]!!,
-                                            true,
                                             onEntityClicked,
                                             isHapticEnabled,
                                             isToastEnabled

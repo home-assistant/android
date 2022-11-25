@@ -35,7 +35,6 @@ import io.homeassistant.companion.android.util.previewEntity3
 @Composable
 fun EntityUi(
     entity: Entity<*>,
-    isFavorite: Boolean,
     onEntityClicked: (String, String) -> Unit,
     isHapticEnabled: Boolean,
     isToastEnabled: Boolean,
@@ -47,7 +46,7 @@ fun EntityUi(
     val iconBitmap = getIcon(entity as Entity<Map<String, Any>>, entity.domain, LocalContext.current)
     val friendlyName = attributes["friendly_name"].toString()
 
-    if (entity.domain in HomePresenterImpl.toggleDomains && isFavorite) {
+    if (entity.domain in HomePresenterImpl.toggleDomains) {
         val isChecked = entity.state in listOf("on", "locked", "open", "opening")
         ToggleChip(
             checked = isChecked,
@@ -149,7 +148,6 @@ private fun PreviewEntityUI() {
     Column {
         EntityUi(
             entity = previewEntity1,
-            false,
             onEntityClicked = { _, _ -> },
             isHapticEnabled = true,
             isToastEnabled = false,
@@ -157,7 +155,6 @@ private fun PreviewEntityUI() {
         )
         EntityUi(
             entity = previewEntity3,
-            false,
             onEntityClicked = { _, _ -> },
             isHapticEnabled = false,
             isToastEnabled = true,
