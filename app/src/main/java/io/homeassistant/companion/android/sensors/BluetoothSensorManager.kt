@@ -20,7 +20,7 @@ import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import java.util.UUID
 import io.homeassistant.companion.android.common.R as commonR
 
-class BluetoothSensorManager : SensorManager {
+public class BluetoothSensorManager : SensorManager {
     companion object {
 
         const val SETTING_BLE_ID1 = "ble_uuid"

@@ -408,6 +408,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
         val updateLocation = UpdateLocation(
             arrayOf(location.latitude, location.longitude),
             accuracy,
+            name,
             location.speed.toInt(),
             location.altitude.toInt(),
             location.bearing.toInt(),
@@ -580,7 +581,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             sensorDao.add(SensorSetting(singleAccurateLocation.id, SETTING_INCLUDE_SENSOR_UPDATE, "false", SensorSettingType.TOGGLE))
     }
 
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return if (DisabledLocationHandler.hasGPS(context)) {
             listOf(singleAccurateLocation, backgroundLocation, zoneLocation, highAccuracyMode, highAccuracyUpdateInterval)
         } else {

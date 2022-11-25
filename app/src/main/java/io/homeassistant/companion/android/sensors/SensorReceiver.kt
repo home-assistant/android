@@ -7,7 +7,9 @@ import android.content.Context
 import android.content.Intent
 import android.media.AudioManager
 import android.net.wifi.WifiManager
+import android.os.Build
 import android.os.PowerManager
+import androidx.annotation.RequiresApi
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.sensors.AppSensorManager
@@ -37,6 +39,7 @@ class SensorReceiver : SensorReceiverBase() {
 
     companion object {
         const val TAG = "SensorReceiver"
+        @RequiresApi(Build.VERSION_CODES.M)
         val MANAGERS = listOf(
             ActivitySensorManager(),
             AppSensorManager(),
