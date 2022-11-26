@@ -7,21 +7,20 @@ plugins {
 
 buildscript {
     repositories {
-        //google()
-        maven("https://maven.aliyun.com/repository/google")
-        maven("https://maven.aliyun.com/repository/jcenter")
-        maven("https://maven.aliyun.com/repository/public")
-        maven("https://maven.aliyun.com/repository/gradle-plugin")
+        google()
+//        maven("https://maven.aliyun.com/repository/jcenter")
+//        maven("https://maven.aliyun.com/repository/public")
+//        maven("https://maven.aliyun.com/repository/gradle-plugin")
         gradlePluginPortal()
     }
     dependencies {
         classpath("com.android.tools.build:gradle:7.3.1")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.10")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.7.20")
         classpath("com.google.gms:google-services:4.3.14")
         classpath("com.google.firebase:firebase-appdistribution-gradle:3.1.1")
         classpath("de.mannodermaus.gradle.plugins:android-junit5:1.8.2.1")
         classpath("com.github.triplet.gradle:play-publisher:3.7.0")
-        classpath("com.google.dagger:hilt-android-gradle-plugin:2.41")
+        classpath("com.google.dagger:hilt-android-gradle-plugin:2.44.2")
     }
 }
 
