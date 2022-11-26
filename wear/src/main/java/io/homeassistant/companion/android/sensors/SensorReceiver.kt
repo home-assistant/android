@@ -2,12 +2,15 @@ package io.homeassistant.companion.android.sensors
 
 import android.annotation.SuppressLint
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.media.AudioManager
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.PowerManager
+import androidx.core.app.TaskStackBuilder
+import androidx.core.net.toUri
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.sensors.AppSensorManager
@@ -21,6 +24,8 @@ import io.homeassistant.companion.android.common.sensors.PowerSensorManager
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
 import io.homeassistant.companion.android.common.sensors.StepsSensorManager
+import io.homeassistant.companion.android.home.HomeActivity
+import io.homeassistant.companion.android.home.views.DEEPLINK_SENSOR_MANAGER
 
 @AndroidEntryPoint
 class SensorReceiver : SensorReceiverBase() {
@@ -84,5 +89,21 @@ class SensorReceiver : SensorReceiverBase() {
         "com.google.android.clockwork.actions.WET_MODE_ENDED" to WetModeSensorManager.wetModeSensor.id
     )
 
-    override fun getSensorSettingsIntent(context: Context, id: String): Intent? = null
+    override fun getSensorSettingsIntent(
+        context: Context,
+        sensorId: String,
+        sensorManagerId: String,
+        notificationId: Int
+    ): PendingIntent? {
+        val intent = Intent(
+            Intent.ACTION_VIEW,
+            "$DEEPLINK_SENSOR_MANAGER/$sensorManagerId".toUri(),
+            context,
+            HomeActivity::class.java
+        )
+        return TaskStackBuilder.create(context).run {
+            addNextIntentWithParentStack(intent)
+            getPendingIntent(notificationId, PendingIntent.FLAG_UPDATE_CURRENT)
+        }
+    }
 }
