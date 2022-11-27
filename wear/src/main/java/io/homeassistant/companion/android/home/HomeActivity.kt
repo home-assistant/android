@@ -61,6 +61,14 @@ class HomeActivity : ComponentActivity(), HomeView {
         SensorWorker.start(this)
 
         mainViewModel.initAllSensors()
+
+        if (mainViewModel.loadingState.value == MainViewModel.LoadingState.READY) {
+            lifecycleScope.launch {
+                presenter.getEntities()?.forEach {
+                    mainViewModel.updateEntityStates(it)
+                }
+            }
+        }
     }
 
     override fun onPause() {

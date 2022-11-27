@@ -145,13 +145,7 @@ class MainViewModel @Inject constructor(
                 entityRegistry = getEntityRegistry.await()
 
                 getEntities.await()?.forEach {
-                    if (supportedDomains().contains(it.domain)) {
-                        entities[it.entityId] = it
-                        // add to cache if part of favorites
-                        if (favoriteEntityIds.value.contains(it.entityId)) {
-                            addCachedFavorite(it.entityId)
-                        }
-                    }
+                    updateEntityStates(it)
                 }
                 updateEntityDomains()
 
@@ -173,15 +167,23 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    fun updateEntityStates(entity: Entity<*>) {
+        if (supportedDomains().contains(entity.domain)) {
+            entities[entity.entityId] = entity
+            // add to cache if part of favorites
+            if (favoriteEntityIds.value.contains(entity.entityId)) {
+                addCachedFavorite(entity.entityId)
+            }
+            updateEntityDomains()
+        }
+    }
+
     suspend fun entityUpdates() {
         if (!homePresenter.isConnected())
             return
         val neededEntities = entityRegistry.orEmpty().map { it.entityId }.filter { it.split(".")[0] in supportedDomains() }
         homePresenter.getEntityUpdates(neededEntities)?.collect {
-            if (supportedDomains().contains(it.domain)) {
-                entities[it.entityId] = it
-                updateEntityDomains()
-            }
+            updateEntityStates(it)
         }
     }
 
