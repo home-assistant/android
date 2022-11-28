@@ -172,11 +172,13 @@ class MainViewModel @Inject constructor(
         val getEntities = async { homePresenter.getEntities() }
 
         areaRegistry = getAreaRegistry.await()?.also {
+            areas.clear()
             areas.addAll(it)
         }
         deviceRegistry = getDeviceRegistry.await()
         entityRegistry = getEntityRegistry.await()
 
+        entities.clear()
         getEntities.await()?.forEach {
             updateEntityStates(it)
         }
