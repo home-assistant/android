@@ -67,6 +67,7 @@ class HomeActivity : ComponentActivity(), HomeView {
                 presenter.getEntities()?.forEach {
                     mainViewModel.updateEntityStates(it)
                 }
+                mainViewModel.updateEntityDomains()
             }
         }
     }

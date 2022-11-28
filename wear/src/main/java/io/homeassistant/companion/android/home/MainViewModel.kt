@@ -174,7 +174,6 @@ class MainViewModel @Inject constructor(
             if (favoriteEntityIds.value.contains(entity.entityId)) {
                 addCachedFavorite(entity.entityId)
             }
-            updateEntityDomains()
         }
     }
 
@@ -184,6 +183,7 @@ class MainViewModel @Inject constructor(
         val neededEntities = entityRegistry.orEmpty().map { it.entityId }.filter { it.split(".")[0] in supportedDomains() }
         homePresenter.getEntityUpdates(neededEntities)?.collect {
             updateEntityStates(it)
+            updateEntityDomains()
         }
     }
 
@@ -218,7 +218,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun updateEntityDomains() {
+    fun updateEntityDomains() {
         val entitiesList = entities.values.toList().sortedBy { it.entityId }
         val areasList = areaRegistry.orEmpty().sortedBy { it.name }
         val domainsList = entitiesList.map { it.domain }.distinct()
