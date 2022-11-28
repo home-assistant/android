@@ -48,9 +48,9 @@ class MainViewModel @Inject constructor(
     }
 
     private lateinit var homePresenter: HomePresenter
-    private var areaRegistry: List<AreaRegistryResponse>? = null
-    private var deviceRegistry: List<DeviceRegistryResponse>? = null
-    private var entityRegistry: List<EntityRegistryResponse>? = null
+    var areaRegistry: List<AreaRegistryResponse>? = null
+    var deviceRegistry: List<DeviceRegistryResponse>? = null
+    var entityRegistry: List<EntityRegistryResponse>? = null
 
     // TODO: This is bad, do this instead: https://stackoverflow.com/questions/46283981/android-viewmodel-additional-arguments
     fun init(homePresenter: HomePresenter) {

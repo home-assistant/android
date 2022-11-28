@@ -64,10 +64,23 @@ class HomeActivity : ComponentActivity(), HomeView {
 
         if (mainViewModel.loadingState.value == MainViewModel.LoadingState.READY) {
             lifecycleScope.launch {
-                presenter.getEntities()?.forEach {
-                    mainViewModel.updateEntityStates(it)
+                launch {
+                    mainViewModel.entityRegistry = presenter.getEntityRegistry()
                 }
-                mainViewModel.updateEntityDomains()
+                launch {
+                    mainViewModel.deviceRegistry = presenter.getDeviceRegistry()
+                }
+                launch {
+                    mainViewModel.areaRegistry = presenter.getAreaRegistry()?.also {
+                        mainViewModel.areas.addAll(it)
+                    }
+                }
+                launch {
+                    presenter.getEntities()?.forEach {
+                        mainViewModel.updateEntityStates(it)
+                    }
+                    mainViewModel.updateEntityDomains()
+                }
             }
         }
     }
