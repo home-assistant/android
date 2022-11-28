@@ -1,7 +1,6 @@
-package io.homeassistant.companion.android.sensors
+package io.homeassistant.companion.android.common.sensors
 
 import android.content.Context
-import io.homeassistant.companion.android.common.sensors.SensorManager
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone

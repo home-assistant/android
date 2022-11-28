@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.sensors
+package io.homeassistant.companion.android.common.sensors
 
 import android.Manifest
 import android.content.Context
@@ -8,7 +8,6 @@ import android.provider.Settings
 import android.provider.Settings.Global.getInt
 import android.telephony.TelephonyManager
 import androidx.core.content.getSystemService
-import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.R as commonR
 
 class MobileDataManager : SensorManager {

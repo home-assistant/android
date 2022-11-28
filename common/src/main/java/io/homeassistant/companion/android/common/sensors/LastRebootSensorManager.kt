@@ -1,10 +1,9 @@
-package io.homeassistant.companion.android.sensors
+package io.homeassistant.companion.android.common.sensors
 
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.SystemClock
 import android.util.Log
-import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
