@@ -62,27 +62,7 @@ class HomeActivity : ComponentActivity(), HomeView {
 
         mainViewModel.initAllSensors()
 
-        if (mainViewModel.loadingState.value == MainViewModel.LoadingState.READY) {
-            lifecycleScope.launch {
-                launch {
-                    mainViewModel.entityRegistry = presenter.getEntityRegistry()
-                }
-                launch {
-                    mainViewModel.deviceRegistry = presenter.getDeviceRegistry()
-                }
-                launch {
-                    mainViewModel.areaRegistry = presenter.getAreaRegistry()?.also {
-                        mainViewModel.areas.addAll(it)
-                    }
-                }
-                launch {
-                    presenter.getEntities()?.forEach {
-                        mainViewModel.updateEntityStates(it)
-                    }
-                    mainViewModel.updateEntityDomains()
-                }
-            }
-        }
+        mainViewModel.updateUI()
     }
 
     override fun onPause() {

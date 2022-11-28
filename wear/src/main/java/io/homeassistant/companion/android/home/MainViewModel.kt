@@ -48,9 +48,9 @@ class MainViewModel @Inject constructor(
     }
 
     private lateinit var homePresenter: HomePresenter
-    var areaRegistry: List<AreaRegistryResponse>? = null
-    var deviceRegistry: List<DeviceRegistryResponse>? = null
-    var entityRegistry: List<EntityRegistryResponse>? = null
+    private var areaRegistry: List<AreaRegistryResponse>? = null
+    private var deviceRegistry: List<DeviceRegistryResponse>? = null
+    private var entityRegistry: List<EntityRegistryResponse>? = null
 
     // TODO: This is bad, do this instead: https://stackoverflow.com/questions/46283981/android-viewmodel-additional-arguments
     fun init(homePresenter: HomePresenter) {
@@ -167,12 +167,36 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun updateEntityStates(entity: Entity<*>) {
+    private fun updateEntityStates(entity: Entity<*>) {
         if (supportedDomains().contains(entity.domain)) {
             entities[entity.entityId] = entity
             // add to cache if part of favorites
             if (favoriteEntityIds.value.contains(entity.entityId)) {
                 addCachedFavorite(entity.entityId)
+            }
+        }
+    }
+
+    fun updateUI() {
+        if (loadingState.value == LoadingState.READY) {
+            viewModelScope.launch {
+                launch {
+                    entityRegistry = homePresenter.getEntityRegistry()
+                }
+                launch {
+                    deviceRegistry = homePresenter.getDeviceRegistry()
+                }
+                launch {
+                    areaRegistry = homePresenter.getAreaRegistry()?.also {
+                        areas.addAll(it)
+                    }
+                }
+                launch {
+                    homePresenter.getEntities()?.forEach {
+                        updateEntityStates(it)
+                    }
+                    updateEntityDomains()
+                }
             }
         }
     }
