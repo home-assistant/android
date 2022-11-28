@@ -62,7 +62,10 @@ class HomeActivity : ComponentActivity(), HomeView {
 
         mainViewModel.initAllSensors()
 
-        mainViewModel.updateUI()
+        lifecycleScope.launch {
+            if (mainViewModel.loadingState.value == MainViewModel.LoadingState.READY)
+                mainViewModel.updateUI()
+        }
     }
 
     override fun onPause() {

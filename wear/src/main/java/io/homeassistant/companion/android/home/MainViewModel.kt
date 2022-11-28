@@ -26,9 +26,11 @@ import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.wear.getAllFlow
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.util.RegistriesDataHandler
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -133,21 +135,7 @@ class MainViewModel @Inject constructor(
             try {
                 // Load initial state
                 loadingState.value = LoadingState.LOADING
-                val getAreaRegistry = async { homePresenter.getAreaRegistry() }
-                val getDeviceRegistry = async { homePresenter.getDeviceRegistry() }
-                val getEntityRegistry = async { homePresenter.getEntityRegistry() }
-                val getEntities = async { homePresenter.getEntities() }
-
-                areaRegistry = getAreaRegistry.await()?.also {
-                    areas.addAll(it)
-                }
-                deviceRegistry = getDeviceRegistry.await()
-                entityRegistry = getEntityRegistry.await()
-
-                getEntities.await()?.forEach {
-                    updateEntityStates(it)
-                }
-                updateEntityDomains()
+                updateUI()
 
                 // Finished initial load, update state
                 val webSocketState = homePresenter.getWebSocketState()
@@ -177,28 +165,22 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun updateUI() {
-        if (loadingState.value == LoadingState.READY) {
-            viewModelScope.launch {
-                launch {
-                    entityRegistry = homePresenter.getEntityRegistry()
-                }
-                launch {
-                    deviceRegistry = homePresenter.getDeviceRegistry()
-                }
-                launch {
-                    areaRegistry = homePresenter.getAreaRegistry()?.also {
-                        areas.addAll(it)
-                    }
-                }
-                launch {
-                    homePresenter.getEntities()?.forEach {
-                        updateEntityStates(it)
-                    }
-                    updateEntityDomains()
-                }
-            }
+    suspend fun updateUI() = withContext(Dispatchers.IO) {
+        val getAreaRegistry = async { homePresenter.getAreaRegistry() }
+        val getDeviceRegistry = async { homePresenter.getDeviceRegistry() }
+        val getEntityRegistry = async { homePresenter.getEntityRegistry() }
+        val getEntities = async { homePresenter.getEntities() }
+
+        areaRegistry = getAreaRegistry.await()?.also {
+            areas.addAll(it)
         }
+        deviceRegistry = getDeviceRegistry.await()
+        entityRegistry = getEntityRegistry.await()
+
+        getEntities.await()?.forEach {
+            updateEntityStates(it)
+        }
+        updateEntityDomains()
     }
 
     suspend fun entityUpdates() {
