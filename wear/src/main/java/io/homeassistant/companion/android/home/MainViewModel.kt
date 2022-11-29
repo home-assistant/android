@@ -29,6 +29,8 @@ import io.homeassistant.companion.android.util.RegistriesDataHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -64,6 +66,9 @@ class MainViewModel @Inject constructor(
     // entities
     var entities = mutableStateMapOf<String, Entity<*>>()
         private set
+
+    private val _supportedEntities = MutableStateFlow(emptyList<String>())
+    val supportedEntities = _supportedEntities.asStateFlow()
 
     /**
      * IDs of favorites in the Favorites database.
@@ -178,9 +183,11 @@ class MainViewModel @Inject constructor(
         deviceRegistry = getDeviceRegistry.await()
         entityRegistry = getEntityRegistry.await()
 
-        entities.clear()
-        getEntities.await()?.forEach {
-            updateEntityStates(it)
+        _supportedEntities.value = getSupportedEntities()
+
+        getEntities.await()?.also {
+            entities.clear()
+            it.forEach { state -> updateEntityStates(state) }
         }
         updateEntityDomains()
     }
@@ -188,8 +195,7 @@ class MainViewModel @Inject constructor(
     suspend fun entityUpdates() {
         if (!homePresenter.isConnected())
             return
-        val neededEntities = entityRegistry.orEmpty().map { it.entityId }.filter { it.split(".")[0] in supportedDomains() }
-        homePresenter.getEntityUpdates(neededEntities)?.collect {
+        homePresenter.getEntityUpdates(supportedEntities.value)?.collect {
             updateEntityStates(it)
             updateEntityDomains()
         }
@@ -222,11 +228,18 @@ class MainViewModel @Inject constructor(
             return
         homePresenter.getEntityRegistryUpdates()?.collect {
             entityRegistry = homePresenter.getEntityRegistry()
+            _supportedEntities.value = getSupportedEntities()
             updateEntityDomains()
         }
     }
 
-    fun updateEntityDomains() {
+    private fun getSupportedEntities(): List<String> =
+        entityRegistry
+            .orEmpty()
+            .map { it.entityId }
+            .filter { it.split(".")[0] in supportedDomains() }
+
+    private fun updateEntityDomains() {
         val entitiesList = entities.values.toList().sortedBy { it.entityId }
         val areasList = areaRegistry.orEmpty().sortedBy { it.name }
         val domainsList = entitiesList.map { it.domain }.distinct()
