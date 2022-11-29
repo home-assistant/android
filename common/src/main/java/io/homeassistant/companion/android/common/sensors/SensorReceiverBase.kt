@@ -69,7 +69,12 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
 
     protected abstract val skippableActions: Map<String, String>
 
-    protected abstract fun getSensorSettingsIntent(context: Context, id: String): Intent?
+    protected abstract fun getSensorSettingsIntent(
+        context: Context,
+        sensorId: String,
+        sensorManagerId: String,
+        notificationId: Int
+    ): PendingIntent?
 
     override fun onReceive(context: Context, intent: Intent) {
         Log.d(tag, "Received intent: ${intent.action}")
@@ -244,9 +249,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                                 context.getSystemService<NotificationManager>()?.let { notificationManager ->
                                     createNotificationChannel(context)
                                     val notificationId = "$sensorCoreSyncChannel-${basicSensor.id}".hashCode()
-                                    val notificationIntent = getSensorSettingsIntent(context, basicSensor.id)?.let {
-                                        PendingIntent.getActivity(context, notificationId, it, PendingIntent.FLAG_IMMUTABLE)
-                                    }
+                                    val notificationIntent = getSensorSettingsIntent(context, basicSensor.id, manager.id(), notificationId)
                                     val notification = NotificationCompat.Builder(context, sensorCoreSyncChannel)
                                         .setSmallIcon(R.drawable.ic_stat_ic_notification)
                                         .setContentTitle(context.getString(basicSensor.name))
