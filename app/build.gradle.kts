@@ -123,7 +123,7 @@ android {
 //            enabled.set(false)
 //        }
         register("full") {
-            enabled.set(false)
+            enabled.set(true)
         }
 //        register("quest") {
 //            enabled.set(false)
