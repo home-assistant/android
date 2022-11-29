@@ -955,4 +955,5 @@
     <string name="sensor_description_daily_calories">The total number of calories over a day (including both BMR and active calories), where the previous day ends and a new day begins at 12:00 AM local time.</string>
     <string name="sensor_name_daily_steps">Daily Steps</string>
     <string name="sensor_description_daily_steps">The total step count over a day, where the previous day ends and a new day begins at 12:00 AM local time.</string>
+    <string name="tile_vibrate">Should vibrate when tile is clicked?</string>
 </resources>
