@@ -30,6 +30,8 @@ class NfcViewModel @Inject constructor(
 
     var isNfcEnabled by mutableStateOf(false)
         private set
+    var usesAndroidDeviceId by mutableStateOf(false)
+        private set
     var nfcTagIdentifier by mutableStateOf<String?>(null)
         private set
     var nfcIdentifierIsEditable by mutableStateOf(true)
@@ -41,6 +43,12 @@ class NfcViewModel @Inject constructor(
 
     private val _nfcResultSnackbar = MutableSharedFlow<Int>()
     var nfcResultSnackbar = _nfcResultSnackbar.asSharedFlow()
+
+    init {
+        viewModelScope.launch {
+            usesAndroidDeviceId = !integrationUseCase.isHomeAssistantVersionAtLeast(2022, 12, 0)
+        }
+    }
 
     fun setDestination(destination: String?) {
         nfcEventShouldWrite = nfcTagIdentifier != null && destination == NfcSetupActivity.NAV_WRITE
