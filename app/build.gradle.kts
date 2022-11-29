@@ -123,7 +123,7 @@ android {
 //            enabled.set(false)
 //        }
         register("full") {
-            enabled.set(true)
+            enabled.set(false)
         }
 //        register("quest") {
 //            enabled.set(false)
@@ -194,6 +194,7 @@ dependencies {
     "fullImplementation"("com.google.android.gms:play-services-location:21.0.1")
     "fullImplementation"(platform("com.google.firebase:firebase-bom:30.4.1"))
     "fullImplementation"("com.google.firebase:firebase-messaging")
+    "fullImplementation"("com.google.firebase:firebase-analytics")
     "fullImplementation"("io.sentry:sentry-android:6.8.0")
     "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
     "fullImplementation"("com.google.android.gms:play-services-wearable:18.0.0")
@@ -203,10 +204,10 @@ dependencies {
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.webkit:webkit:1.5.0")
 
-    implementation("com.google.android.exoplayer:exoplayer-core:2.18.1")
-    implementation("com.google.android.exoplayer:exoplayer-hls:2.18.1")
-    implementation("com.google.android.exoplayer:exoplayer-ui:2.18.1")
-    "fullImplementation"("com.google.android.exoplayer:extension-cronet:2.18.1")
+    implementation("com.google.android.exoplayer:exoplayer-core:2.18.2")
+    implementation("com.google.android.exoplayer:exoplayer-hls:2.18.2")
+    implementation("com.google.android.exoplayer:exoplayer-ui:2.18.2")
+    "fullImplementation"("com.google.android.exoplayer:extension-cronet:2.18.2")
 
     implementation(platform("androidx.compose:compose-bom:2022.10.00"))
     implementation("androidx.compose.animation:animation")
@@ -220,7 +221,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling")
     implementation("androidx.activity:activity-compose:1.6.1")
     implementation("androidx.navigation:navigation-compose:2.5.3")
-    implementation("com.google.android.material:compose-theme-adapter:1.1.21")
+    implementation("com.google.android.material:compose-theme-adapter:1.2.0")
     implementation("com.google.accompanist:accompanist-appcompat-theme:0.27.1")
 
     implementation("com.mikepenz:iconics-core:5.4.0")
