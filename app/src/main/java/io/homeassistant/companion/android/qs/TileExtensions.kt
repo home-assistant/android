@@ -228,7 +228,7 @@ abstract class TileExtensions : TileService() {
         private const val TAG = "TileExtensions"
         private var iconPack: IconPack? = null
         private val toggleDomains = listOf(
-            "cover", "fan", "humidifier", "input_boolean", "light",
+            "automation", "cover", "fan", "humidifier", "input_boolean", "light",
             "media_player", "remote", "siren", "switch"
         )
         private val validActiveStates = listOf("on", "open", "locked")
