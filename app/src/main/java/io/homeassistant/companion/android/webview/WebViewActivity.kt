@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.webview
 import android.annotation.SuppressLint
 import android.app.DownloadManager
 import android.app.PictureInPictureParams
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -1345,8 +1346,15 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             }
             else -> {
                 Log.d(TAG, "Received download request for unsupported scheme, forwarding to system")
-                val browserIntent = Intent(Intent.ACTION_VIEW, uri)
-                startActivity(browserIntent)
+                try {
+                    val browserIntent = Intent(Intent.ACTION_VIEW, uri).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    }
+                    startActivity(browserIntent)
+                } catch (e: ActivityNotFoundException) {
+                    Log.e(TAG, "Unable to forward download request to system", e)
+                    Toast.makeText(this, commonR.string.failed_unsupported, Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
