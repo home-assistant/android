@@ -68,7 +68,7 @@ abstract class TileExtensions : TileService() {
                 setTileData(getTileId(), tile)
             }
         }
-        MainScope().launch {
+        mainScope.launch {
             setTileAdded(getTileId(), true)
         }
     }
@@ -77,7 +77,7 @@ abstract class TileExtensions : TileService() {
         super.onTileRemoved()
         Log.d(TAG, "Tile: ${getTileId()} removed")
         handleInject()
-        MainScope().launch {
+        mainScope.launch {
             setTileAdded(getTileId(), false)
         }
     }
@@ -89,7 +89,21 @@ abstract class TileExtensions : TileService() {
             mainScope.launch {
                 setTileData(getTileId(), tile)
             }
+            mainScope.launch {
+                val tileData = tileDao.get(getTileId())
+                if (tileData != null && tileData.isSetup && tileData.entityId.split('.')[0] in toggleDomains.plus("lock"))
+                    integrationUseCase.getEntityUpdates(listOf(tileData.entityId))?.collect {
+                        tile.state = if (it.state in validActiveStates) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
+                        tile.updateTile()
+                    }
+            }
         }
+    }
+
+    override fun onStopListening() {
+        super.onStopListening()
+        Log.d(TAG, "Tile: ${getTileId()} is no longer in view")
+        mainScope.cancel()
     }
 
     override fun onDestroy() {
@@ -155,9 +169,12 @@ abstract class TileExtensions : TileService() {
         val context = applicationContext
         val tileData = tileDao.get(tileId)
         val hasTile = setTileData(tileId, tile)
+        val needsUpdate = tileData != null && tileData.entityId.split('.')[0] !in toggleDomains.plus("lock")
         if (hasTile) {
-            tile.state = Tile.STATE_ACTIVE
-            tile.updateTile()
+            if (needsUpdate) {
+                tile.state = Tile.STATE_ACTIVE
+                tile.updateTile()
+            }
             withContext(Dispatchers.IO) {
                 try {
                     integrationUseCase.callService(
@@ -189,8 +206,10 @@ abstract class TileExtensions : TileService() {
                     }
                 }
             }
-            tile.state = Tile.STATE_INACTIVE
-            tile.updateTile()
+            if (needsUpdate) {
+                tile.state = Tile.STATE_INACTIVE
+                tile.updateTile()
+            }
         } else {
             Log.d(TAG, "No tile data found for tile ID: $tileId")
             withContext(Dispatchers.Main) {
@@ -213,7 +232,7 @@ abstract class TileExtensions : TileService() {
                 tileDao.add(
                     TileEntity(
                         tileId = tileId,
-                        added = added,
+                        added = true,
                         iconId = null,
                         entityId = "",
                         label = "",
