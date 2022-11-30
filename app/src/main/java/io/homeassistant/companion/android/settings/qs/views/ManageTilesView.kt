@@ -10,12 +10,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
-import androidx.compose.material.Checkbox
 import androidx.compose.material.Divider
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Scaffold
+import androidx.compose.material.Switch
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.rememberScaffoldState
@@ -161,7 +161,7 @@ fun ManageTilesView(
                         text = stringResource(R.string.tile_vibrate),
                         fontSize = 15.sp
                     )
-                    Checkbox(
+                    Switch(
                         checked = viewModel.selectedShouldVibrate,
                         onCheckedChange = { viewModel.selectedShouldVibrate = it }
                     )
