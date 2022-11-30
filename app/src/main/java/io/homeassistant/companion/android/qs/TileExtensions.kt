@@ -25,8 +25,8 @@ import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.TileEntity
 import io.homeassistant.companion.android.database.qs.isSetup
 import io.homeassistant.companion.android.settings.SettingsActivity
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -50,7 +50,7 @@ abstract class TileExtensions : TileService() {
 
     private val mainScope = MainScope()
 
-    private var stateUpdateJob: CoroutineScope? = null
+    private var stateUpdateJob: Job? = null
 
     override fun onClick() {
         super.onClick()
@@ -88,12 +88,11 @@ abstract class TileExtensions : TileService() {
     override fun onStartListening() {
         super.onStartListening()
         Log.d(TAG, "Tile: ${getTileId()} is in view")
-        stateUpdateJob = MainScope()
         getTile()?.let { tile ->
             mainScope.launch {
                 setTileData(getTileId(), tile)
             }
-            stateUpdateJob?.launch {
+            stateUpdateJob = mainScope.launch {
                 val tileData = tileDao.get(getTileId())
                 if (tileData != null && tileData.isSetup && tileData.entityId.split('.')[0] in toggleDomainsWithLock)
                     integrationUseCase.getEntityUpdates(listOf(tileData.entityId))?.collect {
