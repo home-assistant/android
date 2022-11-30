@@ -5,6 +5,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.Icon
 import android.os.Build
+import android.os.VibrationEffect
 import android.os.Vibrator
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
@@ -157,8 +158,12 @@ abstract class TileExtensions : TileService() {
         val context = applicationContext
         val tileData = tileDao.get(tileId)
         val vm = getSystemService<Vibrator>()
-        if (tileData != null && tileData.shouldVibrate)
-            vm?.vibrate(500)
+        if (tileData != null && tileData.shouldVibrate) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                vm?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
+            } else
+                vm?.vibrate(500)
+        }
 
         val hasTile = setTileData(tileId, tile)
         if (hasTile) {
@@ -185,8 +190,12 @@ abstract class TileExtensions : TileService() {
                     Log.d(TAG, "Service call sent for tile ID: $tileId")
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to call service for tile ID: $tileId", e)
-                    if (tileData != null && tileData.shouldVibrate)
-                        vm?.vibrate(1000)
+                    if (tileData != null && tileData.shouldVibrate) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                            vm?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK))
+                        } else
+                            vm?.vibrate(1000)
+                    }
                     withContext(Dispatchers.Main) {
                         Toast.makeText(
                             context,
