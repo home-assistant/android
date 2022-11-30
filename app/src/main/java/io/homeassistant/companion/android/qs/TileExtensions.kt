@@ -26,6 +26,7 @@ import io.homeassistant.companion.android.database.qs.TileEntity
 import io.homeassistant.companion.android.database.qs.isSetup
 import io.homeassistant.companion.android.settings.SettingsActivity
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -49,6 +50,8 @@ abstract class TileExtensions : TileService() {
 
     private val mainScope = MainScope()
 
+    private var stateUpdateJob: Job? = null
+
     override fun onClick() {
         super.onClick()
         getTile()?.let { tile ->
@@ -68,7 +71,7 @@ abstract class TileExtensions : TileService() {
                 setTileData(getTileId(), tile)
             }
         }
-        MainScope().launch {
+        mainScope.launch {
             setTileAdded(getTileId(), true)
         }
     }
@@ -77,7 +80,7 @@ abstract class TileExtensions : TileService() {
         super.onTileRemoved()
         Log.d(TAG, "Tile: ${getTileId()} removed")
         handleInject()
-        MainScope().launch {
+        mainScope.launch {
             setTileAdded(getTileId(), false)
         }
     }
@@ -89,7 +92,21 @@ abstract class TileExtensions : TileService() {
             mainScope.launch {
                 setTileData(getTileId(), tile)
             }
+            stateUpdateJob = mainScope.launch {
+                val tileData = tileDao.get(getTileId())
+                if (tileData != null && tileData.isSetup && tileData.entityId.split('.')[0] in toggleDomainsWithLock)
+                    integrationUseCase.getEntityUpdates(listOf(tileData.entityId))?.collect {
+                        tile.state = if (it.state in validActiveStates) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
+                        tile.updateTile()
+                    }
+            }
         }
+    }
+
+    override fun onStopListening() {
+        super.onStopListening()
+        Log.d(TAG, "Tile: ${getTileId()} is no longer in view")
+        stateUpdateJob?.cancel()
     }
 
     override fun onDestroy() {
@@ -107,7 +124,7 @@ abstract class TileExtensions : TileService() {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     tile.subtitle = tileData.subtitle
                 }
-                if (tileData.entityId.split('.')[0] in toggleDomains.plus("lock")) {
+                if (tileData.entityId.split('.')[0] in toggleDomainsWithLock) {
                     try {
                         val state = withContext(Dispatchers.IO) { integrationUseCase.getEntity(tileData.entityId) }
                         tile.state = if (state?.state in validActiveStates) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
@@ -155,9 +172,12 @@ abstract class TileExtensions : TileService() {
         val context = applicationContext
         val tileData = tileDao.get(tileId)
         val hasTile = setTileData(tileId, tile)
+        val needsUpdate = tileData != null && tileData.entityId.split('.')[0] !in toggleDomainsWithLock
         if (hasTile) {
-            tile.state = Tile.STATE_ACTIVE
-            tile.updateTile()
+            if (needsUpdate) {
+                tile.state = Tile.STATE_ACTIVE
+                tile.updateTile()
+            }
             withContext(Dispatchers.IO) {
                 try {
                     integrationUseCase.callService(
@@ -189,8 +209,10 @@ abstract class TileExtensions : TileService() {
                     }
                 }
             }
-            tile.state = Tile.STATE_INACTIVE
-            tile.updateTile()
+            if (needsUpdate) {
+                tile.state = Tile.STATE_INACTIVE
+                tile.updateTile()
+            }
         } else {
             Log.d(TAG, "No tile data found for tile ID: $tileId")
             withContext(Dispatchers.Main) {
@@ -213,7 +235,7 @@ abstract class TileExtensions : TileService() {
                 tileDao.add(
                     TileEntity(
                         tileId = tileId,
-                        added = added,
+                        added = true,
                         iconId = null,
                         entityId = "",
                         label = "",
@@ -231,6 +253,7 @@ abstract class TileExtensions : TileService() {
             "automation", "cover", "fan", "humidifier", "input_boolean", "light",
             "media_player", "remote", "siren", "switch"
         )
+        private val toggleDomainsWithLock = toggleDomains.plus("lock")
         private val validActiveStates = listOf("on", "open", "locked")
 
         private fun getTileIcon(tileIconId: Int, context: Context): Bitmap? {
