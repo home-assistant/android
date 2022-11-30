@@ -86,7 +86,6 @@ import io.homeassistant.companion.android.databinding.ActivityWebviewBinding
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
 import io.homeassistant.companion.android.databinding.ExoPlayerViewBinding
 import io.homeassistant.companion.android.launch.LaunchActivity
-import io.homeassistant.companion.android.matter.MatterCommissioningHelper
 import io.homeassistant.companion.android.matter.MatterCommissioningRequest
 import io.homeassistant.companion.android.nfc.WriteNfcTag
 import io.homeassistant.companion.android.sensors.SensorReceiver
@@ -162,32 +161,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     }
     private val commissionMatterDevice = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
         val success = result.resultCode == Activity.RESULT_OK
-        val passcode = MatterCommissioningHelper.getPasscodeFromCommissioningResult(result)
-        webView.externalBus(
-            id = commissionMatterMessageId,
-            type = "result",
-            success = success,
-            result = if (success) {
-                JSONObject(
-                    mapOf(
-                        "code" to passcode
-                    )
-                )
-            } else null,
-            error = if (!success) {
-                JSONObject(
-                    mapOf(
-                        "code" to if (result.resultCode == Activity.RESULT_CANCELED) "cancel" else "fail",
-                        "message" to "Commissioning returned with code ${result.resultCode}"
-                    )
-                )
-            } else null
-        ) {
-            if (success) Log.d(TAG, "Matter commissioning returned success")
-            else Log.d(TAG, "Matter commissioning returned with non-OK code ${result.resultCode}")
-        }
+        // TODO send something to frontend?
+
+        if (success) Log.d(TAG, "Matter commissioning returned success")
+        else Log.d(TAG, "Matter commissioning returned with non-OK code ${result.resultCode}")
     }
-    private var commissionMatterMessageId = 0
 
     @Inject
     lateinit var presenter: WebViewPresenter
@@ -611,9 +589,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                 "config/get" -> {
                                     val pm: PackageManager = context.packageManager
                                     val hasNfc = pm.hasSystemFeature(PackageManager.FEATURE_NFC)
-                                    val canCommissionMatter =
-                                        BuildConfig.FLAVOR == "full" &&
-                                            Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1
+                                    val canCommissionMatter = presenter.appCanCommissionMatterDevice()
                                     webView.externalBus(
                                         id = JSONObject(message).get("id"),
                                         type = "result",
@@ -654,27 +630,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                             messageId = JSONObject(message).getInt("id")
                                         )
                                     )
-                                "matter/commission" -> {
-                                    commissionMatterMessageId = JSONObject(message).get("id") as Int
-                                    if (
-                                        BuildConfig.FLAVOR == "full" &&
-                                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1
-                                    ) {
-                                        presenter.startCommissioningMatterDevice(this@WebViewActivity)
-                                    } else {
-                                        webView.externalBus(
-                                            id = commissionMatterMessageId,
-                                            type = "result",
-                                            success = false,
-                                            error = JSONObject(
-                                                mapOf(
-                                                    "code" to "fail",
-                                                    "message" to "Unsupported"
-                                                )
-                                            )
-                                        ) {}
-                                    }
-                                }
+                                "matter/commission" -> presenter.startCommissioningMatterDevice(this@WebViewActivity)
                                 "exoplayer/play_hls" -> exoPlayHls(json)
                                 "exoplayer/stop" -> exoStopHls()
                                 "exoplayer/resize" -> exoResizeHls(json)
@@ -725,17 +681,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                             }
                         }
                         MatterCommissioningRequest.Status.ERROR -> {
-                            webView.externalBus(
-                                id = commissionMatterMessageId,
-                                type = "result",
-                                success = false,
-                                error = JSONObject(
-                                    mapOf(
-                                        "code" to "fail",
-                                        "message" to "Unable to start commissioning"
-                                    )
-                                )
-                            ) { }
+                            // TODO show error?
                         }
                         else -> { } // Do nothing
                     }

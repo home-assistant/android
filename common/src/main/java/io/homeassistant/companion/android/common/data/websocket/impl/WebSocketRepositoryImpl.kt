@@ -317,6 +317,21 @@ class WebSocketRepositoryImpl @Inject constructor(
         return response?.success == true
     }
 
+    /**
+     * Request the server to commission a Matter device that is already on the network
+     * @return `true` if the request was successful
+     */
+    override suspend fun commissionMatterDeviceOnNetwork(pin: Int): Boolean {
+        val response = sendMessage(
+            mapOf(
+                "type" to "matter/commission_on_network",
+                "pin" to pin
+            )
+        )
+
+        return response?.success == true
+    }
+
     private suspend fun connect(): Boolean {
         connectedMutex.withLock {
             if (connection != null && connected.isCompleted) {

@@ -40,6 +40,7 @@ interface WebViewPresenter {
 
     suspend fun parseWebViewColor(webViewColor: String): Int
 
+    fun appCanCommissionMatterDevice(): Boolean
     fun startCommissioningMatterDevice(context: Context)
     fun getMatterCommissioningStatusFlow(): Flow<MatterCommissioningRequest.Status>
     fun getMatterCommissioningIntent(): IntentSender?

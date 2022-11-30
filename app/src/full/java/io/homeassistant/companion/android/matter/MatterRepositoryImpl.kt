@@ -1,23 +1,32 @@
 package io.homeassistant.companion.android.matter
 
-import android.app.Activity
 import android.content.ComponentName
 import android.content.Context
 import android.content.IntentSender
 import android.os.Build
-import androidx.activity.result.ActivityResult
+import android.util.Log
 import com.google.android.gms.home.matter.Matter
 import com.google.android.gms.home.matter.commissioning.CommissioningRequest
-import com.google.android.gms.home.matter.commissioning.CommissioningResult
+import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import javax.inject.Inject
 
-object MatterCommissioningHelper {
+class MatterRepositoryImpl @Inject constructor(
+    private val websocketRepository: WebSocketRepository
+) : MatterRepository {
 
-    fun startNewCommissioningFlow(
+    companion object {
+        private const val TAG = "MatterRepositoryImpl"
+    }
+
+    override fun appSupportsCommissioning(): Boolean =
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1
+
+    override fun startNewCommissioningFlow(
         context: Context,
         onSuccess: (IntentSender) -> Unit,
         onFailure: (Exception) -> Unit
     ) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+        if (appSupportsCommissioning()) {
             Matter.getCommissioningClient(context)
                 .commissionDevice(
                     CommissioningRequest.builder()
@@ -31,12 +40,12 @@ object MatterCommissioningHelper {
         }
     }
 
-    fun getPasscodeFromCommissioningResult(activityResult: ActivityResult): String? {
-        return if (activityResult.resultCode == Activity.RESULT_OK) {
-            val parsed = CommissioningResult.fromIntentSenderResult(activityResult.resultCode, activityResult.data)
-            parsed.token
-        } else {
-            null
+    override suspend fun commissionOnNetworkDevice(pin: Int): Boolean {
+        return try {
+            websocketRepository.commissionMatterDeviceOnNetwork(pin)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error while executing server commissioning request", e)
+            false
         }
     }
 }

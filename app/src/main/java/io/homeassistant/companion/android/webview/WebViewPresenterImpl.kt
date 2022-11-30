@@ -11,8 +11,8 @@ import io.homeassistant.companion.android.common.data.authentication.SessionStat
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
-import io.homeassistant.companion.android.matter.MatterCommissioningHelper
 import io.homeassistant.companion.android.matter.MatterCommissioningRequest
+import io.homeassistant.companion.android.matter.MatterRepository
 import io.homeassistant.companion.android.util.UrlHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -37,7 +37,8 @@ class WebViewPresenterImpl @Inject constructor(
     @ActivityContext context: Context,
     private val urlUseCase: UrlRepository,
     private val authenticationUseCase: AuthenticationRepository,
-    private val integrationUseCase: IntegrationRepository
+    private val integrationUseCase: IntegrationRepository,
+    private val matterUseCase: MatterRepository
 ) : WebViewPresenter {
 
     companion object {
@@ -247,11 +248,13 @@ class WebViewPresenterImpl @Inject constructor(
         } else Color.parseColor(colorString)
     }
 
+    override fun appCanCommissionMatterDevice(): Boolean = matterUseCase.appSupportsCommissioning()
+
     override fun startCommissioningMatterDevice(context: Context) {
         if (_matterCommissioningStatus.value != MatterCommissioningRequest.Status.REQUESTED) {
             _matterCommissioningStatus.tryEmit(MatterCommissioningRequest.Status.REQUESTED)
 
-            MatterCommissioningHelper.startNewCommissioningFlow(
+            matterUseCase.startNewCommissioningFlow(
                 context,
                 { intentSender ->
                     Log.d(TAG, "Matter commissioning is ready")
