@@ -151,14 +151,14 @@ private fun PreviewEntityUI() {
             onEntityClicked = { _, _ -> },
             isHapticEnabled = true,
             isToastEnabled = false,
-            onEntityLongPressed = { _ -> }
+            onEntityLongPressed = { }
         )
         EntityUi(
             entity = previewEntity3,
             onEntityClicked = { _, _ -> },
             isHapticEnabled = false,
             isToastEnabled = true,
-            onEntityLongPressed = { _ -> }
+            onEntityLongPressed = { }
         )
     }
 }
