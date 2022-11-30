@@ -194,12 +194,12 @@ dependencies {
     "fullImplementation"("com.google.android.gms:play-services-location:21.0.1")
     "fullImplementation"(platform("com.google.firebase:firebase-bom:30.4.1"))
     "fullImplementation"("com.google.firebase:firebase-messaging")
-    "fullImplementation"("com.google.firebase:firebase-analytics")
     "fullImplementation"("io.sentry:sentry-android:6.8.0")
     "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
     "fullImplementation"("com.google.android.gms:play-services-wearable:18.0.0")
     "fullImplementation"("androidx.wear:wear-remote-interactions:1.0.0")
     "fullImplementation"("com.amap.api:location:6.1.0")
+    implementation("com.tencent.bugly:crashreport:latest.release")
 
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.webkit:webkit:1.5.0")

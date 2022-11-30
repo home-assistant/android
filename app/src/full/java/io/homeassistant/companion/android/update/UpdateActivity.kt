@@ -44,7 +44,7 @@ class UpdateActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setReceiver()
-        showDialog(intent.getParcelableExtra<UpdateInfo>(UPDATE_INFO)!!)
+        showDialog(intent.getParcelableExtra(UPDATE_INFO)!!)
     }
 
 

@@ -1,15 +1,21 @@
 package io.homeassistant.companion.android
 
+import android.R.attr.tag
+import android.annotation.SuppressLint
 import android.app.Application
 import android.app.NotificationManager
 import android.bluetooth.BluetoothAdapter
+import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.SharedPreferences
 import android.media.AudioManager
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.PowerManager
+import android.provider.Settings
 import android.telephony.TelephonyManager
+import com.tencent.bugly.crashreport.CrashReport
 import dagger.hilt.android.HiltAndroidApp
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
@@ -27,7 +33,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import java.util.*
 import javax.inject.Inject
+
 
 @HiltAndroidApp
 open class HomeAssistantApplication : Application() {
@@ -45,6 +53,8 @@ open class HomeAssistantApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+
+        initBugLy()
 
         ioScope.launch {
             initCrashReporting(
@@ -225,5 +235,30 @@ open class HomeAssistantApplication : Application() {
         registerReceiver(entityWidget, screenIntentFilter)
         registerReceiver(mediaPlayerWidget, screenIntentFilter)
         registerReceiver(templateWidget, screenIntentFilter)
+    }
+
+
+    private fun initBugLy() {
+        CrashReport.initCrashReport(applicationContext, "b2a551d187", BuildConfig.DEBUG)
+        CrashReport.setDeviceId(applicationContext, getDeviceId(applicationContext))
+        CrashReport.setDeviceModel(applicationContext, Build.MODEL)
+    }
+
+    @SuppressLint("HardwareIds")
+    open fun getDeviceId(context: Context): String {
+        var deviceId = Settings.Secure.getString(
+            applicationContext.contentResolver,
+            Settings.Secure.ANDROID_ID
+        )
+        if (!deviceId.isNullOrEmpty()) {
+            return deviceId
+        }
+        val mShare: SharedPreferences = getSharedPreferences("config", Context.MODE_PRIVATE)
+        deviceId = mShare.getString("uuid", "")
+        if (deviceId.isNullOrEmpty()) {
+            deviceId = UUID.randomUUID().toString()
+            mShare.edit().putString("uuid", deviceId).apply()
+        }
+        return deviceId
     }
 }
