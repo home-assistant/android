@@ -21,6 +21,11 @@ class MatterManagerImpl @Inject constructor(
     override fun appSupportsCommissioning(): Boolean =
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1
 
+    override suspend fun coreSupportsCommissioning(): Boolean {
+        val config = websocketRepository.getConfig()
+        return config != null && config.components.contains("matter")
+    }
+
     override fun startNewCommissioningFlow(
         context: Context,
         onSuccess: (IntentSender) -> Unit,
@@ -40,7 +45,7 @@ class MatterManagerImpl @Inject constructor(
         }
     }
 
-    override suspend fun commissionOnNetworkDevice(pin: Int): Boolean {
+    override suspend fun commissionOnNetworkDevice(pin: String): Boolean {
         return try {
             websocketRepository.commissionMatterDeviceOnNetwork(pin)
         } catch (e: Exception) {

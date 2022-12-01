@@ -106,6 +106,7 @@
     <string name="choose_entity">Choose entity</string>
     <string name="choose_server">Choose server</string>
     <string name="clear_favorites">Clear Favorites</string>
+    <string name="close">Close</string>
     <string name="color_temp">Color temperature: %1$d</string>
     <string name="collapse">Collapse</string>
     <string name="complication_entity_invalid">Invalid entity</string>
@@ -337,6 +338,12 @@
     <string name="manual_setup">Enter address manually</string>
     <string name="manual_title">What is your Home Assistant address?</string>
     <string name="map">Map</string>
+    <string name="matter_shared_title">Add shared Matter device</string>
+    <string name="matter_shared_status_not_registered">Please connect to your Home Assistant server before sharing a Matter device.</string>
+    <string name="matter_shared_status_not_supported">To accept a shared Matter device, please update your Home Assistant server and add Matter first.</string>
+    <string name="matter_shared_status_confirmation_required">Do you want to add this Matter device to Home Assistant?</string>
+    <string name="matter_shared_status_success">The device was added! 🎉</string>
+    <string name="matter_shared_status_failure">Unable to add the device to Home Assistant. Would you like to try again?</string>
     <string name="maximum">Maximum</string>
     <string name="media_player">Media player</string>
     <string name="media_player_widget_desc">Control any media player and see current now playing image</string>
@@ -374,6 +381,7 @@
     <string name="nfc_write_tag_enter_identifier">Tag identifier</string>
     <string name="nfc_write_tag_turnon">Please turn on NFC to enable writing to an NFC tag</string>
     <string name="nfc_write_tag_success">Successfully wrote NFC tag</string>
+    <string name="no">No</string>
     <string name="no_notifications_summary">You have not received any notifications yet</string>
     <string name="no_notifications">No Notifications</string>
     <string name="no_supported_entities">No Supported Entities</string>
@@ -918,6 +926,7 @@
     <string name="sensor_description_high_accuracy_interval">The update interval set for high accuracy mode</string>
     <string name="update">Update</string>
     <string name="weather">Weather</string>
+    <string name="yes">Yes</string>
     <string name="zone">Zone</string>
     <string name="tls_cert_title">TLS Client Certificate Error</string>
     <string name="tls_cert_not_found_message">The remote site requires a client certificate.\nPlease install the required credential on your phone and try again.</string>

@@ -11,6 +11,11 @@ interface MatterManager {
     fun appSupportsCommissioning(): Boolean
 
     /**
+     * Indicates if the server supports Matter commissioning
+     */
+    suspend fun coreSupportsCommissioning(): Boolean
+
+    /**
      * Start a flow to commission a Matter device that is on the same network as this device.
      * @param onSuccess Callback that receives an intent to launch the commissioning flow
      * @param onFailure Callback for an exception if the commissioning flow cannot be started
@@ -25,5 +30,5 @@ interface MatterManager {
      * Send a request to the server to commission an "on network" Matter device
      * @return `true` if the request was successful
      */
-    suspend fun commissionOnNetworkDevice(pin: Int): Boolean
+    suspend fun commissionOnNetworkDevice(pin: String): Boolean
 }

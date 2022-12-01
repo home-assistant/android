@@ -47,7 +47,7 @@ class MatterCommissioningService : Service(), CommissioningService.Callback {
         Log.d(TAG, "Received request to commission Matter device")
 
         serviceScope.launch {
-            val success = matterManager.commissionOnNetworkDevice(metadata.passcode.toInt())
+            val success = matterManager.commissionOnNetworkDevice(metadata.passcode.toString())
             Log.d(TAG, "Server commissioning was ${if (success) "successful" else "not successful"}")
 
             commissioningServiceDelegate.sendCommissioningComplete(
