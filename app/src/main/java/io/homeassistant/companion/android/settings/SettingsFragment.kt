@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.settings
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.app.UiModeManager
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -15,7 +14,6 @@ import android.os.PowerManager
 import android.provider.Settings
 import android.text.InputType
 import android.util.Log
-import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
@@ -34,7 +32,6 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.LocationPermissionInfoHandler
-import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.settings.controls.ManageControlsSettingsFragment
 import io.homeassistant.companion.android.settings.language.LanguagesProvider
@@ -62,8 +59,7 @@ import io.homeassistant.companion.android.common.R as commonR
 
 class SettingsFragment constructor(
     val presenter: SettingsPresenter,
-    val langProvider: LanguagesProvider,
-    val matterManager: MatterManager
+    val langProvider: LanguagesProvider
 ) : PreferenceFragmentCompat(), SettingsView {
 
     companion object {
@@ -74,11 +70,6 @@ class SettingsFragment constructor(
 
     private val requestBackgroundAccessResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         updateBackgroundAccessPref()
-    }
-    // TODO remove
-    private val commissionMatterDevice = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-        val success = result.resultCode == Activity.RESULT_OK
-        Log.d(TAG, "Matter commissioning completed ${if (success) "successfully" else "not successfully"}")
     }
 
     private val requestNotificationPermissionResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -102,23 +93,6 @@ class SettingsFragment constructor(
                     .show()
             }
             isValid
-        }
-
-        // TODO remove
-        findPreference<Preference>("matter_commissioning")?.setOnPreferenceClickListener {
-            matterManager.startNewCommissioningFlow(
-                requireContext(),
-                { intentSender ->
-                    commissionMatterDevice.launch(IntentSenderRequest.Builder(intentSender).build())
-                },
-                { e ->
-                    AlertDialog.Builder(requireActivity())
-                        .setMessage("Matter commissioning couldn't be started\n\n${e.message}")
-                        .setPositiveButton(android.R.string.ok) { _, _ -> }
-                        .show()
-                }
-            )
-            return@setOnPreferenceClickListener true
         }
 
         findPreference<SwitchPreference>("app_lock")?.setOnPreferenceChangeListener { _, newValue ->

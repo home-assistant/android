@@ -2,10 +2,6 @@
 <androidx.preference.PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <!-- TODO remove -->
-    <Preference
-        android:key="matter_commissioning"
-        android:title="DEV: Commission Matter device" />
     <PreferenceCategory
         android:title="@string/pref_connection_title">
         <Preference
