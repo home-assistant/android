@@ -31,6 +31,7 @@ class HealthServicesSensorManager : SensorManager {
     companion object {
 
         private const val TAG = "HealthServices"
+        private var callbackLastUpdated = 0L
         private val userActivityState = SensorManager.BasicSensor(
             "activity_state",
             "sensor",
@@ -171,7 +172,7 @@ class HealthServicesSensorManager : SensorManager {
             .setDataTypes(dataTypes)
             .build()
 
-        if (dataTypesRegistered != dataTypes || activityStateRegistered != activityStateEnabled) {
+        if (dataTypesRegistered != dataTypes || activityStateRegistered != activityStateEnabled || callbackLastUpdated + 1800000 < System.currentTimeMillis()) {
             clearHealthServicesCallBack()
         }
 
@@ -181,6 +182,7 @@ class HealthServicesSensorManager : SensorManager {
         val passiveListenerCallback: PassiveListenerCallback = object : PassiveListenerCallback {
             override fun onUserActivityInfoReceived(info: UserActivityInfo) {
                 Log.d(TAG, "User activity state: ${info.userActivityState.name}")
+                callbackLastUpdated = System.currentTimeMillis()
                 onSensorUpdated(
                     latestContext,
                     userActivityState,
@@ -203,6 +205,7 @@ class HealthServicesSensorManager : SensorManager {
 
             override fun onNewDataPointsReceived(dataPoints: DataPointContainer) {
                 Log.d(TAG, "New data point received: ${dataPoints.dataTypes}")
+                callbackLastUpdated = System.currentTimeMillis()
                 val floorsDaily = dataPoints.getData(DataType.FLOORS_DAILY)
                 val distanceDaily = dataPoints.getData(DataType.DISTANCE_DAILY)
                 val caloriesDaily = dataPoints.getData(DataType.CALORIES_DAILY)
