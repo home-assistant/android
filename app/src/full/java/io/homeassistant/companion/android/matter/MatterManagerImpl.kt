@@ -10,9 +10,9 @@ import com.google.android.gms.home.matter.commissioning.CommissioningRequest
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import javax.inject.Inject
 
-class MatterRepositoryImpl @Inject constructor(
+class MatterManagerImpl @Inject constructor(
     private val websocketRepository: WebSocketRepository
-) : MatterRepository {
+) : MatterManager {
 
     companion object {
         private const val TAG = "MatterRepositoryImpl"

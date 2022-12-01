@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.matter
 import android.content.Context
 import android.content.IntentSender
 
-interface MatterRepository {
+interface MatterManager {
 
     /**
      * Indicates if the app on this device supports Matter commissioning

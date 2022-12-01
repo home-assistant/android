@@ -34,7 +34,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.LocationPermissionInfoHandler
-import io.homeassistant.companion.android.matter.MatterRepository
+import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.settings.controls.ManageControlsSettingsFragment
 import io.homeassistant.companion.android.settings.language.LanguagesProvider
@@ -63,7 +63,7 @@ import io.homeassistant.companion.android.common.R as commonR
 class SettingsFragment constructor(
     val presenter: SettingsPresenter,
     val langProvider: LanguagesProvider,
-    val matterRepository: MatterRepository
+    val matterManager: MatterManager
 ) : PreferenceFragmentCompat(), SettingsView {
 
     companion object {
@@ -106,7 +106,7 @@ class SettingsFragment constructor(
 
         // TODO remove
         findPreference<Preference>("matter_commissioning")?.setOnPreferenceClickListener {
-            matterRepository.startNewCommissioningFlow(
+            matterManager.startNewCommissioningFlow(
                 requireContext(),
                 { intentSender ->
                     commissionMatterDevice.launch(IntentSenderRequest.Builder(intentSender).build())

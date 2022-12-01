@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.IntentSender
 import javax.inject.Inject
 
-class MatterRepositoryImpl @Inject constructor() : MatterRepository {
+class MatterManagerImpl @Inject constructor() : MatterManager {
 
     // Matter support currently depends on Google Play Services,
     // and as a result Matter is not supported with the minimal flavor

@@ -23,7 +23,7 @@ class MatterCommissioningService : Service(), CommissioningService.Callback {
     }
 
     @Inject
-    lateinit var matterRepository: MatterRepository
+    lateinit var matterManager: MatterManager
 
     private val serviceScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -47,7 +47,7 @@ class MatterCommissioningService : Service(), CommissioningService.Callback {
         Log.d(TAG, "Received request to commission Matter device")
 
         serviceScope.launch {
-            val success = matterRepository.commissionOnNetworkDevice(metadata.passcode.toInt())
+            val success = matterManager.commissionOnNetworkDevice(metadata.passcode.toInt())
             Log.d(TAG, "Server commissioning was ${if (success) "successful" else "not successful"}")
 
             commissioningServiceDelegate.sendCommissioningComplete(

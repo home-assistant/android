@@ -12,7 +12,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.matter.MatterCommissioningRequest
-import io.homeassistant.companion.android.matter.MatterRepository
+import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.util.UrlHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -38,7 +38,7 @@ class WebViewPresenterImpl @Inject constructor(
     private val urlUseCase: UrlRepository,
     private val authenticationUseCase: AuthenticationRepository,
     private val integrationUseCase: IntegrationRepository,
-    private val matterUseCase: MatterRepository
+    private val matterUseCase: MatterManager
 ) : WebViewPresenter {
 
     companion object {
