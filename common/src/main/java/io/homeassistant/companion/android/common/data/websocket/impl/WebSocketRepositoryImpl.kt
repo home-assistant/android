@@ -321,7 +321,7 @@ class WebSocketRepositoryImpl @Inject constructor(
      * Request the server to commission a Matter device that is already on the network
      * @return `true` if the request was successful
      */
-    override suspend fun commissionMatterDeviceOnNetwork(pin: String): Boolean {
+    override suspend fun commissionMatterDeviceOnNetwork(pin: Long): Boolean {
         val response = sendMessage(
             mapOf(
                 "type" to "matter/commission_on_network",

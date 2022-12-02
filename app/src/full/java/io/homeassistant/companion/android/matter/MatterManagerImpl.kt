@@ -45,7 +45,7 @@ class MatterManagerImpl @Inject constructor(
         }
     }
 
-    override suspend fun commissionOnNetworkDevice(pin: String): Boolean {
+    override suspend fun commissionOnNetworkDevice(pin: Long): Boolean {
         return try {
             websocketRepository.commissionMatterDeviceOnNetwork(pin)
         } catch (e: Exception) {

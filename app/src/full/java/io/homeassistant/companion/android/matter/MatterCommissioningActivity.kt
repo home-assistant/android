@@ -20,7 +20,7 @@ class MatterCommissioningActivity : AppCompatActivity() {
     }
 
     private val viewModel: MatterCommissioningViewModel by viewModels()
-    private var devicePin: String? = null
+    private var devicePin: Long? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,7 +57,7 @@ class MatterCommissioningActivity : AppCompatActivity() {
                     "vendor id: ${data.vendorId}"
             )
 
-            devicePin = data.manualPairingCode
+            devicePin = data.manualPairingCode.toLongOrNull()
             viewModel.checkSupport()
         } else {
             Log.d(TAG, "No Matter commissioning data, launching webview")

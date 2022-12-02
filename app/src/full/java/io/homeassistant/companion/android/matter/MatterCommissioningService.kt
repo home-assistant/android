@@ -7,6 +7,7 @@ import android.util.Log
 import com.google.android.gms.home.matter.commissioning.CommissioningCompleteMetadata
 import com.google.android.gms.home.matter.commissioning.CommissioningRequestMetadata
 import com.google.android.gms.home.matter.commissioning.CommissioningService
+import com.google.android.gms.home.matter.commissioning.CommissioningService.CommissioningError
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -47,15 +48,15 @@ class MatterCommissioningService : Service(), CommissioningService.Callback {
         Log.d(TAG, "Received request to commission Matter device")
 
         serviceScope.launch {
-            val success = matterManager.commissionOnNetworkDevice(metadata.passcode.toString())
+            val success = matterManager.commissionOnNetworkDevice(metadata.passcode)
             Log.d(TAG, "Server commissioning was ${if (success) "successful" else "not successful"}")
 
-            commissioningServiceDelegate.sendCommissioningComplete(
-                CommissioningCompleteMetadata.Builder().build()
-            ).addOnCompleteListener {
-                Log.d(TAG, "Successfully sent commissioning complete")
-            }.addOnFailureListener { e ->
-                Log.e(TAG, "Failed sending commissioning complete", e)
+            if (success) {
+                commissioningServiceDelegate.sendCommissioningComplete(
+                    CommissioningCompleteMetadata.Builder().build()
+                )
+            } else {
+                commissioningServiceDelegate.sendCommissioningError(CommissioningError.OTHER)
             }
         }
     }

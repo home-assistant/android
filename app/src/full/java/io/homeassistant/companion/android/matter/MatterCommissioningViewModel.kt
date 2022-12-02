@@ -48,7 +48,7 @@ class MatterCommissioningViewModel @Inject constructor(
         }
     }
 
-    fun commissionDeviceWithPin(pin: String) {
+    fun commissionDeviceWithPin(pin: Long) {
         viewModelScope.launch {
             step = CommissioningFlowStep.WORKING
 
