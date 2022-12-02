@@ -323,9 +323,12 @@ class WebSocketRepositoryImpl @Inject constructor(
      */
     override suspend fun commissionMatterDeviceOnNetwork(pin: Long): Boolean {
         val response = sendMessage(
-            mapOf(
-                "type" to "matter/commission_on_network",
-                "pin" to pin
+            WebSocketRequest(
+                message = mapOf(
+                    "type" to "matter/commission_on_network",
+                    "pin" to pin
+                ),
+                timeout = 120000L // Matter commissioning takes at least 60 seconds + interview
             )
         )
 
@@ -403,7 +406,7 @@ class WebSocketRepositoryImpl @Inject constructor(
 
     private suspend fun sendMessage(request: WebSocketRequest): SocketResponse? {
         return if (connect()) {
-            withTimeoutOrNull(30000) {
+            withTimeoutOrNull(request.timeout) {
                 try {
                     suspendCancellableCoroutine { cont ->
                         // Lock on the connection so that we fully send before allowing another send.
