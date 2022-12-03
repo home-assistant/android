@@ -23,7 +23,7 @@ class MatterCommissioningViewModel @Inject constructor(
         NOT_REGISTERED,
         CHECKING_CORE,
         NOT_SUPPORTED,
-        CONFIRMATION_REQUIRED,
+        CONFIRMATION,
         WORKING,
         SUCCESS,
         FAILURE
@@ -34,6 +34,8 @@ class MatterCommissioningViewModel @Inject constructor(
 
     fun checkSupport() {
         viewModelScope.launch {
+            if (step != CommissioningFlowStep.NOT_STARTED) return@launch
+
             if (!integrationRepository.isRegistered()) {
                 step = CommissioningFlowStep.NOT_REGISTERED
                 return@launch
@@ -43,16 +45,16 @@ class MatterCommissioningViewModel @Inject constructor(
 
             val coreSupport = matterManager.coreSupportsCommissioning()
             step =
-                if (coreSupport) CommissioningFlowStep.CONFIRMATION_REQUIRED
+                if (coreSupport) CommissioningFlowStep.CONFIRMATION
                 else CommissioningFlowStep.NOT_SUPPORTED
         }
     }
 
-    fun commissionDeviceWithPin(pin: Long) {
+    fun commissionDeviceWithCode(code: String) {
         viewModelScope.launch {
             step = CommissioningFlowStep.WORKING
 
-            val result = matterManager.commissionOnNetworkDevice(pin)
+            val result = matterManager.commissionDevice(code)
             step =
                 if (result) CommissioningFlowStep.SUCCESS
                 else CommissioningFlowStep.FAILURE

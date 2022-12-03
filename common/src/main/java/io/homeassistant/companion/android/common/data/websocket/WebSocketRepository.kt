@@ -34,5 +34,6 @@ interface WebSocketRepository {
     suspend fun getTemplateUpdates(template: String): Flow<TemplateUpdatedEvent>?
     suspend fun getNotifications(): Flow<Map<String, Any>>?
     suspend fun ackNotification(confirmId: String): Boolean
+    suspend fun commissionMatterDevice(code: String): Boolean
     suspend fun commissionMatterDeviceOnNetwork(pin: Long): Boolean
 }

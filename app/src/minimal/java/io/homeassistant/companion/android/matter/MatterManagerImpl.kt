@@ -19,5 +19,7 @@ class MatterManagerImpl @Inject constructor() : MatterManager {
         onFailure(IllegalStateException("Matter commissioning is not supported with the minimal flavor"))
     }
 
-    override suspend fun commissionOnNetworkDevice(pin: Int): Boolean = false
+    override suspend fun commissionDevice(code: String): Boolean = false
+
+    override suspend fun commissionOnNetworkDevice(pin: Long): Boolean = false
 }

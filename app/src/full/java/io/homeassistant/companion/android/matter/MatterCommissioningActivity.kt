@@ -20,7 +20,7 @@ class MatterCommissioningActivity : AppCompatActivity() {
     }
 
     private val viewModel: MatterCommissioningViewModel by viewModels()
-    private var devicePin: Long? = null
+    private var deviceCode: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,12 +29,9 @@ class MatterCommissioningActivity : AppCompatActivity() {
             MdcTheme {
                 MatterCommissioningView(
                     step = viewModel.step,
-                    onConfirmCommissioning = { devicePin?.let { viewModel.commissionDeviceWithPin(it) } },
+                    onConfirmCommissioning = { deviceCode?.let { viewModel.commissionDeviceWithCode(it) } },
                     onClose = { finish() },
-                    onContinue = {
-                        startActivity(WebViewActivity.newInstance(this))
-                        finish()
-                    }
+                    onContinue = { continueToApp(false) }
                 )
             }
         }
@@ -43,27 +40,36 @@ class MatterCommissioningActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         if (intent?.action == Matter.ACTION_COMMISSION_DEVICE) {
-            // TODO reduce log data (especially pairing code)
-            val data = SharedDeviceData.fromIntent(intent)
-            Log.d(
-                TAG,
-                "Matter commissioning data:\n" +
-                    "device name: ${data.deviceName}\n" +
-                    "device type: ${data.deviceType}\n" +
-                    "window expires: ${data.commissioningWindowExpirationMillis}\n" +
-                    "product id: ${data.productId}\n" +
-                    "manual pairing code: ${data.manualPairingCode}\n" +
-                    "room name: ${data.roomName}\n" +
-                    "vendor id: ${data.vendorId}"
-            )
+            try {
+                val data = SharedDeviceData.fromIntent(intent)
+                Log.d(
+                    TAG,
+                    "Matter commissioning data:\n" +
+                        "device name: ${data.deviceName}\n" +
+                        "room name: ${data.roomName}\n" +
+                        "device type: ${data.deviceType}\n" +
+                        "product id: ${data.productId}\n" +
+                        "vendor id: ${data.vendorId}\n" +
+                        "window expires: ${data.commissioningWindowExpirationMillis}"
+                )
 
-            devicePin = data.manualPairingCode.toLongOrNull()
-            viewModel.checkSupport()
+                deviceCode = data.manualPairingCode
+                viewModel.checkSupport()
+            } catch (e: SharedDeviceData.InvalidSharedDeviceDataException) {
+                Log.e(TAG, "Received incomplete Matter commissioning data, launching webview")
+                continueToApp(true)
+            }
         } else {
             Log.d(TAG, "No Matter commissioning data, launching webview")
+            continueToApp(true)
+        }
+    }
 
-            startActivity(WebViewActivity.newInstance(this))
-            finish()
+    private fun continueToApp(hideTransition: Boolean) {
+        startActivity(WebViewActivity.newInstance(this))
+        finish()
+        if (hideTransition) { // Disable activity start/stop animation
+            overridePendingTransition(0, 0)
         }
     }
 }

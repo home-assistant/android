@@ -318,6 +318,24 @@ class WebSocketRepositoryImpl @Inject constructor(
     }
 
     /**
+     * Request the server to add a Matter device to the network and commission it
+     * @return `true` if the request was successful
+     */
+    override suspend fun commissionMatterDevice(code: String): Boolean {
+        val response = sendMessage(
+            WebSocketRequest(
+                message = mapOf(
+                    "type" to "matter/commission",
+                    "code" to code
+                ),
+                timeout = 120000L // Matter commissioning takes at least 60 seconds + interview
+            )
+        )
+
+        return response?.success == true
+    }
+
+    /**
      * Request the server to commission a Matter device that is already on the network
      * @return `true` if the request was successful
      */
