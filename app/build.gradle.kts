@@ -169,6 +169,7 @@ dependencies {
     implementation("com.squareup.picasso:picasso:2.8")
 
     "fullImplementation"("com.google.android.gms:play-services-location:21.0.1")
+    "fullImplementation"("com.google.android.gms:play-services-home:16.0.0-beta1")
     "fullImplementation"(platform("com.google.firebase:firebase-bom:30.4.1"))
     "fullImplementation"("com.google.firebase:firebase-messaging")
     "fullImplementation"("io.sentry:sentry-android:6.9.0")

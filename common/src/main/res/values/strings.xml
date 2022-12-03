@@ -3,6 +3,7 @@
     <string name="account">Account</string>
     <string name="action_reply">Reply</string>
     <string name="activity_intent_error">Unable to send activity intent, please check command format</string>
+    <string name="add_device">Add device</string>
     <string name="add_service_data_field">Add Field</string>
     <string name="add_shortcut">Add Shortcut</string>
     <string name="add_ssid">Add</string>
@@ -106,6 +107,7 @@
     <string name="choose_entity">Choose entity</string>
     <string name="choose_server">Choose server</string>
     <string name="clear_favorites">Clear Favorites</string>
+    <string name="close">Close</string>
     <string name="color_temp">Color temperature: %1$d</string>
     <string name="collapse">Collapse</string>
     <string name="complication_entity_invalid">Invalid entity</string>
@@ -337,6 +339,13 @@
     <string name="manual_setup">Enter address manually</string>
     <string name="manual_title">What is your Home Assistant address?</string>
     <string name="map">Map</string>
+    <string name="matter_shared_title">Add shared Matter device</string>
+    <string name="matter_shared_status_not_registered">Please connect to your Home Assistant server before sharing a Matter device.</string>
+    <string name="matter_shared_status_not_supported">To add a shared Matter device, please update your Home Assistant server and add Matter first.</string>
+    <string name="matter_shared_status_confirmation">Do you want to add this Matter device to Home Assistant?</string>
+    <string name="matter_shared_status_working">Adding device, this may take a minute or two.</string>
+    <string name="matter_shared_status_success">The device was added! 🎉</string>
+    <string name="matter_shared_status_failure">Unable to add the device to Home Assistant. Would you like to try again?</string>
     <string name="maximum">Maximum</string>
     <string name="media_player">Media player</string>
     <string name="media_player_widget_desc">Control any media player and see current now playing image</string>

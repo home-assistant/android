@@ -317,6 +317,42 @@ class WebSocketRepositoryImpl @Inject constructor(
         return response?.success == true
     }
 
+    /**
+     * Request the server to add a Matter device to the network and commission it
+     * @return `true` if the request was successful
+     */
+    override suspend fun commissionMatterDevice(code: String): Boolean {
+        val response = sendMessage(
+            WebSocketRequest(
+                message = mapOf(
+                    "type" to "matter/commission",
+                    "code" to code
+                ),
+                timeout = 120000L // Matter commissioning takes at least 60 seconds + interview
+            )
+        )
+
+        return response?.success == true
+    }
+
+    /**
+     * Request the server to commission a Matter device that is already on the network
+     * @return `true` if the request was successful
+     */
+    override suspend fun commissionMatterDeviceOnNetwork(pin: Long): Boolean {
+        val response = sendMessage(
+            WebSocketRequest(
+                message = mapOf(
+                    "type" to "matter/commission_on_network",
+                    "pin" to pin
+                ),
+                timeout = 120000L // Matter commissioning takes at least 60 seconds + interview
+            )
+        )
+
+        return response?.success == true
+    }
+
     private suspend fun connect(): Boolean {
         connectedMutex.withLock {
             if (connection != null && connected.isCompleted) {
@@ -388,7 +424,7 @@ class WebSocketRepositoryImpl @Inject constructor(
 
     private suspend fun sendMessage(request: WebSocketRequest): SocketResponse? {
         return if (connect()) {
-            withTimeoutOrNull(30000) {
+            withTimeoutOrNull(request.timeout) {
                 try {
                     suspendCancellableCoroutine { cont ->
                         // Lock on the connection so that we fully send before allowing another send.

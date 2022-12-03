@@ -6,6 +6,17 @@
         <meta-data android:name="io.sentry.auto-init" android:value="false" />
         <meta-data android:name="io.sentry.release" android:value="${sentryRelease}" />
 
+        <activity
+            android:name=".matter.MatterCommissioningActivity"
+            android:configChanges="orientation|screenSize"
+            android:exported="true"
+            android:theme="@style/Theme.HomeAssistant.Config">
+            <intent-filter>
+                <action android:name="com.google.android.gms.home.matter.ACTION_COMMISSION_DEVICE"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
+
         <receiver android:name=".location.HighAccuracyLocationReceiver"
             android:enabled="true"
             android:exported="true" />
@@ -22,6 +33,10 @@
             android:name=".location.HighAccuracyLocationService"
             android:enabled="true"
             android:exported="true"/>
+
+        <service
+            android:name=".matter.MatterCommissioningService"
+            android:exported="true" />
 
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
