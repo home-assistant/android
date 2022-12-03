@@ -16,6 +16,7 @@ import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Switch
+import androidx.compose.material.SwitchDefaults
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.rememberScaffoldState
@@ -163,7 +164,8 @@ fun ManageTilesView(
                     )
                     Switch(
                         checked = viewModel.selectedShouldVibrate,
-                        onCheckedChange = { viewModel.selectedShouldVibrate = it }
+                        onCheckedChange = { viewModel.selectedShouldVibrate = it },
+                        colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(R.color.colorSwitchUncheckedThumb))
                     )
                 }
                 Button(
