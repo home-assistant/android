@@ -86,7 +86,7 @@ import io.homeassistant.companion.android.databinding.ActivityWebviewBinding
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
 import io.homeassistant.companion.android.databinding.ExoPlayerViewBinding
 import io.homeassistant.companion.android.launch.LaunchActivity
-import io.homeassistant.companion.android.matter.MatterCommissioningRequest
+import io.homeassistant.companion.android.matter.MatterFrontendCommissioningStatus
 import io.homeassistant.companion.android.nfc.WriteNfcTag
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
@@ -675,12 +675,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 presenter.getMatterCommissioningStatusFlow().collect {
                     Log.d(TAG, "Matter commissioning status changed to $it")
                     when (it) {
-                        MatterCommissioningRequest.Status.IN_PROGRESS -> {
+                        MatterFrontendCommissioningStatus.IN_PROGRESS -> {
                             presenter.getMatterCommissioningIntent()?.let { intentSender ->
                                 commissionMatterDevice.launch(IntentSenderRequest.Builder(intentSender).build())
                             }
                         }
-                        MatterCommissioningRequest.Status.ERROR -> {
+                        MatterFrontendCommissioningStatus.ERROR -> {
                             // TODO show error?
                         }
                         else -> { } // Do nothing

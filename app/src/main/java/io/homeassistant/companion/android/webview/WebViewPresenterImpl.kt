@@ -11,7 +11,7 @@ import io.homeassistant.companion.android.common.data.authentication.SessionStat
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
-import io.homeassistant.companion.android.matter.MatterCommissioningRequest
+import io.homeassistant.companion.android.matter.MatterFrontendCommissioningStatus
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.util.UrlHandler
 import kotlinx.coroutines.CoroutineScope
@@ -51,7 +51,7 @@ class WebViewPresenterImpl @Inject constructor(
 
     private var url: URL? = null
 
-    private val _matterCommissioningStatus = MutableStateFlow(MatterCommissioningRequest.Status.NOT_STARTED)
+    private val _matterCommissioningStatus = MutableStateFlow(MatterFrontendCommissioningStatus.NOT_STARTED)
 
     private var matterCommissioningIntentSender: IntentSender? = null
 
@@ -251,25 +251,25 @@ class WebViewPresenterImpl @Inject constructor(
     override fun appCanCommissionMatterDevice(): Boolean = matterUseCase.appSupportsCommissioning()
 
     override fun startCommissioningMatterDevice(context: Context) {
-        if (_matterCommissioningStatus.value != MatterCommissioningRequest.Status.REQUESTED) {
-            _matterCommissioningStatus.tryEmit(MatterCommissioningRequest.Status.REQUESTED)
+        if (_matterCommissioningStatus.value != MatterFrontendCommissioningStatus.REQUESTED) {
+            _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.REQUESTED)
 
             matterUseCase.startNewCommissioningFlow(
                 context,
                 { intentSender ->
                     Log.d(TAG, "Matter commissioning is ready")
                     matterCommissioningIntentSender = intentSender
-                    _matterCommissioningStatus.tryEmit(MatterCommissioningRequest.Status.IN_PROGRESS)
+                    _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.IN_PROGRESS)
                 },
                 { e ->
                     Log.e(TAG, "Matter commissioning couldn't be prepared", e)
-                    _matterCommissioningStatus.tryEmit(MatterCommissioningRequest.Status.ERROR)
+                    _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.ERROR)
                 }
             )
         } // else already waiting for a result, don't send another request
     }
 
-    override fun getMatterCommissioningStatusFlow(): Flow<MatterCommissioningRequest.Status> =
+    override fun getMatterCommissioningStatusFlow(): Flow<MatterFrontendCommissioningStatus> =
         _matterCommissioningStatus.asStateFlow()
 
     override fun getMatterCommissioningIntent(): IntentSender? {
