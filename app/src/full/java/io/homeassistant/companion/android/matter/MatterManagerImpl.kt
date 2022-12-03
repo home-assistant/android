@@ -15,7 +15,7 @@ class MatterManagerImpl @Inject constructor(
 ) : MatterManager {
 
     companion object {
-        private const val TAG = "MatterRepositoryImpl"
+        private const val TAG = "MatterManagerImpl"
     }
 
     override fun appSupportsCommissioning(): Boolean =

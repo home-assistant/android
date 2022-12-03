@@ -11,6 +11,8 @@ class MatterManagerImpl @Inject constructor() : MatterManager {
 
     override fun appSupportsCommissioning(): Boolean = false
 
+    override suspend fun coreSupportsCommissioning(): Boolean = false
+
     override fun startNewCommissioningFlow(
         context: Context,
         onSuccess: (IntentSender) -> Unit,

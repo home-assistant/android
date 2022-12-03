@@ -12,5 +12,5 @@ abstract class MatterModule {
 
     @Binds
     @Singleton
-    abstract fun bindMatterRepository(matterRepository: MatterManagerImpl): MatterManager
+    abstract fun bindMatterManager(matterManager: MatterManagerImpl): MatterManager
 }
