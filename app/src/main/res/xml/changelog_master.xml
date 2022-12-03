@@ -3,12 +3,12 @@
     tools:ignore="MissingDefaultResource">
     <release version="2022.12 - Phone" versioncode="2">
         <change>Add support for automation domain in quick setting tiles</change>
-        <change>Subscribe to state updates in quick setting tiles</change>
+        <change>Live updates in quick setting tiles</change>
         <change>Bug fixes, performance improvements, design tweaks and dependency updates</change>
     </release>
     <release version="2022.12 - Wear" versioncode="1">
-        <change>Only subscribe to supported entities for home screen updates</change>
-        <change>Notify user to grant sensor permissions when enabled from frontend</change>
+        <change>Reduce data usage on home screen, app is more responsive as a result</change>
+        <change>Navigate user to sensor details from notification when enabled</change>
         <change>Bug fixes and dependency updates</change>
     </release>
 </changelog>
