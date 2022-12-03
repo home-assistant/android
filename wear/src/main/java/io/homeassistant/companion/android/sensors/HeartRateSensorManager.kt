@@ -120,7 +120,7 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
                 )
             )
         }
-        if (validReading || eventCount >= 5) {
+        if (validReading || eventCount >= 10) {
             mySensorManager.unregisterListener(this)
             Log.d(TAG, "Heart Rate sensor listener unregistered")
             isListenerRegistered = false
