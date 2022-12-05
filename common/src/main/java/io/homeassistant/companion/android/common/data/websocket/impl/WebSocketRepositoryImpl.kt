@@ -372,7 +372,7 @@ class WebSocketRepositoryImpl @Inject constructor(
 
             try {
                 connection = okHttpClient.newWebSocket(
-                    Request.Builder().url(urlString).build(),
+                    Request.Builder().url(urlString).header(USER_AGENT, USER_AGENT_STRING).build(),
                     this
                 ).also {
                     // Preemptively send auth
