@@ -108,6 +108,8 @@ class MainViewModel @Inject constructor(
         private set
     var templateTileRefreshInterval = mutableStateOf(0)
         private set
+    var searchResult = mutableStateOf("")
+        private set
 
     fun supportedDomains(): List<String> = HomePresenterImpl.supportedDomains
 

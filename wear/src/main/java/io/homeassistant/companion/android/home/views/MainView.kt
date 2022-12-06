@@ -1,5 +1,10 @@
 package io.homeassistant.companion.android.home.views
 
+import android.content.Intent
+import android.speech.RecognizerIntent
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -36,6 +41,7 @@ import androidx.wear.compose.material.rememberScalingLazyListState
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.home.HomeActivity
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.wearColorPalette
@@ -62,9 +68,24 @@ fun MainView(
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
 
     var expandedFavorites: Boolean by rememberSaveable { mutableStateOf(true) }
-
+    var entityResults: List<Entity<*>> by rememberSaveable {
+        mutableStateOf(emptyList())
+    }
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
+
+    val search =
+        rememberLauncherForActivityResult(contract = ActivityResultContracts.StartActivityForResult()) {
+            if (it.resultCode != HomeActivity.SEARCH)
+                return@rememberLauncherForActivityResult
+
+            mainViewModel.searchResult.value =
+                it.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS).let { result ->
+                    result?.get(0) ?: ""
+                }
+
+            Log.d("SearchResult", "Got results: ${mainViewModel.searchResult.value}")
+        }
 
     WearAppTheme {
         Scaffold(
@@ -77,6 +98,48 @@ fun MainView(
             ThemeLazyColumn(
                 state = scalingLazyListState
             ) {
+                if (mainViewModel.loadingState.value == MainViewModel.LoadingState.READY) {
+                    item {
+                        Chip(
+                            onClick = {
+                                val intent =
+                                    Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                                        putExtra(
+                                            RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                                            RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+                                        )
+                                    }
+                                search.launch(intent)
+                            },
+                            label = {
+                                Text("Search")
+                            }
+                        )
+                    }
+
+                    if (mainViewModel.entities.isNotEmpty() && mainViewModel.searchResult.value != "") {
+                        val searchedEntities = emptyList<Entity<*>>().toMutableList()
+                        for (entity in mainViewModel.entities.values) {
+                            val attributes = entity.attributes as Map<*, *>
+                            if (attributes["friendly_name"].toString()
+                                .contains(mainViewModel.searchResult.value)
+                            ) {
+                                searchedEntities += entity
+                            }
+                        }
+                        entityResults = searchedEntities
+                        if (entityResults.isNotEmpty()) {
+                            items(entityResults.size) { index ->
+                                EntityUi(
+                                    entityResults[index],
+                                    onEntityClicked,
+                                    isHapticEnabled,
+                                    isToastEnabled
+                                ) { entityId -> onEntityLongClicked(entityId) }
+                            }
+                        }
+                    }
+                }
                 if (favoriteEntityIds.isNotEmpty()) {
                     item {
                         ExpandableListHeader(

@@ -31,6 +31,7 @@ class HomeActivity : ComponentActivity(), HomeView {
 
     companion object {
         private const val TAG = "HomeActivity"
+        const val SEARCH = 55
 
         fun newInstance(context: Context): Intent {
             return Intent(context, HomeActivity::class.java)
