@@ -183,6 +183,7 @@ class HealthServicesSensorManager : SensorManager {
             override fun onUserActivityInfoReceived(info: UserActivityInfo) {
                 Log.d(TAG, "User activity state: ${info.userActivityState.name}")
                 callbackLastUpdated = System.currentTimeMillis()
+                val forceUpdate = info.userActivityState == UserActivityState.USER_ACTIVITY_EXERCISE
                 onSensorUpdated(
                     latestContext,
                     userActivityState,
@@ -197,10 +198,13 @@ class HealthServicesSensorManager : SensorManager {
                         "time" to info.stateChangeTime,
                         "exercise_type" to info.exerciseInfo?.exerciseType?.name
                     ),
-                    forceUpdate = info.userActivityState == UserActivityState.USER_ACTIVITY_EXERCISE
+                    forceUpdate = forceUpdate
                 )
+                val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
+                val sensorData = sensorDao.get(userActivityState.id)
 
-                SensorReceiver.updateAllSensors(latestContext)
+                if (sensorData?.state != sensorData?.lastSentState || forceUpdate)
+                    SensorReceiver.updateAllSensors(latestContext)
             }
 
             override fun onNewDataPointsReceived(dataPoints: DataPointContainer) {
