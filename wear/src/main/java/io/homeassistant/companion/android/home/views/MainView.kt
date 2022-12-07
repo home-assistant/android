@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.home.views
 
 import android.content.Intent
 import android.speech.RecognizerIntent
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -41,7 +40,6 @@ import androidx.wear.compose.material.rememberScalingLazyListState
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.home.HomeActivity
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.wearColorPalette
@@ -76,15 +74,10 @@ fun MainView(
 
     val search =
         rememberLauncherForActivityResult(contract = ActivityResultContracts.StartActivityForResult()) {
-            if (it.resultCode != HomeActivity.SEARCH)
-                return@rememberLauncherForActivityResult
-
             mainViewModel.searchResult.value =
                 it.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS).let { result ->
                     result?.get(0) ?: ""
                 }
-
-            Log.d("SearchResult", "Got results: ${mainViewModel.searchResult.value}")
         }
 
     WearAppTheme {
@@ -112,8 +105,14 @@ fun MainView(
                                 search.launch(intent)
                             },
                             label = {
-                                Text("Search")
-                            }
+                                Text(stringResource(commonR.string.search))
+                            },
+                            icon = {
+                                Image(
+                                    asset = CommunityMaterial.Icon3.cmd_search_web
+                                )
+                            },
+                            modifier = Modifier.padding(top = 32.dp, bottom = 8.dp)
                         )
                     }
 
@@ -122,7 +121,7 @@ fun MainView(
                         for (entity in mainViewModel.entities.values) {
                             val attributes = entity.attributes as Map<*, *>
                             if (attributes["friendly_name"].toString()
-                                .contains(mainViewModel.searchResult.value)
+                                .contains(mainViewModel.searchResult.value, true)
                             ) {
                                 searchedEntities += entity
                             }
