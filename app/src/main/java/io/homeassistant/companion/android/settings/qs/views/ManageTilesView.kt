@@ -15,6 +15,8 @@ import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Scaffold
+import androidx.compose.material.Switch
+import androidx.compose.material.SwitchDefaults
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.rememberScaffoldState
@@ -153,6 +155,18 @@ fun ManageTilesView(
                             Text(text = item.entityId, fontSize = 15.sp)
                         }
                     }
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = stringResource(R.string.tile_vibrate),
+                        fontSize = 15.sp
+                    )
+                    Switch(
+                        checked = viewModel.selectedShouldVibrate,
+                        onCheckedChange = { viewModel.selectedShouldVibrate = it },
+                        colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(R.color.colorSwitchUncheckedThumb))
+                    )
                 }
                 Button(
                     onClick = { viewModel.addTile() },

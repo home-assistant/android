@@ -77,6 +77,7 @@ class ManageTilesViewModel @Inject constructor(
     var tileSubtitle by mutableStateOf<String?>(null)
     var submitButtonLabel by mutableStateOf(commonR.string.tile_save)
         private set
+    var selectedShouldVibrate by mutableStateOf(false)
 
     private var selectedIcon: Int? = null
     private var selectedTileId = 0
@@ -120,6 +121,7 @@ class ManageTilesViewModel @Inject constructor(
             tileDao.get(tile.id).also {
                 selectedTileId = it?.id ?: 0
                 selectedTileAdded = it?.added ?: false
+                selectedShouldVibrate = it?.shouldVibrate ?: false
                 submitButtonLabel =
                     if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2 || it?.added == true) commonR.string.tile_save
                     else commonR.string.tile_add
@@ -139,6 +141,7 @@ class ManageTilesViewModel @Inject constructor(
         tileLabel = currentTile.label
         tileSubtitle = currentTile.subtitle
         selectedEntityId = currentTile.entityId
+        selectedShouldVibrate = currentTile.shouldVibrate
         selectIcon(
             currentTile.iconId?.let {
                 if (::iconPack.isInitialized) iconPack.getIcon(it)
@@ -156,7 +159,8 @@ class ManageTilesViewModel @Inject constructor(
                 iconId = selectedIcon,
                 entityId = selectedEntityId,
                 label = tileLabel,
-                subtitle = tileSubtitle
+                subtitle = tileSubtitle,
+                shouldVibrate = selectedShouldVibrate
             )
             tileDao.add(tileData)
 

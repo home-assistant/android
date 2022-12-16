@@ -77,7 +77,7 @@ import io.homeassistant.companion.android.common.R as commonR
         EntityStateComplications::class,
         Setting::class
     ],
-    version = 34,
+    version = 35,
     autoMigrations = [
         AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
@@ -88,7 +88,8 @@ import io.homeassistant.companion.android.common.R as commonR
         AutoMigration(from = 30, to = 31),
         AutoMigration(from = 31, to = 32),
         AutoMigration(from = 32, to = 33),
-        AutoMigration(from = 33, to = 34)
+        AutoMigration(from = 33, to = 34),
+        AutoMigration(from = 34, to = 35),
     ]
 )
 @TypeConverters(

@@ -5,11 +5,14 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.Icon
 import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.core.content.getSystemService
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
 import com.maltaisn.icondialog.pack.IconPack
@@ -171,6 +174,14 @@ abstract class TileExtensions : TileService() {
         Log.d(TAG, "Click detected for tile ID: $tileId")
         val context = applicationContext
         val tileData = tileDao.get(tileId)
+        val vm = getSystemService<Vibrator>()
+        if (tileData != null && tileData.shouldVibrate) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                vm?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
+            } else
+                vm?.vibrate(500)
+        }
+
         val hasTile = setTileData(tileId, tile)
         val needsUpdate = tileData != null && tileData.entityId.split('.')[0] !in toggleDomainsWithLock
         if (hasTile) {
@@ -199,6 +210,12 @@ abstract class TileExtensions : TileService() {
                     Log.d(TAG, "Service call sent for tile ID: $tileId")
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to call service for tile ID: $tileId", e)
+                    if (tileData != null && tileData.shouldVibrate) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                            vm?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK))
+                        } else
+                            vm?.vibrate(1000)
+                    }
                     withContext(Dispatchers.Main) {
                         Toast.makeText(
                             context,
@@ -239,7 +256,8 @@ abstract class TileExtensions : TileService() {
                         iconId = null,
                         entityId = "",
                         label = "",
-                        subtitle = null
+                        subtitle = null,
+                        shouldVibrate = false
                     )
                 )
             } // else if it doesn't exist and is removed we don't have to save anything
