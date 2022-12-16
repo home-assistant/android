@@ -8,8 +8,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.search.views.SearchResultView
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class SearchActivity : ComponentActivity() {
@@ -35,13 +37,18 @@ class SearchActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val searchIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(
-                RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
-            )
+        lifecycleScope.launch {
+            searchViewModel.isSupportConversation()
+            if (searchViewModel.supportsConversation.value) {
+                val searchIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                    putExtra(
+                        RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                        RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+                    )
+                }
+                searchResults.launch(searchIntent)
+            }
         }
-        searchResults.launch(searchIntent)
 
         setContent {
             SearchResultView(searchViewModel)

@@ -35,7 +35,12 @@ fun SearchResultView(
             ) {
                 item {
                     Text(
-                        text = searchViewModel.searchResult.value.ifEmpty { stringResource(R.string.no_search_results) },
+                        text = searchViewModel.searchResult.value.ifEmpty {
+                            if (searchViewModel.supportsConversation.value)
+                                stringResource(R.string.no_search_results)
+                            else
+                                stringResource(R.string.no_conversation_support)
+                        },
                         modifier = Modifier.padding(40.dp)
                     )
                 }

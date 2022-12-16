@@ -967,4 +967,5 @@
     <string name="tile_vibrate">Vibrate when clicked</string>
     <string name="no_search_results">No results yet</string>
     <string name="speak">Speak</string>
+    <string name="no_conversation_support">You must be at least on Home Assistant 2023.01 and have the conversation integration enabled</string>
 </resources>
