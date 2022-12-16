@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.search
+package io.homeassistant.companion.android.conversation
 
 import android.app.Application
 import androidx.compose.runtime.mutableStateOf
@@ -11,16 +11,16 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class SearchViewModel @Inject constructor(
+class ConversationViewModel @Inject constructor(
     application: Application,
     private val integrationUseCase: IntegrationRepository,
     private val webSocketRepository: WebSocketRepository
 ) : AndroidViewModel(application) {
 
-    var searchResult = mutableStateOf("")
+    var speechResult = mutableStateOf("")
         private set
 
-    var speechResult = mutableStateOf("")
+    var conversationResult = mutableStateOf("")
         private set
 
     var supportsConversation = mutableStateOf(false)
@@ -28,7 +28,7 @@ class SearchViewModel @Inject constructor(
 
     fun getConversation() {
         viewModelScope.launch {
-            speechResult.value = integrationUseCase.getConversation(searchResult.value) ?: ""
+            conversationResult.value = integrationUseCase.getConversation(speechResult.value) ?: ""
         }
     }
 

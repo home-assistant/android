@@ -19,21 +19,16 @@ import androidx.wear.tiles.TimelineBuilders.TimelineEntry
 import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.search.SearchActivity
+import io.homeassistant.companion.android.conversation.ConversationActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.guava.future
-import javax.inject.Inject
 
 @AndroidEntryPoint
-class SearchTile : TileService() {
+class ConversationTile : TileService() {
     private val serviceJob = Job()
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
-
-    @Inject
-    lateinit var integrationUseCase: IntegrationRepository
 
     override fun onTileRequest(requestParams: TileRequest): ListenableFuture<Tile> =
         serviceScope.future {
@@ -72,12 +67,12 @@ class SearchTile : TileService() {
                 ModifiersBuilders.Modifiers.Builder()
                     .setClickable(
                         ModifiersBuilders.Clickable.Builder()
-                            .setId("search")
+                            .setId("conversation")
                             .setOnClick(
                                 ActionBuilders.LaunchAction.Builder()
                                     .setAndroidActivity(
                                         ActionBuilders.AndroidActivity.Builder()
-                                            .setClassName(SearchActivity::class.java.name)
+                                            .setClassName(ConversationActivity::class.java.name)
                                             .setPackageName(this.packageName)
                                             .build()
                                     ).build()

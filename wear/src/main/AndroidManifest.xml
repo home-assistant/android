@@ -76,7 +76,7 @@
         <activity android:name="androidx.wear.activity.ConfirmationActivity" />
 
         <activity
-            android:name=".search.SearchActivity"
+            android:name=".conversation.ConversationActivity"
             android:exported="true" />
         <!-- Tiles -->
         <service
@@ -106,8 +106,8 @@
                 android:resource="@drawable/template_tile_example" />
         </service>
         <service
-            android:name=".tiles.SearchTile"
-            android:label="Search"
+            android:name=".tiles.ConversationTile"
+            android:label="@string/conversation"
             android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER"
             android:exported="true">
             <intent-filter>
@@ -115,7 +115,7 @@
             </intent-filter>
 
             <meta-data android:name="androidx.wear.tiles.PREVIEW"
-                android:resource="@drawable/search_tile_example" />
+                android:resource="@drawable/conversation_tile_example" />
         </service>
         <receiver android:name=".tiles.TileActionReceiver"
             android:exported="false">

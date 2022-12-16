@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.search
+package io.homeassistant.companion.android.conversation
 
 import android.content.Context
 import android.content.Intent
@@ -10,27 +10,27 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.search.views.SearchResultView
+import io.homeassistant.companion.android.conversation.views.SearchResultView
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class SearchActivity : ComponentActivity() {
+class ConversationActivity : ComponentActivity() {
 
-    private val searchViewModel by viewModels<SearchViewModel>()
+    private val conversationViewModel by viewModels<ConversationViewModel>()
     companion object {
-        private const val TAG = "SearchActivity"
+        private const val TAG = "ConvActivity"
 
         fun newInstance(context: Context): Intent {
-            return Intent(context, SearchActivity::class.java)
+            return Intent(context, ConversationActivity::class.java)
         }
     }
 
     private var searchResults = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
-            searchViewModel.searchResult.value = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS).let {
+            conversationViewModel.speechResult.value = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS).let {
                 it?.get(0) ?: ""
             }
-            searchViewModel.getConversation()
+            conversationViewModel.getConversation()
         }
     }
 
@@ -38,8 +38,8 @@ class SearchActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         lifecycleScope.launch {
-            searchViewModel.isSupportConversation()
-            if (searchViewModel.supportsConversation.value) {
+            conversationViewModel.isSupportConversation()
+            if (conversationViewModel.supportsConversation.value) {
                 val searchIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
                     putExtra(
                         RecognizerIntent.EXTRA_LANGUAGE_MODEL,
@@ -51,7 +51,7 @@ class SearchActivity : ComponentActivity() {
         }
 
         setContent {
-            SearchResultView(searchViewModel)
+            SearchResultView(conversationViewModel)
         }
     }
 }
