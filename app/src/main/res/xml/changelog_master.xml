@@ -3,6 +3,7 @@
     tools:ignore="MissingDefaultResource">
     <release version="2022.12 - Phone" versioncode="2">
         <change>Add support for automation domain in quick setting tiles</change>
+        <change>Add new option in quick setting tiles for vibration feedback when clicked</change>
         <change>Add initial support for Matter in HA Core 2022.12+</change>
         <change>Live updates in quick setting tiles</change>
         <change>Bug fixes, performance improvements, design tweaks and dependency updates</change>
