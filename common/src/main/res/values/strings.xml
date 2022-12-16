@@ -965,4 +965,6 @@
     <string name="sensor_name_daily_steps">Daily Steps</string>
     <string name="sensor_description_daily_steps">The total step count over a day, where the previous day ends and a new day begins at 12:00 AM local time.</string>
     <string name="tile_vibrate">Vibrate when clicked</string>
+    <string name="no_search_results">No results yet</string>
+    <string name="speak">Speak</string>
 </resources>

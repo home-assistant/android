@@ -583,6 +583,12 @@ class IntegrationRepositoryImpl @Inject constructor(
         }?.toList()
     }
 
+    override suspend fun getConversation(speech: String): String? {
+        val response = webSocketRepository.getConversation(speech)
+
+        return response?.response?.speech?.plain?.get("speech")
+    }
+
     override suspend fun getEntities(): List<Entity<Any>>? {
         val response = webSocketRepository.getStates()
 
