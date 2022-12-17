@@ -1,7 +1,9 @@
 package io.homeassistant.companion.android.conversation
 
 import android.app.Application
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,24 +19,27 @@ class ConversationViewModel @Inject constructor(
     private val webSocketRepository: WebSocketRepository
 ) : AndroidViewModel(application) {
 
-    var speechResult = mutableStateOf("")
+    var speechResult by mutableStateOf("")
+
+    var conversationResult by mutableStateOf("")
         private set
 
-    var conversationResult = mutableStateOf("")
-        private set
-
-    var supportsConversation = mutableStateOf(false)
+    var supportsConversation by mutableStateOf(false)
         private set
 
     fun getConversation() {
         viewModelScope.launch {
-            conversationResult.value = integrationUseCase.getConversation(speechResult.value) ?: ""
+            conversationResult = integrationUseCase.getConversation(speechResult) ?: ""
         }
     }
 
     suspend fun isSupportConversation() {
-        supportsConversation.value =
+        supportsConversation =
             integrationUseCase.isHomeAssistantVersionAtLeast(2023, 1, 0) &&
             webSocketRepository.getConfig()?.components?.contains("conversation") == true
+    }
+
+    fun updateSpeechResult(result: String) {
+        speechResult = result
     }
 }

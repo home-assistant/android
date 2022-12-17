@@ -27,9 +27,11 @@ class ConversationActivity : ComponentActivity() {
 
     private var searchResults = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
-            conversationViewModel.speechResult.value = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS).let {
-                it?.get(0) ?: ""
-            }
+            conversationViewModel.updateSpeechResult(
+                result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS).let {
+                    it?.get(0) ?: ""
+                }
+            )
             conversationViewModel.getConversation()
         }
     }
@@ -39,7 +41,7 @@ class ConversationActivity : ComponentActivity() {
 
         lifecycleScope.launch {
             conversationViewModel.isSupportConversation()
-            if (conversationViewModel.supportsConversation.value) {
+            if (conversationViewModel.supportsConversation) {
                 val searchIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
                     putExtra(
                         RecognizerIntent.EXTRA_LANGUAGE_MODEL,

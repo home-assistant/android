@@ -35,8 +35,8 @@ fun ConversationResultView(
             ) {
                 item {
                     Text(
-                        text = conversationViewModel.speechResult.value.ifEmpty {
-                            if (conversationViewModel.supportsConversation.value)
+                        text = conversationViewModel.speechResult.ifEmpty {
+                            if (conversationViewModel.supportsConversation)
                                 stringResource(R.string.no_results)
                             else
                                 stringResource(R.string.no_conversation_support)
@@ -44,10 +44,10 @@ fun ConversationResultView(
                         modifier = Modifier.padding(40.dp)
                     )
                 }
-                if (conversationViewModel.conversationResult.value.isNotEmpty())
+                if (conversationViewModel.conversationResult.isNotEmpty())
                     item {
                         Text(
-                            text = conversationViewModel.conversationResult.value,
+                            text = conversationViewModel.conversationResult,
                             modifier = Modifier.padding(top = 8.dp, start = 32.dp)
                         )
                     }
