@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
@@ -18,6 +19,7 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.Switch
 import androidx.compose.material.SwitchDefaults
 import androidx.compose.material.Text
+import androidx.compose.material.TextButton
 import androidx.compose.material.TextField
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
@@ -116,28 +118,6 @@ fun ManageTilesView(
                     )
                 }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = stringResource(id = R.string.tile_icon),
-                        fontSize = 15.sp,
-                        modifier = Modifier.padding(end = 10.dp)
-                    )
-                    OutlinedButton(
-                        onClick = { onShowIconDialog(viewModel.selectedTile.id) }
-                    ) {
-                        val iconBitmap = remember(viewModel.selectedIconDrawable) {
-                            viewModel.selectedIconDrawable?.toBitmap()?.asImageBitmap()
-                        }
-                        iconBitmap?.let {
-                            Image(
-                                iconBitmap,
-                                contentDescription = stringResource(id = R.string.tile_icon),
-                                colorFilter = ColorFilter.tint(colorResource(R.color.colorAccent))
-                            )
-                        }
-                    }
-                }
-
                 Text(
                     text = stringResource(id = R.string.tile_entity),
                     fontSize = 15.sp
@@ -149,10 +129,41 @@ fun ManageTilesView(
                 DropdownMenu(expanded = expandedEntity, onDismissRequest = { expandedEntity = false }) {
                     for (item in viewModel.sortedEntities) {
                         DropdownMenuItem(onClick = {
-                            viewModel.selectedEntityId = item.entityId
+                            viewModel.selectEntityId(item.entityId)
                             expandedEntity = false
                         }) {
                             Text(text = item.entityId, fontSize = 15.sp)
+                        }
+                    }
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = stringResource(id = R.string.tile_icon),
+                        fontSize = 15.sp,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                    OutlinedButton(
+                        onClick = { onShowIconDialog(viewModel.selectedTile.id) }
+                    ) {
+                        val iconBitmap = remember(viewModel.selectedIconDrawable) {
+                            viewModel.selectedIconDrawable?.toBitmap()?.asImageBitmap()
+                        }
+                        iconBitmap?.let {
+                            Image(
+                                iconBitmap,
+                                contentDescription = stringResource(id = R.string.tile_icon),
+                                colorFilter = ColorFilter.tint(colorResource(R.color.colorAccent)),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                    if (viewModel.selectedIconId != null && viewModel.selectedEntityId.isNotBlank()) {
+                        TextButton(
+                            modifier = Modifier.padding(start = 4.dp),
+                            onClick = { viewModel.selectIcon(null) }
+                        ) {
+                            Text(text = stringResource(R.string.tile_icon_original))
                         }
                     }
                 }

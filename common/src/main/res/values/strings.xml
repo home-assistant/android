@@ -875,7 +875,8 @@
     <string name="info">Information</string>
     <string name="show_changelog">Show Change Log</string>
     <string name="show_changelog_summary">Show the change log dialog from when the app was updated</string>
-    <string name="tile_icon">Select a icon for the tile</string>
+    <string name="tile_icon">Tile Icon</string>
+    <string name="tile_icon_original">Use entity icon</string>
     <string name="tile_select">Select a tile to edit</string>
     <string name="shortcut_pinned">Pinned Shortcuts</string>
     <string name="remote_debugging">WebView Remote Debugging</string>
