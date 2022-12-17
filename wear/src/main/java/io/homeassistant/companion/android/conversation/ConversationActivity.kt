@@ -10,7 +10,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.conversation.views.SearchResultView
+import io.homeassistant.companion.android.conversation.views.ConversationResultView
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -51,7 +51,7 @@ class ConversationActivity : ComponentActivity() {
         }
 
         setContent {
-            SearchResultView(conversationViewModel)
+            ConversationResultView(conversationViewModel)
         }
     }
 }

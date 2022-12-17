@@ -123,7 +123,6 @@ dependencies {
 
     implementation("com.google.guava:guava:31.1-android")
     implementation("androidx.wear.tiles:tiles:1.1.0")
-    implementation("androidx.wear.tiles:tiles-material:1.1.0")
 
     implementation("androidx.wear.watchface:watchface-complications-data-source-ktx:1.1.1")
 

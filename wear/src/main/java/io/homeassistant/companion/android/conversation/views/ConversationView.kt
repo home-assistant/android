@@ -16,7 +16,7 @@ import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.views.ThemeLazyColumn
 
 @Composable
-fun SearchResultView(
+fun ConversationResultView(
     conversationViewModel: ConversationViewModel
 ) {
 
@@ -48,7 +48,7 @@ fun SearchResultView(
                     item {
                         Text(
                             text = conversationViewModel.conversationResult.value,
-                            modifier = Modifier.padding(top = 10.dp, start = 30.dp)
+                            modifier = Modifier.padding(top = 8.dp, start = 32.dp)
                         )
                     }
             }

@@ -181,6 +181,7 @@ class WebSocketRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getConversation(speech: String): ConversationResponse? {
+        // TODO: Send default locale of device with request.
         val socketResponse = sendMessage(
             mapOf(
                 "type" to "conversation/process",
