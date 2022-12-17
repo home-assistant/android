@@ -20,6 +20,7 @@ class ConversationViewModel @Inject constructor(
 ) : AndroidViewModel(application) {
 
     var speechResult by mutableStateOf("")
+        private set
 
     var conversationResult by mutableStateOf("")
         private set
