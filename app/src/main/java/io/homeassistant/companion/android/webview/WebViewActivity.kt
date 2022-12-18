@@ -160,10 +160,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         mFilePathCallback = null
     }
     private val commissionMatterDevice = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-        val success = result.resultCode == Activity.RESULT_OK
-        // TODO send something to frontend?
-
-        if (success) Log.d(TAG, "Matter commissioning returned success")
+        // Any errors will have been shown in the UI provided by Play Services
+        if (result.resultCode == Activity.RESULT_OK) Log.d(TAG, "Matter commissioning returned success")
         else Log.d(TAG, "Matter commissioning returned with non-OK code ${result.resultCode}")
     }
 
@@ -681,7 +679,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                             }
                         }
                         MatterFrontendCommissioningStatus.ERROR -> {
-                            // TODO show error?
+                            Toast.makeText(this@WebViewActivity, commonR.string.matter_commissioning_unavailable, Toast.LENGTH_SHORT).show()
+                            presenter.confirmMatterCommissioningError()
                         }
                         else -> { } // Do nothing
                     }
