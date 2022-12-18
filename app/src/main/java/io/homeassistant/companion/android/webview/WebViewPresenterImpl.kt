@@ -192,6 +192,12 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
+    override fun isAlwaysShowFirstViewOnAppStartEnabled(): Boolean {
+        return runBlocking {
+            integrationUseCase.isAlwaysShowFirstViewOnAppStartEnabled()
+        }
+    }
+
     override fun sessionTimeOut(): Int {
         return runBlocking {
             integrationUseCase.getSessionTimeOut()

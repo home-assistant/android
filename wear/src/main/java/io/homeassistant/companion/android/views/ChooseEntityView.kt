@@ -15,7 +15,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Chip
@@ -25,10 +24,9 @@ import androidx.wear.compose.material.items
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.domain
+import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.theme.WearAppTheme
-import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.stringForDomain
 import java.util.Locale
 import io.homeassistant.companion.android.common.R as commonR
@@ -121,11 +119,7 @@ private fun ChooseEntityChip(
     onEntitySelected: (entity: SimplifiedEntity) -> Unit
 ) {
     val attributes = entity.attributes as Map<*, *>
-    val iconBitmap = getIcon(
-        entity as Entity<Map<String, Any>>,
-        entity.domain,
-        LocalContext.current
-    )
+    val iconBitmap = entity.getIcon(LocalContext.current)
     Chip(
         modifier = Modifier
             .fillMaxWidth(),

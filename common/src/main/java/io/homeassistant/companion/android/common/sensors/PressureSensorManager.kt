@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.sensors
+package io.homeassistant.companion.android.common.sensors
 
 import android.content.Context
 import android.content.pm.PackageManager
@@ -8,59 +8,59 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import android.util.Log
 import androidx.core.content.getSystemService
-import io.homeassistant.companion.android.common.sensors.SensorManager
-import kotlin.math.roundToInt
+import java.math.RoundingMode
 import io.homeassistant.companion.android.common.R as commonR
 
-class ProximitySensorManager : SensorManager, SensorEventListener {
+class PressureSensorManager : SensorManager, SensorEventListener {
     companion object {
 
-        private const val TAG = "ProximitySensor"
+        private const val TAG = "PressureSensor"
         private var isListenerRegistered = false
         private var listenerLastRegistered = 0
-        private val proximitySensor = SensorManager.BasicSensor(
-            "proximity_sensor",
+        private val pressureSensor = SensorManager.BasicSensor(
+            "pressure_sensor",
             "sensor",
-            commonR.string.sensor_name_proximity,
-            commonR.string.sensor_description_proximity_sensor,
-            "mdi:leak",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            commonR.string.sensor_name_pressure,
+            commonR.string.sensor_description_pressure_sensor,
+            "mdi:gauge",
+            deviceClass = "pressure",
+            unitOfMeasurement = "hPa",
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT
         )
     }
 
     private lateinit var latestContext: Context
     private lateinit var mySensorManager: android.hardware.SensorManager
-    private var maxRange: Int = 0
 
     override fun docsLink(): String {
-        return "https://companion.home-assistant.io/docs/core/sensors#proximity-sensor"
+        return "https://companion.home-assistant.io/docs/core/sensors#pressure-sensor"
     }
     override val enabledByDefault: Boolean
         get() = false
 
     override val name: Int
-        get() = commonR.string.sensor_name_proximity
+        get() = commonR.string.sensor_name_pressure
 
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        return listOf(proximitySensor)
+        return listOf(pressureSensor)
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }
 
-    override fun hasSensor(context: Context): Boolean {
-        val packageManager: PackageManager = context.packageManager
-        return packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_PROXIMITY)
-    }
-
     override fun requestSensorUpdate(context: Context) {
         latestContext = context
-        updateProximitySensor()
+        updatePressureSensor()
     }
 
-    private fun updateProximitySensor() {
-        if (!isEnabled(latestContext, proximitySensor.id))
+    override fun hasSensor(context: Context): Boolean {
+        val packageManager: PackageManager = context.packageManager
+        return packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_BAROMETER)
+    }
+
+    private fun updatePressureSensor() {
+        if (!isEnabled(latestContext, pressureSensor.id))
             return
 
         val now = System.currentTimeMillis()
@@ -72,17 +72,16 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
 
         mySensorManager = latestContext.getSystemService()!!
 
-        val proximitySensors = mySensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY)
-        if (proximitySensors != null && !isListenerRegistered) {
+        val pressureSensors = mySensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE)
+        if (pressureSensors != null && !isListenerRegistered) {
             mySensorManager.registerListener(
                 this,
-                proximitySensors,
+                pressureSensors,
                 SENSOR_DELAY_NORMAL
             )
-            Log.d(TAG, "Proximity sensor listener registered")
+            Log.d(TAG, "Pressure sensor listener registered")
             isListenerRegistered = true
             listenerLastRegistered = now.toInt()
-            maxRange = proximitySensors.maximumRange.roundToInt()
         }
     }
 
@@ -91,24 +90,19 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
-        if (event?.sensor?.type == Sensor.TYPE_PROXIMITY) {
-            val sensorValue = event.values[0].roundToInt()
-            val state =
-                when {
-                    maxRange == 5 && sensorValue == 5 -> "far"
-                    maxRange == 5 -> "near"
-                    else -> sensorValue
-                }
-            onSensorUpdated(
-                latestContext,
-                proximitySensor,
-                state,
-                proximitySensor.statelessIcon,
-                mapOf()
-            )
+        if (event != null) {
+            if (event.sensor.type == Sensor.TYPE_PRESSURE && !event.values[0].isNaN()) {
+                onSensorUpdated(
+                    latestContext,
+                    pressureSensor,
+                    event.values[0].toBigDecimal().setScale(1, RoundingMode.HALF_EVEN).toString(),
+                    pressureSensor.statelessIcon,
+                    mapOf()
+                )
+            }
         }
         mySensorManager.unregisterListener(this)
-        Log.d(TAG, "Proximity sensor listener unregistered")
+        Log.d(TAG, "Pressure sensor listener unregistered")
         isListenerRegistered = false
     }
 }

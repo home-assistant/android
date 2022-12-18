@@ -16,9 +16,8 @@ import com.mikepenz.iconics.utils.colorInt
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.integration.domain
+import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.database.wear.EntityStateComplicationsDao
-import io.homeassistant.companion.android.util.getIcon
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -59,7 +58,7 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
         }
 
         val attributes = entity.attributes as Map<*, *>
-        val icon = getIcon(entity, entity.domain, applicationContext) ?: CommunityMaterial.Icon.cmd_bookmark
+        val icon = entity.getIcon(applicationContext) ?: CommunityMaterial.Icon.cmd_bookmark
         val iconBitmap = IconicsDrawable(this, icon).apply {
             colorInt = Color.WHITE
         }.toBitmap()
