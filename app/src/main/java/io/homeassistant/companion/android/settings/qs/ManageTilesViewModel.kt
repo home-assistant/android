@@ -19,10 +19,13 @@ import com.maltaisn.icondialog.data.Icon
 import com.maltaisn.icondialog.pack.IconPack
 import com.maltaisn.icondialog.pack.IconPackLoader
 import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
+import com.mikepenz.iconics.IconicsDrawable
+import com.mikepenz.iconics.utils.sizeDp
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
+import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.TileEntity
 import io.homeassistant.companion.android.database.qs.isSetup
@@ -70,6 +73,8 @@ class ManageTilesViewModel @Inject constructor(
 
     var sortedEntities by mutableStateOf<List<Entity<*>>>(emptyList())
         private set
+    var selectedIconId by mutableStateOf<Int?>(null)
+        private set
     var selectedIconDrawable by mutableStateOf(AppCompatResources.getDrawable(application, commonR.drawable.ic_stat_ic_notification))
         private set
     var selectedEntityId by mutableStateOf("")
@@ -78,8 +83,6 @@ class ManageTilesViewModel @Inject constructor(
     var submitButtonLabel by mutableStateOf(commonR.string.tile_save)
         private set
     var selectedShouldVibrate by mutableStateOf(false)
-
-    private var selectedIcon: Int? = null
     private var selectedTileId = 0
     private var selectedTileAdded = false
 
@@ -101,6 +104,10 @@ class ManageTilesViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             sortedEntities = integrationUseCase.getEntities().orEmpty()
                 .filter { it.domain in ManageTilesFragment.validDomains }
+            withContext(Dispatchers.Main) {
+                // The entities list might not have been loaded when the tile data was loaded
+                selectTile(slots.indexOf(selectedTile))
+            }
         }
 
         viewModelScope.launch(Dispatchers.IO) {
@@ -132,9 +139,26 @@ class ManageTilesViewModel @Inject constructor(
         }
     }
 
+    fun selectEntityId(entityId: String) {
+        selectedEntityId = entityId
+        if (selectedIconId == null) selectIcon(null) // trigger drawable update
+    }
+
     fun selectIcon(icon: Icon?) {
-        selectedIcon = icon?.id
-        selectedIconDrawable = icon?.drawable?.let { DrawableCompat.wrap(it) }
+        selectedIconId = icon?.id
+        selectedIconDrawable = if (icon != null) {
+            icon.drawable?.let { DrawableCompat.wrap(it) }
+        } else {
+            sortedEntities.firstOrNull { it.entityId == selectedEntityId }?.let {
+                it.getIcon(app)?.let { iIcon ->
+                    DrawableCompat.wrap(
+                        IconicsDrawable(app, iIcon).apply {
+                            sizeDp = 20
+                        }
+                    )
+                }
+            }
+        }
     }
 
     private fun updateExistingTileFields(currentTile: TileEntity) {
@@ -156,7 +180,7 @@ class ManageTilesViewModel @Inject constructor(
                 id = selectedTileId,
                 tileId = selectedTile.id,
                 added = selectedTileAdded,
-                iconId = selectedIcon,
+                iconId = selectedIconId,
                 entityId = selectedEntityId,
                 label = tileLabel,
                 subtitle = tileSubtitle,
