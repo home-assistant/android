@@ -6,12 +6,12 @@ import io.homeassistant.companion.android.matter.MatterCommissioningViewModel
 class MatterCommissioningViewPreviewStates :
     PreviewParameterProvider<MatterCommissioningViewModel.CommissioningFlowStep> {
     override val values = sequenceOf(
-        MatterCommissioningViewModel.CommissioningFlowStep.NOT_REGISTERED,
-        MatterCommissioningViewModel.CommissioningFlowStep.CHECKING_CORE,
-        MatterCommissioningViewModel.CommissioningFlowStep.NOT_SUPPORTED,
-        MatterCommissioningViewModel.CommissioningFlowStep.CONFIRMATION,
-        MatterCommissioningViewModel.CommissioningFlowStep.WORKING,
-        MatterCommissioningViewModel.CommissioningFlowStep.SUCCESS,
-        MatterCommissioningViewModel.CommissioningFlowStep.FAILURE
+        MatterCommissioningViewModel.CommissioningFlowStep.NotRegistered,
+        MatterCommissioningViewModel.CommissioningFlowStep.CheckingCore,
+        MatterCommissioningViewModel.CommissioningFlowStep.NotSupported,
+        MatterCommissioningViewModel.CommissioningFlowStep.Confirmation,
+        MatterCommissioningViewModel.CommissioningFlowStep.Working,
+        MatterCommissioningViewModel.CommissioningFlowStep.Success,
+        MatterCommissioningViewModel.CommissioningFlowStep.Failure(errorCode = 99)
     )
 }

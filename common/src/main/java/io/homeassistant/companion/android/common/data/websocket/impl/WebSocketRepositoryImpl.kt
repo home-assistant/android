@@ -31,6 +31,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.En
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EventResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TemplateUpdatedEvent
@@ -334,9 +335,10 @@ class WebSocketRepositoryImpl @Inject constructor(
 
     /**
      * Request the server to add a Matter device to the network and commission it
-     * @return `true` if the request was successful
+     * @return [MatterCommissionResponse] detailing the server's response, or `null` if the server
+     * did not return a response
      */
-    override suspend fun commissionMatterDevice(code: String): Boolean {
+    override suspend fun commissionMatterDevice(code: String): MatterCommissionResponse? {
         val response = sendMessage(
             WebSocketRequest(
                 message = mapOf(
@@ -347,14 +349,24 @@ class WebSocketRepositoryImpl @Inject constructor(
             )
         )
 
-        return response?.success == true
+        return response?.let {
+            MatterCommissionResponse(
+                success = response.success == true,
+                errorCode = if (response.error?.has("code") == true) {
+                    response.error.get("code").let {
+                        if (it.isNumber) it.asInt() else null
+                    }
+                } else null
+            )
+        }
     }
 
     /**
      * Request the server to commission a Matter device that is already on the network
-     * @return `true` if the request was successful
+     * @return [MatterCommissionResponse] detailing the server's response, or `null` if the server
+     * did not return a response
      */
-    override suspend fun commissionMatterDeviceOnNetwork(pin: Long): Boolean {
+    override suspend fun commissionMatterDeviceOnNetwork(pin: Long): MatterCommissionResponse? {
         val response = sendMessage(
             WebSocketRequest(
                 message = mapOf(
@@ -365,7 +377,16 @@ class WebSocketRepositoryImpl @Inject constructor(
             )
         )
 
-        return response?.success == true
+        return response?.let {
+            MatterCommissionResponse(
+                success = response.success == true,
+                errorCode = if (response.error?.has("code") == true) {
+                    response.error.get("code").let {
+                        if (it.isNumber) it.asInt() else null
+                    }
+                } else null
+            )
+        }
     }
 
     private suspend fun connect(): Boolean {

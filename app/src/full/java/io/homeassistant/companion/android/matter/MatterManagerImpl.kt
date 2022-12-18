@@ -8,6 +8,7 @@ import android.util.Log
 import com.google.android.gms.home.matter.Matter
 import com.google.android.gms.home.matter.commissioning.CommissioningRequest
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
 import javax.inject.Inject
 
 class MatterManagerImpl @Inject constructor(
@@ -45,21 +46,21 @@ class MatterManagerImpl @Inject constructor(
         }
     }
 
-    override suspend fun commissionDevice(code: String): Boolean {
+    override suspend fun commissionDevice(code: String): MatterCommissionResponse? {
         return try {
             websocketRepository.commissionMatterDevice(code)
         } catch (e: Exception) {
             Log.e(TAG, "Error while executing server commissioning request", e)
-            false
+            null
         }
     }
 
-    override suspend fun commissionOnNetworkDevice(pin: Long): Boolean {
+    override suspend fun commissionOnNetworkDevice(pin: Long): MatterCommissionResponse? {
         return try {
             websocketRepository.commissionMatterDeviceOnNetwork(pin)
         } catch (e: Exception) {
             Log.e(TAG, "Error while executing server commissioning request", e)
-            false
+            null
         }
     }
 }

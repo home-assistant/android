@@ -5,6 +5,9 @@ import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.google.android.gms.home.matter.Matter
 import com.google.android.gms.home.matter.commissioning.SharedDeviceData
 import com.google.android.material.composethemeadapter.MdcTheme
@@ -21,6 +24,7 @@ class MatterCommissioningActivity : AppCompatActivity() {
 
     private val viewModel: MatterCommissioningViewModel by viewModels()
     private var deviceCode: String? = null
+    private var deviceName by mutableStateOf<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,6 +33,7 @@ class MatterCommissioningActivity : AppCompatActivity() {
             MdcTheme {
                 MatterCommissioningView(
                     step = viewModel.step,
+                    deviceName = deviceName,
                     onConfirmCommissioning = { deviceCode?.let { viewModel.commissionDeviceWithCode(it) } },
                     onClose = { finish() },
                     onContinue = { continueToApp(false) }
@@ -47,12 +52,12 @@ class MatterCommissioningActivity : AppCompatActivity() {
                     "Matter commissioning data:\n" +
                         "device name: ${data.deviceName}\n" +
                         "room name: ${data.roomName}\n" +
-                        "device type: ${data.deviceType}\n" +
                         "product id: ${data.productId}\n" +
                         "vendor id: ${data.vendorId}\n" +
                         "window expires: ${data.commissioningWindowExpirationMillis}"
                 )
 
+                deviceName = data.deviceName
                 deviceCode = data.manualPairingCode
                 viewModel.checkSupport()
             } catch (e: SharedDeviceData.InvalidSharedDeviceDataException) {

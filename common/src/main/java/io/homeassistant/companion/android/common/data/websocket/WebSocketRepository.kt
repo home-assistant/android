@@ -11,6 +11,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Do
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TemplateUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TriggerEvent
@@ -35,7 +36,7 @@ interface WebSocketRepository {
     suspend fun getTemplateUpdates(template: String): Flow<TemplateUpdatedEvent>?
     suspend fun getNotifications(): Flow<Map<String, Any>>?
     suspend fun ackNotification(confirmId: String): Boolean
-    suspend fun commissionMatterDevice(code: String): Boolean
-    suspend fun commissionMatterDeviceOnNetwork(pin: Long): Boolean
+    suspend fun commissionMatterDevice(code: String): MatterCommissionResponse?
+    suspend fun commissionMatterDeviceOnNetwork(pin: Long): MatterCommissionResponse?
     suspend fun getConversation(speech: String): ConversationResponse?
 }

@@ -45,4 +45,5 @@ interface WebViewPresenter {
     fun startCommissioningMatterDevice(context: Context)
     fun getMatterCommissioningStatusFlow(): Flow<MatterFrontendCommissioningStatus>
     fun getMatterCommissioningIntent(): IntentSender?
+    fun confirmMatterCommissioningError()
 }

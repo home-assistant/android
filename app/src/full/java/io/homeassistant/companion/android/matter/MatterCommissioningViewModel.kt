@@ -18,46 +18,46 @@ class MatterCommissioningViewModel @Inject constructor(
     application: Application
 ) : AndroidViewModel(application) {
 
-    enum class CommissioningFlowStep {
-        NOT_STARTED,
-        NOT_REGISTERED,
-        CHECKING_CORE,
-        NOT_SUPPORTED,
-        CONFIRMATION,
-        WORKING,
-        SUCCESS,
-        FAILURE
+    sealed class CommissioningFlowStep {
+        object NotStarted : CommissioningFlowStep()
+        object NotRegistered : CommissioningFlowStep()
+        object CheckingCore : CommissioningFlowStep()
+        object NotSupported : CommissioningFlowStep()
+        object Confirmation : CommissioningFlowStep()
+        object Working : CommissioningFlowStep()
+        object Success : CommissioningFlowStep()
+        class Failure(val errorCode: Int? = null) : CommissioningFlowStep()
     }
 
-    var step by mutableStateOf(CommissioningFlowStep.NOT_STARTED)
+    var step by mutableStateOf<CommissioningFlowStep>(CommissioningFlowStep.NotStarted)
         private set
 
     fun checkSupport() {
         viewModelScope.launch {
-            if (step != CommissioningFlowStep.NOT_STARTED) return@launch
+            if (step != CommissioningFlowStep.NotStarted) return@launch
 
             if (!integrationRepository.isRegistered()) {
-                step = CommissioningFlowStep.NOT_REGISTERED
+                step = CommissioningFlowStep.NotRegistered
                 return@launch
             }
 
-            step = CommissioningFlowStep.CHECKING_CORE
+            step = CommissioningFlowStep.CheckingCore
 
             val coreSupport = matterManager.coreSupportsCommissioning()
             step =
-                if (coreSupport) CommissioningFlowStep.CONFIRMATION
-                else CommissioningFlowStep.NOT_SUPPORTED
+                if (coreSupport) CommissioningFlowStep.Confirmation
+                else CommissioningFlowStep.NotSupported
         }
     }
 
     fun commissionDeviceWithCode(code: String) {
         viewModelScope.launch {
-            step = CommissioningFlowStep.WORKING
+            step = CommissioningFlowStep.Working
 
             val result = matterManager.commissionDevice(code)
             step =
-                if (result) CommissioningFlowStep.SUCCESS
-                else CommissioningFlowStep.FAILURE
+                if (result?.success == true) CommissioningFlowStep.Success
+                else CommissioningFlowStep.Failure(result?.errorCode)
         }
     }
 }

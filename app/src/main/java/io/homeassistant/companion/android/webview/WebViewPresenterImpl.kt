@@ -283,4 +283,8 @@ class WebViewPresenterImpl @Inject constructor(
         matterCommissioningIntentSender = null
         return intent
     }
+
+    override fun confirmMatterCommissioningError() {
+        _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.NOT_STARTED)
+    }
 }
