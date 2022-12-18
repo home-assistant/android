@@ -965,4 +965,8 @@
     <string name="sensor_name_daily_steps">Daily Steps</string>
     <string name="sensor_description_daily_steps">The total step count over a day, where the previous day ends and a new day begins at 12:00 AM local time.</string>
     <string name="tile_vibrate">Vibrate when clicked</string>
+    <string name="no_results">No results yet</string>
+    <string name="speak">Speak</string>
+    <string name="no_conversation_support">You must be at least on Home Assistant 2023.1 and have the conversation integration enabled</string>
+    <string name="conversation">Conversation</string>
 </resources>

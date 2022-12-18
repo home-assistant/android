@@ -23,6 +23,7 @@ import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.ConversationResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DomainResponse
@@ -177,6 +178,18 @@ class WebSocketRepositoryImpl @Inject constructor(
         return response?.map {
             DomainResponse(it.key, it.value)
         }
+    }
+
+    override suspend fun getConversation(speech: String): ConversationResponse? {
+        // TODO: Send default locale of device with request.
+        val socketResponse = sendMessage(
+            mapOf(
+                "type" to "conversation/process",
+                "text" to speech
+            )
+        )
+
+        return mapResponse(socketResponse)
     }
 
     override suspend fun getStateChanges(): Flow<StateChangedEvent>? =
