@@ -40,19 +40,18 @@ import io.homeassistant.companion.android.common.R as commonR
 @Composable
 fun MatterCommissioningView(
     step: CommissioningFlowStep,
+    deviceName: String?,
     onConfirmCommissioning: () -> Unit,
     onClose: () -> Unit,
     onContinue: () -> Unit
 ) {
-    if (step == CommissioningFlowStep.NOT_STARTED) return
+    if (step == CommissioningFlowStep.NotStarted) return
 
     val screenWidth = LocalConfiguration.current.screenWidthDp
-    val notLoadingSteps = listOf(
-        CommissioningFlowStep.NOT_REGISTERED,
-        CommissioningFlowStep.NOT_SUPPORTED,
-        CommissioningFlowStep.CONFIRMATION,
-        CommissioningFlowStep.SUCCESS,
-        CommissioningFlowStep.FAILURE
+    val loadingSteps = listOf(
+        CommissioningFlowStep.NotStarted,
+        CommissioningFlowStep.CheckingCore,
+        CommissioningFlowStep.Working
     )
 
     Box(
@@ -74,7 +73,7 @@ fun MatterCommissioningView(
                         .fillMaxWidth()
                         .align(Alignment.CenterHorizontally)
                 ) {
-                    if (step !in notLoadingSteps) {
+                    if (step in loadingSteps) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -82,7 +81,7 @@ fun MatterCommissioningView(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             CircularProgressIndicator()
-                            if (step == CommissioningFlowStep.WORKING) {
+                            if (step is CommissioningFlowStep.Working) {
                                 Text(
                                     text = stringResource(commonR.string.matter_shared_status_working),
                                     textAlign = TextAlign.Center,
@@ -94,16 +93,26 @@ fun MatterCommissioningView(
                         }
                     } else {
                         Text(
-                            text = stringResource(
-                                when (step) {
-                                    CommissioningFlowStep.NOT_REGISTERED -> commonR.string.matter_shared_status_not_registered
-                                    CommissioningFlowStep.NOT_SUPPORTED -> commonR.string.matter_shared_status_not_supported
-                                    CommissioningFlowStep.CONFIRMATION -> commonR.string.matter_shared_status_confirmation
-                                    CommissioningFlowStep.SUCCESS -> commonR.string.matter_shared_status_success
-                                    CommissioningFlowStep.FAILURE -> commonR.string.matter_shared_status_failure
-                                    else -> 0 // not used because everything above is in notLoadingSteps
+                            text = when (step) {
+                                CommissioningFlowStep.NotRegistered -> stringResource(commonR.string.matter_shared_status_not_registered)
+                                CommissioningFlowStep.NotSupported -> stringResource(commonR.string.matter_shared_status_not_supported)
+                                CommissioningFlowStep.Confirmation -> {
+                                    if (deviceName?.isNotBlank() == true) {
+                                        stringResource(commonR.string.matter_shared_status_confirmation_named, deviceName)
+                                    } else {
+                                        stringResource(commonR.string.matter_shared_status_confirmation)
+                                    }
                                 }
-                            ),
+                                CommissioningFlowStep.Success -> stringResource(commonR.string.matter_shared_status_success)
+                                is CommissioningFlowStep.Failure -> {
+                                    if (step.errorCode != null) {
+                                        stringResource(commonR.string.matter_shared_status_failure_code, step.errorCode)
+                                    } else {
+                                        stringResource(commonR.string.matter_shared_status_failure)
+                                    }
+                                }
+                                else -> "" // not used because everything above is not in loadingSteps
+                            },
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -111,36 +120,36 @@ fun MatterCommissioningView(
                 }
             }
 
-            if (step in notLoadingSteps) {
+            if (step !in loadingSteps) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 32.dp, bottom = 16.dp)
                 ) {
-                    if (step == CommissioningFlowStep.CONFIRMATION || step == CommissioningFlowStep.FAILURE) {
+                    if (step == CommissioningFlowStep.Confirmation || step is CommissioningFlowStep.Failure) {
                         TextButton(onClick = { onClose() }) {
                             Text(stringResource(commonR.string.cancel))
                         }
                     }
                     Spacer(modifier = Modifier.weight(1f))
                     when (step) {
-                        CommissioningFlowStep.NOT_REGISTERED,
-                        CommissioningFlowStep.NOT_SUPPORTED -> {
+                        CommissioningFlowStep.NotRegistered,
+                        CommissioningFlowStep.NotSupported -> {
                             Button(onClick = { onClose() }) {
                                 Text(stringResource(commonR.string.close))
                             }
                         }
-                        CommissioningFlowStep.CONFIRMATION -> {
+                        CommissioningFlowStep.Confirmation -> {
                             Button(onClick = { onConfirmCommissioning() }) {
                                 Text(stringResource(commonR.string.add_device))
                             }
                         }
-                        CommissioningFlowStep.SUCCESS -> {
+                        CommissioningFlowStep.Success -> {
                             Button(onClick = { onContinue() }) {
                                 Text(stringResource(commonR.string.continue_connect))
                             }
                         }
-                        CommissioningFlowStep.FAILURE -> {
+                        is CommissioningFlowStep.Failure -> {
                             Button(onClick = { onConfirmCommissioning() }) {
                                 Text(stringResource(commonR.string.retry))
                             }
@@ -184,6 +193,7 @@ fun PreviewMatterCommissioningView(
     MdcTheme {
         MatterCommissioningView(
             step = step,
+            deviceName = "Manufacturer Matter Light",
             onConfirmCommissioning = { },
             onClose = { },
             onContinue = { }

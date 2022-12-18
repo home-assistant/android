@@ -342,9 +342,11 @@
     <string name="matter_shared_title">Add shared Matter device</string>
     <string name="matter_shared_status_not_registered">Please connect to your Home Assistant server before sharing a Matter device.</string>
     <string name="matter_shared_status_not_supported">To add a shared Matter device, please update your Home Assistant server and add Matter first.</string>
+    <string name="matter_shared_status_confirmation_named">Do you want to add %1$s to Home Assistant?</string>
     <string name="matter_shared_status_confirmation">Do you want to add this Matter device to Home Assistant?</string>
     <string name="matter_shared_status_working">Adding device, this may take a minute or two.</string>
-    <string name="matter_shared_status_success">The device was added! 🎉</string>
+    <string name="matter_shared_status_success">The device has been added! 🎉</string>
+    <string name="matter_shared_status_failure_code">Unable to add the device to Home Assistant (error code %1$d). Would you like to try again?</string>
     <string name="matter_shared_status_failure">Unable to add the device to Home Assistant. Would you like to try again?</string>
     <string name="maximum">Maximum</string>
     <string name="media_player">Media player</string>

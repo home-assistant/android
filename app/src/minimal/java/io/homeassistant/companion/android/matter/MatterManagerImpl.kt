@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.matter
 
 import android.content.Context
 import android.content.IntentSender
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
 import javax.inject.Inject
 
 class MatterManagerImpl @Inject constructor() : MatterManager {
@@ -21,7 +22,7 @@ class MatterManagerImpl @Inject constructor() : MatterManager {
         onFailure(IllegalStateException("Matter commissioning is not supported with the minimal flavor"))
     }
 
-    override suspend fun commissionDevice(code: String): Boolean = false
+    override suspend fun commissionDevice(code: String): MatterCommissionResponse? = null
 
-    override suspend fun commissionOnNetworkDevice(pin: Long): Boolean = false
+    override suspend fun commissionOnNetworkDevice(pin: Long): MatterCommissionResponse? = null
 }
