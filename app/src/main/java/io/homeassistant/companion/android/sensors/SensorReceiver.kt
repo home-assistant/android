@@ -14,13 +14,24 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.sensors.BatterySensorManager
 import io.homeassistant.companion.android.common.sensors.DNDSensorManager
+import io.homeassistant.companion.android.common.sensors.DisplaySensorManager
+import io.homeassistant.companion.android.common.sensors.KeyguardSensorManager
+import io.homeassistant.companion.android.common.sensors.LastRebootSensorManager
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
+import io.homeassistant.companion.android.common.sensors.LightSensorManager
+import io.homeassistant.companion.android.common.sensors.MobileDataManager
 import io.homeassistant.companion.android.common.sensors.NetworkSensorManager
 import io.homeassistant.companion.android.common.sensors.NextAlarmManager
+import io.homeassistant.companion.android.common.sensors.PhoneStateSensorManager
 import io.homeassistant.companion.android.common.sensors.PowerSensorManager
+import io.homeassistant.companion.android.common.sensors.PressureSensorManager
+import io.homeassistant.companion.android.common.sensors.ProximitySensorManager
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
 import io.homeassistant.companion.android.common.sensors.StepsSensorManager
+import io.homeassistant.companion.android.common.sensors.StorageSensorManager
+import io.homeassistant.companion.android.common.sensors.TimeZoneManager
+import io.homeassistant.companion.android.common.sensors.TrafficStatsManager
 import io.homeassistant.companion.android.settings.SettingsActivity
 
 @AndroidEntryPoint
