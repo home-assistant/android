@@ -92,6 +92,11 @@
             android:title="@string/autoplay_video"
             android:summary="@string/autoplay_video_summary" />
         <SwitchPreference
+            android:key="always_show_first_view_on_app_start"
+            android:icon="@drawable/ic_home_variant_outline"
+            android:title="@string/always_show_first_view_on_app_start"
+            android:summary="@string/always_show_first_view_on_app_start_summary" />
+        <SwitchPreference
             android:key="webview_debug"
             android:icon="@drawable/ic_android_debug_bridge"
             android:title="@string/remote_debugging"

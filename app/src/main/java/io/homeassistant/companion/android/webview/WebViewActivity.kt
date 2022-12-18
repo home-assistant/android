@@ -94,6 +94,7 @@ import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.ChangeLog
 import io.homeassistant.companion.android.util.DataUriDownloadManager
+import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.util.OnSwipeListener
 import io.homeassistant.companion.android.util.TLSWebViewClient
 import io.homeassistant.companion.android.util.isStarted
@@ -744,6 +745,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             checkAndWarnForDisabledLocation()
         }
         changeLog.showChangeLog(this, false)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        openFirstViewOnDashboardIfNeeded()
     }
 
     override fun onPause() {
@@ -1432,5 +1438,31 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             }
             """
         ) {}
+    }
+
+    private fun openFirstViewOnDashboardIfNeeded() {
+        if (presenter.isAlwaysShowFirstViewOnAppStartEnabled() &&
+            LifecycleHandler.isAppInBackground()
+        ) {
+            // Pattern matches urls which are NOT allowed to show the first view after app is started
+            // This is
+            // /config/* as these are the settings of HA but NOT /config/dashboard. This is just the overview of the HA settings
+            // /hassio/* as these are the addons section of HA settings.
+            if (webView.url?.matches(".*://.*/(config/(?!\\bdashboard\\b)|hassio)/*.*".toRegex()) == false) {
+                Log.d(TAG, "Show first view of default dashboard.")
+                webView.evaluateJavascript(
+                    """
+                    var anchor = 'a:nth-child(1)';
+                    var defaultPanel = window.localStorage.getItem('defaultPanel')?.replaceAll('"',"");
+                    if(defaultPanel) anchor = 'a[href="/' + defaultPanel + '"]';
+                    document.querySelector('body > home-assistant').shadowRoot.querySelector('home-assistant-main')
+                                                                   .shadowRoot.querySelector('#drawer > ha-sidebar')
+                                                                   .shadowRoot.querySelector('paper-listbox > ' + anchor).click();
+                    window.scrollTo(0, 0);
+                    """,
+                    null
+                )
+            } else Log.d(TAG, "User is in the Home Assistant config. Will not show first view of the default dashboard.")
+        }
     }
 }

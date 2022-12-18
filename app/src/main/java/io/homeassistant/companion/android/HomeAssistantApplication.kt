@@ -18,6 +18,7 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.language.LanguagesManager
+import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.websocket.WebsocketBroadcastReceiver
 import io.homeassistant.companion.android.widgets.button.ButtonWidget
 import io.homeassistant.companion.android.widgets.entity.EntityWidget
@@ -45,6 +46,8 @@ open class HomeAssistantApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+
+        registerActivityLifecycleCallbacks(LifecycleHandler)
 
         ioScope.launch {
             initCrashReporting(

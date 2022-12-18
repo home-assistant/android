@@ -29,6 +29,7 @@ interface WebViewPresenter {
 
     fun isLockEnabled(): Boolean
     fun isAutoPlayVideoEnabled(): Boolean
+    fun isAlwaysShowFirstViewOnAppStartEnabled(): Boolean
 
     fun sessionTimeOut(): Int
 
