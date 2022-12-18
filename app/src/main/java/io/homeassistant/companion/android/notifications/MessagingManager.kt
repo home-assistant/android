@@ -63,7 +63,7 @@ import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.NotificationSensorManager
-import io.homeassistant.companion.android.sensors.SensorWorker
+import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.UrlHandler
 import io.homeassistant.companion.android.websocket.WebsocketManager
@@ -537,7 +537,7 @@ class MessagingManager @Inject constructor(
                             }
                         }
                     }
-                    COMMAND_UPDATE_SENSORS -> SensorWorker.start(context)
+                    COMMAND_UPDATE_SENSORS -> SensorReceiver.updateAllSensors(context)
                     COMMAND_LAUNCH_APP -> {
                         if (!jsonData[PACKAGE_NAME].isNullOrEmpty()) {
                             handleDeviceCommands(jsonData)
@@ -867,7 +867,7 @@ class MessagingManager @Inject constructor(
                         )
                     }
                     BluetoothSensorManager().requestSensorUpdate(context)
-                    SensorWorker.start(context)
+                    SensorReceiver.updateAllSensors(context)
                 }
             }
             COMMAND_BEACON_MONITOR -> {
@@ -1673,6 +1673,7 @@ class MessagingManager @Inject constructor(
         uri: String
     ): PendingIntent {
         val needsPackage = uri.startsWith(APP_PREFIX) || uri.startsWith(INTENT_PREFIX)
+        val otherApp = needsPackage || UrlHandler.isAbsoluteUrl(uri) || uri.startsWith(DEEP_LINK_PREFIX)
         val intent = when {
             uri.isBlank() -> {
                 WebViewActivity.newInstance(context)
@@ -1708,8 +1709,10 @@ class MessagingManager @Inject constructor(
             intent.putExtra("fragment", NOTIFICATION_HISTORY)
 
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-        intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+        if (!otherApp) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+            intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+        }
 
         return PendingIntent.getActivity(
             context,

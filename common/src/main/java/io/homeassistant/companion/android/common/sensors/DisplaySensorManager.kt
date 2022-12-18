@@ -1,9 +1,8 @@
-package io.homeassistant.companion.android.sensors
+package io.homeassistant.companion.android.common.sensors
 
 import android.content.Context
 import android.provider.Settings
 import android.util.Log
-import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.R as commonR
 
 class DisplaySensorManager : SensorManager {
@@ -34,7 +33,7 @@ class DisplaySensorManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_display_sensors
 
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(screenBrightness, screenOffTimeout)
     }
 

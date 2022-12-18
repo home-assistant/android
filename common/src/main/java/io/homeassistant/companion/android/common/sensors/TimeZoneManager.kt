@@ -1,7 +1,6 @@
-package io.homeassistant.companion.android.sensors
+package io.homeassistant.companion.android.common.sensors
 
 import android.content.Context
-import io.homeassistant.companion.android.common.sensors.SensorManager
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
@@ -29,7 +28,7 @@ class TimeZoneManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_time_zone
 
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(currentTimeZone)
     }
 

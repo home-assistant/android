@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK 11
-        uses: actions/setup-java@v3.6.0
+        uses: actions/setup-java@v3.9.0
         with:
           distribution: 'adopt'
           java-version: '11'
@@ -37,7 +37,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK 11
-        uses: actions/setup-java@v3.6.0
+        uses: actions/setup-java@v3.9.0
         with:
           distribution: 'adopt'
           java-version: '11'
@@ -76,7 +76,7 @@ jobs:
         fi
 
     - name: Set up JDK 11
-      uses: actions/setup-java@v3.6.0
+      uses: actions/setup-java@v3.9.0
       with:
         distribution: 'adopt'
         java-version: '11'
@@ -112,6 +112,6 @@ jobs:
         fi
     
     - name: Archive Debug Build
-      uses: kittaakos/upload-artifact-as-is@v0
+      uses: actions/upload-artifact@v3
       with:
         path: ./**/*.apk

@@ -1,8 +1,10 @@
 package io.homeassistant.companion.android.webview
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.DownloadManager
 import android.app.PictureInPictureParams
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -43,7 +45,9 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -52,7 +56,9 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import com.google.android.exoplayer2.DefaultLoadControl
@@ -80,11 +86,11 @@ import io.homeassistant.companion.android.databinding.ActivityWebviewBinding
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
 import io.homeassistant.companion.android.databinding.ExoPlayerViewBinding
 import io.homeassistant.companion.android.launch.LaunchActivity
+import io.homeassistant.companion.android.matter.MatterFrontendCommissioningStatus
 import io.homeassistant.companion.android.nfc.WriteNfcTag
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.SettingsActivity
-import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.ChangeLog
 import io.homeassistant.companion.android.util.DataUriDownloadManager
@@ -154,6 +160,13 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         mFilePathCallback?.onReceiveValue(result)
         mFilePathCallback = null
     }
+    private val commissionMatterDevice = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+        val success = result.resultCode == Activity.RESULT_OK
+        // TODO send something to frontend?
+
+        if (success) Log.d(TAG, "Matter commissioning returned success")
+        else Log.d(TAG, "Matter commissioning returned with non-OK code ${result.resultCode}")
+    }
 
     @Inject
     lateinit var presenter: WebViewPresenter
@@ -163,9 +176,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     @Inject
     lateinit var changeLog: ChangeLog
-
-    @Inject
-    lateinit var languagesManager: LanguagesManager
 
     @Inject
     lateinit var urlRepository: UrlRepository
@@ -256,8 +266,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         onBackPressedDispatcher.addCallback(this, onBackPressed)
 
         webView.apply {
-            // TODO This quick bar workaround only works on Home Assistant core versions <2022.7
-            // If not 'fixed' or officially supported: should be removed in Android 2023.1 (GitHub: #2690)
             setOnTouchListener(object : OnSwipeListener() {
                 override fun onSwipe(
                     e1: MotionEvent,
@@ -582,6 +590,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                 "config/get" -> {
                                     val pm: PackageManager = context.packageManager
                                     val hasNfc = pm.hasSystemFeature(PackageManager.FEATURE_NFC)
+                                    val canCommissionMatter = presenter.appCanCommissionMatterDevice()
                                     webView.externalBus(
                                         id = JSONObject(message).get("id"),
                                         type = "result",
@@ -590,7 +599,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                             mapOf(
                                                 "hasSettingsScreen" to true,
                                                 "canWriteTag" to hasNfc,
-                                                "hasExoPlayer" to true
+                                                "hasExoPlayer" to true,
+                                                "canCommissionMatter" to canCommissionMatter
                                             )
                                         )
                                     ) {
@@ -621,6 +631,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                             messageId = JSONObject(message).getInt("id")
                                         )
                                     )
+                                "matter/commission" -> presenter.startCommissioningMatterDevice(this@WebViewActivity)
                                 "exoplayer/play_hls" -> exoPlayHls(json)
                                 "exoplayer/stop" -> exoStopHls()
                                 "exoplayer/resize" -> exoResizeHls(json)
@@ -653,12 +664,30 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         if (presenter.isKeepScreenOnEnabled())
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
-        currentLang = languagesManager.getCurrentLang()
         currentAutoplay = presenter.isAutoPlayVideoEnabled()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val webviewPackage = WebViewCompat.getCurrentWebViewPackage(this)
             Log.d(TAG, "Current webview package ${webviewPackage?.packageName} and version ${webviewPackage?.versionName}")
+        }
+
+        lifecycleScope.launch {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                presenter.getMatterCommissioningStatusFlow().collect {
+                    Log.d(TAG, "Matter commissioning status changed to $it")
+                    when (it) {
+                        MatterFrontendCommissioningStatus.IN_PROGRESS -> {
+                            presenter.getMatterCommissioningIntent()?.let { intentSender ->
+                                commissionMatterDevice.launch(IntentSenderRequest.Builder(intentSender).build())
+                            }
+                        }
+                        MatterFrontendCommissioningStatus.ERROR -> {
+                            // TODO show error?
+                        }
+                        else -> { } // Do nothing
+                    }
+                }
+            }
         }
     }
 
@@ -695,7 +724,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     override fun onResume() {
         super.onResume()
-        if ((currentLang != languagesManager.getCurrentLang()) || currentAutoplay != presenter.isAutoPlayVideoEnabled())
+        if (currentAutoplay != presenter.isAutoPlayVideoEnabled())
             recreate()
 
         appLocked = presenter.isAppLocked()
@@ -712,7 +741,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         SensorWorker.start(this)
         WebsocketManager.start(this)
-        checkAndWarnForDisabledLocation()
+        lifecycleScope.launch {
+            checkAndWarnForDisabledLocation()
+        }
         changeLog.showChangeLog(this, false)
     }
 
@@ -723,11 +754,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     override fun onPause() {
         super.onPause()
-        SensorWorker.start(this)
+        SensorReceiver.updateAllSensors(this)
         presenter.setAppActive(false)
     }
 
-    private fun checkAndWarnForDisabledLocation() {
+    private suspend fun checkAndWarnForDisabledLocation() {
         var showLocationDisabledWarning = false
         var settingsWithLocationPermissions = mutableListOf<String>()
         if (!DisabledLocationHandler.isLocationEnabled(this) && presenter.isSsidUsed()) {
@@ -986,10 +1017,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onPictureInPictureModeChanged(
         isInPictureInPictureMode: Boolean,
         newConfig: Configuration
     ) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
         if (exoPlayerView.visibility != View.VISIBLE) {
             if (isInPictureInPictureMode) {
                 (decor.getChildAt(3) as FrameLayout).layoutParams.height =
@@ -1301,17 +1334,19 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         id: Any,
         type: String,
         success: Boolean,
-        result: Any?,
+        result: Any? = null,
+        error: Any? = null,
         callback: ValueCallback<String>?
     ) {
-        val json = JSONObject(
-            mapOf(
-                "id" to id,
-                "type" to type,
-                "success" to success,
-                "result" to result
-            )
+        val map = mutableMapOf(
+            "id" to id,
+            "type" to type,
+            "success" to success
         )
+        if (result != null) map["result"] = result
+        if (error != null) map["error"] = error
+
+        val json = JSONObject(map.toMap())
         val script = "externalBus($json);"
 
         Log.d(TAG, script)
@@ -1353,8 +1388,15 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             }
             else -> {
                 Log.d(TAG, "Received download request for unsupported scheme, forwarding to system")
-                val browserIntent = Intent(Intent.ACTION_VIEW, uri)
-                startActivity(browserIntent)
+                try {
+                    val browserIntent = Intent(Intent.ACTION_VIEW, uri).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    }
+                    startActivity(browserIntent)
+                } catch (e: ActivityNotFoundException) {
+                    Log.e(TAG, "Unable to forward download request to system", e)
+                    Toast.makeText(this, commonR.string.failed_unsupported, Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }

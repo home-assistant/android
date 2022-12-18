@@ -66,9 +66,6 @@ android {
 
     kotlinOptions {
         jvmTarget = "11"
-        // Temporarily required to implement an interface from Compose because they use @JvmDefault
-        // Remove when kotlin-gradle-plugin is >=1.6.20 (https://issuetracker.google.com/issues/217593040)
-        freeCompilerArgs = freeCompilerArgs + "-Xjvm-default=all"
     }
 
     lint {
@@ -103,8 +100,8 @@ dependencies {
     implementation("androidx.wear:wear-remote-interactions:1.0.0")
     implementation("androidx.wear:wear-phone-interactions:1.0.1")
 
-    implementation("com.google.dagger:hilt-android:2.44")
-    kapt("com.google.dagger:hilt-android-compiler:2.44")
+    implementation("com.google.dagger:hilt-android:2.44.2")
+    kapt("com.google.dagger:hilt-android-compiler:2.44.2")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.4")
     implementation("com.squareup.okhttp3:okhttp:4.10.0")

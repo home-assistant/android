@@ -23,10 +23,12 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
 
         private const val TAG = "HRSensor"
         private var isListenerRegistered = false
+        private var listenerLastRegistered = 0
         private val skipAccuracy = listOf(
             SENSOR_STATUS_UNRELIABLE,
             SENSOR_STATUS_NO_CONTACT
         )
+        private var eventCount = 0
         private val heartRate = SensorManager.BasicSensor(
             "heart_rate",
             "sensor",
@@ -47,7 +49,7 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
     override val name: Int
         get() = commonR.string.sensor_name_heart_rate
 
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(heartRate)
     }
 
@@ -74,6 +76,12 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
         if (!isEnabled(latestContext, heartRate.id))
             return
 
+        val now = System.currentTimeMillis()
+        if (listenerLastRegistered + 60000 < now && isListenerRegistered) {
+            Log.d(TAG, "Re-registering listener as it appears to be stuck")
+            mySensorManager.unregisterListener(this)
+            isListenerRegistered = false
+        }
         mySensorManager = latestContext.getSystemService()!!
 
         val heartRateSensor = mySensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE)
@@ -85,6 +93,7 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
             )
             Log.d(TAG, "Heart Rate sensor listener registered")
             isListenerRegistered = true
+            listenerLastRegistered = now.toInt()
         }
     }
 
@@ -93,7 +102,14 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
-        if (event?.sensor?.type == Sensor.TYPE_HEART_RATE && event.accuracy !in skipAccuracy) {
+        eventCount++
+        val validReading = event?.sensor?.type == Sensor.TYPE_HEART_RATE && event.accuracy !in skipAccuracy &&
+            event.values[0].roundToInt() >= 0
+        if (event?.sensor?.type == Sensor.TYPE_HEART_RATE) {
+            Log.d(TAG, "HR event received with accuracy: ${getAccuracy(event.accuracy)} and value: ${event.values[0]} with event count: $eventCount")
+        } else
+            Log.d(TAG, "No HR event received")
+        if (event != null && validReading) {
             onSensorUpdated(
                 latestContext,
                 heartRate,
@@ -104,9 +120,12 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
                 )
             )
         }
-        mySensorManager.unregisterListener(this)
-        Log.d(TAG, "Heart Rate sensor listener unregistered")
-        isListenerRegistered = false
+        if (validReading || eventCount >= 10) {
+            mySensorManager.unregisterListener(this)
+            Log.d(TAG, "Heart Rate sensor listener unregistered")
+            isListenerRegistered = false
+            eventCount = 0
+        }
     }
 
     private fun getAccuracy(accuracy: Int): String {
@@ -114,6 +133,8 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
             SENSOR_STATUS_ACCURACY_HIGH -> "high"
             SENSOR_STATUS_ACCURACY_MEDIUM -> "medium"
             SENSOR_STATUS_ACCURACY_LOW -> "low"
+            SENSOR_STATUS_UNRELIABLE -> "unreliable"
+            SENSOR_STATUS_NO_CONTACT -> "no_contact"
             else -> "unknown"
         }
     }

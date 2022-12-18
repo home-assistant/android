@@ -9,11 +9,10 @@ import android.os.Process
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
-import io.homeassistant.companion.android.common.BuildConfig
 import java.math.RoundingMode
 import io.homeassistant.companion.android.common.R as commonR
 
-class AppSensorManager : SensorManager {
+abstract class AppSensorManagerBase : SensorManager {
     companion object {
         private const val TAG = "AppSensor"
         private const val GB = 1000000000
@@ -100,7 +99,7 @@ class AppSensorManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_app_sensor
 
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return when {
             (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) ->
                 listOf(
@@ -137,12 +136,14 @@ class AppSensorManager : SensorManager {
         }
     }
 
+    abstract fun getCurrentVersion(): String
+
     private fun updateCurrentVersion(context: Context) {
 
         if (!isEnabled(context, currentVersion.id))
             return
 
-        val state = BuildConfig.VERSION_NAME
+        val state = getCurrentVersion()
 
         onSensorUpdated(
             context,

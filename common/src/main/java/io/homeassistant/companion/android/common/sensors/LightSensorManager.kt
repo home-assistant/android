@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.sensors
+package io.homeassistant.companion.android.common.sensors
 
 import android.content.Context
 import android.content.pm.PackageManager
@@ -8,7 +8,6 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import android.util.Log
 import androidx.core.content.getSystemService
-import io.homeassistant.companion.android.common.sensors.SensorManager
 import kotlin.math.roundToInt
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -17,6 +16,7 @@ class LightSensorManager : SensorManager, SensorEventListener {
 
         private const val TAG = "LightSensor"
         private var isListenerRegistered = false
+        private var listenerLastRegistered = 0
         private val lightSensor = SensorManager.BasicSensor(
             "light_sensor",
             "sensor",
@@ -38,7 +38,7 @@ class LightSensorManager : SensorManager, SensorEventListener {
     override val name: Int
         get() = commonR.string.sensor_name_light
 
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(lightSensor)
     }
 
@@ -65,6 +65,12 @@ class LightSensorManager : SensorManager, SensorEventListener {
         if (!isEnabled(latestContext, lightSensor.id))
             return
 
+        val now = System.currentTimeMillis()
+        if (listenerLastRegistered + SensorManager.SENSOR_LISTENER_TIMEOUT < now && isListenerRegistered) {
+            Log.d(TAG, "Re-registering listener as it appears to be stuck")
+            mySensorManager.unregisterListener(this)
+            isListenerRegistered = false
+        }
         mySensorManager = latestContext.getSystemService()!!
 
         val lightSensors = mySensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
@@ -76,6 +82,7 @@ class LightSensorManager : SensorManager, SensorEventListener {
             )
             Log.d(TAG, "Light sensor listener registered")
             isListenerRegistered = true
+            listenerLastRegistered = now.toInt()
         }
     }
 

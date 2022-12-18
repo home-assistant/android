@@ -126,7 +126,7 @@ class NetworkSensorManager : SensorManager {
         get() = false
     override val name: Int
         get() = commonR.string.sensor_name_network
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         val list = listOf(
             wifiConnection,
             bssidState,

@@ -89,19 +89,20 @@ fun MainView(
                         items(favoriteEntityIds.size) { index ->
                             val favoriteEntityID = favoriteEntityIds[index].split(",")[0]
                             if (mainViewModel.entities.isEmpty()) {
-                                // Use a normal chip when we don't have the state of the entity
+                                // when we don't have the state of the entity, create a Chip from cache as we don't have the state yet
+                                val cached = mainViewModel.getCachedEntity(favoriteEntityID)
                                 Chip(
                                     modifier = Modifier
                                         .fillMaxWidth(),
                                     icon = {
                                         Image(
-                                            asset = CommunityMaterial.Icon.cmd_bookmark,
+                                            asset = getIcon(cached?.icon, favoriteEntityID.split(".")[0], context) ?: CommunityMaterial.Icon.cmd_bookmark,
                                             colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
                                         )
                                     },
                                     label = {
                                         Text(
-                                            text = favoriteEntityID,
+                                            text = cached?.friendlyName ?: favoriteEntityID,
                                             maxLines = 2,
                                             overflow = TextOverflow.Ellipsis
                                         )

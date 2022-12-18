@@ -22,7 +22,8 @@ class OnBodySensorManager : SensorManager, SensorEventListener {
             commonR.string.sensor_name_on_body,
             commonR.string.sensor_description_on_body,
             "mdi:account",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
     }
 
@@ -38,7 +39,7 @@ class OnBodySensorManager : SensorManager, SensorEventListener {
     override val name: Int
         get() = commonR.string.sensor_name_on_body
 
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(onBodySensor)
     }
 
@@ -92,6 +93,6 @@ class OnBodySensorManager : SensorManager, SensorEventListener {
         }
 
         // Send update immediately
-        SensorWorker.start(latestContext)
+        SensorReceiver.updateAllSensors(latestContext)
     }
 }

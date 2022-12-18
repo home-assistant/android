@@ -59,8 +59,8 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.7.20")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
 
-    implementation("com.google.dagger:hilt-android:2.44")
-    kapt("com.google.dagger:hilt-android-compiler:2.44")
+    implementation("com.google.dagger:hilt-android:2.44.2")
+    kapt("com.google.dagger:hilt-android-compiler:2.44.2")
 
     api("androidx.room:room-runtime:2.4.3")
     api("androidx.room:room-ktx:2.4.3")
@@ -74,4 +74,7 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.4")
     implementation("org.altbeacon:android-beacon-library:2.19.4")
+
+    implementation("com.mikepenz:iconics-core:5.4.0")
+    implementation("com.mikepenz:community-material-typeface:7.0.96.0-kotlin@aar")
 }

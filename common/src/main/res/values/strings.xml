@@ -3,6 +3,7 @@
     <string name="account">Account</string>
     <string name="action_reply">Reply</string>
     <string name="activity_intent_error">Unable to send activity intent, please check command format</string>
+    <string name="add_device">Add device</string>
     <string name="add_service_data_field">Add Field</string>
     <string name="add_shortcut">Add Shortcut</string>
     <string name="add_ssid">Add</string>
@@ -108,6 +109,7 @@
     <string name="choose_entity">Choose entity</string>
     <string name="choose_server">Choose server</string>
     <string name="clear_favorites">Clear Favorites</string>
+    <string name="close">Close</string>
     <string name="color_temp">Color temperature: %1$d</string>
     <string name="collapse">Collapse</string>
     <string name="complication_entity_invalid">Invalid entity</string>
@@ -339,6 +341,13 @@
     <string name="manual_setup">Enter address manually</string>
     <string name="manual_title">What is your Home Assistant address?</string>
     <string name="map">Map</string>
+    <string name="matter_shared_title">Add shared Matter device</string>
+    <string name="matter_shared_status_not_registered">Please connect to your Home Assistant server before sharing a Matter device.</string>
+    <string name="matter_shared_status_not_supported">To add a shared Matter device, please update your Home Assistant server and add Matter first.</string>
+    <string name="matter_shared_status_confirmation">Do you want to add this Matter device to Home Assistant?</string>
+    <string name="matter_shared_status_working">Adding device, this may take a minute or two.</string>
+    <string name="matter_shared_status_success">The device was added! 🎉</string>
+    <string name="matter_shared_status_failure">Unable to add the device to Home Assistant. Would you like to try again?</string>
     <string name="maximum">Maximum</string>
     <string name="media_player">Media player</string>
     <string name="media_player_widget_desc">Control any media player and see current now playing image</string>
@@ -868,7 +877,8 @@
     <string name="info">Information</string>
     <string name="show_changelog">Show Change Log</string>
     <string name="show_changelog_summary">Show the change log dialog from when the app was updated</string>
-    <string name="tile_icon">Select a icon for the tile</string>
+    <string name="tile_icon">Tile Icon</string>
+    <string name="tile_icon_original">Use entity icon</string>
     <string name="tile_select">Select a tile to edit</string>
     <string name="shortcut_pinned">Pinned Shortcuts</string>
     <string name="remote_debugging">WebView Remote Debugging</string>
@@ -949,4 +959,17 @@
     <string name="sensor_name_health_services">Health Services</string>
     <string name="sensor_name_heart_rate">Heart Rate</string>
     <string name="sensor_description_heart_rate">Current heart rate in beats per minute, an attribute also exists for the reported accuracy from the sensor</string>
+    <string name="sensor_name_daily_floors">Daily Floors</string>
+    <string name="sensor_description_daily_floors">The total number floors climbed over a day, where the previous day ends and a new day begins at 12:00 AM local time</string>
+    <string name="sensor_name_daily_distance">Daily Distance</string>
+    <string name="sensor_description_daily_distance">The total distance over a day, where the previous day ends and a new day begins at 12:00 AM local time.</string>
+    <string name="sensor_name_daily_calories">Daily Calories</string>
+    <string name="sensor_description_daily_calories">The total number of calories over a day (including both BMR and active calories), where the previous day ends and a new day begins at 12:00 AM local time.</string>
+    <string name="sensor_name_daily_steps">Daily Steps</string>
+    <string name="sensor_description_daily_steps">The total step count over a day, where the previous day ends and a new day begins at 12:00 AM local time.</string>
+    <string name="tile_vibrate">Vibrate when clicked</string>
+    <string name="no_results">No results yet</string>
+    <string name="speak">Speak</string>
+    <string name="no_conversation_support">You must be at least on Home Assistant 2023.1 and have the conversation integration enabled</string>
+    <string name="conversation">Conversation</string>
 </resources>

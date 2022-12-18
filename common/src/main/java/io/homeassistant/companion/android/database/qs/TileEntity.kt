@@ -19,7 +19,9 @@ data class TileEntity(
     @ColumnInfo(name = "label")
     val label: String,
     @ColumnInfo(name = "subtitle")
-    val subtitle: String?
+    val subtitle: String?,
+    @ColumnInfo(name = "shouldVibrate", defaultValue = "0")
+    val shouldVibrate: Boolean
 )
 
 val TileEntity.isSetup: Boolean

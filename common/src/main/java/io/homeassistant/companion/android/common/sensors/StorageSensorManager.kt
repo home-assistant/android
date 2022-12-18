@@ -1,10 +1,9 @@
-package io.homeassistant.companion.android.sensors
+package io.homeassistant.companion.android.common.sensors
 
 import android.content.Context
 import android.os.Environment
 import android.os.StatFs
 import android.util.Log
-import io.homeassistant.companion.android.common.sensors.SensorManager
 import java.io.File
 import kotlin.math.roundToInt
 import io.homeassistant.companion.android.common.R as commonR
@@ -66,7 +65,7 @@ class StorageSensorManager : SensorManager {
         get() = false
     override val name: Int
         get() = commonR.string.sensor_name_storage
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(storageSensor, externalStorage)
     }
 

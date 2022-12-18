@@ -32,6 +32,7 @@ import io.homeassistant.companion.android.common.R as commonR
 @Composable
 fun NfcEditView(
     identifier: String?,
+    showDeviceSample: Boolean,
     onDuplicateClicked: () -> Unit,
     onFireEventClicked: () -> Unit
 ) {
@@ -79,15 +80,17 @@ fun NfcEditView(
         item {
             NfcTriggerExample(
                 modifier = Modifier.padding(bottom = 8.dp),
-                description = stringResource(commonR.string.nfc_trigger_any),
+                description = if (showDeviceSample) stringResource(commonR.string.nfc_trigger_any) else "",
                 example = tagTriggerExample
             )
         }
-        item {
-            NfcTriggerExample(
-                description = stringResource(commonR.string.nfc_trigger_device),
-                example = deviceTriggerExample
-            )
+        if (showDeviceSample) {
+            item {
+                NfcTriggerExample(
+                    description = stringResource(commonR.string.nfc_trigger_device),
+                    example = deviceTriggerExample
+                )
+            }
         }
     }
 }

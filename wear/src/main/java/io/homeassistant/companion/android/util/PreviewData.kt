@@ -31,3 +31,5 @@ val playPreviewEntityScene2 = Entity("scene.second", "on", mapOf("friendly_name"
 val playPreviewEntityScene3 = Entity("scene.third", "on", mapOf("friendly_name" to "Goodbye"), calendar, calendar, mapOf())
 
 val batterySensorManager = BatterySensorManager()
+
+val sensorList = listOf(BatterySensorManager.isChargingState)

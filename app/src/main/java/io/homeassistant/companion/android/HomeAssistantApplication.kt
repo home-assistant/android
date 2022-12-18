@@ -17,6 +17,7 @@ import io.homeassistant.companion.android.common.sensors.LastUpdateManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.sensors.SensorReceiver
+import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.websocket.WebsocketBroadcastReceiver
 import io.homeassistant.companion.android.widgets.button.ButtonWidget
@@ -40,6 +41,9 @@ open class HomeAssistantApplication : Application() {
     @Inject
     lateinit var keyChainRepository: KeyChainRepository
 
+    @Inject
+    lateinit var languagesManager: LanguagesManager
+
     override fun onCreate() {
         super.onCreate()
 
@@ -51,6 +55,8 @@ open class HomeAssistantApplication : Application() {
                 prefsRepository.isCrashReporting()
             )
         }
+
+        languagesManager.applyCurrentLang()
 
         // This will make sure we start/stop when we actually need too.
         registerReceiver(

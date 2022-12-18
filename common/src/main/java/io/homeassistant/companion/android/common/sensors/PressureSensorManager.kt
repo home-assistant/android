@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.sensors
+package io.homeassistant.companion.android.common.sensors
 
 import android.content.Context
 import android.content.pm.PackageManager
@@ -8,7 +8,6 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import android.util.Log
 import androidx.core.content.getSystemService
-import io.homeassistant.companion.android.common.sensors.SensorManager
 import java.math.RoundingMode
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -17,6 +16,7 @@ class PressureSensorManager : SensorManager, SensorEventListener {
 
         private const val TAG = "PressureSensor"
         private var isListenerRegistered = false
+        private var listenerLastRegistered = 0
         private val pressureSensor = SensorManager.BasicSensor(
             "pressure_sensor",
             "sensor",
@@ -41,7 +41,7 @@ class PressureSensorManager : SensorManager, SensorEventListener {
     override val name: Int
         get() = commonR.string.sensor_name_pressure
 
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(pressureSensor)
     }
 
@@ -63,6 +63,13 @@ class PressureSensorManager : SensorManager, SensorEventListener {
         if (!isEnabled(latestContext, pressureSensor.id))
             return
 
+        val now = System.currentTimeMillis()
+        if (listenerLastRegistered + SensorManager.SENSOR_LISTENER_TIMEOUT < now && isListenerRegistered) {
+            Log.d(TAG, "Re-registering listener as it appears to be stuck")
+            mySensorManager.unregisterListener(this)
+            isListenerRegistered = false
+        }
+
         mySensorManager = latestContext.getSystemService()!!
 
         val pressureSensors = mySensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE)
@@ -74,6 +81,7 @@ class PressureSensorManager : SensorManager, SensorEventListener {
             )
             Log.d(TAG, "Pressure sensor listener registered")
             isListenerRegistered = true
+            listenerLastRegistered = now.toInt()
         }
     }
 

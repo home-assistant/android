@@ -4,6 +4,7 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.ConversationResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DomainResponse
@@ -34,4 +35,7 @@ interface WebSocketRepository {
     suspend fun getTemplateUpdates(template: String): Flow<TemplateUpdatedEvent>?
     suspend fun getNotifications(): Flow<Map<String, Any>>?
     suspend fun ackNotification(confirmId: String): Boolean
+    suspend fun commissionMatterDevice(code: String): Boolean
+    suspend fun commissionMatterDeviceOnNetwork(pin: Long): Boolean
+    suspend fun getConversation(speech: String): ConversationResponse?
 }

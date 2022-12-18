@@ -1,10 +1,9 @@
-package io.homeassistant.companion.android.sensors
+package io.homeassistant.companion.android.common.sensors
 
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.SystemClock
 import android.util.Log
-import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
@@ -42,7 +41,7 @@ class LastRebootSensorManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_last_reboot
 
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(lastRebootSensor)
     }
 

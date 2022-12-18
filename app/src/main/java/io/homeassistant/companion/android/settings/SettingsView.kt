@@ -9,6 +9,4 @@ interface SettingsView {
     fun updateExternalUrl(url: String, useCloud: Boolean)
 
     fun updateSsids(ssids: Set<String>)
-
-    fun onLangSettingsChanged()
 }

@@ -14,6 +14,7 @@
         android:id="@+id/widgetImageButtonLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:paddingVertical="4dp"
         android:orientation="vertical">
 
         <ImageView
@@ -31,8 +32,7 @@
             android:id="@+id/widgetLabelLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="2dp"
-            android:minHeight="32sp">
+            android:layout_margin="2dp">
 
             <TextView
                 android:id="@+id/widgetLabel"
