@@ -61,46 +61,17 @@ jobs:
         run: ./gradlew assembleRelease
 
       - name: Create Github Pre-Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: marvinpinto/action-automatic-releases@v1
         with:
-          tag_name: ${{ steps.rel_number.outputs.version }}
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
           release_name: ${{ steps.rel_number.outputs.version }}
-          body_path: ./app/build/outputs/changelogGithub
           draft: false
           prerelease: true
-
-      - name: Upload Full APK
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./app/build/outputs/apk/full/release/app-full-release.apk
-          asset_name: home-assistant-full-${{steps.rel_number.outputs.version}}.apk
-          asset_content_type: application/zip
-
-      - name: Upload Minimal APK
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./app/build/outputs/apk/minimal/release/app-minimal-release.apk
-          asset_name: home-assistant-minimal-${{steps.rel_number.outputs.version}}.apk
-          asset_content_type: application/zip
-
-      - name: Upload Wear APK
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./wear/build/outputs/apk/release/wear-release.apk
-          asset_name: home-assistant-wear-${{steps.rel_number.outputs.version}}.apk
-          asset_content_type: application/zip
+          files: |
+            ./app/build/outputs/apk/full/release/app-full-release.apk
+            ./app/build/outputs/apk/minimal/release/app-minimal-release.apk
+            ./wear/build/outputs/apk/release/wear-release.apk
 
       - name: Deploy to Firebase
         env:

@@ -65,42 +65,6 @@ jobs:
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
         run: ./gradlew assembleRelease
 
-      - name: Get the upload URL for the release
-        uses: bruceadams/get-release@v1.3.2
-        id: get_release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload Full APK
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: ./app/build/outputs/apk/full/release/app-full-release.apk
-          asset_name: home-assistant-full-${{steps.rel_number.outputs.version}}.apk
-          asset_content_type: application/zip
-
-      - name: Upload Minimal APK
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: ./app/build/outputs/apk/minimal/release/app-minimal-release.apk
-          asset_name: home-assistant-minimal-${{steps.rel_number.outputs.version}}.apk
-          asset_content_type: application/zip
-
-      - name: Upload Wear APK
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: ./wear/build/outputs/apk/release/wear-release.apk
-          asset_name: home-assistant-wear-${{steps.rel_number.outputs.version}}.apk
-          asset_content_type: application/zip
-
       - name: Create Version File
         shell: bash
         env:
@@ -108,15 +72,14 @@ jobs:
         run: |
           echo $VERSION_CODE > ./app/build/outputs/version_code.txt
 
-      - name: Upload Version Code
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Release
+        uses: softprops/action-gh-release@v1
         with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: ./app/build/outputs/version_code.txt
-          asset_name: version_code.txt
-          asset_content_type: text/plain
+          files: |
+            ./app/build/outputs/apk/full/release/app-full-release.apk
+            ./app/build/outputs/apk/minimal/release/app-minimal-release.apk
+            ./wear/build/outputs/apk/release/wear-release.apk
+            ./app/build/outputs/version_code.txt
 
       - name: Deploy to Firebase
         env:
