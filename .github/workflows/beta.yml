@@ -61,10 +61,10 @@ jobs:
         run: ./gradlew assembleRelease
 
       - name: Create Github Pre-Release
-        uses: marvinpinto/action-automatic-releases@v1.2.1
+        uses: softprops/action-gh-release@v0.1.15
         with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: ${{ steps.rel_number.outputs.version }}
+          tag_name: ${{ steps.rel_number.outputs.version }}
+          body_path: ./app/build/outputs/changelogGithub
           draft: false
           prerelease: true
           files: |
