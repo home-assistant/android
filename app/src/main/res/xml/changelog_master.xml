@@ -2,12 +2,9 @@
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
     <release version="2022.12 - Phone" versioncode="2">
-        <change>Add support for automation domain in quick setting tiles</change>
-        <change>Add new option in quick setting tiles for vibration feedback when clicked</change>
+        <change>Quick Setting tiles: add automation domain, add new option to vibrate when clicked, live updates when open and use entity icon by default</change>
         <change>Add initial support for Matter in HA Core 2022.12+</change>
         <change>Add setting to always start app on first dashboard view</change>
-        <change>Live updates in quick setting tiles</change>
-        <change>Use entity icon in quick setting tiles by default</change>
         <change>Bug fixes, performance improvements, design tweaks and dependency updates</change>
     </release>
     <release version="2022.12 - Wear" versioncode="1">
