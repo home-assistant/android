@@ -6,7 +6,7 @@ on:
 
 jobs:
   app_build:
-    name: Github, Firebase, and Sentry Release
+    name: Github, Firebase, Amazon, and Sentry Releases
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -89,6 +89,14 @@ jobs:
           VERSION: ${{ steps.rel_number.outputs.version }}
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
         run: ./gradlew appDistributionUploadFullRelease
+
+      - name: Deploy to Amazon
+        uses: ALJAZEERAPLUS/amazon-appstore-action@v1
+        with:
+          client-id: ${{ secrets.AMAZON_APPSTORE_CLIENT_ID }}
+          client-secret: ${{ secrets.AMAZON_APPSTORE_CLIENT_SECRET }}
+          app-id: ${{ secrets.AMAZON_APPSTORE_APP_ID }}
+          apk-file: ./app/build/outputs/apk/minimal/release/app-minimal-release.apk
 
       - name: Create a Sentry.io release
         uses: getsentry/action-release@v1
