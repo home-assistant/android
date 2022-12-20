@@ -63,9 +63,12 @@ class NotificationActionReceiver : BroadcastReceiver() {
                     .sortedBy { it.key.substringAfter(MessagingManager.SOURCE_REPLY_HISTORY).toInt() }
                     .map { it.value } + replyText
                 messagingManager.handleMessage(
-                    replies.mapIndexed { index, text ->
-                        "${MessagingManager.SOURCE_REPLY_HISTORY}$index" to text!!
-                    }.toMap(),
+                    replies
+                        .takeLast(3)
+                        .mapIndexed { index, text ->
+                            "${MessagingManager.SOURCE_REPLY_HISTORY}$index" to text!!
+                        }
+                        .toMap(),
                     "${MessagingManager.SOURCE_REPLY}$databaseId"
                 )
             } else {
