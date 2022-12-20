@@ -58,10 +58,14 @@ class NotificationActionReceiver : BroadcastReceiver() {
 
         val onComplete: () -> Unit = {
             if (isReply && !replyText.isNullOrBlank()) {
+                val replies = notificationAction.data.entries
+                    .filter { it.key.startsWith(MessagingManager.SOURCE_REPLY_HISTORY) }
+                    .sortedBy { it.key.substringAfter(MessagingManager.SOURCE_REPLY_HISTORY).toInt() }
+                    .map { it.value } + replyText
                 messagingManager.handleMessage(
-                    mapOf(
-                        MessagingManager.SOURCE_REPLY_TEXT to replyText!!
-                    ),
+                    replies.mapIndexed { index, text ->
+                        "${MessagingManager.SOURCE_REPLY_HISTORY}$index" to text!!
+                    }.toMap(),
                     "${MessagingManager.SOURCE_REPLY}$databaseId"
                 )
             } else {
@@ -98,7 +102,9 @@ class NotificationActionReceiver : BroadcastReceiver() {
             try {
                 integrationUseCase.fireEvent(
                     "mobile_app_notification_action",
-                    action.data.plus(Pair("action", action.key))
+                    action.data
+                        .filter { !it.key.startsWith(MessagingManager.SOURCE_REPLY_HISTORY) }
+                        .plus(Pair("action", action.key))
                 )
                 onComplete()
             } catch (e: Exception) {

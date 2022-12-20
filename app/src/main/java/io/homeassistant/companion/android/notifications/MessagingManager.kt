@@ -291,7 +291,7 @@ class MessagingManager @Inject constructor(
 
         // Values for a notification that has been replied to
         const val SOURCE_REPLY = "REPLY_"
-        const val SOURCE_REPLY_TEXT = "reply_text"
+        const val SOURCE_REPLY_HISTORY = "reply_history_"
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
@@ -1108,7 +1108,7 @@ class MessagingManager @Inject constructor(
 
         handleActions(notificationBuilder, tag, messageId, id, data)
 
-        handleReplyInput(notificationBuilder, data)
+        handleReplyHistory(notificationBuilder, data)
 
         handleDeleteIntent(notificationBuilder, data, messageId, group, groupId)
 
@@ -1664,7 +1664,7 @@ class MessagingManager @Inject constructor(
                         }
                         val replyPendingIntent = PendingIntent.getBroadcast(
                             context,
-                            0,
+                            messageId,
                             eventIntent,
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
                         )
@@ -1761,13 +1761,17 @@ class MessagingManager @Inject constructor(
         )
     }
 
-    private fun handleReplyInput(
+    private fun handleReplyHistory(
         builder: NotificationCompat.Builder,
         data: Map<String, String>
     ) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            if (data.containsKey(SOURCE_REPLY_TEXT)) {
-                builder.setRemoteInputHistory(arrayOf(data[SOURCE_REPLY_TEXT]))
+            val replies = data.entries
+                .filter { it.key.startsWith(SOURCE_REPLY_HISTORY) }
+                .sortedBy { it.key.substringAfter(SOURCE_REPLY_HISTORY).toInt() }
+            if (replies.any()) {
+                val history = replies.map { it.value }.reversed().toTypedArray() // Reverse to have latest replies first
+                builder.setRemoteInputHistory(history)
                 builder.setOnlyAlertOnce(true) // Overwrites user settings to match system defaults
             }
         }
