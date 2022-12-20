@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.bluetooth.ble
+package io.homeassistant.companion.android.common.bluetooth.ble
 
 import android.content.Context
 import kotlinx.coroutines.CoroutineScope
