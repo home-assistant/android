@@ -91,7 +91,7 @@ jobs:
         run: ./gradlew appDistributionUploadFullRelease
 
       - name: Deploy to Amazon
-        uses: ALJAZEERAPLUS/amazon-appstore-action@v1
+        uses: ALJAZEERAPLUS/amazon-appstore-action@v1.1.1
         with:
           client-id: ${{ secrets.AMAZON_APPSTORE_CLIENT_ID }}
           client-secret: ${{ secrets.AMAZON_APPSTORE_CLIENT_SECRET }}
