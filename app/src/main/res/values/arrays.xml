@@ -23,6 +23,34 @@
         <item>tile_10</item>
         <item>tile_11</item>
         <item>tile_12</item>
+        <item>tile_13</item>
+        <item>tile_14</item>
+        <item>tile_15</item>
+        <item>tile_16</item>
+        <item>tile_17</item>
+        <item>tile_18</item>
+        <item>tile_19</item>
+        <item>tile_20</item>
+        <item>tile_21</item>
+        <item>tile_22</item>
+        <item>tile_23</item>
+        <item>tile_24</item>
+        <item>tile_25</item>
+        <item>tile_26</item>
+        <item>tile_27</item>
+        <item>tile_28</item>
+        <item>tile_29</item>
+        <item>tile_30</item>
+        <item>tile_31</item>
+        <item>tile_32</item>
+        <item>tile_33</item>
+        <item>tile_34</item>
+        <item>tile_35</item>
+        <item>tile_36</item>
+        <item>tile_37</item>
+        <item>tile_38</item>
+        <item>tile_39</item>
+        <item>tile_40</item>
     </string-array>
     <string-array name="tile_name">
         <item>@string/tile_1</item>
@@ -37,5 +65,33 @@
         <item>@string/tile_10</item>
         <item>@string/tile_11</item>
         <item>@string/tile_12</item>
+        <item>@string/tile_13</item>
+        <item>@string/tile_14</item>
+        <item>@string/tile_15</item>
+        <item>@string/tile_16</item>
+        <item>@string/tile_17</item>
+        <item>@string/tile_18</item>
+        <item>@string/tile_19</item>
+        <item>@string/tile_20</item>
+        <item>@string/tile_21</item>
+        <item>@string/tile_22</item>
+        <item>@string/tile_23</item>
+        <item>@string/tile_24</item>
+        <item>@string/tile_25</item>
+        <item>@string/tile_26</item>
+        <item>@string/tile_27</item>
+        <item>@string/tile_28</item>
+        <item>@string/tile_29</item>
+        <item>@string/tile_30</item>
+        <item>@string/tile_31</item>
+        <item>@string/tile_32</item>
+        <item>@string/tile_33</item>
+        <item>@string/tile_34</item>
+        <item>@string/tile_35</item>
+        <item>@string/tile_36</item>
+        <item>@string/tile_37</item>
+        <item>@string/tile_38</item>
+        <item>@string/tile_39</item>
+        <item>@string/tile_40</item>
     </string-array>
 </resources>
