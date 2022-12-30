@@ -179,6 +179,19 @@ fun ManageTilesView(
                         colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(R.color.colorSwitchUncheckedThumb))
                     )
                 }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = stringResource(R.string.tile_auth_required),
+                        fontSize = 15.sp
+                    )
+                    Switch(
+                        checked = viewModel.tileAuthRequired,
+                        onCheckedChange = { viewModel.tileAuthRequired = it },
+                        colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(R.color.colorSwitchUncheckedThumb))
+                    )
+                }
+
                 Button(
                     onClick = { viewModel.addTile() },
                     enabled = viewModel.tileLabel.isNotBlank() && viewModel.selectedEntityId.isNotBlank()
