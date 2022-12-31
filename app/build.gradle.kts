@@ -29,6 +29,7 @@ android {
         versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
 
         manifestPlaceholders["sentryRelease"] = "$applicationId@$versionName"
+        manifestPlaceholders["sentryDsn"] = System.getenv("SENTRY_DSN") ?: ""
 
         bundle {
             language {
