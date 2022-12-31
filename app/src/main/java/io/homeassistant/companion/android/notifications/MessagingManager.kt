@@ -43,6 +43,8 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.core.text.HtmlCompat
 import androidx.core.text.isDigitsOnly
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.utils.toAndroidIconCompat
 import com.vdurmont.emoji.EmojiParser
@@ -286,27 +288,44 @@ class MessagingManager @Inject constructor(
         const val VIDEO_START_MICROSECONDS = 100000L
         const val VIDEO_INCREMENT_MICROSECONDS = 750000L
         const val VIDEO_GUESS_MILLISECONDS = 7000L
+
+        // Values for a notification that has been replied to
+        const val SOURCE_REPLY = "REPLY_"
+        const val SOURCE_REPLY_HISTORY = "reply_history_"
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     private var textToSpeech: TextToSpeech? = null
 
-    fun handleMessage(jsonData: Map<String, String>, source: String) {
+    fun handleMessage(notificationData: Map<String, String>, source: String) {
 
-        val jsonObject = JSONObject(jsonData)
-        val now = System.currentTimeMillis()
-        val notificationRow =
-            NotificationItem(0, now, jsonData[MESSAGE].toString(), jsonObject.toString(), source)
-        notificationDao.add(notificationRow)
+        var now = System.currentTimeMillis()
+        var jsonData = notificationData
+        val notificationId: Long
 
-        val confirmation = jsonData[CONFIRMATION]?.toBoolean() ?: false
-        if (confirmation) {
-            mainScope.launch {
-                try {
-                    integrationUseCase.fireEvent("mobile_app_notification_received", jsonData)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Unable to send notification received event", e)
+        if (source.startsWith(SOURCE_REPLY)) {
+            notificationId = source.substringAfter(SOURCE_REPLY).toLong()
+            notificationDao.get(notificationId.toInt())?.let {
+                val dbData: Map<String, String> = jacksonObjectMapper().readValue(it.data)
+
+                now = it.received // Allow for updating the existing notification without a tag
+                jsonData = jsonData + dbData // Add the notificationData, this contains the reply text
+            } ?: return
+        } else {
+            val jsonObject = JSONObject(jsonData)
+            val notificationRow =
+                NotificationItem(0, now, jsonData[MESSAGE].toString(), jsonObject.toString(), source)
+            notificationId = notificationDao.add(notificationRow)
+
+            val confirmation = jsonData[CONFIRMATION]?.toBoolean() ?: false
+            if (confirmation) {
+                mainScope.launch {
+                    try {
+                        integrationUseCase.fireEvent("mobile_app_notification_received", jsonData)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Unable to send notification received event", e)
+                    }
                 }
             }
         }
@@ -598,7 +617,7 @@ class MessagingManager @Inject constructor(
             }
             else -> mainScope.launch {
                 Log.d(TAG, "Creating notification with following data: $jsonData")
-                sendNotification(jsonData)
+                sendNotification(jsonData, notificationId, now)
             }
         }
     }
@@ -1033,11 +1052,11 @@ class MessagingManager @Inject constructor(
      * Create and show a simple notification containing the received FCM message.
      *
      */
-    private suspend fun sendNotification(data: Map<String, String>) {
+    private suspend fun sendNotification(data: Map<String, String>, id: Long? = null, received: Long? = null) {
         val notificationManagerCompat = NotificationManagerCompat.from(context)
 
         val tag = data["tag"]
-        val messageId = tag?.hashCode() ?: System.currentTimeMillis().toInt()
+        val messageId = tag?.hashCode() ?: received?.toInt() ?: System.currentTimeMillis().toInt()
 
         var group = data["group"]
         var groupId = 0
@@ -1087,7 +1106,9 @@ class MessagingManager @Inject constructor(
 
         handleVisibility(notificationBuilder, data)
 
-        handleActions(notificationBuilder, tag, messageId, data)
+        handleActions(notificationBuilder, tag, messageId, id, data)
+
+        handleReplyHistory(notificationBuilder, data)
 
         handleDeleteIntent(notificationBuilder, data, messageId, group, groupId)
 
@@ -1599,6 +1620,7 @@ class MessagingManager @Inject constructor(
         builder: NotificationCompat.Builder,
         tag: String?,
         messageId: Int,
+        databaseId: Long?,
         data: Map<String, String>
     ) {
         for (i in 1..3) {
@@ -1619,6 +1641,10 @@ class MessagingManager @Inject constructor(
                         NotificationActionReceiver.EXTRA_NOTIFICATION_ACTION,
                         notificationAction
                     )
+                    putExtra(
+                        NotificationActionReceiver.EXTRA_NOTIFICATION_DB,
+                        databaseId
+                    )
                 }
 
                 when (notificationAction.key) {
@@ -1638,7 +1664,7 @@ class MessagingManager @Inject constructor(
                         }
                         val replyPendingIntent = PendingIntent.getBroadcast(
                             context,
-                            0,
+                            messageId,
                             eventIntent,
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
                         )
@@ -1733,6 +1759,22 @@ class MessagingManager @Inject constructor(
                 intent,
             PendingIntent.FLAG_IMMUTABLE
         )
+    }
+
+    private fun handleReplyHistory(
+        builder: NotificationCompat.Builder,
+        data: Map<String, String>
+    ) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            val replies = data.entries
+                .filter { it.key.startsWith(SOURCE_REPLY_HISTORY) }
+                .sortedBy { it.key.substringAfter(SOURCE_REPLY_HISTORY).toInt() }
+            if (replies.any()) {
+                val history = replies.map { it.value }.reversed().toTypedArray() // Reverse to have latest replies first
+                builder.setRemoteInputHistory(history)
+                builder.setOnlyAlertOnce(true) // Overwrites user settings to match system defaults
+            }
+        }
     }
 
     private fun handleChannel(
