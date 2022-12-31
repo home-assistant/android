@@ -21,7 +21,9 @@ data class TileEntity(
     @ColumnInfo(name = "subtitle")
     val subtitle: String?,
     @ColumnInfo(name = "shouldVibrate", defaultValue = "0")
-    val shouldVibrate: Boolean
+    val shouldVibrate: Boolean,
+    @ColumnInfo(name = "authRequired", defaultValue = "0")
+    val authRequired: Boolean
 )
 
 val TileEntity.isSetup: Boolean

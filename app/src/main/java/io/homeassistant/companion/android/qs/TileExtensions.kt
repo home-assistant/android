@@ -68,7 +68,7 @@ abstract class TileExtensions : TileService() {
         getTile()?.let { tile ->
             mainScope.launch {
                 setTileData(getTileId(), tile)
-                tileClicked(getTileId(), tile)
+                tileClicked(getTileId(), tile, false)
             }
         }
     }
@@ -190,17 +190,26 @@ abstract class TileExtensions : TileService() {
 
     private suspend fun tileClicked(
         tileId: String,
-        tile: Tile
+        tile: Tile,
+        isUnlock: Boolean
     ) {
         Log.d(TAG, "Click detected for tile ID: $tileId")
         val context = applicationContext
         val tileData = tileDao.get(tileId)
         val vm = getSystemService<Vibrator>()
-        if (tileData != null && tileData.shouldVibrate) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                vm?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
-            } else
-                vm?.vibrate(500)
+        if (!isUnlock) {
+            if (tileData?.shouldVibrate == true) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    vm?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
+                } else
+                    vm?.vibrate(500)
+            }
+            if (tileData?.authRequired == true && isSecure) {
+                unlockAndRun {
+                    mainScope.launch { tileClicked(tileId, tile, true) }
+                }
+                return
+            }
         }
 
         val hasTile = setTileData(tileId, tile)
@@ -278,7 +287,8 @@ abstract class TileExtensions : TileService() {
                         entityId = "",
                         label = "",
                         subtitle = null,
-                        shouldVibrate = false
+                        shouldVibrate = false,
+                        authRequired = false
                     )
                 )
             } // else if it doesn't exist and is removed we don't have to save anything
