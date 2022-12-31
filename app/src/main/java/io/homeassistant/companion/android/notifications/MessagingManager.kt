@@ -483,18 +483,18 @@ class MessagingManager @Inject constructor(
                         }
                     }
                     COMMAND_APP_LOCK -> {
-                        val app_lock_enable_param_present = jsonData[APP_LOCK_ENABLED] != null
-                        val app_lock_timeout_param_present = jsonData[APP_LOCK_TIMEOUT] != null
-                        val home_bypass_param_present = jsonData[APP_LOCK_ENABLED] != null
+                        val appLockEnablePresent = jsonData[APP_LOCK_ENABLED] != null
+                        val appLockTimeoutPresent = jsonData[APP_LOCK_TIMEOUT] != null
+                        val homeBypassEnablePresent = jsonData[HOME_BYPASS_ENABLED] != null
 
-                        val app_lock_enable_value = jsonData[APP_LOCK_ENABLED]?.toLowerCase()?.toBooleanStrictOrNull()
-                        val app_lock_timeout_value = jsonData[APP_LOCK_TIMEOUT]?.toIntOrNull()
-                        val home_bypass_value = jsonData[APP_LOCK_ENABLED]?.toLowerCase()?.toBooleanStrictOrNull()
+                        val appLockEnableValue = jsonData[APP_LOCK_ENABLED]?.lowercase()?.toBooleanStrictOrNull()
+                        val appLockTimeoutValue = jsonData[APP_LOCK_TIMEOUT]?.toIntOrNull()
+                        val homeBypassEnableValue = jsonData[HOME_BYPASS_ENABLED]?.lowercase()?.toBooleanStrictOrNull()
 
-                        val invalid = (!app_lock_enable_param_present && !app_lock_timeout_param_present && !home_bypass_param_present) ||
-                            (app_lock_enable_param_present && app_lock_enable_value == null) ||
-                            (app_lock_timeout_param_present && (app_lock_timeout_value == null || app_lock_timeout_value < 0)) ||
-                            (home_bypass_param_present && home_bypass_value == null)
+                        val invalid = (!appLockEnablePresent && !appLockTimeoutPresent && !homeBypassEnablePresent) ||
+                            (appLockEnablePresent && appLockEnableValue == null) ||
+                            (appLockTimeoutPresent && (appLockTimeoutValue == null || appLockTimeoutValue < 0)) ||
+                            (homeBypassEnablePresent && homeBypassEnableValue == null)
 
                         if (!invalid)
                             handleDeviceCommands(jsonData)
@@ -2061,20 +2061,20 @@ class MessagingManager @Inject constructor(
     }
 
     private suspend fun setAppLock(data: Map<String, String>) {
-        val app_lock_enable_value = data[APP_LOCK_ENABLED]?.toLowerCase()?.toBooleanStrictOrNull()
-        val app_lock_timeout_value = data[APP_LOCK_TIMEOUT]?.toIntOrNull()
-        val home_bypass_value = data[APP_LOCK_ENABLED]?.toLowerCase()?.toBooleanStrictOrNull()
+        val appLockEnableValue = data[APP_LOCK_ENABLED]?.lowercase()?.toBooleanStrictOrNull()
+        val appLockTimeoutValue = data[APP_LOCK_TIMEOUT]?.toIntOrNull()
+        val homeBypassEnableValue = data[HOME_BYPASS_ENABLED]?.lowercase()?.toBooleanStrictOrNull()
 
         val canAuth = (BiometricManager.from(context).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS)
         if (canAuth) {
-            if (app_lock_enable_value != null) {
-                authenticationUseCase.setLockEnabled(app_lock_enable_value)
+            if (appLockEnableValue != null) {
+                authenticationUseCase.setLockEnabled(appLockEnableValue)
             }
-            if (app_lock_timeout_value != null) {
-                integrationUseCase.sessionTimeOut(app_lock_timeout_value)
+            if (appLockTimeoutValue != null) {
+                integrationUseCase.sessionTimeOut(appLockTimeoutValue)
             }
-            if (home_bypass_value != null) {
-                authenticationUseCase.setLockHomeBypassEnabled(home_bypass_value)
+            if (homeBypassEnableValue != null) {
+                authenticationUseCase.setLockHomeBypassEnabled(homeBypassEnableValue)
             }
         } else {
             Log.w(TAG, "Not changing App-Lock settings. BiometricManager cannot Authenticate!")
