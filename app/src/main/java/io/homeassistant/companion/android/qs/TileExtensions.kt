@@ -30,13 +30,17 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.TileEntity
+import io.homeassistant.companion.android.database.qs.getHighestInUse
 import io.homeassistant.companion.android.database.qs.isSetup
+import io.homeassistant.companion.android.database.qs.numberedId
 import io.homeassistant.companion.android.settings.SettingsActivity
+import io.homeassistant.companion.android.settings.qs.updateActiveTileServices
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
@@ -87,7 +91,7 @@ abstract class TileExtensions : TileService() {
         super.onTileRemoved()
         Log.d(TAG, "Tile: ${getTileId()} removed")
         handleInject()
-        mainScope.launch {
+        runBlocking {
             setTileAdded(getTileId(), false)
         }
     }
@@ -279,6 +283,10 @@ abstract class TileExtensions : TileService() {
                 )
             } // else if it doesn't exist and is removed we don't have to save anything
         }
+
+        val highestInUse = tileDao.getHighestInUse()?.numberedId ?: 0
+        Log.d(TAG, "Highest tile in use: $highestInUse")
+        updateActiveTileServices(highestInUse, applicationContext)
     }
 
     private fun getTileIcon(tileIconId: Int?, entity: Entity<*>?, context: Context): Bitmap? {

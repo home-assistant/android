@@ -26,3 +26,6 @@ data class TileEntity(
 
 val TileEntity.isSetup: Boolean
     get() = this.label.isNotBlank() && this.entityId.isNotBlank()
+
+val TileEntity.numberedId: Int
+    get() = this.tileId.split("_")[1].toInt()

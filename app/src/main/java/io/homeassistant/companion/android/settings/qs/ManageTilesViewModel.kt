@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.settings.qs
 
+import android.annotation.SuppressLint
 import android.app.Application
 import android.app.StatusBarManager
 import android.content.ComponentName
@@ -28,13 +29,43 @@ import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.TileEntity
+import io.homeassistant.companion.android.database.qs.getHighestInUse
 import io.homeassistant.companion.android.database.qs.isSetup
+import io.homeassistant.companion.android.database.qs.numberedId
 import io.homeassistant.companion.android.qs.Tile10Service
 import io.homeassistant.companion.android.qs.Tile11Service
 import io.homeassistant.companion.android.qs.Tile12Service
+import io.homeassistant.companion.android.qs.Tile13Service
+import io.homeassistant.companion.android.qs.Tile14Service
+import io.homeassistant.companion.android.qs.Tile15Service
+import io.homeassistant.companion.android.qs.Tile16Service
+import io.homeassistant.companion.android.qs.Tile17Service
+import io.homeassistant.companion.android.qs.Tile18Service
+import io.homeassistant.companion.android.qs.Tile19Service
 import io.homeassistant.companion.android.qs.Tile1Service
+import io.homeassistant.companion.android.qs.Tile20Service
+import io.homeassistant.companion.android.qs.Tile21Service
+import io.homeassistant.companion.android.qs.Tile22Service
+import io.homeassistant.companion.android.qs.Tile23Service
+import io.homeassistant.companion.android.qs.Tile24Service
+import io.homeassistant.companion.android.qs.Tile25Service
+import io.homeassistant.companion.android.qs.Tile26Service
+import io.homeassistant.companion.android.qs.Tile27Service
+import io.homeassistant.companion.android.qs.Tile28Service
+import io.homeassistant.companion.android.qs.Tile29Service
 import io.homeassistant.companion.android.qs.Tile2Service
+import io.homeassistant.companion.android.qs.Tile30Service
+import io.homeassistant.companion.android.qs.Tile31Service
+import io.homeassistant.companion.android.qs.Tile32Service
+import io.homeassistant.companion.android.qs.Tile33Service
+import io.homeassistant.companion.android.qs.Tile34Service
+import io.homeassistant.companion.android.qs.Tile35Service
+import io.homeassistant.companion.android.qs.Tile36Service
+import io.homeassistant.companion.android.qs.Tile37Service
+import io.homeassistant.companion.android.qs.Tile38Service
+import io.homeassistant.companion.android.qs.Tile39Service
 import io.homeassistant.companion.android.qs.Tile3Service
+import io.homeassistant.companion.android.qs.Tile40Service
 import io.homeassistant.companion.android.qs.Tile4Service
 import io.homeassistant.companion.android.qs.Tile5Service
 import io.homeassistant.companion.android.qs.Tile6Service
@@ -60,6 +91,50 @@ class ManageTilesViewModel @Inject constructor(
 
     companion object {
         private const val TAG = "ManageTilesViewModel"
+
+        @SuppressLint("InlinedApi", "NewApi")
+        val idToTileService = mapOf(
+            Tile1Service.TILE_ID to Tile1Service::class.java,
+            Tile2Service.TILE_ID to Tile2Service::class.java,
+            Tile3Service.TILE_ID to Tile3Service::class.java,
+            Tile4Service.TILE_ID to Tile4Service::class.java,
+            Tile5Service.TILE_ID to Tile5Service::class.java,
+            Tile6Service.TILE_ID to Tile6Service::class.java,
+            Tile7Service.TILE_ID to Tile7Service::class.java,
+            Tile8Service.TILE_ID to Tile8Service::class.java,
+            Tile9Service.TILE_ID to Tile9Service::class.java,
+            Tile10Service.TILE_ID to Tile10Service::class.java,
+            Tile11Service.TILE_ID to Tile11Service::class.java,
+            Tile12Service.TILE_ID to Tile12Service::class.java,
+            Tile13Service.TILE_ID to Tile13Service::class.java,
+            Tile14Service.TILE_ID to Tile14Service::class.java,
+            Tile15Service.TILE_ID to Tile15Service::class.java,
+            Tile16Service.TILE_ID to Tile16Service::class.java,
+            Tile17Service.TILE_ID to Tile17Service::class.java,
+            Tile18Service.TILE_ID to Tile18Service::class.java,
+            Tile19Service.TILE_ID to Tile19Service::class.java,
+            Tile20Service.TILE_ID to Tile20Service::class.java,
+            Tile21Service.TILE_ID to Tile21Service::class.java,
+            Tile22Service.TILE_ID to Tile22Service::class.java,
+            Tile23Service.TILE_ID to Tile23Service::class.java,
+            Tile24Service.TILE_ID to Tile24Service::class.java,
+            Tile25Service.TILE_ID to Tile25Service::class.java,
+            Tile26Service.TILE_ID to Tile26Service::class.java,
+            Tile27Service.TILE_ID to Tile27Service::class.java,
+            Tile28Service.TILE_ID to Tile28Service::class.java,
+            Tile29Service.TILE_ID to Tile29Service::class.java,
+            Tile30Service.TILE_ID to Tile30Service::class.java,
+            Tile31Service.TILE_ID to Tile31Service::class.java,
+            Tile32Service.TILE_ID to Tile32Service::class.java,
+            Tile33Service.TILE_ID to Tile33Service::class.java,
+            Tile34Service.TILE_ID to Tile34Service::class.java,
+            Tile35Service.TILE_ID to Tile35Service::class.java,
+            Tile36Service.TILE_ID to Tile36Service::class.java,
+            Tile37Service.TILE_ID to Tile37Service::class.java,
+            Tile38Service.TILE_ID to Tile38Service::class.java,
+            Tile39Service.TILE_ID to Tile39Service::class.java,
+            Tile40Service.TILE_ID to Tile40Service::class.java
+        )
     }
 
     lateinit var iconPack: IconPack
@@ -188,22 +263,12 @@ class ManageTilesViewModel @Inject constructor(
             )
             tileDao.add(tileData)
 
+            val highestInUse = tileDao.getHighestInUse()?.numberedId ?: 0
+            updateActiveTileServices(highestInUse, app)
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !selectedTileAdded) {
                 val statusBarManager = app.getSystemService<StatusBarManager>()
-                val service = when (selectedTile.id) {
-                    Tile2Service.TILE_ID -> Tile2Service::class.java
-                    Tile3Service.TILE_ID -> Tile3Service::class.java
-                    Tile4Service.TILE_ID -> Tile4Service::class.java
-                    Tile5Service.TILE_ID -> Tile5Service::class.java
-                    Tile6Service.TILE_ID -> Tile6Service::class.java
-                    Tile7Service.TILE_ID -> Tile7Service::class.java
-                    Tile8Service.TILE_ID -> Tile8Service::class.java
-                    Tile9Service.TILE_ID -> Tile9Service::class.java
-                    Tile10Service.TILE_ID -> Tile10Service::class.java
-                    Tile11Service.TILE_ID -> Tile11Service::class.java
-                    Tile12Service.TILE_ID -> Tile12Service::class.java
-                    else -> Tile1Service::class.java
-                }
+                val service = idToTileService[selectedTile.id] ?: Tile1Service::class.java
                 val icon = selectedIconDrawable?.let {
                     it.toBitmapOrNull(it.intrinsicWidth, it.intrinsicHeight)?.let { bitmap ->
                         android.graphics.drawable.Icon.createWithBitmap(bitmap)
