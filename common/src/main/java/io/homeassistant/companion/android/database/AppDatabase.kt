@@ -79,7 +79,7 @@ import io.homeassistant.companion.android.common.R as commonR
         EntityStateComplications::class,
         Setting::class
     ],
-    version = 38,
+    version = 37,
     autoMigrations = [
         AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
@@ -94,7 +94,6 @@ import io.homeassistant.companion.android.common.R as commonR
         AutoMigration(from = 34, to = 35),
         AutoMigration(from = 35, to = 36),
         AutoMigration(from = 36, to = 37, spec = AppDatabase.Companion.Migration36to37::class),
-        AutoMigration(from = 37, to = 38, spec = AppDatabase.Companion.Migration37to38::class),
     ]
 )
 @TypeConverters(
@@ -534,30 +533,14 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        @RenameTable.Entries(
-            RenameTable(
-                fromTableName = "Authentication_List",
-                toTableName = "authentication_list"
-            ),
-            RenameTable(
-                fromTableName = "entityStateComplications",
-                toTableName = "entity_state_complications"
-            ),
-            RenameTable(
-                fromTableName = "mediaplayctrls_widgets",
-                toTableName = "media_player_controls_widgets"
-            )
-        )
-        class Migration36to37 : AutoMigrationSpec
-
         @RenameColumn.Entries(
             RenameColumn(
-                tableName = "authentication_list",
+                tableName = "Authentication_List",
                 fromColumnName = "Username",
                 toColumnName = "username"
             ),
             RenameColumn(
-                tableName = "authentication_list",
+                tableName = "Authentication_List",
                 fromColumnName = "Password",
                 toColumnName = "password"
             ),
@@ -597,37 +580,51 @@ abstract class AppDatabase : RoomDatabase() {
                 toColumnName = "entity_id"
             ),
             RenameColumn(
-                tableName = "entity_state_complications",
+                tableName = "entityStateComplications",
                 fromColumnName = "entityId",
                 toColumnName = "entity_id"
             ),
             RenameColumn(
-                tableName = "media_player_controls_widgets",
+                tableName = "mediaplayctrls_widgets",
                 fromColumnName = "entityId",
                 toColumnName = "entity_id"
             ),
             RenameColumn(
-                tableName = "media_player_controls_widgets",
+                tableName = "mediaplayctrls_widgets",
                 fromColumnName = "showSkip",
                 toColumnName = "show_skip"
             ),
             RenameColumn(
-                tableName = "media_player_controls_widgets",
+                tableName = "mediaplayctrls_widgets",
                 fromColumnName = "showSeek",
                 toColumnName = "show_seek"
             ),
             RenameColumn(
-                tableName = "media_player_controls_widgets",
+                tableName = "mediaplayctrls_widgets",
                 fromColumnName = "showVolume",
                 toColumnName = "show_volume"
             ),
             RenameColumn(
-                tableName = "media_player_controls_widgets",
+                tableName = "mediaplayctrls_widgets",
                 fromColumnName = "showSource",
                 toColumnName = "show_source"
             )
         )
-        class Migration37to38 : AutoMigrationSpec
+        @RenameTable.Entries(
+            RenameTable(
+                fromTableName = "Authentication_List",
+                toTableName = "authentication_list"
+            ),
+            RenameTable(
+                fromTableName = "entityStateComplications",
+                toTableName = "entity_state_complications"
+            ),
+            RenameTable(
+                fromTableName = "mediaplayctrls_widgets",
+                toTableName = "media_player_controls_widgets"
+            )
+        )
+        class Migration36to37 : AutoMigrationSpec
 
         private fun createNotificationChannel() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

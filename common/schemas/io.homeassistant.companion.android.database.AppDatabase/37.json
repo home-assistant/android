@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 37,
-    "identityHash": "8064bd352331f9fb435b5237acfafd48",
+    "identityHash": "facc54581c6e041df23e57315e10c5ee",
     "entities": [
       {
         "tableName": "sensor_attributes",
@@ -311,7 +311,7 @@
       },
       {
         "tableName": "camera_widgets",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `entityId` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `entity_id` TEXT NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -321,7 +321,7 @@
           },
           {
             "fieldPath": "entityId",
-            "columnName": "entityId",
+            "columnName": "entity_id",
             "affinity": "TEXT",
             "notNull": true
           }
@@ -337,7 +337,7 @@
       },
       {
         "tableName": "media_player_controls_widgets",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `entityId` TEXT NOT NULL, `label` TEXT, `showSkip` INTEGER NOT NULL, `showSeek` INTEGER NOT NULL, `showVolume` INTEGER NOT NULL, `showSource` INTEGER NOT NULL DEFAULT false, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `entity_id` TEXT NOT NULL, `label` TEXT, `show_skip` INTEGER NOT NULL, `show_seek` INTEGER NOT NULL, `show_volume` INTEGER NOT NULL, `show_source` INTEGER NOT NULL DEFAULT false, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -347,7 +347,7 @@
           },
           {
             "fieldPath": "entityId",
-            "columnName": "entityId",
+            "columnName": "entity_id",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -359,25 +359,25 @@
           },
           {
             "fieldPath": "showSkip",
-            "columnName": "showSkip",
+            "columnName": "show_skip",
             "affinity": "INTEGER",
             "notNull": true
           },
           {
             "fieldPath": "showSeek",
-            "columnName": "showSeek",
+            "columnName": "show_seek",
             "affinity": "INTEGER",
             "notNull": true
           },
           {
             "fieldPath": "showVolume",
-            "columnName": "showVolume",
+            "columnName": "show_volume",
             "affinity": "INTEGER",
             "notNull": true
           },
           {
             "fieldPath": "showSource",
-            "columnName": "showSource",
+            "columnName": "show_source",
             "affinity": "INTEGER",
             "notNull": true,
             "defaultValue": "false"
@@ -578,7 +578,7 @@
       },
       {
         "tableName": "qs_tiles",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `tileId` TEXT NOT NULL, `added` INTEGER NOT NULL DEFAULT 1, `icon_id` INTEGER, `entityId` TEXT NOT NULL, `label` TEXT NOT NULL, `subtitle` TEXT, `shouldVibrate` INTEGER NOT NULL DEFAULT 0, `authRequired` INTEGER NOT NULL DEFAULT 0)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `tile_id` TEXT NOT NULL, `added` INTEGER NOT NULL DEFAULT 1, `icon_id` INTEGER, `entity_id` TEXT NOT NULL, `label` TEXT NOT NULL, `subtitle` TEXT, `should_vibrate` INTEGER NOT NULL DEFAULT 0, `auth_required` INTEGER NOT NULL DEFAULT 0)",
         "fields": [
           {
             "fieldPath": "id",
@@ -588,7 +588,7 @@
           },
           {
             "fieldPath": "tileId",
-            "columnName": "tileId",
+            "columnName": "tile_id",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -607,7 +607,7 @@
           },
           {
             "fieldPath": "entityId",
-            "columnName": "entityId",
+            "columnName": "entity_id",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -625,14 +625,14 @@
           },
           {
             "fieldPath": "shouldVibrate",
-            "columnName": "shouldVibrate",
+            "columnName": "should_vibrate",
             "affinity": "INTEGER",
             "notNull": true,
             "defaultValue": "0"
           },
           {
             "fieldPath": "authRequired",
-            "columnName": "authRequired",
+            "columnName": "auth_required",
             "affinity": "INTEGER",
             "notNull": true,
             "defaultValue": "0"
@@ -707,7 +707,7 @@
       },
       {
         "tableName": "entity_state_complications",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `entityId` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `entity_id` TEXT NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -717,7 +717,7 @@
           },
           {
             "fieldPath": "entityId",
-            "columnName": "entityId",
+            "columnName": "entity_id",
             "affinity": "TEXT",
             "notNull": true
           }
@@ -733,7 +733,7 @@
       },
       {
         "tableName": "settings",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `websocketSetting` TEXT NOT NULL, `sensorUpdateFrequency` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `websocket_setting` TEXT NOT NULL, `sensor_update_frequency` TEXT NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -743,13 +743,13 @@
           },
           {
             "fieldPath": "websocketSetting",
-            "columnName": "websocketSetting",
+            "columnName": "websocket_setting",
             "affinity": "TEXT",
             "notNull": true
           },
           {
             "fieldPath": "sensorUpdateFrequency",
-            "columnName": "sensorUpdateFrequency",
+            "columnName": "sensor_update_frequency",
             "affinity": "TEXT",
             "notNull": true
           }
@@ -767,7 +767,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8064bd352331f9fb435b5237acfafd48')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'facc54581c6e041df23e57315e10c5ee')"
     ]
   }
 }
