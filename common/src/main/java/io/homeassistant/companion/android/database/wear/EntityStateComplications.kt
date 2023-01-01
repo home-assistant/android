@@ -12,6 +12,6 @@ data class EntityStateComplications(
     @PrimaryKey
     @ColumnInfo(name = "id")
     val id: Int,
-    @ColumnInfo(name = "entityId")
+    @ColumnInfo(name = "entity_id")
     val entityId: String
 )

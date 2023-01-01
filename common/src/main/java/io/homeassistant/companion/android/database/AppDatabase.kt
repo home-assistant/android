@@ -12,13 +12,7 @@ import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
-import androidx.room.AutoMigration
-import androidx.room.Database
-import androidx.room.OnConflictStrategy
-import androidx.room.RenameTable
-import androidx.room.Room
-import androidx.room.RoomDatabase
-import androidx.room.TypeConverters
+import androidx.room.*
 import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
@@ -78,7 +72,7 @@ import io.homeassistant.companion.android.common.R as commonR
         EntityStateComplications::class,
         Setting::class
     ],
-    version = 37,
+    version = 38,
     autoMigrations = [
         AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
@@ -92,7 +86,8 @@ import io.homeassistant.companion.android.common.R as commonR
         AutoMigration(from = 33, to = 34),
         AutoMigration(from = 34, to = 35),
         AutoMigration(from = 35, to = 36),
-        AutoMigration(from = 36, to = 37, spec = AppDatabase.Companion.Migration36to37::class),
+        AutoMigration(from = 36, to = 37),
+        AutoMigration(from = 37, to = 38, spec = AppDatabase.Companion.Migration37to38::class),
     ]
 )
 @TypeConverters(
@@ -532,19 +527,82 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        @RenameTable(
-            fromTableName = "Authentication_List",
-            toTableName = "authentication_list"
+        @RenameColumn(
+            tableName = "authentication_list",
+            fromColumnName = "Username",
+            toColumnName = "username"
         )
-        @RenameTable(
-            fromTableName = "entityStateComplications",
-            toTableName = "entity_state_complications"
+        @RenameColumn(
+            tableName = "authentication_list",
+            fromColumnName = "Password",
+            toColumnName = "password"
         )
-        @RenameTable(
-            fromTableName = "mediaplayctrls_widgets",
-            toTableName = "media_player_controls_widgets"
+        @RenameColumn(
+            tableName = "qs_tiles",
+            fromColumnName = "tileId",
+            toColumnName = "tile_id"
         )
-        class Migration36to37 : AutoMigrationSpec
+        @RenameColumn(
+            tableName = "qs_tiles",
+            fromColumnName = "entityId",
+            toColumnName = "entity_id"
+        )
+        @RenameColumn(
+            tableName = "qs_tiles",
+            fromColumnName = "shouldVibrate",
+            toColumnName = "should_vibrate"
+        )
+        @RenameColumn(
+            tableName = "qs_tiles",
+            fromColumnName = "authRequired",
+            toColumnName = "auth_required"
+        )
+        @RenameColumn(
+            tableName = "settings",
+            fromColumnName = "websocketSetting",
+            toColumnName = "websocket_setting"
+        )
+        @RenameColumn(
+            tableName = "settings",
+            fromColumnName = "sensorUpdateFrequency",
+            toColumnName = "sensor_update_frequency"
+        )
+        @RenameColumn(
+            tableName = "entity_state_complications",
+            fromColumnName = "entityId",
+            toColumnName = "entity_id"
+        )
+        @RenameColumn(
+            tableName = "camera_widgets",
+            fromColumnName = "entityId",
+            toColumnName = "entity_id"
+        )
+        @RenameColumn(
+            tableName = "media_player_controls_widgets",
+            fromColumnName = "entityId",
+            toColumnName = "entity_id"
+        )
+        @RenameColumn(
+            tableName = "media_player_controls_widgets",
+            fromColumnName = "showSkip",
+            toColumnName = "show_skip"
+        )
+        @RenameColumn(
+            tableName = "media_player_controls_widgets",
+            fromColumnName = "showSeek",
+            toColumnName = "show_seek"
+        )
+        @RenameColumn(
+            tableName = "media_player_controls_widgets",
+            fromColumnName = "showVolume",
+            toColumnName = "show_volume"
+        )
+        @RenameColumn(
+            tableName = "media_player_controls_widgets",
+            fromColumnName = "showSource",
+            toColumnName = "show_source"
+        )
+        class Migration37to38 : AutoMigrationSpec
 
         private fun createNotificationChannel() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
