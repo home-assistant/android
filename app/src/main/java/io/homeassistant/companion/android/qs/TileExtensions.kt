@@ -203,8 +203,9 @@ abstract class TileExtensions : TileService() {
                     vm?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
                 } else {
                     vm?.vibrate(500)
+                }
             }
-            if (tileData.authRequired && isSecure) {
+            if (tileData?.authRequired == true && isSecure) {
                 unlockAndRun {
                     mainScope.launch { tileClicked(tileId, tile, true) }
                 }
