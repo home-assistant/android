@@ -9,9 +9,9 @@ data class Authentication(
     @PrimaryKey
     val host: String,
 
-    @ColumnInfo(name = "Username")
+    @ColumnInfo(name = "username")
     val username: String,
 
-    @ColumnInfo(name = "Password")
+    @ColumnInfo(name = "password")
     val password: String
 )
