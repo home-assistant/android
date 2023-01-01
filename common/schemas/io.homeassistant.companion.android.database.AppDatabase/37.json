@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 37,
-    "identityHash": "facc54581c6e041df23e57315e10c5ee",
+    "identityHash": "ef7bffe8a27b46fc8303956dd44e7213",
     "entities": [
       {
         "tableName": "sensor_attributes",
@@ -45,7 +45,7 @@
       },
       {
         "tableName": "authentication_list",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`host` TEXT NOT NULL, `Username` TEXT NOT NULL, `Password` TEXT NOT NULL, PRIMARY KEY(`host`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`host` TEXT NOT NULL, `username` TEXT NOT NULL, `password` TEXT NOT NULL, PRIMARY KEY(`host`))",
         "fields": [
           {
             "fieldPath": "host",
@@ -55,13 +55,13 @@
           },
           {
             "fieldPath": "username",
-            "columnName": "Username",
+            "columnName": "username",
             "affinity": "TEXT",
             "notNull": true
           },
           {
             "fieldPath": "password",
-            "columnName": "Password",
+            "columnName": "password",
             "affinity": "TEXT",
             "notNull": true
           }
@@ -767,7 +767,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'facc54581c6e041df23e57315e10c5ee')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ef7bffe8a27b46fc8303956dd44e7213')"
     ]
   }
 }
