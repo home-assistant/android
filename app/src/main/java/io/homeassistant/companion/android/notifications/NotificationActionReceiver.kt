@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.notifications
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Handler
 import android.util.Log
 import android.widget.Toast
@@ -42,7 +43,11 @@ class NotificationActionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
 
         val notificationAction =
-            intent.getParcelableExtra<NotificationAction>(EXTRA_NOTIFICATION_ACTION)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                intent.getParcelableExtra(EXTRA_NOTIFICATION_ACTION, NotificationAction::class.java)
+            } else {
+                intent.getParcelableExtra(EXTRA_NOTIFICATION_ACTION)
+            }
 
         if (notificationAction == null) {
             Log.e(TAG, "Failed to get notification action.")

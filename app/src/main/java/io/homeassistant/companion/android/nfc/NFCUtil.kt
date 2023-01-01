@@ -11,6 +11,7 @@ import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.nfc.tech.Ndef
 import android.nfc.tech.NdefFormatable
+import android.os.Build
 import io.homeassistant.companion.android.BuildConfig
 import java.io.IOException
 
@@ -20,9 +21,12 @@ object NFCUtil {
             return null
         }
 
-        val rawMessages = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES)
-        val ndefMessage = rawMessages?.get(0) as NdefMessage?
-        return ndefMessage?.records?.get(0)?.toUri()
+        val ndefMessages = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES, NdefMessage::class.java)
+        } else {
+            intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES) as Array<NdefMessage>
+        }
+        return ndefMessages?.get(0)?.records?.get(0)?.toUri()
     }
 
     @Throws(Exception::class)

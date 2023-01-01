@@ -36,6 +36,7 @@ import android.widget.RemoteViews
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricManager.Authenticators
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
@@ -1112,7 +1113,7 @@ class MessagingManager @Inject constructor(
 
         handleDeleteIntent(notificationBuilder, data, messageId, group, groupId)
 
-        handleContentIntent(notificationBuilder, messageId, group, groupId, data)
+        handleContentIntent(notificationBuilder, data)
 
         handleChronometer(notificationBuilder, data)
 
@@ -1181,9 +1182,6 @@ class MessagingManager @Inject constructor(
 
     private fun handleContentIntent(
         builder: NotificationCompat.Builder,
-        messageId: Int,
-        group: String?,
-        groupId: Int,
         data: Map<String, String>
     ) {
         val actionUri = data["clickAction"] ?: "/"
@@ -1323,9 +1321,7 @@ class MessagingManager @Inject constructor(
     ) {
 
         // Use importance property for legacy priority support
-        val priority = data[IMPORTANCE]
-
-        when (priority) {
+        when (data[IMPORTANCE]) {
             "high" -> {
                 builder.priority = NotificationCompat.PRIORITY_HIGH
             }
@@ -1349,9 +1345,7 @@ class MessagingManager @Inject constructor(
         data: Map<String, String>
     ): Int {
 
-        val importance = data[IMPORTANCE]
-
-        when (importance) {
+        when (data[IMPORTANCE]) {
             "high" -> {
                 return NotificationManager.IMPORTANCE_HIGH
             }
@@ -1589,7 +1583,7 @@ class MessagingManager @Inject constructor(
 
     private fun Bitmap.getCompressedFrame(): Bitmap? {
         var newWidth = 480
-        var newHeight = 0
+        val newHeight: Int
         // If already smaller than 480p do not scale else scale
         if (width < newWidth) {
             newWidth = width
@@ -1863,13 +1857,13 @@ class MessagingManager @Inject constructor(
         if (!vibrationPattern.isNullOrBlank()) {
             val pattern = vibrationPattern.split(",").toTypedArray()
             val list = mutableListOf<Long>()
-            pattern.forEach { it ->
+            pattern.forEach {
                 val ms = it.trim().toLongOrNull()
                 if (ms != null) {
                     list.add(ms)
                 }
             }
-            if (list.count() > 0) {
+            if (list.isNotEmpty()) {
                 return list.toLongArray()
             }
         }
@@ -1881,7 +1875,7 @@ class MessagingManager @Inject constructor(
     ): String {
         return channelName
             .trim()
-            .toLowerCase(Locale.ROOT)
+            .lowercase(Locale.ROOT)
             .replace(" ", "_")
     }
 
@@ -2107,7 +2101,7 @@ class MessagingManager @Inject constructor(
         val appLockTimeoutValue = data[APP_LOCK_TIMEOUT]?.toIntOrNull()
         val homeBypassEnableValue = data[HOME_BYPASS_ENABLED]?.lowercase()?.toBooleanStrictOrNull()
 
-        val canAuth = (BiometricManager.from(context).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS)
+        val canAuth = (BiometricManager.from(context).canAuthenticate(Authenticators.BIOMETRIC_WEAK) == BiometricManager.BIOMETRIC_SUCCESS)
         if (canAuth) {
             if (appLockEnableValue != null) {
                 authenticationUseCase.setLockEnabled(appLockEnableValue)

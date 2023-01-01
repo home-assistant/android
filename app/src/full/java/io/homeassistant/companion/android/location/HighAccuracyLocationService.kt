@@ -189,12 +189,11 @@ class HighAccuracyLocationService : Service() {
 
     @SuppressLint("MissingPermission")
     private fun requestLocationUpdates(intervalInSeconds: Int) {
-        val request = LocationRequest.create()
-
         val intervalInMS = (intervalInSeconds * 1000).toLong()
-        request.interval = intervalInMS
-        request.fastestInterval = intervalInMS / 2
-        request.priority = Priority.PRIORITY_HIGH_ACCURACY
+        val request = LocationRequest.Builder(intervalInMS)
+            .setMinUpdateIntervalMillis(intervalInMS / 2)
+            .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+            .build()
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
         fusedLocationProviderClient?.requestLocationUpdates(request, getLocationUpdateIntent())

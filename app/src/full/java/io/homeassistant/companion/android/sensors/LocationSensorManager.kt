@@ -191,10 +191,9 @@ class LocationSensorManager : LocationSensorManagerBase() {
             ACTION_PROCESS_GEO -> handleGeoUpdate(intent)
             ACTION_REQUEST_ACCURATE_LOCATION_UPDATE -> requestSingleAccurateLocation()
             ACTION_FORCE_HIGH_ACCURACY -> {
-                var command = intent.extras?.get("command")?.toString()
-                when (command) {
+                when (val command = intent.extras?.get("command")?.toString()) {
                     MessagingManager.TURN_ON, MessagingManager.TURN_OFF, MessagingManager.FORCE_ON -> {
-                        var turnOn = command != MessagingManager.TURN_OFF
+                        val turnOn = command != MessagingManager.TURN_OFF
                         if (turnOn) Log.d(TAG, "Forcing of high accuracy mode enabled")
                         else Log.d(TAG, "Forcing of high accuracy mode disabled")
                         forceHighAccuracyModeOn = turnOn
@@ -388,7 +387,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
     private fun getHighAccuracyModeUpdateInterval(): Int {
         val updateIntervalHighAccuracySeconds = getSetting(
             latestContext,
-            LocationSensorManager.backgroundLocation,
+            backgroundLocation,
             SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL,
             SensorSettingType.NUMBER,
             DEFAULT_UPDATE_INTERVAL_HA_SECONDS.toString()
@@ -405,7 +404,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
     private fun getHighAccuracyModeState(): Boolean {
 
-        var highAccuracyMode = getHighAccuracyModeSetting()
+        val highAccuracyMode = getHighAccuracyModeSetting()
 
         if (!highAccuracyMode) return false
 

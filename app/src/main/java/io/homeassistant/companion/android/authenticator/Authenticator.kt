@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.authenticator
 
 import android.content.Context
 import android.util.Log
+import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
@@ -42,7 +43,7 @@ class Authenticator(context: Context, fragmentActivity: FragmentActivity, callba
         val promptDialog = BiometricPrompt.PromptInfo.Builder()
             .setTitle(title)
             .setConfirmationRequired(false)
-            .setDeviceCredentialAllowed(true)
+            .setAllowedAuthenticators(BiometricManager.Authenticators.DEVICE_CREDENTIAL)
             .build()
 
         biometricPrompt.authenticate(promptDialog)

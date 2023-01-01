@@ -58,8 +58,8 @@ import java.time.format.FormatStyle
 import io.homeassistant.companion.android.common.R as commonR
 
 class SettingsFragment constructor(
-    val presenter: SettingsPresenter,
-    val langProvider: LanguagesProvider
+    private val presenter: SettingsPresenter,
+    private val langProvider: LanguagesProvider
 ) : PreferenceFragmentCompat(), SettingsView {
 
     companion object {
@@ -312,8 +312,7 @@ class SettingsFragment constructor(
         }
         findPreference<SwitchPreference>("crash_reporting")?.let {
             it.isVisible = BuildConfig.FLAVOR == "full"
-            it.setOnPreferenceChangeListener { _, newValue ->
-                val checked = newValue as Boolean
+            it.setOnPreferenceChangeListener { _, _ ->
                 true
             }
         }
@@ -501,9 +500,9 @@ class SettingsFragment constructor(
             if (pref != null) {
                 val systemIndex = pref.findIndexOfValue("system")
                 if (systemIndex > 0) {
-                    var entries = pref.entries?.toMutableList()
+                    val entries = pref.entries?.toMutableList()
                     entries?.removeAt(systemIndex)
-                    var entryValues = pref.entryValues?.toMutableList()
+                    val entryValues = pref.entryValues?.toMutableList()
                     entryValues?.removeAt(systemIndex)
                     if (entries != null && entryValues != null) {
                         pref.entries = entries.toTypedArray()
@@ -575,7 +574,7 @@ class SettingsFragment constructor(
     private fun checkAndRequestPermissions(permissions: Array<String>, requestCode: Int, requestPermissions: Array<String>? = null, forceRequest: Boolean = false): Boolean {
         val permissionsNeeded = mutableListOf<String>()
         for (permission in permissions) {
-            if (forceRequest || ContextCompat.checkSelfPermission(requireContext(), permission) === PackageManager.PERMISSION_DENIED) {
+            if (forceRequest || ContextCompat.checkSelfPermission(requireContext(), permission) == PackageManager.PERMISSION_DENIED) {
                 if (requestPermissions.isNullOrEmpty() || requestPermissions.contains(permission)) {
                     permissionsNeeded.add(permission)
                 }
@@ -587,10 +586,10 @@ class SettingsFragment constructor(
         } else true
     }
 
-    fun checkPermission(permissions: Array<String>?): Boolean {
+    private fun checkPermission(permissions: Array<String>?): Boolean {
         if (!permissions.isNullOrEmpty()) {
             for (permission in permissions) {
-                if (ContextCompat.checkSelfPermission(requireContext(), permission) === PackageManager.PERMISSION_DENIED) {
+                if (ContextCompat.checkSelfPermission(requireContext(), permission) == PackageManager.PERMISSION_DENIED) {
                     return false
                 }
             }

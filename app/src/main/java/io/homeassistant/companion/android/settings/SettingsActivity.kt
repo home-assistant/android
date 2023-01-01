@@ -9,6 +9,7 @@ import android.view.MenuItem
 import android.view.ViewGroup
 import androidx.appcompat.widget.SearchView
 import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_WEAK
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
@@ -150,7 +151,7 @@ class SettingsActivity : BaseActivity() {
         Log.d(TAG, "settingsActivityAuthenticationResult(): authenticating: $authenticating, externalAuth: $isExtAuth")
 
         externalAuthCallback?.let {
-            if (it(result) == true) {
+            if (it(result)) {
                 externalAuthCallback = null
             }
         }
@@ -189,7 +190,7 @@ class SettingsActivity : BaseActivity() {
     }
 
     fun requestAuthentication(title: String, callback: (Int) -> Boolean): Boolean {
-        return if (BiometricManager.from(this).canAuthenticate() != BiometricManager.BIOMETRIC_SUCCESS) {
+        return if (BiometricManager.from(this).canAuthenticate(BIOMETRIC_WEAK) != BiometricManager.BIOMETRIC_SUCCESS) {
             false
         } else {
             externalAuthCallback = callback

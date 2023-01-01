@@ -40,7 +40,7 @@ object CameraControl : HaControl {
                 "idle" -> context.getString(commonR.string.state_idle)
                 "recording" -> context.getString(commonR.string.state_recording)
                 "streaming" -> context.getString(commonR.string.state_streaming)
-                else -> entity.state.capitalize(Locale.getDefault())
+                else -> entity.state.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
             }
         )
 
