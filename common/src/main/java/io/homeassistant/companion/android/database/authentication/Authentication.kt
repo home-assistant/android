@@ -4,7 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "Authentication_List")
+@Entity(tableName = "authentication_list")
 data class Authentication(
     @PrimaryKey
     val host: String,

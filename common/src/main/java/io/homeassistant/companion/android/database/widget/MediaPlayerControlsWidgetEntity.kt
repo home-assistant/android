@@ -4,7 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "mediaplayctrls_widgets")
+@Entity(tableName = "media_player_controls_widgets")
 data class MediaPlayerControlsWidgetEntity(
     @PrimaryKey
     override val id: Int,

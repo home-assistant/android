@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey
 /**
  * Represents the configuration of an entity state complication
  */
-@Entity(tableName = "entityStateComplications")
+@Entity(tableName = "entity_state_complications")
 data class EntityStateComplications(
     @PrimaryKey
     @ColumnInfo(name = "id")

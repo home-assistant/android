@@ -9,21 +9,21 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface MediaPlayerControlsWidgetDao : WidgetDao {
 
-    @Query("SELECT * FROM mediaplayctrls_widgets WHERE id = :id")
+    @Query("SELECT * FROM media_player_controls_widgets WHERE id = :id")
     fun get(id: Int): MediaPlayerControlsWidgetEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun add(mediaPlayCtrlWidgetEntity: MediaPlayerControlsWidgetEntity)
 
-    @Query("DELETE FROM mediaplayctrls_widgets WHERE id = :id")
+    @Query("DELETE FROM media_player_controls_widgets WHERE id = :id")
     override suspend fun delete(id: Int)
 
-    @Query("DELETE FROM mediaplayctrls_widgets WHERE id IN (:ids)")
+    @Query("DELETE FROM media_player_controls_widgets WHERE id IN (:ids)")
     suspend fun deleteAll(ids: IntArray)
 
-    @Query("SELECT * FROM mediaplayctrls_widgets")
+    @Query("SELECT * FROM media_player_controls_widgets")
     suspend fun getAll(): List<MediaPlayerControlsWidgetEntity>
 
-    @Query("SELECT * FROM mediaplayctrls_widgets")
+    @Query("SELECT * FROM media_player_controls_widgets")
     fun getAllFlow(): Flow<List<MediaPlayerControlsWidgetEntity>>
 }

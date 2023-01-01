@@ -14,6 +14,6 @@ interface AuthenticationDao {
     @Update
     fun update(authentication: Authentication)
 
-    @Query("SELECT * from Authentication_List WHERE Host = :key")
+    @Query("SELECT * from authentication_list WHERE Host = :key")
     fun get(key: String): Authentication?
 }

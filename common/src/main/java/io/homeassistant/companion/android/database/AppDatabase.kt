@@ -15,6 +15,8 @@ import androidx.core.content.getSystemService
 import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.OnConflictStrategy
+import androidx.room.RenameColumn
+import androidx.room.RenameTable
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
@@ -77,7 +79,7 @@ import io.homeassistant.companion.android.common.R as commonR
         EntityStateComplications::class,
         Setting::class
     ],
-    version = 36,
+    version = 37,
     autoMigrations = [
         AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
@@ -91,6 +93,7 @@ import io.homeassistant.companion.android.common.R as commonR
         AutoMigration(from = 33, to = 34),
         AutoMigration(from = 34, to = 35),
         AutoMigration(from = 35, to = 36),
+        AutoMigration(from = 36, to = 37, spec = AppDatabase.Companion.Migration36to37::class),
     ]
 )
 @TypeConverters(
@@ -275,16 +278,19 @@ abstract class AppDatabase : RoomDatabase() {
                 database.execSQL("CREATE TABLE IF NOT EXISTS `sensor_attributes` (`sensor_id` TEXT NOT NULL, `name` TEXT NOT NULL, `value` TEXT NOT NULL, PRIMARY KEY(`sensor_id`, `name`))")
             }
         }
+
         private val MIGRATION_7_8 = object : Migration(7, 8) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE `sensor_attributes` ADD `value_type` TEXT NOT NULL DEFAULT 'string'")
             }
         }
+
         private val MIGRATION_8_9 = object : Migration(8, 9) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE `sensors` ADD `state_changed` INTEGER NOT NULL DEFAULT ''")
             }
         }
+
         private val MIGRATION_9_10 = object : Migration(9, 10) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 val cursor = database.query("SELECT * FROM sensors")
@@ -526,6 +532,20 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("UPDATE `sensors` SET `registered` = NULL")
             }
         }
+
+        @RenameTable(
+            fromTableName = "Authentication_List",
+            toTableName = "authentication_list"
+        )
+        @RenameTable(
+            fromTableName = "entityStateComplications",
+            toTableName = "entity_state_complications"
+        )
+        @RenameTable(
+            fromTableName = "mediaplayctrls_widgets",
+            toTableName = "media_player_controls_widgets"
+        )
+        class Migration36to37 : AutoMigrationSpec
 
         private fun createNotificationChannel() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

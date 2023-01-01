@@ -7,7 +7,7 @@ import androidx.room.Query
 
 @Dao
 interface EntityStateComplicationsDao {
-    @Query("SELECT * FROM entityStateComplications WHERE id = :id")
+    @Query("SELECT * FROM entity_state_complications WHERE id = :id")
     suspend fun get(id: Int): EntityStateComplications?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
