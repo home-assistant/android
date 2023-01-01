@@ -15,7 +15,6 @@ import androidx.core.content.getSystemService
 import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.OnConflictStrategy
-import androidx.room.RenameColumn
 import androidx.room.RenameTable
 import androidx.room.Room
 import androidx.room.RoomDatabase
