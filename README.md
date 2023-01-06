@@ -12,6 +12,10 @@
 ## 下载地址：
 [APK](https://github.com/nesror/Home-Assistant-Companion-for-Android/releases/latest)
 
+## 使用方法：
+* [APP使用](https://www.bilibili.com/video/BV18W4y1p7mk)
+* [地理围栏](https://www.bilibili.com/video/BV1HD4y1v7r4)
+
 ## Documentation
 If you are looking for documentation around the companion applications check out the [Home Assistant Companion Documentation](https://companion.home-assistant.io/).  This will provide you instructions on using the applications.
 
