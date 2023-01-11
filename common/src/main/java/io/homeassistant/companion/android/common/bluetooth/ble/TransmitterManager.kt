@@ -1,11 +1,11 @@
-package io.homeassistant.companion.android.bluetooth.ble
+package io.homeassistant.companion.android.common.bluetooth.ble
 
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseSettings
 import android.content.Context
 import androidx.core.content.getSystemService
-import io.homeassistant.companion.android.sensors.BluetoothSensorManager
+import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
 import org.altbeacon.beacon.Beacon
 import org.altbeacon.beacon.BeaconParser
 import org.altbeacon.beacon.BeaconTransmitter
