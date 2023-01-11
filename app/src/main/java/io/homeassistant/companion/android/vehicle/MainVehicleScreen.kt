@@ -6,20 +6,16 @@ import androidx.annotation.RequiresApi
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
 import androidx.car.app.model.Action
-import androidx.car.app.model.CarColor
-import androidx.car.app.model.CarIcon
-import androidx.car.app.model.GridItem
-import androidx.car.app.model.GridTemplate
 import androidx.car.app.model.ItemList
+import androidx.car.app.model.ListTemplate
+import androidx.car.app.model.Row
 import androidx.car.app.model.Template
 import androidx.lifecycle.lifecycleScope
-import com.mikepenz.iconics.IconicsDrawable
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import com.mikepenz.iconics.utils.toAndroidIconCompat
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.integration.getIcon
+import io.homeassistant.companion.android.common.data.integration.domain
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 @RequiresApi(Build.VERSION_CODES.O)
 class MainVehicleScreen(
@@ -29,34 +25,29 @@ class MainVehicleScreen(
 
     companion object {
         private const val TAG = "MainVehicleScreen"
+
         private val SUPPORTED_DOMAINS = listOf(
+            "button",
             "cover",
             "input_boolean",
             "light",
             "lock",
+            "scene",
             "script",
             "switch",
         )
     }
 
-    val entities = sortedMapOf<String, Entity<*>>()
+    private val domains = mutableSetOf<String>()
+    private val entities = mutableMapOf<String, Entity<*>>()
 
     init {
-        lifecycleScope.launch {
-            integrationRepository.getEntityUpdates()?.collect { entity ->
-                if (entities.containsKey(entity.entityId)) {
-                    entities[entity.entityId] = entity
-                    invalidate()
-                }
-            }
-        }
         lifecycleScope.launch {
             integrationRepository.getEntities()?.forEach { entity ->
                 val domain = entity.entityId.split(".")[0]
                 if (domain in SUPPORTED_DOMAINS) {
                     entities[entity.entityId] = entity
-                } else {
-                    Log.d(TAG, "Ignoring entity: ${entity.entityId}")
+                    domains.add(domain)
                 }
             }
             invalidate()
@@ -65,29 +56,34 @@ class MainVehicleScreen(
 
     override fun onGetTemplate(): Template {
         val listBuilder = ItemList.Builder()
-        entities.forEach { (entityId, entity) ->
-            val friendlyName =
-                (entity.attributes as? Map<*, *>)?.get("friendly_name")?.toString() ?: entityId
-            val icon = entity.getIcon(carContext) ?: CommunityMaterial.Icon.cmd_cloud_question
+        domains.forEach { domain ->
+            val friendlyDomain = domain.split("_").joinToString(" ") { word ->
+                word.replaceFirstChar {
+                    if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+                }
+            }
             listBuilder.addItem(
-                GridItem.Builder()
-                    .setLoading(false)
-                    .setTitle(friendlyName)
-                    .setText(entity.state)
-                    .setImage(
-                        CarIcon.Builder(IconicsDrawable(carContext, icon).toAndroidIconCompat())
-                            .setTint(CarColor.DEFAULT)
-                            .build()
-                    )
+                Row.Builder()
+                    .setTitle(friendlyDomain)
                     .setOnClickListener {
-                        Log.i(TAG, "$entityId clicked")
+                        Log.i(TAG, "$domain clicked")
+                        screenManager.push(
+                            EntityGridVehicleScreen(
+                                carContext,
+                                integrationRepository,
+                                friendlyDomain,
+                                entities.filter { it.value.domain == domain }.toMutableMap()
+                            )
+                        )
                     }
                     .build()
             )
         }
 
-        return GridTemplate.Builder()
-            .setTitle("Entities")
+        // TODO: Add row for zones so we can start navigation?
+
+        return ListTemplate.Builder()
+            .setTitle("Home Assistant")
             .setHeaderAction(Action.APP_ICON)
             .setSingleList(listBuilder.build())
             .build()
