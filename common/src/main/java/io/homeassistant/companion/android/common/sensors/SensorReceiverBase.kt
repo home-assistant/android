@@ -338,9 +338,15 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         context: Context,
         sensorId: String
     ) {
-        val sensorManager = managers.firstOrNull { it.getAvailableSensors(context).any { s -> s.id == sensorId } }
-        sensorManager?.requestSensorUpdate(context)
-        val basicSensor = sensorManager?.getAvailableSensors(context)?.firstOrNull { it.id == sensorId }
+        val sensorManager = managers.firstOrNull {
+            it.getAvailableSensors(context).any { s -> s.id == sensorId }
+        } ?: return
+        try {
+            sensorManager.requestSensorUpdate(context)
+        } catch (e: Exception) {
+            Log.e(tag, "Issue requesting updates for ${context.getString(sensorManager.name)}", e)
+        }
+        val basicSensor = sensorManager.getAvailableSensors(context).firstOrNull { it.id == sensorId }
         val fullSensor = sensorDao.getFull(sensorId)
         if (
             fullSensor != null && fullSensor.sensor.enabled &&
@@ -350,12 +356,16 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                     fullSensor.sensor.icon != fullSensor.sensor.lastSentIcon
                 )
         ) {
-            integrationUseCase.updateSensors(arrayOf(fullSensor.toSensorRegistration(basicSensor)))
-            sensorDao.updateLastSentStateAndIcon(
-                basicSensor.id,
-                fullSensor.sensor.state,
-                fullSensor.sensor.icon
-            )
+            try {
+                integrationUseCase.updateSensors(arrayOf(fullSensor.toSensorRegistration(basicSensor)))
+                sensorDao.updateLastSentStateAndIcon(
+                    basicSensor.id,
+                    fullSensor.sensor.state,
+                    fullSensor.sensor.icon
+                )
+            } catch (e: Exception) {
+                Log.e(tag, "Exception while updating individual sensor.", e)
+            }
         }
     }
 
