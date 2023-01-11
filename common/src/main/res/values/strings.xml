@@ -1001,7 +1001,7 @@
     <string name="tile_vibrate">Vibrate when clicked</string>
     <string name="tile_auth_required">Requires unlocked device</string>
     <string name="no_results">No results yet</string>
-    <string name="speak">Speak</string>
     <string name="no_conversation_support">You must be at least on Home Assistant 2023.1 and have the conversation integration enabled</string>
     <string name="conversation">Conversation</string>
+    <string name="assist">Assist</string>
 </resources>

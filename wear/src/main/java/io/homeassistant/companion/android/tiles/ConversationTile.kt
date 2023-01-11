@@ -6,11 +6,12 @@ import androidx.wear.tiles.ColorBuilders.argb
 import androidx.wear.tiles.DimensionBuilders.dp
 import androidx.wear.tiles.DimensionBuilders.sp
 import androidx.wear.tiles.LayoutElementBuilders
-import androidx.wear.tiles.LayoutElementBuilders.Layout
-import androidx.wear.tiles.LayoutElementBuilders.LayoutElement
+import androidx.wear.tiles.LayoutElementBuilders.VERTICAL_ALIGN_CENTER
 import androidx.wear.tiles.ModifiersBuilders
 import androidx.wear.tiles.RequestBuilders.ResourcesRequest
 import androidx.wear.tiles.RequestBuilders.TileRequest
+import androidx.wear.tiles.ResourceBuilders
+import androidx.wear.tiles.ResourceBuilders.ImageResource
 import androidx.wear.tiles.ResourceBuilders.Resources
 import androidx.wear.tiles.TileBuilders.Tile
 import androidx.wear.tiles.TileService
@@ -37,7 +38,7 @@ class ConversationTile : TileService() {
                 .setTimeline(
                     Timeline.Builder().addTimelineEntry(
                         TimelineEntry.Builder().setLayout(
-                            Layout.Builder().setRoot(
+                            LayoutElementBuilders.Layout.Builder().setRoot(
                                 boxLayout()
                             ).build()
                         ).build()
@@ -49,6 +50,16 @@ class ConversationTile : TileService() {
         serviceScope.future {
             Resources.Builder()
                 .setVersion("1")
+                .addIdToImageMapping(
+                    "image",
+                    ImageResource.Builder()
+                        .setAndroidResourceByResId(
+                            ResourceBuilders.AndroidImageResourceByResId.Builder()
+                                .setResourceId(io.homeassistant.companion.android.R.drawable.ic_comment_processing_outline)
+                                .build()
+                        )
+                        .build()
+                )
                 .build()
         }
 
@@ -58,11 +69,11 @@ class ConversationTile : TileService() {
         serviceJob.cancel()
     }
 
-    private fun boxLayout(): LayoutElement =
+    private fun boxLayout(): LayoutElementBuilders.LayoutElement =
         LayoutElementBuilders.Box.Builder()
-            .addContent(tappableElement())
+            .addContent(rowElement())
             .setHeight(dp(50f))
-            .setWidth(dp(100f))
+            .setWidth(dp(140f))
             .setModifiers(
                 ModifiersBuilders.Modifiers.Builder()
                     .setClickable(
@@ -92,13 +103,36 @@ class ConversationTile : TileService() {
             )
             .build()
 
-    private fun tappableElement(): LayoutElement =
+    private fun tappableElement(): LayoutElementBuilders.LayoutElement =
         LayoutElementBuilders.Text.Builder()
-            .setText(getString(R.string.speak))
+            .setText(getString(R.string.assist))
             .setFontStyle(
                 LayoutElementBuilders.FontStyle.Builder()
                     .setSize(sp(30f))
                     .build()
             )
+            .setModifiers(
+                ModifiersBuilders.Modifiers.Builder()
+                    .setPadding(
+                        ModifiersBuilders.Padding.Builder()
+                            .setStart(dp(4f))
+                            .build()
+                    )
+                    .build()
+            )
+            .build()
+
+    private fun imageElement(): LayoutElementBuilders.LayoutElement =
+        LayoutElementBuilders.Image.Builder()
+            .setResourceId("image")
+            .setWidth(dp(30f))
+            .setHeight(dp(30f))
+            .build()
+
+    private fun rowElement(): LayoutElementBuilders.LayoutElement =
+        LayoutElementBuilders.Row.Builder()
+            .addContent(imageElement())
+            .addContent(tappableElement())
+            .setVerticalAlignment(VERTICAL_ALIGN_CENTER)
             .build()
 }
