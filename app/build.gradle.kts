@@ -130,7 +130,7 @@ android {
 
 play {
     serviceAccountCredentials.set(file("playStorePublishServiceCredentialsFile.json"))
-    track.set("beta")
+    track.set("internal")
     resolutionStrategy.set(ResolutionStrategy.IGNORE)
     // We will depend on the wear commit.
     commit.set(true)
@@ -211,6 +211,8 @@ dependencies {
 
     "fullImplementation"("org.burnoutcrew.composereorderable:reorderable:0.9.6")
     implementation("com.github.AppDevNext:ChangeLog:3.4")
+
+    "fullImplementation"("androidx.car.app:app:1.3.0-rc01")
 }
 
 // Disable to fix memory leak and be compatible with the configuration cache.

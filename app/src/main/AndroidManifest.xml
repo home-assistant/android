@@ -840,6 +840,7 @@
             android:name=".notifications.NotificationDeleteReceiver"
             android:enabled="true"
             android:exported="true" />
+
     </application>
 
 </manifest>

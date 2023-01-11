@@ -8,6 +8,7 @@ import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateDiff
 import java.util.Calendar
+import java.util.Locale
 import kotlin.math.round
 
 data class Entity<T>(
@@ -61,7 +62,8 @@ fun Entity<Map<String, Any>>.applyCompressedStateDiff(diff: CompressedStateDiff)
             newLastChanged = calendar
             newLastUpdated = calendar
         } ?: plus.lastUpdated?.let {
-            newLastUpdated = Calendar.getInstance().apply { timeInMillis = round(it * 1000).toLong() }
+            newLastUpdated =
+                Calendar.getInstance().apply { timeInMillis = round(it * 1000).toLong() }
         }
         plus.attributes?.let {
             newAttributes = newAttributes.plus(it)
@@ -144,7 +146,9 @@ fun <T> Entity<T>.getFanSteps(): Int? {
             return calculateNumStep(percentageStep * 2)
         }
 
-        return calculateNumStep(((attributes as Map<*, *>)["percentage_step"] as? Double)?.toDouble() ?: 1.0) - 1
+        return calculateNumStep(
+            ((attributes as Map<*, *>)["percentage_step"] as? Double)?.toDouble() ?: 1.0
+        ) - 1
     } catch (e: Exception) {
         Log.e(EntityExt.TAG, "Unable to get getFanSteps")
         null
@@ -157,7 +161,8 @@ fun <T> Entity<T>.supportsLightBrightness(): Boolean {
 
         // On HA Core 2021.5 and later brightness detection has changed
         // to simplify things in the app lets use both methods for now
-        val supportedColorModes = (attributes as Map<*, *>)["supported_color_modes"] as? List<String>
+        val supportedColorModes =
+            (attributes as Map<*, *>)["supported_color_modes"] as? List<String>
         val supportsBrightness =
             if (supportedColorModes == null) false else (supportedColorModes - EntityExt.LIGHT_MODE_NO_BRIGHTNESS_SUPPORT).isNotEmpty()
         val supportedFeatures = attributes["supported_features"] as Int
@@ -178,7 +183,8 @@ fun <T> Entity<T>.getLightBrightness(): EntityPosition? {
                 val minValue = 0f
                 val maxValue = 100f
                 val currentValue =
-                    ((attributes as Map<*, *>)["brightness"] as? Number)?.toFloat()?.div(255f)?.times(100)
+                    ((attributes as Map<*, *>)["brightness"] as? Number)?.toFloat()?.div(255f)
+                        ?.times(100)
                         ?: 0f
 
                 EntityPosition(
@@ -199,8 +205,10 @@ fun <T> Entity<T>.supportsLightColorTemperature(): Boolean {
     return try {
         if (domain != "light") return false
 
-        val supportedColorModes = (attributes as Map<*, *>)["supported_color_modes"] as? List<String>
-        val supportsColorTemp = supportedColorModes?.contains(EntityExt.LIGHT_MODE_COLOR_TEMP) ?: false
+        val supportedColorModes =
+            (attributes as Map<*, *>)["supported_color_modes"] as? List<String>
+        val supportsColorTemp =
+            supportedColorModes?.contains(EntityExt.LIGHT_MODE_COLOR_TEMP) ?: false
         val supportedFeatures = attributes["supported_features"] as Int
         supportsColorTemp || (supportedFeatures and EntityExt.LIGHT_SUPPORT_COLOR_TEMP_DEPR == EntityExt.LIGHT_SUPPORT_COLOR_TEMP_DEPR)
     } catch (e: Exception) {
@@ -395,3 +403,41 @@ private fun coverIcon(state: String?, entity: Entity<Map<String, Any?>>): IIcon 
         }
     }
 }
+
+suspend fun <T> Entity<T>.onPressed(
+    integrationRepository: IntegrationRepository
+) {
+    val service = when (domain) {
+        "lock" -> {
+            if (state == "unlocked") "lock" else "unlock"
+        }
+        "cover" -> {
+            if (state == "open") "close_cover" else "open_cover"
+        }
+        "scene",
+        "script",
+        "button" -> "press"
+        "fan",
+        "input_boolean",
+        "switch" -> {
+            if (state == "on") "turn_off" else "turn_on"
+        }
+        else -> "toggle"
+    }
+
+    integrationRepository.callService(
+        domain = this.domain,
+        service = service,
+        serviceData = hashMapOf("entity_id" to entityId)
+    )
+}
+
+val <T> Entity<T>.friendlyName: String
+    get() = (attributes as? Map<*, *>)?.get("friendly_name")?.toString() ?: entityId
+
+val <T> Entity<T>.friendlyState: String
+    get() = state.split("_").joinToString(" ") { word ->
+        word.replaceFirstChar {
+            if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+        }
+    }
