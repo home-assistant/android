@@ -37,6 +37,8 @@ import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingTypeConverter
+import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.database.server.ServerDao
 import io.homeassistant.companion.android.database.settings.LocalNotificationSettingConverter
 import io.homeassistant.companion.android.database.settings.LocalSensorSettingConverter
 import io.homeassistant.companion.android.database.settings.Setting
@@ -77,9 +79,10 @@ import io.homeassistant.companion.android.common.R as commonR
         Favorites::class,
         FavoriteCaches::class,
         EntityStateComplications::class,
+        Server::class,
         Setting::class
     ],
-    version = 37,
+    version = 38,
     autoMigrations = [
         AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
@@ -94,6 +97,7 @@ import io.homeassistant.companion.android.common.R as commonR
         AutoMigration(from = 34, to = 35),
         AutoMigration(from = 35, to = 36),
         AutoMigration(from = 36, to = 37, spec = AppDatabase.Companion.Migration36to37::class),
+        AutoMigration(from = 37, to = 38),
     ]
 )
 @TypeConverters(
@@ -116,6 +120,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun favoritesDao(): FavoritesDao
     abstract fun favoriteCachesDao(): FavoriteCachesDao
     abstract fun entityStateComplicationsDao(): EntityStateComplicationsDao
+    abstract fun serverDao(): ServerDao
     abstract fun settingsDao(): SettingsDao
 
     companion object {

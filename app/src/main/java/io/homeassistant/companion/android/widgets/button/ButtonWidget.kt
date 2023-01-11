@@ -26,7 +26,7 @@ import com.maltaisn.icondialog.pack.IconPackLoader
 import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -65,7 +65,7 @@ class ButtonWidget : AppWidgetProvider() {
     }
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
+    lateinit var serverManager: ServerManager
 
     @Inject
     lateinit var buttonWidgetDao: ButtonWidgetDao
@@ -319,7 +319,7 @@ class ButtonWidget : AppWidgetProvider() {
                     }
 
                     Log.d(TAG, "Sending service call to Home Assistant")
-                    integrationUseCase.callService(domain, service, serviceDataMap)
+                    serverManager.integrationRepository().callService(domain, service, serviceDataMap)
                     Log.d(TAG, "Service call sent successfully")
 
                     // If service call does not throw an exception, send positive feedback

@@ -20,7 +20,7 @@ import androidx.lifecycle.lifecycleScope
 import com.fasterxml.jackson.databind.JsonMappingException
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetTemplateConfigureBinding
@@ -41,7 +41,7 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     }
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
+    lateinit var serverManager: ServerManager
 
     @Inject
     lateinit var templateWidgetDao: TemplateWidgetDao
@@ -214,7 +214,7 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             var enabled: Boolean
             withContext(Dispatchers.IO) {
                 try {
-                    templateText = integrationUseCase.renderTemplate(template, mapOf()).toString()
+                    templateText = serverManager.integrationRepository().renderTemplate(template, mapOf()).toString()
                     enabled = true
                 } catch (e: Exception) {
                     Log.e(TAG, "Exception while rendering template", e)

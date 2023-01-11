@@ -12,9 +12,9 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.controls.HaControlsProviderService
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -22,7 +22,7 @@ import javax.inject.Inject
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @HiltViewModel
 class ManageControlsViewModel @Inject constructor(
-    private val integrationUseCase: IntegrationRepository,
+    private val serverManager: ServerManager,
     private val prefsRepository: PrefsRepository,
     application: Application
 ) : AndroidViewModel(application) {
@@ -42,7 +42,7 @@ class ManageControlsViewModel @Inject constructor(
             authRequired = prefsRepository.getControlsAuthRequired()
             authRequiredList.addAll(prefsRepository.getControlsAuthEntities())
 
-            val entities = integrationUseCase.getEntities()
+            val entities = serverManager.integrationRepository().getEntities()
                 ?.filter { it.domain in HaControlsProviderService.getSupportedDomains() }
                 ?.sortedWith(
                     compareBy(String.CASE_INSENSITIVE_ORDER) {

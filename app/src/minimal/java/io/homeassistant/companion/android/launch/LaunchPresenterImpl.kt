@@ -2,21 +2,20 @@ package io.homeassistant.companion.android.launch
 
 import android.util.Log
 import io.homeassistant.companion.android.BuildConfig
-import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class LaunchPresenterImpl @Inject constructor(
     view: LaunchView,
-    authenticationUseCase: AuthenticationRepository,
-    integrationUseCase: IntegrationRepository
-) : LaunchPresenterBase(view, authenticationUseCase, integrationUseCase) {
+    serverManager: ServerManager
+) : LaunchPresenterBase(view, serverManager) {
     override fun resyncRegistration() {
+        if (!serverManager.isRegistered()) return
         mainScope.launch {
             try {
-                integrationUseCase.updateRegistration(
+                serverManager.integrationRepository().updateRegistration(
                     DeviceRegistration(
                         "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
                     )

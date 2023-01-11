@@ -35,8 +35,8 @@ import com.maltaisn.icondialog.pack.IconPackLoader
 import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.Service
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetButtonConfigureBinding
@@ -59,7 +59,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
     }
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
+    lateinit var serverManager: ServerManager
 
     @Inject
     lateinit var buttonWidgetDao: ButtonWidgetDao
@@ -240,7 +240,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
         lifecycleScope.launch {
             try {
                 // Fetch services
-                integrationUseCase.getServices()?.forEach {
+                serverManager.integrationRepository().getServices()?.forEach {
                     services[getServiceString(it)] = it
                 }
                 Log.d(TAG, "Services found: $services")
@@ -276,7 +276,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
                                 dynamicFields.add(ServiceFieldBinder(serviceText, fieldKey))
                         }
                     }
-                    integrationUseCase.getEntities()?.forEach {
+                    serverManager.integrationRepository().getEntities()?.forEach {
                         entities[it.entityId] = it
                     }
                     dynamicFieldAdapter.notifyDataSetChanged()
@@ -296,7 +296,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
 
             try {
                 // Fetch entities
-                integrationUseCase.getEntities()?.forEach {
+                serverManager.integrationRepository().getEntities()?.forEach {
                     entities[it.entityId] = it
                 }
             } catch (e: Exception) {

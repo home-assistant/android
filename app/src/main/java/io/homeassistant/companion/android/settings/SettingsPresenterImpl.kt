@@ -4,12 +4,23 @@ import android.content.Context
 import android.util.Log
 import androidx.preference.PreferenceDataStore
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.common.data.MalformedHttpUrlException
+import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
-import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.database.server.ServerConnectionInfo
+import io.homeassistant.companion.android.database.server.ServerSessionInfo
+import io.homeassistant.companion.android.database.server.ServerType
+import io.homeassistant.companion.android.launch.LaunchActivity
+import io.homeassistant.companion.android.onboarding.OnboardApp
+import io.homeassistant.companion.android.onboarding.getMessagingToken
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.ChangeLog
+import io.homeassistant.companion.android.util.UrlUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -20,8 +31,7 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class SettingsPresenterImpl @Inject constructor(
-    private val urlUseCase: UrlRepository,
-    private val integrationUseCase: IntegrationRepository,
+    private val serverManager: ServerManager,
     private val prefsRepository: PrefsRepository,
     private val themesManager: ThemesManager,
     private val langsManager: LanguagesManager,
@@ -89,16 +99,19 @@ class SettingsPresenterImpl @Inject constructor(
     }
 
     override fun getServerRegistrationName(): String? = runBlocking {
+        // TODO fix
         integrationUseCase.getRegistration().deviceName
     }
 
     override fun getServerName(): String = runBlocking {
+        // TODO fix
         urlUseCase.getUrl()?.toString() ?: ""
     }
 
     override suspend fun getNotificationRateLimits(): RateLimitResponse? = withContext(Dispatchers.IO) {
         try {
-            integrationUseCase.getNotificationRateLimits()
+            if (serverManager.isRegistered()) serverManager.integrationRepository().getNotificationRateLimits()
+            else null
         } catch (e: Exception) {
             Log.d(TAG, "Unable to get rate limits")
             return@withContext null
@@ -107,5 +120,54 @@ class SettingsPresenterImpl @Inject constructor(
 
     override fun showChangeLog(context: Context) {
         changeLog.showChangeLog(context, true)
+    }
+
+    override fun getServerCount(): Int = serverManager.servers.filter { it.type == ServerType.DEFAULT }.size
+
+    override suspend fun addServer(result: OnboardApp.Output?) {
+        if (result != null) {
+            val (url, authCode, deviceName, _, _) = result
+            val messagingToken = getMessagingToken()
+            var serverId: Int? = null
+            try {
+                val formattedUrl = UrlUtil.formattedUrlString(url)
+                val server = Server(
+                    name = formattedUrl,
+                    type = ServerType.TEMPORARY,
+                    connection = ServerConnectionInfo(
+                        externalUrl = formattedUrl
+                    ),
+                    session = ServerSessionInfo()
+                )
+                serverId = serverManager.addServer(server)
+                serverManager.authenticationRepository(serverId).registerAuthorizationCode(authCode)
+                serverManager.integrationRepository(serverId).registerDevice(
+                    DeviceRegistration(
+                        "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                        deviceName,
+                        messagingToken
+                    )
+                )
+                serverManager.convertTemporaryServer(serverId)
+            } catch (e: Exception) {
+                Log.e(LaunchActivity.TAG, "Exception while registering", e)
+                try {
+                    if (serverId != null) {
+                        serverManager.authenticationRepository(serverId).revokeSession()
+                        serverManager.removeServer(serverId)
+                    }
+                } catch (e: Exception) {
+                    Log.e(LaunchActivity.TAG, "Can't revoke session", e)
+                }
+            }
+        }
+    }
+
+    override suspend fun removeServer() {
+        serverManager.getServer()?.let {
+            Log.d(TAG, "Deleting server ${it.id}: ${it.name}")
+            serverManager.removeServer(it.id)
+            // TODO update UI
+        }
     }
 }

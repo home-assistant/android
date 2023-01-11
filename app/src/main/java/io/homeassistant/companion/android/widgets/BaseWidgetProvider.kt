@@ -10,7 +10,7 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.RemoteViews
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -36,7 +36,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     }
 
     @Inject
-    protected lateinit var integrationUseCase: IntegrationRepository
+    protected lateinit var serverManager: ServerManager
 
     private var thisSetScope = false
     protected var lastIntent = ""
@@ -88,10 +88,8 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
 
     fun onScreenOn(context: Context) {
         setupWidgetScope()
+        if (!serverManager.isRegistered()) return
         widgetScope!!.launch {
-            if (!integrationUseCase.isRegistered()) {
-                return@launch
-            }
             updateAllWidgets(context)
 
             val allWidgets = getAllWidgetIdsWithEntities(context)
@@ -105,7 +103,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                 widgetsWithDifferentEntities.forEach { (id, entities) ->
                     widgetJobs[id]?.cancel()
 
-                    val entityUpdates = integrationUseCase.getEntityUpdates(entities)
+                    val entityUpdates = serverManager.integrationRepository().getEntityUpdates(entities)
                     if (entityUpdates != null) {
                         widgetEntities[id] = entities
                         widgetJobs[id] = widgetScope!!.launch {

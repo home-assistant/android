@@ -24,8 +24,7 @@ import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.common.data.url.UrlRepository
-import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.websocketChannel
 import io.homeassistant.companion.android.common.util.websocketIssuesChannel
 import io.homeassistant.companion.android.database.settings.SettingsDao
@@ -83,17 +82,15 @@ class WebsocketManager(
     private val entryPoint = EntryPointAccessors
         .fromApplication(applicationContext, WebsocketManagerEntryPoint::class.java)
 
-    private val websocketRepository: WebSocketRepository = entryPoint.websocketRepository()
+    private val serverManager: ServerManager = entryPoint.serverManager()
     private val messagingManager: MessagingManager = entryPoint.messagingManager()
-    private val urlRepository: UrlRepository = entryPoint.urlRepository()
     private val settingsDao: SettingsDao = entryPoint.settingsDao()
 
     @EntryPoint
     @InstallIn(SingletonComponent::class)
     interface WebsocketManagerEntryPoint {
-        fun websocketRepository(): WebSocketRepository
+        fun serverManager(): ServerManager
         fun messagingManager(): MessagingManager
-        fun urlRepository(): UrlRepository
         fun settingsDao(): SettingsDao
     }
 
@@ -113,7 +110,7 @@ class WebsocketManager(
         // play ping pong to ensure we have a connection.
         do {
             delay(30000)
-        } while (job.isActive && isActive && shouldWeRun() && websocketRepository.sendPing())
+        } while (job.isActive && isActive && shouldWeRun() && serverManager.webSocketRepository().sendPing())
 
         job.cancel()
 
@@ -123,17 +120,18 @@ class WebsocketManager(
     }
 
     @Suppress("DEPRECATION")
-    private suspend fun shouldWeRun(): Boolean {
+    private fun shouldWeRun(): Boolean {
         // Check for connectivity but not internet access, based on WorkManager's NetworkConnectedController API <26
         val connectivityManager = applicationContext.getSystemService<ConnectivityManager>()
         val networkInfo = connectivityManager?.activeNetworkInfo
         val powerManager = applicationContext.getSystemService<PowerManager>()!!
         val displayOff = !powerManager.isInteractive
         val setting = settingsDao.get(0)?.websocketSetting ?: DEFAULT_WEBSOCKET_SETTING
-        val isHome = urlRepository.isInternal()
+        val isHome = serverManager.getServer()?.connection?.isInternal() == true
         return when {
             (setting == WebsocketSetting.NEVER) -> false
             (networkInfo != null && !networkInfo.isConnected) -> false
+            !serverManager.isRegistered() -> false
             (displayOff && setting == WebsocketSetting.SCREEN_ON) -> false
             (!isHome && setting == WebsocketSetting.HOME_WIFI) -> false
             else -> true
@@ -141,9 +139,9 @@ class WebsocketManager(
     }
 
     private suspend fun collectNotifications() {
-        websocketRepository.getNotifications()?.collect {
+        serverManager.webSocketRepository().getNotifications()?.collect {
             if (it.containsKey("hass_confirm_id"))
-                websocketRepository.ackNotification(it["hass_confirm_id"].toString())
+                serverManager.webSocketRepository().ackNotification(it["hass_confirm_id"].toString())
             val flattened = mutableMapOf<String, String>()
             if (it.containsKey("data")) {
                 for ((key, value) in it["data"] as Map<*, *>) {

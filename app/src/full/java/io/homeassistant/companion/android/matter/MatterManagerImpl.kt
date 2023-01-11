@@ -7,12 +7,12 @@ import android.os.Build
 import android.util.Log
 import com.google.android.gms.home.matter.Matter
 import com.google.android.gms.home.matter.commissioning.CommissioningRequest
-import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
 import javax.inject.Inject
 
 class MatterManagerImpl @Inject constructor(
-    private val websocketRepository: WebSocketRepository
+    private val serverManager: ServerManager
 ) : MatterManager {
 
     companion object {
@@ -23,7 +23,8 @@ class MatterManagerImpl @Inject constructor(
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1
 
     override suspend fun coreSupportsCommissioning(): Boolean {
-        val config = websocketRepository.getConfig()
+        if (!serverManager.isRegistered()) return false
+        val config = serverManager.webSocketRepository().getConfig()
         return config != null && config.components.contains("matter")
     }
 
@@ -48,7 +49,7 @@ class MatterManagerImpl @Inject constructor(
 
     override suspend fun commissionDevice(code: String): MatterCommissionResponse? {
         return try {
-            websocketRepository.commissionMatterDevice(code)
+            serverManager.webSocketRepository().commissionMatterDevice(code)
         } catch (e: Exception) {
             Log.e(TAG, "Error while executing server commissioning request", e)
             null
@@ -57,7 +58,7 @@ class MatterManagerImpl @Inject constructor(
 
     override suspend fun commissionOnNetworkDevice(pin: Long): MatterCommissionResponse? {
         return try {
-            websocketRepository.commissionMatterDeviceOnNetwork(pin)
+            serverManager.webSocketRepository().commissionMatterDeviceOnNetwork(pin)
         } catch (e: Exception) {
             Log.e(TAG, "Error while executing server commissioning request", e)
             null

@@ -1,8 +1,7 @@
 package io.homeassistant.companion.android.launch
 
-import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.SessionState
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -11,8 +10,7 @@ import kotlinx.coroutines.launch
 
 abstract class LaunchPresenterBase(
     private val view: LaunchView,
-    private val authenticationUseCase: AuthenticationRepository,
-    internal val integrationUseCase: IntegrationRepository
+    internal val serverManager: ServerManager
 ) : LaunchPresenter {
 
     companion object {
@@ -24,19 +22,21 @@ abstract class LaunchPresenterBase(
 
     override fun onViewReady() {
         mainScope.launch {
-            val sessionValid = authenticationUseCase.getSessionState() == SessionState.CONNECTED
-            if (sessionValid && integrationUseCase.isRegistered()) {
+            if (
+                serverManager.isRegistered() &&
+                serverManager.authenticationRepository().getSessionState() == SessionState.CONNECTED
+            ) {
                 resyncRegistration()
                 view.displayWebview()
             } else {
-                view.displayOnBoarding(sessionValid)
+                view.displayOnBoarding(false)
             }
         }
     }
 
     override fun setSessionExpireMillis(value: Long) {
         mainScope.launch {
-            integrationUseCase.setSessionExpireMillis(value)
+            if (serverManager.isRegistered()) serverManager.integrationRepository().setSessionExpireMillis(value)
         }
     }
 

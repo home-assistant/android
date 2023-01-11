@@ -13,7 +13,6 @@ import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.onboarding.discovery.HomeAssistantInstance
 import io.homeassistant.companion.android.onboarding.discovery.HomeAssistantSearcher
@@ -24,7 +23,6 @@ import javax.inject.Inject
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
     app: Application,
-    val authenticationRepository: AuthenticationRepository,
     private val sensorDao: SensorDao
 ) : AndroidViewModel(app) {
 

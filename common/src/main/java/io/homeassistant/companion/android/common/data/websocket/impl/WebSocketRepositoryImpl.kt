@@ -8,15 +8,16 @@ import com.fasterxml.jackson.module.kotlin.contains
 import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
 import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.data.HomeAssistantApis.Companion.USER_AGENT
 import io.homeassistant.companion.android.common.data.HomeAssistantApis.Companion.USER_AGENT_STRING
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
-import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.AuthorizationException
 import io.homeassistant.companion.android.common.data.integration.ServiceData
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
-import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRequest
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
@@ -64,13 +65,12 @@ import okio.ByteString
 import java.io.IOException
 import java.util.Collections
 import java.util.concurrent.atomic.AtomicLong
-import javax.inject.Inject
 import kotlin.coroutines.resumeWithException
 
-class WebSocketRepositoryImpl @Inject constructor(
+class WebSocketRepositoryImpl @AssistedInject constructor(
     private val okHttpClient: OkHttpClient,
-    private val urlRepository: UrlRepository,
-    private val authenticationRepository: AuthenticationRepository
+    private val serverManager: ServerManager,
+    @Assisted private val serverId: Int
 ) : WebSocketRepository, WebSocketListener() {
 
     companion object {
@@ -102,6 +102,8 @@ class WebSocketRepositoryImpl @Inject constructor(
     private val connectedMutex = Mutex()
     private var connected = CompletableDeferred<Boolean>()
     private val eventSubscriptionMutex = Mutex()
+
+    private val server get() = serverManager.getServer(serverId)
 
     override fun getConnectionState(): WebSocketState? = connectionState
 
@@ -312,24 +314,27 @@ class WebSocketRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getNotifications(): Flow<Map<String, Any>>? =
+    override suspend fun getNotifications(): Flow<Map<String, Any>>? = server?.let {
         subscribeTo(
             SUBSCRIBE_TYPE_PUSH_NOTIFICATION_CHANNEL,
             mapOf(
-                "webhook_id" to urlRepository.getWebhookId().toString(),
+                "webhook_id" to it.connection.webhookId!!,
                 "support_confirm" to true
             ),
             DISCONNECT_DELAY
         )
+    }
 
     override suspend fun ackNotification(confirmId: String): Boolean {
-        val response = sendMessage(
-            mapOf(
-                "type" to "mobile_app/push_notification_confirm",
-                "webhook_id" to urlRepository.getWebhookId(),
-                "confirm_id" to confirmId
+        val response = server?.let {
+            sendMessage(
+                mapOf(
+                    "type" to "mobile_app/push_notification_confirm",
+                    "webhook_id" to it.connection.webhookId!!,
+                    "confirm_id" to confirmId
+                )
             )
-        )
+        }
         return response?.success == true
     }
 
@@ -395,7 +400,7 @@ class WebSocketRepositoryImpl @Inject constructor(
                 return !connected.isCancelled
             }
 
-            val url = urlRepository.getUrl()
+            val url = server?.connection?.getUrl()
             if (url == null) {
                 Log.w(TAG, "No url to connect websocket too.")
                 return false
@@ -417,7 +422,7 @@ class WebSocketRepositoryImpl @Inject constructor(
                         mapper.writeValueAsString(
                             mapOf(
                                 "type" to "auth",
-                                "access_token" to authenticationRepository.retrieveAccessToken()
+                                "access_token" to serverManager.authenticationRepository(serverId).retrieveAccessToken()
                             )
                         )
                     )
@@ -582,6 +587,10 @@ class WebSocketRepositoryImpl @Inject constructor(
                 )
             )
         }
+    }
+
+    override fun shutdown() {
+        connection?.close(1001, "Session removed from app.")
     }
 
     private fun handleClosingSocket() {

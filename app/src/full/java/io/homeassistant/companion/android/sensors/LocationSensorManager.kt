@@ -553,8 +553,8 @@ class LocationSensorManager : LocationSensorManagerBase() {
         ).toBoolean()
     }
 
-    private suspend fun getSendLocationAsSetting(): String {
-        return if (integrationUseCase.isHomeAssistantVersionAtLeast(2022, 2, 0)) {
+    private fun getSendLocationAsSetting(): String {
+        return if (serverManager.getServer()?.version?.isAtLeast(2022, 2, 0) == true) {
             getSetting(
                 context = latestContext,
                 sensor = backgroundLocation,
@@ -718,7 +718,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 )
                 runBlocking {
                     try {
-                        integrationUseCase.fireEvent(zoneStatusEvent, zoneAttr as Map<String, Any>)
+                        serverManager.integrationRepository().fireEvent(zoneStatusEvent, zoneAttr as Map<String, Any>)
                         Log.d(TAG, "Event sent to Home Assistant")
                     } catch (e: Exception) {
                         Log.e(TAG, "Unable to send event to Home Assistant", e)
@@ -849,7 +849,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
         ioScope.launch {
             try {
-                integrationUseCase.updateLocation(updateLocation)
+                serverManager.integrationRepository().updateLocation(updateLocation)
                 Log.d(TAG, "Location update sent successfully as $updateLocationAs")
 
                 // Update Geocoded Location Sensor
@@ -890,7 +890,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             zonesLastReceived < (System.currentTimeMillis() - TimeUnit.HOURS.toMillis(4))
         ) {
             try {
-                zones = integrationUseCase.getZones()
+                zones = serverManager.integrationRepository().getZones()
                 zonesLastReceived = System.currentTimeMillis()
             } catch (e: Exception) {
                 Log.e(TAG, "Error receiving zones from Home Assistant", e)

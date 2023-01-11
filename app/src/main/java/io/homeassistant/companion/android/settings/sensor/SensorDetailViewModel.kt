@@ -15,7 +15,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.common.sensors.NetworkSensorManager
 import io.homeassistant.companion.android.common.sensors.SensorManager
@@ -39,7 +39,7 @@ import io.homeassistant.companion.android.common.R as commonR
 @HiltViewModel
 class SensorDetailViewModel @Inject constructor(
     state: SavedStateHandle,
-    private val integrationUseCase: IntegrationRepository,
+    private val serverManager: ServerManager,
     private val sensorDao: SensorDao,
     private val settingsDao: SettingsDao,
     application: Application
@@ -103,7 +103,7 @@ class SensorDetailViewModel @Inject constructor(
         Log.d(TAG, "Get zones from Home Assistant for listing zones in preferences...")
         runBlocking {
             try {
-                val cachedZones = integrationUseCase.getZones().map { it.entityId }
+                val cachedZones = serverManager.integrationRepository().getZones().map { it.entityId }
                 Log.d(TAG, "Successfully received " + cachedZones.size + " zones (" + cachedZones + ") from Home Assistant")
                 cachedZones
             } catch (e: Exception) {

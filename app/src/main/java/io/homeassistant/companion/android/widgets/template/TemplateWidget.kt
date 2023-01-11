@@ -19,7 +19,7 @@ import androidx.core.graphics.toColorInt
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -54,7 +54,7 @@ class TemplateWidget : AppWidgetProvider() {
     }
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
+    lateinit var serverManager: ServerManager
 
     @Inject
     lateinit var templateWidgetDao: TemplateWidgetDao
@@ -121,10 +121,8 @@ class TemplateWidget : AppWidgetProvider() {
 
     private fun onScreenOn(context: Context) {
         setupWidgetScope()
+        if (!serverManager.isRegistered()) return
         widgetScope!!.launch {
-            if (!integrationUseCase.isRegistered()) {
-                return@launch
-            }
             updateAllWidgets(context)
 
             val allWidgets = templateWidgetDao.getAll()
@@ -140,7 +138,7 @@ class TemplateWidget : AppWidgetProvider() {
                 widgetsWithDifferentTemplate.forEach { widget ->
                     widgetJobs[widget.id]?.cancel()
 
-                    val templateUpdates = integrationUseCase.getTemplateUpdates(widget.template)
+                    val templateUpdates = serverManager.integrationRepository().getTemplateUpdates(widget.template)
                     if (templateUpdates != null) {
                         widgetTemplates[widget.id] = widget.template
                         widgetJobs[widget.id] = widgetScope!!.launch {
@@ -233,7 +231,7 @@ class TemplateWidget : AppWidgetProvider() {
                 // Content
                 var renderedTemplate: String? = templateWidgetDao.get(appWidgetId)?.lastUpdate ?: context.getString(commonR.string.loading)
                 try {
-                    renderedTemplate = suggestedTemplate ?: integrationUseCase.renderTemplate(widget.template, mapOf()).toString()
+                    renderedTemplate = suggestedTemplate ?: serverManager.integrationRepository().renderTemplate(widget.template, mapOf()).toString()
                     templateWidgetDao.updateTemplateWidgetLastUpdate(
                         appWidgetId,
                         renderedTemplate

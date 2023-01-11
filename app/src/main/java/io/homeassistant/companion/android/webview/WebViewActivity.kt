@@ -78,7 +78,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
-import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
@@ -177,7 +177,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     lateinit var changeLog: ChangeLog
 
     @Inject
-    lateinit var urlRepository: UrlRepository
+    lateinit var serverManager: ServerManager
 
     @Inject
     lateinit var authenticationDao: AuthenticationDao
@@ -1206,9 +1206,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             alert.setPositiveButton(commonR.string.settings) { _, _ ->
                 startActivity(SettingsActivity.newInstance(this))
             }
-            val isInternal = runBlocking {
-                urlRepository.isInternal()
-            }
+            val isInternal = serverManager.getServer()?.connection?.isInternal() == true
             alert.setNegativeButton(
                 if (failedConnection == "external" && isInternal)
                     commonR.string.refresh_internal
@@ -1217,10 +1215,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             ) { _, _ ->
                 runBlocking {
                     failedConnection = if (failedConnection == "external") {
-                        webView.loadUrl(urlRepository.getUrl(true).toString())
+                        serverManager.getServer()?.let { webView.loadUrl(it.connection.getUrl(true).toString()) }
                         "internal"
                     } else {
-                        webView.loadUrl(urlRepository.getUrl(false).toString())
+                        serverManager.getServer()?.let { webView.loadUrl(it.connection.getUrl(false).toString()) }
                         "external"
                     }
                 }
@@ -1370,12 +1368,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                         Environment.DIRECTORY_DOWNLOADS,
                         URLUtil.guessFileName(url, contentDisposition, mimetype)
                     )
-                runBlocking {
-                    if (url.startsWith(urlRepository.getUrl(true).toString()) ||
-                        url.startsWith(urlRepository.getUrl(false).toString())
-                    ) {
-                        request.addRequestHeader("Authorization", presenter.getAuthorizationHeader())
-                    }
+                if (url.startsWith(serverManager.getServer()?.connection?.getUrl(true).toString()) ||
+                    url.startsWith(serverManager.getServer()?.connection?.getUrl(false).toString())
+                ) {
+                    request.addRequestHeader("Authorization", presenter.getAuthorizationHeader())
                 }
                 try {
                     request.addRequestHeader("Cookie", CookieManager.getInstance().getCookie(url))

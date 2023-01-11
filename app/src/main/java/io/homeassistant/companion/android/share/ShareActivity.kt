@@ -7,7 +7,7 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import javax.inject.Inject
@@ -21,7 +21,7 @@ class ShareActivity : BaseActivity() {
     }
 
     @Inject
-    lateinit var integrationRepository: IntegrationRepository
+    lateinit var serverManager: ServerManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,7 +43,7 @@ class ShareActivity : BaseActivity() {
         }
         runBlocking {
             try {
-                integrationRepository.fireEvent("mobile_app.share", data)
+                serverManager.integrationRepository().fireEvent("mobile_app.share", data)
                 Log.d(TAG, "Share successful!")
                 Toast.makeText(
                     applicationContext,

@@ -6,7 +6,7 @@ import android.content.Intent
 import android.util.Log
 import androidx.core.app.NotificationManagerCompat
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
@@ -21,7 +21,7 @@ class NotificationDeleteReceiver : BroadcastReceiver() {
     }
 
     @Inject
-    lateinit var integrationRepository: IntegrationRepository
+    lateinit var serverManager: ServerManager
 
     override fun onReceive(context: Context, intent: Intent) {
 
@@ -38,7 +38,7 @@ class NotificationDeleteReceiver : BroadcastReceiver() {
 
         runBlocking {
             try {
-                integrationRepository.fireEvent("mobile_app_notification_cleared", hashData)
+                serverManager.integrationRepository().fireEvent("mobile_app_notification_cleared", hashData)
                 Log.d(TAG, "Notification cleared event successful!")
             } catch (e: Exception) {
                 Log.e(TAG, "Issue sending event to Home Assistant", e)

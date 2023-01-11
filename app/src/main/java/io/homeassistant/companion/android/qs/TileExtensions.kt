@@ -26,8 +26,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.getIcon
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.TileEntity
 import io.homeassistant.companion.android.database.qs.getHighestInUse
@@ -54,7 +54,7 @@ abstract class TileExtensions : TileService() {
     abstract fun getTileId(): String
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
+    lateinit var serverManager: ServerManager
 
     @Inject
     lateinit var tileDao: TileDao
@@ -105,14 +105,20 @@ abstract class TileExtensions : TileService() {
             }
             stateUpdateJob = mainScope.launch {
                 val tileData = tileDao.get(getTileId())
-                if (tileData != null && tileData.isSetup && tileData.entityId.split('.')[0] in toggleDomainsWithLock)
-                    integrationUseCase.getEntityUpdates(listOf(tileData.entityId))?.collect {
-                        tile.state = if (it.state in validActiveStates) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
+                if (tileData != null &&
+                    tileData.isSetup &&
+                    tileData.entityId.split('.')[0] in toggleDomainsWithLock &&
+                    serverManager.isRegistered()
+                ) {
+                    serverManager.integrationRepository().getEntityUpdates(listOf(tileData.entityId))?.collect {
+                        tile.state =
+                            if (it.state in validActiveStates) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
                         getTileIcon(tileData.iconId, it, applicationContext)?.let { icon ->
                             tile.icon = Icon.createWithBitmap(icon)
                         }
                         tile.updateTile()
                     }
+                }
             }
         }
     }
@@ -145,7 +151,7 @@ abstract class TileExtensions : TileService() {
                     ) {
                         withContext(Dispatchers.IO) {
                             try {
-                                integrationUseCase.getEntity(tileData.entityId)
+                                serverManager.integrationRepository().getEntity(tileData.entityId)
                             } catch (e: Exception) {
                                 Log.e(TAG, "Unable to get state for tile", e)
                                 null
@@ -174,7 +180,7 @@ abstract class TileExtensions : TileService() {
                     Log.d(TAG, "No tile data found for tile ID: $tileId")
                 }
                 tile.state =
-                    if (integrationUseCase.isRegistered()) Tile.STATE_INACTIVE
+                    if (serverManager.isRegistered()) Tile.STATE_INACTIVE
                     else Tile.STATE_UNAVAILABLE
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     tile.subtitle = getString(commonR.string.tile_not_setup)
@@ -221,13 +227,13 @@ abstract class TileExtensions : TileService() {
             }
             withContext(Dispatchers.IO) {
                 try {
-                    integrationUseCase.callService(
+                    serverManager.integrationRepository().callService(
                         tileData!!.entityId.split(".")[0],
                         when (tileData.entityId.split(".")[0]) {
                             "button", "input_button" -> "press"
                             in toggleDomains -> "toggle"
                             "lock" -> {
-                                val state = integrationUseCase.getEntity(tileData.entityId)
+                                val state = serverManager.integrationRepository().getEntity(tileData.entityId)
                                 if (state?.state == "locked")
                                     "unlock"
                                 else

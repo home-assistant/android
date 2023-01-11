@@ -7,14 +7,14 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class MatterCommissioningViewModel @Inject constructor(
     private val matterManager: MatterManager,
-    private val integrationRepository: IntegrationRepository,
+    private val serverManager: ServerManager,
     application: Application
 ) : AndroidViewModel(application) {
 
@@ -36,7 +36,7 @@ class MatterCommissioningViewModel @Inject constructor(
         viewModelScope.launch {
             if (step != CommissioningFlowStep.NotStarted) return@launch
 
-            if (!integrationRepository.isRegistered()) {
+            if (!serverManager.isRegistered()) {
                 step = CommissioningFlowStep.NotRegistered
                 return@launch
             }

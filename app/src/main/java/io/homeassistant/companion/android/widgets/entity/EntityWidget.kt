@@ -140,7 +140,7 @@ class EntityWidget : BaseWidgetProvider() {
             entity = if (suggestedEntity != null && suggestedEntity.entityId == entityId) {
                 suggestedEntity
             } else {
-                entityId?.let { integrationUseCase.getEntity(it) }
+                entityId?.let { serverManager.integrationRepository().getEntity(it) }
             }
         } catch (e: Exception) {
             Log.e(TAG, "Unable to fetch entity", e)

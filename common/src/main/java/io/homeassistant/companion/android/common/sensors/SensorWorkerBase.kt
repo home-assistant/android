@@ -10,7 +10,7 @@ import androidx.core.content.getSystemService
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.sensorWorkerChannel
 import io.homeassistant.companion.android.database.AppDatabase
 import kotlinx.coroutines.Dispatchers
@@ -23,7 +23,7 @@ abstract class SensorWorkerBase(
     workerParams: WorkerParameters
 ) : CoroutineWorker(appContext, workerParams) {
 
-    protected abstract val integrationUseCase: IntegrationRepository
+    protected abstract val serverManager: ServerManager
     protected abstract val sensorReceiver: SensorReceiverBase
 
     companion object {
@@ -36,7 +36,8 @@ abstract class SensorWorkerBase(
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         val sensorDao = AppDatabase.getInstance(applicationContext).sensorDao()
         val enabledSensorCount = sensorDao.getEnabledCount() ?: 0
-        val currentCoreSupportsDisabledSensors = integrationUseCase.isHomeAssistantVersionAtLeast(2022, 6, 0)
+        val currentCoreSupportsDisabledSensors =
+            serverManager.getServer()?.version?.isAtLeast(2022, 6, 0) == true
         if (enabledSensorCount > 0 || currentCoreSupportsDisabledSensors) {
             createNotificationChannel()
             val notification = NotificationCompat.Builder(applicationContext, sensorWorkerChannel)
@@ -61,7 +62,7 @@ abstract class SensorWorkerBase(
                 if (lastUpdateSensor.enabled)
                     LastUpdateManager().sendLastUpdate(appContext, TAG)
             }
-            sensorReceiver.updateSensors(appContext, integrationUseCase, sensorDao, null)
+            sensorReceiver.updateSensors(appContext, serverManager, sensorDao, null)
         }
         Result.success()
     }

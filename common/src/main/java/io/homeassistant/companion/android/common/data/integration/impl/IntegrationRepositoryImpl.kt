@@ -1,10 +1,12 @@
 package io.homeassistant.companion.android.common.data.integration.impl
 
 import android.util.Log
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
 import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.LocalStorage
-import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
+import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationException
@@ -23,22 +25,19 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.integration.impl.entities.ServiceCallRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.Template
 import io.homeassistant.companion.android.common.data.integration.impl.entities.UpdateLocationRequest
-import io.homeassistant.companion.android.common.data.url.UrlRepository
-import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.util.concurrent.TimeUnit
-import javax.inject.Inject
 import javax.inject.Named
 
-class IntegrationRepositoryImpl @Inject constructor(
+class IntegrationRepositoryImpl @AssistedInject constructor(
     private val integrationService: IntegrationService,
-    private val authenticationRepository: AuthenticationRepository,
-    private val urlRepository: UrlRepository,
-    private val webSocketRepository: WebSocketRepository,
+    private val serverManager: ServerManager,
+    @Assisted private val serverId: Int,
     @Named("integration") private val localStorage: LocalStorage,
     @Named("manufacturer") private val manufacturer: String,
     @Named("model") private val model: String,
@@ -69,6 +68,10 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val APPLOCK_TIMEOUT_GRACE_MS = 1000
     }
 
+    private val server get() = serverManager.getServer(serverId)!!
+
+    private val webSocketRepository get() = serverManager.webSocketRepository(serverId)
+
     private var appActive = false
 
     override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {
@@ -79,7 +82,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         request.supportsEncryption = false
         request.deviceId = deviceId
 
-        val url = urlRepository.getUrl()?.toHttpUrlOrNull()
+        val url = server.connection.getUrl()?.toHttpUrlOrNull()
         if (url == null) {
             Log.e(TAG, "Unable to register device due to missing URL")
             return
@@ -87,17 +90,22 @@ class IntegrationRepositoryImpl @Inject constructor(
         val response =
             integrationService.registerDevice(
                 url.newBuilder().addPathSegments("api/mobile_app/registrations").build(),
-                authenticationRepository.buildBearerToken(),
+                serverManager.authenticationRepository(serverId).buildBearerToken(),
                 request
             )
         try {
             persistDeviceRegistration(deviceRegistration)
-            urlRepository.saveRegistrationUrls(
-                response.cloudhookUrl,
-                response.remoteUiUrl,
-                response.webhookId
+            serverManager.updateServer(
+                server.copy(
+                    connection = server.connection.copy(
+                        webhookId = response.webhookId,
+                        cloudhookUrl = response.cloudhookUrl,
+                        cloudUrl = response.remoteUiUrl,
+                        useCloud = response.remoteUiUrl != null
+                    )
+                )
             )
-            localStorage.putString(PREF_SECRET, response.secret)
+            localStorage.putString(PREF_SECRET, response.secret) // TODO what is this used for?
         } catch (e: Exception) {
             Log.e(TAG, "Unable to save device registration", e)
         }
@@ -110,7 +118,7 @@ class IntegrationRepositoryImpl @Inject constructor(
                 createUpdateRegistrationRequest(deviceRegistration)
             )
         var causeException: Exception? = null
-        for (it in urlRepository.getApiUrls()) {
+        for (it in server.connection.getApiUrls()) {
             try {
                 if (integrationService.callWebhook(it.toHttpUrlOrNull()!!, request).isSuccessful) {
                     persistDeviceRegistration(deviceRegistration)
@@ -143,13 +151,13 @@ class IntegrationRepositoryImpl @Inject constructor(
             localStorage.putString(PREF_PUSH_TOKEN, deviceRegistration.pushToken)
     }
 
-    override suspend fun isRegistered(): Boolean {
-        return urlRepository.getApiUrls().isNotEmpty()
+    private fun isRegistered(): Boolean {
+        return server.connection.getApiUrls().isNotEmpty()
     }
 
     override suspend fun renderTemplate(template: String, variables: Map<String, String>): String? {
         var causeException: Exception? = null
-        for (it in urlRepository.getApiUrls()) {
+        for (it in server.connection.getApiUrls()) {
             try {
                 return integrationService.getTemplate(
                     it.toHttpUrlOrNull()!!,
@@ -179,7 +187,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         val updateLocationRequest = createUpdateLocation(updateLocation)
 
         var causeException: Exception? = null
-        for (it in urlRepository.getApiUrls()) {
+        for (it in server.connection.getApiUrls()) {
             var wasSuccess = false
             try {
                 wasSuccess =
@@ -215,7 +223,7 @@ class IntegrationRepositoryImpl @Inject constructor(
             )
 
         var causeException: Exception? = null
-        for (it in urlRepository.getApiUrls()) {
+        for (it in server.connection.getApiUrls()) {
             try {
                 wasSuccess =
                     integrationService.callWebhook(
@@ -242,7 +250,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         var wasSuccess = false
 
         var causeException: Exception? = null
-        for (it in urlRepository.getApiUrls()) {
+        for (it in server.connection.getApiUrls()) {
             try {
                 wasSuccess =
                     integrationService.callWebhook(
@@ -274,7 +282,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         )
 
         var causeException: Exception? = null
-        for (it in urlRepository.getApiUrls()) {
+        for (it in server.connection.getApiUrls()) {
             try {
                 wasSuccess =
                     integrationService.callWebhook(
@@ -305,7 +313,7 @@ class IntegrationRepositoryImpl @Inject constructor(
             )
         var causeException: Exception? = null
         var zones: Array<EntityResponse<ZoneAttributes>>? = null
-        for (it in urlRepository.getApiUrls()) {
+        for (it in server.connection.getApiUrls()) {
             try {
                 zones = integrationService.getZones(it.toHttpUrlOrNull()!!, getZonesRequest)
             } catch (e: Exception) {
@@ -323,7 +331,7 @@ class IntegrationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun isAppLocked(): Boolean {
-        val lockEnabled = authenticationRepository.isLockEnabled()
+        val lockEnabled = serverManager.authenticationRepository(serverId).isLockEnabled()
         val sessionExpireMillis = getSessionExpireMillis()
         val currentMillis = System.currentTimeMillis()
         val sessionExpired = currentMillis > sessionExpireMillis
@@ -380,6 +388,7 @@ class IntegrationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getHomeAssistantVersion(): String {
+        // TODO read from server + update server object
         val current = System.currentTimeMillis()
         val next = localStorage.getLong(PREF_CHECK_SENSOR_REGISTRATION_NEXT) ?: 0
         if (current <= next)
@@ -387,16 +396,13 @@ class IntegrationRepositoryImpl @Inject constructor(
                 ?: "" // Skip checking HA version as it has not been 4 hours yet
 
         return try {
-            webSocketRepository.getConfig()?.let { response ->
+            getConfig().let { response ->
                 localStorage.putString(PREF_HA_VERSION, response.version)
                 localStorage.putLong(
                     PREF_CHECK_SENSOR_REGISTRATION_NEXT,
                     current + TimeUnit.HOURS.toMillis(4)
                 )
                 response.version
-            } ?: run {
-                Log.e(TAG, "Issue getting config from core.")
-                localStorage.getString(PREF_HA_VERSION) ?: ""
             }
         } catch (e: Exception) {
             Log.e(TAG, "Issue getting new version from core.", e)
@@ -424,7 +430,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         var response: GetConfigResponse? = null
         var causeException: Exception? = null
 
-        for (it in urlRepository.getApiUrls()) {
+        for (it in server.connection.getApiUrls()) {
             try {
                 response = integrationService.getConfig(it.toHttpUrlOrNull()!!, getConfigRequest)
             } catch (e: Exception) {
@@ -439,7 +445,14 @@ class IntegrationRepositoryImpl @Inject constructor(
                     PREF_CHECK_SENSOR_REGISTRATION_NEXT,
                     System.currentTimeMillis() + TimeUnit.HOURS.toMillis(4)
                 )
-                urlRepository.updateCloudUrls(response.cloudhookUrl, response.remoteUiUrl)
+                serverManager.updateServer(
+                    server.copy(
+                        connection = server.connection.copy(
+                            cloudUrl = response.remoteUiUrl,
+                            cloudhookUrl = response.cloudhookUrl
+                        )
+                    )
+                )
                 return response
             }
         }
@@ -483,7 +496,7 @@ class IntegrationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getEntity(entityId: String): Entity<Map<String, Any>>? {
-        val url = urlRepository.getUrl()?.toHttpUrlOrNull()
+        val url = server.connection.getUrl()?.toHttpUrlOrNull()
         if (url == null) {
             Log.e(TAG, "Unable to register device due to missing URL")
             return null
@@ -491,7 +504,7 @@ class IntegrationRepositoryImpl @Inject constructor(
 
         val response = integrationService.getState(
             url.newBuilder().addPathSegments("api/states/$entityId").build(),
-            authenticationRepository.buildBearerToken()
+            serverManager.authenticationRepository(serverId).buildBearerToken()
         )
         return Entity(
             response.entityId,
@@ -558,7 +571,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         )
 
         var causeException: Exception? = null
-        for (it in urlRepository.getApiUrls()) {
+        for (it in server.connection.getApiUrls()) {
             try {
                 integrationService.callWebhook(it.toHttpUrlOrNull()!!, integrationRequest).let {
                     // If we created sensor or it already exists
@@ -590,7 +603,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         )
 
         var causeException: Exception? = null
-        for (it in urlRepository.getApiUrls()) {
+        for (it in server.connection.getApiUrls()) {
             try {
                 integrationService.updateSensors(it.toHttpUrlOrNull()!!, integrationRequest).let {
                     it.forEach { (_, response) ->

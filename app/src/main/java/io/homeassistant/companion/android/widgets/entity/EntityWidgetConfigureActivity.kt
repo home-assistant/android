@@ -22,7 +22,7 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetStaticConfigureBinding
@@ -45,7 +45,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     }
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
+    lateinit var serverManager: ServerManager
 
     @Inject
     lateinit var staticWidgetDao: StaticWidgetDao
@@ -125,7 +125,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             binding.stateSeparator.setText(staticWidget.stateSeparator)
             val entity = runBlocking {
                 try {
-                    integrationUseCase.getEntity(staticWidget.entityId)
+                    serverManager.integrationRepository().getEntity(staticWidget.entityId)
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to get entity information", e)
                     Toast.makeText(applicationContext, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
@@ -200,7 +200,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         lifecycleScope.launch {
             try {
                 // Fetch entities
-                val fetchedEntities = integrationUseCase.getEntities()
+                val fetchedEntities = serverManager.integrationRepository().getEntities()
                 fetchedEntities?.forEach {
                     entities[it.entityId] = it
                 }

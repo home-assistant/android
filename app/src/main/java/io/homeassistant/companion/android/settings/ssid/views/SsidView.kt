@@ -51,7 +51,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.common.data.wifi.WifiHelper
 import io.homeassistant.companion.android.common.R as commonR
 
 @OptIn(
@@ -155,7 +155,7 @@ fun SsidView(
                 usingWifi &&
                     (
                         it == activeSsid ||
-                            (it.startsWith(UrlRepository.BSSID_PREFIX) && it.removePrefix(UrlRepository.BSSID_PREFIX).equals(activeBssid, ignoreCase = true))
+                            (it.startsWith(WifiHelper.BSSID_PREFIX) && it.removePrefix(WifiHelper.BSSID_PREFIX).equals(activeBssid, ignoreCase = true))
                         )
             }
             Row(
@@ -174,10 +174,10 @@ fun SsidView(
                 )
                 Text(
                     text =
-                    if (it.startsWith(UrlRepository.BSSID_PREFIX)) it.removePrefix(UrlRepository.BSSID_PREFIX)
+                    if (it.startsWith(WifiHelper.BSSID_PREFIX)) it.removePrefix(WifiHelper.BSSID_PREFIX)
                     else it,
                     fontFamily =
-                    if (it.startsWith(UrlRepository.BSSID_PREFIX)) FontFamily.Monospace
+                    if (it.startsWith(WifiHelper.BSSID_PREFIX)) FontFamily.Monospace
                     else null,
                     modifier = Modifier
                         .padding(horizontal = 16.dp)

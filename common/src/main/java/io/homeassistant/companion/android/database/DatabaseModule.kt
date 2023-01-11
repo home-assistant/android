@@ -10,6 +10,7 @@ import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.sensor.SensorDao
+import io.homeassistant.companion.android.database.server.ServerDao
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.wear.EntityStateComplicationsDao
 import io.homeassistant.companion.android.database.wear.FavoriteCachesDao
@@ -64,6 +65,9 @@ object DatabaseModule {
 
     @Provides
     fun provideFavoriteCachesDao(database: AppDatabase): FavoriteCachesDao = database.favoriteCachesDao()
+
+    @Provides
+    fun provideServerDao(database: AppDatabase): ServerDao = database.serverDao()
 
     @Provides
     fun provideSettingsDao(database: AppDatabase): SettingsDao = database.settingsDao()

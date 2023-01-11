@@ -11,7 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.themeadapter.material.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.nfc.views.TagReaderView
 import io.homeassistant.companion.android.util.UrlHandler
 import kotlinx.coroutines.launch
@@ -26,7 +26,7 @@ class TagReaderActivity : BaseActivity() {
     }
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
+    lateinit var serverManager: ServerManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,8 +60,8 @@ class TagReaderActivity : BaseActivity() {
 
         val nfcTagId = UrlHandler.splitNfcTagId(url)
         Log.d(TAG, "Tag ID: $nfcTagId")
-        if (nfcTagId != null) {
-            integrationUseCase.scanTag(hashMapOf("tag_id" to nfcTagId))
+        if (nfcTagId != null && serverManager.isRegistered()) {
+            serverManager.integrationRepository().scanTag(hashMapOf("tag_id" to nfcTagId))
             Log.d(TAG, "Tag scanned to HA successfully")
         } else {
             showProcessingError(isNfcTag)

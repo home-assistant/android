@@ -135,8 +135,8 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
         }
     }
 
-    override fun startIntegration() {
-        startActivity(MobileAppIntegrationActivity.newInstance(this))
+    override fun startIntegration(serverId: Int) {
+        startActivity(MobileAppIntegrationActivity.newInstance(this, serverId))
     }
 
     override fun showLoading() {

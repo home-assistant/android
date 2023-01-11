@@ -17,8 +17,8 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetMediaControlsConfigureBinding
@@ -43,7 +43,7 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
     private var requestLauncherSetup = false
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
+    lateinit var serverManager: ServerManager
 
     @Inject
     lateinit var mediaPlayerControlsWidgetDao: MediaPlayerControlsWidgetDao
@@ -127,7 +127,7 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
             binding.widgetShowMediaPlayerSource.isChecked = mediaPlayerWidget.showSource
             val entities = runBlocking {
                 try {
-                    mediaPlayerWidget.entityId.split(",").map { s -> integrationUseCase.getEntity(s.trim()) }
+                    mediaPlayerWidget.entityId.split(",").map { s -> serverManager.integrationRepository().getEntity(s.trim()) }
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to get entity information", e)
                     Toast.makeText(applicationContext, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
@@ -156,7 +156,7 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
         lifecycleScope.launch {
             try {
                 // Fetch entities
-                val fetchedEntities = integrationUseCase.getEntities()
+                val fetchedEntities = serverManager.integrationRepository().getEntities()
                 fetchedEntities?.forEach {
                     if (it.domain == "media_player") {
                         entities[it.entityId] = it

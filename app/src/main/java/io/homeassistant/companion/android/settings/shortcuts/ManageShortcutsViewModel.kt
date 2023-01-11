@@ -27,7 +27,7 @@ import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -35,7 +35,7 @@ import javax.inject.Inject
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @HiltViewModel
 class ManageShortcutsViewModel @Inject constructor(
-    private val integrationUseCase: IntegrationRepository,
+    private val serverManager: ServerManager,
     application: Application
 ) : AndroidViewModel(application) {
 
@@ -68,7 +68,7 @@ class ManageShortcutsViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            integrationUseCase.getEntities()?.forEach {
+            serverManager.integrationRepository().getEntities()?.forEach {
                 entities[it.entityId] = it
             }
         }

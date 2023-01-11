@@ -93,7 +93,7 @@ class HomeActivity : ComponentActivity(), HomeView {
     }
 
     override fun displayMobileAppIntegration() {
-        val intent = MobileAppIntegrationActivity.newInstance(this)
+        val intent = MobileAppIntegrationActivity.newInstance(this, 0) // TODO
         startActivity(intent)
         finish()
     }

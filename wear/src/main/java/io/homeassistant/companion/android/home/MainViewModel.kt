@@ -133,10 +133,8 @@ class MainViewModel @Inject constructor(
     }
 
     fun loadEntities() {
+        if (!homePresenter.isConnected()) return
         viewModelScope.launch {
-            if (!homePresenter.isConnected()) {
-                return@launch
-            }
             try {
                 // Load initial state
                 loadingState.value = LoadingState.LOADING
@@ -171,6 +169,7 @@ class MainViewModel @Inject constructor(
     }
 
     suspend fun updateUI() = withContext(Dispatchers.IO) {
+        if (!homePresenter.isConnected()) return@withContext
         val getAreaRegistry = async { homePresenter.getAreaRegistry() }
         val getDeviceRegistry = async { homePresenter.getDeviceRegistry() }
         val getEntityRegistry = async { homePresenter.getEntityRegistry() }

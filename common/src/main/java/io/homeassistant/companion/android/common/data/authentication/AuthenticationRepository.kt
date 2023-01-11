@@ -1,5 +1,8 @@
 package io.homeassistant.companion.android.common.data.authentication
 
+import dagger.assisted.AssistedFactory
+import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationRepositoryImpl
+
 interface AuthenticationRepository {
 
     suspend fun registerAuthorizationCode(authorizationCode: String)
@@ -9,7 +12,6 @@ interface AuthenticationRepository {
     suspend fun retrieveAccessToken(): String
 
     suspend fun revokeSession()
-    suspend fun removeSessionData()
 
     suspend fun getSessionState(): SessionState
 
@@ -22,4 +24,9 @@ interface AuthenticationRepository {
     suspend fun isLockEnabledRaw(): Boolean
     suspend fun isLockHomeBypassEnabled(): Boolean
     suspend fun isLockEnabled(): Boolean
+}
+
+@AssistedFactory
+interface AuthenticationRepositoryFactory {
+    fun create(serverId: Int): AuthenticationRepositoryImpl
 }

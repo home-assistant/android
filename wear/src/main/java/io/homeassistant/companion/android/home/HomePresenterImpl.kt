@@ -2,13 +2,11 @@ package io.homeassistant.companion.android.home
 
 import android.util.Log
 import io.homeassistant.companion.android.BuildConfig
-import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
-import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
@@ -28,9 +26,7 @@ import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
 class HomePresenterImpl @Inject constructor(
-    private val authenticationUseCase: AuthenticationRepository,
-    private val integrationUseCase: IntegrationRepository,
-    private val webSocketUseCase: WebSocketRepository,
+    private val serverManager: ServerManager,
     private val wearPrefsRepository: WearPrefsRepository
 ) : HomePresenter {
 
@@ -65,10 +61,12 @@ class HomePresenterImpl @Inject constructor(
 
     override fun onViewReady() {
         mainScope.launch {
-            val sessionValid = authenticationUseCase.getSessionState() == SessionState.CONNECTED
-            if (sessionValid && integrationUseCase.isRegistered()) {
+            if (
+                serverManager.isRegistered() &&
+                serverManager.authenticationRepository().getSessionState() == SessionState.CONNECTED
+            ) {
                 resyncRegistration()
-            } else if (sessionValid) {
+            } else if (false) { // TODO the app can't have a valid session without a registration
                 view.displayMobileAppIntegration()
             } else {
                 view.displayOnBoarding()
@@ -77,11 +75,11 @@ class HomePresenterImpl @Inject constructor(
     }
 
     override suspend fun getEntities(): List<Entity<*>>? {
-        return integrationUseCase.getEntities()
+        return serverManager.integrationRepository().getEntities()
     }
 
     override suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity<*>>? {
-        return integrationUseCase.getEntityUpdates(entityIds)
+        return serverManager.integrationRepository().getEntityUpdates(entityIds)
     }
 
     override suspend fun onEntityClicked(entityId: String, state: String) {
@@ -99,7 +97,7 @@ class HomePresenterImpl @Inject constructor(
             else -> "turn_on"
         }
         try {
-            integrationUseCase.callService(
+            serverManager.integrationRepository().callService(
                 domain,
                 serviceName,
                 hashMapOf("entity_id" to entityId)
@@ -111,7 +109,7 @@ class HomePresenterImpl @Inject constructor(
 
     override suspend fun onFanSpeedChanged(entityId: String, speed: Float) {
         try {
-            integrationUseCase.callService(
+            serverManager.integrationRepository().callService(
                 entityId.split(".")[0],
                 "set_percentage",
                 hashMapOf(
@@ -126,7 +124,7 @@ class HomePresenterImpl @Inject constructor(
 
     override suspend fun onBrightnessChanged(entityId: String, brightness: Float) {
         try {
-            integrationUseCase.callService(
+            serverManager.integrationRepository().callService(
                 entityId.split(".")[0],
                 "turn_on",
                 hashMapOf(
@@ -141,7 +139,7 @@ class HomePresenterImpl @Inject constructor(
 
     override suspend fun onColorTempChanged(entityId: String, colorTemp: Float) {
         try {
-            integrationUseCase.callService(
+            serverManager.integrationRepository().callService(
                 entityId.split(".")[0],
                 "turn_on",
                 hashMapOf(
@@ -161,11 +159,11 @@ class HomePresenterImpl @Inject constructor(
     private fun finishSession() {
         mainScope.launch {
             try {
-                authenticationUseCase.revokeSession()
+                serverManager.authenticationRepository().revokeSession()
             } catch (e: Exception) {
                 Log.e(TAG, "Exception while revoking session", e)
                 // Remove local data anyway, the user wants to sign out and we don't need the server for that
-                authenticationUseCase.removeSessionData()
+                serverManager.getServer()?.let { serverManager.removeServer(it.id) }
             }
             view.displayOnBoarding()
         }
@@ -178,7 +176,7 @@ class HomePresenterImpl @Inject constructor(
     private fun resyncRegistration() {
         mainScope.launch {
             try {
-                integrationUseCase.updateRegistration(
+                serverManager.integrationRepository().updateRegistration(
                     DeviceRegistration(
                         "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
                         null,
@@ -192,36 +190,34 @@ class HomePresenterImpl @Inject constructor(
         }
     }
 
-    override suspend fun isConnected(): Boolean {
-        return integrationUseCase.isRegistered()
-    }
+    override fun isConnected(): Boolean = serverManager.isRegistered()
 
     override fun getWebSocketState(): WebSocketState? {
-        return webSocketUseCase.getConnectionState()
+        return serverManager.webSocketRepository().getConnectionState()
     }
 
     override suspend fun getAreaRegistry(): List<AreaRegistryResponse>? {
-        return webSocketUseCase.getAreaRegistry()
+        return serverManager.webSocketRepository().getAreaRegistry()
     }
 
     override suspend fun getDeviceRegistry(): List<DeviceRegistryResponse>? {
-        return webSocketUseCase.getDeviceRegistry()
+        return serverManager.webSocketRepository().getDeviceRegistry()
     }
 
     override suspend fun getEntityRegistry(): List<EntityRegistryResponse>? {
-        return webSocketUseCase.getEntityRegistry()
+        return serverManager.webSocketRepository().getEntityRegistry()
     }
 
     override suspend fun getAreaRegistryUpdates(): Flow<AreaRegistryUpdatedEvent>? {
-        return webSocketUseCase.getAreaRegistryUpdates()
+        return serverManager.webSocketRepository().getAreaRegistryUpdates()
     }
 
     override suspend fun getDeviceRegistryUpdates(): Flow<DeviceRegistryUpdatedEvent>? {
-        return webSocketUseCase.getDeviceRegistryUpdates()
+        return serverManager.webSocketRepository().getDeviceRegistryUpdates()
     }
 
     override suspend fun getEntityRegistryUpdates(): Flow<EntityRegistryUpdatedEvent>? {
-        return webSocketUseCase.getEntityRegistryUpdates()
+        return serverManager.webSocketRepository().getEntityRegistryUpdates()
     }
 
     override suspend fun getTileShortcuts(): List<SimplifiedEntity> {

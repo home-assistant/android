@@ -13,8 +13,8 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.sensorCoreSyncChannel
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorDao
@@ -55,7 +55,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
     protected abstract val managers: List<SensorManager>
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
+    lateinit var serverManager: ServerManager
 
     @Inject
     lateinit var sensorDao: SensorDao
@@ -104,7 +104,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                     Log.d(tag, "Event data: $eventData")
                     ioScope.launch {
                         try {
-                            integrationUseCase.fireEvent(
+                            serverManager.integrationRepository().fireEvent(
                                 "android.intent_received",
                                 eventData as Map<String, Any>
                             )
@@ -132,12 +132,12 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                     updateSensor(context, sensorId)
                 }
             } else {
-                updateSensors(context, integrationUseCase, sensorDao, intent)
+                updateSensors(context, serverManager, sensorDao, intent)
                 if (chargingActions.contains(intent.action)) {
                     // Add a 5 second delay to perform another update so charging state updates completely.
                     // This is necessary as the system needs a few seconds to verify the charger.
                     delay(5000L)
-                    updateSensors(context, integrationUseCase, sensorDao, intent)
+                    updateSensors(context, serverManager, sensorDao, intent)
                 }
             }
         }
@@ -149,23 +149,25 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
 
     suspend fun updateSensors(
         context: Context,
-        integrationUseCase: IntegrationRepository,
+        serverManager: ServerManager,
         sensorDao: SensorDao,
         intent: Intent?
     ) {
         val enabledRegistrations = mutableListOf<SensorRegistration<Any>>()
 
-        val checkDeviceRegistration = integrationUseCase.getRegistration()
-        if (checkDeviceRegistration.appVersion == null) {
+        if (
+            !serverManager.isRegistered() ||
+            serverManager.integrationRepository().getRegistration().appVersion == null
+        ) {
             Log.w(tag, "Device not registered, skipping sensor update/registration")
             return
         }
 
-        val currentHAversion = integrationUseCase.getHomeAssistantVersion()
-        val supportsDisabledSensors = integrationUseCase.isHomeAssistantVersionAtLeast(2022, 6, 0)
+        val currentHAversion = serverManager.integrationRepository().getHomeAssistantVersion()
+        val supportsDisabledSensors = serverManager.integrationRepository().isHomeAssistantVersionAtLeast(2022, 6, 0)
         val coreSensorStatus: Map<String, Boolean>? = if (supportsDisabledSensors) {
             try {
-                val config = integrationUseCase.getConfig().entities
+                val config = serverManager.integrationRepository().getConfig().entities
                 config
                     ?.filter { it.value["disabled"] != null }
                     ?.mapValues { !(it.value["disabled"] as Boolean) } // Map to sensor id -> enabled
@@ -182,7 +184,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
             // Since we don't have this manager injected it doesn't fulfil its injects, manually
             // inject for now I guess?
             if (manager is LocationSensorManagerBase)
-                manager.integrationUseCase = integrationUseCase
+                manager.serverManager = serverManager
 
             val hasSensor = manager.hasSensor(context)
             if (hasSensor) {
@@ -221,7 +223,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                     // - sensor enabled has changed from registered enabled state on core >=2022.6
                     // - sensor is registered according to database, but core >=2022.6 doesn't know about it
                     try {
-                        registerSensor(context, integrationUseCase, fullSensor, basicSensor)
+                        registerSensor(context, serverManager, fullSensor, basicSensor)
                         sensor.registered = sensor.enabled
                         sensor.coreRegistration = currentHAversion
                         sensor.appRegistration = currentAppVersion
@@ -244,7 +246,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                                 sensor.registered = true
                             } else {
                                 // Can't enable due to missing permission(s), 'override' core and notify user
-                                registerSensor(context, integrationUseCase, fullSensor, basicSensor)
+                                registerSensor(context, serverManager, fullSensor, basicSensor)
 
                                 context.getSystemService<NotificationManager>()?.let { notificationManager ->
                                     createNotificationChannel(context)
@@ -279,7 +281,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                     // 3. Re-register sensors with core when they can be registered and are enabled or on
                     // core >= 2022.6, and app or core version change is detected
                     try {
-                        registerSensor(context, integrationUseCase, fullSensor, basicSensor)
+                        registerSensor(context, serverManager, fullSensor, basicSensor)
                         sensor.registered = sensor.enabled
                         sensor.coreRegistration = currentHAversion
                         sensor.appRegistration = currentAppVersion
@@ -297,7 +299,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         if (enabledRegistrations.isNotEmpty()) {
             var success = false
             try {
-                success = integrationUseCase.updateSensors(enabledRegistrations.toTypedArray())
+                success = serverManager.integrationRepository().updateSensors(enabledRegistrations.toTypedArray())
                 enabledRegistrations.forEach {
                     sensorDao.updateLastSentStateAndIcon(it.uniqueId, it.state.toString(), it.icon)
                 }
@@ -322,7 +324,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
 
     private suspend fun registerSensor(
         context: Context,
-        integrationUseCase: IntegrationRepository,
+        serverManager: ServerManager,
         fullSensor: SensorWithAttributes,
         basicSensor: SensorManager.BasicSensor
     ) {
@@ -331,7 +333,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         config.setLocale(Locale("en"))
         reg.name = context.createConfigurationContext(config).resources.getString(basicSensor.name)
 
-        integrationUseCase.registerSensor(reg)
+        serverManager.integrationRepository().registerSensor(reg)
     }
 
     private suspend fun updateSensor(
@@ -357,7 +359,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                 )
         ) {
             try {
-                integrationUseCase.updateSensors(arrayOf(fullSensor.toSensorRegistration(basicSensor)))
+                serverManager.integrationRepository().updateSensors(arrayOf(fullSensor.toSensorRegistration(basicSensor)))
                 sensorDao.updateLastSentStateAndIcon(
                     basicSensor.id,
                     fullSensor.sensor.state,

@@ -25,6 +25,7 @@ import androidx.preference.SwitchPreference
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
+import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.settings.controls.ManageControlsSettingsFragment
 import io.homeassistant.companion.android.settings.language.LanguagesProvider
 import io.homeassistant.companion.android.settings.log.LogFragment
@@ -62,6 +63,8 @@ class SettingsFragment constructor(
     private val requestNotificationPermissionResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         updateNotificationChannelPrefs()
     }
+
+    private val requestOnboardingResult = registerForActivityResult(OnboardApp(), this::onOnboardingComplete)
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         preferenceManager.preferenceDataStore = presenter.getPreferenceDataStore()
@@ -103,6 +106,13 @@ class SettingsFragment constructor(
         removeSystemFromThemesIfNeeded()
 
         updateBackgroundAccessPref()
+
+        findPreference<Preference>("server_add")?.let {
+            it.setOnPreferenceClickListener {
+                requestOnboardingResult.launch(OnboardApp.Input())
+                return@setOnPreferenceClickListener true
+            }
+        }
 
         findPreference<Preference>("sensors")?.setOnPreferenceClickListener {
             parentFragmentManager.commit {
@@ -340,6 +350,14 @@ class SettingsFragment constructor(
                 notificationsEnabled &&
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
                 uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION
+        }
+    }
+
+    private fun onOnboardingComplete(result: OnboardApp.Output?) {
+        lifecycleScope.launch {
+            presenter.addServer(result)
+            presenter.updateExternalUrlStatus()
+            presenter.updateInternalUrlStatus()
         }
     }
 

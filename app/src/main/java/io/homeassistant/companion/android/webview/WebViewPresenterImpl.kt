@@ -6,11 +6,9 @@ import android.graphics.Color
 import android.net.Uri
 import android.util.Log
 import dagger.hilt.android.qualifiers.ActivityContext
-import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.SessionState
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
-import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.matter.MatterFrontendCommissioningStatus
 import io.homeassistant.companion.android.matter.MatterManager
@@ -36,9 +34,7 @@ import io.homeassistant.companion.android.common.R as commonR
 
 class WebViewPresenterImpl @Inject constructor(
     @ActivityContext context: Context,
-    private val urlUseCase: UrlRepository,
-    private val authenticationUseCase: AuthenticationRepository,
-    private val integrationUseCase: IntegrationRepository,
+    private val serverManager: ServerManager,
     private val prefsRepository: PrefsRepository,
     private val matterUseCase: MatterManager
 ) : WebViewPresenter {
@@ -60,7 +56,10 @@ class WebViewPresenterImpl @Inject constructor(
     override fun onViewReady(path: String?) {
         mainScope.launch {
             val oldUrl = url
-            url = urlUseCase.getUrl(urlUseCase.isInternal() || (urlUseCase.isPrioritizeInternal() && !DisabledLocationHandler.isLocationEnabled(view as Context)))
+            val serverConnectionInfo = serverManager.getServer()?.connection
+            url = serverConnectionInfo?.getUrl(
+                serverConnectionInfo.isInternal() || (serverConnectionInfo.prioritizeInternal && !DisabledLocationHandler.isLocationEnabled(view as Context))
+            )
 
             if (path != null && !path.startsWith("entityId:")) {
                 url = UrlHandler.handle(url, path)
@@ -85,10 +84,11 @@ class WebViewPresenterImpl @Inject constructor(
     }
 
     override fun checkSecurityVersion() {
+        if (!serverManager.isRegistered()) return
         mainScope.launch {
             try {
-                if (!integrationUseCase.isHomeAssistantVersionAtLeast(2021, 1, 5)) {
-                    if (integrationUseCase.shouldNotifySecurityWarning()) {
+                if (!serverManager.integrationRepository().isHomeAssistantVersionAtLeast(2021, 1, 5)) {
+                    if (serverManager.integrationRepository().shouldNotifySecurityWarning()) {
                         view.showError(WebView.ErrorType.SECURITY_WARNING)
                     } else {
                         Log.w(TAG, "Still not updated but have already notified.")
@@ -103,10 +103,10 @@ class WebViewPresenterImpl @Inject constructor(
     override fun onGetExternalAuth(context: Context, callback: String, force: Boolean) {
         mainScope.launch {
             try {
-                view.setExternalAuth("$callback(true, ${authenticationUseCase.retrieveExternalAuthentication(force)})")
+                view.setExternalAuth("$callback(true, ${serverManager.authenticationRepository().retrieveExternalAuthentication(force)})")
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to retrieve external auth", e)
-                val anonymousSession = authenticationUseCase.getSessionState() == SessionState.ANONYMOUS
+                val anonymousSession = serverManager.isRegistered() && serverManager.authenticationRepository().getSessionState() == SessionState.ANONYMOUS
                 view.setExternalAuth("$callback(false)")
                 view.showError(
                     errorType = when {
@@ -128,7 +128,7 @@ class WebViewPresenterImpl @Inject constructor(
     override fun onRevokeExternalAuth(callback: String) {
         mainScope.launch {
             try {
-                authenticationUseCase.revokeSession()
+                serverManager.authenticationRepository().revokeSession()
                 view.setExternalAuth("$callback(true)")
                 view.relaunchApp()
             } catch (e: Exception) {
@@ -140,9 +140,18 @@ class WebViewPresenterImpl @Inject constructor(
 
     override fun clearKnownUrls() {
         mainScope.launch {
-            urlUseCase.saveUrl("", true)
-            urlUseCase.saveUrl("", false)
-            urlUseCase.updateCloudUrls(null, null)
+            serverManager.getServer()?.let {
+                serverManager.updateServer(
+                    it.copy(
+                        connection = it.connection.copy(
+                            externalUrl = "",
+                            internalUrl = null,
+                            cloudUrl = null,
+                            cloudhookUrl = null
+                        )
+                    )
+                )
+            }
         }
     }
 
@@ -164,19 +173,21 @@ class WebViewPresenterImpl @Inject constructor(
 
     override fun isAppLocked(): Boolean {
         return runBlocking {
-            integrationUseCase.isAppLocked()
+            if (serverManager.isRegistered()) serverManager.integrationRepository().isAppLocked()
+            else false
         }
     }
 
     override fun setAppActive(active: Boolean) {
         return runBlocking {
-            integrationUseCase.setAppActive(active)
+            if (serverManager.isRegistered()) serverManager.integrationRepository().setAppActive(active)
         }
     }
 
     override fun isLockEnabled(): Boolean {
         return runBlocking {
-            authenticationUseCase.isLockEnabled()
+            if (serverManager.isRegistered()) serverManager.authenticationRepository().isLockEnabled()
+            else false
         }
     }
 
@@ -190,7 +201,8 @@ class WebViewPresenterImpl @Inject constructor(
 
     override fun sessionTimeOut(): Int {
         return runBlocking {
-            integrationUseCase.getSessionTimeOut()
+            if (serverManager.isRegistered()) serverManager.integrationRepository().getSessionTimeOut()
+            else 0
         }
     }
 
@@ -198,15 +210,13 @@ class WebViewPresenterImpl @Inject constructor(
         mainScope.cancel()
     }
 
-    override fun isSsidUsed(): Boolean {
-        return runBlocking {
-            urlUseCase.getHomeWifiSsids().isNotEmpty()
-        }
-    }
+    override fun isSsidUsed(): Boolean =
+        serverManager.getServer()?.connection?.internalSsids?.isNotEmpty() == true
 
     override fun getAuthorizationHeader(): String {
         return runBlocking {
-            authenticationUseCase.buildBearerToken()
+            if (serverManager.isRegistered()) serverManager.authenticationRepository().buildBearerToken()
+            else ""
         }
     }
 

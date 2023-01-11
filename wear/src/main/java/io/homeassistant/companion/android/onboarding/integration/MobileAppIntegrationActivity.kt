@@ -17,9 +17,12 @@ import io.homeassistant.companion.android.common.R as commonR
 class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationView {
     companion object {
         private const val TAG = "MobileAppIntegrationActivity"
+        val EXTRA_SERVER_ID = "server_id"
 
-        fun newInstance(context: Context): Intent {
-            return Intent(context, MobileAppIntegrationActivity::class.java)
+        fun newInstance(context: Context, serverId: Int): Intent {
+            return Intent(context, MobileAppIntegrationActivity::class.java).apply {
+                putExtra(EXTRA_SERVER_ID, serverId)
+            }
         }
     }
 
@@ -30,13 +33,16 @@ class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationVi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val serverId = intent.getIntExtra(EXTRA_SERVER_ID, 0)
+        if (serverId == 0) finish()
+
         binding = ActivityIntegrationBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         binding.serverUrl.setText(Build.MODEL)
 
         binding.finish.setOnClickListener {
-            presenter.onRegistrationAttempt(binding.serverUrl.text.toString())
+            presenter.onRegistrationAttempt(serverId, binding.serverUrl.text.toString())
         }
     }
 

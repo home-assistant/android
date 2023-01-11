@@ -15,8 +15,8 @@ import androidx.core.content.getSystemService
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.databinding.WidgetCameraConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
@@ -38,7 +38,7 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     private var requestLauncherSetup = false
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
+    lateinit var serverManager: ServerManager
 
     private var entities = LinkedHashMap<String, Entity<Any>>()
     private var selectedEntity: Entity<Any>? = null
@@ -100,7 +100,7 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             binding.addButton.setText(commonR.string.update_widget)
             val entity = runBlocking {
                 try {
-                    integrationUseCase.getEntity(cameraWidget.entityId)
+                    serverManager.integrationRepository().getEntity(cameraWidget.entityId)
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to get entity information", e)
                     Toast.makeText(applicationContext, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
@@ -122,7 +122,7 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         lifecycleScope.launch {
             try {
                 // Fetch entities
-                val fetchedEntities = integrationUseCase.getEntities()
+                val fetchedEntities = serverManager.integrationRepository().getEntities()
                 fetchedEntities?.forEach {
                     if (it.domain == "camera") {
                         entities[it.entityId] = it

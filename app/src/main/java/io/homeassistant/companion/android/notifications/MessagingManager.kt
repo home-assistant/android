@@ -44,10 +44,8 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
-import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.notifications.DeviceCommandData
 import io.homeassistant.companion.android.common.notifications.NotificationData
 import io.homeassistant.companion.android.common.notifications.commandBeaconMonitor
@@ -61,6 +59,7 @@ import io.homeassistant.companion.android.common.notifications.handleText
 import io.homeassistant.companion.android.common.notifications.parseColor
 import io.homeassistant.companion.android.common.notifications.parseVibrationPattern
 import io.homeassistant.companion.android.common.notifications.prepareText
+import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.common.util.cancel
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.getActiveNotification
@@ -98,9 +97,7 @@ import io.homeassistant.companion.android.common.R as commonR
 class MessagingManager @Inject constructor(
     @ApplicationContext val context: Context,
     private val okHttpClient: OkHttpClient,
-    private val integrationUseCase: IntegrationRepository,
-    private val urlUseCase: UrlRepository,
-    private val authenticationUseCase: AuthenticationRepository,
+    private val serverManager: ServerManager,
     private val prefsRepository: PrefsRepository,
     private val notificationDao: NotificationDao,
     private val sensorDao: SensorDao,
@@ -278,7 +275,7 @@ class MessagingManager @Inject constructor(
             if (confirmation) {
                 mainScope.launch {
                     try {
-                        integrationUseCase.fireEvent("mobile_app_notification_received", jsonData)
+                        serverManager.integrationRepository().fireEvent("mobile_app_notification_received", jsonData)
                     } catch (e: Exception) {
                         Log.e(TAG, "Unable to send notification received event", e)
                     }
@@ -1198,7 +1195,7 @@ class MessagingManager @Inject constructor(
         data: Map<String, String>
     ) {
         data[ICON_URL]?.let {
-            val url = UrlHandler.handle(urlUseCase.getUrl(), it)
+            val url = UrlHandler.handle(serverManager.getServer()?.connection?.getUrl(), it)
             val bitmap = getImageBitmap(url, !UrlHandler.isAbsoluteUrl(it))
             if (bitmap != null) {
                 builder.setLargeIcon(bitmap)
@@ -1211,7 +1208,7 @@ class MessagingManager @Inject constructor(
         data: Map<String, String>
     ) {
         data[IMAGE_URL]?.let {
-            val url = UrlHandler.handle(urlUseCase.getUrl(), it)
+            val url = UrlHandler.handle(serverManager.getServer()?.connection?.getUrl(), it)
             val bitmap = getImageBitmap(url, !UrlHandler.isAbsoluteUrl(it))
             if (bitmap != null) {
                 builder
@@ -1237,7 +1234,7 @@ class MessagingManager @Inject constructor(
                 val request = Request.Builder().apply {
                     url(url)
                     if (requiresAuth) {
-                        addHeader("Authorization", authenticationUseCase.buildBearerToken())
+                        addHeader("Authorization", serverManager.authenticationRepository().buildBearerToken())
                     }
                 }.build()
 
@@ -1255,7 +1252,7 @@ class MessagingManager @Inject constructor(
         data: Map<String, String>
     ) {
         data[VIDEO_URL]?.let {
-            val url = UrlHandler.handle(urlUseCase.getUrl(), it)
+            val url = UrlHandler.handle(serverManager.getServer()?.connection?.getUrl(), it)
             getVideoFrames(url, !UrlHandler.isAbsoluteUrl(it))?.let { frames ->
                 Log.d(TAG, "Found ${frames.size} frames for video notification")
                 RemoteViews(context.packageName, R.layout.view_image_flipper).let { remoteViewFlipper ->
@@ -1303,7 +1300,7 @@ class MessagingManager @Inject constructor(
                     val request = Request.Builder().apply {
                         url(url)
                         if (requiresAuth) {
-                            addHeader("Authorization", authenticationUseCase.buildBearerToken())
+                            addHeader("Authorization", serverManager.authenticationRepository().buildBearerToken())
                         }
                     }.build()
                     val response = okHttpClient.newCall(request).execute()
@@ -1765,13 +1762,13 @@ class MessagingManager @Inject constructor(
         val canAuth = (BiometricManager.from(context).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS)
         if (canAuth) {
             if (appLockEnableValue != null) {
-                authenticationUseCase.setLockEnabled(appLockEnableValue)
+                serverManager.authenticationRepository().setLockEnabled(appLockEnableValue)
             }
             if (appLockTimeoutValue != null) {
-                integrationUseCase.sessionTimeOut(appLockTimeoutValue)
+                serverManager.integrationRepository().sessionTimeOut(appLockTimeoutValue)
             }
             if (homeBypassEnableValue != null) {
-                authenticationUseCase.setLockHomeBypassEnabled(homeBypassEnableValue)
+                serverManager.authenticationRepository().setLockHomeBypassEnabled(homeBypassEnableValue)
             }
         } else {
             Log.w(TAG, "Not changing App-Lock settings. BiometricManager cannot Authenticate!")

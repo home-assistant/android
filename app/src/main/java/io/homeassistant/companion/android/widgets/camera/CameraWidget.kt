@@ -18,8 +18,7 @@ import com.squareup.picasso.Picasso
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
 import kotlinx.coroutines.CoroutineScope
@@ -43,10 +42,7 @@ class CameraWidget : AppWidgetProvider() {
     }
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
-
-    @Inject
-    lateinit var urlUseCase: UrlRepository
+    lateinit var serverManager: ServerManager
 
     @Inject
     lateinit var cameraWidgetDao: CameraWidgetDao
@@ -125,7 +121,7 @@ class CameraWidget : AppWidgetProvider() {
                     setViewVisibility(R.id.widgetCameraError, View.VISIBLE)
                     entityPictureUrl = null
                 }
-                val baseUrl = urlUseCase.getUrl().toString().removeSuffix("/")
+                val baseUrl = serverManager.getServer()?.connection?.getUrl().toString().removeSuffix("/")
                 val url = "$baseUrl$entityPictureUrl"
                 if (entityPictureUrl == null) {
                     setImageViewResource(
@@ -189,7 +185,7 @@ class CameraWidget : AppWidgetProvider() {
     }
 
     private suspend fun retrieveCameraImageUrl(entityId: String): String? {
-        val entity = integrationUseCase.getEntity(entityId)
+        val entity = serverManager.integrationRepository().getEntity(entityId)
         return entity?.attributes?.get("entity_picture")?.toString()
     }
 

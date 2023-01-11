@@ -9,7 +9,7 @@ import android.widget.Toast
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.cancel
 import io.homeassistant.companion.android.notifications.MessagingManager.Companion.KEY_TEXT_REPLY
 import kotlinx.coroutines.CoroutineScope
@@ -34,7 +34,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
+    lateinit var serverManager: ServerManager
 
     @Inject
     lateinit var messagingManager: MessagingManager
@@ -103,7 +103,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
     ) {
         ioScope.launch {
             try {
-                integrationUseCase.fireEvent(
+                serverManager.integrationRepository().fireEvent(
                     "mobile_app_notification_action",
                     action.data
                         .filter { !it.key.startsWith(MessagingManager.SOURCE_REPLY_HISTORY) }

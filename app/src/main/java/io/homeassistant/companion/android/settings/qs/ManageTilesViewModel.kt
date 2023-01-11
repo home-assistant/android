@@ -24,9 +24,9 @@ import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.utils.sizeDp
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.getIcon
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.TileEntity
 import io.homeassistant.companion.android.database.qs.getHighestInUse
@@ -84,7 +84,7 @@ import io.homeassistant.companion.android.common.R as commonR
 @HiltViewModel
 class ManageTilesViewModel @Inject constructor(
     state: SavedStateHandle,
-    private val integrationUseCase: IntegrationRepository,
+    private val serverManager: ServerManager,
     private val tileDao: TileDao,
     application: Application
 ) : AndroidViewModel(application) {
@@ -178,7 +178,7 @@ class ManageTilesViewModel @Inject constructor(
         }
 
         viewModelScope.launch(Dispatchers.IO) {
-            sortedEntities = integrationUseCase.getEntities().orEmpty()
+            sortedEntities = serverManager.integrationRepository().getEntities().orEmpty()
                 .filter { it.domain in ManageTilesFragment.validDomains }
             withContext(Dispatchers.Main) {
                 // The entities list might not have been loaded when the tile data was loaded

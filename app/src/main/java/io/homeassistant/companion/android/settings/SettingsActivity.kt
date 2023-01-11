@@ -19,7 +19,7 @@ import eightbitlab.com.blurview.RenderScriptBlur
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
 import io.homeassistant.companion.android.settings.sensor.SensorDetailFragment
@@ -32,7 +32,7 @@ import io.homeassistant.companion.android.common.R as commonR
 class SettingsActivity : BaseActivity() {
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
+    lateinit var serverManager: ServerManager
 
     private lateinit var authenticator: Authenticator
     private lateinit var blurView: BlurView
@@ -107,14 +107,14 @@ class SettingsActivity : BaseActivity() {
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
         runBlocking {
-            integrationUseCase.setAppActive(false)
+            if (serverManager.isRegistered()) serverManager.integrationRepository().setAppActive(false)
         }
     }
 
     override fun onPause() {
         super.onPause()
         runBlocking {
-            integrationUseCase.setAppActive(false)
+            if (serverManager.isRegistered()) serverManager.integrationRepository().setAppActive(false)
         }
     }
 
@@ -122,7 +122,8 @@ class SettingsActivity : BaseActivity() {
         super.onResume()
 
         val appLocked = runBlocking {
-            integrationUseCase.isAppLocked()
+            if (serverManager.isRegistered()) serverManager.integrationRepository().isAppLocked()
+            else false
         }
 
         blurView.setBlurEnabled(appLocked)
@@ -132,7 +133,8 @@ class SettingsActivity : BaseActivity() {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) {
             val appLocked = runBlocking {
-                integrationUseCase.isAppLocked()
+                if (serverManager.isRegistered()) serverManager.integrationRepository().isAppLocked()
+                else false
             }
 
             if (appLocked) {
@@ -162,7 +164,7 @@ class SettingsActivity : BaseActivity() {
                     Log.d(TAG, "Authentication successful, unlocking app")
                     blurView.setBlurEnabled(false)
                     runBlocking {
-                        integrationUseCase.setAppActive(true)
+                        if (serverManager.isRegistered()) serverManager.integrationRepository().setAppActive(true)
                     }
                 }
                 Authenticator.CANCELED -> {

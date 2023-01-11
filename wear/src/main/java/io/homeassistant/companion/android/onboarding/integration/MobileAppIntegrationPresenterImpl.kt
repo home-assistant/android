@@ -5,7 +5,7 @@ import android.util.Log
 import dagger.hilt.android.qualifiers.ActivityContext
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.onboarding.getMessagingToken
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -16,7 +16,7 @@ import javax.inject.Inject
 
 class MobileAppIntegrationPresenterImpl @Inject constructor(
     @ActivityContext context: Context,
-    private val integrationUseCase: IntegrationRepository
+    private val serverManager: ServerManager
 ) : MobileAppIntegrationPresenter {
 
     companion object {
@@ -35,12 +35,13 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
         )
     }
 
-    override fun onRegistrationAttempt(deviceName: String) {
+    override fun onRegistrationAttempt(serverId: Int, deviceName: String) {
         view.showLoading()
         mainScope.launch {
             val deviceRegistration = createRegistration(deviceName)
             try {
-                integrationUseCase.registerDevice(deviceRegistration)
+                serverManager.integrationRepository(serverId).registerDevice(deviceRegistration)
+                serverManager.convertTemporaryServer(serverId)
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to register with Home Assistant", e)
                 view.showError()
