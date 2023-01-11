@@ -11,6 +11,7 @@ import androidx.car.app.model.ListTemplate
 import androidx.car.app.model.Row
 import androidx.car.app.model.Template
 import androidx.lifecycle.lifecycleScope
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
@@ -83,7 +84,7 @@ class MainVehicleScreen(
         // TODO: Add row for zones so we can start navigation?
 
         return ListTemplate.Builder()
-            .setTitle("Home Assistant")
+            .setTitle(carContext.getString(io.homeassistant.companion.android.common.R.string.app_name))
             .setHeaderAction(Action.APP_ICON)
             .setSingleList(listBuilder.build())
             .build()
