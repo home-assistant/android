@@ -130,7 +130,7 @@ android {
 
 play {
     serviceAccountCredentials.set(file("playStorePublishServiceCredentialsFile.json"))
-    track.set("beta")
+    track.set("internal")
     resolutionStrategy.set(ResolutionStrategy.IGNORE)
     // We will depend on the wear commit.
     commit.set(true)

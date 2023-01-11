@@ -163,7 +163,7 @@ jobs:
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
         run: ./gradlew bundleRelease
 
-      - name: Deploy to Playstore Beta
+      - name: Deploy to Playstore Internal
         env:
           KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
           KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
@@ -171,6 +171,15 @@ jobs:
           VERSION: ${{ steps.rel_number.outputs.version }}
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
         run: ./gradlew publishReleaseBundle
+
+      - name: Promote to Internal to Beta
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
+          KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
+          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
+          VERSION: ${{ steps.rel_number.outputs.version }}
+          VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
+        run: ./gradlew promoteArtifact --from-track internal --promote-track beta
 
       - name: Promote to Beta to Production
         env:

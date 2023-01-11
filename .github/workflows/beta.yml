@@ -90,3 +90,67 @@ jobs:
         with:
           version: io.homeassistant.companion.android@${{ steps.rel_number.outputs.version }}
           environment: Beta
+
+  play_publish:
+    name: Play Publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3.9.0
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - uses: ./.github/actions/create-release-number
+        name: Create Release Number
+        id: rel_number
+        with:
+          beta: true
+
+      - uses: ./.github/actions/inflate-secrets
+        name: Inflate Secrets
+        with:
+          keystore: ${{ secrets.UPLOAD_KEYSTORE_FILE }}
+          google-services: ${{ secrets.GOOGLESERVICES }}
+          firebase-creds: ${{ secrets.FIREBASECREDS }}
+          playstore-creds: ${{ secrets.PLAYSTORECREDS }}
+
+      - uses: ./.github/actions/create-release-notes
+        name: Create Release Notes
+
+      - uses: ./.github/actions/download-translations
+        name: Download Translations
+        with:
+          lokalise-project: ${{ secrets.LOKALISE_PROJECT }}
+          lokalise-token: ${{ secrets.LOKALISE_TOKEN }}
+
+      - name: Build Release
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
+          KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
+          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
+          VERSION: ${{ steps.rel_number.outputs.version }}
+          VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
+        run: ./gradlew bundleRelease
+
+      - name: Deploy to Playstore Internal
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
+          KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
+          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
+          VERSION: ${{ steps.rel_number.outputs.version }}
+          VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
+        run: ./gradlew publishReleaseBundle
