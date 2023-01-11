@@ -94,7 +94,7 @@ class ConversationTile : TileService() {
                             .setColor(argb(ContextCompat.getColor(baseContext, R.color.colorAccent)))
                             .setCorner(
                                 ModifiersBuilders.Corner.Builder()
-                                    .setRadius(dp(10f))
+                                    .setRadius(dp(30f))
                                     .build()
                             )
                             .build()
@@ -127,6 +127,15 @@ class ConversationTile : TileService() {
             .setResourceId("image")
             .setWidth(dp(30f))
             .setHeight(dp(30f))
+            .setModifiers(
+                ModifiersBuilders.Modifiers.Builder()
+                    .setPadding(
+                        ModifiersBuilders.Padding.Builder()
+                            .setTop(dp(2f))
+                            .build()
+                    )
+                    .build()
+            )
             .build()
 
     private fun rowElement(): LayoutElementBuilders.LayoutElement =
