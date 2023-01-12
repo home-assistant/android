@@ -15,6 +15,7 @@ import androidx.car.app.model.Template
 import androidx.lifecycle.lifecycleScope
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import com.mikepenz.iconics.utils.sizeDp
 import com.mikepenz.iconics.utils.toAndroidIconCompat
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -57,7 +58,11 @@ class EntityGridVehicleScreen(
                     .setTitle(entity.friendlyName)
                     .setText(entity.friendlyState)
                     .setImage(
-                        CarIcon.Builder(IconicsDrawable(carContext, icon).toAndroidIconCompat())
+                        CarIcon.Builder(
+                            IconicsDrawable(carContext, icon).apply {
+                                sizeDp = 64
+                            }.toAndroidIconCompat()
+                        )
                             .setTint(CarColor.DEFAULT)
                             .build()
                     )
