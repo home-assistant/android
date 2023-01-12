@@ -126,5 +126,5 @@ dependencies {
 
     implementation("androidx.wear.watchface:watchface-complications-data-source-ktx:1.1.1")
 
-    implementation("androidx.health:health-services-client:1.0.0-beta01")
+    implementation("androidx.health:health-services-client:1.0.0-beta02")
 }
