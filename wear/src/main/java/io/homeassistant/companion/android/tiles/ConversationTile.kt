@@ -72,8 +72,7 @@ class ConversationTile : TileService() {
     private fun boxLayout(): LayoutElementBuilders.LayoutElement =
         LayoutElementBuilders.Box.Builder()
             .addContent(rowElement())
-            .setHeight(dp(50f))
-            .setWidth(dp(140f))
+            .setHeight(dp(40f))
             .setModifiers(
                 ModifiersBuilders.Modifiers.Builder()
                     .setClickable(
@@ -94,9 +93,15 @@ class ConversationTile : TileService() {
                             .setColor(argb(ContextCompat.getColor(baseContext, R.color.colorAccent)))
                             .setCorner(
                                 ModifiersBuilders.Corner.Builder()
-                                    .setRadius(dp(30f))
+                                    .setRadius(dp(20f))
                                     .build()
                             )
+                            .build()
+                    )
+                    .setPadding(
+                        ModifiersBuilders.Padding.Builder()
+                            .setStart(dp(16f))
+                            .setEnd(dp(24f))
                             .build()
                     )
                     .build()
@@ -108,14 +113,14 @@ class ConversationTile : TileService() {
             .setText(getString(R.string.assist))
             .setFontStyle(
                 LayoutElementBuilders.FontStyle.Builder()
-                    .setSize(sp(30f))
+                    .setSize(sp(24f))
                     .build()
             )
             .setModifiers(
                 ModifiersBuilders.Modifiers.Builder()
                     .setPadding(
                         ModifiersBuilders.Padding.Builder()
-                            .setStart(dp(4f))
+                            .setStart(dp(8f))
                             .build()
                     )
                     .build()
@@ -125,8 +130,8 @@ class ConversationTile : TileService() {
     private fun imageElement(): LayoutElementBuilders.LayoutElement =
         LayoutElementBuilders.Image.Builder()
             .setResourceId("image")
-            .setWidth(dp(30f))
-            .setHeight(dp(30f))
+            .setWidth(dp(24f))
+            .setHeight(dp(24f))
             .setModifiers(
                 ModifiersBuilders.Modifiers.Builder()
                     .setPadding(
