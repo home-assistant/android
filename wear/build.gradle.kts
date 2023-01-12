@@ -117,9 +117,9 @@ dependencies {
     implementation(platform("androidx.compose:compose-bom:2022.10.00"))
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.ui:ui-tooling")
-    implementation("androidx.wear.compose:compose-foundation:1.0.2")
-    implementation("androidx.wear.compose:compose-material:1.0.2")
-    implementation("androidx.wear.compose:compose-navigation:1.0.2")
+    implementation("androidx.wear.compose:compose-foundation:1.1.1")
+    implementation("androidx.wear.compose:compose-material:1.1.1")
+    implementation("androidx.wear.compose:compose-navigation:1.1.1")
 
     implementation("com.google.guava:guava:31.1-android")
     implementation("androidx.wear.tiles:tiles:1.1.0")
