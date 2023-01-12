@@ -79,7 +79,7 @@ android {
 
 play {
     serviceAccountCredentials.set(file("playStorePublishServiceCredentialsFile.json"))
-    track.set("beta")
+    track.set("internal")
     resolutionStrategy.set(com.github.triplet.gradle.androidpublisher.ResolutionStrategy.IGNORE)
     commit.set(false)
 }
