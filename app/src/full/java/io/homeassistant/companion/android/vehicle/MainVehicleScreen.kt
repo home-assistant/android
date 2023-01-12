@@ -25,13 +25,13 @@ import com.mikepenz.iconics.utils.toAndroidIconCompat
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.launch.LaunchActivity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Locale
@@ -40,8 +40,7 @@ import io.homeassistant.companion.android.common.R as commonR
 @RequiresApi(Build.VERSION_CODES.O)
 class MainVehicleScreen(
     carContext: CarContext,
-    private val integrationRepository: IntegrationRepository,
-    private val authenticationRepository: AuthenticationRepository,
+    val serverManager: ServerManager,
     private val allEntities: Flow<Map<String, Entity<*>>>
 ) : Screen(carContext) {
 
@@ -74,12 +73,11 @@ class MainVehicleScreen(
     init {
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                isLoggedIn = authenticationRepository.getSessionState() == SessionState.CONNECTED
+                isLoggedIn = serverManager.isRegistered()
                 invalidate()
                 while (isLoggedIn != true) {
                     delay(1000)
-                    isLoggedIn =
-                        authenticationRepository.getSessionState() == SessionState.CONNECTED
+                    isLoggedIn = serverManager.isRegistered()
                     invalidate()
                 }
                 allEntities.collect { entities ->
@@ -157,7 +155,7 @@ class MainVehicleScreen(
                         screenManager.push(
                             EntityGridVehicleScreen(
                                 carContext,
-                                integrationRepository,
+                                serverManager.integrationRepository(),
                                 friendlyDomain,
                                 allEntities.map { it.values.filter { entity -> entity.domain == domain } }
                             )

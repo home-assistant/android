@@ -13,9 +13,8 @@ import androidx.car.app.validation.HostValidator
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flow
@@ -32,10 +31,7 @@ class HaCarAppService : CarAppService() {
     }
 
     @Inject
-    lateinit var integrationRepository: IntegrationRepository
-
-    @Inject
-    lateinit var authenticationRepository: AuthenticationRepository
+    lateinit var serverManager: ServerManager
 
     override fun createHostValidator(): HostValidator {
         return if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) {
@@ -74,8 +70,7 @@ class HaCarAppService : CarAppService() {
             override fun onCreateScreen(intent: Intent): Screen {
                 return MainVehicleScreen(
                     carContext,
-                    integrationRepository,
-                    authenticationRepository,
+                    serverManager,
                     allEntities
                 )
             }
