@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="aa_app_not_logged_in">Not logged in</string>
+    <string name="aa_navigation">Navigation</string>
+    <string name="aa_no_entities_with_locations">No entities with locations found.</string>
     <string name="account">Account</string>
     <string name="action_reply">Reply</string>
     <string name="activity_intent_error">Unable to send activity intent, please check command format</string>

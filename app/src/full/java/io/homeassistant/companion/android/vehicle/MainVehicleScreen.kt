@@ -1,27 +1,48 @@
 package io.homeassistant.companion.android.vehicle
 
+import android.content.Intent
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
 import androidx.car.app.model.Action
+import androidx.car.app.model.CarColor
+import androidx.car.app.model.CarIcon
 import androidx.car.app.model.ItemList
 import androidx.car.app.model.ListTemplate
+import androidx.car.app.model.MessageTemplate
+import androidx.car.app.model.ParkedOnlyOnClickListener
 import androidx.car.app.model.Row
 import androidx.car.app.model.Template
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import com.mikepenz.iconics.IconicsDrawable
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import com.mikepenz.iconics.utils.sizeDp
+import com.mikepenz.iconics.utils.toAndroidIconCompat
+import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
+import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
+import io.homeassistant.companion.android.common.data.integration.getIcon
+import io.homeassistant.companion.android.launch.LaunchActivity
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import java.util.Calendar
 import java.util.Locale
 import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.O)
 class MainVehicleScreen(
     carContext: CarContext,
-    val integrationRepository: IntegrationRepository,
+    private val integrationRepository: IntegrationRepository,
+    private val authenticationRepository: AuthenticationRepository,
+    private val allEntities: Flow<Map<String, Entity<*>>>
 ) : Screen(carContext) {
 
     companion object {
@@ -39,25 +60,64 @@ class MainVehicleScreen(
             "switch" to commonR.string.switches,
         )
         private val SUPPORTED_DOMAINS = SUPPORTED_DOMAINS_WITH_STRING.keys
+
+        private val MAP_DOMAINS = listOf(
+            "device_tracker",
+            "person",
+            "zone",
+        )
     }
 
+    private var isLoggedIn: Boolean? = null
     private val domains = mutableSetOf<String>()
-    private val entities = mutableMapOf<String, Entity<*>>()
 
     init {
         lifecycleScope.launch {
-            integrationRepository.getEntities()?.forEach { entity ->
-                val domain = entity.domain
-                if (domain in SUPPORTED_DOMAINS) {
-                    entities[entity.entityId] = entity
-                    domains.add(domain)
+            lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                isLoggedIn = authenticationRepository.getSessionState() == SessionState.CONNECTED
+                invalidate()
+                while (isLoggedIn != true) {
+                    delay(1000)
+                    isLoggedIn =
+                        authenticationRepository.getSessionState() == SessionState.CONNECTED
+                    invalidate()
+                }
+                allEntities.collect { entities ->
+                    domains.clear()
+                    entities.values.forEach {
+                        if (it.domain in SUPPORTED_DOMAINS) {
+                            domains.add(it.domain)
+                        }
+                    }
+                    invalidate()
                 }
             }
-            invalidate()
         }
     }
 
     override fun onGetTemplate(): Template {
+        if (isLoggedIn == false) {
+            return MessageTemplate.Builder(carContext.getString(commonR.string.aa_app_not_logged_in))
+                .setTitle(carContext.getString(commonR.string.app_name))
+                .setHeaderAction(Action.APP_ICON)
+                .addAction(
+                    Action.Builder()
+                        .setTitle(carContext.getString(commonR.string.login))
+                        .setOnClickListener(
+                            ParkedOnlyOnClickListener.create {
+                                Log.i(TAG, "Starting login activity")
+                                carContext.startActivity(
+                                    Intent(carContext, LaunchActivity::class.java).apply {
+                                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                    }
+                                )
+                            }
+                        )
+                        .build()
+                )
+                .build()
+        }
+
         val listBuilder = ItemList.Builder()
         domains.forEach { domain ->
             val friendlyDomain =
@@ -67,17 +127,39 @@ class MainVehicleScreen(
                             if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
                         }
                     }
+            val icon = Entity(
+                "$domain.ha_android_placeholder",
+                "",
+                mapOf<Any, Any>(),
+                Calendar.getInstance(),
+                Calendar.getInstance(),
+                null
+            ).getIcon(carContext)
+
             listBuilder.addItem(
-                Row.Builder()
+                Row.Builder().apply {
+                    if (icon != null) {
+                        setImage(
+                            CarIcon.Builder(
+                                IconicsDrawable(carContext, icon)
+                                    .apply {
+                                        sizeDp = 48
+                                    }.toAndroidIconCompat()
+                            )
+                                .setTint(CarColor.DEFAULT)
+                                .build()
+                        )
+                    }
+                }
                     .setTitle(friendlyDomain)
                     .setOnClickListener {
-                        Log.i(TAG, "$domain clicked")
+                        Log.i(TAG, "Domain:$domain clicked")
                         screenManager.push(
                             EntityGridVehicleScreen(
                                 carContext,
                                 integrationRepository,
                                 friendlyDomain,
-                                entities.filter { it.value.domain == domain }.toMutableMap()
+                                allEntities.map { it.values.filter { entity -> entity.domain == domain } }
                             )
                         )
                     }
@@ -85,12 +167,43 @@ class MainVehicleScreen(
             )
         }
 
-        // TODO: Add row for zones so we can start navigation?
+        listBuilder.addItem(
+            Row.Builder()
+                .setImage(
+                    CarIcon.Builder(
+                        IconicsDrawable(
+                            carContext,
+                            CommunityMaterial.Icon3.cmd_map_outline
+                        ).apply {
+                            sizeDp = 48
+                        }.toAndroidIconCompat()
+                    )
+                        .setTint(CarColor.DEFAULT)
+                        .build()
+                )
+                .setTitle(carContext.getString(commonR.string.aa_navigation))
+                .setOnClickListener {
+                    Log.i(TAG, "Navigation clicked")
+                    screenManager.push(
+                        MapVehicleScreen(
+                            carContext,
+                            integrationRepository,
+                            allEntities.map { it.values.filter { entity -> entity.domain in MAP_DOMAINS } }
+                        )
+                    )
+                }
+                .build()
+        )
 
-        return ListTemplate.Builder()
-            .setTitle(carContext.getString(io.homeassistant.companion.android.common.R.string.app_name))
-            .setHeaderAction(Action.APP_ICON)
-            .setSingleList(listBuilder.build())
-            .build()
+        return ListTemplate.Builder().apply {
+            setTitle(carContext.getString(commonR.string.app_name))
+            setHeaderAction(Action.APP_ICON)
+            if (domains.isEmpty()) {
+                setLoading(true)
+            } else {
+                setLoading(false)
+                setSingleList(listBuilder.build())
+            }
+        }.build()
     }
 }

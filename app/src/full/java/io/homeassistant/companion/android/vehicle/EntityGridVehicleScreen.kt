@@ -12,7 +12,9 @@ import androidx.car.app.model.GridItem
 import androidx.car.app.model.GridTemplate
 import androidx.car.app.model.ItemList
 import androidx.car.app.model.Template
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import com.mikepenz.iconics.utils.sizeDp
@@ -23,6 +25,7 @@ import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.friendlyState
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.integration.onPressed
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -30,18 +33,22 @@ class EntityGridVehicleScreen(
     carContext: CarContext,
     val integrationRepository: IntegrationRepository,
     val title: String,
-    val entities: MutableMap<String, Entity<*>>,
+    val entitiesFlow: Flow<List<Entity<*>>>,
 ) : Screen(carContext) {
 
     companion object {
         private const val TAG = "EntityGridVehicleScreen"
     }
 
+    var loading = true
+    var entities: List<Entity<*>> = listOf()
+
     init {
         lifecycleScope.launch {
-            integrationRepository.getEntityUpdates()?.collect { entity ->
-                if (entities.containsKey(entity.entityId)) {
-                    entities[entity.entityId] = entity
+            lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                entitiesFlow.collect {
+                    loading = false
+                    entities = it
                     invalidate()
                 }
             }
@@ -50,7 +57,7 @@ class EntityGridVehicleScreen(
 
     override fun onGetTemplate(): Template {
         val listBuilder = ItemList.Builder()
-        entities.forEach { (entityId, entity) ->
+        entities.forEach { entity ->
             val icon = entity.getIcon(carContext) ?: CommunityMaterial.Icon.cmd_cloud_question
             listBuilder.addItem(
                 GridItem.Builder()
@@ -67,7 +74,7 @@ class EntityGridVehicleScreen(
                             .build()
                     )
                     .setOnClickListener {
-                        Log.i(TAG, "$entityId clicked")
+                        Log.i(TAG, "${entity.entityId} clicked")
                         lifecycleScope.launch {
                             entity.onPressed(integrationRepository)
                         }
@@ -76,10 +83,15 @@ class EntityGridVehicleScreen(
             )
         }
 
-        return GridTemplate.Builder()
-            .setTitle(title)
-            .setHeaderAction(Action.BACK)
-            .setSingleList(listBuilder.build())
-            .build()
+        return GridTemplate.Builder().apply {
+            setTitle(title)
+            setHeaderAction(Action.BACK)
+            if (loading) {
+                setLoading(true)
+            } else {
+                setLoading(false)
+                setSingleList(listBuilder.build())
+            }
+        }.build()
     }
 }

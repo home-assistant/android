@@ -94,6 +94,8 @@ jobs:
   play_publish:
     name: Play Publish
     runs-on: ubuntu-latest
+    concurrency:
+      group: playstore_deploy
     steps:
       - uses: actions/checkout@v3
         with:
