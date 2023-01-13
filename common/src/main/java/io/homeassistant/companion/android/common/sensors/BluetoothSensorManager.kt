@@ -128,6 +128,7 @@ class BluetoothSensorManager : SensorManager {
                 monitoringManager.stopMonitoring(context, beaconMonitoringDevice)
             }
             sensorDao.add(SensorSetting(beaconMonitor.id, SETTING_BEACON_MONITOR_ENABLED, monitorEnabled.toString(), SensorSettingType.TOGGLE))
+            SensorUpdateReceiver.updateSensors(context)
         }
     }
 

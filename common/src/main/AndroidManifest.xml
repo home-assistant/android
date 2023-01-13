@@ -3,4 +3,14 @@
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
+    <application>
+        <receiver android:name=".sensors.SensorUpdateReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="io.homeassistant.companion.android.UPDATE_SENSORS" />
+            </intent-filter>
+        </receiver>
+    </application>
+
 </manifest>
