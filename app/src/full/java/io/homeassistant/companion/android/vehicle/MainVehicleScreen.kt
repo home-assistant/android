@@ -78,7 +78,8 @@ class MainVehicleScreen(
                 invalidate()
                 while (isLoggedIn != true) {
                     delay(1000)
-                    isLoggedIn = authenticationRepository.getSessionState() == SessionState.CONNECTED
+                    isLoggedIn =
+                        authenticationRepository.getSessionState() == SessionState.CONNECTED
                     invalidate()
                 }
                 allEntities.collect { entities ->
@@ -173,7 +174,9 @@ class MainVehicleScreen(
                         IconicsDrawable(
                             carContext,
                             CommunityMaterial.Icon3.cmd_map_outline
-                        ).toAndroidIconCompat()
+                        ).apply {
+                            sizeDp = 48
+                        }.toAndroidIconCompat()
                     )
                         .setTint(CarColor.DEFAULT)
                         .build()
