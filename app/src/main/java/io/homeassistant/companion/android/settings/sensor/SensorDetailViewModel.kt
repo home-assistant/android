@@ -16,6 +16,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.common.sensors.NetworkSensorManager
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
@@ -332,6 +333,13 @@ class SensorDetailViewModel @Inject constructor(
             }
             SensorSettingType.LIST_ZONES ->
                 entries ?: zones
+            SensorSettingType.LIST_BEACONS -> {
+                // show current beacons and also previously selected UUIDs
+                entries ?: (sensorManager as BluetoothSensorManager).getBeaconUUIDs()
+                    .plus(setting.value.split(", ").filter { it.isNotEmpty() })
+                    .sorted()
+                    .distinct()
+            }
             else ->
                 emptyList()
         }

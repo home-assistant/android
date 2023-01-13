@@ -16,6 +16,9 @@ import io.homeassistant.companion.android.common.bluetooth.ble.name
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.UUID
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -41,6 +44,8 @@ class BluetoothSensorManager : SensorManager {
         private const val SETTING_BEACON_MONITOR_SCAN_INTERVAL = "beacon_monitor_scan_interval"
         private const val SETTING_BEACON_MONITOR_FILTER_ITERATIONS = "beacon_monitor_filter_iterations"
         private const val SETTING_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER = "beacon_monitor_filter_rssi_multiplier"
+        private const val SETTING_BEACON_MONITOR_UUID_FILTER = "beacon_monitor_uuid_filter"
+        private const val SETTING_BEACON_MONITOR_UUID_FILTER_EXCLUDE = "beacon_monitor_uuid_filter_exclude"
 
         private const val DEFAULT_BLE_TRANSMIT_POWER = "ultraLow"
         private const val DEFAULT_BLE_ADVERTISE_MODE = "lowPower"
@@ -125,6 +130,8 @@ class BluetoothSensorManager : SensorManager {
             sensorDao.add(SensorSetting(beaconMonitor.id, SETTING_BEACON_MONITOR_ENABLED, monitorEnabled.toString(), SensorSettingType.TOGGLE))
         }
     }
+
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#bluetooth-sensors"
@@ -301,6 +308,15 @@ class BluetoothSensorManager : SensorManager {
         KalmanFilter.maxIterations = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_FILTER_ITERATIONS, SensorSettingType.NUMBER, DEFAULT_BEACON_MONITOR_FILTER_ITERATIONS).toIntOrNull() ?: DEFAULT_BEACON_MONITOR_FILTER_ITERATIONS.toInt()
         KalmanFilter.rssiMultiplier = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER, SensorSettingType.NUMBER, DEFAULT_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER).toDoubleOrNull() ?: DEFAULT_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER.toDouble()
 
+        val uuidFilter = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_UUID_FILTER, SensorSettingType.LIST_BEACONS, "").split(", ").filter { it.isNotEmpty() }
+        beaconMonitoringDevice.setUUIDFilter(
+            uuidFilter,
+            getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_UUID_FILTER_EXCLUDE, SensorSettingType.TOGGLE, "false").toBoolean()
+        )
+        ioScope.launch {
+            enableDisableSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_UUID_FILTER_EXCLUDE, uuidFilter.isNotEmpty())
+        }
+
         val restart = monitoringManager.isMonitoring() &&
             (monitoringManager.scanPeriod != scanPeriod || monitoringManager.scanInterval != scanInterval)
         monitoringManager.scanPeriod = scanPeriod
@@ -376,6 +392,12 @@ class BluetoothSensorManager : SensorManager {
             attr,
             forceUpdate = true
         )
+    }
+
+    fun getBeaconUUIDs(): List<String> {
+        return beaconMonitoringDevice.beacons
+            .map { it.uuid }
+            .plus(beaconMonitoringDevice.lastSeenBeacons.map { it.id1.toString() }) // include ignored
     }
 
     private fun checkNameAddress(bt: BluetoothDevice): String {

@@ -22,17 +22,32 @@ data class IBeacon(
 class IBeaconMonitor {
     lateinit var sensorManager: BluetoothSensorManager
     var beacons: List<IBeacon> = listOf()
+    var lastSeenBeacons: Collection<Beacon> = listOf()
+    private var uuidFilter = listOf<String>()
+    private var uuidFilterExclude = false
 
     private fun sort(tmp: Collection<IBeacon>): Collection<IBeacon> {
         return tmp.sortedBy { it.distance }
     }
 
+    private fun ignoreBeacon(uuid: String): Boolean {
+        val inList = uuidFilter.contains(uuid)
+        return if (uuidFilterExclude)
+            inList // exclude filter, keep those not in list
+        else
+            !(inList || uuidFilter.isEmpty()) // include filter, keep those in list (or all if the list is empty)
+    }
+
     fun setBeacons(context: Context, newBeacons: Collection<Beacon>) {
+        lastSeenBeacons = newBeacons // unfiltered list, for the settings UI
         var requireUpdate = false
         val tmp = mutableMapOf<String, IBeacon>()
         for (existingBeacon in beacons) {
-            existingBeacon.skippedUpdated++
-            tmp += existingBeacon.name to existingBeacon
+            if (++existingBeacon.skippedUpdated > MAX_SKIPPED_UPDATED) { // an old beacon expired
+                requireUpdate = true
+            } else {
+                tmp += existingBeacon.name to existingBeacon
+            }
         }
         for (newBeacon in newBeacons) {
             val uuid = newBeacon.id1.toString()
@@ -42,22 +57,16 @@ class IBeaconMonitor {
             val rssi = newBeacon.runningAverageRssi
 
             val beacon = IBeacon(uuid, major, minor, distance, rssi, 0)
-            if (beacon.name !in tmp) { // we found a new beacon
+            val existing = tmp[beacon.name]
+            if (existing == null) { // we found a new beacon
+                if (ignoreBeacon(uuid)) continue // UUID filter (note: no need to check old beacons)
                 requireUpdate = true
+            } else {
+                existing.skippedUpdated = 0 // beacon seen, make sure skippedUpdated=0, even if requireUpdate stays false (and beacons list is not replaced)
             }
             tmp += beacon.name to beacon
         }
         val sorted = sort(tmp.values).toMutableList()
-        if (requireUpdate) {
-            sendUpdate(context, sorted)
-            return
-        }
-        for (i in sorted.indices.reversed()) {
-            if (sorted[i].skippedUpdated > MAX_SKIPPED_UPDATED) { // a old beacon expired
-                sorted.removeAt(i)
-                requireUpdate = true
-            }
-        }
         if (requireUpdate) {
             sendUpdate(context, sorted)
             return
@@ -84,5 +93,15 @@ class IBeaconMonitor {
         val intent = Intent(context, SensorReceiverBase::class.java)
         intent.action = SensorReceiverBase.ACTION_UPDATE_SENSORS
         context.sendBroadcast(intent)
+    }
+
+    fun setUUIDFilter(uuidFilter: List<String>, uuidFilterExclude: Boolean) {
+        this.uuidFilter = uuidFilter
+        this.uuidFilterExclude = uuidFilterExclude
+
+        // existing beacons are only filtered when the filter changes
+        beacons
+            .filter { ignoreBeacon(it.uuid) }
+            .forEach { it.skippedUpdated = MAX_SKIPPED_UPDATED } // delete in the next update
     }
 }
