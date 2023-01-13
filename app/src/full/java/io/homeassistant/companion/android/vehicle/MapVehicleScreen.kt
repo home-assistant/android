@@ -28,6 +28,7 @@ import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.O)
 class MapVehicleScreen(
@@ -104,7 +105,7 @@ class MapVehicleScreen(
                 setLoading(true)
             } else {
                 setLoading(false)
-                listBuilder.setNoItemsMessage("No entities with locations found.")
+                listBuilder.setNoItemsMessage(carContext.getString(commonR.string.aa_no_entities_with_locations))
                 setSingleList(listBuilder.build())
             }
         }.build()

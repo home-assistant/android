@@ -19,7 +19,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.mikepenz.iconics.IconicsDrawable
-import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import com.mikepenz.iconics.utils.sizeDp
 import com.mikepenz.iconics.utils.toAndroidIconCompat
@@ -28,11 +27,13 @@ import io.homeassistant.companion.android.common.data.authentication.SessionStat
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
+import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.launch.LaunchActivity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import java.util.Calendar
 import java.util.Locale
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -58,19 +59,6 @@ class MainVehicleScreen(
             "script" to commonR.string.scripts,
             "switch" to commonR.string.switches,
         )
-
-        private val DOMAIN_TO_ICON: Map<String, IIcon> = mapOf(
-            "button" to CommunityMaterial.Icon.cmd_button_pointer,
-            "cover" to CommunityMaterial.Icon2.cmd_garage,
-            "input_boolean" to CommunityMaterial.Icon3.cmd_toggle_switch,
-            "input_button" to CommunityMaterial.Icon.cmd_button_pointer,
-            "light" to CommunityMaterial.Icon2.cmd_lightbulb,
-            "lock" to CommunityMaterial.Icon2.cmd_lock,
-            "scene" to CommunityMaterial.Icon3.cmd_movie_open,
-            "script" to CommunityMaterial.Icon3.cmd_script_text,
-            "switch" to CommunityMaterial.Icon3.cmd_toggle_switch_variant,
-        )
-
         private val SUPPORTED_DOMAINS = SUPPORTED_DOMAINS_WITH_STRING.keys
 
         private val MAP_DOMAINS = listOf(
@@ -106,7 +94,7 @@ class MainVehicleScreen(
     }
 
     override fun onGetTemplate(): Template {
-        if (isLoggedIn != null && isLoggedIn == false) {
+        if (isLoggedIn == false) {
             return MessageTemplate.Builder(carContext.getString(commonR.string.aa_app_not_logged_in))
                 .setTitle(carContext.getString(commonR.string.app_name))
                 .setHeaderAction(Action.APP_ICON)
@@ -137,7 +125,15 @@ class MainVehicleScreen(
                             if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
                         }
                     }
-            val icon = DOMAIN_TO_ICON[domain]
+            val icon = Entity(
+                "$domain.ha_android_placeholder",
+                "",
+                mapOf<Any, Any>(),
+                Calendar.getInstance(),
+                Calendar.getInstance(),
+                null
+            ).getIcon(carContext)
+
             listBuilder.addItem(
                 Row.Builder().apply {
                     if (icon != null) {
