@@ -74,10 +74,11 @@ class MainVehicleScreen(
     init {
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                isLoggedIn = authenticationRepository.getSessionState() == SessionState.CONNECTED
+                invalidate()
                 while (isLoggedIn != true) {
                     delay(1000)
-                    isLoggedIn =
-                        authenticationRepository.getSessionState() == SessionState.CONNECTED
+                    isLoggedIn = authenticationRepository.getSessionState() == SessionState.CONNECTED
                     invalidate()
                 }
                 allEntities.collect { entities ->
