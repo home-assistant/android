@@ -21,6 +21,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import com.mikepenz.iconics.utils.sizeDp
 import com.mikepenz.iconics.utils.toAndroidIconCompat
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.SessionState
@@ -141,7 +142,10 @@ class MainVehicleScreen(
                 Row.Builder().apply {
                     if (icon != null) {
                         setImage(
-                            CarIcon.Builder(IconicsDrawable(carContext, icon).toAndroidIconCompat())
+                            CarIcon.Builder(IconicsDrawable(carContext, icon)
+                                .apply {
+                                    sizeDp = 48
+                                }.toAndroidIconCompat())
                                 .setTint(CarColor.DEFAULT)
                                 .build()
                         )
