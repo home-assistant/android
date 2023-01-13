@@ -142,10 +142,12 @@ class MainVehicleScreen(
                 Row.Builder().apply {
                     if (icon != null) {
                         setImage(
-                            CarIcon.Builder(IconicsDrawable(carContext, icon)
-                                .apply {
-                                    sizeDp = 48
-                                }.toAndroidIconCompat())
+                            CarIcon.Builder(
+                                IconicsDrawable(carContext, icon)
+                                    .apply {
+                                        sizeDp = 48
+                                    }.toAndroidIconCompat()
+                            )
                                 .setTint(CarColor.DEFAULT)
                                 .build()
                         )
