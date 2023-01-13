@@ -77,4 +77,8 @@ dependencies {
 
     implementation("com.mikepenz:iconics-core:5.4.0")
     implementation("com.mikepenz:community-material-typeface:7.0.96.0-kotlin@aar")
+
+    implementation("com.vdurmont:emoji-java:5.1.1") {
+        exclude(group = "org.json", module = "json")
+    }
 }
