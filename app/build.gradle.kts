@@ -162,7 +162,7 @@ dependencies {
     implementation("androidx.recyclerview:recyclerview:1.2.1")
     implementation("androidx.preference:preference-ktx:1.2.0")
     implementation("com.google.android.material:material:1.7.0")
-    implementation("androidx.fragment:fragment-ktx:1.5.4")
+    implementation("androidx.fragment:fragment-ktx:1.5.5")
 
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.4")
@@ -181,14 +181,14 @@ dependencies {
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.webkit:webkit:1.5.0")
 
-    implementation("com.google.android.exoplayer:exoplayer-core:2.18.1")
-    implementation("com.google.android.exoplayer:exoplayer-hls:2.18.1")
-    implementation("com.google.android.exoplayer:exoplayer-ui:2.18.1")
-    "fullImplementation"("com.google.android.exoplayer:extension-cronet:2.18.1")
-    "minimalImplementation"("com.google.android.exoplayer:extension-cronet:2.18.1") {
+    implementation("com.google.android.exoplayer:exoplayer-core:2.18.2")
+    implementation("com.google.android.exoplayer:exoplayer-hls:2.18.2")
+    implementation("com.google.android.exoplayer:exoplayer-ui:2.18.2")
+    "fullImplementation"("com.google.android.exoplayer:extension-cronet:2.18.2")
+    "minimalImplementation"("com.google.android.exoplayer:extension-cronet:2.18.2") {
         exclude(group = "com.google.android.gms", module = "play-services-cronet")
     }
-    "minimalImplementation"("org.chromium.net:cronet-embedded:105.5195.68")
+    "minimalImplementation"("org.chromium.net:cronet-embedded:108.5359.79")
 
     implementation(platform("androidx.compose:compose-bom:2022.10.00"))
     implementation("androidx.compose.animation:animation")
@@ -202,7 +202,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling")
     implementation("androidx.activity:activity-compose:1.6.1")
     implementation("androidx.navigation:navigation-compose:2.5.3")
-    implementation("com.google.android.material:compose-theme-adapter:1.1.21")
+    implementation("com.google.android.material:compose-theme-adapter:1.2.1")
     implementation("com.google.accompanist:accompanist-appcompat-theme:0.28.0")
 
     implementation("com.mikepenz:iconics-core:5.4.0")
