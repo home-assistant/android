@@ -37,6 +37,7 @@
     <string name="basic_sensor_name_active_notification_count">Active Notification Count</string>
     <string name="basic_sensor_name_activity">Detected Activity</string>
     <string name="basic_sensor_name_alarm">Next Alarm</string>
+    <string name="basic_sensor_name_android_auto">Android Auto</string>
     <string name="basic_sensor_name_app_importance">App Importance</string>
     <string name="basic_sensor_name_app_inactive">App Inactive</string>
     <string name="basic_sensor_name_app_memory">App Memory</string>
@@ -477,6 +478,7 @@
     <string name="select_instance">Select your Home Assistant server</string>
     <string name="sensor_description_active_notification_count">Total count of active notifications that are visible to the user including silent, persistent and the Sensor Worker notifications.</string>
     <string name="sensor_description_app_importance">If the app is in the foreground, background or any other state it can be.</string>
+    <string name="sensor_description_android_auto">If the phone is currently connected to an Android Auto head unit.</string>
     <string name="sensor_description_app_inactive">Whether the app is currently considered inactive by the system</string>
     <string name="sensor_description_app_memory">Total used and available memory for the app</string>
     <string name="sensor_description_app_rx_gb">App Rx GB since last device reboot</string>
@@ -556,6 +558,7 @@
     <string name="sensor_description_work_profile">Whether the work profile is currently active on the device</string>
     <string name="sensor_name_activity">Activity Sensors</string>
     <string name="sensor_name_alarm">Alarm Sensor</string>
+    <string name="sensor_name_android_auto">Android Auto Sensors</string>
     <string name="sensor_name_app_sensor">App Sensors</string>
     <string name="sensor_name_audio_mode">Audio Mode</string>
     <string name="sensor_name_audio">Audio Sensors</string>
