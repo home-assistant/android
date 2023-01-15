@@ -11,8 +11,7 @@ import io.homeassistant.companion.android.common.data.authentication.Authenticat
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.notifications.GROUP_PREFIX
-import io.homeassistant.companion.android.common.notifications.MESSAGE
+import io.homeassistant.companion.android.common.notifications.NotificationData
 import io.homeassistant.companion.android.common.notifications.getGroupNotificationBuilder
 import io.homeassistant.companion.android.common.notifications.handleChannel
 import io.homeassistant.companion.android.common.notifications.handleSmallIcon
@@ -53,7 +52,7 @@ class FirebaseCloudMessagingService : FirebaseMessagingService() {
 
         val jsonObject = (jsonData as Map<*, *>?)?.let { JSONObject(it) }
         val notificationRow =
-            NotificationItem(0, now, jsonData[MESSAGE].toString(), jsonObject.toString(), SOURCE)
+            NotificationItem(0, now, jsonData[NotificationData.MESSAGE].toString(), jsonObject.toString(), SOURCE)
         notificationId = notificationDao.add(notificationRow)
 
         sendNotification(jsonData, notificationId, now)
@@ -71,12 +70,12 @@ class FirebaseCloudMessagingService : FirebaseMessagingService() {
         var previousGroup = ""
         var previousGroupId = 0
         if (!group.isNullOrBlank()) {
-            group = GROUP_PREFIX + group
+            group = NotificationData.GROUP_PREFIX + group
             groupId = group.hashCode()
         } else {
             val notification = notificationManagerCompat.getActiveNotification(tag, messageId)
             if (notification != null && notification.isGroup) {
-                previousGroup = GROUP_PREFIX + notification.tag
+                previousGroup = NotificationData.GROUP_PREFIX + notification.tag
                 previousGroupId = previousGroup.hashCode()
             }
         }

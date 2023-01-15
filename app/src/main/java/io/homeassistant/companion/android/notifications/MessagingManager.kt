@@ -47,22 +47,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
-import io.homeassistant.companion.android.common.notifications.ALARM_STREAM
-import io.homeassistant.companion.android.common.notifications.ALARM_STREAM_MAX
-import io.homeassistant.companion.android.common.notifications.ALERT_ONCE
-import io.homeassistant.companion.android.common.notifications.CALL_STREAM
-import io.homeassistant.companion.android.common.notifications.CHANNEL
-import io.homeassistant.companion.android.common.notifications.DTMF_STREAM
-import io.homeassistant.companion.android.common.notifications.GROUP_PREFIX
-import io.homeassistant.companion.android.common.notifications.IMPORTANCE
-import io.homeassistant.companion.android.common.notifications.LED_COLOR
-import io.homeassistant.companion.android.common.notifications.MESSAGE
-import io.homeassistant.companion.android.common.notifications.MUSIC_STREAM
-import io.homeassistant.companion.android.common.notifications.NOTIFICATION_STREAM
-import io.homeassistant.companion.android.common.notifications.RING_STREAM
-import io.homeassistant.companion.android.common.notifications.SYSTEM_STREAM
-import io.homeassistant.companion.android.common.notifications.TITLE
-import io.homeassistant.companion.android.common.notifications.VIBRATION_PATTERN
+import io.homeassistant.companion.android.common.notifications.NotificationData
 import io.homeassistant.companion.android.common.notifications.createChannelID
 import io.homeassistant.companion.android.common.notifications.getGroupNotificationBuilder
 import io.homeassistant.companion.android.common.notifications.handleChannel
@@ -264,8 +249,13 @@ class MessagingManager @Inject constructor(
         val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
         val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
         val CHANNEL_VOLUME_STREAM = listOf(
-            ALARM_STREAM, MUSIC_STREAM, NOTIFICATION_STREAM, RING_STREAM, CALL_STREAM,
-            SYSTEM_STREAM, DTMF_STREAM
+            NotificationData.ALARM_STREAM,
+            NotificationData.MUSIC_STREAM,
+            NotificationData.NOTIFICATION_STREAM,
+            NotificationData.RING_STREAM,
+            NotificationData.CALL_STREAM,
+            NotificationData.SYSTEM_STREAM,
+            NotificationData.DTMF_STREAM
         )
         val ENABLE_COMMANDS = listOf(TURN_OFF, TURN_ON)
         val FORCE_COMMANDS = listOf(FORCE_OFF, FORCE_ON)
@@ -313,7 +303,7 @@ class MessagingManager @Inject constructor(
         } else {
             val jsonObject = JSONObject(jsonData)
             val notificationRow =
-                NotificationItem(0, now, jsonData[MESSAGE].toString(), jsonObject.toString(), source)
+                NotificationItem(0, now, jsonData[NotificationData.MESSAGE].toString(), jsonObject.toString(), source)
             notificationId = notificationDao.add(notificationRow)
 
             val confirmation = jsonData[CONFIRMATION]?.toBoolean() ?: false
@@ -329,25 +319,25 @@ class MessagingManager @Inject constructor(
         }
 
         when {
-            jsonData[MESSAGE] == REQUEST_LOCATION_UPDATE -> {
+            jsonData[NotificationData.MESSAGE] == REQUEST_LOCATION_UPDATE -> {
                 Log.d(TAG, "Request location update")
                 requestAccurateLocationUpdate()
             }
-            jsonData[MESSAGE] == CLEAR_NOTIFICATION && !jsonData["tag"].isNullOrBlank() -> {
+            jsonData[NotificationData.MESSAGE] == CLEAR_NOTIFICATION && !jsonData["tag"].isNullOrBlank() -> {
                 Log.d(TAG, "Clearing notification with tag: ${jsonData["tag"]}")
                 clearNotification(jsonData["tag"]!!)
             }
-            jsonData[MESSAGE] == REMOVE_CHANNEL && !jsonData[CHANNEL].isNullOrBlank() -> {
-                Log.d(TAG, "Removing Notification channel ${jsonData[CHANNEL]}")
-                removeNotificationChannel(jsonData[CHANNEL]!!)
+            jsonData[NotificationData.MESSAGE] == REMOVE_CHANNEL && !jsonData[NotificationData.CHANNEL].isNullOrBlank() -> {
+                Log.d(TAG, "Removing Notification channel ${jsonData[NotificationData.CHANNEL]}")
+                removeNotificationChannel(jsonData[NotificationData.CHANNEL]!!)
             }
-            jsonData[MESSAGE] == TTS -> {
+            jsonData[NotificationData.MESSAGE] == TTS -> {
                 Log.d(TAG, "Sending notification title to TTS")
                 speakNotification(jsonData)
             }
-            jsonData[MESSAGE] in DEVICE_COMMANDS -> {
+            jsonData[NotificationData.MESSAGE] in DEVICE_COMMANDS -> {
                 Log.d(TAG, "Processing device command")
-                when (jsonData[MESSAGE]) {
+                when (jsonData[NotificationData.MESSAGE]) {
                     COMMAND_DND -> {
                         if (jsonData[COMMAND] in DND_COMMANDS) {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
@@ -665,7 +655,7 @@ class MessagingManager @Inject constructor(
             if (it == TextToSpeech.SUCCESS) {
                 val listener = object : UtteranceProgressListener() {
                     override fun onStart(p0: String?) {
-                        if (data[MEDIA_STREAM] == ALARM_STREAM_MAX)
+                        if (data[MEDIA_STREAM] == NotificationData.ALARM_STREAM_MAX)
                             audioManager?.setStreamVolume(
                                 AudioManager.STREAM_ALARM,
                                 maxAlarmVolume!!,
@@ -676,7 +666,7 @@ class MessagingManager @Inject constructor(
                     override fun onDone(p0: String?) {
                         textToSpeech?.stop()
                         textToSpeech?.shutdown()
-                        if (data[MEDIA_STREAM] == ALARM_STREAM_MAX)
+                        if (data[MEDIA_STREAM] == NotificationData.ALARM_STREAM_MAX)
                             audioManager?.setStreamVolume(
                                 AudioManager.STREAM_ALARM,
                                 currentAlarmVolume!!,
@@ -687,7 +677,7 @@ class MessagingManager @Inject constructor(
                     override fun onError(p0: String?) {
                         textToSpeech?.stop()
                         textToSpeech?.shutdown()
-                        if (data[MEDIA_STREAM] == ALARM_STREAM_MAX)
+                        if (data[MEDIA_STREAM] == NotificationData.ALARM_STREAM_MAX)
                             audioManager?.setStreamVolume(
                                 AudioManager.STREAM_ALARM,
                                 currentAlarmVolume!!,
@@ -696,7 +686,7 @@ class MessagingManager @Inject constructor(
                     }
 
                     override fun onStop(utteranceId: String?, interrupted: Boolean) {
-                        if (data[MEDIA_STREAM] == ALARM_STREAM_MAX)
+                        if (data[MEDIA_STREAM] == NotificationData.ALARM_STREAM_MAX)
                             audioManager?.setStreamVolume(
                                 AudioManager.STREAM_ALARM,
                                 currentAlarmVolume!!,
@@ -705,7 +695,7 @@ class MessagingManager @Inject constructor(
                     }
                 }
                 textToSpeech?.setOnUtteranceProgressListener(listener)
-                if (data[MEDIA_STREAM] == ALARM_STREAM || data[MEDIA_STREAM] == ALARM_STREAM_MAX) {
+                if (data[MEDIA_STREAM] == NotificationData.ALARM_STREAM || data[MEDIA_STREAM] == NotificationData.ALARM_STREAM_MAX) {
                     val audioAttributes = AudioAttributes.Builder()
                         .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                         .setUsage(AudioAttributes.USAGE_ALARM)
@@ -727,7 +717,7 @@ class MessagingManager @Inject constructor(
     }
 
     private fun handleDeviceCommands(data: Map<String, String>) {
-        val message = data[MESSAGE]
+        val message = data[NotificationData.MESSAGE]
         val command = data[COMMAND]
         when (message) {
             COMMAND_DND -> {
@@ -735,7 +725,7 @@ class MessagingManager @Inject constructor(
                     val notificationManager =
                         context.getSystemService<NotificationManager>()
                     if (notificationManager?.isNotificationPolicyAccessGranted == false) {
-                        notifyMissingPermission(data[MESSAGE].toString())
+                        notifyMissingPermission(message.toString())
                     } else {
                         when (command) {
                             DND_ALARMS_ONLY -> notificationManager?.setInterruptionFilter(
@@ -759,7 +749,7 @@ class MessagingManager @Inject constructor(
                     val notificationManager =
                         context.getSystemService<NotificationManager>()
                     if (notificationManager?.isNotificationPolicyAccessGranted == false) {
-                        notifyMissingPermission(data[MESSAGE].toString())
+                        notifyMissingPermission(message.toString())
                     } else {
                         processRingerMode(audioManager!!, command)
                     }
@@ -798,7 +788,7 @@ class MessagingManager @Inject constructor(
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     val notificationManager = context.getSystemService<NotificationManager>()
                     if (notificationManager?.isNotificationPolicyAccessGranted == false) {
-                        notifyMissingPermission(data[MESSAGE].toString())
+                        notifyMissingPermission(message.toString())
                     } else {
                         processStreamVolume(
                             audioManager!!,
@@ -823,7 +813,7 @@ class MessagingManager @Inject constructor(
                         }
                         else -> {
                             Log.e(TAG, "Missing Bluetooth permissions, notifying user to grant permissions")
-                            notifyMissingPermission(data[MESSAGE].toString())
+                            notifyMissingPermission(message.toString())
                         }
                     }
                 }
@@ -908,7 +898,7 @@ class MessagingManager @Inject constructor(
             COMMAND_ACTIVITY -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (!Settings.canDrawOverlays(context))
-                        notifyMissingPermission(data[MESSAGE].toString())
+                        notifyMissingPermission(message.toString())
                     else if (ContextCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED && data["tag"] == Intent.ACTION_CALL) {
                         Handler(Looper.getMainLooper()).post {
                             Toast.makeText(
@@ -931,7 +921,7 @@ class MessagingManager @Inject constructor(
             COMMAND_WEBVIEW -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (!Settings.canDrawOverlays(context))
-                        notifyMissingPermission(data[MESSAGE].toString())
+                        notifyMissingPermission(message.toString())
                     else
                         openWebview(command)
                 } else
@@ -961,7 +951,7 @@ class MessagingManager @Inject constructor(
                     if (!NotificationManagerCompat.getEnabledListenerPackages(context)
                         .contains(context.packageName)
                     )
-                        notifyMissingPermission(data[MESSAGE].toString())
+                        notifyMissingPermission(message.toString())
                     else {
                         processMediaCommand(data)
                     }
@@ -970,7 +960,7 @@ class MessagingManager @Inject constructor(
             COMMAND_LAUNCH_APP -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (!Settings.canDrawOverlays(context))
-                        notifyMissingPermission(data[MESSAGE].toString())
+                        notifyMissingPermission(message.toString())
                     else
                         launchApp(data)
                 } else
@@ -988,7 +978,7 @@ class MessagingManager @Inject constructor(
                         if (!processScreenCommands(data))
                             mainScope.launch { sendNotification(data) }
                     } else
-                        notifyMissingPermission(data[MESSAGE].toString())
+                        notifyMissingPermission(message.toString())
                 } else if (!processScreenCommands(data))
                     mainScope.launch { sendNotification(data) }
             }
@@ -1061,14 +1051,14 @@ class MessagingManager @Inject constructor(
         var previousGroup = ""
         var previousGroupId = 0
         if (!group.isNullOrBlank()) {
-            group = GROUP_PREFIX + group
+            group = NotificationData.GROUP_PREFIX + group
             groupId = group.hashCode()
         } else {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
 
                 val notification = notificationManagerCompat.getActiveNotification(tag, messageId)
                 if (notification != null && notification.isGroup) {
-                    previousGroup = GROUP_PREFIX + notification.tag
+                    previousGroup = NotificationData.GROUP_PREFIX + notification.tag
                     previousGroupId = previousGroup.hashCode()
                 }
             }
@@ -1086,7 +1076,7 @@ class MessagingManager @Inject constructor(
 
         handleLargeIcon(notificationBuilder, data)
 
-        handleGroup(notificationBuilder, group, data[ALERT_ONCE].toBoolean())
+        handleGroup(notificationBuilder, group, data[NotificationData.ALERT_ONCE].toBoolean())
 
         handleTimeout(notificationBuilder, data)
 
@@ -1212,7 +1202,7 @@ class MessagingManager @Inject constructor(
         builder: NotificationCompat.Builder,
         data: Map<String, String>
     ) {
-        if (data[CHANNEL] == ALARM_STREAM) {
+        if (data[NotificationData.CHANNEL] == NotificationData.ALARM_STREAM) {
             builder.setCategory(Notification.CATEGORY_ALARM)
             builder.setSound(
                 RingtoneManager.getActualDefaultRingtoneUri(
@@ -1228,7 +1218,7 @@ class MessagingManager @Inject constructor(
         } else {
             builder.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
         }
-        if (data[ALERT_ONCE].toBoolean())
+        if (data[NotificationData.ALERT_ONCE].toBoolean())
             builder.setOnlyAlertOnce(true)
     }
 
@@ -1236,7 +1226,7 @@ class MessagingManager @Inject constructor(
         builder: NotificationCompat.Builder,
         data: Map<String, String>
     ) {
-        val ledColor = data[LED_COLOR]
+        val ledColor = data[NotificationData.LED_COLOR]
         if (!ledColor.isNullOrBlank()) {
             builder.setLights(parseColor(context, ledColor, commonR.color.colorPrimary), 3000, 3000)
         }
@@ -1246,7 +1236,7 @@ class MessagingManager @Inject constructor(
         builder: NotificationCompat.Builder,
         data: Map<String, String>
     ) {
-        val vibrationPattern = data[VIBRATION_PATTERN]
+        val vibrationPattern = data[NotificationData.VIBRATION_PATTERN]
         if (!vibrationPattern.isNullOrBlank()) {
             val arrVibrationPattern = parseVibrationPattern(vibrationPattern)
             if (arrVibrationPattern.isNotEmpty()) {
@@ -1261,7 +1251,7 @@ class MessagingManager @Inject constructor(
     ) {
 
         // Use importance property for legacy priority support
-        val priority = data[IMPORTANCE]
+        val priority = data[NotificationData.IMPORTANCE]
 
         when (priority) {
             "high" -> {
@@ -1398,11 +1388,11 @@ class MessagingManager @Inject constructor(
                             )
                         }
 
-                        data[TITLE]?.let { rawTitle ->
+                        data[NotificationData.TITLE]?.let { rawTitle ->
                             remoteViewFlipper.setTextViewText(R.id.title, rawTitle)
                         }
 
-                        data[MESSAGE]?.let { rawMessage ->
+                        data[NotificationData.MESSAGE]?.let { rawMessage ->
                             remoteViewFlipper.setTextViewText(R.id.info, rawMessage)
                         }
 
@@ -1783,13 +1773,13 @@ class MessagingManager @Inject constructor(
 
     private fun processStreamVolume(audioManager: AudioManager, stream: String, volume: Int) {
         when (stream) {
-            ALARM_STREAM -> adjustVolumeStream(AudioManager.STREAM_ALARM, volume, audioManager)
-            MUSIC_STREAM -> adjustVolumeStream(AudioManager.STREAM_MUSIC, volume, audioManager)
-            NOTIFICATION_STREAM -> adjustVolumeStream(AudioManager.STREAM_NOTIFICATION, volume, audioManager)
-            RING_STREAM -> adjustVolumeStream(AudioManager.STREAM_RING, volume, audioManager)
-            CALL_STREAM -> adjustVolumeStream(AudioManager.STREAM_VOICE_CALL, volume, audioManager)
-            SYSTEM_STREAM -> adjustVolumeStream(AudioManager.STREAM_SYSTEM, volume, audioManager)
-            DTMF_STREAM -> adjustVolumeStream(AudioManager.STREAM_DTMF, volume, audioManager)
+            NotificationData.ALARM_STREAM -> adjustVolumeStream(AudioManager.STREAM_ALARM, volume, audioManager)
+            NotificationData.MUSIC_STREAM -> adjustVolumeStream(AudioManager.STREAM_MUSIC, volume, audioManager)
+            NotificationData.NOTIFICATION_STREAM -> adjustVolumeStream(AudioManager.STREAM_NOTIFICATION, volume, audioManager)
+            NotificationData.RING_STREAM -> adjustVolumeStream(AudioManager.STREAM_RING, volume, audioManager)
+            NotificationData.CALL_STREAM -> adjustVolumeStream(AudioManager.STREAM_VOICE_CALL, volume, audioManager)
+            NotificationData.SYSTEM_STREAM -> adjustVolumeStream(AudioManager.STREAM_SYSTEM, volume, audioManager)
+            NotificationData.DTMF_STREAM -> adjustVolumeStream(AudioManager.STREAM_DTMF, volume, audioManager)
             else -> Log.d(TAG, "Skipping command due to invalid channel stream")
         }
     }
@@ -1941,12 +1931,12 @@ class MessagingManager @Inject constructor(
         val contentResolver = context.contentResolver
         val success = Settings.System.putInt(
             contentResolver,
-            when (data[MESSAGE].toString()) {
+            when (data[NotificationData.MESSAGE].toString()) {
                 COMMAND_SCREEN_BRIGHTNESS_LEVEL -> Settings.System.SCREEN_BRIGHTNESS
                 COMMAND_AUTO_SCREEN_BRIGHTNESS -> Settings.System.SCREEN_BRIGHTNESS_MODE
                 else -> Settings.System.SCREEN_OFF_TIMEOUT
             },
-            when (data[MESSAGE].toString()) {
+            when (data[NotificationData.MESSAGE].toString()) {
                 COMMAND_SCREEN_BRIGHTNESS_LEVEL -> command!!.toInt().coerceIn(0, 255)
                 COMMAND_AUTO_SCREEN_BRIGHTNESS -> {
                     if (command == TURN_ON)
@@ -1969,7 +1959,7 @@ class MessagingManager @Inject constructor(
                 if (context.applicationInfo.processName == item.processName) {
                     if (item.importance != ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
                         val data =
-                            mutableMapOf(MESSAGE to context.getString(commonR.string.missing_command_permission))
+                            mutableMapOf(NotificationData.MESSAGE to context.getString(commonR.string.missing_command_permission))
                         runBlocking {
                             sendNotification(data)
                         }

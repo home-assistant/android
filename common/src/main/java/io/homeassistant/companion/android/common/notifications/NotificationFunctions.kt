@@ -22,26 +22,28 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.util.generalChannel
 import java.util.Locale
 
-const val TAG = "MessagingService"
-const val TITLE = "title"
-const val MESSAGE = "message"
-const val GROUP_PREFIX = "group_"
-const val CHANNEL = "channel"
-const val IMPORTANCE = "importance"
-const val LED_COLOR = "ledColor"
-const val VIBRATION_PATTERN = "vibrationPattern"
-const val NOTIFICATION_ICON = "notification_icon"
-const val ALERT_ONCE = "alert_once"
+object NotificationData {
+    const val TAG = "MessagingService"
+    const val TITLE = "title"
+    const val MESSAGE = "message"
+    const val GROUP_PREFIX = "group_"
+    const val CHANNEL = "channel"
+    const val IMPORTANCE = "importance"
+    const val LED_COLOR = "ledColor"
+    const val VIBRATION_PATTERN = "vibrationPattern"
+    const val NOTIFICATION_ICON = "notification_icon"
+    const val ALERT_ONCE = "alert_once"
 
-// Channel streams
-const val ALARM_STREAM = "alarm_stream"
-const val ALARM_STREAM_MAX = "alarm_stream_max"
-const val MUSIC_STREAM = "music_stream"
-const val NOTIFICATION_STREAM = "notification_stream"
-const val RING_STREAM = "ring_stream"
-const val SYSTEM_STREAM = "system_stream"
-const val CALL_STREAM = "call_stream"
-const val DTMF_STREAM = "dtmf_stream"
+    // Channel streams
+    const val ALARM_STREAM = "alarm_stream"
+    const val ALARM_STREAM_MAX = "alarm_stream_max"
+    const val MUSIC_STREAM = "music_stream"
+    const val NOTIFICATION_STREAM = "notification_stream"
+    const val RING_STREAM = "ring_stream"
+    const val SYSTEM_STREAM = "system_stream"
+    const val CALL_STREAM = "call_stream"
+    const val DTMF_STREAM = "dtmf_stream"
+}
 
 fun createChannelID(
     channelName: String
@@ -61,9 +63,9 @@ fun handleChannel(
     var channelID = generalChannel
     var channelName = "General"
 
-    if (!data[CHANNEL].isNullOrEmpty()) {
-        channelID = createChannelID(data[CHANNEL].toString())
-        channelName = data[CHANNEL].toString().trim()
+    if (!data[NotificationData.CHANNEL].isNullOrEmpty()) {
+        channelID = createChannelID(data[NotificationData.CHANNEL].toString())
+        channelName = data[NotificationData.CHANNEL].toString().trim()
     }
 
     // Since android Oreo notification channel is needed.
@@ -74,7 +76,7 @@ fun handleChannel(
             handleImportance(data)
         )
 
-        if (channelName == ALARM_STREAM)
+        if (channelName == NotificationData.ALARM_STREAM)
             handleChannelSound(context, channel)
 
         setChannelLedColor(context, data, channel)
@@ -89,7 +91,7 @@ fun handleImportance(
     data: Map<String, String>
 ): Int {
 
-    when (data[IMPORTANCE]) {
+    when (data[NotificationData.IMPORTANCE]) {
         "high" -> {
             return NotificationManager.IMPORTANCE_HIGH
         }
@@ -138,7 +140,7 @@ fun setChannelLedColor(
     channel: NotificationChannel
 ) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        val ledColor = data[LED_COLOR]
+        val ledColor = data[NotificationData.LED_COLOR]
         if (!ledColor.isNullOrBlank()) {
             channel.enableLights(true)
             channel.lightColor = parseColor(context, ledColor, R.color.colorPrimary)
@@ -151,7 +153,7 @@ fun setChannelVibrationPattern(
     channel: NotificationChannel
 ) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        val vibrationPattern = data[VIBRATION_PATTERN]
+        val vibrationPattern = data[NotificationData.VIBRATION_PATTERN]
         val arrVibrationPattern = parseVibrationPattern(vibrationPattern)
         if (arrVibrationPattern.isNotEmpty()) {
             channel.vibrationPattern = arrVibrationPattern
@@ -187,7 +189,7 @@ fun parseColor(
         try {
             return Color.parseColor(colorString)
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to parse color", e)
+            Log.e(NotificationData.TAG, "Unable to parse color", e)
         }
     }
     return ContextCompat.getColor(context, default)
@@ -198,8 +200,9 @@ fun handleSmallIcon(
     builder: NotificationCompat.Builder,
     data: Map<String, String>
 ) {
-    if (data[NOTIFICATION_ICON]?.startsWith("mdi:") == true && !data[NOTIFICATION_ICON]?.substringAfter("mdi:").isNullOrBlank() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        val iconName = data[NOTIFICATION_ICON]!!.split(":")[1]
+    val notificationIcon = data[NotificationData.NOTIFICATION_ICON] ?: ""
+    if (notificationIcon.startsWith("mdi:") && notificationIcon.substringAfter("mdi:").isNotBlank() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        val iconName = notificationIcon.split(":")[1]
         val iconDrawable =
             IconicsDrawable(context, "cmd-$iconName")
         if (iconDrawable.icon != null)
@@ -221,13 +224,13 @@ fun getGroupNotificationBuilder(
         .setStyle(
             NotificationCompat.BigTextStyle()
                 .setSummaryText(
-                    prepareText(group.substring(GROUP_PREFIX.length))
+                    prepareText(group.substring(NotificationData.GROUP_PREFIX.length))
                 )
         )
         .setGroup(group)
         .setGroupSummary(true)
 
-    if (data[ALERT_ONCE].toBoolean())
+    if (data[NotificationData.ALERT_ONCE].toBoolean())
         groupNotificationBuilder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
     handleColor(context, groupNotificationBuilder, data)
     handleSmallIcon(context, groupNotificationBuilder, data)
@@ -257,10 +260,10 @@ fun handleText(
     builder: NotificationCompat.Builder,
     data: Map<String, String>
 ) {
-    data[TITLE]?.let {
+    data[NotificationData.TITLE]?.let {
         builder.setContentTitle(prepareText(it))
     }
-    data[MESSAGE]?.let {
+    data[NotificationData.MESSAGE]?.let {
         val text = prepareText(it)
         builder.setContentText(text)
         builder.setStyle(NotificationCompat.BigTextStyle().bigText(text))
