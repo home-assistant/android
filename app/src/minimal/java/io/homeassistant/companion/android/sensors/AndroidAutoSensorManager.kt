@@ -1,3 +1,5 @@
+package io.homeassistant.companion.android.sensors
+
 import android.content.Context
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.R as commonR
