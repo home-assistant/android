@@ -1,9 +1,6 @@
 package io.homeassistant.companion.android.notifications
 
-import android.annotation.SuppressLint
 import android.util.Log
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import dagger.hilt.android.AndroidEntryPoint
@@ -11,20 +8,10 @@ import io.homeassistant.companion.android.common.data.authentication.Authenticat
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.notifications.NotificationData
-import io.homeassistant.companion.android.common.notifications.getGroupNotificationBuilder
-import io.homeassistant.companion.android.common.notifications.handleChannel
-import io.homeassistant.companion.android.common.notifications.handleSmallIcon
-import io.homeassistant.companion.android.common.notifications.handleText
-import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
-import io.homeassistant.companion.android.common.util.getActiveNotification
-import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.database.notification.NotificationItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import org.json.JSONObject
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -40,70 +27,15 @@ class FirebaseCloudMessagingService : FirebaseMessagingService() {
     @Inject
     lateinit var authenticationUseCase: AuthenticationRepository
 
+    @Inject
+    lateinit var messagingManager: MessagingManager
+
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         Log.d(TAG, "From: ${remoteMessage.from} and data: ${remoteMessage.data}")
 
-        val notificationDao = AppDatabase.getInstance(applicationContext).notificationDao()
-        var now = System.currentTimeMillis()
-        var jsonData = remoteMessage.data
-        val notificationId: Long
-
-        val jsonObject = (jsonData as Map<*, *>?)?.let { JSONObject(it) }
-        val notificationRow =
-            NotificationItem(0, now, jsonData[NotificationData.MESSAGE].toString(), jsonObject.toString(), SOURCE)
-        notificationId = notificationDao.add(notificationRow)
-
-        sendNotification(jsonData, notificationId, now)
-    }
-
-    @SuppressLint("MissingPermission")
-    private fun sendNotification(data: Map<String, String>, id: Long? = null, received: Long? = null) {
-        val notificationManagerCompat = NotificationManagerCompat.from(applicationContext)
-
-        val tag = data["tag"]
-        val messageId = tag?.hashCode() ?: received?.toInt() ?: System.currentTimeMillis().toInt()
-
-        var group = data["group"]
-        var groupId = 0
-        var previousGroup = ""
-        var previousGroupId = 0
-        if (!group.isNullOrBlank()) {
-            group = NotificationData.GROUP_PREFIX + group
-            groupId = group.hashCode()
-        } else {
-            val notification = notificationManagerCompat.getActiveNotification(tag, messageId)
-            if (notification != null && notification.isGroup) {
-                previousGroup = NotificationData.GROUP_PREFIX + notification.tag
-                previousGroupId = previousGroup.hashCode()
-            }
-        }
-
-        val channelId = handleChannel(applicationContext, notificationManagerCompat, data)
-
-        val notificationBuilder = NotificationCompat.Builder(applicationContext, channelId)
-
-        handleSmallIcon(applicationContext, notificationBuilder, data)
-
-        handleText(notificationBuilder, data)
-
-        notificationManagerCompat.apply {
-            Log.d(TAG, "Show notification with tag \"$tag\" and id \"$messageId\"")
-            notify(tag, messageId, notificationBuilder.build())
-            if (!group.isNullOrBlank()) {
-                Log.d(TAG, "Show group notification with tag \"$group\" and id \"$groupId\"")
-                notify(group, groupId, getGroupNotificationBuilder(applicationContext, channelId, group, data).build())
-            } else {
-                if (!previousGroup.isBlank()) {
-                    Log.d(
-                        TAG,
-                        "Remove group notification with tag \"$previousGroup\" and id \"$previousGroupId\""
-                    )
-                    notificationManagerCompat.cancelGroupIfNeeded(previousGroup, previousGroupId)
-                }
-            }
-        }
+        messagingManager.handleMessage(remoteMessage.data, SOURCE)
     }
 
     /**

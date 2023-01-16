@@ -143,9 +143,6 @@ dependencies {
     implementation("org.altbeacon:android-beacon-library:2.19.5")
     implementation("com.maltaisn:icondialog:3.3.0")
     implementation("com.maltaisn:iconpack-community-material:5.3.45")
-    implementation("com.vdurmont:emoji-java:5.1.1") {
-        exclude(group = "org.json", module = "json")
-    }
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.20")
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.7.20")
