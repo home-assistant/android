@@ -8,5 +8,5 @@ data class ConversationSpeechResponse(
     val card: Any?,
     val language: String?,
     val responseType: String?,
-    val data: Map<String, String?>?
+    val data: Map<String, Any?>?
 )
