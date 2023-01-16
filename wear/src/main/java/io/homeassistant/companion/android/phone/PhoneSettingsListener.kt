@@ -126,7 +126,8 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
                 DeviceRegistration(
                     "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
                     deviceName,
-                    getMessagingToken()
+                    getMessagingToken(),
+                    false
                 )
             )
 

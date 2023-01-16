@@ -53,7 +53,8 @@ class FirebaseCloudMessagingService : FirebaseMessagingService() {
             try {
                 integrationUseCase.updateRegistration(
                     DeviceRegistration(
-                        pushToken = token
+                        pushToken = token,
+                        pushWebsocket = false
                     )
                 )
             } catch (e: Exception) {

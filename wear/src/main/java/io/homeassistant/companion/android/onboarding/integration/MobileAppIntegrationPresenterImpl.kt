@@ -30,7 +30,8 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
         return DeviceRegistration(
             "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
             deviceName,
-            getMessagingToken()
+            getMessagingToken(),
+            false
         )
     }
 

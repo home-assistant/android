@@ -180,7 +180,8 @@ class HomePresenterImpl @Inject constructor(
                     DeviceRegistration(
                         "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
                         null,
-                        getMessagingToken()
+                        getMessagingToken(),
+                        false
                     )
                 )
             } catch (e: Exception) {
