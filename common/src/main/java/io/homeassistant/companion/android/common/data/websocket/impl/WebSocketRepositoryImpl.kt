@@ -9,6 +9,8 @@ import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.homeassistant.companion.android.common.BuildConfig
+import io.homeassistant.companion.android.common.data.HomeAssistantApis.Companion.USER_AGENT
+import io.homeassistant.companion.android.common.data.HomeAssistantApis.Companion.USER_AGENT_STRING
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.AuthorizationException
@@ -21,6 +23,7 @@ import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.ConversationResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DomainResponse
@@ -28,6 +31,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.En
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EventResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TemplateUpdatedEvent
@@ -58,8 +62,10 @@ import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okio.ByteString
 import java.io.IOException
+import java.util.Collections
 import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
+import kotlin.coroutines.resumeWithException
 
 class WebSocketRepositoryImpl @Inject constructor(
     private val okHttpClient: OkHttpClient,
@@ -88,7 +94,7 @@ class WebSocketRepositoryImpl @Inject constructor(
     private val mapper = jacksonObjectMapper()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
         .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
-    private val activeMessages = mutableMapOf<Long, WebSocketRequest>()
+    private val activeMessages = Collections.synchronizedMap(mutableMapOf<Long, WebSocketRequest>())
     private val id = AtomicLong(1)
     private var connection: WebSocket? = null
     private var connectionState: WebSocketState? = null
@@ -175,6 +181,18 @@ class WebSocketRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getConversation(speech: String): ConversationResponse? {
+        // TODO: Send default locale of device with request.
+        val socketResponse = sendMessage(
+            mapOf(
+                "type" to "conversation/process",
+                "text" to speech
+            )
+        )
+
+        return mapResponse(socketResponse)
+    }
+
     override suspend fun getStateChanges(): Flow<StateChangedEvent>? =
         subscribeToEventsForType(EVENT_STATE_CHANGED)
 
@@ -231,7 +249,10 @@ class WebSocketRepositoryImpl @Inject constructor(
         ).plus(data)
 
         eventSubscriptionMutex.withLock {
-            if (activeMessages.values.none { it.message == subscribeMessage }) {
+            val isNewMessage = synchronized(activeMessages) {
+                activeMessages.values.none { it.message == subscribeMessage }
+            }
+            if (isNewMessage) {
                 val channel = Channel<Any>(capacity = Channel.BUFFERED)
                 val flow = callbackFlow<T> {
                     val producer = this as ProducerScope<Any>
@@ -244,12 +265,14 @@ class WebSocketRepositoryImpl @Inject constructor(
                         ioScope.launch {
                             var subscription: Long? = null
                             eventSubscriptionMutex.withLock {
-                                activeMessages.entries.firstOrNull { it.value.message == subscribeMessage }
-                                    ?.let {
-                                        subscription = it.key
-                                        channel.close()
-                                        activeMessages.remove(subscription)
-                                    }
+                                synchronized(activeMessages) {
+                                    activeMessages.entries.firstOrNull { it.value.message == subscribeMessage }
+                                        ?.let {
+                                            subscription = it.key
+                                            channel.close()
+                                            activeMessages.remove(subscription)
+                                        }
+                                }
                             }
                             subscription?.let {
                                 Log.d(TAG, "Unsubscribing from $type with data $data")
@@ -275,14 +298,18 @@ class WebSocketRepositoryImpl @Inject constructor(
                 val response = sendMessage(webSocketRequest)
                 if (response == null || response.success != true) {
                     Log.e(TAG, "Unable to subscribe to $type with data $data")
-                    activeMessages.entries
-                        .firstOrNull { it.value.message == subscribeMessage }
-                        ?.let { activeMessages.remove(it.key) }
+                    synchronized(activeMessages) {
+                        activeMessages.entries
+                            .firstOrNull { it.value.message == subscribeMessage }
+                            ?.let { activeMessages.remove(it.key) }
+                    }
                     return null
                 }
             }
         }
-        return activeMessages.values.find { it.message == subscribeMessage }?.eventFlow as? Flow<T>
+        return synchronized(activeMessages) {
+            activeMessages.values.find { it.message == subscribeMessage }?.eventFlow as? Flow<T>
+        }
     }
 
     override suspend fun getNotifications(): Flow<Map<String, Any>>? =
@@ -306,6 +333,62 @@ class WebSocketRepositoryImpl @Inject constructor(
         return response?.success == true
     }
 
+    /**
+     * Request the server to add a Matter device to the network and commission it
+     * @return [MatterCommissionResponse] detailing the server's response, or `null` if the server
+     * did not return a response
+     */
+    override suspend fun commissionMatterDevice(code: String): MatterCommissionResponse? {
+        val response = sendMessage(
+            WebSocketRequest(
+                message = mapOf(
+                    "type" to "matter/commission",
+                    "code" to code
+                ),
+                timeout = 120000L // Matter commissioning takes at least 60 seconds + interview
+            )
+        )
+
+        return response?.let {
+            MatterCommissionResponse(
+                success = response.success == true,
+                errorCode = if (response.error?.has("code") == true) {
+                    response.error.get("code").let {
+                        if (it.isNumber) it.asInt() else null
+                    }
+                } else null
+            )
+        }
+    }
+
+    /**
+     * Request the server to commission a Matter device that is already on the network
+     * @return [MatterCommissionResponse] detailing the server's response, or `null` if the server
+     * did not return a response
+     */
+    override suspend fun commissionMatterDeviceOnNetwork(pin: Long): MatterCommissionResponse? {
+        val response = sendMessage(
+            WebSocketRequest(
+                message = mapOf(
+                    "type" to "matter/commission_on_network",
+                    "pin" to pin
+                ),
+                timeout = 120000L // Matter commissioning takes at least 60 seconds + interview
+            )
+        )
+
+        return response?.let {
+            MatterCommissionResponse(
+                success = response.success == true,
+                errorCode = if (response.error?.has("code") == true) {
+                    response.error.get("code").let {
+                        if (it.isNumber) it.asInt() else null
+                    }
+                } else null
+            )
+        }
+    }
+
     private suspend fun connect(): Boolean {
         connectedMutex.withLock {
             if (connection != null && connected.isCompleted) {
@@ -325,7 +408,7 @@ class WebSocketRepositoryImpl @Inject constructor(
 
             try {
                 connection = okHttpClient.newWebSocket(
-                    Request.Builder().url(urlString).build(),
+                    Request.Builder().url(urlString).header(USER_AGENT, USER_AGENT_STRING).build(),
                     this
                 ).also {
                     // Preemptively send auth
@@ -377,22 +460,27 @@ class WebSocketRepositoryImpl @Inject constructor(
 
     private suspend fun sendMessage(request: WebSocketRequest): SocketResponse? {
         return if (connect()) {
-            withTimeoutOrNull(30000) {
-                suspendCancellableCoroutine { cont ->
-                    // Lock on the connection so that we fully send before allowing another send.
-                    // This should prevent out of order errors.
-                    connection?.let {
-                        synchronized(it) {
-                            val requestId = id.getAndIncrement()
-                            val outbound = request.message.plus("id" to requestId)
-                            Log.d(TAG, "Sending message $requestId: $outbound")
-                            activeMessages[requestId] = request.apply {
-                                onResponse = cont
+            withTimeoutOrNull(request.timeout) {
+                try {
+                    suspendCancellableCoroutine { cont ->
+                        // Lock on the connection so that we fully send before allowing another send.
+                        // This should prevent out of order errors.
+                        connection?.let {
+                            synchronized(it) {
+                                val requestId = id.getAndIncrement()
+                                val outbound = request.message.plus("id" to requestId)
+                                Log.d(TAG, "Sending message $requestId: $outbound")
+                                activeMessages[requestId] = request.apply {
+                                    onResponse = cont
+                                }
+                                connection?.send(mapper.writeValueAsString(outbound))
+                                Log.d(TAG, "Message number $requestId sent")
                             }
-                            connection?.send(mapper.writeValueAsString(outbound))
-                            Log.d(TAG, "Message number $requestId sent")
                         }
                     }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Exception while sending message", e)
+                    null
                 }
             }
         } else {
@@ -418,7 +506,9 @@ class WebSocketRepositoryImpl @Inject constructor(
     private fun handleMessage(response: SocketResponse) {
         val id = response.id!!
         activeMessages[id]?.let {
-            it.onResponse!!.resumeWith(Result.success(response))
+            it.onResponse?.let { cont ->
+                if (cont.isActive) cont.resumeWith(Result.success(response))
+            }
             if (it.eventFlow == null) {
                 activeMessages.remove(id)
             }
@@ -502,21 +592,30 @@ class WebSocketRepositoryImpl @Inject constructor(
                 connectionHaVersion = null
                 if (connectionState != WebSocketState.CLOSED_AUTH)
                     connectionState = WebSocketState.CLOSED_OTHER
-                activeMessages
-                    .filterValues { it.eventFlow == null }
-                    .forEach {
-                        it.value.onResponse?.resumeWith(Result.failure(IOException()))
-                        activeMessages.remove(it.key)
-                    }
+                synchronized(activeMessages) {
+                    activeMessages
+                        .filterValues { it.eventFlow == null }
+                        .forEach {
+                            it.value.onResponse?.let { cont ->
+                                if (cont.isActive) cont.resumeWithException(IOException())
+                            }
+                            activeMessages.remove(it.key)
+                        }
+                }
             }
         }
         // If we still have flows flowing
-        if (activeMessages.any { it.value.eventFlow != null } && ioScope.isActive) {
+        val hasFlowMessages = synchronized(activeMessages) {
+            activeMessages.any { it.value.eventFlow != null }
+        }
+        if (hasFlowMessages && ioScope.isActive) {
             ioScope.launch {
                 delay(10000)
                 if (connect()) {
                     Log.d(TAG, "Resubscribing to active subscriptions...")
-                    activeMessages.filterValues { it.eventFlow != null }.forEach { (oldId, oldMessage) ->
+                    synchronized(activeMessages) {
+                        activeMessages.filterValues { it.eventFlow != null }.entries
+                    }.forEach { (oldId, oldMessage) ->
                         val response = sendMessage(oldMessage)
                         if (response == null || response.success != true) {
                             Log.e(TAG, "Issue re-registering subscription with ${oldMessage.message}")

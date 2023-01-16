@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.SharedFlow
  * A class that holds information about messages that are currently active (sent and no response
  * received, or sent for a subscription) on the websocket connection.
  * @param message Map that holds the websocket message contents
+ * @param timeout timeout in milliseconds for receiving a response to the message
  * @param eventFlow Flow (using callbackFlow) that will emit events for a subscription, else `null`
  * @param eventTimeout timeout in milliseconds for ending the subscription when the flow is no
  * longer collected
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.SharedFlow
  */
 data class WebSocketRequest(
     val message: Map<*, *>,
+    val timeout: Long = 30000L,
     val eventFlow: SharedFlow<Any>? = null,
     val eventTimeout: Long = 0L,
     val onEvent: Channel<Any>? = null,

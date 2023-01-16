@@ -6,7 +6,7 @@ on:
 
 jobs:
   app_build:
-    name: Github, Firebase, and Sentry Release
+    name: Github, Firebase, Amazon, and Sentry Releases
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -14,9 +14,9 @@ jobs:
           fetch-depth: 0
 
       - name: Set up JDK 11
-        uses: actions/setup-java@v3.6.0
+        uses: actions/setup-java@v3.9.0
         with:
-          distribution: 'adopt'
+          distribution: 'temurin'
           java-version: '11'
 
       - uses: actions/cache@v3
@@ -65,42 +65,6 @@ jobs:
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
         run: ./gradlew assembleRelease
 
-      - name: Get the upload URL for the release
-        uses: bruceadams/get-release@v1.2.3
-        id: get_release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload Full APK
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: ./app/build/outputs/apk/full/release/app-full-release.apk
-          asset_name: home-assistant-full-${{steps.rel_number.outputs.version}}.apk
-          asset_content_type: application/zip
-
-      - name: Upload Minimal APK
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: ./app/build/outputs/apk/minimal/release/app-minimal-release.apk
-          asset_name: home-assistant-minimal-${{steps.rel_number.outputs.version}}.apk
-          asset_content_type: application/zip
-
-      - name: Upload Wear APK
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: ./wear/build/outputs/apk/release/wear-release.apk
-          asset_name: home-assistant-wear-${{steps.rel_number.outputs.version}}.apk
-          asset_content_type: application/zip
-
       - name: Create Version File
         shell: bash
         env:
@@ -108,15 +72,14 @@ jobs:
         run: |
           echo $VERSION_CODE > ./app/build/outputs/version_code.txt
 
-      - name: Upload Version Code
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Release
+        uses: softprops/action-gh-release@v1
         with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: ./app/build/outputs/version_code.txt
-          asset_name: version_code.txt
-          asset_content_type: text/plain
+          files: |
+            ./app/build/outputs/apk/full/release/app-full-release.apk
+            ./app/build/outputs/apk/minimal/release/app-minimal-release.apk
+            ./wear/build/outputs/apk/release/wear-release.apk
+            ./app/build/outputs/version_code.txt
 
       - name: Deploy to Firebase
         env:
@@ -127,14 +90,22 @@ jobs:
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
         run: ./gradlew appDistributionUploadFullRelease
 
+      - name: Deploy to Amazon
+        uses: ALJAZEERAPLUS/amazon-appstore-action@v1.1.1
+        with:
+          client-id: ${{ secrets.AMAZON_APPSTORE_CLIENT_ID }}
+          client-secret: ${{ secrets.AMAZON_APPSTORE_CLIENT_SECRET }}
+          app-id: ${{ secrets.AMAZON_APPSTORE_APP_ID }}
+          apk-file: ./app/build/outputs/apk/minimal/release/app-minimal-release.apk
+
       - name: Create a Sentry.io release
-        uses: tclindner/sentry-releases-action@v1.2.0
+        uses: getsentry/action-release@v1
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
         with:
-          tagName: io.homeassistant.companion.android@${{ steps.rel_number.outputs.version }}
+          version: io.homeassistant.companion.android@${{ steps.rel_number.outputs.version }}
           environment: Production
 
   play_publish:
@@ -146,7 +117,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up JDK 11
-        uses: actions/setup-java@v3.6.0
+        uses: actions/setup-java@v3.9.0
         with:
           distribution: 'adopt'
           java-version: '11'
@@ -192,7 +163,7 @@ jobs:
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
         run: ./gradlew bundleRelease
 
-      - name: Deploy to Playstore Beta
+      - name: Deploy to Playstore Internal
         env:
           KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
           KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
@@ -200,6 +171,15 @@ jobs:
           VERSION: ${{ steps.rel_number.outputs.version }}
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
         run: ./gradlew publishReleaseBundle
+
+      - name: Promote to Internal to Beta
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
+          KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
+          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
+          VERSION: ${{ steps.rel_number.outputs.version }}
+          VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
+        run: ./gradlew promoteArtifact --from-track internal --promote-track beta
 
       - name: Promote to Beta to Production
         env:

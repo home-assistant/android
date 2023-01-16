@@ -23,14 +23,14 @@ class BedtimeModeSensorManager : SensorManager {
     }
 
     override fun docsLink(): String {
-        return "https://companion.home-assistant.io/docs/core/sensors#bedtime-mode-sensor"
+        return "https://companion.home-assistant.io/docs/wear-os/sensors"
     }
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
         get() = commonR.string.sensor_name_bedtime_mode
 
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(bedtimeMode)
     }
 
@@ -52,7 +52,7 @@ class BedtimeModeSensorManager : SensorManager {
             return
 
         val state = try {
-            Settings.Global.getInt(context.contentResolver, "bedtime_mode") == 1
+            Settings.Global.getInt(context.contentResolver, if (Build.MANUFACTURER == "samsung") "setting_bedtime_mode_running_state" else "bedtime_mode") == 1
         } catch (e: Exception) {
             Log.e(TAG, "Unable to update bedtime mode sensor", e)
             false

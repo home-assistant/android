@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.sensors
 
 import android.content.Context
+import android.os.Build
 import android.provider.Settings
 import android.util.Log
 import io.homeassistant.companion.android.common.sensors.SensorManager
@@ -22,14 +23,14 @@ class TheaterModeSensorManager : SensorManager {
     }
 
     override fun docsLink(): String {
-        return "https://companion.home-assistant.io/docs/core/sensors#theater-mode-sensor"
+        return "https://companion.home-assistant.io/docs/wear-os/sensors"
     }
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
         get() = commonR.string.sensor_name_theater_mode
 
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(theaterMode)
     }
 
@@ -47,7 +48,7 @@ class TheaterModeSensorManager : SensorManager {
             return
 
         val state = try {
-            Settings.Global.getInt(context.contentResolver, "theater_mode_on") == 1
+            Settings.Global.getInt(context.contentResolver, if (Build.MANUFACTURER == "samsung") "setting_theater_mode_on" else "theater_mode_on") == 1
         } catch (e: Exception) {
             Log.e(TAG, "Unable to update theater mode sensor", e)
             false

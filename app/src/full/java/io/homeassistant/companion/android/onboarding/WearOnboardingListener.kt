@@ -43,9 +43,8 @@ class WearOnboardingListener : WearableListenerService() {
                 setUrgent()
                 asPutDataRequest()
             }
-            Wearable.getDataClient(this@WearOnboardingListener).putDataItem(putDataReq).apply {
-                addOnSuccessListener { Log.d("WearOnboardingListener", "sendHomeAssistantInstance: success") }
-                addOnFailureListener { Log.d("WearOnboardingListener", "sendHomeAssistantInstance: failed") }
+            Wearable.getDataClient(this@WearOnboardingListener).putDataItem(putDataReq).addOnCompleteListener {
+                Log.d("WearOnboardingListener", "sendHomeAssistantInstance: ${if (it.isSuccessful) "success" else "failed"}")
             }
         }
     }

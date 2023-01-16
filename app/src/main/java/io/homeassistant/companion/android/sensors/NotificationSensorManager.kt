@@ -74,7 +74,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
     }
     override val name: Int
         get() = commonR.string.sensor_name_last_notification
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(lastNotification, lastRemovedNotification, activeNotificationCount, mediaSession)
     }
     override val enabledByDefault: Boolean
@@ -159,7 +159,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         )
 
         // Need to send update!
-        SensorWorker.start(applicationContext)
+        SensorReceiver.updateAllSensors(applicationContext)
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification) {
@@ -217,7 +217,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         )
 
         // Need to send update!
-        SensorWorker.start(applicationContext)
+        SensorReceiver.updateAllSensors(applicationContext)
     }
 
     private fun updateActiveNotificationCount() {

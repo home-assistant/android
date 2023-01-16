@@ -152,9 +152,11 @@ class UrlRepositoryImpl @Inject constructor(
     }
 
     override suspend fun isHomeWifiSsid(): Boolean {
+        val wifiSsids = getHomeWifiSsids()
+        if (wifiSsids.isEmpty())
+            return false
         val formattedSsid = wifiHelper.getWifiSsid()?.removeSurrounding("\"")
         val formattedBssid = wifiHelper.getWifiBssid()
-        val wifiSsids = getHomeWifiSsids()
         return (
             formattedSsid != null &&
                 (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || formattedSsid !== WifiManager.UNKNOWN_SSID) &&
@@ -171,8 +173,9 @@ class UrlRepositoryImpl @Inject constructor(
 
     override suspend fun isInternal(): Boolean {
         val usesInternalSsid = isHomeWifiSsid()
+        val usesWifi = wifiHelper.isUsingWifi()
         val localUrl = localStorage.getString(PREF_LOCAL_URL)
-        Log.d(TAG, "localUrl is: ${!localUrl.isNullOrBlank()} and usesInternalSsid is: $usesInternalSsid")
-        return !localUrl.isNullOrBlank() && usesInternalSsid
+        Log.d(TAG, "localUrl is: ${!localUrl.isNullOrBlank()}, usesInternalSsid is: $usesInternalSsid, usesWifi is: $usesWifi")
+        return !localUrl.isNullOrBlank() && usesInternalSsid && usesWifi
     }
 }

@@ -43,6 +43,8 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.core.text.HtmlCompat
 import androidx.core.text.isDigitsOnly
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.utils.toAndroidIconCompat
 import com.vdurmont.emoji.EmojiParser
@@ -51,6 +53,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.common.util.cancel
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.generalChannel
@@ -60,10 +63,9 @@ import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
-import io.homeassistant.companion.android.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.NotificationSensorManager
-import io.homeassistant.companion.android.sensors.SensorWorker
+import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.UrlHandler
 import io.homeassistant.companion.android.websocket.WebsocketManager
@@ -286,27 +288,44 @@ class MessagingManager @Inject constructor(
         const val VIDEO_START_MICROSECONDS = 100000L
         const val VIDEO_INCREMENT_MICROSECONDS = 750000L
         const val VIDEO_GUESS_MILLISECONDS = 7000L
+
+        // Values for a notification that has been replied to
+        const val SOURCE_REPLY = "REPLY_"
+        const val SOURCE_REPLY_HISTORY = "reply_history_"
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     private var textToSpeech: TextToSpeech? = null
 
-    fun handleMessage(jsonData: Map<String, String>, source: String) {
+    fun handleMessage(notificationData: Map<String, String>, source: String) {
 
-        val jsonObject = JSONObject(jsonData)
-        val now = System.currentTimeMillis()
-        val notificationRow =
-            NotificationItem(0, now, jsonData[MESSAGE].toString(), jsonObject.toString(), source)
-        notificationDao.add(notificationRow)
+        var now = System.currentTimeMillis()
+        var jsonData = notificationData
+        val notificationId: Long
 
-        val confirmation = jsonData[CONFIRMATION]?.toBoolean() ?: false
-        if (confirmation) {
-            mainScope.launch {
-                try {
-                    integrationUseCase.fireEvent("mobile_app_notification_received", jsonData)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Unable to send notification received event", e)
+        if (source.startsWith(SOURCE_REPLY)) {
+            notificationId = source.substringAfter(SOURCE_REPLY).toLong()
+            notificationDao.get(notificationId.toInt())?.let {
+                val dbData: Map<String, String> = jacksonObjectMapper().readValue(it.data)
+
+                now = it.received // Allow for updating the existing notification without a tag
+                jsonData = jsonData + dbData // Add the notificationData, this contains the reply text
+            } ?: return
+        } else {
+            val jsonObject = JSONObject(jsonData)
+            val notificationRow =
+                NotificationItem(0, now, jsonData[MESSAGE].toString(), jsonObject.toString(), source)
+            notificationId = notificationDao.add(notificationRow)
+
+            val confirmation = jsonData[CONFIRMATION]?.toBoolean() ?: false
+            if (confirmation) {
+                mainScope.launch {
+                    try {
+                        integrationUseCase.fireEvent("mobile_app_notification_received", jsonData)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Unable to send notification received event", e)
+                    }
                 }
             }
         }
@@ -483,18 +502,18 @@ class MessagingManager @Inject constructor(
                         }
                     }
                     COMMAND_APP_LOCK -> {
-                        val app_lock_enable_param_present = jsonData[APP_LOCK_ENABLED] != null
-                        val app_lock_timeout_param_present = jsonData[APP_LOCK_TIMEOUT] != null
-                        val home_bypass_param_present = jsonData[APP_LOCK_ENABLED] != null
+                        val appLockEnablePresent = jsonData[APP_LOCK_ENABLED] != null
+                        val appLockTimeoutPresent = jsonData[APP_LOCK_TIMEOUT] != null
+                        val homeBypassEnablePresent = jsonData[HOME_BYPASS_ENABLED] != null
 
-                        val app_lock_enable_value = jsonData[APP_LOCK_ENABLED]?.toLowerCase()?.toBooleanStrictOrNull()
-                        val app_lock_timeout_value = jsonData[APP_LOCK_TIMEOUT]?.toIntOrNull()
-                        val home_bypass_value = jsonData[APP_LOCK_ENABLED]?.toLowerCase()?.toBooleanStrictOrNull()
+                        val appLockEnableValue = jsonData[APP_LOCK_ENABLED]?.lowercase()?.toBooleanStrictOrNull()
+                        val appLockTimeoutValue = jsonData[APP_LOCK_TIMEOUT]?.toIntOrNull()
+                        val homeBypassEnableValue = jsonData[HOME_BYPASS_ENABLED]?.lowercase()?.toBooleanStrictOrNull()
 
-                        val invalid = (!app_lock_enable_param_present && !app_lock_timeout_param_present && !home_bypass_param_present) ||
-                            (app_lock_enable_param_present && app_lock_enable_value == null) ||
-                            (app_lock_timeout_param_present && (app_lock_timeout_value == null || app_lock_timeout_value < 0)) ||
-                            (home_bypass_param_present && home_bypass_value == null)
+                        val invalid = (!appLockEnablePresent && !appLockTimeoutPresent && !homeBypassEnablePresent) ||
+                            (appLockEnablePresent && appLockEnableValue == null) ||
+                            (appLockTimeoutPresent && (appLockTimeoutValue == null || appLockTimeoutValue < 0)) ||
+                            (homeBypassEnablePresent && homeBypassEnableValue == null)
 
                         if (!invalid)
                             handleDeviceCommands(jsonData)
@@ -537,7 +556,7 @@ class MessagingManager @Inject constructor(
                             }
                         }
                     }
-                    COMMAND_UPDATE_SENSORS -> SensorWorker.start(context)
+                    COMMAND_UPDATE_SENSORS -> SensorReceiver.updateAllSensors(context)
                     COMMAND_LAUNCH_APP -> {
                         if (!jsonData[PACKAGE_NAME].isNullOrEmpty()) {
                             handleDeviceCommands(jsonData)
@@ -598,7 +617,7 @@ class MessagingManager @Inject constructor(
             }
             else -> mainScope.launch {
                 Log.d(TAG, "Creating notification with following data: $jsonData")
-                sendNotification(jsonData)
+                sendNotification(jsonData, notificationId, now)
             }
         }
     }
@@ -867,7 +886,7 @@ class MessagingManager @Inject constructor(
                         )
                     }
                     BluetoothSensorManager().requestSensorUpdate(context)
-                    SensorWorker.start(context)
+                    SensorReceiver.updateAllSensors(context)
                 }
             }
             COMMAND_BEACON_MONITOR -> {
@@ -1033,11 +1052,11 @@ class MessagingManager @Inject constructor(
      * Create and show a simple notification containing the received FCM message.
      *
      */
-    private suspend fun sendNotification(data: Map<String, String>) {
+    private suspend fun sendNotification(data: Map<String, String>, id: Long? = null, received: Long? = null) {
         val notificationManagerCompat = NotificationManagerCompat.from(context)
 
         val tag = data["tag"]
-        val messageId = tag?.hashCode() ?: System.currentTimeMillis().toInt()
+        val messageId = tag?.hashCode() ?: received?.toInt() ?: System.currentTimeMillis().toInt()
 
         var group = data["group"]
         var groupId = 0
@@ -1087,7 +1106,9 @@ class MessagingManager @Inject constructor(
 
         handleVisibility(notificationBuilder, data)
 
-        handleActions(notificationBuilder, tag, messageId, data)
+        handleActions(notificationBuilder, tag, messageId, id, data)
+
+        handleReplyHistory(notificationBuilder, data)
 
         handleDeleteIntent(notificationBuilder, data, messageId, group, groupId)
 
@@ -1540,7 +1561,7 @@ class MessagingManager @Inject constructor(
                     run frameLoop@{
                         for (timeInMicroSeconds in VIDEO_START_MICROSECONDS until durationInMicroSeconds step VIDEO_INCREMENT_MICROSECONDS) {
                             // Max size in bytes for notification GIF
-                            val maxSize = (2500000 - singleFrame)
+                            val maxSize = (5000000 - singleFrame)
                             if (processingFramesSize >= maxSize) {
                                 return@frameLoop
                             }
@@ -1599,6 +1620,7 @@ class MessagingManager @Inject constructor(
         builder: NotificationCompat.Builder,
         tag: String?,
         messageId: Int,
+        databaseId: Long?,
         data: Map<String, String>
     ) {
         for (i in 1..3) {
@@ -1619,6 +1641,10 @@ class MessagingManager @Inject constructor(
                         NotificationActionReceiver.EXTRA_NOTIFICATION_ACTION,
                         notificationAction
                     )
+                    putExtra(
+                        NotificationActionReceiver.EXTRA_NOTIFICATION_DB,
+                        databaseId
+                    )
                 }
 
                 when (notificationAction.key) {
@@ -1638,7 +1664,7 @@ class MessagingManager @Inject constructor(
                         }
                         val replyPendingIntent = PendingIntent.getBroadcast(
                             context,
-                            0,
+                            messageId,
                             eventIntent,
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
                         )
@@ -1673,6 +1699,7 @@ class MessagingManager @Inject constructor(
         uri: String
     ): PendingIntent {
         val needsPackage = uri.startsWith(APP_PREFIX) || uri.startsWith(INTENT_PREFIX)
+        val otherApp = needsPackage || UrlHandler.isAbsoluteUrl(uri) || uri.startsWith(DEEP_LINK_PREFIX)
         val intent = when {
             uri.isBlank() -> {
                 WebViewActivity.newInstance(context)
@@ -1708,8 +1735,10 @@ class MessagingManager @Inject constructor(
             intent.putExtra("fragment", NOTIFICATION_HISTORY)
 
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-        intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+        if (!otherApp) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+            intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+        }
 
         return PendingIntent.getActivity(
             context,
@@ -1730,6 +1759,22 @@ class MessagingManager @Inject constructor(
                 intent,
             PendingIntent.FLAG_IMMUTABLE
         )
+    }
+
+    private fun handleReplyHistory(
+        builder: NotificationCompat.Builder,
+        data: Map<String, String>
+    ) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            val replies = data.entries
+                .filter { it.key.startsWith(SOURCE_REPLY_HISTORY) }
+                .sortedBy { it.key.substringAfter(SOURCE_REPLY_HISTORY).toInt() }
+            if (replies.any()) {
+                val history = replies.map { it.value }.reversed().toTypedArray() // Reverse to have latest replies first
+                builder.setRemoteInputHistory(history)
+                builder.setOnlyAlertOnce(true) // Overwrites user settings to match system defaults
+            }
+        }
     }
 
     private fun handleChannel(
@@ -2058,20 +2103,20 @@ class MessagingManager @Inject constructor(
     }
 
     private suspend fun setAppLock(data: Map<String, String>) {
-        val app_lock_enable_value = data[APP_LOCK_ENABLED]?.toLowerCase()?.toBooleanStrictOrNull()
-        val app_lock_timeout_value = data[APP_LOCK_TIMEOUT]?.toIntOrNull()
-        val home_bypass_value = data[APP_LOCK_ENABLED]?.toLowerCase()?.toBooleanStrictOrNull()
+        val appLockEnableValue = data[APP_LOCK_ENABLED]?.lowercase()?.toBooleanStrictOrNull()
+        val appLockTimeoutValue = data[APP_LOCK_TIMEOUT]?.toIntOrNull()
+        val homeBypassEnableValue = data[HOME_BYPASS_ENABLED]?.lowercase()?.toBooleanStrictOrNull()
 
         val canAuth = (BiometricManager.from(context).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS)
         if (canAuth) {
-            if (app_lock_enable_value != null) {
-                authenticationUseCase.setLockEnabled(app_lock_enable_value)
+            if (appLockEnableValue != null) {
+                authenticationUseCase.setLockEnabled(appLockEnableValue)
             }
-            if (app_lock_timeout_value != null) {
-                integrationUseCase.sessionTimeOut(app_lock_timeout_value)
+            if (appLockTimeoutValue != null) {
+                integrationUseCase.sessionTimeOut(appLockTimeoutValue)
             }
-            if (home_bypass_value != null) {
-                authenticationUseCase.setLockHomeBypassEnabled(home_bypass_value)
+            if (homeBypassEnableValue != null) {
+                authenticationUseCase.setLockHomeBypassEnabled(homeBypassEnableValue)
             }
         } else {
             Log.w(TAG, "Not changing App-Lock settings. BiometricManager cannot Authenticate!")

@@ -4,7 +4,7 @@ import android.os.Build
 import android.webkit.CookieManager
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.PropertyNamingStrategy
+import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.data.url.UrlRepository
@@ -21,7 +21,7 @@ class HomeAssistantApis @Inject constructor(
 ) {
     companion object {
         private const val LOCAL_HOST = "http://localhost/"
-        private const val USER_AGENT = "User-Agent"
+        const val USER_AGENT = "User-Agent"
         val USER_AGENT_STRING = "Home Assistant/${BuildConfig.VERSION_NAME} (Android ${Build.VERSION.RELEASE}; ${Build.MODEL})"
 
         private val CALL_TIMEOUT = 30L
@@ -69,7 +69,7 @@ class HomeAssistantApis @Inject constructor(
             JacksonConverterFactory.create(
                 ObjectMapper()
                     .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-                    .setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE)
+                    .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
                     .registerKotlinModule()
             )
         )

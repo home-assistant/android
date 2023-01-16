@@ -31,6 +31,7 @@ import javax.inject.Inject
 abstract class SensorReceiverBase : BroadcastReceiver() {
     companion object {
         const val ACTION_UPDATE_SENSOR = "io.homeassistant.companion.android.UPDATE_SENSOR"
+        const val ACTION_UPDATE_SENSORS = "io.homeassistant.companion.android.UPDATE_SENSORS"
         const val EXTRA_SENSOR_ID = "sensorId"
 
         fun shouldDoFastUpdates(context: Context): Boolean {
@@ -68,7 +69,12 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
 
     protected abstract val skippableActions: Map<String, String>
 
-    protected abstract fun getSensorSettingsIntent(context: Context, id: String): Intent?
+    protected abstract fun getSensorSettingsIntent(
+        context: Context,
+        sensorId: String,
+        sensorManagerId: String,
+        notificationId: Int
+    ): PendingIntent?
 
     override fun onReceive(context: Context, intent: Intent) {
         Log.d(tag, "Received intent: ${intent.action}")
@@ -243,9 +249,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                                 context.getSystemService<NotificationManager>()?.let { notificationManager ->
                                     createNotificationChannel(context)
                                     val notificationId = "$sensorCoreSyncChannel-${basicSensor.id}".hashCode()
-                                    val notificationIntent = getSensorSettingsIntent(context, basicSensor.id)?.let {
-                                        PendingIntent.getActivity(context, notificationId, it, PendingIntent.FLAG_IMMUTABLE)
-                                    }
+                                    val notificationIntent = getSensorSettingsIntent(context, basicSensor.id, manager.id(), notificationId)
                                     val notification = NotificationCompat.Builder(context, sensorCoreSyncChannel)
                                         .setSmallIcon(R.drawable.ic_stat_ic_notification)
                                         .setContentTitle(context.getString(basicSensor.name))
@@ -334,9 +338,15 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         context: Context,
         sensorId: String
     ) {
-        val sensorManager = managers.firstOrNull { it.getAvailableSensors(context).any { s -> s.id == sensorId } }
-        sensorManager?.requestSensorUpdate(context)
-        val basicSensor = sensorManager?.getAvailableSensors(context)?.firstOrNull { it.id == sensorId }
+        val sensorManager = managers.firstOrNull {
+            it.getAvailableSensors(context).any { s -> s.id == sensorId }
+        } ?: return
+        try {
+            sensorManager.requestSensorUpdate(context)
+        } catch (e: Exception) {
+            Log.e(tag, "Issue requesting updates for ${context.getString(sensorManager.name)}", e)
+        }
+        val basicSensor = sensorManager.getAvailableSensors(context).firstOrNull { it.id == sensorId }
         val fullSensor = sensorDao.getFull(sensorId)
         if (
             fullSensor != null && fullSensor.sensor.enabled &&
@@ -346,12 +356,16 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                     fullSensor.sensor.icon != fullSensor.sensor.lastSentIcon
                 )
         ) {
-            integrationUseCase.updateSensors(arrayOf(fullSensor.toSensorRegistration(basicSensor)))
-            sensorDao.updateLastSentStateAndIcon(
-                basicSensor.id,
-                fullSensor.sensor.state,
-                fullSensor.sensor.icon
-            )
+            try {
+                integrationUseCase.updateSensors(arrayOf(fullSensor.toSensorRegistration(basicSensor)))
+                sensorDao.updateLastSentStateAndIcon(
+                    basicSensor.id,
+                    fullSensor.sensor.state,
+                    fullSensor.sensor.icon
+                )
+            } catch (e: Exception) {
+                Log.e(tag, "Exception while updating individual sensor.", e)
+            }
         }
     }
 

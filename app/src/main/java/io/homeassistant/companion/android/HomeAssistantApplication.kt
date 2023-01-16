@@ -17,6 +17,8 @@ import io.homeassistant.companion.android.common.sensors.LastUpdateManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.sensors.SensorReceiver
+import io.homeassistant.companion.android.settings.language.LanguagesManager
+import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.websocket.WebsocketBroadcastReceiver
 import io.homeassistant.companion.android.widgets.button.ButtonWidget
 import io.homeassistant.companion.android.widgets.entity.EntityWidget
@@ -39,8 +41,13 @@ open class HomeAssistantApplication : Application() {
     @Inject
     lateinit var keyChainRepository: KeyChainRepository
 
+    @Inject
+    lateinit var languagesManager: LanguagesManager
+
     override fun onCreate() {
         super.onCreate()
+
+        registerActivityLifecycleCallbacks(LifecycleHandler)
 
         ioScope.launch {
             initCrashReporting(
@@ -48,6 +55,8 @@ open class HomeAssistantApplication : Application() {
                 prefsRepository.isCrashReporting()
             )
         }
+
+        languagesManager.applyCurrentLang()
 
         // This will make sure we start/stop when we actually need too.
         registerReceiver(
@@ -160,6 +169,11 @@ open class HomeAssistantApplication : Application() {
                 IntentFilter(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED)
             )
         }
+
+        registerReceiver(
+            sensorReceiver,
+            IntentFilter("androidx.car.app.connection.action.CAR_CONNECTION_UPDATED")
+        )
 
         // Add a receiver for the shutdown event to attempt to send 1 final sensor update
         registerReceiver(

@@ -2,6 +2,7 @@ package io.homeassistant.companion.android
 
 import android.app.Application
 import android.app.NotificationManager
+import android.bluetooth.BluetoothAdapter
 import android.content.Intent
 import android.content.IntentFilter
 import android.media.AudioManager
@@ -83,6 +84,22 @@ open class HomeAssistantApplication : Application() {
                 addAction(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED)
             }
         )
+
+        // Listen to changes to Wet Mode State
+        registerReceiver(
+            sensorReceiver,
+            IntentFilter().apply {
+                addAction("com.google.android.clockwork.actions.WET_MODE_STARTED")
+                addAction("com.google.android.clockwork.actions.WET_MODE_ENDED")
+            }
+        )
+
+        // Listen for bluetooth state changes
+        registerReceiver(
+            sensorReceiver,
+            IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
+        )
+
         // Update complications when the screen is on
         val complicationReceiver = ComplicationReceiver()
 

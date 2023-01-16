@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.nfc.views
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Scaffold
@@ -93,11 +94,11 @@ fun LoadNfcView(
                 contentColor = colorResource(commonR.color.colorOnBackground)
             )
         }
-    ) {
+    ) { contentPadding ->
         NavHost(
             navController = navController,
             startDestination = startDestination,
-            modifier = Modifier
+            modifier = Modifier.padding(contentPadding)
         ) {
             composable(NfcSetupActivity.NAV_WELCOME) {
                 NfcWelcomeView(
@@ -121,6 +122,7 @@ fun LoadNfcView(
             composable(NfcSetupActivity.NAV_EDIT) {
                 NfcEditView(
                     identifier = viewModel.nfcTagIdentifier,
+                    showDeviceSample = viewModel.usesAndroidDeviceId,
                     onDuplicateClicked = { viewModel.duplicateNfcTag() },
                     onFireEventClicked = { viewModel.fireNfcTagEvent() }
                 )

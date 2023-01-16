@@ -52,6 +52,7 @@ class SettingsPresenterImpl @Inject constructor(
                 "app_lock_home_bypass" -> authenticationUseCase.isLockHomeBypassEnabled()
                 "crash_reporting" -> prefsRepository.isCrashReporting()
                 "autoplay_video" -> integrationUseCase.isAutoPlayVideoEnabled()
+                "always_show_first_view_on_app_start" -> integrationUseCase.isAlwaysShowFirstViewOnAppStartEnabled()
                 "webview_debug" -> integrationUseCase.isWebViewDebugEnabled()
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
@@ -68,6 +69,7 @@ class SettingsPresenterImpl @Inject constructor(
                 "app_lock_home_bypass" -> authenticationUseCase.setLockHomeBypassEnabled(value)
                 "crash_reporting" -> prefsRepository.setCrashReporting(value)
                 "autoplay_video" -> integrationUseCase.setAutoPlayVideo(value)
+                "always_show_first_view_on_app_start" -> integrationUseCase.setAlwaysShowFirstViewOnAppStart(value)
                 "webview_debug" -> integrationUseCase.setWebViewDebugEnabled(value)
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
@@ -106,10 +108,7 @@ class SettingsPresenterImpl @Inject constructor(
                     }
                 }
                 "themes" -> themesManager.saveTheme(value)
-                "languages" -> {
-                    langsManager.saveLang(value)
-                    settingsView.onLangSettingsChanged()
-                }
+                "languages" -> langsManager.saveLang(value)
                 else -> throw IllegalArgumentException("No string found by this key: $key")
             }
         }

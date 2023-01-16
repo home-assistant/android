@@ -1,21 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2022.11 - Phone" versioncode="2">
-        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Mobile data roaming sensor now requires phone permission on devices running Android 10+</change>
-        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Notification command to turn bluetooth on and off no longer works on Android 13+ devices. BLE transmitter and Beacon Monitor commands are not impacted by this.</change>
-        <change>Add notification commands to control app lock setting and screen timeout</change>
-        <chagne>Add a screen timeout sensor</chagne>
-        <change>Add additional filters in Manage Sensors: All, Enabled or Disabled</change>
-        <change>Apply app lock to settings screens</change>
-        <change>Add new sensor setting for Background Location to only send zone name instead of GPS coordinates</change>
-        <change>Only show Wear OS settings when device is connected, instead of relying on what app is installed</change>
-        <change>Improve user experience when Nabu Casa cloud is used</change>
-        <change>Bug fixes, performance improvements, design tweaks and dependency updates</change>
-    </release>
-    <release version="2022.11 - Wear" versioncode="1">
-        <change>Add App, Audio, Bedtime mode (Wear OS 3 Only), Do Not Disturb, Last Update, Network, Next Alarm, Power, Steps and Theater mode sensors</change>
-        <change>Allow settings to always be accessible, even when loading</change>
+    <release version="2023.1 - Phone" versioncode="2">
+        <change>Initial Android Auto support</change>
+        <change>Quick Setting tiles: allow up to 40 tiles, add new option to only execute action if device is unlocked</change>
+        <change>Add UUID filter to Beacon Monitor sensor</change>
         <change>Bug fixes and dependency updates</change>
+    </release>
+    <release version="2023.1 - Wear" versioncode="1">
+        <change>Add Bluetooth Sensors. Important to note that sensor settings are not available on Wear OS, neither are notifications. This means the BLE transmitter and Beacon Monitor can only be enabled and disabled.</change>
     </release>
 </changelog>

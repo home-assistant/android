@@ -33,6 +33,9 @@ interface IntegrationRepository {
     suspend fun setAutoPlayVideo(enabled: Boolean)
     suspend fun isAutoPlayVideoEnabled(): Boolean
 
+    suspend fun setAlwaysShowFirstViewOnAppStart(enabled: Boolean)
+    suspend fun isAlwaysShowFirstViewOnAppStartEnabled(): Boolean
+
     suspend fun setWebViewDebugEnabled(enabled: Boolean)
     suspend fun isWebViewDebugEnabled(): Boolean
 
@@ -83,4 +86,6 @@ interface IntegrationRepository {
     suspend fun updateSensors(sensors: Array<SensorRegistration<Any>>): Boolean
 
     suspend fun shouldNotifySecurityWarning(): Boolean
+
+    suspend fun getConversation(speech: String): String?
 }

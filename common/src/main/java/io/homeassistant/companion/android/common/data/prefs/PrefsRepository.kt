@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.common.data.prefs
 interface PrefsRepository {
     suspend fun getAppVersion(): String?
 
-    suspend fun saveAppVersion(lang: String)
+    suspend fun saveAppVersion(ver: String)
 
     suspend fun getCurrentTheme(): String?
 
@@ -19,7 +19,7 @@ interface PrefsRepository {
 
     suspend fun isCrashReporting(): Boolean
 
-    suspend fun setCrashReporting(crash: Boolean)
+    suspend fun setCrashReporting(crashReportingEnabled: Boolean)
 
     suspend fun saveKeyAlias(alias: String)
 

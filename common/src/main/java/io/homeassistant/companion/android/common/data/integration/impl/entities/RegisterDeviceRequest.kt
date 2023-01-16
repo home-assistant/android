@@ -6,14 +6,14 @@ import com.fasterxml.jackson.annotation.JsonInclude
 data class RegisterDeviceRequest(
     var appId: String?,
     var appName: String?,
-    var appVersion: String?,
-    var deviceName: String?,
-    var manufacturer: String?,
-    var model: String?,
+    val appVersion: String?,
+    val deviceName: String?,
+    val manufacturer: String?,
+    val model: String?,
     var osName: String?,
-    var osVersion: String?,
+    val osVersion: String?,
     var supportsEncryption: Boolean?,
-    var appData: Map<String, Any>?,
+    val appData: Map<String, Any>?,
     // Added in HA 0.104.0
     var deviceId: String?
 )

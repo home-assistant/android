@@ -5,6 +5,18 @@
         android:name="io.homeassistant.companion.android.HomeAssistantApplication" >
         <meta-data android:name="io.sentry.auto-init" android:value="false" />
         <meta-data android:name="io.sentry.release" android:value="${sentryRelease}" />
+        <meta-data android:name="io.sentry.dsn" android:value="${sentryDsn}" />
+
+        <activity
+            android:name=".matter.MatterCommissioningActivity"
+            android:configChanges="orientation|screenSize"
+            android:exported="true"
+            android:theme="@style/Theme.HomeAssistant.Config">
+            <intent-filter>
+                <action android:name="com.google.android.gms.home.matter.ACTION_COMMISSION_DEVICE"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
 
         <receiver android:name=".location.HighAccuracyLocationReceiver"
             android:enabled="true"
@@ -23,12 +35,31 @@
             android:enabled="true"
             android:exported="true"/>
 
+        <service
+            android:name=".matter.MatterCommissioningService"
+            android:exported="true" />
+
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@drawable/ic_stat_ic_notification" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/colorPrimary" />
+
+        <meta-data
+            android:name="androidx.car.app.minCarApiLevel"
+            android:value="1"/>
+        <meta-data
+            android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc"/>
+        <service
+            android:name=".vehicle.HaCarAppService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="androidx.car.app.CarAppService" />
+                <category android:name="androidx.car.app.category.IOT"/>
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>

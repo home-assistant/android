@@ -19,8 +19,15 @@ data class TileEntity(
     @ColumnInfo(name = "label")
     val label: String,
     @ColumnInfo(name = "subtitle")
-    val subtitle: String?
+    val subtitle: String?,
+    @ColumnInfo(name = "shouldVibrate", defaultValue = "0")
+    val shouldVibrate: Boolean,
+    @ColumnInfo(name = "authRequired", defaultValue = "0")
+    val authRequired: Boolean
 )
 
 val TileEntity.isSetup: Boolean
     get() = this.label.isNotBlank() && this.entityId.isNotBlank()
+
+val TileEntity.numberedId: Int
+    get() = this.tileId.split("_")[1].toInt()

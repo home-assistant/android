@@ -26,6 +26,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import org.burnoutcrew.reorderable.ItemPosition
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
@@ -71,26 +72,27 @@ class SettingsWearViewModel @Inject constructor(
 
     init {
         Wearable.getDataClient(application).addListener(this)
-        Wearable.getCapabilityClient(application)
-            .getCapability(CAPABILITY_WEAR_SENDS_CONFIG, CapabilityClient.FILTER_REACHABLE)
-            .addOnSuccessListener {
-                it.nodes.forEach { node ->
+        viewModelScope.launch {
+            try {
+                val capabilityInfo = Wearable.getCapabilityClient(application)
+                    .getCapability(CAPABILITY_WEAR_SENDS_CONFIG, CapabilityClient.FILTER_REACHABLE)
+                    .await()
+                capabilityInfo.nodes.forEach { node ->
                     Log.d(TAG, "Requesting config from node ${node.id}")
-                    Wearable.getMessageClient(application).sendMessage(
-                        node.id,
-                        "/requestConfig",
-                        ByteArray(0)
-                    ).apply {
-                        addOnSuccessListener {
+                    launch {
+                        try {
+                            Wearable.getMessageClient(application).sendMessage(
+                                node.id,
+                                "/requestConfig",
+                                ByteArray(0)
+                            ).await()
                             Log.d(TAG, "Request for config sent successfully")
-                        }
-                        addOnFailureListener { e ->
+                        } catch (e: Exception) {
                             Log.e(TAG, "Failed to request config", e)
                         }
                     }
                 }
-            }
-            .addOnFailureListener { e ->
+            } catch (e: Exception) {
                 Log.e(TAG, "Failed to send config request to wear", e)
                 Toast.makeText(
                     application,
@@ -98,6 +100,7 @@ class SettingsWearViewModel @Inject constructor(
                     Toast.LENGTH_LONG
                 ).show()
             }
+        }
         viewModelScope.launch {
             integrationUseCase.getEntities()?.forEach {
                 entities[it.entityId] = it
@@ -158,16 +161,16 @@ class SettingsWearViewModel @Inject constructor(
             asPutDataRequest()
         }
 
-        Wearable.getDataClient(application).putDataItem(putDataRequest).apply {
-            addOnSuccessListener { Log.d(TAG, "Successfully sent favorites to wear") }
-            addOnFailureListener { e ->
-                Log.e(TAG, "Failed to send favorites to wear", e)
-                Toast.makeText(
-                    application,
-                    application.getString(commonR.string.failure_send_favorites_wear),
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
+        try {
+            Wearable.getDataClient(application).putDataItem(putDataRequest).await()
+            Log.d(TAG, "Successfully sent favorites to wear")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to send favorites to wear", e)
+            Toast.makeText(
+                application,
+                application.getString(commonR.string.failure_send_favorites_wear),
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 

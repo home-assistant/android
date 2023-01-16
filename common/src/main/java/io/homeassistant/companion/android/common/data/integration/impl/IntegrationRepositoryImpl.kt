@@ -69,6 +69,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_WEAR_TOAST_CONFIRMATION = "wear_toast_confirmation"
         private const val PREF_HA_VERSION = "ha_version"
         private const val PREF_AUTOPLAY_VIDEO = "autoplay_video"
+        private const val PREF_ALWAYS_SHOW_FIRST_VIEW_ON_APP_START = "always_show_first_view_on_app_start"
         private const val PREF_FULLSCREEN_ENABLED = "fullscreen_enabled"
         private const val PREF_KEEP_SCREEN_ON_ENABLED = "keep_screen_on_enabled"
         private const val PREF_PINCH_TO_ZOOM_ENABLED = "pinch_to_zoom_enabled"
@@ -373,6 +374,14 @@ class IntegrationRepositoryImpl @Inject constructor(
         return localStorage.getBoolean(PREF_AUTOPLAY_VIDEO)
     }
 
+    override suspend fun setAlwaysShowFirstViewOnAppStart(enabled: Boolean) {
+        localStorage.putBoolean(PREF_ALWAYS_SHOW_FIRST_VIEW_ON_APP_START, enabled)
+    }
+
+    override suspend fun isAlwaysShowFirstViewOnAppStartEnabled(): Boolean {
+        return localStorage.getBoolean(PREF_ALWAYS_SHOW_FIRST_VIEW_ON_APP_START)
+    }
+
     override suspend fun setAutoPlayVideo(enabled: Boolean) {
         localStorage.putBoolean(PREF_AUTOPLAY_VIDEO, enabled)
     }
@@ -583,6 +592,13 @@ class IntegrationRepositoryImpl @Inject constructor(
         }?.toList()
     }
 
+    override suspend fun getConversation(speech: String): String? {
+        // TODO: Also send back conversation ID for dialogue
+        val response = webSocketRepository.getConversation(speech)
+
+        return response?.response?.speech?.plain?.get("speech")
+    }
+
     override suspend fun getEntities(): List<Entity<Any>>? {
         val response = webSocketRepository.getStates()
 
@@ -654,6 +670,7 @@ class IntegrationRepositoryImpl @Inject constructor(
     override suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>) {
         val canRegisterCategoryStateClass = isHomeAssistantVersionAtLeast(2021, 11, 0)
         val canRegisterEntityDisabledState = isHomeAssistantVersionAtLeast(2022, 6, 0)
+        val canRegisterDeviceClassDistance = isHomeAssistantVersionAtLeast(2022, 10, 0)
         val integrationRequest = IntegrationRequest(
             "register_sensor",
             SensorRequest(
@@ -663,7 +680,10 @@ class IntegrationRepositoryImpl @Inject constructor(
                 sensorRegistration.icon,
                 sensorRegistration.attributes,
                 sensorRegistration.name,
-                sensorRegistration.deviceClass,
+                when (sensorRegistration.deviceClass) {
+                    "distance" -> if (canRegisterDeviceClassDistance) sensorRegistration.deviceClass else null
+                    else -> sensorRegistration.deviceClass
+                },
                 sensorRegistration.unitOfMeasurement,
                 if (canRegisterCategoryStateClass) sensorRegistration.stateClass else null,
                 if (canRegisterCategoryStateClass) sensorRegistration.entityCategory else null,

@@ -16,7 +16,9 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.common.sensors.NetworkSensorManager
+import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.sensor.SensorSetting
@@ -26,7 +28,6 @@ import io.homeassistant.companion.android.database.settings.SensorUpdateFrequenc
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.sensors.LastAppSensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
-import io.homeassistant.companion.android.sensors.SensorWorker
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -75,10 +76,17 @@ class SensorDetailViewModel @Inject constructor(
     private val _permissionSnackbar = MutableSharedFlow<PermissionSnackbar>()
     var permissionSnackbar = _permissionSnackbar.asSharedFlow()
 
-    val sensorManager = SensorReceiver.MANAGERS
-        .find { it.getAvailableSensors(getApplication()).any { sensor -> sensor.id == sensorId } }
-    val basicSensor = sensorManager?.getAvailableSensors(getApplication())
-        ?.find { it.id == sensorId }
+    val sensorManager: SensorManager? = runBlocking {
+        SensorReceiver.MANAGERS
+            .find {
+                it.getAvailableSensors(getApplication()).any { sensor -> sensor.id == sensorId }
+            }
+    }
+
+    val basicSensor: SensorManager.BasicSensor? = runBlocking {
+        sensorManager?.getAvailableSensors(getApplication())
+            ?.find { it.id == sensorId }
+    }
 
     var sensor by mutableStateOf<SensorWithAttributes?>(null)
         private set
@@ -133,7 +141,11 @@ class SensorDetailViewModel @Inject constructor(
                 if ((fineLocation || coarseLocation) &&
                     !DisabledLocationHandler.isLocationEnabled(getApplication())
                 ) {
-                    val sensorName = basicSensor?.let { getApplication<Application>().getString(basicSensor.name) }.orEmpty()
+                    val sensorName = basicSensor?.let {
+                        getApplication<Application>().getString(
+                            basicSensor.name
+                        )
+                    }.orEmpty()
                     locationPermissionRequests.value = LocationPermissionsDialog(block = true, sensors = arrayOf(sensorName))
                     return
                 } else {
@@ -220,7 +232,7 @@ class SensorDetailViewModel @Inject constructor(
     }
 
     private fun refreshSensorData() {
-        SensorWorker.start(getApplication())
+        SensorReceiver.updateAllSensors(getApplication())
     }
 
     fun getSettingTranslatedTitle(key: String): String {
@@ -321,6 +333,13 @@ class SensorDetailViewModel @Inject constructor(
             }
             SensorSettingType.LIST_ZONES ->
                 entries ?: zones
+            SensorSettingType.LIST_BEACONS -> {
+                // show current beacons and also previously selected UUIDs
+                entries ?: (sensorManager as BluetoothSensorManager).getBeaconUUIDs()
+                    .plus(setting.value.split(", ").filter { it.isNotEmpty() })
+                    .sorted()
+                    .distinct()
+            }
             else ->
                 emptyList()
         }

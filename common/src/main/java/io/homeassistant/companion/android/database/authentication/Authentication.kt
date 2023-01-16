@@ -7,11 +7,11 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "Authentication_List")
 data class Authentication(
     @PrimaryKey
-    var host: String,
+    val host: String,
 
     @ColumnInfo(name = "Username")
     val username: String,
 
     @ColumnInfo(name = "Password")
-    var password: String
+    val password: String
 )
