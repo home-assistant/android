@@ -170,6 +170,11 @@ open class HomeAssistantApplication : Application() {
             )
         }
 
+        registerReceiver(
+            sensorReceiver,
+            IntentFilter("androidx.car.app.connection.action.CAR_CONNECTION_UPDATED")
+        )
+
         // Add a receiver for the shutdown event to attempt to send 1 final sensor update
         registerReceiver(
             sensorReceiver,

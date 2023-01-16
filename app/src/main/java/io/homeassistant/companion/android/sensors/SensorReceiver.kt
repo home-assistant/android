@@ -51,6 +51,7 @@ class SensorReceiver : SensorReceiverBase() {
         const val TAG = "SensorReceiver"
         val MANAGERS = listOf(
             ActivitySensorManager(),
+            AndroidAutoSensorManager(),
             AppSensorManager(),
             AudioSensorManager(),
             BatterySensorManager(),
