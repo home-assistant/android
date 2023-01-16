@@ -109,6 +109,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.chromium.net.CronetEngine
 import org.json.JSONObject
 import java.util.concurrent.Executors
@@ -1321,7 +1322,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private fun waitForConnection() {
         Handler(Looper.getMainLooper()).postDelayed(
             {
-                if (!isConnected) {
+                if (
+                    !isConnected &&
+                    !loadedUrl.toHttpUrl().pathSegments.contains("api") &&
+                    !loadedUrl.toHttpUrl().pathSegments.contains("local")
+                ) {
                     showError()
                 }
             },
