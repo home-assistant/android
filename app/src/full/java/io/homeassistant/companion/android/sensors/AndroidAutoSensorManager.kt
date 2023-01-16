@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.sensors
 
 import android.content.Context
+import android.os.Build
 import androidx.car.app.connection.CarConnection
 import androidx.lifecycle.Observer
 import io.homeassistant.companion.android.common.sensors.SensorManager
@@ -32,7 +33,10 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
         get() = commonR.string.sensor_name_android_auto
 
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        return listOf(androidAutoConnected)
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+            listOf(androidAutoConnected)
+        else
+            emptyList()
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
