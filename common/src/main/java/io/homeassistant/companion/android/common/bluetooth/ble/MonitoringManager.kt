@@ -63,6 +63,8 @@ class MonitoringManager {
     }
 
     fun stopMonitoring(context: Context, haMonitor: IBeaconMonitor) {
+        haMonitor.beacons = emptyList()
+        haMonitor.lastSeenBeacons = emptyList()
         if (isMonitoring()) {
             beaconManager.stopRangingBeacons(region)
             haMonitor.sensorManager.updateBeaconMonitoringSensor(context)
