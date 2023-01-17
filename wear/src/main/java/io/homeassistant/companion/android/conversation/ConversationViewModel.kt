@@ -28,6 +28,9 @@ class ConversationViewModel @Inject constructor(
     var supportsConversation by mutableStateOf(false)
         private set
 
+    var isHapticEnabled = mutableStateOf(false)
+        private set
+
     fun getConversation() {
         viewModelScope.launch {
             conversationResult = integrationUseCase.getConversation(speechResult) ?: ""
@@ -38,6 +41,7 @@ class ConversationViewModel @Inject constructor(
         supportsConversation =
             integrationUseCase.isHomeAssistantVersionAtLeast(2023, 1, 0) &&
             webSocketRepository.getConfig()?.components?.contains("conversation") == true
+        isHapticEnabled.value = integrationUseCase.getWearHapticFeedback()
     }
 
     fun updateSpeechResult(result: String) {

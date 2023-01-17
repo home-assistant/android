@@ -3,11 +3,13 @@ package io.homeassistant.companion.android.conversation
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.PowerManager
 import android.speech.RecognizerIntent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.core.content.getSystemService
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.conversation.views.ConversationResultView
@@ -54,6 +56,15 @@ class ConversationActivity : ComponentActivity() {
 
         setContent {
             ConversationResultView(conversationViewModel)
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        val pm = applicationContext.getSystemService<PowerManager>()
+        if (pm != null) {
+            if (!pm.isInteractive)
+                finish()
         }
     }
 }
