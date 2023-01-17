@@ -129,6 +129,6 @@ dependencies {
 
     implementation("androidx.health:health-services-client:1.0.0-beta02")
 
-    implementation(platform("com.google.firebase:firebase-bom:30.4.1"))
+    implementation(platform("com.google.firebase:firebase-bom:31.1.1"))
     implementation("com.google.firebase:firebase-messaging")
 }
