@@ -1324,8 +1324,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             {
                 if (
                     !isConnected &&
-                    !loadedUrl.toHttpUrl().pathSegments.contains("api") &&
-                    !loadedUrl.toHttpUrl().pathSegments.contains("local")
+                    !loadedUrl.toHttpUrl().pathSegments.first().contains("api") &&
+                    !loadedUrl.toHttpUrl().pathSegments.first().contains("local")
                 ) {
                     showError()
                 }
