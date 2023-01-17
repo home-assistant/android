@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -65,8 +66,14 @@ fun ConversationResultView(
                 if (conversationViewModel.conversationResult.isNotEmpty())
                     item {
                         Row {
-                            if (conversationViewModel.isHapticEnabled.value)
-                                LocalHapticFeedback.current.performHapticFeedback(HapticFeedbackType.LongPress)
+                            if (conversationViewModel.isHapticEnabled.value) {
+                                val haptic = LocalHapticFeedback.current
+                                LaunchedEffect(key1 = "haptic") {
+                                    haptic.performHapticFeedback(
+                                        HapticFeedbackType.LongPress
+                                    )
+                                }
+                            }
                             Spacer(Modifier.padding(start = 40.dp))
                             SpeechBubble(
                                 text = conversationViewModel.conversationResult,

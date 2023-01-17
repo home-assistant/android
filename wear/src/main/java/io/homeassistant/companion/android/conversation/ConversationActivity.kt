@@ -62,9 +62,8 @@ class ConversationActivity : ComponentActivity() {
     override fun onPause() {
         super.onPause()
         val pm = applicationContext.getSystemService<PowerManager>()
-        if (pm != null) {
-            if (!pm.isInteractive)
-                finish()
+        if (pm?.isInteractive == false && conversationViewModel.conversationResult.isNotEmpty()) {
+            finish()
         }
     }
 }
