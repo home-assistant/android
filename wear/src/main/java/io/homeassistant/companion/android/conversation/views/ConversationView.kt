@@ -1,10 +1,12 @@
 package io.homeassistant.companion.android.conversation.views
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -51,18 +53,15 @@ fun ConversationResultView(
                 item {
                     Column {
                         Spacer(Modifier.padding(24.dp))
-                        Row {
-                            Spacer(Modifier.padding(start = 40.dp))
-                            SpeechBubble(
-                                text = conversationViewModel.speechResult.ifEmpty {
-                                    if (conversationViewModel.supportsConversation)
-                                        stringResource(R.string.no_results)
-                                    else
-                                        stringResource(R.string.no_conversation_support)
-                                },
-                                false
-                            )
-                        }
+                        SpeechBubble(
+                            text = conversationViewModel.speechResult.ifEmpty {
+                                if (conversationViewModel.supportsConversation)
+                                    stringResource(R.string.no_results)
+                                else
+                                    stringResource(R.string.no_conversation_support)
+                            },
+                            false
+                        )
                         Spacer(Modifier.padding(8.dp))
                     }
                 }
@@ -88,31 +87,38 @@ fun ConversationResultView(
 
 @Composable
 fun SpeechBubble(text: String, isResponse: Boolean) {
-    Box(
-        modifier = Modifier
-            .background(
-                if (isResponse)
-                    colorResource(R.color.colorAccent)
-                else
-                    colorResource(R.color.colorSpeechText),
-                AbsoluteRoundedCornerShape(
-                    topLeftPercent = 40,
-                    topRightPercent = 40,
-                    bottomLeftPercent = if (isResponse) 0 else 40,
-                    bottomRightPercent = if (isResponse) 40 else 0
-                )
-            )
-            .padding(4.dp)
+    Row(
+        horizontalArrangement = if (isResponse) Arrangement.Start else Arrangement.End,
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Text(
-            text = text,
-            color = if (isResponse)
-                Color.White
-            else
-                Color.Black,
+        if (!isResponse)
+            Spacer(Modifier.padding(start = 24.dp))
+        Box(
             modifier = Modifier
+                .background(
+                    if (isResponse)
+                        colorResource(R.color.colorAccent)
+                    else
+                        colorResource(R.color.colorSpeechText),
+                    AbsoluteRoundedCornerShape(
+                        topLeftPercent = 40,
+                        topRightPercent = 40,
+                        bottomLeftPercent = if (isResponse) 0 else 40,
+                        bottomRightPercent = if (isResponse) 40 else 0
+                    )
+                )
                 .padding(4.dp)
-        )
+        ) {
+            Text(
+                text = text,
+                color = if (isResponse)
+                    Color.White
+                else
+                    Color.Black,
+                modifier = Modifier
+                    .padding(4.dp)
+            )
+        }
     }
 }
 
