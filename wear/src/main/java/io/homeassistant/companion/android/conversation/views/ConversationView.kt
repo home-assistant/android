@@ -51,35 +51,35 @@ fun ConversationResultView(
                 item {
                     Column {
                         Spacer(Modifier.padding(24.dp))
-                        SpeechBubble(
-                            text = conversationViewModel.speechResult.ifEmpty {
-                                if (conversationViewModel.supportsConversation)
-                                    stringResource(R.string.no_results)
-                                else
-                                    stringResource(R.string.no_conversation_support)
-                            },
-                            false
-                        )
+                        Row {
+                            Spacer(Modifier.padding(start = 40.dp))
+                            SpeechBubble(
+                                text = conversationViewModel.speechResult.ifEmpty {
+                                    if (conversationViewModel.supportsConversation)
+                                        stringResource(R.string.no_results)
+                                    else
+                                        stringResource(R.string.no_conversation_support)
+                                },
+                                false
+                            )
+                        }
                         Spacer(Modifier.padding(8.dp))
                     }
                 }
                 if (conversationViewModel.conversationResult.isNotEmpty())
                     item {
-                        Row {
-                            if (conversationViewModel.isHapticEnabled.value) {
-                                val haptic = LocalHapticFeedback.current
-                                LaunchedEffect(key1 = "haptic") {
-                                    haptic.performHapticFeedback(
-                                        HapticFeedbackType.LongPress
-                                    )
-                                }
+                        if (conversationViewModel.isHapticEnabled.value) {
+                            val haptic = LocalHapticFeedback.current
+                            LaunchedEffect(key1 = "haptic") {
+                                haptic.performHapticFeedback(
+                                    HapticFeedbackType.LongPress
+                                )
                             }
-                            Spacer(Modifier.padding(start = 40.dp))
-                            SpeechBubble(
-                                text = conversationViewModel.conversationResult,
-                                true
-                            )
                         }
+                        SpeechBubble(
+                            text = conversationViewModel.conversationResult,
+                            true
+                        )
                     }
             }
         }
@@ -98,8 +98,8 @@ fun SpeechBubble(text: String, isResponse: Boolean) {
                 AbsoluteRoundedCornerShape(
                     topLeftPercent = 40,
                     topRightPercent = 40,
-                    bottomLeftPercent = if (isResponse) 40 else 0,
-                    bottomRightPercent = if (isResponse) 0 else 40
+                    bottomLeftPercent = if (isResponse) 0 else 40,
+                    bottomRightPercent = if (isResponse) 40 else 0
                 )
             )
             .padding(4.dp)
