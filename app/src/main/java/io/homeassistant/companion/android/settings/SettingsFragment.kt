@@ -70,7 +70,12 @@ class SettingsFragment constructor(
 
         // This should enumerate over all servers in the future
         val serverPreference = Preference(requireContext())
-        serverPreference.title = presenter.getServerName()
+        presenter.getServerRegistrationName()?.let {
+            serverPreference.title = it
+            serverPreference.summary = presenter.getServerName()
+        } ?: run {
+            serverPreference.title = presenter.getServerName()
+        }
         serverPreference.order = 1
         try {
             serverPreference.icon = AppCompatResources.getDrawable(requireContext(), commonR.drawable.ic_stat_ic_notification_blue)

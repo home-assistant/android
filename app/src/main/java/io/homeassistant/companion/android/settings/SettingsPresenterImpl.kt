@@ -88,6 +88,10 @@ class SettingsPresenterImpl @Inject constructor(
         mainScope.cancel()
     }
 
+    override fun getServerRegistrationName(): String? = runBlocking {
+        integrationUseCase.getRegistration().deviceName
+    }
+
     override fun getServerName(): String = runBlocking {
         urlUseCase.getUrl()?.toString() ?: ""
     }
