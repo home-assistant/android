@@ -7,6 +7,7 @@ import io.homeassistant.companion.android.common.data.authentication.SessionStat
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
@@ -28,7 +29,8 @@ import io.homeassistant.companion.android.common.R as commonR
 class HomePresenterImpl @Inject constructor(
     private val authenticationUseCase: AuthenticationRepository,
     private val integrationUseCase: IntegrationRepository,
-    private val webSocketUseCase: WebSocketRepository
+    private val webSocketUseCase: WebSocketRepository,
+    private val wearPrefsRepository: WearPrefsRepository
 ) : HomePresenter {
 
     companion object {
@@ -221,50 +223,50 @@ class HomePresenterImpl @Inject constructor(
     }
 
     override suspend fun getTileShortcuts(): List<SimplifiedEntity> {
-        return integrationUseCase.getTileShortcuts().map { SimplifiedEntity(it) }
+        return wearPrefsRepository.getTileShortcuts().map { SimplifiedEntity(it) }
     }
 
     override suspend fun setTileShortcuts(entities: List<SimplifiedEntity>) {
-        integrationUseCase.setTileShortcuts(entities.map { it.entityString })
+        wearPrefsRepository.setTileShortcuts(entities.map { it.entityString })
     }
 
     override suspend fun getWearHapticFeedback(): Boolean {
-        return integrationUseCase.getWearHapticFeedback()
+        return wearPrefsRepository.getWearHapticFeedback()
     }
 
     override suspend fun setWearHapticFeedback(enabled: Boolean) {
-        integrationUseCase.setWearHapticFeedback(enabled)
+        wearPrefsRepository.setWearHapticFeedback(enabled)
     }
 
     override suspend fun getWearToastConfirmation(): Boolean {
-        return integrationUseCase.getWearToastConfirmation()
+        return wearPrefsRepository.getWearToastConfirmation()
     }
 
     override suspend fun setWearToastConfirmation(enabled: Boolean) {
-        integrationUseCase.setWearToastConfirmation(enabled)
+        wearPrefsRepository.setWearToastConfirmation(enabled)
     }
 
     override suspend fun getShowShortcutText(): Boolean {
-        return integrationUseCase.getShowShortcutText()
+        return wearPrefsRepository.getShowShortcutText()
     }
 
     override suspend fun setShowShortcutTextEnabled(enabled: Boolean) {
-        integrationUseCase.setShowShortcutTextEnabled(enabled)
+        wearPrefsRepository.setShowShortcutTextEnabled(enabled)
     }
 
     override suspend fun getTemplateTileContent(): String {
-        return integrationUseCase.getTemplateTileContent()
+        return wearPrefsRepository.getTemplateTileContent()
     }
 
     override suspend fun setTemplateTileContent(content: String) {
-        integrationUseCase.setTemplateTileContent(content)
+        wearPrefsRepository.setTemplateTileContent(content)
     }
 
     override suspend fun getTemplateTileRefreshInterval(): Int {
-        return integrationUseCase.getTemplateTileRefreshInterval()
+        return wearPrefsRepository.getTemplateTileRefreshInterval()
     }
 
     override suspend fun setTemplateTileRefreshInterval(interval: Int) {
-        integrationUseCase.setTemplateTileRefreshInterval(interval)
+        wearPrefsRepository.setTemplateTileRefreshInterval(interval)
     }
 }

@@ -5,7 +5,6 @@ import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
-import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationException
@@ -31,7 +30,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import org.json.JSONArray
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Named
@@ -61,23 +59,9 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_SECRET = "secret"
 
         private const val PREF_CHECK_SENSOR_REGISTRATION_NEXT = "sensor_reg_last"
-        private const val PREF_TILE_SHORTCUTS = "tile_shortcuts_list"
-        private const val PREF_SHOW_TILE_SHORTCUTS_TEXT = "show_tile_shortcuts_text"
-        private const val PREF_TILE_TEMPLATE = "tile_template"
-        private const val PREF_TILE_TEMPLATE_REFRESH_INTERVAL = "tile_template_refresh_interval"
-        private const val PREF_WEAR_HAPTIC_FEEDBACK = "wear_haptic_feedback"
-        private const val PREF_WEAR_TOAST_CONFIRMATION = "wear_toast_confirmation"
         private const val PREF_HA_VERSION = "ha_version"
-        private const val PREF_AUTOPLAY_VIDEO = "autoplay_video"
-        private const val PREF_ALWAYS_SHOW_FIRST_VIEW_ON_APP_START = "always_show_first_view_on_app_start"
-        private const val PREF_FULLSCREEN_ENABLED = "fullscreen_enabled"
-        private const val PREF_KEEP_SCREEN_ON_ENABLED = "keep_screen_on_enabled"
-        private const val PREF_PINCH_TO_ZOOM_ENABLED = "pinch_to_zoom_enabled"
-        private const val PREF_WEBVIEW_DEBUG_ENABLED = "webview_debug_enabled"
         private const val PREF_SESSION_TIMEOUT = "session_timeout"
         private const val PREF_SESSION_EXPIRE = "session_expire"
-        private const val PREF_CONTROLS_AUTH_REQUIRED = "controls_auth_required"
-        private const val PREF_CONTROLS_AUTH_ENTITIES = "controls_auth_entities"
         private const val PREF_SEC_WARNING_NEXT = "sec_warning_last"
         private const val TAG = "IntegrationRepository"
         private const val RATE_LIMIT_URL = BuildConfig.RATE_LIMIT_URL
@@ -338,54 +322,6 @@ class IntegrationRepositoryImpl @Inject constructor(
         else throw IntegrationException("Error calling integration request get_zones")
     }
 
-    override suspend fun setFullScreenEnabled(enabled: Boolean) {
-        localStorage.putBoolean(PREF_FULLSCREEN_ENABLED, enabled)
-    }
-
-    override suspend fun isFullScreenEnabled(): Boolean {
-        return localStorage.getBoolean(PREF_FULLSCREEN_ENABLED)
-    }
-
-    override suspend fun setKeepScreenOnEnabled(enabled: Boolean) {
-        localStorage.putBoolean(PREF_KEEP_SCREEN_ON_ENABLED, enabled)
-    }
-
-    override suspend fun isKeepScreenOnEnabled(): Boolean {
-        return localStorage.getBoolean(PREF_KEEP_SCREEN_ON_ENABLED)
-    }
-
-    override suspend fun setPinchToZoomEnabled(enabled: Boolean) {
-        localStorage.putBoolean(PREF_PINCH_TO_ZOOM_ENABLED, enabled)
-    }
-
-    override suspend fun isPinchToZoomEnabled(): Boolean {
-        return localStorage.getBoolean(PREF_PINCH_TO_ZOOM_ENABLED)
-    }
-
-    override suspend fun setWebViewDebugEnabled(enabled: Boolean) {
-        localStorage.putBoolean(PREF_WEBVIEW_DEBUG_ENABLED, enabled)
-    }
-
-    override suspend fun isWebViewDebugEnabled(): Boolean {
-        return localStorage.getBoolean(PREF_WEBVIEW_DEBUG_ENABLED)
-    }
-
-    override suspend fun isAutoPlayVideoEnabled(): Boolean {
-        return localStorage.getBoolean(PREF_AUTOPLAY_VIDEO)
-    }
-
-    override suspend fun setAlwaysShowFirstViewOnAppStart(enabled: Boolean) {
-        localStorage.putBoolean(PREF_ALWAYS_SHOW_FIRST_VIEW_ON_APP_START, enabled)
-    }
-
-    override suspend fun isAlwaysShowFirstViewOnAppStartEnabled(): Boolean {
-        return localStorage.getBoolean(PREF_ALWAYS_SHOW_FIRST_VIEW_ON_APP_START)
-    }
-
-    override suspend fun setAutoPlayVideo(enabled: Boolean) {
-        localStorage.putBoolean(PREF_AUTOPLAY_VIDEO, enabled)
-    }
-
     override suspend fun isAppLocked(): Boolean {
         val lockEnabled = authenticationRepository.isLockEnabled()
         val sessionExpireMillis = getSessionExpireMillis()
@@ -420,76 +356,6 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     private suspend fun getSessionExpireMillis(): Long {
         return localStorage.getLong(PREF_SESSION_EXPIRE) ?: 0
-    }
-
-    override suspend fun setControlsAuthRequired(setting: ControlsAuthRequiredSetting) {
-        localStorage.putString(PREF_CONTROLS_AUTH_REQUIRED, setting.name)
-    }
-
-    override suspend fun getControlsAuthRequired(): ControlsAuthRequiredSetting {
-        val current = localStorage.getString(PREF_CONTROLS_AUTH_REQUIRED)
-        return ControlsAuthRequiredSetting.values().firstOrNull {
-            it.name == current
-        } ?: ControlsAuthRequiredSetting.NONE
-    }
-
-    override suspend fun setControlsAuthEntities(entities: List<String>) {
-        localStorage.putStringSet(PREF_CONTROLS_AUTH_ENTITIES, entities.toSet())
-    }
-
-    override suspend fun getControlsAuthEntities(): List<String> {
-        return localStorage.getStringSet(PREF_CONTROLS_AUTH_ENTITIES)?.toList() ?: emptyList()
-    }
-
-    override suspend fun getTileShortcuts(): List<String> {
-        val jsonArray = JSONArray(localStorage.getString(PREF_TILE_SHORTCUTS) ?: "[]")
-        return List(jsonArray.length()) {
-            jsonArray.getString(it)
-        }
-    }
-
-    override suspend fun setTileShortcuts(entities: List<String>) {
-        localStorage.putString(PREF_TILE_SHORTCUTS, JSONArray(entities).toString())
-    }
-
-    override suspend fun getTemplateTileContent(): String {
-        return localStorage.getString(PREF_TILE_TEMPLATE) ?: ""
-    }
-
-    override suspend fun setTemplateTileContent(content: String) {
-        localStorage.putString(PREF_TILE_TEMPLATE, content)
-    }
-
-    override suspend fun getTemplateTileRefreshInterval(): Int {
-        return localStorage.getInt(PREF_TILE_TEMPLATE_REFRESH_INTERVAL) ?: 0
-    }
-
-    override suspend fun setTemplateTileRefreshInterval(interval: Int) {
-        localStorage.putInt(PREF_TILE_TEMPLATE_REFRESH_INTERVAL, interval)
-    }
-
-    override suspend fun setWearHapticFeedback(enabled: Boolean) {
-        localStorage.putBoolean(PREF_WEAR_HAPTIC_FEEDBACK, enabled)
-    }
-
-    override suspend fun getWearHapticFeedback(): Boolean {
-        return localStorage.getBoolean(PREF_WEAR_HAPTIC_FEEDBACK)
-    }
-
-    override suspend fun setWearToastConfirmation(enabled: Boolean) {
-        localStorage.putBoolean(PREF_WEAR_TOAST_CONFIRMATION, enabled)
-    }
-
-    override suspend fun getWearToastConfirmation(): Boolean {
-        return localStorage.getBoolean(PREF_WEAR_TOAST_CONFIRMATION)
-    }
-
-    override suspend fun setShowShortcutTextEnabled(enabled: Boolean) {
-        localStorage.putBoolean(PREF_SHOW_TILE_SHORTCUTS_TEXT, enabled)
-    }
-
-    override suspend fun getShowShortcutText(): Boolean {
-        return localStorage.getBoolean(PREF_SHOW_TILE_SHORTCUTS_TEXT)
     }
 
     override suspend fun getNotificationRateLimits(): RateLimitResponse {

@@ -14,6 +14,7 @@ import io.homeassistant.companion.android.common.data.integration.ControlsAuthRe
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.controls.HaControlsProviderService
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -22,6 +23,7 @@ import javax.inject.Inject
 @HiltViewModel
 class ManageControlsViewModel @Inject constructor(
     private val integrationUseCase: IntegrationRepository,
+    private val prefsRepository: PrefsRepository,
     application: Application
 ) : AndroidViewModel(application) {
 
@@ -37,8 +39,8 @@ class ManageControlsViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            authRequired = integrationUseCase.getControlsAuthRequired()
-            authRequiredList.addAll(integrationUseCase.getControlsAuthEntities())
+            authRequired = prefsRepository.getControlsAuthRequired()
+            authRequiredList.addAll(prefsRepository.getControlsAuthEntities())
 
             val entities = integrationUseCase.getEntities()
                 ?.filter { it.domain in HaControlsProviderService.getSupportedDomains() }
@@ -59,8 +61,8 @@ class ManageControlsViewModel @Inject constructor(
             authRequired = setting
             if (authRequired != ControlsAuthRequiredSetting.SELECTION) authRequiredList.clear()
 
-            integrationUseCase.setControlsAuthRequired(setting)
-            integrationUseCase.setControlsAuthEntities(authRequiredList.toList())
+            prefsRepository.setControlsAuthRequired(setting)
+            prefsRepository.setControlsAuthEntities(authRequiredList.toList())
         }
     }
 
@@ -89,8 +91,8 @@ class ManageControlsViewModel @Inject constructor(
             // Set values for update
             authRequired = newAuthRequired
             if (newAuthRequired != ControlsAuthRequiredSetting.SELECTION) authRequiredList.clear()
-            integrationUseCase.setControlsAuthRequired(newAuthRequired)
-            integrationUseCase.setControlsAuthEntities(authRequiredList.toList())
+            prefsRepository.setControlsAuthRequired(newAuthRequired)
+            prefsRepository.setControlsAuthEntities(authRequiredList.toList())
         }
     }
 }

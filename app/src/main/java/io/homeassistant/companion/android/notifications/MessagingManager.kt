@@ -52,6 +52,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.common.util.cancel
@@ -97,6 +98,7 @@ class MessagingManager @Inject constructor(
     private val integrationUseCase: IntegrationRepository,
     private val urlUseCase: UrlRepository,
     private val authenticationUseCase: AuthenticationRepository,
+    private val prefsRepository: PrefsRepository,
     private val notificationDao: NotificationDao,
     private val sensorDao: SensorDao,
     private val settingsDao: SettingsDao
@@ -942,7 +944,7 @@ class MessagingManager @Inject constructor(
             COMMAND_SCREEN_ON -> {
                 if (!command.isNullOrEmpty()) {
                     mainScope.launch {
-                        integrationUseCase.setKeepScreenOnEnabled(
+                        prefsRepository.setKeepScreenOnEnabled(
                             command == COMMAND_KEEP_SCREEN_ON
                         )
                     }

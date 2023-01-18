@@ -21,24 +21,6 @@ interface IntegrationRepository {
 
     suspend fun getZones(): Array<Entity<ZoneAttributes>>
 
-    suspend fun setFullScreenEnabled(enabled: Boolean)
-    suspend fun isFullScreenEnabled(): Boolean
-
-    suspend fun setKeepScreenOnEnabled(enabled: Boolean)
-    suspend fun isKeepScreenOnEnabled(): Boolean
-
-    suspend fun setPinchToZoomEnabled(enabled: Boolean)
-    suspend fun isPinchToZoomEnabled(): Boolean
-
-    suspend fun setAutoPlayVideo(enabled: Boolean)
-    suspend fun isAutoPlayVideoEnabled(): Boolean
-
-    suspend fun setAlwaysShowFirstViewOnAppStart(enabled: Boolean)
-    suspend fun isAlwaysShowFirstViewOnAppStartEnabled(): Boolean
-
-    suspend fun setWebViewDebugEnabled(enabled: Boolean)
-    suspend fun isWebViewDebugEnabled(): Boolean
-
     suspend fun isAppLocked(): Boolean
     suspend fun setAppActive(active: Boolean)
 
@@ -46,24 +28,6 @@ interface IntegrationRepository {
     suspend fun getSessionTimeOut(): Int
 
     suspend fun setSessionExpireMillis(value: Long)
-
-    suspend fun setControlsAuthRequired(setting: ControlsAuthRequiredSetting)
-    suspend fun getControlsAuthRequired(): ControlsAuthRequiredSetting
-    suspend fun setControlsAuthEntities(entities: List<String>)
-    suspend fun getControlsAuthEntities(): List<String>
-
-    suspend fun getTileShortcuts(): List<String>
-    suspend fun setTileShortcuts(entities: List<String>)
-    suspend fun getTemplateTileContent(): String
-    suspend fun setTemplateTileContent(content: String)
-    suspend fun getTemplateTileRefreshInterval(): Int
-    suspend fun setTemplateTileRefreshInterval(interval: Int)
-    suspend fun setWearHapticFeedback(enabled: Boolean)
-    suspend fun getWearHapticFeedback(): Boolean
-    suspend fun setWearToastConfirmation(enabled: Boolean)
-    suspend fun getWearToastConfirmation(): Boolean
-    suspend fun getShowShortcutText(): Boolean
-    suspend fun setShowShortcutTextEnabled(enabled: Boolean)
 
     suspend fun getHomeAssistantVersion(): String
     suspend fun isHomeAssistantVersionAtLeast(year: Int, month: Int, release: Int): Boolean

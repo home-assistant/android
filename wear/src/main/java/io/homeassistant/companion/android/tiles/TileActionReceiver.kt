@@ -10,6 +10,7 @@ import android.os.VibratorManager
 import androidx.core.content.getSystemService
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.home.HomePresenterImpl
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
@@ -20,12 +21,15 @@ class TileActionReceiver : BroadcastReceiver() {
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
 
+    @Inject
+    lateinit var wearPrefsRepository: WearPrefsRepository
+
     override fun onReceive(context: Context?, intent: Intent?) {
         val entityId: String? = intent?.getStringExtra("entity_id")
 
         if (entityId != null) {
             runBlocking {
-                if (integrationUseCase.getWearHapticFeedback()) {
+                if (wearPrefsRepository.getWearHapticFeedback()) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                         val vibratorManager = context?.getSystemService<VibratorManager>()
                         val vibrator = vibratorManager?.defaultVibrator

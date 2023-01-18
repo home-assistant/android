@@ -36,13 +36,13 @@ class SettingsPresenterImpl @Inject constructor(
 
     override fun getBoolean(key: String, defValue: Boolean): Boolean = runBlocking {
         return@runBlocking when (key) {
-            "fullscreen" -> integrationUseCase.isFullScreenEnabled()
-            "keep_screen_on" -> integrationUseCase.isKeepScreenOnEnabled()
-            "pinch_to_zoom" -> integrationUseCase.isPinchToZoomEnabled()
+            "fullscreen" -> prefsRepository.isFullScreenEnabled()
+            "keep_screen_on" -> prefsRepository.isKeepScreenOnEnabled()
+            "pinch_to_zoom" -> prefsRepository.isPinchToZoomEnabled()
             "crash_reporting" -> prefsRepository.isCrashReporting()
-            "autoplay_video" -> integrationUseCase.isAutoPlayVideoEnabled()
-            "always_show_first_view_on_app_start" -> integrationUseCase.isAlwaysShowFirstViewOnAppStartEnabled()
-            "webview_debug" -> integrationUseCase.isWebViewDebugEnabled()
+            "autoplay_video" -> prefsRepository.isAutoPlayVideoEnabled()
+            "always_show_first_view_on_app_start" -> prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled()
+            "webview_debug" -> prefsRepository.isWebViewDebugEnabled()
             else -> throw IllegalArgumentException("No boolean found by this key: $key")
         }
     }
@@ -50,13 +50,13 @@ class SettingsPresenterImpl @Inject constructor(
     override fun putBoolean(key: String, value: Boolean) {
         mainScope.launch {
             when (key) {
-                "fullscreen" -> integrationUseCase.setFullScreenEnabled(value)
-                "keep_screen_on" -> integrationUseCase.setKeepScreenOnEnabled(value)
-                "pinch_to_zoom" -> integrationUseCase.setPinchToZoomEnabled(value)
+                "fullscreen" -> prefsRepository.setFullScreenEnabled(value)
+                "keep_screen_on" -> prefsRepository.setKeepScreenOnEnabled(value)
+                "pinch_to_zoom" -> prefsRepository.setPinchToZoomEnabled(value)
                 "crash_reporting" -> prefsRepository.setCrashReporting(value)
-                "autoplay_video" -> integrationUseCase.setAutoPlayVideo(value)
-                "always_show_first_view_on_app_start" -> integrationUseCase.setAlwaysShowFirstViewOnAppStart(value)
-                "webview_debug" -> integrationUseCase.setWebViewDebugEnabled(value)
+                "autoplay_video" -> prefsRepository.setAutoPlayVideo(value)
+                "always_show_first_view_on_app_start" -> prefsRepository.setAlwaysShowFirstViewOnAppStart(value)
+                "webview_debug" -> prefsRepository.setWebViewDebugEnabled(value)
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }
