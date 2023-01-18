@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Bundle
 import android.text.InputType
 import android.util.Log
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.ContextCompat
@@ -34,12 +35,14 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
 
     companion object {
         private const val TAG = "ServerSettingsFragment"
-        private const val LOCATION_REQUEST_CODE = 0
-        private const val BACKGROUND_LOCATION_REQUEST_CODE = 1
     }
 
     @Inject
     lateinit var presenter: ServerSettingsPresenter
+
+    private val permissionsRequest = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+        onPermissionsResult(it)
+    }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         presenter.init(this)
@@ -127,10 +130,11 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
     }
 
     override fun enableInternalConnection(isEnabled: Boolean) {
-        val iconTint = if (isEnabled) resources.getColor(commonR.color.colorAccent) else Color.DKGRAY
+        val iconTint = if (isEnabled) ContextCompat.getColor(requireContext(), commonR.color.colorAccent) else Color.DKGRAY
+        val doEnable = isEnabled && hasLocationPermission()
 
         findPreference<EditTextPreference>("connection_internal")?.let {
-            it.isEnabled = isEnabled
+            it.isEnabled = doEnable
             try {
                 val unwrappedDrawable =
                     AppCompatResources.getDrawable(requireContext(), R.drawable.ic_computer)
@@ -142,7 +146,7 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         }
 
         findPreference<SwitchPreference>("app_lock_home_bypass")?.let {
-            it.isEnabled = isEnabled
+            it.isEnabled = doEnable
             try {
                 val unwrappedDrawable =
                     AppCompatResources.getDrawable(requireContext(), R.drawable.ic_wifi)
@@ -178,21 +182,12 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         }
 
         if (DisabledLocationHandler.isLocationEnabled(requireContext())) {
-            var permissionsToRequest: Array<String>? = null
-            if (permissionsToCheck.isNotEmpty() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                // For Android 11 we MUST NOT request Background Location permission with fine or coarse permissions
-                // as for Android 11 the background location request needs to be done separately
-                // See here: https://developer.android.com/about/versions/11/privacy/location#request-background-location-separately
-                permissionsToRequest = permissionsToCheck.toList().minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION).toTypedArray()
-            }
-
-            val hasPermission = checkPermission(permissionsToCheck)
-            if (permissionsToCheck.isNotEmpty() && !hasPermission) {
+            if (!checkPermission(permissionsToCheck)) {
                 LocationPermissionInfoHandler.showLocationPermInfoDialogIfNeeded(
                     requireContext(), permissionsToCheck,
                     continueYesCallback = {
-                        checkAndRequestPermissions(permissionsToCheck, LOCATION_REQUEST_CODE, permissionsToRequest, true)
-                        // showSsidSettings() will be called in onRequestPermissionsResult if permission is granted
+                        requestLocationPermission()
+                        // showSsidSettings() will be called if permission is granted
                     }
                 )
             } else showSsidSettings()
@@ -242,25 +237,30 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         return (result == Authenticator.SUCCESS || result == Authenticator.CANCELED)
     }
 
-    private fun checkAndRequestPermissions(permissions: Array<String>, requestCode: Int, requestPermissions: Array<String>? = null, forceRequest: Boolean = false): Boolean {
-        val permissionsNeeded = mutableListOf<String>()
-        for (permission in permissions) {
-            if (forceRequest || ContextCompat.checkSelfPermission(requireContext(), permission) === PackageManager.PERMISSION_DENIED) {
-                if (requestPermissions.isNullOrEmpty() || requestPermissions.contains(permission)) {
-                    permissionsNeeded.add(permission)
-                }
-            }
+    private fun hasLocationPermission(): Boolean {
+        val permissionsToCheck: Array<String> = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+        } else {
+            arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION)
         }
-        return if (permissionsNeeded.isNotEmpty()) {
-            requestPermissions(permissionsNeeded.toTypedArray(), requestCode)
-            false
-        } else true
+        return checkPermission(permissionsToCheck)
+    }
+
+    private fun requestLocationPermission() {
+        val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION) // Background location will be requested later
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+        } else {
+            arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION)
+        }
+        permissionsRequest.launch(permissions)
     }
 
     private fun checkPermission(permissions: Array<String>?): Boolean {
         if (!permissions.isNullOrEmpty()) {
             for (permission in permissions) {
-                if (ContextCompat.checkSelfPermission(requireContext(), permission) === PackageManager.PERMISSION_DENIED) {
+                if (ContextCompat.checkSelfPermission(requireContext(), permission) == PackageManager.PERMISSION_DENIED) {
                     return false
                 }
             }
@@ -268,33 +268,21 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         return true
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
-        val isGreaterR = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
-
-        if (requestCode == LOCATION_REQUEST_CODE && grantResults.isNotEmpty()) {
-            if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
-                if (isGreaterR) {
-                    // For Android 11 we MUST NOT request Background Location permission with fine or coarse permissions
-                    // as for Android 11 the background location request needs to be done separately
-                    // See here: https://developer.android.com/about/versions/11/privacy/location#request-background-location-separately
-                    // The separate request of background location is done here
-                    requestPermissions(
-                        arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
-                        BACKGROUND_LOCATION_REQUEST_CODE
-                    )
-                }
-            }
+    private fun onPermissionsResult(results: Map<String, Boolean>) {
+        if (results.keys.contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
+            results[Manifest.permission.ACCESS_FINE_LOCATION] == true &&
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+        ) {
+            // For Android 11+ we MUST NOT request Background Location permission with fine or coarse
+            // permissions as for Android 11 the background location request needs to be done separately
+            // See here: https://developer.android.com/about/versions/11/privacy/location#request-background-location-separately
+            // The separate request of background location is done here
+            permissionsRequest.launch(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION))
+            return
         }
-        if ((requestCode == LOCATION_REQUEST_CODE && !isGreaterR || requestCode == BACKGROUND_LOCATION_REQUEST_CODE && isGreaterR) && grantResults.isNotEmpty()) {
-            if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
-                showSsidSettings()
-            }
+
+        if (results.entries.all { it.value }) {
+            showSsidSettings()
         }
     }
 
