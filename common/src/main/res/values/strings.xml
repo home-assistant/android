@@ -817,7 +817,6 @@
     <string name="view_password">View Password</string>
     <string name="wait">Wait</string>
     <string name="wear_favorite_entities">Favorite Entities</string>
-    <string name="wear_os_category">Wear OS</string>
     <string name="wear_os_settings_summary">Manage Wear OS App</string>
     <string name="wear_os_settings_title">Wear OS Settings</string>
     <string name="wear_set_favorites">Select your favorite entities to appear at the top of the Wear home screen. You can also drag and drop to change the order in which they appear.</string>
