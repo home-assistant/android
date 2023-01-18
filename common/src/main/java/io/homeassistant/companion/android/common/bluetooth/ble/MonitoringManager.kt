@@ -48,12 +48,15 @@ class MonitoringManager {
             beaconManager.backgroundBetweenScanPeriod = scanInterval
 
             region = buildRegion()
+            var observerCount = 0
             scope.launch(Dispatchers.Main) {
                 beaconManager.getRegionViewModel(region).rangedBeacons.observeForever { beacons ->
-                    haMonitor.setBeacons(
-                        context,
-                        beacons
-                    )
+                    if (observerCount > 0)
+                        haMonitor.setBeacons(
+                            context,
+                            beacons
+                        )
+                    observerCount++
                 }
             }
         }
