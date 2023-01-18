@@ -89,10 +89,13 @@ fun ConversationResultView(
 fun SpeechBubble(text: String, isResponse: Boolean) {
     Row(
         horizontalArrangement = if (isResponse) Arrangement.Start else Arrangement.End,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                start = if (isResponse) 0.dp else 24.dp,
+                end = if (isResponse) 24.dp else 0.dp
+            )
     ) {
-        if (!isResponse)
-            Spacer(Modifier.padding(start = 24.dp))
         Box(
             modifier = Modifier
                 .background(
