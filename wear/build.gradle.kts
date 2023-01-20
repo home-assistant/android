@@ -5,6 +5,7 @@ plugins {
     id("com.github.triplet.play")
     kotlin("kapt")
     id("dagger.hilt.android.plugin")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -127,4 +128,7 @@ dependencies {
     implementation("androidx.wear.watchface:watchface-complications-data-source-ktx:1.1.1")
 
     implementation("androidx.health:health-services-client:1.0.0-beta02")
+
+    implementation(platform("com.google.firebase:firebase-bom:31.1.1"))
+    implementation("com.google.firebase:firebase-messaging")
 }

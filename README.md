@@ -17,7 +17,7 @@ If you are looking for documentation around the companion applications check out
  - `io.homeassistant.companion.android.minimal`
  - `io.homeassistant.companion.android.minimal.debug`
 
-5. Now download the `google-services.json` file and put it in the _home-assistant-Android/app_ folder. This file contains the configuration of the whole project (all four applications). ([You can also use the mock services file instead of generating your own](/.github/mock-google-services.json). The file should contain client IDs for all packages listed above for debugging to work properly.  **If you do not generate your own file FCM push notification will never work, only websocket notifications will**)
+5. Now download the `google-services.json` file and put it in the _home-assistant-Android/app_ and _home-assistant-Android/wear_ folder. This file contains the configuration of the whole project (all four applications). ([You can also use the mock services file instead of generating your own](/.github/mock-google-services.json). The file should contain client IDs for all packages listed above for debugging to work properly.  **If you do not generate your own file FCM push notification will never work, only websocket notifications will**)
 6. Start Android Studio, open your source code folder and check if the Gradle build will be successful using Build/Make Module "App". You might have to install the right Android SDK via Tools/SDK Manager first.
 7. Run `gradlew assembleDebug` to build all debug versions, this might take a while.
 8. If the build is successful, you can run the app by doing the following: click **Run** -> **Run 'app'**.

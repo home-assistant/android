@@ -24,6 +24,7 @@ import io.homeassistant.companion.android.database.wear.getAll
 import io.homeassistant.companion.android.database.wear.replaceAll
 import io.homeassistant.companion.android.home.HomeActivity
 import io.homeassistant.companion.android.home.HomePresenterImpl
+import io.homeassistant.companion.android.onboarding.getMessagingToken
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -124,7 +125,9 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
             integrationUseCase.registerDevice(
                 DeviceRegistration(
                     "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-                    deviceName
+                    deviceName,
+                    getMessagingToken(),
+                    false
                 )
             )
 

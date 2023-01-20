@@ -143,9 +143,6 @@ dependencies {
     implementation("org.altbeacon:android-beacon-library:2.19.5")
     implementation("com.maltaisn:icondialog:3.3.0")
     implementation("com.maltaisn:iconpack-community-material:5.3.45")
-    implementation("com.vdurmont:emoji-java:5.1.1") {
-        exclude(group = "org.json", module = "json")
-    }
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.20")
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.7.20")
@@ -171,7 +168,7 @@ dependencies {
 
     "fullImplementation"("com.google.android.gms:play-services-location:21.0.1")
     "fullImplementation"("com.google.android.gms:play-services-home:16.0.0")
-    "fullImplementation"(platform("com.google.firebase:firebase-bom:30.4.1"))
+    "fullImplementation"(platform("com.google.firebase:firebase-bom:31.1.1"))
     "fullImplementation"("com.google.firebase:firebase-messaging")
     "fullImplementation"("io.sentry:sentry-android:6.11.0")
     "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
