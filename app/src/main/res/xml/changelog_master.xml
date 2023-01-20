@@ -10,7 +10,7 @@
         <change>Bug fixes, design tweaks and dependency updates</change>
     </release>
     <release version="2023.1 - Wear" versioncode="1">
-        <change>Initial support for notifications sent directly to watch service call. Current support is limited to message and title.</change>
+        <change>Initial support for notifications sent only to the watch. Current support is limited to message and title.</change>
         <change>Add Bluetooth Sensors. Important to note that sensor settings are not available on Wear OS, neither are notifications. This means the BLE transmitter and Beacon Monitor can only be enabled and disabled.</change>
         <change>Bug fixes, design tweaks and dependency updates</change>
     </release>
