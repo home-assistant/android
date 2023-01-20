@@ -32,4 +32,5 @@
     <color name="colorDeviceControlsDefaultOn">#8AB4F8</color>
     <color name="colorDeviceControlsThermostatHeat">#FF8B66</color>
     <color name="colorDeviceControlsCamera">#F1F3F4</color>
+    <color name="colorSpeechText">#B3E5FC</color>
 </resources>
