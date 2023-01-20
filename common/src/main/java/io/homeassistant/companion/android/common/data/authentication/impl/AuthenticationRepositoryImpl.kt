@@ -89,13 +89,12 @@ class AuthenticationRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun buildAuthenticationUrl(baseUrl: String, callbackUrl: String): String {
+    override suspend fun buildAuthenticationUrl(baseUrl: String): String {
         return baseUrl.toHttpUrlOrNull()!!
             .newBuilder()
             .addPathSegments("auth/authorize")
             .addEncodedQueryParameter("response_type", "code")
             .addEncodedQueryParameter("client_id", AuthenticationService.CLIENT_ID)
-            .addEncodedQueryParameter("redirect_uri", callbackUrl)
             .build()
             .toString()
     }

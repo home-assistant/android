@@ -13,7 +13,6 @@ import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.DataMapItem
 import dagger.hilt.android.qualifiers.ActivityContext
-import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import kotlinx.coroutines.CoroutineScope
@@ -47,17 +46,19 @@ class OnboardingPresenterImpl @Inject constructor(
         // ManualSetupPresenterImpl. Also a good starting point for manual URL if it is possible to
         // enter this on the device without the app in the future.
         mainScope.launch {
-            val request = OAuthRequest.Builder(context)
-                .setAuthProviderUrl(
-                    Uri.parse(
-                        authenticationUseCase.buildAuthenticationUrl(
-                            url,
-                            OAuthRequest.WEAR_REDIRECT_URL_PREFIX + BuildConfig.APPLICATION_ID
-                        )
+            val request: OAuthRequest
+            try {
+                request = OAuthRequest.Builder(context)
+                    .setAuthProviderUrl(
+                        Uri.parse(authenticationUseCase.buildAuthenticationUrl(url))
                     )
-                )
-                .setCodeChallenge(CodeChallenge(codeVerifier))
-                .build()
+                    .setCodeChallenge(CodeChallenge(codeVerifier))
+                    .build()
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to build OAuthRequest", e)
+                view.showError(commonR.string.failed_unsupported)
+                return@launch
+            }
 
             authClient = RemoteAuthClient.create(context)
             authClient?.let {
