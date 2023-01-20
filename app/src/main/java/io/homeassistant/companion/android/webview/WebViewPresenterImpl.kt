@@ -9,6 +9,7 @@ import dagger.hilt.android.qualifiers.ActivityContext
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.matter.MatterFrontendCommissioningStatus
@@ -38,6 +39,7 @@ class WebViewPresenterImpl @Inject constructor(
     private val urlUseCase: UrlRepository,
     private val authenticationUseCase: AuthenticationRepository,
     private val integrationUseCase: IntegrationRepository,
+    private val prefsRepository: PrefsRepository,
     private val matterUseCase: MatterManager
 ) : WebViewPresenter {
 
@@ -144,28 +146,20 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
-    override fun isFullScreen(): Boolean {
-        return runBlocking {
-            integrationUseCase.isFullScreenEnabled()
-        }
+    override fun isFullScreen(): Boolean = runBlocking {
+        prefsRepository.isFullScreenEnabled()
     }
 
-    override fun isKeepScreenOnEnabled(): Boolean {
-        return runBlocking {
-            integrationUseCase.isKeepScreenOnEnabled()
-        }
+    override fun isKeepScreenOnEnabled(): Boolean = runBlocking {
+        prefsRepository.isKeepScreenOnEnabled()
     }
 
-    override fun isPinchToZoomEnabled(): Boolean {
-        return runBlocking {
-            integrationUseCase.isPinchToZoomEnabled()
-        }
+    override fun isPinchToZoomEnabled(): Boolean = runBlocking {
+        prefsRepository.isPinchToZoomEnabled()
     }
 
-    override fun isWebViewDebugEnabled(): Boolean {
-        return runBlocking {
-            integrationUseCase.isWebViewDebugEnabled()
-        }
+    override fun isWebViewDebugEnabled(): Boolean = runBlocking {
+        prefsRepository.isWebViewDebugEnabled()
     }
 
     override fun isAppLocked(): Boolean {
@@ -186,16 +180,12 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
-    override fun isAutoPlayVideoEnabled(): Boolean {
-        return runBlocking {
-            integrationUseCase.isAutoPlayVideoEnabled()
-        }
+    override fun isAutoPlayVideoEnabled(): Boolean = runBlocking {
+        prefsRepository.isAutoPlayVideoEnabled()
     }
 
-    override fun isAlwaysShowFirstViewOnAppStartEnabled(): Boolean {
-        return runBlocking {
-            integrationUseCase.isAlwaysShowFirstViewOnAppStartEnabled()
-        }
+    override fun isAlwaysShowFirstViewOnAppStartEnabled(): Boolean = runBlocking {
+        prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled()
     }
 
     override fun sessionTimeOut(): Int {

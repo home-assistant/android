@@ -645,6 +645,8 @@
     <string name="sensor">Sensor</string>
     <string name="sensors_with_settings">The following sensors offer custom settings: %1$s</string>
     <string name="sensors">Sensors</string>
+    <string name="server_settings">Server Settings</string>
+    <string name="servers_devices_category">Servers &amp; Devices</string>
     <string name="service_call_failure">Unable to send service call</string>
     <string name="session_timeout_title">Session TimeOut (in seconds)</string>
     <string name="set_favorite">Set Favorites</string>
@@ -818,7 +820,6 @@
     <string name="view_password">View Password</string>
     <string name="wait">Wait</string>
     <string name="wear_favorite_entities">Favorite Entities</string>
-    <string name="wear_os_category">Wear OS</string>
     <string name="wear_os_settings_summary">Manage Wear OS App</string>
     <string name="wear_os_settings_title">Wear OS Settings</string>
     <string name="wear_set_favorites">Select your favorite entities to appear at the top of the Wear home screen. You can also drag and drop to change the order in which they appear.</string>

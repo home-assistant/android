@@ -24,6 +24,8 @@ import io.homeassistant.companion.android.common.data.keychain.KeyChainRepositor
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepositoryImpl
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepositoryImpl
+import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
+import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepositoryImpl
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepositoryImpl
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
@@ -99,6 +101,17 @@ abstract class DataModule {
             )
 
         @Provides
+        @Named("wear")
+        @Singleton
+        fun provideWearPrefsLocalStorage(@ApplicationContext appContext: Context): LocalStorage =
+            LocalStorageImpl(
+                appContext.getSharedPreferences(
+                    "wear_0",
+                    Context.MODE_PRIVATE
+                )
+            )
+
+        @Provides
         @Named("manufacturer")
         @Singleton
         fun provideDeviceManufacturer(): String = Build.MANUFACTURER
@@ -142,6 +155,10 @@ abstract class DataModule {
     @Binds
     @Singleton
     abstract fun bindPrefsRepository(prefsRepository: PrefsRepositoryImpl): PrefsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindWearPrefsRepository(wearPrefsRepository: WearPrefsRepositoryImpl): WearPrefsRepository
 
     @Binds
     @Singleton

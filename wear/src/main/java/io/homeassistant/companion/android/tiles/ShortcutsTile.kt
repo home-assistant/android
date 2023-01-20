@@ -35,7 +35,7 @@ import com.mikepenz.iconics.utils.colorInt
 import com.mikepenz.iconics.utils.sizeDp
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.util.getIcon
 import kotlinx.coroutines.CoroutineScope
@@ -62,7 +62,7 @@ class ShortcutsTile : TileService() {
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
+    lateinit var wearPrefsRepository: WearPrefsRepository
 
     override fun onTileRequest(requestParams: TileRequest): ListenableFuture<Tile> =
         serviceScope.future {
@@ -77,7 +77,7 @@ class ShortcutsTile : TileService() {
             }
 
             val entities = getEntities()
-            val showLabels = integrationUseCase.getShowShortcutText()
+            val showLabels = wearPrefsRepository.getShowShortcutText()
 
             Tile.Builder()
                 .setResourcesVersion(entities.toString())
@@ -94,7 +94,7 @@ class ShortcutsTile : TileService() {
 
     override fun onResourcesRequest(requestParams: ResourcesRequest): ListenableFuture<Resources> =
         serviceScope.future {
-            val showLabels = integrationUseCase.getShowShortcutText()
+            val showLabels = wearPrefsRepository.getShowShortcutText()
             val iconSize = if (showLabels) ICON_SIZE_SMALL else ICON_SIZE_FULL
             val density = requestParams.deviceParameters!!.screenDensity
             val iconSizePx = (iconSize * density).roundToInt()
@@ -146,7 +146,7 @@ class ShortcutsTile : TileService() {
     }
 
     private suspend fun getEntities(): List<SimplifiedEntity> {
-        return integrationUseCase.getTileShortcuts().map { SimplifiedEntity(it) }
+        return wearPrefsRepository.getTileShortcuts().map { SimplifiedEntity(it) }
     }
 
     fun layout(entities: List<SimplifiedEntity>, showLabels: Boolean): LayoutElement = Column.Builder().apply {
