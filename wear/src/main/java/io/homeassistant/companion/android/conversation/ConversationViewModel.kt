@@ -8,6 +8,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -16,7 +17,8 @@ import javax.inject.Inject
 class ConversationViewModel @Inject constructor(
     application: Application,
     private val integrationUseCase: IntegrationRepository,
-    private val webSocketRepository: WebSocketRepository
+    private val webSocketRepository: WebSocketRepository,
+    private val wearPrefsRepository: WearPrefsRepository
 ) : AndroidViewModel(application) {
 
     var speechResult by mutableStateOf("")
@@ -41,7 +43,7 @@ class ConversationViewModel @Inject constructor(
         supportsConversation =
             integrationUseCase.isHomeAssistantVersionAtLeast(2023, 1, 0) &&
             webSocketRepository.getConfig()?.components?.contains("conversation") == true
-        isHapticEnabled.value = integrationUseCase.getWearHapticFeedback()
+        isHapticEnabled.value = wearPrefsRepository.getWearHapticFeedback()
     }
 
     fun updateSpeechResult(result: String) {
