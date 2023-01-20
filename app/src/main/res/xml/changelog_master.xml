@@ -5,9 +5,13 @@
         <change>Initial Android Auto support</change>
         <change>Quick Setting tiles: allow up to 40 tiles, add new option to only execute action if device is unlocked</change>
         <change>Add UUID filter to Beacon Monitor sensor</change>
-        <change>Bug fixes and dependency updates</change>
+        <change>Add Android Auto sensor</change>
+        <change>Move server specific settings to its own section</change>
+        <change>Bug fixes, design tweaks and dependency updates</change>
     </release>
     <release version="2023.1 - Wear" versioncode="1">
+        <change>Initial support for notifications sent directly to watch service call. Current support is limited to message and title.</change>
         <change>Add Bluetooth Sensors. Important to note that sensor settings are not available on Wear OS, neither are notifications. This means the BLE transmitter and Beacon Monitor can only be enabled and disabled.</change>
+        <change>Bug fixes, design tweaks and dependency updates</change>
     </release>
 </changelog>
