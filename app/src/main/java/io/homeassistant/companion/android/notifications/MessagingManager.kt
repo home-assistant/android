@@ -390,10 +390,6 @@ class MessagingManager @Inject constructor(
                     DeviceCommandData.COMMAND_BLE_TRANSMITTER -> {
                         if (!commandBleTransmitter(context, jsonData, sensorDao, mainScope)) {
                             mainScope.launch {
-                                Log.d(
-                                    TAG,
-                                    "Invalid ble transmitter command received, posting notification to device"
-                                )
                                 sendNotification(jsonData)
                             }
                         }
@@ -401,10 +397,6 @@ class MessagingManager @Inject constructor(
                     DeviceCommandData.COMMAND_BEACON_MONITOR -> {
                         if (!commandBeaconMonitor(context, jsonData)) {
                             mainScope.launch {
-                                Log.d(
-                                    TAG,
-                                    "Invalid beacon monitor command received, posting notification to device"
-                                )
                                 sendNotification(jsonData)
                             }
                         }

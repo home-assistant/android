@@ -77,8 +77,13 @@ fun commandBeaconMonitor(
     context: Context,
     data: Map<String, String>
 ): Boolean {
-    if (!checkCommandFormat(data))
+    if (!checkCommandFormat(data)) {
+        Log.d(
+            TAG,
+            "Invalid beacon monitor command received, posting notification to device"
+        )
         return false
+    }
     val command = data[NotificationData.COMMAND]
     Log.d(TAG, "Processing command: ${data[NotificationData.MESSAGE]}")
     if (command == DeviceCommandData.TURN_OFF)
@@ -94,8 +99,13 @@ fun commandBleTransmitter(
     sensorDao: SensorDao,
     mainScope: CoroutineScope
 ): Boolean {
-    if (!checkCommandFormat(data))
+    if (!checkCommandFormat(data)) {
+        Log.d(
+            TAG,
+            "Invalid ble transmitter command received, posting notification to device"
+        )
         return false
+    }
     val command = data[NotificationData.COMMAND]
     Log.d(TAG, "Processing command: ${data[NotificationData.MESSAGE]}")
     if (command == DeviceCommandData.TURN_OFF)

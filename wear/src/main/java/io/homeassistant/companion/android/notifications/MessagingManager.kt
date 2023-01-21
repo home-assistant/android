@@ -49,19 +49,11 @@ class MessagingManager @Inject constructor(
         when (notificationData[NotificationData.MESSAGE]) {
             DeviceCommandData.COMMAND_BEACON_MONITOR -> {
                 if (!commandBeaconMonitor(context, notificationData)) {
-                    Log.d(
-                        TAG,
-                        "Invalid beacon monitor command received, posting notification to device"
-                    )
                     sendNotification(notificationData, now)
                 }
             }
             DeviceCommandData.COMMAND_BLE_TRANSMITTER -> {
                 if (!commandBleTransmitter(context, notificationData, sensorDao, mainScope)) {
-                    Log.d(
-                        TAG,
-                        "Invalid ble transmitter command received, posting notification to device"
-                    )
                     sendNotification(notificationData)
                 }
             }
