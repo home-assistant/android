@@ -415,14 +415,14 @@ suspend fun <T> Entity<T>.onPressed(
             if (state == "open") "close_cover" else "open_cover"
         }
         "button",
-        "input_button",
-        "scene",
-        "script" -> "press"
+        "input_button" -> "press"
         "fan",
         "input_boolean",
+        "script",
         "switch" -> {
             if (state == "on") "turn_off" else "turn_on"
         }
+        "scene" -> "turn_on"
         else -> "toggle"
     }
 
