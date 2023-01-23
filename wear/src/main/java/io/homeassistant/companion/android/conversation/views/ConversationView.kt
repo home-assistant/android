@@ -55,10 +55,11 @@ fun ConversationResultView(
                         Spacer(Modifier.padding(24.dp))
                         SpeechBubble(
                             text = conversationViewModel.speechResult.ifEmpty {
-                                if (conversationViewModel.supportsConversation)
-                                    stringResource(R.string.no_results)
-                                else
-                                    stringResource(R.string.no_conversation_support)
+                                when {
+                                    (conversationViewModel.supportsConversation) -> stringResource(R.string.no_results)
+                                    (!conversationViewModel.isRegistered) -> stringResource(R.string.not_registered)
+                                    else -> stringResource(R.string.no_conversation_support)
+                                }
                             },
                             false
                         )

@@ -1013,4 +1013,6 @@
     <string name="no_conversation_support">You must be at least on Home Assistant 2023.1 and have the conversation integration enabled</string>
     <string name="conversation">Conversation</string>
     <string name="assist">Assist</string>
+    <string name="not_registered">Please launch the Home Assistant app and login before you can use the assist feature.</string>
+    <string name="ha_assist">HA: Assist</string>
 </resources>
