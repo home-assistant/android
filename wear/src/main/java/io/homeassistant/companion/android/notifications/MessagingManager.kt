@@ -14,8 +14,11 @@ import io.homeassistant.companion.android.common.notifications.getGroupNotificat
 import io.homeassistant.companion.android.common.notifications.handleChannel
 import io.homeassistant.companion.android.common.notifications.handleSmallIcon
 import io.homeassistant.companion.android.common.notifications.handleText
+import io.homeassistant.companion.android.common.util.TextToSpeechData
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.getActiveNotification
+import io.homeassistant.companion.android.common.util.speakText
+import io.homeassistant.companion.android.common.util.stopTTS
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.database.sensor.SensorDao
@@ -57,8 +60,9 @@ class MessagingManager @Inject constructor(
                     sendNotification(notificationData)
                 }
             }
-            else ->
-                sendNotification(notificationData, now)
+            TextToSpeechData.TTS -> speakText(context, notificationData)
+            TextToSpeechData.COMMAND_STOP_TTS -> stopTTS()
+            else -> sendNotification(notificationData, now)
         }
     }
 

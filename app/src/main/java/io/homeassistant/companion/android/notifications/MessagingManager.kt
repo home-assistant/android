@@ -13,7 +13,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.MediaMetadataRetriever
 import android.media.RingtoneManager
@@ -26,8 +25,6 @@ import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
 import android.provider.Settings
-import android.speech.tts.TextToSpeech
-import android.speech.tts.UtteranceProgressListener
 import android.util.Log
 import android.view.KeyEvent
 import android.widget.RemoteViews
@@ -61,9 +58,12 @@ import io.homeassistant.companion.android.common.notifications.handleText
 import io.homeassistant.companion.android.common.notifications.parseColor
 import io.homeassistant.companion.android.common.notifications.parseVibrationPattern
 import io.homeassistant.companion.android.common.notifications.prepareText
+import io.homeassistant.companion.android.common.util.TextToSpeechData
 import io.homeassistant.companion.android.common.util.cancel
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.getActiveNotification
+import io.homeassistant.companion.android.common.util.speakText
+import io.homeassistant.companion.android.common.util.stopTTS
 import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.database.sensor.SensorDao
@@ -131,7 +131,6 @@ class MessagingManager @Inject constructor(
         const val REPLY = "REPLY"
         const val HIGH_ACCURACY_UPDATE_INTERVAL = "high_accuracy_update_interval"
         const val PACKAGE_NAME = "package_name"
-        const val TTS_TEXT = "tts_text"
         const val CONFIRMATION = "confirmation"
 
         // special intent constants
@@ -145,7 +144,6 @@ class MessagingManager @Inject constructor(
         const val REQUEST_LOCATION_UPDATE = "request_location_update"
         const val CLEAR_NOTIFICATION = "clear_notification"
         const val REMOVE_CHANNEL = "remove_channel"
-        const val TTS = "TTS"
         const val COMMAND_DND = "command_dnd"
         const val COMMAND_RINGER_MODE = "command_ringer_mode"
         const val COMMAND_BROADCAST_INTENT = "command_broadcast_intent"
@@ -161,7 +159,6 @@ class MessagingManager @Inject constructor(
         const val COMMAND_LAUNCH_APP = "command_launch_app"
         const val COMMAND_APP_LOCK = "command_app_lock"
         const val COMMAND_PERSISTENT_CONNECTION = "command_persistent_connection"
-        const val COMMAND_STOP_TTS = "command_stop_tts"
         const val COMMAND_AUTO_SCREEN_BRIGHTNESS = "command_auto_screen_brightness"
         const val COMMAND_SCREEN_BRIGHTNESS_LEVEL = "command_screen_brightness_level"
         const val COMMAND_SCREEN_OFF_TIMEOUT = "command_screen_off_timeout"
@@ -188,7 +185,6 @@ class MessagingManager @Inject constructor(
         const val MEDIA_STOP = "stop"
         const val MEDIA_PACKAGE_NAME = "media_package_name"
         const val MEDIA_COMMAND = "media_command"
-        const val MEDIA_STREAM = "media_stream"
 
         // App-lock command parameters:
         const val APP_LOCK_ENABLED = "app_lock_enabled"
@@ -218,7 +214,7 @@ class MessagingManager @Inject constructor(
             COMMAND_LAUNCH_APP,
             COMMAND_APP_LOCK,
             COMMAND_PERSISTENT_CONNECTION,
-            COMMAND_STOP_TTS,
+            TextToSpeechData.COMMAND_STOP_TTS,
             COMMAND_AUTO_SCREEN_BRIGHTNESS,
             COMMAND_SCREEN_BRIGHTNESS_LEVEL,
             COMMAND_SCREEN_OFF_TIMEOUT
@@ -251,8 +247,6 @@ class MessagingManager @Inject constructor(
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
-
-    private var textToSpeech: TextToSpeech? = null
 
     fun handleMessage(notificationData: Map<String, String>, source: String) {
 
@@ -299,9 +293,8 @@ class MessagingManager @Inject constructor(
                 Log.d(TAG, "Removing Notification channel ${jsonData[NotificationData.CHANNEL]}")
                 removeNotificationChannel(jsonData[NotificationData.CHANNEL]!!)
             }
-            jsonData[NotificationData.MESSAGE] == TTS -> {
-                Log.d(TAG, "Sending notification title to TTS")
-                speakNotification(jsonData)
+            jsonData[NotificationData.MESSAGE] == TextToSpeechData.TTS -> {
+                speakText(context, jsonData)
             }
             jsonData[NotificationData.MESSAGE] in DEVICE_COMMANDS -> {
                 Log.d(TAG, "Processing device command")
@@ -356,7 +349,7 @@ class MessagingManager @Inject constructor(
                         }
                     }
                     COMMAND_VOLUME_LEVEL -> {
-                        if (!jsonData[MEDIA_STREAM].isNullOrEmpty() && jsonData[MEDIA_STREAM] in CHANNEL_VOLUME_STREAM &&
+                        if (!jsonData[NotificationData.MEDIA_STREAM].isNullOrEmpty() && jsonData[NotificationData.MEDIA_STREAM] in CHANNEL_VOLUME_STREAM &&
                             !jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND]?.toIntOrNull() != null
                         )
                             handleDeviceCommands(jsonData)
@@ -527,7 +520,7 @@ class MessagingManager @Inject constructor(
                             else -> handleDeviceCommands(jsonData)
                         }
                     }
-                    COMMAND_STOP_TTS -> handleDeviceCommands(jsonData)
+                    TextToSpeechData.COMMAND_STOP_TTS -> stopTTS()
                     COMMAND_AUTO_SCREEN_BRIGHTNESS -> {
                         if (!jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND] in DeviceCommandData.ENABLE_COMMANDS)
                             handleDeviceCommands(jsonData)
@@ -570,12 +563,6 @@ class MessagingManager @Inject constructor(
         notificationManagerCompat.cancel(tag, messageId, true)
     }
 
-    private fun stopTTS() {
-        Log.d(TAG, "Stopping TTS")
-        textToSpeech?.stop()
-        textToSpeech?.shutdown()
-    }
-
     private fun removeNotificationChannel(channelName: String) {
         val notificationManagerCompat = NotificationManagerCompat.from(context)
 
@@ -583,80 +570,6 @@ class MessagingManager @Inject constructor(
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && channelID != NotificationChannel.DEFAULT_CHANNEL_ID) {
             notificationManagerCompat.deleteNotificationChannel(channelID)
-        }
-    }
-
-    private fun speakNotification(data: Map<String, String>) {
-        var tts = data[TTS_TEXT]
-        val audioManager = context.getSystemService<AudioManager>()
-        val currentAlarmVolume = audioManager?.getStreamVolume(AudioManager.STREAM_ALARM)
-        val maxAlarmVolume = audioManager?.getStreamMaxVolume(AudioManager.STREAM_ALARM)
-        if (tts.isNullOrEmpty())
-            tts = context.getString(commonR.string.tts_no_text)
-        textToSpeech = TextToSpeech(
-            context
-        ) {
-            if (it == TextToSpeech.SUCCESS) {
-                val listener = object : UtteranceProgressListener() {
-                    override fun onStart(p0: String?) {
-                        if (data[MEDIA_STREAM] == NotificationData.ALARM_STREAM_MAX)
-                            audioManager?.setStreamVolume(
-                                AudioManager.STREAM_ALARM,
-                                maxAlarmVolume!!,
-                                0
-                            )
-                    }
-
-                    override fun onDone(p0: String?) {
-                        textToSpeech?.stop()
-                        textToSpeech?.shutdown()
-                        if (data[MEDIA_STREAM] == NotificationData.ALARM_STREAM_MAX)
-                            audioManager?.setStreamVolume(
-                                AudioManager.STREAM_ALARM,
-                                currentAlarmVolume!!,
-                                0
-                            )
-                    }
-
-                    override fun onError(p0: String?) {
-                        textToSpeech?.stop()
-                        textToSpeech?.shutdown()
-                        if (data[MEDIA_STREAM] == NotificationData.ALARM_STREAM_MAX)
-                            audioManager?.setStreamVolume(
-                                AudioManager.STREAM_ALARM,
-                                currentAlarmVolume!!,
-                                0
-                            )
-                    }
-
-                    override fun onStop(utteranceId: String?, interrupted: Boolean) {
-                        if (data[MEDIA_STREAM] == NotificationData.ALARM_STREAM_MAX)
-                            audioManager?.setStreamVolume(
-                                AudioManager.STREAM_ALARM,
-                                currentAlarmVolume!!,
-                                0
-                            )
-                    }
-                }
-                textToSpeech?.setOnUtteranceProgressListener(listener)
-                if (data[MEDIA_STREAM] == NotificationData.ALARM_STREAM || data[MEDIA_STREAM] == NotificationData.ALARM_STREAM_MAX) {
-                    val audioAttributes = AudioAttributes.Builder()
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                        .setUsage(AudioAttributes.USAGE_ALARM)
-                        .build()
-                    textToSpeech?.setAudioAttributes(audioAttributes)
-                }
-                textToSpeech?.speak(tts, TextToSpeech.QUEUE_ADD, null, "")
-                Log.d(TAG, "speaking notification")
-            } else {
-                Handler(Looper.getMainLooper()).post {
-                    Toast.makeText(
-                        context,
-                        context.getString(commonR.string.tts_error, tts),
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-            }
         }
     }
 
@@ -736,14 +649,14 @@ class MessagingManager @Inject constructor(
                     } else {
                         processStreamVolume(
                             audioManager!!,
-                            data[MEDIA_STREAM].toString(),
+                            data[NotificationData.MEDIA_STREAM].toString(),
                             command!!.toInt()
                         )
                     }
                 } else {
                     processStreamVolume(
                         audioManager!!,
-                        data[MEDIA_STREAM].toString(),
+                        data[NotificationData.MEDIA_STREAM].toString(),
                         command!!.toInt()
                     )
                 }
@@ -852,9 +765,6 @@ class MessagingManager @Inject constructor(
             }
             COMMAND_PERSISTENT_CONNECTION -> {
                 togglePersistentConnection(data[PERSISTENT].toString())
-            }
-            COMMAND_STOP_TTS -> {
-                stopTTS()
             }
             COMMAND_AUTO_SCREEN_BRIGHTNESS, COMMAND_SCREEN_BRIGHTNESS_LEVEL, COMMAND_SCREEN_OFF_TIMEOUT -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {

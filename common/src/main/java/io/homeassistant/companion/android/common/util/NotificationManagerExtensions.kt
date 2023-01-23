@@ -7,7 +7,7 @@ import android.service.notification.StatusBarNotification
 import android.util.Log
 import androidx.core.app.NotificationManagerCompat
 
-const val TAG = "NotifManagerCompat"
+private const val TAG = "NotifManagerCompat"
 
 fun NotificationManagerCompat.getNotificationManager(): NotificationManager {
     val field = this.javaClass.declaredFields
@@ -29,14 +29,14 @@ fun NotificationManagerCompat.cancelGroupIfNeeded(tag: String?, id: Int): Boolea
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
         Log.d(TAG, "Cancel notification with tag \"$tag\" and id \"$id\"")
 
-        var currentActiveNotifications = this.getNotificationManager().activeNotifications
+        val currentActiveNotifications = this.getNotificationManager().activeNotifications
 
         Log.d(TAG, "Check if the notification is in a group...")
         // Get group key from the current notification
         // to handle possible group deletion
-        var statusBarNotification =
+        val statusBarNotification =
             currentActiveNotifications.singleOrNull { s -> s.id == id && s.tag == tag && s.isGroup }
-        var groupKey = statusBarNotification?.groupKey
+        val groupKey = statusBarNotification?.groupKey
 
         // Notification has a group?
         if (statusBarNotification != null && !groupKey.isNullOrBlank()) {
@@ -51,7 +51,7 @@ fun NotificationManagerCompat.cancelGroupIfNeeded(tag: String?, id: Int): Boolea
                     currentActiveNotifications.filter { s -> s.groupKey == groupKey }
 
                 // Is the notification which should be deleted a group summary
-                var isGroupSummary = statusBarNotification.notification.flags and FLAG_GROUP_SUMMARY != 0
+                val isGroupSummary = statusBarNotification.notification.flags and FLAG_GROUP_SUMMARY != 0
                 if (isGroupSummary) Log.d(TAG, "Notification is the group summary.")
                 else Log.d(TAG, "Notification is NOT the group summary.")
 
@@ -75,7 +75,7 @@ fun NotificationManagerCompat.cancelGroupIfNeeded(tag: String?, id: Int): Boolea
                     // This group can't be canceled, but it will be canceled by canceling the last notification inside of the group
                     // If the group isn't null, cancel the group
                     return if (group != null) {
-                        var groupId = group.hashCode()
+                        val groupId = group.hashCode()
                         Log.d(TAG, "Cancel group notification with tag \"$group\"  and id \"$groupId\"")
                         this.cancel(group, groupId)
                         true
