@@ -88,7 +88,6 @@
         <activity
             android:name=".conversation.ConversationActivity"
             android:icon="@mipmap/ic_assist_launcher"
-            android:roundIcon="@mipmap/ic_assist_launcher"
             android:label="@string/ha_assist"
             android:exported="true">
             <intent-filter>
