@@ -8,7 +8,7 @@ import androidx.room.Query
 @Dao
 interface TileDao {
 
-    @Query("SELECT * FROM qs_tiles WHERE tileId = :tileId")
+    @Query("SELECT * FROM qs_tiles WHERE tile_id = :tileId")
     suspend fun get(tileId: String): TileEntity?
 
     @Query("SELECT * FROM qs_tiles")
