@@ -87,7 +87,15 @@
 
         <activity
             android:name=".conversation.ConversationActivity"
-            android:exported="true" />
+            android:icon="@mipmap/ic_assist_launcher"
+            android:label="@string/ha_assist"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
         <!-- Tiles -->
         <service
             android:name=".tiles.ShortcutsTile"
@@ -117,7 +125,7 @@
         </service>
         <service
             android:name=".tiles.ConversationTile"
-            android:label="@string/conversation"
+            android:label="@string/assist"
             android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER"
             android:exported="true">
             <intent-filter>
