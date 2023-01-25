@@ -63,7 +63,7 @@ class EntityGridVehicleScreen(
                 GridItem.Builder()
                     .setLoading(false)
                     .setTitle(entity.friendlyName)
-                    .setText(entity.friendlyState)
+                    .setText(entity.friendlyState(carContext))
                     .setImage(
                         CarIcon.Builder(
                             IconicsDrawable(carContext, icon).apply {

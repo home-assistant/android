@@ -2,14 +2,20 @@ package io.homeassistant.companion.android.common.data.integration
 
 import android.content.Context
 import android.graphics.Color
+import android.os.Build
+import android.text.format.DateUtils
 import android.util.Log
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateDiff
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 import java.util.Calendar
 import java.util.Locale
 import kotlin.math.round
+import io.homeassistant.companion.android.common.R as commonR
 
 data class Entity<T>(
     val entityId: String,
@@ -436,9 +442,42 @@ suspend fun <T> Entity<T>.onPressed(
 val <T> Entity<T>.friendlyName: String
     get() = (attributes as? Map<*, *>)?.get("friendly_name")?.toString() ?: entityId
 
-val <T> Entity<T>.friendlyState: String
-    get() = state.split("_").joinToString(" ") { word ->
-        word.replaceFirstChar {
-            if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+fun <T> Entity<T>.friendlyState(context: Context): String {
+    var friendlyState = when (state) {
+        "closed" -> context.getString(commonR.string.state_closed)
+        "closing" -> context.getString(commonR.string.state_closing)
+        "jammed" -> context.getString(commonR.string.state_jammed)
+        "locked" -> context.getString(commonR.string.state_locked)
+        "locking" -> context.getString(commonR.string.state_locking)
+        "off" -> context.getString(commonR.string.state_off)
+        "on" -> context.getString(commonR.string.state_on)
+        "open" -> context.getString(commonR.string.state_open)
+        "opening" -> context.getString(commonR.string.state_opening)
+        "unavailable" -> context.getString(commonR.string.state_unavailable)
+        "unlocked" -> context.getString(commonR.string.state_unlocked)
+        "unlocking" -> context.getString(commonR.string.state_unlocking)
+        "unknown" -> context.getString(commonR.string.state_unknown)
+        else -> state
+    }
+    if (friendlyState == state && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        try {
+            val stateInMillis = ZonedDateTime.parse(state, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+                .toInstant()
+                .toEpochMilli()
+            friendlyState = DateUtils.getRelativeTimeSpanString(
+                stateInMillis,
+                System.currentTimeMillis(),
+                0,
+                DateUtils.FORMAT_ABBREV_ALL
+            ).toString()
+        } catch (e: DateTimeParseException) { /* Not a timestamp */ }
+    }
+    if (friendlyState == state) {
+        friendlyState = state.split("_").joinToString(" ") { word ->
+            word.replaceFirstChar {
+                if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+            }
         }
     }
+    return friendlyState
+}
