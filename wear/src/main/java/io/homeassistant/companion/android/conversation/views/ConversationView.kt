@@ -57,8 +57,9 @@ fun ConversationResultView(
                             text = conversationViewModel.speechResult.ifEmpty {
                                 when {
                                     (conversationViewModel.supportsConversation) -> stringResource(R.string.no_results)
+                                    (!conversationViewModel.supportsConversation && !conversationViewModel.checkSupportProgress) -> stringResource(R.string.no_conversation_support)
                                     (!conversationViewModel.isRegistered) -> stringResource(R.string.not_registered)
-                                    else -> stringResource(R.string.no_conversation_support)
+                                    else -> "..."
                                 }
                             },
                             false

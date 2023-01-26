@@ -36,6 +36,9 @@ class ConversationViewModel @Inject constructor(
     var isRegistered by mutableStateOf(false)
         private set
 
+    var checkSupportProgress by mutableStateOf(true)
+        private set
+
     fun getConversation() {
         viewModelScope.launch {
             conversationResult = integrationUseCase.getConversation(speechResult) ?: ""
@@ -43,11 +46,13 @@ class ConversationViewModel @Inject constructor(
     }
 
     suspend fun isSupportConversation() {
+        checkSupportProgress = true
         isRegistered = integrationUseCase.isRegistered()
         supportsConversation =
             integrationUseCase.isHomeAssistantVersionAtLeast(2023, 1, 0) &&
             webSocketRepository.getConfig()?.components?.contains("conversation") == true
         isHapticEnabled.value = wearPrefsRepository.getWearHapticFeedback()
+        checkSupportProgress = false
     }
 
     fun updateSpeechResult(result: String) {
