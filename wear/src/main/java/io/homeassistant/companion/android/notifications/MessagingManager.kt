@@ -6,7 +6,10 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.homeassistant.companion.android.common.notifications.DeviceCommandData
 import io.homeassistant.companion.android.common.notifications.NotificationData
+import io.homeassistant.companion.android.common.notifications.commandBeaconMonitor
+import io.homeassistant.companion.android.common.notifications.commandBleTransmitter
 import io.homeassistant.companion.android.common.notifications.getGroupNotificationBuilder
 import io.homeassistant.companion.android.common.notifications.handleChannel
 import io.homeassistant.companion.android.common.notifications.handleSmallIcon
@@ -15,16 +18,23 @@ import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.getActiveNotification
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.notification.NotificationItem
+import io.homeassistant.companion.android.database.sensor.SensorDao
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import org.json.JSONObject
 import javax.inject.Inject
 
 class MessagingManager @Inject constructor(
     @ApplicationContext val context: Context,
+    private val sensorDao: SensorDao,
 ) {
 
     companion object {
         const val TAG = "MessagingManager"
     }
+
+    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     fun handleMessage(notificationData: Map<String, String>, source: String) {
 
@@ -36,7 +46,20 @@ class MessagingManager @Inject constructor(
             NotificationItem(0, now, notificationData[NotificationData.MESSAGE].toString(), jsonObject.toString(), source)
         notificationDao.add(notificationRow)
 
-        sendNotification(notificationData, now)
+        when (notificationData[NotificationData.MESSAGE]) {
+            DeviceCommandData.COMMAND_BEACON_MONITOR -> {
+                if (!commandBeaconMonitor(context, notificationData)) {
+                    sendNotification(notificationData, now)
+                }
+            }
+            DeviceCommandData.COMMAND_BLE_TRANSMITTER -> {
+                if (!commandBleTransmitter(context, notificationData, sensorDao, mainScope)) {
+                    sendNotification(notificationData)
+                }
+            }
+            else ->
+                sendNotification(notificationData, now)
+        }
     }
 
     @SuppressLint("MissingPermission")

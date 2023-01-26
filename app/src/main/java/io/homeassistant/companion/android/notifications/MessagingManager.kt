@@ -48,7 +48,10 @@ import io.homeassistant.companion.android.common.data.authentication.Authenticat
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.common.notifications.DeviceCommandData
 import io.homeassistant.companion.android.common.notifications.NotificationData
+import io.homeassistant.companion.android.common.notifications.commandBeaconMonitor
+import io.homeassistant.companion.android.common.notifications.commandBleTransmitter
 import io.homeassistant.companion.android.common.notifications.createChannelID
 import io.homeassistant.companion.android.common.notifications.getGroupNotificationBuilder
 import io.homeassistant.companion.android.common.notifications.handleChannel
@@ -58,7 +61,6 @@ import io.homeassistant.companion.android.common.notifications.handleText
 import io.homeassistant.companion.android.common.notifications.parseColor
 import io.homeassistant.companion.android.common.notifications.parseVibrationPattern
 import io.homeassistant.companion.android.common.notifications.prepareText
-import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.common.util.cancel
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.getActiveNotification
@@ -90,7 +92,6 @@ import java.io.File
 import java.io.FileOutputStream
 import java.net.URL
 import java.net.URLDecoder
-import java.util.UUID
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -128,11 +129,8 @@ class MessagingManager @Inject constructor(
         const val INTENT_CLASS_NAME = "intent_class_name"
         const val URI = "URI"
         const val REPLY = "REPLY"
-        const val BLE_ADVERTISE = "ble_advertise"
-        const val BLE_TRANSMIT = "ble_transmit"
         const val HIGH_ACCURACY_UPDATE_INTERVAL = "high_accuracy_update_interval"
         const val PACKAGE_NAME = "package_name"
-        const val COMMAND = "command"
         const val TTS_TEXT = "tts_text"
         const val CONFIRMATION = "confirmation"
 
@@ -153,8 +151,6 @@ class MessagingManager @Inject constructor(
         const val COMMAND_BROADCAST_INTENT = "command_broadcast_intent"
         const val COMMAND_VOLUME_LEVEL = "command_volume_level"
         const val COMMAND_BLUETOOTH = "command_bluetooth"
-        const val COMMAND_BLE_TRANSMITTER = "command_ble_transmitter"
-        const val COMMAND_BEACON_MONITOR = "command_beacon_monitor"
         const val COMMAND_SCREEN_ON = "command_screen_on"
         const val COMMAND_MEDIA = "command_media"
         const val COMMAND_UPDATE_SENSORS = "command_update_sensors"
@@ -181,10 +177,6 @@ class MessagingManager @Inject constructor(
         const val RM_SILENT = "silent"
         const val RM_VIBRATE = "vibrate"
 
-        // Enable/Disable Commands
-        const val TURN_ON = "turn_on"
-        const val TURN_OFF = "turn_off"
-
         // Media Commands
         const val MEDIA_FAST_FORWARD = "fast_forward"
         const val MEDIA_NEXT = "next"
@@ -197,23 +189,6 @@ class MessagingManager @Inject constructor(
         const val MEDIA_PACKAGE_NAME = "media_package_name"
         const val MEDIA_COMMAND = "media_command"
         const val MEDIA_STREAM = "media_stream"
-
-        // Ble Transmitter Commands
-        const val BLE_SET_TRANSMIT_POWER = "ble_set_transmit_power"
-        const val BLE_SET_ADVERTISE_MODE = "ble_set_advertise_mode"
-        const val BLE_ADVERTISE_LOW_LATENCY = "ble_advertise_low_latency"
-        const val BLE_ADVERTISE_BALANCED = "ble_advertise_balanced"
-        const val BLE_ADVERTISE_LOW_POWER = "ble_advertise_low_power"
-        const val BLE_TRANSMIT_ULTRA_LOW = "ble_transmit_ultra_low"
-        const val BLE_TRANSMIT_LOW = "ble_transmit_low"
-        const val BLE_TRANSMIT_MEDIUM = "ble_transmit_medium"
-        const val BLE_TRANSMIT_HIGH = "ble_transmit_high"
-        const val BLE_SET_UUID = "ble_set_uuid"
-        const val BLE_SET_MAJOR = "ble_set_major"
-        const val BLE_SET_MINOR = "ble_set_minor"
-        const val BLE_UUID = "ble_uuid"
-        const val BLE_MAJOR = "ble_major"
-        const val BLE_MINOR = "ble_minor"
 
         // App-lock command parameters:
         const val APP_LOCK_ENABLED = "app_lock_enabled"
@@ -232,8 +207,8 @@ class MessagingManager @Inject constructor(
             COMMAND_BROADCAST_INTENT,
             COMMAND_VOLUME_LEVEL,
             COMMAND_BLUETOOTH,
-            COMMAND_BLE_TRANSMITTER,
-            COMMAND_BEACON_MONITOR,
+            DeviceCommandData.COMMAND_BLE_TRANSMITTER,
+            DeviceCommandData.COMMAND_BEACON_MONITOR,
             COMMAND_HIGH_ACCURACY_MODE,
             COMMAND_ACTIVITY,
             COMMAND_WEBVIEW,
@@ -259,20 +234,11 @@ class MessagingManager @Inject constructor(
             NotificationData.SYSTEM_STREAM,
             NotificationData.DTMF_STREAM
         )
-        val ENABLE_COMMANDS = listOf(TURN_OFF, TURN_ON)
         val FORCE_COMMANDS = listOf(FORCE_OFF, FORCE_ON)
         val MEDIA_COMMANDS = listOf(
             MEDIA_FAST_FORWARD, MEDIA_NEXT, MEDIA_PAUSE, MEDIA_PLAY,
             MEDIA_PLAY_PAUSE, MEDIA_PREVIOUS, MEDIA_REWIND, MEDIA_STOP
         )
-        val BLE_COMMANDS = listOf(
-            BLE_SET_ADVERTISE_MODE, BLE_SET_TRANSMIT_POWER, BLE_SET_UUID, BLE_SET_MAJOR,
-            BLE_SET_MINOR
-        )
-        val BLE_TRANSMIT_COMMANDS =
-            listOf(BLE_TRANSMIT_HIGH, BLE_TRANSMIT_LOW, BLE_TRANSMIT_MEDIUM, BLE_TRANSMIT_ULTRA_LOW)
-        val BLE_ADVERTISE_COMMANDS =
-            listOf(BLE_ADVERTISE_BALANCED, BLE_ADVERTISE_LOW_LATENCY, BLE_ADVERTISE_LOW_POWER)
 
         // Video Values
         const val VIDEO_START_MICROSECONDS = 100000L
@@ -341,7 +307,7 @@ class MessagingManager @Inject constructor(
                 Log.d(TAG, "Processing device command")
                 when (jsonData[NotificationData.MESSAGE]) {
                     COMMAND_DND -> {
-                        if (jsonData[COMMAND] in DND_COMMANDS) {
+                        if (jsonData[NotificationData.COMMAND] in DND_COMMANDS) {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
                                 handleDeviceCommands(jsonData)
                             else {
@@ -364,7 +330,7 @@ class MessagingManager @Inject constructor(
                         }
                     }
                     COMMAND_RINGER_MODE -> {
-                        if (jsonData[COMMAND] in RM_COMMANDS) {
+                        if (jsonData[NotificationData.COMMAND] in RM_COMMANDS) {
                             handleDeviceCommands(jsonData)
                         } else {
                             mainScope.launch {
@@ -391,7 +357,7 @@ class MessagingManager @Inject constructor(
                     }
                     COMMAND_VOLUME_LEVEL -> {
                         if (!jsonData[MEDIA_STREAM].isNullOrEmpty() && jsonData[MEDIA_STREAM] in CHANNEL_VOLUME_STREAM &&
-                            !jsonData[COMMAND].isNullOrEmpty() && jsonData[COMMAND]?.toIntOrNull() != null
+                            !jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND]?.toIntOrNull() != null
                         )
                             handleDeviceCommands(jsonData)
                         else {
@@ -406,8 +372,8 @@ class MessagingManager @Inject constructor(
                     }
                     COMMAND_BLUETOOTH -> {
                         if (
-                            !jsonData[COMMAND].isNullOrEmpty() &&
-                            jsonData[COMMAND] in ENABLE_COMMANDS &&
+                            !jsonData[NotificationData.COMMAND].isNullOrEmpty() &&
+                            jsonData[NotificationData.COMMAND] in DeviceCommandData.ENABLE_COMMANDS &&
                             Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
                         )
                             handleDeviceCommands(jsonData)
@@ -421,49 +387,25 @@ class MessagingManager @Inject constructor(
                             }
                         }
                     }
-                    COMMAND_BLE_TRANSMITTER -> {
-                        if (
-                            (!jsonData[COMMAND].isNullOrEmpty() && jsonData[COMMAND] in ENABLE_COMMANDS) ||
-                            (
-                                (!jsonData[COMMAND].isNullOrEmpty() && jsonData[COMMAND] in BLE_COMMANDS) &&
-                                    (
-                                        (!jsonData[BLE_ADVERTISE].isNullOrEmpty() && jsonData[BLE_ADVERTISE] in BLE_ADVERTISE_COMMANDS) ||
-                                            (!jsonData[BLE_TRANSMIT].isNullOrEmpty() && jsonData[BLE_TRANSMIT] in BLE_TRANSMIT_COMMANDS) ||
-                                            (jsonData[COMMAND] == BLE_SET_UUID && !jsonData[BLE_UUID].isNullOrEmpty()) ||
-                                            (jsonData[COMMAND] == BLE_SET_MAJOR && !jsonData[BLE_MAJOR].isNullOrEmpty()) ||
-                                            (jsonData[COMMAND] == BLE_SET_MINOR && !jsonData[BLE_MINOR].isNullOrEmpty())
-                                        )
-                                )
-                        )
-                            handleDeviceCommands(jsonData)
-                        else {
+                    DeviceCommandData.COMMAND_BLE_TRANSMITTER -> {
+                        if (!commandBleTransmitter(context, jsonData, sensorDao, mainScope)) {
                             mainScope.launch {
-                                Log.d(
-                                    TAG,
-                                    "Invalid ble transmitter command received, posting notification to device"
-                                )
                                 sendNotification(jsonData)
                             }
                         }
                     }
-                    COMMAND_BEACON_MONITOR -> {
-                        if (!jsonData[COMMAND].isNullOrEmpty() && jsonData[COMMAND] in ENABLE_COMMANDS)
-                            handleDeviceCommands(jsonData)
-                        else {
+                    DeviceCommandData.COMMAND_BEACON_MONITOR -> {
+                        if (!commandBeaconMonitor(context, jsonData)) {
                             mainScope.launch {
-                                Log.d(
-                                    TAG,
-                                    "Invalid beacon monitor command received, posting notification to device"
-                                )
                                 sendNotification(jsonData)
                             }
                         }
                     }
                     COMMAND_HIGH_ACCURACY_MODE -> {
-                        if ((!jsonData[COMMAND].isNullOrEmpty() && jsonData[COMMAND] in ENABLE_COMMANDS) ||
-                            (!jsonData[COMMAND].isNullOrEmpty() && jsonData[COMMAND] in FORCE_COMMANDS) ||
+                        if ((!jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND] in DeviceCommandData.ENABLE_COMMANDS) ||
+                            (!jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND] in FORCE_COMMANDS) ||
                             (
-                                !jsonData[COMMAND].isNullOrEmpty() && jsonData[COMMAND] == HIGH_ACCURACY_SET_UPDATE_INTERVAL &&
+                                !jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND] == HIGH_ACCURACY_SET_UPDATE_INTERVAL &&
                                     jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toIntOrNull() != null && jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toInt()!! >= 5
                                 )
                         )
@@ -587,7 +529,7 @@ class MessagingManager @Inject constructor(
                     }
                     COMMAND_STOP_TTS -> handleDeviceCommands(jsonData)
                     COMMAND_AUTO_SCREEN_BRIGHTNESS -> {
-                        if (!jsonData[COMMAND].isNullOrEmpty() && jsonData[COMMAND] in ENABLE_COMMANDS)
+                        if (!jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND] in DeviceCommandData.ENABLE_COMMANDS)
                             handleDeviceCommands(jsonData)
                         else
                             mainScope.launch {
@@ -595,7 +537,7 @@ class MessagingManager @Inject constructor(
                             }
                     }
                     COMMAND_SCREEN_BRIGHTNESS_LEVEL, COMMAND_SCREEN_OFF_TIMEOUT -> {
-                        if (!jsonData[COMMAND].isNullOrEmpty() && jsonData[COMMAND]?.toIntOrNull() != null)
+                        if (!jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND]?.toIntOrNull() != null)
                             handleDeviceCommands(jsonData)
                         else
                             mainScope.launch {
@@ -720,7 +662,7 @@ class MessagingManager @Inject constructor(
 
     private fun handleDeviceCommands(data: Map<String, String>) {
         val message = data[NotificationData.MESSAGE]
-        val command = data[COMMAND]
+        val command = data[NotificationData.COMMAND]
         when (message) {
             COMMAND_DND -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -820,75 +762,15 @@ class MessagingManager @Inject constructor(
                     }
                 }
                 @Suppress("DEPRECATION")
-                if (command == TURN_OFF)
+                if (command == DeviceCommandData.TURN_OFF)
                     bluetoothAdapter?.disable()
-                else if (command == TURN_ON)
+                else if (command == DeviceCommandData.TURN_ON)
                     bluetoothAdapter?.enable()
-            }
-            COMMAND_BLE_TRANSMITTER -> {
-                if (command == TURN_OFF)
-                    BluetoothSensorManager.enableDisableBLETransmitter(context, false)
-                if (command == TURN_ON)
-                    BluetoothSensorManager.enableDisableBLETransmitter(context, true)
-                if (command in BLE_COMMANDS) {
-                    sensorDao.updateSettingValue(
-                        BluetoothSensorManager.bleTransmitter.id,
-                        when (command) {
-                            BLE_SET_ADVERTISE_MODE -> BluetoothSensorManager.SETTING_BLE_ADVERTISE_MODE
-                            BLE_SET_TRANSMIT_POWER -> BluetoothSensorManager.SETTING_BLE_TRANSMIT_POWER
-                            BLE_SET_UUID -> BluetoothSensorManager.SETTING_BLE_ID1
-                            BLE_SET_MAJOR -> BluetoothSensorManager.SETTING_BLE_ID2
-                            BLE_SET_MINOR -> BluetoothSensorManager.SETTING_BLE_ID3
-                            else -> BluetoothSensorManager.SETTING_BLE_TRANSMIT_POWER
-                        },
-                        when (command) {
-                            BLE_SET_ADVERTISE_MODE -> {
-                                when (data[BLE_ADVERTISE]) {
-                                    BLE_ADVERTISE_BALANCED -> BluetoothSensorManager.BLE_ADVERTISE_BALANCED
-                                    BLE_ADVERTISE_LOW_LATENCY -> BluetoothSensorManager.BLE_ADVERTISE_LOW_LATENCY
-                                    BLE_ADVERTISE_LOW_POWER -> BluetoothSensorManager.BLE_ADVERTISE_LOW_POWER
-                                    else -> BluetoothSensorManager.BLE_ADVERTISE_LOW_POWER
-                                }
-                            }
-                            BLE_SET_UUID -> data[BLE_UUID] ?: UUID.randomUUID().toString()
-                            BLE_SET_MAJOR -> data[BLE_MAJOR]
-                                ?: BluetoothSensorManager.DEFAULT_BLE_MAJOR
-                            BLE_SET_MINOR -> data[BLE_MINOR]
-                                ?: BluetoothSensorManager.DEFAULT_BLE_MINOR
-                            else -> {
-                                when (data[BLE_TRANSMIT]) {
-                                    BLE_TRANSMIT_HIGH -> BluetoothSensorManager.BLE_TRANSMIT_HIGH
-                                    BLE_TRANSMIT_LOW -> BluetoothSensorManager.BLE_TRANSMIT_LOW
-                                    BLE_TRANSMIT_MEDIUM -> BluetoothSensorManager.BLE_TRANSMIT_MEDIUM
-                                    BLE_TRANSMIT_ULTRA_LOW -> BluetoothSensorManager.BLE_TRANSMIT_ULTRA_LOW
-                                    else -> BluetoothSensorManager.BLE_TRANSMIT_ULTRA_LOW
-                                }
-                            }
-                        }
-                    )
-
-                    // Force the transmitter to restart and send updated attributes
-                    mainScope.launch {
-                        sensorDao.updateLastSentStateAndIcon(
-                            BluetoothSensorManager.bleTransmitter.id,
-                            null,
-                            null
-                        )
-                    }
-                    BluetoothSensorManager().requestSensorUpdate(context)
-                    SensorReceiver.updateAllSensors(context)
-                }
-            }
-            COMMAND_BEACON_MONITOR -> {
-                if (command == TURN_OFF)
-                    BluetoothSensorManager.enableDisableBeaconMonitor(context, false)
-                if (command == TURN_ON)
-                    BluetoothSensorManager.enableDisableBeaconMonitor(context, true)
             }
             COMMAND_HIGH_ACCURACY_MODE -> {
                 when (command) {
-                    TURN_OFF -> LocationSensorManager.setHighAccuracyModeSetting(context, false)
-                    TURN_ON -> LocationSensorManager.setHighAccuracyModeSetting(context, true)
+                    DeviceCommandData.TURN_OFF -> LocationSensorManager.setHighAccuracyModeSetting(context, false)
+                    DeviceCommandData.TURN_ON -> LocationSensorManager.setHighAccuracyModeSetting(context, true)
                     FORCE_ON -> LocationSensorManager.setHighAccuracyModeSetting(context, true)
                     HIGH_ACCURACY_SET_UPDATE_INTERVAL -> LocationSensorManager.setHighAccuracyModeIntervalSetting(context, data[HIGH_ACCURACY_UPDATE_INTERVAL]!!.toInt())
                 }
@@ -1929,7 +1811,7 @@ class MessagingManager @Inject constructor(
     }
 
     private fun processScreenCommands(data: Map<String, String>): Boolean {
-        val command = data[COMMAND]
+        val command = data[NotificationData.COMMAND]
         val contentResolver = context.contentResolver
         val success = Settings.System.putInt(
             contentResolver,
@@ -1941,7 +1823,7 @@ class MessagingManager @Inject constructor(
             when (data[NotificationData.MESSAGE].toString()) {
                 COMMAND_SCREEN_BRIGHTNESS_LEVEL -> command!!.toInt().coerceIn(0, 255)
                 COMMAND_AUTO_SCREEN_BRIGHTNESS -> {
-                    if (command == TURN_ON)
+                    if (command == DeviceCommandData.TURN_ON)
                         Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
                     else
                         Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL

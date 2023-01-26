@@ -28,6 +28,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.UpdateLocation
 import io.homeassistant.companion.android.common.data.integration.ZoneAttributes
 import io.homeassistant.companion.android.common.data.integration.containsWithAccuracy
+import io.homeassistant.companion.android.common.notifications.DeviceCommandData
 import io.homeassistant.companion.android.common.sensors.LocationSensorManagerBase
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
@@ -193,8 +194,8 @@ class LocationSensorManager : LocationSensorManagerBase() {
             ACTION_FORCE_HIGH_ACCURACY -> {
                 var command = intent.extras?.get("command")?.toString()
                 when (command) {
-                    MessagingManager.TURN_ON, MessagingManager.TURN_OFF, MessagingManager.FORCE_ON -> {
-                        var turnOn = command != MessagingManager.TURN_OFF
+                    DeviceCommandData.TURN_ON, DeviceCommandData.TURN_OFF, MessagingManager.FORCE_ON -> {
+                        var turnOn = command != DeviceCommandData.TURN_OFF
                         if (turnOn) Log.d(TAG, "Forcing of high accuracy mode enabled")
                         else Log.d(TAG, "Forcing of high accuracy mode disabled")
                         forceHighAccuracyModeOn = turnOn

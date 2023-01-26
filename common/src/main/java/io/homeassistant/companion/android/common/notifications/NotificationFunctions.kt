@@ -33,6 +33,7 @@ object NotificationData {
     const val VIBRATION_PATTERN = "vibrationPattern"
     const val NOTIFICATION_ICON = "notification_icon"
     const val ALERT_ONCE = "alert_once"
+    const val COMMAND = "command"
 
     // Channel streams
     const val ALARM_STREAM = "alarm_stream"
