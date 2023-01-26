@@ -19,10 +19,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
@@ -38,9 +36,7 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
-import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.getIcon
-import io.homeassistant.companion.android.util.onEntityClickedFeedback
 import io.homeassistant.companion.android.views.ExpandableListHeader
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
@@ -54,16 +50,14 @@ fun MainView(
     onEntityLongClicked: (String) -> Unit,
     onRetryLoadEntitiesClicked: () -> Unit,
     onSettingsClicked: () -> Unit,
-    onTestClicked: (entityLists: Map<String, List<Entity<*>>>, listOrder: List<String>, filter: (Entity<*>) -> (Boolean)) -> Unit,
+    onTestClicked: (entityLists: Map<String, List<Entity<*>>>, listOrder: List<String>, filter: (Entity<*>) -> Boolean) -> Unit,
     isHapticEnabled: Boolean,
-    isToastEnabled: Boolean,
-    deleteFavorite: (String) -> Unit
+    isToastEnabled: Boolean
 ) {
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
 
     var expandedFavorites: Boolean by rememberSaveable { mutableStateOf(true) }
 
-    val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
 
     WearAppTheme {
@@ -91,27 +85,13 @@ fun MainView(
                             if (mainViewModel.entities.isEmpty()) {
                                 // when we don't have the state of the entity, create a Chip from cache as we don't have the state yet
                                 val cached = mainViewModel.getCachedEntity(favoriteEntityID)
-                                Chip(
-                                    modifier = Modifier
-                                        .fillMaxWidth(),
-                                    icon = {
-                                        Image(
-                                            asset = getIcon(cached?.icon, favoriteEntityID.split(".")[0], context) ?: CommunityMaterial.Icon.cmd_bookmark,
-                                            colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
-                                        )
-                                    },
-                                    label = {
-                                        Text(
-                                            text = cached?.friendlyName ?: favoriteEntityID,
-                                            maxLines = 2,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                    },
-                                    onClick = {
-                                        onEntityClicked(favoriteEntityID, "unknown")
-                                        onEntityClickedFeedback(isToastEnabled, isHapticEnabled, context, favoriteEntityID, haptic)
-                                    },
-                                    colors = ChipDefaults.secondaryChipColors()
+                                CachedFavorite(
+                                    cached = cached,
+                                    favoriteEntityID = favoriteEntityID,
+                                    context = context,
+                                    onEntityClicked = onEntityClicked,
+                                    isHapticEnabled = isHapticEnabled,
+                                    isToastEnabled = isToastEnabled
                                 )
                             } else {
                                 mainViewModel.entities.values.toList()
@@ -123,7 +103,14 @@ fun MainView(
                                             isHapticEnabled,
                                             isToastEnabled
                                         ) { entityId -> onEntityLongClicked(entityId) }
-                                    } ?: deleteFavorite(favoriteEntityID)
+                                    } ?: CachedFavorite(
+                                    cached = mainViewModel.getCachedEntity(favoriteEntityID),
+                                    favoriteEntityID = favoriteEntityID,
+                                    context = context,
+                                    onEntityClicked = onEntityClicked,
+                                    isHapticEnabled = isHapticEnabled,
+                                    isToastEnabled = isToastEnabled
+                                )
                             }
                         }
                     }

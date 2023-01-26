@@ -68,8 +68,7 @@ fun LoadHomePage(
                         swipeDismissableNavController.navigate(SCREEN_ENTITY_LIST)
                     },
                     isHapticEnabled = mainViewModel.isHapticEnabled.value,
-                    isToastEnabled = mainViewModel.isToastEnabled.value,
-                    deleteFavorite = { id -> mainViewModel.removeFavoriteEntity(id) }
+                    isToastEnabled = mainViewModel.isToastEnabled.value
                 )
             }
             composable("$SCREEN_ENTITY_DETAIL/{entityId}") {
