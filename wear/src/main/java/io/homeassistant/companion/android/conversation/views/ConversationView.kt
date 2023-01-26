@@ -52,18 +52,19 @@ fun ConversationResultView(
             ) {
                 item {
                     Column {
-                        Spacer(Modifier.padding(24.dp))
+                        Spacer(Modifier.padding(12.dp))
                         SpeechBubble(
                             text = conversationViewModel.speechResult.ifEmpty {
                                 when {
                                     (conversationViewModel.supportsConversation) -> stringResource(R.string.no_results)
+                                    (!conversationViewModel.supportsConversation && !conversationViewModel.checkSupportProgress) -> stringResource(R.string.no_conversation_support)
                                     (!conversationViewModel.isRegistered) -> stringResource(R.string.not_registered)
-                                    else -> stringResource(R.string.no_conversation_support)
+                                    else -> "..."
                                 }
                             },
                             false
                         )
-                        Spacer(Modifier.padding(8.dp))
+                        Spacer(Modifier.padding(4.dp))
                     }
                 }
                 if (conversationViewModel.conversationResult.isNotEmpty())
@@ -105,10 +106,10 @@ fun SpeechBubble(text: String, isResponse: Boolean) {
                     else
                         colorResource(R.color.colorSpeechText),
                     AbsoluteRoundedCornerShape(
-                        topLeftPercent = 40,
-                        topRightPercent = 40,
-                        bottomLeftPercent = if (isResponse) 0 else 40,
-                        bottomRightPercent = if (isResponse) 40 else 0
+                        topLeftPercent = 30,
+                        topRightPercent = 30,
+                        bottomLeftPercent = if (isResponse) 0 else 30,
+                        bottomRightPercent = if (isResponse) 30 else 0
                     )
                 )
                 .padding(4.dp)
@@ -120,7 +121,7 @@ fun SpeechBubble(text: String, isResponse: Boolean) {
                 else
                     Color.Black,
                 modifier = Modifier
-                    .padding(4.dp)
+                    .padding(2.dp)
             )
         }
     }
