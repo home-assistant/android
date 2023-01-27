@@ -54,7 +54,7 @@ fun MainView(
     onEntityLongClicked: (String) -> Unit,
     onRetryLoadEntitiesClicked: () -> Unit,
     onSettingsClicked: () -> Unit,
-    onTestClicked: (entityLists: Map<String, List<Entity<*>>>, listOrder: List<String>, filter: (Entity<*>) -> Boolean) -> Unit,
+    onNavigationClicked: (entityLists: Map<String, List<Entity<*>>>, listOrder: List<String>, filter: (Entity<*>) -> Boolean) -> Unit,
     isHapticEnabled: Boolean,
     isToastEnabled: Boolean
 ) {
@@ -128,7 +128,7 @@ fun MainView(
                     }
                 }
 
-                if (!mainViewModel.isFavoritesOnly.value) {
+                if (!mainViewModel.isFavoritesOnly) {
                     when (mainViewModel.loadingState.value) {
                         MainViewModel.LoadingState.LOADING -> {
                             if (favoriteEntityIds.isEmpty()) {
@@ -227,7 +227,7 @@ fun MainView(
                                                     Text(text = area.name)
                                                 },
                                                 onClick = {
-                                                    onTestClicked(
+                                                    onNavigationClicked(
                                                         mapOf(area.name to entities),
                                                         listOf(area.name)
                                                     ) {
@@ -275,7 +275,7 @@ fun MainView(
                                                 Text(text = mainViewModel.stringForDomain(domain)!!)
                                             },
                                             onClick = {
-                                                onTestClicked(
+                                                onNavigationClicked(
                                                     mapOf(
                                                         mainViewModel.stringForDomain(domain)!! to domainEntities
                                                     ),
@@ -308,7 +308,7 @@ fun MainView(
                                             Text(text = stringResource(commonR.string.all_entities))
                                         },
                                         onClick = {
-                                            onTestClicked(
+                                            onNavigationClicked(
                                                 mainViewModel.entitiesByDomain.mapKeys {
                                                     mainViewModel.stringForDomain(
                                                         it.key
@@ -328,6 +328,11 @@ fun MainView(
                         }
                     }
                 }
+
+                if (mainViewModel.isFavoritesOnly)
+                    item {
+                        Spacer(Modifier.padding(4.dp))
+                    }
 
                 // Settings
                 item {

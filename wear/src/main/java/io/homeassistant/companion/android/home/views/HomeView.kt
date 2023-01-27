@@ -59,7 +59,7 @@ fun LoadHomePage(
                     },
                     onRetryLoadEntitiesClicked = mainViewModel::loadEntities,
                     onSettingsClicked = { swipeDismissableNavController.navigate(SCREEN_SETTINGS) },
-                    onTestClicked = { lists, order, filter ->
+                    onNavigationClicked = { lists, order, filter ->
                         mainViewModel.entityLists.clear()
                         mainViewModel.entityLists.putAll(lists)
                         mainViewModel.entityListsOrder.clear()
@@ -140,7 +140,7 @@ fun LoadHomePage(
                     onClickLogout = { mainViewModel.logout() },
                     isHapticEnabled = mainViewModel.isHapticEnabled.value,
                     isToastEnabled = mainViewModel.isToastEnabled.value,
-                    isFavoritesOnly = mainViewModel.isFavoritesOnly.value,
+                    isFavoritesOnly = mainViewModel.isFavoritesOnly,
                     onHapticEnabled = { mainViewModel.setHapticEnabled(it) },
                     onToastEnabled = { mainViewModel.setToastEnabled(it) },
                     setFavoritesOnly = { mainViewModel.setWearFavoritesOnly(it) }

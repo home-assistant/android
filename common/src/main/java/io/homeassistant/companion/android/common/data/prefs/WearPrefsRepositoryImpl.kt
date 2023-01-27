@@ -46,9 +46,6 @@ class WearPrefsRepositoryImpl @Inject constructor(
                 integrationStorage.getBooleanOrNull(PREF_WEAR_TOAST_CONFIRMATION)?.let {
                     localStorage.putBoolean(PREF_WEAR_TOAST_CONFIRMATION, it)
                 }
-                integrationStorage.getBooleanOrNull(PREF_WEAR_FAVORITES_ONLY)?.let {
-                    localStorage.putBoolean(PREF_WEAR_FAVORITES_ONLY, it)
-                }
 
                 localStorage.putInt(MIGRATION_PREF, MIGRATION_VERSION)
             }
