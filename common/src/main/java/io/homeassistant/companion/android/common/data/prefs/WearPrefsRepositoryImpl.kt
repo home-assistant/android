@@ -21,6 +21,7 @@ class WearPrefsRepositoryImpl @Inject constructor(
         private const val PREF_TILE_TEMPLATE_REFRESH_INTERVAL = "tile_template_refresh_interval"
         private const val PREF_WEAR_HAPTIC_FEEDBACK = "wear_haptic_feedback"
         private const val PREF_WEAR_TOAST_CONFIRMATION = "wear_toast_confirmation"
+        private const val PREF_WEAR_FAVORITES_ONLY = "wear_favorites_only"
     }
 
     init {
@@ -44,6 +45,9 @@ class WearPrefsRepositoryImpl @Inject constructor(
                 }
                 integrationStorage.getBooleanOrNull(PREF_WEAR_TOAST_CONFIRMATION)?.let {
                     localStorage.putBoolean(PREF_WEAR_TOAST_CONFIRMATION, it)
+                }
+                integrationStorage.getBooleanOrNull(PREF_WEAR_FAVORITES_ONLY)?.let {
+                    localStorage.putBoolean(PREF_WEAR_FAVORITES_ONLY, it)
                 }
 
                 localStorage.putInt(MIGRATION_PREF, MIGRATION_VERSION)
@@ -100,5 +104,13 @@ class WearPrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setWearToastConfirmation(enabled: Boolean) {
         localStorage.putBoolean(PREF_WEAR_TOAST_CONFIRMATION, enabled)
+    }
+
+    override suspend fun getWearFavoritesOnly(): Boolean {
+        return localStorage.getBoolean(PREF_WEAR_FAVORITES_ONLY)
+    }
+
+    override suspend fun setWearFavoritesOnly(enabled: Boolean) {
+        localStorage.putBoolean(PREF_WEAR_FAVORITES_ONLY, enabled)
     }
 }

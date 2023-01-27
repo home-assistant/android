@@ -108,6 +108,8 @@ class MainViewModel @Inject constructor(
         private set
     var templateTileRefreshInterval = mutableStateOf(0)
         private set
+    var isFavoritesOnly = mutableStateOf(false)
+        private set
 
     fun supportedDomains(): List<String> = HomePresenterImpl.supportedDomains
 
@@ -129,6 +131,7 @@ class MainViewModel @Inject constructor(
             isShowShortcutTextEnabled.value = homePresenter.getShowShortcutText()
             templateTileContent.value = homePresenter.getTemplateTileContent()
             templateTileRefreshInterval.value = homePresenter.getTemplateTileRefreshInterval()
+            isFavoritesOnly.value = homePresenter.getWearFavoritesOnly()
         }
     }
 
@@ -176,11 +179,13 @@ class MainViewModel @Inject constructor(
         val getEntityRegistry = async { homePresenter.getEntityRegistry() }
         val getEntities = async { homePresenter.getEntities() }
 
-        areaRegistry = getAreaRegistry.await()?.also {
-            areas.clear()
-            areas.addAll(it)
+        if (!isFavoritesOnly.value) {
+            areaRegistry = getAreaRegistry.await()?.also {
+                areas.clear()
+                areas.addAll(it)
+            }
+            deviceRegistry = getDeviceRegistry.await()
         }
-        deviceRegistry = getDeviceRegistry.await()
         entityRegistry = getEntityRegistry.await()
 
         _supportedEntities.value = getSupportedEntities()
@@ -189,7 +194,8 @@ class MainViewModel @Inject constructor(
             entities.clear()
             it.forEach { state -> updateEntityStates(state) }
         }
-        updateEntityDomains()
+        if (!isFavoritesOnly.value)
+            updateEntityDomains()
     }
 
     suspend fun entityUpdates() {
@@ -197,12 +203,13 @@ class MainViewModel @Inject constructor(
             return
         homePresenter.getEntityUpdates(supportedEntities.value)?.collect {
             updateEntityStates(it)
-            updateEntityDomains()
+            if (!isFavoritesOnly.value)
+                updateEntityDomains()
         }
     }
 
     suspend fun areaUpdates() {
-        if (!homePresenter.isConnected())
+        if (!homePresenter.isConnected() || isFavoritesOnly.value)
             return
         homePresenter.getAreaRegistryUpdates()?.collect {
             areaRegistry = homePresenter.getAreaRegistry()
@@ -215,7 +222,7 @@ class MainViewModel @Inject constructor(
     }
 
     suspend fun deviceUpdates() {
-        if (!homePresenter.isConnected())
+        if (!homePresenter.isConnected() || isFavoritesOnly.value)
             return
         homePresenter.getDeviceRegistryUpdates()?.collect {
             deviceRegistry = homePresenter.getDeviceRegistry()
@@ -224,7 +231,7 @@ class MainViewModel @Inject constructor(
     }
 
     suspend fun entityRegistryUpdates() {
-        if (!homePresenter.isConnected())
+        if (!homePresenter.isConnected() || isFavoritesOnly.value)
             return
         homePresenter.getEntityRegistryUpdates()?.collect {
             entityRegistry = homePresenter.getEntityRegistry()
@@ -411,6 +418,13 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             homePresenter.setTemplateTileContent(content)
             templateTileContent.value = content
+        }
+    }
+
+    fun setWearFavoritesOnly(enabled: Boolean) {
+        viewModelScope.launch {
+            homePresenter.setWearFavoritesOnly(enabled)
+            isFavoritesOnly.value = enabled
         }
     }
 

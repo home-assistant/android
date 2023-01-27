@@ -68,8 +68,7 @@ fun LoadHomePage(
                         swipeDismissableNavController.navigate(SCREEN_ENTITY_LIST)
                     },
                     isHapticEnabled = mainViewModel.isHapticEnabled.value,
-                    isToastEnabled = mainViewModel.isToastEnabled.value,
-                    deleteFavorite = { id -> mainViewModel.removeFavoriteEntity(id) }
+                    isToastEnabled = mainViewModel.isToastEnabled.value
                 )
             }
             composable("$SCREEN_ENTITY_DETAIL/{entityId}") {
@@ -141,8 +140,10 @@ fun LoadHomePage(
                     onClickLogout = { mainViewModel.logout() },
                     isHapticEnabled = mainViewModel.isHapticEnabled.value,
                     isToastEnabled = mainViewModel.isToastEnabled.value,
+                    isFavoritesOnly = mainViewModel.isFavoritesOnly.value,
                     onHapticEnabled = { mainViewModel.setHapticEnabled(it) },
-                    onToastEnabled = { mainViewModel.setToastEnabled(it) }
+                    onToastEnabled = { mainViewModel.setToastEnabled(it) },
+                    setFavoritesOnly = { mainViewModel.setWearFavoritesOnly(it) }
                 ) { swipeDismissableNavController.navigate(SCREEN_SET_TILE_TEMPLATE) }
             }
             composable(SCREEN_SET_FAVORITES) {
