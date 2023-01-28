@@ -6,7 +6,7 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 
 object GCJ2WGS {
-    //圆周率 GCJ_02_To_WGS_84
+    // 圆周率 GCJ_02_To_WGS_84
     var PI = 3.14159265358979324
 
     /**

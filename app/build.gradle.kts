@@ -84,7 +84,7 @@ android {
 
     buildTypes {
         named("debug").configure {
-            //applicationIdSuffix = ".debug"
+            // applicationIdSuffix = ".debug"
             signingConfig = signingConfigs.getByName("release")
             manifestPlaceholders["amapkey"] = AMAP_KEY
         }
@@ -229,11 +229,11 @@ configure<GoogleServicesPluginConfig> {
     disableVersionCheck = true
 }
 
-fun getVersionCode():Int {
+fun getVersionCode(): Int {
     val time = System.currentTimeMillis()
-    return (time/1000).toInt()
+    return (time / 1000).toInt()
 }
 
 fun getVersionName(): String {
-    return "v"+SimpleDateFormat("yyyy-MM-dd").format(System.currentTimeMillis())
+    return "v" + SimpleDateFormat("yyyy-MM-dd").format(System.currentTimeMillis())
 }
