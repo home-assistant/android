@@ -52,7 +52,9 @@
         <meta-data
             android:name="com.amap.api.v2.apikey"
             android:value="${amapkey}" />
-
+        <meta-data
+            android:name="pgy_api_key"
+            android:value="${pgy_api_key}" />
 
 
         <meta-data
