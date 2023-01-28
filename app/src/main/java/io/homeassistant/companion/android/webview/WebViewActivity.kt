@@ -1,8 +1,10 @@
 package io.homeassistant.companion.android.webview
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.DownloadManager
 import android.app.PictureInPictureParams
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -43,6 +45,7 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
@@ -53,7 +56,9 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import com.google.android.exoplayer2.DefaultLoadControl
@@ -83,6 +88,7 @@ import io.homeassistant.companion.android.databinding.ActivityWebviewBinding
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
 import io.homeassistant.companion.android.databinding.ExoPlayerViewBinding
 import io.homeassistant.companion.android.launch.LaunchActivity
+import io.homeassistant.companion.android.matter.MatterFrontendCommissioningStatus
 import io.homeassistant.companion.android.nfc.WriteNfcTag
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
@@ -93,6 +99,7 @@ import io.homeassistant.companion.android.update.UpdateActivity.Companion.UPDATE
 import io.homeassistant.companion.android.update.UpdateInfo
 import io.homeassistant.companion.android.util.ChangeLog
 import io.homeassistant.companion.android.util.DataUriDownloadManager
+import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.util.OnSwipeListener
 import io.homeassistant.companion.android.util.TLSWebViewClient
 import io.homeassistant.companion.android.util.isStarted
@@ -159,6 +166,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private val showWebFileChooser = registerForActivityResult(ShowWebFileChooser()) { result ->
         mFilePathCallback?.onReceiveValue(result)
         mFilePathCallback = null
+    }
+    private val commissionMatterDevice = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+        // Any errors will have been shown in the UI provided by Play Services
+        if (result.resultCode == Activity.RESULT_OK) Log.d(TAG, "Matter commissioning returned success")
+        else Log.d(TAG, "Matter commissioning returned with non-OK code ${result.resultCode}")
     }
 
     @Inject
@@ -229,8 +241,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         windowInsetsController = WindowInsetsControllerCompat(window, window.decorView)
 
         // Initially set status and navigation bar color to colorLaunchScreenBackground to match the launch screen until the web frontend is loaded
-        val colorLaunchScreenBackground =
-            ResourcesCompat.getColor(resources, commonR.color.colorLaunchScreenBackground, theme)
+        val colorLaunchScreenBackground = ResourcesCompat.getColor(resources, commonR.color.colorLaunchScreenBackground, theme)
         setStatusBarAndNavigationBarColor(colorLaunchScreenBackground, colorLaunchScreenBackground)
 
         binding.blurView.setupWith(binding.root)
@@ -293,8 +304,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             settings.domStorageEnabled = true
             settings.displayZoomControls = false
             settings.mediaPlaybackRequiresUserGesture = !presenter.isAutoPlayVideoEnabled()
-            settings.userAgentString =
-                settings.userAgentString + " ${HomeAssistantApis.USER_AGENT_STRING}"
+            settings.userAgentString = settings.userAgentString + " ${HomeAssistantApis.USER_AGENT_STRING}"
             webViewClient = object : TLSWebViewClient(keyChainRepository) {
                 override fun onReceivedError(
                     view: WebView?,
@@ -332,10 +342,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     request: WebResourceRequest?,
                     errorResponse: WebResourceResponse?
                 ) {
-                    Log.e(
-                        TAG,
-                        "onReceivedHttpError: ${errorResponse?.statusCode} : ${errorResponse?.reasonPhrase} for: ${request?.url}"
-                    )
+                    Log.e(TAG, "onReceivedHttpError: ${errorResponse?.statusCode} : ${errorResponse?.reasonPhrase} for: ${request?.url}")
                     if (request?.url.toString() == loadedUrl) {
                         showError()
                     }
@@ -595,6 +602,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                 "config/get" -> {
                                     val pm: PackageManager = context.packageManager
                                     val hasNfc = pm.hasSystemFeature(PackageManager.FEATURE_NFC)
+                                    val canCommissionMatter = presenter.appCanCommissionMatterDevice()
                                     webView.externalBus(
                                         id = JSONObject(message).get("id"),
                                         type = "result",
@@ -603,7 +611,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                             mapOf(
                                                 "hasSettingsScreen" to true,
                                                 "canWriteTag" to hasNfc,
-                                                "hasExoPlayer" to true
+                                                "hasExoPlayer" to true,
+                                                "canCommissionMatter" to canCommissionMatter
                                             )
                                         )
                                     ) {
@@ -634,6 +643,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                             messageId = JSONObject(message).getInt("id")
                                         )
                                     )
+                                "matter/commission" -> presenter.startCommissioningMatterDevice(this@WebViewActivity)
                                 "exoplayer/play_hls" -> exoPlayHls(json)
                                 "exoplayer/stop" -> exoStopHls()
                                 "exoplayer/resize" -> exoResizeHls(json)
@@ -671,6 +681,26 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val webviewPackage = WebViewCompat.getCurrentWebViewPackage(this)
             Log.d(TAG, "Current webview package ${webviewPackage?.packageName} and version ${webviewPackage?.versionName}")
+        }
+
+        lifecycleScope.launch {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                presenter.getMatterCommissioningStatusFlow().collect {
+                    Log.d(TAG, "Matter commissioning status changed to $it")
+                    when (it) {
+                        MatterFrontendCommissioningStatus.IN_PROGRESS -> {
+                            presenter.getMatterCommissioningIntent()?.let { intentSender ->
+                                commissionMatterDevice.launch(IntentSenderRequest.Builder(intentSender).build())
+                            }
+                        }
+                        MatterFrontendCommissioningStatus.ERROR -> {
+                            Toast.makeText(this@WebViewActivity, commonR.string.matter_commissioning_unavailable, Toast.LENGTH_SHORT).show()
+                            presenter.confirmMatterCommissioningError()
+                        }
+                        else -> { } // Do nothing
+                    }
+                }
+            }
         }
     }
 
@@ -764,6 +794,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             checkAndWarnForDisabledLocation()
         }
         changeLog.showChangeLog(this, false)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        openFirstViewOnDashboardIfNeeded()
     }
 
     override fun onPause() {
@@ -1336,7 +1371,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private fun waitForConnection() {
         Handler(Looper.getMainLooper()).postDelayed(
             {
-                if (!isConnected) {
+                if (
+                    !isConnected &&
+                    !loadedUrl.toHttpUrl().pathSegments.first().contains("api") &&
+                    !loadedUrl.toHttpUrl().pathSegments.first().contains("local")
+                ) {
                     showError()
                 }
             },
@@ -1348,17 +1387,19 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         id: Any,
         type: String,
         success: Boolean,
-        result: Any?,
+        result: Any? = null,
+        error: Any? = null,
         callback: ValueCallback<String>?
     ) {
-        val json = JSONObject(
-            mapOf(
-                "id" to id,
-                "type" to type,
-                "success" to success,
-                "result" to result
-            )
+        val map = mutableMapOf(
+            "id" to id,
+            "type" to type,
+            "success" to success
         )
+        if (result != null) map["result"] = result
+        if (error != null) map["error"] = error
+
+        val json = JSONObject(map.toMap())
         val script = "externalBus($json);"
 
         Log.d(TAG, script)
@@ -1400,8 +1441,15 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             }
             else -> {
                 Log.d(TAG, "Received download request for unsupported scheme, forwarding to system")
-                val browserIntent = Intent(Intent.ACTION_VIEW, uri)
-                startActivity(browserIntent)
+                try {
+                    val browserIntent = Intent(Intent.ACTION_VIEW, uri).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    }
+                    startActivity(browserIntent)
+                } catch (e: ActivityNotFoundException) {
+                    Log.e(TAG, "Unable to forward download request to system", e)
+                    Toast.makeText(this, commonR.string.failed_unsupported, Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
@@ -1443,5 +1491,31 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             }
             """
         ) {}
+    }
+
+    private fun openFirstViewOnDashboardIfNeeded() {
+        if (presenter.isAlwaysShowFirstViewOnAppStartEnabled() &&
+            LifecycleHandler.isAppInBackground()
+        ) {
+            // Pattern matches urls which are NOT allowed to show the first view after app is started
+            // This is
+            // /config/* as these are the settings of HA but NOT /config/dashboard. This is just the overview of the HA settings
+            // /hassio/* as these are the addons section of HA settings.
+            if (webView.url?.matches(".*://.*/(config/(?!\\bdashboard\\b)|hassio)/*.*".toRegex()) == false) {
+                Log.d(TAG, "Show first view of default dashboard.")
+                webView.evaluateJavascript(
+                    """
+                    var anchor = 'a:nth-child(1)';
+                    var defaultPanel = window.localStorage.getItem('defaultPanel')?.replaceAll('"',"");
+                    if(defaultPanel) anchor = 'a[href="/' + defaultPanel + '"]';
+                    document.querySelector('body > home-assistant').shadowRoot.querySelector('home-assistant-main')
+                                                                   .shadowRoot.querySelector('#drawer > ha-sidebar')
+                                                                   .shadowRoot.querySelector('paper-listbox > ' + anchor).click();
+                    window.scrollTo(0, 0);
+                    """,
+                    null
+                )
+            } else Log.d(TAG, "User is in the Home Assistant config. Will not show first view of the default dashboard.")
+        }
     }
 }

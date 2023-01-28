@@ -1,0 +1,69 @@
+package io.homeassistant.companion.android.conversation
+
+import android.content.Context
+import android.content.Intent
+import android.os.Bundle
+import android.os.PowerManager
+import android.speech.RecognizerIntent
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
+import androidx.core.content.getSystemService
+import androidx.lifecycle.lifecycleScope
+import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.conversation.views.ConversationResultView
+import kotlinx.coroutines.launch
+
+@AndroidEntryPoint
+class ConversationActivity : ComponentActivity() {
+
+    private val conversationViewModel by viewModels<ConversationViewModel>()
+    companion object {
+        private const val TAG = "ConvActivity"
+
+        fun newInstance(context: Context): Intent {
+            return Intent(context, ConversationActivity::class.java)
+        }
+    }
+
+    private var searchResults = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            conversationViewModel.updateSpeechResult(
+                result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS).let {
+                    it?.get(0) ?: ""
+                }
+            )
+            conversationViewModel.getConversation()
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        lifecycleScope.launch {
+            conversationViewModel.isSupportConversation()
+            if (conversationViewModel.supportsConversation) {
+                val searchIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                    putExtra(
+                        RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                        RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+                    )
+                }
+                searchResults.launch(searchIntent)
+            }
+        }
+
+        setContent {
+            ConversationResultView(conversationViewModel)
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        val pm = applicationContext.getSystemService<PowerManager>()
+        if (pm?.isInteractive == false && conversationViewModel.conversationResult.isNotEmpty()) {
+            finish()
+        }
+    }
+}

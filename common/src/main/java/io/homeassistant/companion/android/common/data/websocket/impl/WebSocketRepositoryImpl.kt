@@ -9,6 +9,8 @@ import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.homeassistant.companion.android.common.BuildConfig
+import io.homeassistant.companion.android.common.data.HomeAssistantApis.Companion.USER_AGENT
+import io.homeassistant.companion.android.common.data.HomeAssistantApis.Companion.USER_AGENT_STRING
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.AuthorizationException
@@ -21,6 +23,7 @@ import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.ConversationResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DomainResponse
@@ -28,6 +31,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.En
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EventResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TemplateUpdatedEvent
@@ -177,6 +181,18 @@ class WebSocketRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getConversation(speech: String): ConversationResponse? {
+        // TODO: Send default locale of device with request.
+        val socketResponse = sendMessage(
+            mapOf(
+                "type" to "conversation/process",
+                "text" to speech
+            )
+        )
+
+        return mapResponse(socketResponse)
+    }
+
     override suspend fun getStateChanges(): Flow<StateChangedEvent>? =
         subscribeToEventsForType(EVENT_STATE_CHANGED)
 
@@ -317,6 +333,62 @@ class WebSocketRepositoryImpl @Inject constructor(
         return response?.success == true
     }
 
+    /**
+     * Request the server to add a Matter device to the network and commission it
+     * @return [MatterCommissionResponse] detailing the server's response, or `null` if the server
+     * did not return a response
+     */
+    override suspend fun commissionMatterDevice(code: String): MatterCommissionResponse? {
+        val response = sendMessage(
+            WebSocketRequest(
+                message = mapOf(
+                    "type" to "matter/commission",
+                    "code" to code
+                ),
+                timeout = 120000L // Matter commissioning takes at least 60 seconds + interview
+            )
+        )
+
+        return response?.let {
+            MatterCommissionResponse(
+                success = response.success == true,
+                errorCode = if (response.error?.has("code") == true) {
+                    response.error.get("code").let {
+                        if (it.isNumber) it.asInt() else null
+                    }
+                } else null
+            )
+        }
+    }
+
+    /**
+     * Request the server to commission a Matter device that is already on the network
+     * @return [MatterCommissionResponse] detailing the server's response, or `null` if the server
+     * did not return a response
+     */
+    override suspend fun commissionMatterDeviceOnNetwork(pin: Long): MatterCommissionResponse? {
+        val response = sendMessage(
+            WebSocketRequest(
+                message = mapOf(
+                    "type" to "matter/commission_on_network",
+                    "pin" to pin
+                ),
+                timeout = 120000L // Matter commissioning takes at least 60 seconds + interview
+            )
+        )
+
+        return response?.let {
+            MatterCommissionResponse(
+                success = response.success == true,
+                errorCode = if (response.error?.has("code") == true) {
+                    response.error.get("code").let {
+                        if (it.isNumber) it.asInt() else null
+                    }
+                } else null
+            )
+        }
+    }
+
     private suspend fun connect(): Boolean {
         connectedMutex.withLock {
             if (connection != null && connected.isCompleted) {
@@ -336,7 +408,7 @@ class WebSocketRepositoryImpl @Inject constructor(
 
             try {
                 connection = okHttpClient.newWebSocket(
-                    Request.Builder().url(urlString).build(),
+                    Request.Builder().url(urlString).header(USER_AGENT, USER_AGENT_STRING).build(),
                     this
                 ).also {
                     // Preemptively send auth
@@ -388,7 +460,7 @@ class WebSocketRepositoryImpl @Inject constructor(
 
     private suspend fun sendMessage(request: WebSocketRequest): SocketResponse? {
         return if (connect()) {
-            withTimeoutOrNull(30000) {
+            withTimeoutOrNull(request.timeout) {
                 try {
                     suspendCancellableCoroutine { cont ->
                         // Lock on the connection so that we fully send before allowing another send.

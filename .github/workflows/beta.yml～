@@ -14,9 +14,9 @@ jobs:
           fetch-depth: 0
 
       - name: Set up JDK 11
-        uses: actions/setup-java@v3.6.0
+        uses: actions/setup-java@v3.9.0
         with:
-          distribution: 'adopt'
+          distribution: 'temurin'
           java-version: '11'
 
       - uses: actions/cache@v3
@@ -61,46 +61,16 @@ jobs:
         run: ./gradlew assembleRelease
 
       - name: Create Github Pre-Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v0.1.15
         with:
           tag_name: ${{ steps.rel_number.outputs.version }}
-          release_name: ${{ steps.rel_number.outputs.version }}
           body_path: ./app/build/outputs/changelogGithub
           draft: false
           prerelease: true
-
-      - name: Upload Full APK
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./app/build/outputs/apk/full/release/app-full-release.apk
-          asset_name: home-assistant-full-${{steps.rel_number.outputs.version}}.apk
-          asset_content_type: application/zip
-
-      - name: Upload Minimal APK
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./app/build/outputs/apk/minimal/release/app-minimal-release.apk
-          asset_name: home-assistant-minimal-${{steps.rel_number.outputs.version}}.apk
-          asset_content_type: application/zip
-
-      - name: Upload Wear APK
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./wear/build/outputs/apk/release/wear-release.apk
-          asset_name: home-assistant-wear-${{steps.rel_number.outputs.version}}.apk
-          asset_content_type: application/zip
+          files: |
+            ./app/build/outputs/apk/full/release/app-full-release.apk
+            ./app/build/outputs/apk/minimal/release/app-minimal-release.apk
+            ./wear/build/outputs/apk/release/wear-release.apk
 
       - name: Deploy to Firebase
         env:
@@ -120,3 +90,69 @@ jobs:
         with:
           version: io.homeassistant.companion.android@${{ steps.rel_number.outputs.version }}
           environment: Beta
+
+  play_publish:
+    name: Play Publish
+    runs-on: ubuntu-latest
+    concurrency:
+      group: playstore_deploy
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3.9.0
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - uses: ./.github/actions/create-release-number
+        name: Create Release Number
+        id: rel_number
+        with:
+          beta: true
+
+      - uses: ./.github/actions/inflate-secrets
+        name: Inflate Secrets
+        with:
+          keystore: ${{ secrets.UPLOAD_KEYSTORE_FILE }}
+          google-services: ${{ secrets.GOOGLESERVICES }}
+          firebase-creds: ${{ secrets.FIREBASECREDS }}
+          playstore-creds: ${{ secrets.PLAYSTORECREDS }}
+
+      - uses: ./.github/actions/create-release-notes
+        name: Create Release Notes
+
+      - uses: ./.github/actions/download-translations
+        name: Download Translations
+        with:
+          lokalise-project: ${{ secrets.LOKALISE_PROJECT }}
+          lokalise-token: ${{ secrets.LOKALISE_TOKEN }}
+
+      - name: Build Release
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
+          KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
+          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
+          VERSION: ${{ steps.rel_number.outputs.version }}
+          VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
+        run: ./gradlew bundleRelease
+
+      - name: Deploy to Playstore Internal
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
+          KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
+          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
+          VERSION: ${{ steps.rel_number.outputs.version }}
+          VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
+        run: ./gradlew publishReleaseBundle

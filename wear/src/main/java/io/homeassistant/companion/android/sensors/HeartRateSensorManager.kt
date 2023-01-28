@@ -28,6 +28,7 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
             SENSOR_STATUS_UNRELIABLE,
             SENSOR_STATUS_NO_CONTACT
         )
+        private var eventCount = 0
         private val heartRate = SensorManager.BasicSensor(
             "heart_rate",
             "sensor",
@@ -101,10 +102,14 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
-        if (
-            event?.sensor?.type == Sensor.TYPE_HEART_RATE && event.accuracy !in skipAccuracy &&
+        eventCount++
+        val validReading = event?.sensor?.type == Sensor.TYPE_HEART_RATE && event.accuracy !in skipAccuracy &&
             event.values[0].roundToInt() >= 0
-        ) {
+        if (event?.sensor?.type == Sensor.TYPE_HEART_RATE) {
+            Log.d(TAG, "HR event received with accuracy: ${getAccuracy(event.accuracy)} and value: ${event.values[0]} with event count: $eventCount")
+        } else
+            Log.d(TAG, "No HR event received")
+        if (event != null && validReading) {
             onSensorUpdated(
                 latestContext,
                 heartRate,
@@ -115,9 +120,12 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
                 )
             )
         }
-        mySensorManager.unregisterListener(this)
-        Log.d(TAG, "Heart Rate sensor listener unregistered")
-        isListenerRegistered = false
+        if (validReading || eventCount >= 10) {
+            mySensorManager.unregisterListener(this)
+            Log.d(TAG, "Heart Rate sensor listener unregistered")
+            isListenerRegistered = false
+            eventCount = 0
+        }
     }
 
     private fun getAccuracy(accuracy: Int): String {
@@ -125,6 +133,8 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
             SENSOR_STATUS_ACCURACY_HIGH -> "high"
             SENSOR_STATUS_ACCURACY_MEDIUM -> "medium"
             SENSOR_STATUS_ACCURACY_LOW -> "low"
+            SENSOR_STATUS_UNRELIABLE -> "unreliable"
+            SENSOR_STATUS_NO_CONTACT -> "no_contact"
             else -> "unknown"
         }
     }

@@ -27,6 +27,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
         const val FIRE_EVENT = "FIRE_EVENT"
         const val EXTRA_NOTIFICATION_TAG = "EXTRA_NOTIFICATION_TAG"
         const val EXTRA_NOTIFICATION_ID = "EXTRA_NOTIFICATION_ID"
+        const val EXTRA_NOTIFICATION_DB = "EXTRA_NOTIFICATION_DB"
         const val EXTRA_NOTIFICATION_ACTION = "EXTRA_ACTION_KEY"
     }
 
@@ -34,6 +35,9 @@ class NotificationActionReceiver : BroadcastReceiver() {
 
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
+
+    @Inject
+    lateinit var messagingManager: MessagingManager
 
     override fun onReceive(context: Context, intent: Intent) {
 
@@ -47,24 +51,44 @@ class NotificationActionReceiver : BroadcastReceiver() {
 
         val tag = intent.getStringExtra(EXTRA_NOTIFICATION_TAG)
         val messageId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, -1)
+        val databaseId = intent.getLongExtra(EXTRA_NOTIFICATION_DB, 0)
+
+        val isReply = notificationAction.key == "REPLY"
+        var replyText: String? = null
+
         val onComplete: () -> Unit = {
-            val notificationManagerCompat = NotificationManagerCompat.from(context)
-            notificationManagerCompat.cancel(
-                tag,
-                messageId,
-                true
-            )
+            if (isReply && !replyText.isNullOrBlank()) {
+                val replies = notificationAction.data.entries
+                    .filter { it.key.startsWith(MessagingManager.SOURCE_REPLY_HISTORY) }
+                    .sortedBy { it.key.substringAfter(MessagingManager.SOURCE_REPLY_HISTORY).toInt() }
+                    .map { it.value } + replyText
+                messagingManager.handleMessage(
+                    replies
+                        .takeLast(3)
+                        .mapIndexed { index, text ->
+                            "${MessagingManager.SOURCE_REPLY_HISTORY}$index" to text!!
+                        }
+                        .toMap(),
+                    "${MessagingManager.SOURCE_REPLY}$databaseId"
+                )
+            } else {
+                val notificationManagerCompat = NotificationManagerCompat.from(context)
+                notificationManagerCompat.cancel(
+                    tag,
+                    messageId,
+                    true
+                )
+            }
         }
         val onFailure: () -> Unit = {
             Handler(context.mainLooper).post {
                 Toast.makeText(context, commonR.string.event_error, Toast.LENGTH_LONG).show()
             }
         }
-        if (notificationAction.key == "REPLY") {
-            notificationAction.data += Pair(
-                "reply_text",
-                RemoteInput.getResultsFromIntent(intent)?.getCharSequence(KEY_TEXT_REPLY).toString()
-            )
+
+        if (isReply) {
+            replyText = RemoteInput.getResultsFromIntent(intent)?.getCharSequence(KEY_TEXT_REPLY).toString()
+            notificationAction.data += Pair("reply_text", replyText)
         }
 
         when (intent.action) {
@@ -81,7 +105,9 @@ class NotificationActionReceiver : BroadcastReceiver() {
             try {
                 integrationUseCase.fireEvent(
                     "mobile_app_notification_action",
-                    action.data.plus(Pair("action", action.key))
+                    action.data
+                        .filter { !it.key.startsWith(MessagingManager.SOURCE_REPLY_HISTORY) }
+                        .plus(Pair("action", action.key))
                 )
                 onComplete()
             } catch (e: Exception) {

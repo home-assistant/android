@@ -38,6 +38,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -53,11 +54,14 @@ class TemplateTile : TileService() {
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
 
+    @Inject
+    lateinit var wearPrefsRepository: WearPrefsRepository
+
     override fun onTileRequest(requestParams: TileRequest): ListenableFuture<Tile> =
         serviceScope.future {
             val state = requestParams.state
             if (state != null && state.lastClickableId == "refresh") {
-                if (integrationUseCase.getWearHapticFeedback()) {
+                if (wearPrefsRepository.getWearHapticFeedback()) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                         val vibratorManager = applicationContext.getSystemService<VibratorManager>()
                         val vibrator = vibratorManager?.defaultVibrator
@@ -69,7 +73,7 @@ class TemplateTile : TileService() {
                 }
             }
 
-            val template = integrationUseCase.getTemplateTileContent()
+            val template = wearPrefsRepository.getTemplateTileContent()
             val renderedText = try {
                 integrationUseCase.renderTemplate(template, mapOf()).toString()
             } catch (e: Exception) {
@@ -82,7 +86,7 @@ class TemplateTile : TileService() {
             Tile.Builder()
                 .setResourcesVersion("1")
                 .setFreshnessIntervalMillis(
-                    integrationUseCase.getTemplateTileRefreshInterval().toLong() * 1000
+                    wearPrefsRepository.getTemplateTileRefreshInterval().toLong() * 1000
                 )
                 .setTimeline(
                     Timeline.Builder().addTimelineEntry(

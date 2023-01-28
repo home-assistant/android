@@ -19,11 +19,10 @@ import androidx.wear.compose.material.rememberScalingLazyListState
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.domain
+import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.wearColorPalette
-import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.views.ExpandableListHeader
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
@@ -88,11 +87,7 @@ private fun FavoriteToggleChip(
     onFavoriteSelected: (entityId: String, isSelected: Boolean) -> Unit
 ) {
     val attributes = entity.attributes as Map<*, *>
-    val iconBitmap = getIcon(
-        entity as Entity<Map<String, Any>>,
-        entity.domain,
-        LocalContext.current
-    )
+    val iconBitmap = entity.getIcon(LocalContext.current)
 
     val entityId = entity.entityId
     val checked = favoriteEntityIds.contains(entityId)

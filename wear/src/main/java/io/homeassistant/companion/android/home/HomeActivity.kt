@@ -15,6 +15,7 @@ import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationActivity
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -25,6 +26,8 @@ class HomeActivity : ComponentActivity(), HomeView {
     lateinit var presenter: HomePresenter
 
     private val mainViewModel by viewModels<MainViewModel>()
+
+    private var entityUpdateJob: Job? = null
 
     companion object {
         private const val TAG = "HomeActivity"
@@ -48,7 +51,12 @@ class HomeActivity : ComponentActivity(), HomeView {
 
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                launch { mainViewModel.entityUpdates() }
+                launch {
+                    mainViewModel.supportedEntities.collect {
+                        if (entityUpdateJob?.isActive == true) entityUpdateJob?.cancel()
+                        entityUpdateJob = launch { mainViewModel.entityUpdates() }
+                    }
+                }
                 launch { mainViewModel.areaUpdates() }
                 launch { mainViewModel.deviceUpdates() }
                 launch { mainViewModel.entityRegistryUpdates() }
@@ -61,6 +69,11 @@ class HomeActivity : ComponentActivity(), HomeView {
         SensorWorker.start(this)
 
         mainViewModel.initAllSensors()
+
+        lifecycleScope.launch {
+            if (mainViewModel.loadingState.value == MainViewModel.LoadingState.READY)
+                mainViewModel.updateUI()
+        }
     }
 
     override fun onPause() {

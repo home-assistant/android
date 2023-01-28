@@ -31,6 +31,7 @@ android {
         versionCode = getVersionCode()
 
         manifestPlaceholders["sentryRelease"] = "$applicationId@$versionName"
+        manifestPlaceholders["sentryDsn"] = System.getenv("SENTRY_DSN") ?: ""
 
         bundle {
             language {
@@ -104,11 +105,6 @@ android {
             applicationIdSuffix = ""
             versionNameSuffix = "-full"
         }
-//        create("quest") {
-//            applicationIdSuffix = ".quest"
-//            versionNameSuffix = "-quest"
-//            minSdk = 23
-//        }
 
         // Generate a list of application ids into BuildConfig
         val values = productFlavors.joinToString {
@@ -125,9 +121,6 @@ android {
         register("full") {
             enabled.set(false)
         }
-//        register("quest") {
-//            enabled.set(false)
-//        }
     }
 
     testOptions {
@@ -152,7 +145,7 @@ android {
 
 play {
     serviceAccountCredentials.set(file("playStorePublishServiceCredentialsFile.json"))
-    track.set("beta")
+    track.set("internal")
     resolutionStrategy.set(ResolutionStrategy.IGNORE)
     // We will depend on the wear commit.
     commit.set(true)
@@ -162,12 +155,9 @@ dependencies {
     implementation(project(":common"))
 
     implementation("com.github.Dimezis:BlurView:version-1.6.6")
-    implementation("org.altbeacon:android-beacon-library:2.19.4")
+    implementation("org.altbeacon:android-beacon-library:2.19.5")
     implementation("com.maltaisn:icondialog:3.3.0")
     implementation("com.maltaisn:iconpack-community-material:5.3.45")
-    implementation("com.vdurmont:emoji-java:5.1.1") {
-        exclude(group = "org.json", module = "json")
-    }
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.20")
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.7.20")
@@ -184,17 +174,18 @@ dependencies {
     implementation("androidx.recyclerview:recyclerview:1.2.1")
     implementation("androidx.preference:preference-ktx:1.2.0")
     implementation("com.google.android.material:material:1.7.0")
-    implementation("androidx.fragment:fragment-ktx:1.5.4")
+    implementation("androidx.fragment:fragment-ktx:1.5.5")
 
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.4")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.5")
     implementation("com.squareup.okhttp3:okhttp:4.10.0")
     implementation("com.squareup.picasso:picasso:2.8")
 
     "fullImplementation"("com.google.android.gms:play-services-location:21.0.1")
-    "fullImplementation"(platform("com.google.firebase:firebase-bom:30.4.1"))
+    "fullImplementation"("com.google.android.gms:play-services-home:16.0.0")
+    "fullImplementation"(platform("com.google.firebase:firebase-bom:31.1.1"))
     "fullImplementation"("com.google.firebase:firebase-messaging")
-    "fullImplementation"("io.sentry:sentry-android:6.8.0")
+    "fullImplementation"("io.sentry:sentry-android:6.12.1")
     "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
     "fullImplementation"("com.google.android.gms:play-services-wearable:18.0.0")
     "fullImplementation"("androidx.wear:wear-remote-interactions:1.0.0")
@@ -221,8 +212,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling")
     implementation("androidx.activity:activity-compose:1.6.1")
     implementation("androidx.navigation:navigation-compose:2.5.3")
-    implementation("com.google.android.material:compose-theme-adapter:1.2.0")
-    implementation("com.google.accompanist:accompanist-appcompat-theme:0.27.1")
+    implementation("com.google.accompanist:accompanist-themeadapter-material:0.28.0")
 
     implementation("com.mikepenz:iconics-core:5.4.0")
     implementation("com.mikepenz:iconics-compose:5.4.0")
@@ -230,6 +220,8 @@ dependencies {
 
     "fullImplementation"("org.burnoutcrew.composereorderable:reorderable:0.9.6")
     implementation("com.github.AppDevNext:ChangeLog:3.4")
+
+    "fullImplementation"("androidx.car.app:app:1.3.0-rc01")
 }
 
 // Disable to fix memory leak and be compatible with the configuration cache.

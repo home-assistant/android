@@ -8,19 +8,26 @@ import androidx.room.PrimaryKey
 data class TileEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    @ColumnInfo(name = "tileId")
+    @ColumnInfo(name = "tile_id")
     val tileId: String,
     @ColumnInfo(name = "added", defaultValue = "1")
     val added: Boolean,
     @ColumnInfo(name = "icon_id")
     val iconId: Int?,
-    @ColumnInfo(name = "entityId")
+    @ColumnInfo(name = "entity_id")
     val entityId: String,
     @ColumnInfo(name = "label")
     val label: String,
     @ColumnInfo(name = "subtitle")
-    val subtitle: String?
+    val subtitle: String?,
+    @ColumnInfo(name = "should_vibrate", defaultValue = "0")
+    val shouldVibrate: Boolean,
+    @ColumnInfo(name = "auth_required", defaultValue = "0")
+    val authRequired: Boolean
 )
 
 val TileEntity.isSetup: Boolean
     get() = this.label.isNotBlank() && this.entityId.isNotBlank()
+
+val TileEntity.numberedId: Int
+    get() = this.tileId.split("_")[1].toInt()

@@ -28,7 +28,7 @@ interface HomePresenter {
     fun getWebSocketState(): WebSocketState?
 
     suspend fun getEntities(): List<Entity<*>>?
-    suspend fun getEntityUpdates(): Flow<Entity<*>>?
+    suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity<*>>?
 
     suspend fun getAreaRegistry(): List<AreaRegistryResponse>?
     suspend fun getDeviceRegistry(): List<DeviceRegistryResponse>?

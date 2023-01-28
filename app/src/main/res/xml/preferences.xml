@@ -3,28 +3,16 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <PreferenceCategory
-        android:title="@string/pref_connection_title">
+        android:key="servers_devices_category"
+        android:title="@string/servers_devices_category">
+        <!-- Servers will be added at runtime -->
         <Preference
-            android:key="connection_external"
-            android:icon="@drawable/ic_globe"
-            android:title="@string/pref_connection_url"/>
-        <Preference
-            android:key="connection_internal_ssids"
-            android:icon="@drawable/ic_wifi"
-            android:title="@string/pref_connection_wifi"
-            android:summary="@string/pref_connection_ssids_empty" />
-        <EditTextPreference
-            android:key="connection_internal"
-            android:title="@string/pref_connection_internal"
-            app:useSimpleSummaryProvider="true"/>
-    </PreferenceCategory>
-    <PreferenceCategory
-        android:title="@string/device_registration">
-        <EditTextPreference
-            android:key="registration_name"
-            android:icon="@drawable/ic_edit"
-            android:title="@string/device_name"
-            app:useSimpleSummaryProvider="true"/>
+            android:key="wear_settings"
+            app:isPreferenceVisible="false"
+            android:title="@string/wear_os_settings_title"
+            android:icon="@drawable/ic_baseline_watch_24"
+            android:order="999"
+            android:summary="@string/wear_os_settings_summary" />
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/sensors">
@@ -38,36 +26,6 @@
             android:icon="@drawable/ic_clock_fast"
             android:title="@string/sensor_update_frequency"
             android:summary="@string/sensor_update_frequency_summary" />
-    </PreferenceCategory>
-    <PreferenceCategory
-        android:key="security_category"
-        android:title="@string/security">
-        <SwitchPreference
-            android:key="app_lock"
-            android:icon="@drawable/ic_lock"
-            android:title="@string/lock_title"
-            android:summary="@string/lock_summary"/>
-        <SwitchPreference
-            android:key="app_lock_home_bypass"
-            android:icon="@drawable/ic_wifi"
-            android:title="@string/lock_home_bypass_title"
-            android:summary="@string/lock_home_bypass_summary"/>
-        <EditTextPreference
-            android:key="session_timeout"
-            android:icon="@drawable/ic_timeout"
-            android:title="@string/session_timeout_title"
-            app:isPreferenceVisible="false"
-            app:useSimpleSummaryProvider="true"/>
-    </PreferenceCategory>
-    <PreferenceCategory
-        android:key="wear_category"
-        app:isPreferenceVisible="false"
-        android:title="@string/wear_os_category">
-        <Preference
-            android:key="wear_settings"
-            android:title="@string/wear_os_settings_title"
-            android:icon="@drawable/ic_baseline_watch_24"
-            android:summary="@string/wear_os_settings_summary" />
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/other_settings">
@@ -91,6 +49,11 @@
             android:icon="@drawable/ic_baseline_video_settings_24"
             android:title="@string/autoplay_video"
             android:summary="@string/autoplay_video_summary" />
+        <SwitchPreference
+            android:key="always_show_first_view_on_app_start"
+            android:icon="@drawable/ic_home_variant_outline"
+            android:title="@string/always_show_first_view_on_app_start"
+            android:summary="@string/always_show_first_view_on_app_start_summary" />
         <SwitchPreference
             android:key="webview_debug"
             android:icon="@drawable/ic_android_debug_bridge"
@@ -118,11 +81,6 @@
         <Preference
             android:key="background"
             android:title="@string/background_access_title"/>
-        <Preference
-            android:key="websocket"
-            android:icon="@drawable/ic_websocket"
-            android:title="@string/websocket_setting_name"
-            android:summary="@string/websocket_setting_summary" />
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/notifications"

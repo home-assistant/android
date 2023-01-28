@@ -24,6 +24,7 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.language.LanguagesManager
+import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.websocket.WebsocketBroadcastReceiver
 import io.homeassistant.companion.android.widgets.button.ButtonWidget
 import io.homeassistant.companion.android.widgets.entity.EntityWidget
@@ -35,7 +36,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
-
 
 @HiltAndroidApp
 open class HomeAssistantApplication : Application() {
@@ -55,6 +55,8 @@ open class HomeAssistantApplication : Application() {
         super.onCreate()
 
         initBugLy()
+
+        registerActivityLifecycleCallbacks(LifecycleHandler)
 
         ioScope.launch {
             initCrashReporting(
@@ -176,6 +178,11 @@ open class HomeAssistantApplication : Application() {
                 IntentFilter(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED)
             )
         }
+
+        registerReceiver(
+            sensorReceiver,
+            IntentFilter("androidx.car.app.connection.action.CAR_CONNECTION_UPDATED")
+        )
 
         // Add a receiver for the shutdown event to attempt to send 1 final sensor update
         registerReceiver(

@@ -207,7 +207,7 @@ fun SensorDetailView(
                                         }
                                     )
                                 }
-                                SensorSettingType.LIST, SensorSettingType.LIST_APPS, SensorSettingType.LIST_BLUETOOTH, SensorSettingType.LIST_ZONES -> {
+                                SensorSettingType.LIST, SensorSettingType.LIST_APPS, SensorSettingType.LIST_BLUETOOTH, SensorSettingType.LIST_ZONES, SensorSettingType.LIST_BEACONS -> {
                                     val summaryValues = setting.value.split(", ").mapNotNull { it.ifBlank { null } }
                                     SensorDetailRow(
                                         title = viewModel.getSettingTranslatedTitle(setting.name),

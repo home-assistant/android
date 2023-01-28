@@ -12,6 +12,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.applyCompressedStateDiff
 import io.homeassistant.companion.android.common.data.integration.domain
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
@@ -82,6 +83,9 @@ class HaControlsProviderService : ControlsProviderService() {
 
     @Inject
     lateinit var urlRepository: UrlRepository
+
+    @Inject
+    lateinit var prefsRepository: PrefsRepository
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
@@ -364,9 +368,9 @@ class HaControlsProviderService : ControlsProviderService() {
 
     private suspend fun entityRequiresAuth(entityId: String): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val setting = integrationRepository.getControlsAuthRequired()
+            val setting = prefsRepository.getControlsAuthRequired()
             if (setting == ControlsAuthRequiredSetting.SELECTION) {
-                val includeList = integrationRepository.getControlsAuthEntities()
+                val includeList = prefsRepository.getControlsAuthEntities()
                 includeList.contains(entityId)
             } else {
                 setting == ControlsAuthRequiredSetting.ALL

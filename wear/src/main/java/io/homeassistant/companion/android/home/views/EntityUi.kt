@@ -24,10 +24,10 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
+import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.home.HomePresenterImpl
 import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.WearToggleChip
-import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.onEntityClickedFeedback
 import io.homeassistant.companion.android.util.previewEntity1
 import io.homeassistant.companion.android.util.previewEntity3
@@ -43,7 +43,7 @@ fun EntityUi(
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
     val attributes = entity.attributes as Map<*, *>
-    val iconBitmap = getIcon(entity as Entity<Map<String, Any>>, entity.domain, LocalContext.current)
+    val iconBitmap = entity.getIcon(LocalContext.current)
     val friendlyName = attributes["friendly_name"].toString()
 
     if (entity.domain in HomePresenterImpl.toggleDomains) {
@@ -151,14 +151,14 @@ private fun PreviewEntityUI() {
             onEntityClicked = { _, _ -> },
             isHapticEnabled = true,
             isToastEnabled = false,
-            onEntityLongPressed = { _ -> }
+            onEntityLongPressed = { }
         )
         EntityUi(
             entity = previewEntity3,
             onEntityClicked = { _, _ -> },
             isHapticEnabled = false,
             isToastEnabled = true,
-            onEntityLongPressed = { _ -> }
+            onEntityLongPressed = { }
         )
     }
 }

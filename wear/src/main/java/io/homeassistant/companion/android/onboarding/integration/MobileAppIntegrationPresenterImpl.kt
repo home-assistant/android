@@ -6,6 +6,7 @@ import dagger.hilt.android.qualifiers.ActivityContext
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.onboarding.getMessagingToken
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -28,7 +29,9 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
     private suspend fun createRegistration(deviceName: String): DeviceRegistration {
         return DeviceRegistration(
             "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-            deviceName
+            deviceName,
+            getMessagingToken(),
+            false
         )
     }
 

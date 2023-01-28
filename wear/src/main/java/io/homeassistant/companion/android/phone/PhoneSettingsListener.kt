@@ -18,12 +18,14 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.wear.getAll
 import io.homeassistant.companion.android.database.wear.replaceAll
 import io.homeassistant.companion.android.home.HomeActivity
 import io.homeassistant.companion.android.home.HomePresenterImpl
+import io.homeassistant.companion.android.onboarding.getMessagingToken
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -42,6 +44,9 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
 
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
+
+    @Inject
+    lateinit var wearPrefsRepository: WearPrefsRepository
 
     @Inject
     lateinit var favoritesDao: FavoritesDao
@@ -75,8 +80,8 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
             dataMap.putBoolean(KEY_IS_AUTHENTICATED, integrationUseCase.isRegistered())
             dataMap.putString(KEY_SUPPORTED_DOMAINS, objectMapper.writeValueAsString(HomePresenterImpl.supportedDomains))
             dataMap.putString(KEY_FAVORITES, objectMapper.writeValueAsString(currentFavorites))
-            dataMap.putString(KEY_TEMPLATE_TILE, integrationUseCase.getTemplateTileContent())
-            dataMap.putInt(KEY_TEMPLATE_TILE_REFRESH_INTERVAL, integrationUseCase.getTemplateTileRefreshInterval())
+            dataMap.putString(KEY_TEMPLATE_TILE, wearPrefsRepository.getTemplateTileContent())
+            dataMap.putInt(KEY_TEMPLATE_TILE_REFRESH_INTERVAL, wearPrefsRepository.getTemplateTileRefreshInterval())
             setUrgent()
             asPutDataRequest()
         }
@@ -124,7 +129,9 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
             integrationUseCase.registerDevice(
                 DeviceRegistration(
                     "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-                    deviceName
+                    deviceName,
+                    getMessagingToken(),
+                    false
                 )
             )
 
@@ -150,7 +157,7 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
     private fun saveTileTemplate(dataMap: DataMap) = mainScope.launch {
         val content = dataMap.getString(KEY_TEMPLATE_TILE, "")
         val interval = dataMap.getInt(KEY_TEMPLATE_TILE_REFRESH_INTERVAL, 0)
-        integrationUseCase.setTemplateTileContent(content)
-        integrationUseCase.setTemplateTileRefreshInterval(interval)
+        wearPrefsRepository.setTemplateTileContent(content)
+        wearPrefsRepository.setTemplateTileRefreshInterval(interval)
     }
 }

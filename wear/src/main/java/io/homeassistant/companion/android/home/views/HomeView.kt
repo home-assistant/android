@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
@@ -32,6 +33,8 @@ private const val SCREEN_SET_TILE_SHORTCUTS = "set_tile_shortcuts"
 private const val SCREEN_SELECT_TILE_SHORTCUT = "select_tile_shortcut"
 private const val SCREEN_SET_TILE_TEMPLATE = "set_tile_template"
 private const val SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL = "set_tile_template_refresh_interval"
+
+const val DEEPLINK_SENSOR_MANAGER = "ha_wear://$SCREEN_SINGLE_SENSOR_MANAGER"
 
 @Composable
 fun LoadHomePage(
@@ -215,6 +218,9 @@ fun LoadHomePage(
                     navArgument(name = ARG_SCREEN_SENSOR_MANAGER_ID) {
                         type = NavType.StringType
                     }
+                ),
+                deepLinks = listOf(
+                    navDeepLink { uriPattern = "$DEEPLINK_SENSOR_MANAGER/{$ARG_SCREEN_SENSOR_MANAGER_ID}" }
                 )
             ) { backStackEntry ->
                 val sensorManagerId =

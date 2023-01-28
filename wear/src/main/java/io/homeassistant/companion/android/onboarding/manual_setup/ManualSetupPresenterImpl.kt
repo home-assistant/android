@@ -9,7 +9,6 @@ import androidx.wear.phone.interactions.authentication.OAuthRequest
 import androidx.wear.phone.interactions.authentication.OAuthResponse
 import androidx.wear.phone.interactions.authentication.RemoteAuthClient
 import dagger.hilt.android.qualifiers.ActivityContext
-import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import kotlinx.coroutines.CoroutineScope
@@ -39,17 +38,19 @@ class ManualSetupPresenterImpl @Inject constructor(
     override fun onNextClicked(context: Context, url: String) {
         view.showLoading()
         mainScope.launch {
-            val request = OAuthRequest.Builder(context)
-                .setAuthProviderUrl(
-                    Uri.parse(
-                        authenticationUseCase.buildAuthenticationUrl(
-                            url,
-                            OAuthRequest.WEAR_REDIRECT_URL_PREFIX + BuildConfig.APPLICATION_ID
-                        )
+            val request: OAuthRequest
+            try {
+                request = OAuthRequest.Builder(context)
+                    .setAuthProviderUrl(
+                        Uri.parse(authenticationUseCase.buildAuthenticationUrl(url))
                     )
-                )
-                .setCodeChallenge(CodeChallenge(codeVerifier))
-                .build()
+                    .setCodeChallenge(CodeChallenge(codeVerifier))
+                    .build()
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to build OAuthRequest", e)
+                view.showError(commonR.string.failed_unsupported)
+                return@launch
+            }
 
             authClient = RemoteAuthClient.create(context)
             authClient?.let {

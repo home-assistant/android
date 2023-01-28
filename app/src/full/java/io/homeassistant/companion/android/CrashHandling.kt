@@ -29,7 +29,6 @@ fun initCrashReporting(context: Context, enabled: Boolean) {
     SentryAndroid.init(context) { options ->
         options.isEnableAutoSessionTracking = true
         options.isEnableNdk = false
-        options.dsn = "https://2d646f40f9574e0b9579e301a69bb030@o427061.ingest.sentry.io/5372876"
 
         options.beforeSend = SentryOptions.BeforeSendCallback { event, _ ->
             if (event.isCrashed && event.throwable != null) {

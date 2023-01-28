@@ -26,9 +26,13 @@ import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.wear.getAllFlow
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.util.RegistriesDataHandler
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -62,6 +66,9 @@ class MainViewModel @Inject constructor(
     // entities
     var entities = mutableStateMapOf<String, Entity<*>>()
         private set
+
+    private val _supportedEntities = MutableStateFlow(emptyList<String>())
+    val supportedEntities = _supportedEntities.asStateFlow()
 
     /**
      * IDs of favorites in the Favorites database.
@@ -133,27 +140,7 @@ class MainViewModel @Inject constructor(
             try {
                 // Load initial state
                 loadingState.value = LoadingState.LOADING
-                val getAreaRegistry = async { homePresenter.getAreaRegistry() }
-                val getDeviceRegistry = async { homePresenter.getDeviceRegistry() }
-                val getEntityRegistry = async { homePresenter.getEntityRegistry() }
-                val getEntities = async { homePresenter.getEntities() }
-
-                areaRegistry = getAreaRegistry.await()?.also {
-                    areas.addAll(it)
-                }
-                deviceRegistry = getDeviceRegistry.await()
-                entityRegistry = getEntityRegistry.await()
-
-                getEntities.await()?.forEach {
-                    if (supportedDomains().contains(it.domain)) {
-                        entities[it.entityId] = it
-                        // add to cache if part of favorites
-                        if (favoriteEntityIds.value.contains(it.entityId)) {
-                            addCachedFavorite(it.entityId)
-                        }
-                    }
-                }
-                updateEntityDomains()
+                updateUI()
 
                 // Finished initial load, update state
                 val webSocketState = homePresenter.getWebSocketState()
@@ -173,14 +160,44 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    private fun updateEntityStates(entity: Entity<*>) {
+        if (supportedDomains().contains(entity.domain)) {
+            entities[entity.entityId] = entity
+            // add to cache if part of favorites
+            if (favoriteEntityIds.value.contains(entity.entityId)) {
+                addCachedFavorite(entity.entityId)
+            }
+        }
+    }
+
+    suspend fun updateUI() = withContext(Dispatchers.IO) {
+        val getAreaRegistry = async { homePresenter.getAreaRegistry() }
+        val getDeviceRegistry = async { homePresenter.getDeviceRegistry() }
+        val getEntityRegistry = async { homePresenter.getEntityRegistry() }
+        val getEntities = async { homePresenter.getEntities() }
+
+        areaRegistry = getAreaRegistry.await()?.also {
+            areas.clear()
+            areas.addAll(it)
+        }
+        deviceRegistry = getDeviceRegistry.await()
+        entityRegistry = getEntityRegistry.await()
+
+        _supportedEntities.value = getSupportedEntities()
+
+        getEntities.await()?.also {
+            entities.clear()
+            it.forEach { state -> updateEntityStates(state) }
+        }
+        updateEntityDomains()
+    }
+
     suspend fun entityUpdates() {
         if (!homePresenter.isConnected())
             return
-        homePresenter.getEntityUpdates()?.collect {
-            if (supportedDomains().contains(it.domain)) {
-                entities[it.entityId] = it
-                updateEntityDomains()
-            }
+        homePresenter.getEntityUpdates(supportedEntities.value)?.collect {
+            updateEntityStates(it)
+            updateEntityDomains()
         }
     }
 
@@ -211,11 +228,18 @@ class MainViewModel @Inject constructor(
             return
         homePresenter.getEntityRegistryUpdates()?.collect {
             entityRegistry = homePresenter.getEntityRegistry()
+            _supportedEntities.value = getSupportedEntities()
             updateEntityDomains()
         }
     }
 
-    fun updateEntityDomains() {
+    private fun getSupportedEntities(): List<String> =
+        entityRegistry
+            .orEmpty()
+            .map { it.entityId }
+            .filter { it.split(".")[0] in supportedDomains() }
+
+    private fun updateEntityDomains() {
         val entitiesList = entities.values.toList().sortedBy { it.entityId }
         val areasList = areaRegistry.orEmpty().sortedBy { it.name }
         val domainsList = entitiesList.map { it.domain }.distinct()

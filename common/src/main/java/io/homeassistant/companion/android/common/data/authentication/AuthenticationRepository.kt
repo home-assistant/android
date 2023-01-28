@@ -13,7 +13,7 @@ interface AuthenticationRepository {
 
     suspend fun getSessionState(): SessionState
 
-    suspend fun buildAuthenticationUrl(baseUrl: String, callbackUrl: String): String
+    suspend fun buildAuthenticationUrl(baseUrl: String): String
 
     suspend fun buildBearerToken(): String
 

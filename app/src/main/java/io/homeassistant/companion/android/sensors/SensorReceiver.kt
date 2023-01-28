@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.sensors
 
 import android.annotation.SuppressLint
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.content.Intent
@@ -12,17 +13,28 @@ import android.os.PowerManager
 import androidx.annotation.RequiresApi
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
-import io.homeassistant.companion.android.common.sensors.AppSensorManager
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.sensors.BatterySensorManager
+import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.common.sensors.DNDSensorManager
+import io.homeassistant.companion.android.common.sensors.DisplaySensorManager
+import io.homeassistant.companion.android.common.sensors.KeyguardSensorManager
+import io.homeassistant.companion.android.common.sensors.LastRebootSensorManager
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
+import io.homeassistant.companion.android.common.sensors.LightSensorManager
+import io.homeassistant.companion.android.common.sensors.MobileDataManager
 import io.homeassistant.companion.android.common.sensors.NetworkSensorManager
 import io.homeassistant.companion.android.common.sensors.NextAlarmManager
+import io.homeassistant.companion.android.common.sensors.PhoneStateSensorManager
 import io.homeassistant.companion.android.common.sensors.PowerSensorManager
+import io.homeassistant.companion.android.common.sensors.PressureSensorManager
+import io.homeassistant.companion.android.common.sensors.ProximitySensorManager
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
 import io.homeassistant.companion.android.common.sensors.StepsSensorManager
+import io.homeassistant.companion.android.common.sensors.StorageSensorManager
+import io.homeassistant.companion.android.common.sensors.TimeZoneManager
+import io.homeassistant.companion.android.common.sensors.TrafficStatsManager
 import io.homeassistant.companion.android.settings.SettingsActivity
 
 @AndroidEntryPoint
@@ -42,6 +54,7 @@ class SensorReceiver : SensorReceiverBase() {
         @RequiresApi(Build.VERSION_CODES.M)
         val MANAGERS = listOf(
             ActivitySensorManager(),
+            AndroidAutoSensorManager(),
             AppSensorManager(),
             AudioSensorManager(),
             BatterySensorManager(),
@@ -103,11 +116,17 @@ class SensorReceiver : SensorReceiverBase() {
         WifiManager.WIFI_STATE_CHANGED_ACTION to NetworkSensorManager.wifiState.id,
     )
 
-    override fun getSensorSettingsIntent(context: Context, id: String): Intent? {
-        return SettingsActivity.newInstance(context).apply {
-            putExtra("fragment", "sensors/$id")
+    override fun getSensorSettingsIntent(
+        context: Context,
+        sensorId: String,
+        sensorManagerId: String,
+        notificationId: Int
+    ): PendingIntent? {
+        val intent = SettingsActivity.newInstance(context).apply {
+            putExtra("fragment", "sensors/$sensorId")
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
         }
+        return PendingIntent.getActivity(context, notificationId, intent, PendingIntent.FLAG_IMMUTABLE)
     }
 }
