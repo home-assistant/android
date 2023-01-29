@@ -348,8 +348,11 @@ class SettingsFragment constructor(
             }
             serverPreference.setOnPreferenceClickListener {
                 parentFragmentManager.commit {
-                    replace(R.id.content, ServerSettingsFragment::class.java, null)
-                    // TODO extra indicates server ID
+                    replace(
+                        R.id.content,
+                        ServerSettingsFragment::class.java,
+                        Bundle().apply { putInt(ServerSettingsFragment.EXTRA_SERVER, server.id) }
+                    )
                     addToBackStack(getString(commonR.string.server_settings))
                 }
                 return@setOnPreferenceClickListener true

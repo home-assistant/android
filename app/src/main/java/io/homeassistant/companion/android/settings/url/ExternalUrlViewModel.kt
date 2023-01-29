@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.MalformedHttpUrlException
@@ -16,6 +17,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ExternalUrlViewModel @Inject constructor(
+    state: SavedStateHandle,
     private val serverManager: ServerManager,
     application: Application
 ) : AndroidViewModel(application) {
@@ -33,8 +35,11 @@ class ExternalUrlViewModel @Inject constructor(
     var externalUrl by mutableStateOf("")
         private set
 
+    private var serverId = -1
+
     init {
-        serverManager.getServer()?.let {
+        state.get<Int>(ExternalUrlFragment.EXTRA_SERVER)?.let { serverId = it }
+        serverManager.getServer(serverId)?.let {
             canUseCloud = it.connection.canUseCloud()
             useCloud = it.connection.useCloud
             externalUrl = it.connection.getUrl(isInternal = false, force = true).toString()
@@ -44,7 +49,7 @@ class ExternalUrlViewModel @Inject constructor(
     fun toggleCloud(use: Boolean) {
         viewModelScope.launch {
             useCloud = use && canUseCloud
-            serverManager.getServer()?.let {
+            serverManager.getServer(serverId)?.let {
                 serverManager.updateServer(
                     it.copy(
                         connection = it.connection.copy(
@@ -58,7 +63,7 @@ class ExternalUrlViewModel @Inject constructor(
 
     fun updateExternalUrl(url: String) {
         viewModelScope.launch {
-            serverManager.getServer()?.let {
+            serverManager.getServer(serverId)?.let {
                 try {
                     val formatted = UrlUtil.formattedUrlString(url)
                     serverManager.updateServer(

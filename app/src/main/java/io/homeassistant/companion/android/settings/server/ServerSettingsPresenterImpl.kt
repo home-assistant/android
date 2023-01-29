@@ -22,17 +22,19 @@ class ServerSettingsPresenterImpl @Inject constructor(
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
     private lateinit var view: ServerSettingsView
+    private var serverId = -1
 
-    override fun init(view: ServerSettingsView) {
+    override fun init(view: ServerSettingsView, serverId: Int) {
         this.view = view
+        this.serverId = serverId
     }
 
     override fun getPreferenceDataStore(): PreferenceDataStore = this
 
     override fun getBoolean(key: String?, defValue: Boolean): Boolean = runBlocking {
         when (key) {
-            "app_lock" -> serverManager.authenticationRepository().isLockEnabledRaw()
-            "app_lock_home_bypass" -> serverManager.authenticationRepository().isLockHomeBypassEnabled()
+            "app_lock" -> serverManager.authenticationRepository(serverId).isLockEnabledRaw()
+            "app_lock_home_bypass" -> serverManager.authenticationRepository(serverId).isLockHomeBypassEnabled()
             else -> throw IllegalArgumentException("No boolean found by this key: $key")
         }
     }
@@ -40,8 +42,8 @@ class ServerSettingsPresenterImpl @Inject constructor(
     override fun putBoolean(key: String?, value: Boolean) {
         mainScope.launch {
             when (key) {
-                "app_lock" -> serverManager.authenticationRepository().setLockEnabled(value)
-                "app_lock_home_bypass" -> serverManager.authenticationRepository().setLockHomeBypassEnabled(value)
+                "app_lock" -> serverManager.authenticationRepository(serverId).setLockEnabled(value)
+                "app_lock_home_bypass" -> serverManager.authenticationRepository(serverId).setLockHomeBypassEnabled(value)
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }
@@ -49,9 +51,9 @@ class ServerSettingsPresenterImpl @Inject constructor(
 
     override fun getString(key: String?, defValue: String?): String? = runBlocking {
         when (key) {
-            "connection_internal" -> (serverManager.getServer()?.connection?.getUrl(isInternal = true, force = true) ?: "").toString()
-            "registration_name" -> serverManager.integrationRepository().getRegistration().deviceName
-            "session_timeout" -> serverManager.integrationRepository().getSessionTimeOut().toString()
+            "connection_internal" -> (serverManager.getServer(serverId)?.connection?.getUrl(isInternal = true, force = true) ?: "").toString()
+            "registration_name" -> serverManager.integrationRepository(serverId).getRegistration().deviceName
+            "session_timeout" -> serverManager.integrationRepository(serverId).getSessionTimeOut().toString()
             else -> throw IllegalArgumentException("No string found by this key: $key")
         }
     }
@@ -60,7 +62,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
         mainScope.launch {
             when (key) {
                 "connection_internal" -> {
-                    serverManager.getServer()?.let {
+                    serverManager.getServer(serverId)?.let {
                         serverManager.updateServer(
                             it.copy(
                                 connection = it.connection.copy(
@@ -72,14 +74,14 @@ class ServerSettingsPresenterImpl @Inject constructor(
                 }
                 "session_timeout" -> {
                     try {
-                        serverManager.integrationRepository().sessionTimeOut(value.toString().toInt())
+                        serverManager.integrationRepository(serverId).sessionTimeOut(value.toString().toInt())
                     } catch (e: Exception) {
                         Log.e(TAG, "Issue saving session timeout value", e)
                     }
                 }
                 "registration_name" -> {
                     try {
-                        serverManager.integrationRepository().updateRegistration(DeviceRegistration(deviceName = value!!))
+                        serverManager.integrationRepository(serverId).updateRegistration(DeviceRegistration(deviceName = value!!))
                     } catch (e: Exception) {
                         Log.e(TAG, "Issue updating registration with new device name", e)
                     }
@@ -95,7 +97,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
 
     override fun updateUrlStatus() {
         mainScope.launch {
-            serverManager.getServer()?.let {
+            serverManager.getServer(serverId)?.let {
                 view.updateExternalUrl(
                     it.connection.getUrl(false)?.toString() ?: "",
                     it.connection.useCloud && it.connection.canUseCloud()
@@ -103,9 +105,9 @@ class ServerSettingsPresenterImpl @Inject constructor(
             }
         }
         mainScope.launch {
-            val ssids = serverManager.getServer()?.connection?.internalSsids.orEmpty()
+            val ssids = serverManager.getServer(serverId)?.connection?.internalSsids.orEmpty()
             if (ssids.isEmpty()) {
-                serverManager.getServer()?.let {
+                serverManager.getServer(serverId)?.let {
                     serverManager.updateServer(
                         it.copy(
                             connection = it.connection.copy(
@@ -122,12 +124,12 @@ class ServerSettingsPresenterImpl @Inject constructor(
     }
 
     override fun isSsidUsed(): Boolean = runBlocking {
-        serverManager.getServer()?.connection?.internalSsids?.isNotEmpty() == true
+        serverManager.getServer(serverId)?.connection?.internalSsids?.isNotEmpty() == true
     }
 
     override fun clearSsids() {
         mainScope.launch {
-            serverManager.getServer()?.let {
+            serverManager.getServer(serverId)?.let {
                 serverManager.updateServer(
                     it.copy(
                         connection = it.connection.copy(
@@ -141,6 +143,6 @@ class ServerSettingsPresenterImpl @Inject constructor(
     }
 
     override fun setAppActive() = runBlocking {
-        serverManager.integrationRepository().setAppActive(true)
+        serverManager.integrationRepository(serverId).setAppActive(true)
     }
 }

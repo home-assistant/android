@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -15,6 +16,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SsidViewModel @Inject constructor(
+    state: SavedStateHandle,
     private val serverManager: ServerManager,
     private val wifiHelper: WifiHelper,
     application: Application
@@ -35,9 +37,12 @@ class SsidViewModel @Inject constructor(
     var activeBssid by mutableStateOf<String?>(null)
         private set
 
+    private var serverId = -1
+
     init {
+        state.get<Int>(SsidFragment.EXTRA_SERVER)?.let { serverId = it }
         viewModelScope.launch {
-            val server = serverManager.getServer()
+            val server = serverManager.getServer(serverId)
             wifiSsids.clear()
             wifiSsids.addAll(server?.connection?.internalSsids.orEmpty())
             server?.connection?.prioritizeInternal?.let { prioritizeInternal = it }
@@ -63,7 +68,7 @@ class SsidViewModel @Inject constructor(
 
     private fun setHomeWifiSsids(ssids: List<String>) {
         viewModelScope.launch {
-            serverManager.getServer()?.let {
+            serverManager.getServer(serverId)?.let {
                 serverManager.updateServer(
                     it.copy(
                         connection = it.connection.copy(
@@ -79,7 +84,7 @@ class SsidViewModel @Inject constructor(
 
     fun setPrioritize(prioritize: Boolean) {
         viewModelScope.launch {
-            serverManager.getServer()?.let {
+            serverManager.getServer(serverId)?.let {
                 serverManager.updateServer(
                     it.copy(
                         connection = it.connection.copy(

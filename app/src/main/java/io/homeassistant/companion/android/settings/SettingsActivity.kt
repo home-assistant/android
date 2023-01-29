@@ -86,7 +86,7 @@ class SettingsActivity : BaseActivity() {
                 .replace(
                     R.id.content,
                     when {
-                        settingsNavigation == "websocket" -> WebsocketSettingFragment::class.java
+                        settingsNavigation == "websocket" -> WebsocketSettingFragment::class.java // TODO multiserver notification
                         settingsNavigation == "notification_history" -> NotificationHistoryFragment::class.java
                         settingsNavigation?.startsWith("sensors/") == true -> SensorDetailFragment::class.java
                         settingsNavigation?.startsWith("tiles/") == true -> ManageTilesFragment::class.java

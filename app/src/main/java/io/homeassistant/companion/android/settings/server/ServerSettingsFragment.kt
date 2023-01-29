@@ -35,6 +35,8 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
 
     companion object {
         private const val TAG = "ServerSettingsFragment"
+
+        const val EXTRA_SERVER = "server"
     }
 
     @Inject
@@ -44,8 +46,13 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         onPermissionsResult(it)
     }
 
+    private var serverId = -1
+
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        presenter.init(this)
+        arguments?.let {
+            serverId = it.getInt(EXTRA_SERVER, serverId)
+        }
+        presenter.init(this, serverId)
 
         preferenceManager.preferenceDataStore = presenter.getPreferenceDataStore()
 
@@ -55,8 +62,8 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
             val isValid = newValue.toString().isBlank() || newValue.toString().toHttpUrlOrNull() != null
             if (!isValid) {
                 AlertDialog.Builder(requireActivity())
-                    .setTitle(io.homeassistant.companion.android.common.R.string.url_invalid)
-                    .setMessage(io.homeassistant.companion.android.common.R.string.url_parse_error)
+                    .setTitle(commonR.string.url_invalid)
+                    .setMessage(commonR.string.url_parse_error)
                     .setPositiveButton(android.R.string.ok) { _, _ -> }
                     .show()
             }
@@ -71,13 +78,13 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
                 findPreference<EditTextPreference>("session_timeout")?.isVisible = false
             } else {
                 val settingsActivity = requireActivity() as SettingsActivity
-                val canAuth = settingsActivity.requestAuthentication(getString(io.homeassistant.companion.android.common.R.string.biometric_set_title), ::setLockAuthenticationResult)
+                val canAuth = settingsActivity.requestAuthentication(getString(commonR.string.biometric_set_title), ::setLockAuthenticationResult)
                 isValid = canAuth
 
                 if (!canAuth) {
                     AlertDialog.Builder(requireActivity())
-                        .setTitle(io.homeassistant.companion.android.common.R.string.set_lock_title)
-                        .setMessage(io.homeassistant.companion.android.common.R.string.set_lock_message)
+                        .setTitle(commonR.string.set_lock_title)
+                        .setMessage(commonR.string.set_lock_message)
                         .setPositiveButton(android.R.string.ok) { _, _ -> }
                         .show()
                 }
@@ -103,8 +110,12 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
 
         findPreference<Preference>("connection_external")?.setOnPreferenceClickListener {
             parentFragmentManager.commit {
-                replace(R.id.content, ExternalUrlFragment::class.java, null)
-                addToBackStack(getString(io.homeassistant.companion.android.common.R.string.input_url))
+                replace(
+                    R.id.content,
+                    ExternalUrlFragment::class.java,
+                    Bundle().apply { putInt(ExternalUrlFragment.EXTRA_SERVER, serverId) }
+                )
+                addToBackStack(getString(commonR.string.input_url))
             }
             return@setOnPreferenceClickListener true
         }
@@ -121,8 +132,12 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         findPreference<Preference>("websocket")?.let {
             it.setOnPreferenceClickListener {
                 parentFragmentManager.commit {
-                    replace(R.id.content, WebsocketSettingFragment::class.java, null)
-                    addToBackStack(getString(io.homeassistant.companion.android.common.R.string.notifications))
+                    replace(
+                        R.id.content,
+                        WebsocketSettingFragment::class.java,
+                        Bundle().apply { putInt(WebsocketSettingFragment.EXTRA_SERVER, serverId) }
+                    )
+                    addToBackStack(getString(commonR.string.websocket_setting_name))
                 }
                 return@setOnPreferenceClickListener true
             }
@@ -161,7 +176,7 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
     override fun updateExternalUrl(url: String, useCloud: Boolean) {
         findPreference<Preference>("connection_external")?.let {
             it.summary =
-                if (useCloud) getString(io.homeassistant.companion.android.common.R.string.input_cloud)
+                if (useCloud) getString(commonR.string.input_cloud)
                 else url
         }
     }
@@ -169,7 +184,7 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
     override fun updateSsids(ssids: List<String>) {
         findPreference<Preference>("connection_internal_ssids")?.let {
             it.summary =
-                if (ssids.isEmpty()) getString(io.homeassistant.companion.android.common.R.string.pref_connection_ssids_empty)
+                if (ssids.isEmpty()) getString(commonR.string.pref_connection_ssids_empty)
                 else ssids.joinToString()
         }
     }
@@ -196,9 +211,7 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
                 DisabledLocationHandler.showLocationDisabledWarnDialog(
                     requireActivity(),
                     arrayOf(
-                        getString(
-                            io.homeassistant.companion.android.common.R.string.pref_connection_wifi
-                        )
+                        getString(commonR.string.pref_connection_wifi)
                     ),
                     showAsNotification = false, withDisableOption = true
                 ) {
@@ -208,9 +221,7 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
                 DisabledLocationHandler.showLocationDisabledWarnDialog(
                     requireActivity(),
                     arrayOf(
-                        getString(
-                            io.homeassistant.companion.android.common.R.string.pref_connection_wifi
-                        )
+                        getString(commonR.string.pref_connection_wifi)
                     )
                 )
             }
@@ -219,8 +230,12 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
 
     private fun showSsidSettings() {
         parentFragmentManager.commit {
-            replace(R.id.content, SsidFragment::class.java, null)
-            addToBackStack(getString(io.homeassistant.companion.android.common.R.string.manage_ssids))
+            replace(
+                R.id.content,
+                SsidFragment::class.java,
+                Bundle().apply { putInt(SsidFragment.EXTRA_SERVER, serverId) }
+            )
+            addToBackStack(getString(commonR.string.manage_ssids))
         }
     }
 
