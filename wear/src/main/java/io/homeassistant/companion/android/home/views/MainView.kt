@@ -331,7 +331,7 @@ fun MainView(
 
                 if (mainViewModel.isFavoritesOnly)
                     item {
-                        Spacer(Modifier.padding(4.dp))
+                        Spacer(Modifier.padding(32.dp))
                     }
 
                 // Settings

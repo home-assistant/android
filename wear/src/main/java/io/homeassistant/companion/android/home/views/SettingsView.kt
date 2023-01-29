@@ -113,6 +113,7 @@ fun SettingsView(
                         checked = isFavoritesOnly,
                         onCheckedChange = { setFavoritesOnly(it) },
                         label = { Text(stringResource(commonR.string.only_favorites)) },
+                        enabled = favorites.isNotEmpty(),
                         toggleControl = {
                             Icon(
                                 imageVector = ToggleChipDefaults.switchIcon(isFavoritesOnly),

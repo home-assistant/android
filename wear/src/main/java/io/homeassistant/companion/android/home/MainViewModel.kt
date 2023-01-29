@@ -233,7 +233,7 @@ class MainViewModel @Inject constructor(
     }
 
     suspend fun entityRegistryUpdates() {
-        if (!homePresenter.isConnected() || isFavoritesOnly)
+        if (!homePresenter.isConnected())
             return
         homePresenter.getEntityRegistryUpdates()?.collect {
             entityRegistry = homePresenter.getEntityRegistry()

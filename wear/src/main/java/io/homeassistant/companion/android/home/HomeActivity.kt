@@ -57,10 +57,10 @@ class HomeActivity : ComponentActivity(), HomeView {
                         entityUpdateJob = launch { mainViewModel.entityUpdates() }
                     }
                 }
+                launch { mainViewModel.entityRegistryUpdates() }
                 if (!mainViewModel.isFavoritesOnly) {
                     launch { mainViewModel.areaUpdates() }
                     launch { mainViewModel.deviceUpdates() }
-                    launch { mainViewModel.entityRegistryUpdates() }
                 }
             }
         }
