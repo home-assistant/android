@@ -9,6 +9,7 @@
         <Preference
             android:key="server_add"
             android:icon="@drawable/ic_plus"
+            android:order="998"
             android:title="@string/server_add" />
         <Preference
             android:key="wear_settings"

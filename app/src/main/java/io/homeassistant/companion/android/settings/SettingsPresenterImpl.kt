@@ -3,9 +3,7 @@ package io.homeassistant.companion.android.settings
 import android.content.Context
 import android.util.Log
 import androidx.preference.PreferenceDataStore
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.BuildConfig
-import io.homeassistant.companion.android.common.data.MalformedHttpUrlException
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
@@ -98,14 +96,8 @@ class SettingsPresenterImpl @Inject constructor(
         mainScope.cancel()
     }
 
-    override fun getServerRegistrationName(): String? = runBlocking {
-        // TODO fix
-        integrationUseCase.getRegistration().deviceName
-    }
-
-    override fun getServerName(): String = runBlocking {
-        // TODO fix
-        urlUseCase.getUrl()?.toString() ?: ""
+    override fun getServers(): List<Server> {
+        return serverManager.servers.filter { it.type == ServerType.DEFAULT } // TODO offer a flow version
     }
 
     override suspend fun getNotificationRateLimits(): RateLimitResponse? = withContext(Dispatchers.IO) {
@@ -160,14 +152,6 @@ class SettingsPresenterImpl @Inject constructor(
                     Log.e(LaunchActivity.TAG, "Can't revoke session", e)
                 }
             }
-        }
-    }
-
-    override suspend fun removeServer() {
-        serverManager.getServer()?.let {
-            Log.d(TAG, "Deleting server ${it.id}: ${it.name}")
-            serverManager.removeServer(it.id)
-            // TODO update UI
         }
     }
 }

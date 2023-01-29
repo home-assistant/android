@@ -22,16 +22,15 @@ import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import com.mikepenz.iconics.utils.sizeDp
 import com.mikepenz.iconics.utils.toAndroidIconCompat
-import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.getIcon
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.launch.LaunchActivity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import io.homeassistant.companion.android.common.data.servers.ServerManager
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Locale
@@ -73,11 +72,13 @@ class MainVehicleScreen(
     init {
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                isLoggedIn = serverManager.isRegistered()
+                isLoggedIn = serverManager.isRegistered() &&
+                    serverManager.authenticationRepository().getSessionState() == SessionState.CONNECTED
                 invalidate()
                 while (isLoggedIn != true) {
                     delay(1000)
-                    isLoggedIn = serverManager.isRegistered()
+                    isLoggedIn = serverManager.isRegistered() &&
+                        serverManager.authenticationRepository().getSessionState() == SessionState.CONNECTED
                     invalidate()
                 }
                 allEntities.collect { entities ->
@@ -185,7 +186,7 @@ class MainVehicleScreen(
                     screenManager.push(
                         MapVehicleScreen(
                             carContext,
-                            integrationRepository,
+                            serverManager.integrationRepository(),
                             allEntities.map { it.values.filter { entity -> entity.domain in MAP_DOMAINS } }
                         )
                     )

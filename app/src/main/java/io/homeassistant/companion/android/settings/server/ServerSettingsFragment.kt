@@ -166,7 +166,7 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         }
     }
 
-    override fun updateSsids(ssids: Set<String>) {
+    override fun updateSsids(ssids: List<String>) {
         findPreference<Preference>("connection_internal_ssids")?.let {
             it.summary =
                 if (ssids.isEmpty()) getString(io.homeassistant.companion.android.common.R.string.pref_connection_ssids_empty)

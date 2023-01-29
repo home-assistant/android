@@ -10,8 +10,8 @@ import android.os.VibratorManager
 import android.util.Log
 import androidx.core.content.getSystemService
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.home.HomePresenterImpl
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject

@@ -7,15 +7,15 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class ConversationViewModel @Inject constructor(
     application: Application,
-    private val serverManager: ServerManager
+    private val serverManager: ServerManager,
     private val wearPrefsRepository: WearPrefsRepository
 ) : AndroidViewModel(application) {
 
@@ -47,7 +47,7 @@ class ConversationViewModel @Inject constructor(
 
     suspend fun isSupportConversation() {
         checkSupportProgress = true
-        isRegistered = integrationUseCase.isRegistered()
+        isRegistered = serverManager.isRegistered()
         supportsConversation =
             serverManager.isRegistered() &&
             serverManager.integrationRepository().isHomeAssistantVersionAtLeast(2023, 1, 0) &&

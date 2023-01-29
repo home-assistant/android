@@ -49,12 +49,14 @@ class HaCarAppService : CarAppService() {
             private val allEntities: Flow<Map<String, Entity<*>>> = flow {
                 emit(emptyMap())
                 val entities: MutableMap<String, Entity<*>>? =
-                    integrationRepository.getEntities()
-                        ?.associate { it.entityId to it }
-                        ?.toMutableMap()
+                    if (serverManager.isRegistered()) {
+                        serverManager.integrationRepository().getEntities()
+                            ?.associate { it.entityId to it }
+                            ?.toMutableMap()
+                    } else null
                 if (entities != null) {
                     emit(entities.toImmutableMap())
-                    integrationRepository.getEntityUpdates()?.collect { entity ->
+                    serverManager.integrationRepository().getEntityUpdates()?.collect { entity ->
                         entities[entity.entityId] = entity
                         emit(entities.toImmutableMap())
                     }

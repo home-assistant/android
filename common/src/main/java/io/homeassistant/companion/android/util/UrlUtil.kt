@@ -22,13 +22,12 @@ object UrlUtil {
         }
     }
 
-    fun buildAuthenticationUrl(url: String, redirect: String): String {
+    fun buildAuthenticationUrl(url: String): String {
         return url.toHttpUrlOrNull()!!
             .newBuilder()
             .addPathSegments("auth/authorize")
             .addEncodedQueryParameter("response_type", "code")
             .addEncodedQueryParameter("client_id", AuthenticationService.CLIENT_ID)
-            .addEncodedQueryParameter("redirect_uri", redirect)
             .build()
             .toString()
     }

@@ -128,7 +128,10 @@ class WebViewPresenterImpl @Inject constructor(
     override fun onRevokeExternalAuth(callback: String) {
         mainScope.launch {
             try {
-                serverManager.authenticationRepository().revokeSession()
+                serverManager.getServer()?.let {
+                    serverManager.authenticationRepository(it.id).revokeSession()
+                    serverManager.removeServer(it.id)
+                }
                 view.setExternalAuth("$callback(true)")
                 view.relaunchApp()
             } catch (e: Exception) {

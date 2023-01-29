@@ -158,12 +158,15 @@ class HomePresenterImpl @Inject constructor(
 
     private fun finishSession() {
         mainScope.launch {
-            try {
-                serverManager.authenticationRepository().revokeSession()
-            } catch (e: Exception) {
-                Log.e(TAG, "Exception while revoking session", e)
-                // Remove local data anyway, the user wants to sign out and we don't need the server for that
-                serverManager.getServer()?.let { serverManager.removeServer(it.id) }
+            serverManager.getServer()?.let {
+                try {
+                    serverManager.authenticationRepository(it.id).revokeSession()
+                    serverManager.removeServer(it.id)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Exception while revoking session", e)
+                    // Remove local data anyway, the user wants to sign out and we don't need the server for that
+                    serverManager.removeServer(it.id)
+                }
             }
             view.displayOnBoarding()
         }

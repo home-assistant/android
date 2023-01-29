@@ -2,10 +2,8 @@ package io.homeassistant.companion.android.settings.server
 
 import android.util.Log
 import androidx.preference.PreferenceDataStore
-import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -15,9 +13,7 @@ import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 class ServerSettingsPresenterImpl @Inject constructor(
-    private val authenticationRepository: AuthenticationRepository,
-    private val integrationRepository: IntegrationRepository,
-    private val urlRepository: UrlRepository
+    private val serverManager: ServerManager
 ) : ServerSettingsPresenter, PreferenceDataStore() {
 
     companion object {
@@ -35,8 +31,8 @@ class ServerSettingsPresenterImpl @Inject constructor(
 
     override fun getBoolean(key: String?, defValue: Boolean): Boolean = runBlocking {
         when (key) {
-            "app_lock" -> authenticationRepository.isLockEnabledRaw()
-            "app_lock_home_bypass" -> authenticationRepository.isLockHomeBypassEnabled()
+            "app_lock" -> serverManager.authenticationRepository().isLockEnabledRaw()
+            "app_lock_home_bypass" -> serverManager.authenticationRepository().isLockHomeBypassEnabled()
             else -> throw IllegalArgumentException("No boolean found by this key: $key")
         }
     }
@@ -44,8 +40,8 @@ class ServerSettingsPresenterImpl @Inject constructor(
     override fun putBoolean(key: String?, value: Boolean) {
         mainScope.launch {
             when (key) {
-                "app_lock" -> authenticationRepository.setLockEnabled(value)
-                "app_lock_home_bypass" -> authenticationRepository.setLockHomeBypassEnabled(value)
+                "app_lock" -> serverManager.authenticationRepository().setLockEnabled(value)
+                "app_lock_home_bypass" -> serverManager.authenticationRepository().setLockHomeBypassEnabled(value)
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }
@@ -53,9 +49,9 @@ class ServerSettingsPresenterImpl @Inject constructor(
 
     override fun getString(key: String?, defValue: String?): String? = runBlocking {
         when (key) {
-            "connection_internal" -> (urlRepository.getUrl(isInternal = true, force = true) ?: "").toString()
-            "registration_name" -> integrationRepository.getRegistration().deviceName
-            "session_timeout" -> integrationRepository.getSessionTimeOut().toString()
+            "connection_internal" -> (serverManager.getServer()?.connection?.getUrl(isInternal = true, force = true) ?: "").toString()
+            "registration_name" -> serverManager.integrationRepository().getRegistration().deviceName
+            "session_timeout" -> serverManager.integrationRepository().getSessionTimeOut().toString()
             else -> throw IllegalArgumentException("No string found by this key: $key")
         }
     }
@@ -63,17 +59,27 @@ class ServerSettingsPresenterImpl @Inject constructor(
     override fun putString(key: String?, value: String?) {
         mainScope.launch {
             when (key) {
-                "connection_internal" -> urlRepository.saveUrl(value ?: "", true)
+                "connection_internal" -> {
+                    serverManager.getServer()?.let {
+                        serverManager.updateServer(
+                            it.copy(
+                                connection = it.connection.copy(
+                                    internalUrl = value
+                                )
+                            )
+                        )
+                    }
+                }
                 "session_timeout" -> {
                     try {
-                        integrationRepository.sessionTimeOut(value.toString().toInt())
+                        serverManager.integrationRepository().sessionTimeOut(value.toString().toInt())
                     } catch (e: Exception) {
                         Log.e(TAG, "Issue saving session timeout value", e)
                     }
                 }
                 "registration_name" -> {
                     try {
-                        integrationRepository.updateRegistration(DeviceRegistration(deviceName = value!!))
+                        serverManager.integrationRepository().updateRegistration(DeviceRegistration(deviceName = value!!))
                     } catch (e: Exception) {
                         Log.e(TAG, "Issue updating registration with new device name", e)
                     }
@@ -89,14 +95,26 @@ class ServerSettingsPresenterImpl @Inject constructor(
 
     override fun updateUrlStatus() {
         mainScope.launch {
-            view.updateExternalUrl(
-                urlRepository.getUrl(false)?.toString() ?: "",
-                urlRepository.shouldUseCloud() && urlRepository.canUseCloud()
-            )
+            serverManager.getServer()?.let {
+                view.updateExternalUrl(
+                    it.connection.getUrl(false)?.toString() ?: "",
+                    it.connection.useCloud && it.connection.canUseCloud()
+                )
+            }
         }
         mainScope.launch {
-            val ssids = urlRepository.getHomeWifiSsids()
-            if (ssids.isEmpty()) urlRepository.saveUrl("", true)
+            val ssids = serverManager.getServer()?.connection?.internalSsids.orEmpty()
+            if (ssids.isEmpty()) {
+                serverManager.getServer()?.let {
+                    serverManager.updateServer(
+                        it.copy(
+                            connection = it.connection.copy(
+                                internalUrl = null
+                            )
+                        )
+                    )
+                }
+            }
 
             view.enableInternalConnection(ssids.isNotEmpty())
             view.updateSsids(ssids)
@@ -104,17 +122,25 @@ class ServerSettingsPresenterImpl @Inject constructor(
     }
 
     override fun isSsidUsed(): Boolean = runBlocking {
-        urlRepository.getHomeWifiSsids().isNotEmpty()
+        serverManager.getServer()?.connection?.internalSsids?.isNotEmpty() == true
     }
 
     override fun clearSsids() {
         mainScope.launch {
-            urlRepository.saveHomeWifiSsids(emptySet())
+            serverManager.getServer()?.let {
+                serverManager.updateServer(
+                    it.copy(
+                        connection = it.connection.copy(
+                            internalSsids = emptyList()
+                        )
+                    )
+                )
+            }
             updateUrlStatus()
         }
     }
 
     override fun setAppActive() = runBlocking {
-        integrationRepository.setAppActive(true)
+        serverManager.integrationRepository().setAppActive(true)
     }
 }

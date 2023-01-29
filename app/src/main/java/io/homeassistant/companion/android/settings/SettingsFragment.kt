@@ -24,6 +24,7 @@ import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.settings.controls.ManageControlsSettingsFragment
@@ -40,7 +41,10 @@ import io.homeassistant.companion.android.settings.wear.SettingsWearActivity
 import io.homeassistant.companion.android.settings.wear.SettingsWearDetection
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -49,7 +53,8 @@ import io.homeassistant.companion.android.common.R as commonR
 
 class SettingsFragment constructor(
     val presenter: SettingsPresenter,
-    val langProvider: LanguagesProvider
+    val langProvider: LanguagesProvider,
+    private val serverManager: ServerManager
 ) : PreferenceFragmentCompat() {
 
     companion object {
@@ -66,33 +71,12 @@ class SettingsFragment constructor(
 
     private val requestOnboardingResult = registerForActivityResult(OnboardApp(), this::onOnboardingComplete)
 
+    private val serverMutex = Mutex()
+
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         preferenceManager.preferenceDataStore = presenter.getPreferenceDataStore()
 
         setPreferencesFromResource(R.xml.preferences, rootKey)
-
-        // This should enumerate over all servers in the future
-        val serverPreference = Preference(requireContext())
-        presenter.getServerRegistrationName()?.let {
-            serverPreference.title = it
-            serverPreference.summary = presenter.getServerName()
-        } ?: run {
-            serverPreference.title = presenter.getServerName()
-        }
-        serverPreference.order = 1
-        try {
-            serverPreference.icon = AppCompatResources.getDrawable(requireContext(), commonR.drawable.ic_stat_ic_notification_blue)
-        } catch (e: Exception) {
-            Log.e(TAG, "Unable to set the server icon", e)
-        }
-        serverPreference.setOnPreferenceClickListener {
-            parentFragmentManager.commit {
-                replace(R.id.content, ServerSettingsFragment::class.java, null)
-                addToBackStack(getString(commonR.string.server_settings))
-            }
-            return@setOnPreferenceClickListener true
-        }
-        findPreference<PreferenceCategory>("servers_devices_category")?.addPreference(serverPreference)
 
         findPreference<Preference>("nfc_tags")?.let {
             val pm: PackageManager = requireContext().packageManager
@@ -336,6 +320,44 @@ class SettingsFragment constructor(
         }
     }
 
+    private suspend fun updateServers() = serverMutex.withLock {
+        val category = findPreference<PreferenceCategory>("servers_devices_category")
+
+        val numPreferences = category?.preferenceCount ?: 0
+        val removePreferences = mutableListOf<Preference>()
+        for (i in 0 until numPreferences) {
+            category?.getPreference(i)?.let {
+                if (it.key != "server_add" && it.key != "wear_settings") removePreferences += it
+            }
+        }
+        removePreferences.forEach {
+            category?.removePreference(it)
+        }
+
+        presenter.getServers().forEachIndexed { index, server ->
+            val serverPreference = Preference(requireContext())
+            serverManager.integrationRepository(server.id).getRegistration().let {
+                serverPreference.title = it.deviceName
+                serverPreference.summary = server.connection.getUrl()?.toString()
+            }
+            serverPreference.order = index
+            try {
+                serverPreference.icon = AppCompatResources.getDrawable(requireContext(), commonR.drawable.ic_stat_ic_notification_blue)
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to set the server icon", e)
+            }
+            serverPreference.setOnPreferenceClickListener {
+                parentFragmentManager.commit {
+                    replace(R.id.content, ServerSettingsFragment::class.java, null)
+                    // TODO extra indicates server ID
+                    addToBackStack(getString(commonR.string.server_settings))
+                }
+                return@setOnPreferenceClickListener true
+            }
+            category?.addPreference(serverPreference)
+        }
+    }
+
     private fun updateNotificationChannelPrefs() {
         val notificationsEnabled =
             Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
@@ -356,8 +378,8 @@ class SettingsFragment constructor(
     private fun onOnboardingComplete(result: OnboardApp.Output?) {
         lifecycleScope.launch {
             presenter.addServer(result)
-            presenter.updateExternalUrlStatus()
-            presenter.updateInternalUrlStatus()
+            delay(500L)
+            updateServers()
         }
     }
 
@@ -393,6 +415,10 @@ class SettingsFragment constructor(
     override fun onResume() {
         super.onResume()
         activity?.title = getString(commonR.string.companion_app)
+
+        lifecycleScope.launch {
+            updateServers()
+        }
     }
 
     override fun onDestroy() {
