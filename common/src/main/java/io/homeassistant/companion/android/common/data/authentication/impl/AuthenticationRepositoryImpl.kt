@@ -17,7 +17,8 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
     private val authenticationService: AuthenticationService,
     private val serverManager: ServerManager,
     @Assisted private val serverId: Int,
-    @Named("session") private val localStorage: LocalStorage
+    @Named("session") private val localStorage: LocalStorage,
+    @Named("installId") private val installId: String
 ) : AuthenticationRepository {
 
     companion object {
@@ -46,7 +47,8 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
                         it.accessToken,
                         it.refreshToken!!,
                         System.currentTimeMillis() / 1000 + it.expiresIn,
-                        it.tokenType
+                        it.tokenType,
+                        installId
                     )
                 )
             )
@@ -82,7 +84,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
     }
 
     override suspend fun getSessionState(): SessionState {
-        return if (server.session.isComplete() && server.connection.getUrl() != null) {
+        return if (server.session.isComplete() && server.session.installId == installId && server.connection.getUrl() != null) {
             SessionState.CONNECTED
         } else {
             SessionState.ANONYMOUS
@@ -106,8 +108,8 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
 
     private suspend fun ensureValidSession(forceRefresh: Boolean = false) {
         val url = server.connection.getUrl()?.toHttpUrlOrNull()
-        if (!server.session.isComplete() || url == null) {
-            Log.e(TAG, "Unable to revoke session.")
+        if (!server.session.isComplete() || server.session.installId != installId || url == null) {
+            Log.e(TAG, "Unable to ensure valid session.")
             throw AuthorizationException()
         }
 
@@ -126,7 +128,8 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
                                 refreshedToken.accessToken,
                                 server.session.refreshToken,
                                 System.currentTimeMillis() / 1000 + refreshedToken.expiresIn,
-                                refreshedToken.tokenType
+                                refreshedToken.tokenType,
+                                installId
                             )
                         )
                     )

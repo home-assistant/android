@@ -26,7 +26,9 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.ServerManagerImpl
 import io.homeassistant.companion.android.common.data.wifi.WifiHelper
 import io.homeassistant.companion.android.common.data.wifi.WifiHelperImpl
+import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
+import java.util.UUID
 import javax.inject.Named
 import javax.inject.Singleton
 
@@ -128,6 +130,18 @@ abstract class DataModule {
             appContext.contentResolver,
             Settings.Secure.ANDROID_ID
         )
+
+        @Provides
+        @Named("installId")
+        @Singleton
+        fun provideInstallId(@ApplicationContext appContext: Context) = runBlocking {
+            val storage = provideSessionLocalStorage(appContext)
+            storage.getString("install_id") ?: run {
+                val uuid = UUID.randomUUID().toString()
+                storage.putString("install_id", uuid)
+                uuid
+            }
+        }
 
         @Provides
         @Singleton

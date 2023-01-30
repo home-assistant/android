@@ -22,6 +22,7 @@ abstract class LaunchPresenterBase(
 
     override fun onViewReady() {
         mainScope.launch {
+            // TODO delete servers without valid session (ie different device)
             if (
                 serverManager.isRegistered() &&
                 serverManager.authenticationRepository().getSessionState() == SessionState.CONNECTED

@@ -143,11 +143,12 @@ class WebViewPresenterImpl @Inject constructor(
 
     override fun clearKnownUrls() {
         mainScope.launch {
+            // TODO fix
             serverManager.getServer()?.let {
                 serverManager.updateServer(
                     it.copy(
                         connection = it.connection.copy(
-                            externalUrl = "",
+                            externalUrl = it.connection.externalUrl,
                             internalUrl = null,
                             cloudUrl = null,
                             cloudhookUrl = null
