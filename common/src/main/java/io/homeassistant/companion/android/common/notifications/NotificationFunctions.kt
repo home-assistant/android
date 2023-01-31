@@ -44,6 +44,9 @@ object NotificationData {
     const val SYSTEM_STREAM = "system_stream"
     const val CALL_STREAM = "call_stream"
     const val DTMF_STREAM = "dtmf_stream"
+
+    const val MEDIA_STREAM = "media_stream"
+    val ALARM_STREAMS = listOf(ALARM_STREAM, ALARM_STREAM_MAX)
 }
 
 fun createChannelID(
