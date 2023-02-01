@@ -15,7 +15,7 @@ assignees: ''
   DO NOT DELETE ANY TEXT from this template! All requested information is important.
 -->
 
-<!-- If you are reporting an issue for Wear OS or Android Auto please list both devices for the below 3 fields -->
+<!-- If you are reporting an issue for Wear OS please list both devices for the below 3 fields -->
 **Home Assistant Android app version(s):**
 
 **Android version(s):**
