@@ -15,11 +15,12 @@ assignees: ''
   DO NOT DELETE ANY TEXT from this template! All requested information is important.
 -->
 
-**Home Assistant Android version (Phone and/or Watch):**
+<!-- If you are reporting an issue for Wear OS or Android Auto please list both devices for the below 3 fields -->
+**Home Assistant Android app version(s):**
 
-**Android version (Phone and/or Watch):**
+**Android version(s):**
 
-**Phone and/or Watch model:**
+**Device model(s):**
 
 **Home Assistant version:**
 
@@ -27,12 +28,17 @@ assignees: ''
 
 **Description of problem, include YAML if issue is related to notifications:**
 
-**Companion App Logs (From Phone- Settings > Companion App > Show and Share logs, for Watch we will need LogCat):**
+<!--
+- For Wear OS devices we will need the LogCat logs from the device.
+- For Android Auto the logs can be retrieved from the connected device.
+- Logs from the device can be taken from Settings > Companion App > Show and Share Logs
+-->
+**Companion App Logs:**
 
 ```
 
 ```
 
-**Screenshot of problem:**
+**Screenshot or video of problem:**
 
 **Additional information:**
