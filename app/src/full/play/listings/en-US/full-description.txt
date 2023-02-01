@@ -6,4 +6,4 @@ Home Assistant for Android requires that you have access to a Home Assistant ins
 
 For documentation around the application please see https://companion.home-assistant.io/
 
-We are also working on supporting Wear OS.  If interested be sure to check out the beta!
+There is also a Wear OS app!
