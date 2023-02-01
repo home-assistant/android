@@ -15,19 +15,19 @@ assignees: ''
   DO NOT DELETE ANY TEXT from this template! All requested information is important.
 -->
 
-**Home Assistant Android version:**
+**Home Assistant Android version (Phone and/or Watch):**
 
-**Android version:**
+**Android version (Phone and/or Watch):**
 
-**Phone model:**
+**Phone and/or Watch model:**
 
 **Home Assistant version:**
 
 **Last working Home Assistant release (if known):**
 
-**Description of problem:**
+**Description of problem, include YAML if issue is related to notifications:**
 
-**Traceback (if applicable, to get the logs you may refer to: https://companion.home-assistant.io/docs/troubleshooting/faqs/#android-crash-logs):**
+**Companion App Logs (From Phone- Settings > Companion App > Show and Share logs, for Watch we will need LogCat):**
 
 ```
 
