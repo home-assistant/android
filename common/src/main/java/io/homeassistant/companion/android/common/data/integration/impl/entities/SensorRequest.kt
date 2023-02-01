@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class SensorRequest<T>(
     val uniqueId: String,
+    @JsonInclude(JsonInclude.Include.ALWAYS)
     val state: T,
     val type: String,
     val icon: String,
