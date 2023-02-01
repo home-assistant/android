@@ -3,9 +3,11 @@ package io.homeassistant.companion.android.home
 import android.app.Application
 import android.util.Log
 import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -108,6 +110,8 @@ class MainViewModel @Inject constructor(
         private set
     var templateTileRefreshInterval = mutableStateOf(0)
         private set
+    var isFavoritesOnly by mutableStateOf(false)
+        private set
 
     fun supportedDomains(): List<String> = HomePresenterImpl.supportedDomains
 
@@ -129,6 +133,7 @@ class MainViewModel @Inject constructor(
             isShowShortcutTextEnabled.value = homePresenter.getShowShortcutText()
             templateTileContent.value = homePresenter.getTemplateTileContent()
             templateTileRefreshInterval.value = homePresenter.getTemplateTileRefreshInterval()
+            isFavoritesOnly = homePresenter.getWearFavoritesOnly()
         }
     }
 
@@ -176,11 +181,13 @@ class MainViewModel @Inject constructor(
         val getEntityRegistry = async { homePresenter.getEntityRegistry() }
         val getEntities = async { homePresenter.getEntities() }
 
-        areaRegistry = getAreaRegistry.await()?.also {
-            areas.clear()
-            areas.addAll(it)
+        if (!isFavoritesOnly) {
+            areaRegistry = getAreaRegistry.await()?.also {
+                areas.clear()
+                areas.addAll(it)
+            }
+            deviceRegistry = getDeviceRegistry.await()
         }
-        deviceRegistry = getDeviceRegistry.await()
         entityRegistry = getEntityRegistry.await()
 
         _supportedEntities.value = getSupportedEntities()
@@ -189,7 +196,8 @@ class MainViewModel @Inject constructor(
             entities.clear()
             it.forEach { state -> updateEntityStates(state) }
         }
-        updateEntityDomains()
+        if (!isFavoritesOnly)
+            updateEntityDomains()
     }
 
     suspend fun entityUpdates() {
@@ -197,12 +205,13 @@ class MainViewModel @Inject constructor(
             return
         homePresenter.getEntityUpdates(supportedEntities.value)?.collect {
             updateEntityStates(it)
-            updateEntityDomains()
+            if (!isFavoritesOnly)
+                updateEntityDomains()
         }
     }
 
     suspend fun areaUpdates() {
-        if (!homePresenter.isConnected())
+        if (!homePresenter.isConnected() || isFavoritesOnly)
             return
         homePresenter.getAreaRegistryUpdates()?.collect {
             areaRegistry = homePresenter.getAreaRegistry()
@@ -215,7 +224,7 @@ class MainViewModel @Inject constructor(
     }
 
     suspend fun deviceUpdates() {
-        if (!homePresenter.isConnected())
+        if (!homePresenter.isConnected() || isFavoritesOnly)
             return
         homePresenter.getDeviceRegistryUpdates()?.collect {
             deviceRegistry = homePresenter.getDeviceRegistry()
@@ -411,6 +420,13 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             homePresenter.setTemplateTileContent(content)
             templateTileContent.value = content
+        }
+    }
+
+    fun setWearFavoritesOnly(enabled: Boolean) {
+        viewModelScope.launch {
+            homePresenter.setWearFavoritesOnly(enabled)
+            isFavoritesOnly = enabled
         }
     }
 
