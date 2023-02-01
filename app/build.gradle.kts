@@ -188,6 +188,7 @@ dependencies {
     "fullImplementation"("com.google.android.gms:play-services-home:16.0.0")
     "fullImplementation"(platform("com.google.firebase:firebase-bom:31.1.1"))
     "fullImplementation"("com.google.firebase:firebase-messaging")
+    "fullImplementation"("com.google.firebase:firebase-analytics")
     "fullImplementation"("io.sentry:sentry-android:6.12.1")
     "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
     "fullImplementation"("com.google.android.gms:play-services-wearable:18.0.0")
