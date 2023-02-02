@@ -1,5 +1,8 @@
 # 官方app高德定位版! 
-
+[![version](https://img.shields.io/github/v/release/nesror/Home-Assistant-Companion-for-Android?display_name=tag&sort=semver)](https://github.com/nesror/Home-Assistant-Companion-for-Android/releases/latest)
+[![stars](https://img.shields.io/github/stars/nesror/Home-Assistant-Companion-for-Android)](https://github.com/nesror/Home-Assistant-Companion-for-Android/stargazers)
+[![issues](https://img.shields.io/github/issues/nesror/Home-Assistant-Companion-for-Android)](https://github.com/nesror/Home-Assistant-Companion-for-Android/issues)
+![visit](https://visitor-badge.glitch.me/badge?page_id=nesror.Home-Assistant-Companion-for-Android&left_text=visit)
 [![Build and Release apk](https://github.com/nesror/android/workflows/Build%20and%20Release%20apk/badge.svg)](https://github.com/nesror/Home-Assistant-Companion-for-Android/actions/workflows/main.yml)
 
 （适合没有gms服务或谷歌服务受限的用）同时修复官方app的UA问题，导致部分前端组件异常（如 高德地图）
