@@ -1,11 +1,9 @@
-# 官方app高德定位版! 
+# HASS官方app高德定位版! 
 [![version](https://img.shields.io/github/v/release/nesror/Home-Assistant-Companion-for-Android?display_name=tag&sort=semver)](https://github.com/nesror/Home-Assistant-Companion-for-Android/releases/latest)
 [![stars](https://img.shields.io/github/stars/nesror/Home-Assistant-Companion-for-Android)](https://github.com/nesror/Home-Assistant-Companion-for-Android/stargazers)
 [![issues](https://img.shields.io/github/issues/nesror/Home-Assistant-Companion-for-Android)](https://github.com/nesror/Home-Assistant-Companion-for-Android/issues)
 ![visit](https://visitor-badge.glitch.me/badge?page_id=nesror.Home-Assistant-Companion-for-Android&left_text=visit)
 [![Build and Release apk](https://github.com/nesror/android/workflows/Build%20and%20Release%20apk/badge.svg)](https://github.com/nesror/Home-Assistant-Companion-for-Android/actions/workflows/main.yml)
-
-（适合没有gms服务或谷歌服务受限的用）同时修复官方app的UA问题，导致部分前端组件异常（如 高德地图）
 
 #### 高德地理编码api免费每日有使用上线，如果地理编码出不来了可以下载源码进行修改。已经升级账号，一般情况下不会达到上限
 
@@ -18,6 +16,8 @@
 ## 使用方法：
 * [APP使用](https://www.bilibili.com/video/BV18W4y1p7mk)
 * [地理围栏](https://www.bilibili.com/video/BV1HD4y1v7r4)
+
+（适合没有gms服务或谷歌服务受限的用）同时修复官方app的UA问题，导致部分前端组件异常（如 高德地图）
 
 ## Documentation
 If you are looking for documentation around the companion applications check out the [Home Assistant Companion Documentation](https://companion.home-assistant.io/).  This will provide you instructions on using the applications.
