@@ -4,6 +4,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.ContentValues
 import android.content.Context
+import android.database.sqlite.SQLiteDatabase
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -11,6 +12,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.edit
 import androidx.core.content.getSystemService
 import androidx.room.AutoMigration
 import androidx.room.Database
@@ -23,6 +25,7 @@ import androidx.room.TypeConverters
 import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.util.databaseChannel
 import io.homeassistant.companion.android.database.authentication.Authentication
@@ -61,6 +64,8 @@ import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundTypeConverter
 import kotlinx.coroutines.runBlocking
+import java.util.UUID
+import kotlin.collections.ArrayList
 import io.homeassistant.companion.android.common.R as commonR
 
 @Database(
@@ -97,7 +102,7 @@ import io.homeassistant.companion.android.common.R as commonR
         AutoMigration(from = 34, to = 35),
         AutoMigration(from = 35, to = 36),
         AutoMigration(from = 36, to = 37, spec = AppDatabase.Companion.Migration36to37::class),
-        AutoMigration(from = 37, to = 38),
+        AutoMigration(from = 37, to = 38, spec = AppDatabase.Companion.Migration37to38::class),
     ]
 )
 @TypeConverters(
@@ -630,6 +635,69 @@ abstract class AppDatabase : RoomDatabase() {
             )
         )
         class Migration36to37 : AutoMigrationSpec
+
+        class Migration37to38 : AutoMigrationSpec {
+            override fun onPostMigrate(db: SupportSQLiteDatabase) {
+                val urlStorage = appContext.getSharedPreferences("url_0", Context.MODE_PRIVATE)
+                val urlExternal = urlStorage.getString("remote_url", null) ?: return
+                val urlInternal = urlStorage.getString("local_url", null)
+                val urlCloud = urlStorage.getString("remote_ui_url", null)
+                val urlWebhook = urlStorage.getString("webhook_id", null)
+                val urlCloudhook = urlStorage.getString("cloudhook_url", null)
+                val urlUseCloud = urlStorage.getBoolean("use_cloud", false)
+                val urlInternalSsids = urlStorage.getStringSet("wifi_ssids", emptySet()).orEmpty().toList()
+                val urlPrioritizeInternal = urlStorage.getBoolean("prioritize_internal", false)
+
+                val authStorage = appContext.getSharedPreferences("session_0", Context.MODE_PRIVATE)
+                val authAccessToken = authStorage.getString("access_token", null)
+                val authRefreshToken = authStorage.getString("refresh_token", null)
+                val authTokenExpiration = if (authStorage.contains("expires_date")) authStorage.getLong("expires_date", 0) else null
+                val authTokenType = authStorage.getString("token_type", null)
+                val authInstallId = if (authStorage.contains("install_id")) {
+                    authStorage.getString("install_id", "")
+                } else {
+                    val uuid = UUID.randomUUID().toString()
+                    authStorage.edit { putString("install_id", uuid) }
+                    uuid
+                }
+
+                val integrationStorage = appContext.getSharedPreferences("integration_0", Context.MODE_PRIVATE)
+                val integrationHaVersion = integrationStorage.getString("ha_version", null)
+
+                val serverValues = ContentValues().apply {
+                    put("name", urlExternal)
+                    integrationHaVersion?.let { put("_version", it) } ?: run { putNull("_version") }
+                    put("list_order", -1)
+                    put("external_url", urlExternal)
+                    urlInternal?.let { put("internal_url", it) } ?: run { putNull("internal_url") }
+                    urlCloud?.let { put("cloud_url", it) } ?: run { putNull("cloud_url") }
+                    urlWebhook?.let { put("webhook_id", it) } ?: run { putNull("webhook_id") }
+                    urlCloudhook?.let { put("cloudhook_url", it) } ?: run { putNull("cloudhook_url") }
+                    put("use_cloud", urlUseCloud)
+                    put("internal_ssids", jacksonObjectMapper().writeValueAsString(urlInternalSsids))
+                    put("prioritize_internal", urlPrioritizeInternal)
+                    authAccessToken?.let { put("access_token", it) } ?: run { putNull("access_token") }
+                    authRefreshToken?.let { put("refresh_token", it) } ?: run { putNull("refresh_token") }
+                    authTokenExpiration?.let { put("token_expiration", it) } ?: run { putNull("token_expiration") }
+                    authTokenType?.let { put("token_type", it) } ?: run { putNull("token_type") }
+                    authAccessToken?.let { put("install_id", authInstallId) } ?: run { putNull("install_id") }
+                }
+                val serverId = db.insert("servers", SQLiteDatabase.CONFLICT_REPLACE, serverValues)
+
+                urlStorage.edit { clear() }
+                authStorage.edit {
+                    remove("access_token")
+                    remove("refresh_token")
+                    remove("expires_date")
+                    remove("token_type")
+                }
+                integrationStorage.edit { remove("ha_version") }
+                // TODO migration
+                //  - auth/integration prefs prefix with server specific
+                //  - settings copy with server ID, 0 = shared
+                //  - notifications/tiles/sensors/widgets update with server ID
+            }
+        }
 
         private fun createNotificationChannel() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 38,
-    "identityHash": "1f428f574f79cf3c23652662b0461865",
+    "identityHash": "bd22ad49c60327abfe842ff9b1d105c5",
     "entities": [
       {
         "tableName": "sensor_attributes",
@@ -733,7 +733,7 @@
       },
       {
         "tableName": "servers",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `_version` TEXT, `order` INTEGER NOT NULL, `external_url` TEXT NOT NULL, `internal_url` TEXT, `cloud_url` TEXT, `webhook_id` TEXT, `cloudhook_url` TEXT, `use_cloud` INTEGER NOT NULL, `internal_ssids` TEXT NOT NULL, `prioritize_internal` INTEGER NOT NULL, `access_token` TEXT, `refresh_token` TEXT, `token_expiration` INTEGER, `token_type` TEXT, `install_id` TEXT)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `_version` TEXT, `list_order` INTEGER NOT NULL, `external_url` TEXT NOT NULL, `internal_url` TEXT, `cloud_url` TEXT, `webhook_id` TEXT, `cloudhook_url` TEXT, `use_cloud` INTEGER NOT NULL, `internal_ssids` TEXT NOT NULL, `prioritize_internal` INTEGER NOT NULL, `access_token` TEXT, `refresh_token` TEXT, `token_expiration` INTEGER, `token_type` TEXT, `install_id` TEXT)",
         "fields": [
           {
             "fieldPath": "id",
@@ -754,8 +754,8 @@
             "notNull": false
           },
           {
-            "fieldPath": "order",
-            "columnName": "order",
+            "fieldPath": "listOrder",
+            "columnName": "list_order",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -883,7 +883,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1f428f574f79cf3c23652662b0461865')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'bd22ad49c60327abfe842ff9b1d105c5')"
     ]
   }
 }

@@ -16,7 +16,7 @@ interface ServerDao {
     @Query("SELECT * FROM servers WHERE webhook_id = :webhookId")
     fun get(webhookId: String): Server?
 
-    @Query("SELECT * FROM servers ORDER BY `order` ASC")
+    @Query("SELECT * FROM servers ORDER BY `list_order` ASC")
     fun getAll(): Flow<List<Server>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

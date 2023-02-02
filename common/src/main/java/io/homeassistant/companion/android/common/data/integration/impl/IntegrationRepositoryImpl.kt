@@ -57,7 +57,6 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         private const val PREF_SECRET = "secret"
 
         private const val PREF_CHECK_SENSOR_REGISTRATION_NEXT = "sensor_reg_last"
-        private const val PREF_HA_VERSION = "ha_version"
         private const val PREF_SESSION_TIMEOUT = "session_timeout"
         private const val PREF_SESSION_EXPIRE = "session_expire"
         private const val PREF_SEC_WARNING_NEXT = "sec_warning_last"
@@ -387,16 +386,19 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     }
 
     override suspend fun getHomeAssistantVersion(): String {
-        // TODO read from server + update server object
         val current = System.currentTimeMillis()
         val next = localStorage.getLong(PREF_CHECK_SENSOR_REGISTRATION_NEXT) ?: 0
         if (current <= next)
-            return localStorage.getString(PREF_HA_VERSION)
+            return server._version
                 ?: "" // Skip checking HA version as it has not been 4 hours yet
 
         return try {
             getConfig().let { response ->
-                localStorage.putString(PREF_HA_VERSION, response.version)
+                serverManager.updateServer(
+                    server.copy(
+                        _version = response.version
+                    )
+                )
                 localStorage.putLong(
                     PREF_CHECK_SENSOR_REGISTRATION_NEXT,
                     current + TimeUnit.HOURS.toMillis(4)
@@ -405,7 +407,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             }
         } catch (e: Exception) {
             Log.e(TAG, "Issue getting new version from core.", e)
-            localStorage.getString(PREF_HA_VERSION) ?: ""
+            server._version ?: ""
         }
     }
 
@@ -439,7 +441,11 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
             if (response != null) {
                 // If we have a valid response, also update the cached version
-                localStorage.putString(PREF_HA_VERSION, response.version)
+                serverManager.updateServer(
+                    server.copy(
+                        _version = response.version
+                    )
+                )
                 localStorage.putLong(
                     PREF_CHECK_SENSOR_REGISTRATION_NEXT,
                     System.currentTimeMillis() + TimeUnit.HOURS.toMillis(4)

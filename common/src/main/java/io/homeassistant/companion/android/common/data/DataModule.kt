@@ -53,17 +53,6 @@ abstract class DataModule {
             homeAssistantApis.okHttpClient
 
         @Provides
-        @Named("url")
-        @Singleton
-        fun provideUrlLocalStorage(@ApplicationContext appContext: Context): LocalStorage =
-            LocalStorageImpl(
-                appContext.getSharedPreferences(
-                    "url_0",
-                    Context.MODE_PRIVATE
-                )
-            )
-
-        @Provides
         @Named("session")
         @Singleton
         fun provideSessionLocalStorage(@ApplicationContext appContext: Context): LocalStorage =

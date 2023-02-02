@@ -19,13 +19,13 @@ data class Server(
     val _version: String? = null,
     @Ignore
     val type: ServerType = ServerType.DEFAULT,
-    @ColumnInfo(name = "order")
-    val order: Int = -1,
+    @ColumnInfo(name = "list_order")
+    val listOrder: Int = -1,
     @Embedded val connection: ServerConnectionInfo,
     @Embedded val session: ServerSessionInfo
 ) {
-    constructor(id: Int, name: String, _version: String?, order: Int, connection: ServerConnectionInfo, session: ServerSessionInfo) :
-        this(id, name, _version, ServerType.DEFAULT, order, connection, session)
+    constructor(id: Int, name: String, _version: String?, listOrder: Int, connection: ServerConnectionInfo, session: ServerSessionInfo) :
+        this(id, name, _version, ServerType.DEFAULT, listOrder, connection, session)
 
     val version: HomeAssistantVersion?
         get() = _version?.let { HomeAssistantVersion.fromString(_version) }
