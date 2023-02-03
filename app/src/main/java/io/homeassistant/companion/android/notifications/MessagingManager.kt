@@ -65,7 +65,6 @@ import io.homeassistant.companion.android.common.util.getActiveNotification
 import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.database.sensor.SensorDao
-import io.homeassistant.companion.android.database.server.ServerType
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.sensors.LocationSensorManager
@@ -1206,7 +1205,7 @@ class MessagingManager @Inject constructor(
         data: Map<String, String>
     ) {
         data[NotificationData.WEBHOOK_ID]?.let { webhookId ->
-            if (serverManager.servers.filter { it.type == ServerType.DEFAULT }.size > 1) {
+            if (serverManager.defaultServers.size > 1) {
                 serverManager.getServer(webhookId = webhookId)?.let {
                     builder.setSubText(it.friendlyName)
                 }

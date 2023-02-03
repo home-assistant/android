@@ -97,7 +97,7 @@ class SettingsPresenterImpl @Inject constructor(
     }
 
     override fun getServers(): List<Server> {
-        return serverManager.servers.filter { it.type == ServerType.DEFAULT } // TODO offer a flow version
+        return serverManager.defaultServers // TODO offer a flow version
     }
 
     override suspend fun getNotificationRateLimits(): RateLimitResponse? = withContext(Dispatchers.IO) {
@@ -114,7 +114,7 @@ class SettingsPresenterImpl @Inject constructor(
         changeLog.showChangeLog(context, true)
     }
 
-    override fun getServerCount(): Int = serverManager.servers.filter { it.type == ServerType.DEFAULT }.size
+    override fun getServerCount(): Int = serverManager.defaultServers.size
 
     override suspend fun addServer(result: OnboardApp.Output?) {
         if (result != null) {

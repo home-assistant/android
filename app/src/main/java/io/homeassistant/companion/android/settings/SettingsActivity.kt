@@ -9,6 +9,7 @@ import android.view.MenuItem
 import android.view.ViewGroup
 import androidx.appcompat.widget.SearchView
 import androidx.biometric.BiometricManager
+import androidx.fragment.app.commit
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
@@ -81,12 +82,13 @@ class SettingsActivity : BaseActivity() {
 
         if (savedInstanceState == null) {
             val settingsNavigation = intent.getStringExtra("fragment")
-            supportFragmentManager
-                .beginTransaction()
-                .replace(
+            supportFragmentManager.commit {
+                replace(
                     R.id.content,
                     when {
-                        settingsNavigation == "websocket" -> WebsocketSettingFragment::class.java // TODO multiserver notification
+                        settingsNavigation == "websocket" ->
+                            if (serverManager.defaultServers.size == 1) WebsocketSettingFragment::class.java
+                            else SettingsFragment::class.java
                         settingsNavigation == "notification_history" -> NotificationHistoryFragment::class.java
                         settingsNavigation?.startsWith("sensors/") == true -> SensorDetailFragment::class.java
                         settingsNavigation?.startsWith("tiles/") == true -> ManageTilesFragment::class.java
@@ -98,9 +100,14 @@ class SettingsActivity : BaseActivity() {
                     } else if (settingsNavigation?.startsWith("tiles/") == true) {
                         val tileId = settingsNavigation.split("/")[1]
                         Bundle().apply { putString("id", tileId) }
+                    } else if (settingsNavigation == "websocket") {
+                        val servers = serverManager.defaultServers
+                        if (servers.size == 1) {
+                            Bundle().apply { putInt(WebsocketSettingFragment.EXTRA_SERVER, servers[0].id) }
+                        } else null
                     } else null
                 )
-                .commit()
+            }
         }
     }
 

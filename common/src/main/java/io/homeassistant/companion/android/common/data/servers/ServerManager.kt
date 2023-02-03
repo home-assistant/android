@@ -12,7 +12,10 @@ interface ServerManager {
         const val SERVER_ID_ACTIVE = -1
     }
 
-    val servers: List<Server>
+    /**
+     * A list of all [Server]s managed by the app of the type [ServerType.DEFAULT].
+     */
+    val defaultServers: List<Server>
 
     /**
      * @return `true` if the app is registered with any server

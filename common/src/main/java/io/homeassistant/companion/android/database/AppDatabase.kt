@@ -694,12 +694,30 @@ abstract class AppDatabase : RoomDatabase() {
                 }
                 integrationStorage.edit { remove("ha_version") }
 
-                // Attribute existing notifications to the existing server
+                // Copy existing settings to server - ID 0 is used for shared settings
+                val existingSettings = db.query("SELECT * FROM `settings`")
+                existingSettings.use {
+                    if (existingSettings.count > 0) {
+                        if (it.moveToFirst()) {
+                            val settingValues = ContentValues().apply {
+                                put("id", serverId)
+                                it.getColumnIndex("websocket_setting").let { index ->
+                                    put("websocket_setting", if (index > -1) it.getString(index) else "NEVER")
+                                }
+                                it.getColumnIndex("sensor_update_frequency").let { index ->
+                                    put("sensor_update_frequency", if (index > -1) it.getString(index) else "NORMAL")
+                                }
+                            }
+                            db.insert("settings", SQLiteDatabase.CONFLICT_REPLACE, settingValues)
+                        }
+                    }
+                }
+
+                // Attribute existing rows to the existing server
                 db.execSQL("UPDATE `notification_history` SET `server_id` = $serverId")
 
                 // TODO migration
                 //  - auth/integration prefs prefix with server specific
-                //  - settings copy with server ID, 0 = shared
                 //  - tiles/sensors/widgets update with server ID
             }
         }

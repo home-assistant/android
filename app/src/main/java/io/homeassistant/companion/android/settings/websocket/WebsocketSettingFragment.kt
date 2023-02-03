@@ -68,13 +68,12 @@ class WebsocketSettingFragment : Fragment() {
         return ComposeView(requireContext()).apply {
             setContent {
                 MdcTheme {
-                    // TODO use server ID
-                    val settings = viewModel.getSettingFlow(0)
-                        .collectAsState(initial = viewModel.getSetting(0))
+                    val settings = viewModel.getSettingFlow(serverId)
+                        .collectAsState(initial = viewModel.getSetting(serverId))
                     WebsocketSettingView(
                         websocketSetting = settings.value.websocketSetting,
                         unrestrictedBackgroundAccess = isIgnoringBatteryOptimizations,
-                        onSettingChanged = { viewModel.updateWebsocketSetting(0, it) },
+                        onSettingChanged = { viewModel.updateWebsocketSetting(serverId, it) },
                         onBackgroundAccessTapped = {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                                 requestBackgroundAccessResult.launch(

@@ -33,7 +33,9 @@ import io.homeassistant.companion.android.notifications.MessagingManager
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -105,29 +107,36 @@ class WebsocketManager(
 
         // Start listening for notifications
         Log.d(TAG, "Starting to listen to Websocket")
-        val job = launch { collectNotifications() }
+        val jobs = mutableMapOf<Int, Job>()
+        manageServerJobs(jobs, this)
 
-        // play ping pong to ensure we have a connection.
+        // play ping pong to ensure we have a connection and server changes are handled.
         do {
             delay(30000)
-        } while (job.isActive && isActive && shouldWeRun() && serverManager.webSocketRepository().sendPing())
+        } while (jobs.values.any { it.isActive } && isActive && shouldWeRun() && manageServerJobs(jobs, this))
 
-        job.cancel()
+        jobs.forEach { it.value.cancel() }
+        jobs.clear()
 
         Log.d(TAG, "Done listening to Websocket")
 
         return@withContext Result.success()
     }
 
+    private fun shouldWeRun(): Boolean = serverManager.defaultServers.any { shouldRunForServer(it.id) }
+
     @Suppress("DEPRECATION")
-    private fun shouldWeRun(): Boolean {
+    private fun shouldRunForServer(serverId: Int): Boolean {
+        val server = serverManager.getServer(serverId) ?: return false
+        val setting = settingsDao.get(serverId)?.websocketSetting ?: DEFAULT_WEBSOCKET_SETTING
+        val isHome = server.connection.isInternal()
+
         // Check for connectivity but not internet access, based on WorkManager's NetworkConnectedController API <26
         val connectivityManager = applicationContext.getSystemService<ConnectivityManager>()
         val networkInfo = connectivityManager?.activeNetworkInfo
         val powerManager = applicationContext.getSystemService<PowerManager>()!!
         val displayOff = !powerManager.isInteractive
-        val setting = settingsDao.get(0)?.websocketSetting ?: DEFAULT_WEBSOCKET_SETTING
-        val isHome = serverManager.getServer()?.connection?.isInternal() == true
+
         return when {
             (setting == WebsocketSetting.NEVER) -> false
             (networkInfo != null && !networkInfo.isConnected) -> false
@@ -138,10 +147,39 @@ class WebsocketManager(
         }
     }
 
-    private suspend fun collectNotifications() {
-        serverManager.webSocketRepository().getNotifications()?.collect {
-            if (it.containsKey("hass_confirm_id"))
-                serverManager.webSocketRepository().ackNotification(it["hass_confirm_id"].toString())
+    private suspend fun manageServerJobs(jobs: MutableMap<Int, Job>, coroutineScope: CoroutineScope): Boolean {
+        val servers = serverManager.defaultServers
+
+        // Clean up...
+        jobs.filter { (serverId, _) ->
+            servers.none { it.id == serverId } || !shouldRunForServer(serverId)
+        }
+            .forEach { (serverId, job) ->
+                job.cancel()
+                jobs.remove(serverId)
+            }
+        // Keep up existing connections...
+        jobs.forEach { (serverId, _) ->
+            coroutineScope.launch { serverManager.webSocketRepository(serverId).sendPing() }
+        }
+        // Start new connections...
+        servers.filter { it.id !in jobs.keys && shouldRunForServer(it.id) }
+            .forEach {
+                jobs[it.id] = coroutineScope.launch { collectNotifications(it.id) }
+            }
+
+        return true // for while
+    }
+
+    private suspend fun collectNotifications(serverId: Int) {
+        serverManager.webSocketRepository(serverId).getNotifications()?.collect {
+            if (it.containsKey("hass_confirm_id")) {
+                try {
+                    serverManager.webSocketRepository(serverId).ackNotification(it["hass_confirm_id"].toString())
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unable to confirm received notification", e)
+                }
+            }
             val flattened = mutableMapOf<String, String>()
             if (it.containsKey("data")) {
                 for ((key, value) in it["data"] as Map<*, *>) {
@@ -162,6 +200,9 @@ class WebsocketManager(
             listOf("message", "title").forEach { key ->
                 if (it.containsKey(key))
                     flattened[key] = it[key].toString()
+            }
+            serverManager.getServer(serverId)?.let { server ->
+                flattened["webhook_id"] = server.connection.webhookId.toString()
             }
             messagingManager.handleMessage(flattened, SOURCE)
         }

@@ -121,7 +121,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     companion object {
         const val EXTRA_PATH = "path"
-        const val EXTRA_SERVER_ID = "server_id"
+        const val EXTRA_SERVER = "server"
 
         private const val TAG = "WebviewActivity"
         private const val APP_PREFIX = "app://"
@@ -131,7 +131,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         fun newInstance(context: Context, path: String? = null, serverId: Int? = null): Intent {
             return Intent(context, WebViewActivity::class.java).apply {
                 putExtra(EXTRA_PATH, path)
-                putExtra(EXTRA_SERVER_ID, serverId) // TODO use me
+                putExtra(EXTRA_SERVER, serverId) // TODO use me
             }
         }
 

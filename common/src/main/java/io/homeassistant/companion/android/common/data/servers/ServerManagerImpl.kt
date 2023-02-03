@@ -11,6 +11,7 @@ import io.homeassistant.companion.android.common.data.wifi.WifiHelper
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerDao
 import io.homeassistant.companion.android.database.server.ServerType
+import io.homeassistant.companion.android.database.settings.SettingsDao
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -23,6 +24,7 @@ class ServerManagerImpl @Inject constructor(
     private val integrationRepositoryFactory: IntegrationRepositoryFactory,
     private val webSocketRepositoryFactory: WebSocketRepositoryFactory,
     private val serverDao: ServerDao,
+    private val settingsDao: SettingsDao,
     private val wifiHelper: WifiHelper
 ) : ServerManager {
 
@@ -36,8 +38,8 @@ class ServerManagerImpl @Inject constructor(
 
     private val illegalServerException = IllegalArgumentException("No server for ID")
 
-    override val servers: List<Server>
-        get() = _servers.values.toList()
+    override val defaultServers: List<Server>
+        get() = _servers.values.filter { it.type == ServerType.DEFAULT }.toList()
 
     init {
         ioScope.launch {
@@ -104,6 +106,7 @@ class ServerManagerImpl @Inject constructor(
 
     override suspend fun removeServer(id: Int) {
         removeServerFromManager(id)
+        settingsDao.delete(id)
         serverDao.delete(id)
     }
 
