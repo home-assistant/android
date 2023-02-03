@@ -13,8 +13,10 @@ import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 data class Server(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    @ColumnInfo(name = "name")
-    val name: String,
+    @ColumnInfo(name = "_name")
+    val _name: String,
+    @ColumnInfo(name = "name_override")
+    val nameOverride: String? = null,
     @ColumnInfo(name = "_version")
     val _version: String? = null,
     @Ignore
@@ -24,8 +26,11 @@ data class Server(
     @Embedded val connection: ServerConnectionInfo,
     @Embedded val session: ServerSessionInfo
 ) {
-    constructor(id: Int, name: String, _version: String?, listOrder: Int, connection: ServerConnectionInfo, session: ServerSessionInfo) :
-        this(id, name, _version, ServerType.DEFAULT, listOrder, connection, session)
+    constructor(id: Int, _name: String, nameOverride: String?, _version: String?, listOrder: Int, connection: ServerConnectionInfo, session: ServerSessionInfo) :
+        this(id, _name, nameOverride, _version, ServerType.DEFAULT, listOrder, connection, session)
+
+    val friendlyName: String
+        get() = nameOverride ?: _name.ifBlank { connection.externalUrl }
 
     val version: HomeAssistantVersion?
         get() = _version?.let { HomeAssistantVersion.fromString(_version) }

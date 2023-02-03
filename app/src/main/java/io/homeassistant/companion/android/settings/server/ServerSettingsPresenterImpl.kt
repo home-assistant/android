@@ -51,8 +51,9 @@ class ServerSettingsPresenterImpl @Inject constructor(
 
     override fun getString(key: String?, defValue: String?): String? = runBlocking {
         when (key) {
-            "connection_internal" -> (serverManager.getServer(serverId)?.connection?.getUrl(isInternal = true, force = true) ?: "").toString()
+            "server_name" -> serverManager.getServer(serverId)?.nameOverride
             "registration_name" -> serverManager.integrationRepository(serverId).getRegistration().deviceName
+            "connection_internal" -> (serverManager.getServer(serverId)?.connection?.getUrl(isInternal = true, force = true) ?: "").toString()
             "session_timeout" -> serverManager.integrationRepository(serverId).getSessionTimeOut().toString()
             else -> throw IllegalArgumentException("No string found by this key: $key")
         }
@@ -61,6 +62,23 @@ class ServerSettingsPresenterImpl @Inject constructor(
     override fun putString(key: String?, value: String?) {
         mainScope.launch {
             when (key) {
+                "server_name" -> {
+                    serverManager.getServer(serverId)?.let {
+                        serverManager.updateServer(
+                            it.copy(
+                                nameOverride = value?.ifBlank { null }
+                            )
+                        )
+                    }
+                    view.updateServerName(serverManager.getServer(serverId)?.friendlyName ?: "")
+                }
+                "registration_name" -> {
+                    try {
+                        serverManager.integrationRepository(serverId).updateRegistration(DeviceRegistration(deviceName = value!!))
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Issue updating registration with new device name", e)
+                    }
+                }
                 "connection_internal" -> {
                     serverManager.getServer(serverId)?.let {
                         serverManager.updateServer(
@@ -79,13 +97,6 @@ class ServerSettingsPresenterImpl @Inject constructor(
                         Log.e(TAG, "Issue saving session timeout value", e)
                     }
                 }
-                "registration_name" -> {
-                    try {
-                        serverManager.integrationRepository(serverId).updateRegistration(DeviceRegistration(deviceName = value!!))
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Issue updating registration with new device name", e)
-                    }
-                }
                 else -> throw IllegalArgumentException("No string found by this key: $key")
             }
         }
@@ -94,6 +105,9 @@ class ServerSettingsPresenterImpl @Inject constructor(
     override fun onFinish() {
         mainScope.cancel()
     }
+
+    override fun updateServerName() =
+        view.updateServerName(serverManager.getServer(serverId)?.friendlyName ?: "")
 
     override fun updateUrlStatus() {
         mainScope.launch {

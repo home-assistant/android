@@ -665,7 +665,8 @@ abstract class AppDatabase : RoomDatabase() {
                 val integrationHaVersion = integrationStorage.getString("ha_version", null)
 
                 val serverValues = ContentValues().apply {
-                    put("name", urlExternal)
+                    put("_name", "")
+                    putNull("name_override")
                     integrationHaVersion?.let { put("_version", it) } ?: run { putNull("_version") }
                     put("list_order", -1)
                     put("external_url", urlExternal)

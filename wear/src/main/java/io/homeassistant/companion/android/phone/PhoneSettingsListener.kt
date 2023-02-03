@@ -124,7 +124,7 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
 
             val formattedUrl = UrlUtil.formattedUrlString(url)
             val server = Server(
-                name = formattedUrl,
+                _name = "",
                 type = ServerType.TEMPORARY,
                 connection = ServerConnectionInfo(
                     externalUrl = formattedUrl

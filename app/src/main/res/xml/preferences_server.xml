@@ -2,6 +2,18 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <PreferenceCategory
+        android:title="@string/device_registration">
+        <EditTextPreference
+            android:key="server_name"
+            android:icon="@drawable/ic_stat_ic_notification_blue"
+            android:title="@string/server_name"/>
+        <EditTextPreference
+            android:key="registration_name"
+            android:icon="@drawable/ic_edit"
+            android:title="@string/device_name"
+            app:useSimpleSummaryProvider="true"/>
+    </PreferenceCategory>
+    <PreferenceCategory
         android:title="@string/pref_connection_title">
         <Preference
             android:key="connection_external"
@@ -15,14 +27,6 @@
         <EditTextPreference
             android:key="connection_internal"
             android:title="@string/pref_connection_internal"
-            app:useSimpleSummaryProvider="true"/>
-    </PreferenceCategory>
-    <PreferenceCategory
-        android:title="@string/device_registration">
-        <EditTextPreference
-            android:key="registration_name"
-            android:icon="@drawable/ic_edit"
-            android:title="@string/device_name"
             app:useSimpleSummaryProvider="true"/>
     </PreferenceCategory>
     <PreferenceCategory

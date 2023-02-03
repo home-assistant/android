@@ -143,7 +143,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
         try {
             val formattedUrl = UrlUtil.formattedUrlString(url)
             val server = Server(
-                name = formattedUrl,
+                _name = "",
                 type = ServerType.TEMPORARY,
                 connection = ServerConnectionInfo(
                     externalUrl = formattedUrl

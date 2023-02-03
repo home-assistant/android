@@ -144,6 +144,13 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         }
     }
 
+    override fun updateServerName(name: String) {
+        activity?.title = name.ifBlank { getString(commonR.string.server_settings) }
+        findPreference<EditTextPreference>("server_name")?.let {
+            it.summary = name
+        }
+    }
+
     override fun enableInternalConnection(isEnabled: Boolean) {
         val iconTint = if (isEnabled) ContextCompat.getColor(requireContext(), commonR.color.colorAccent) else Color.DKGRAY
         val doEnable = isEnabled && hasLocationPermission()
@@ -303,8 +310,8 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
 
     override fun onResume() {
         super.onResume()
-        activity?.title = getString(commonR.string.server_settings)
 
+        presenter.updateServerName()
         presenter.updateUrlStatus()
     }
 

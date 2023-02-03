@@ -648,7 +648,7 @@
     <string name="server_settings">Server Settings</string>
     <string name="servers_devices_category">Servers &amp; Devices</string>
     <string name="server_add">Add server</string>
-    <string name="server_change">Change server</string>
+    <string name="server_name">Server Name</string>
     <string name="server_remove">Remove server</string>
     <string name="service_call_failure">Unable to send service call</string>
     <string name="session_timeout_title">Session TimeOut (in seconds)</string>

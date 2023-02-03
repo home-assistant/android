@@ -7,6 +7,7 @@ interface ServerSettingsPresenter {
     fun getPreferenceDataStore(): PreferenceDataStore
     fun onFinish()
 
+    fun updateServerName()
     fun updateUrlStatus()
     fun isSsidUsed(): Boolean
     fun clearSsids()

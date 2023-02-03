@@ -394,11 +394,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
         return try {
             getConfig().let { response ->
-                serverManager.updateServer(
-                    server.copy(
-                        _version = response.version
-                    )
-                )
+                updateServerWithConfig(response)
                 localStorage.putLong(
                     PREF_CHECK_SENSOR_REGISTRATION_NEXT,
                     current + TimeUnit.HOURS.toMillis(4)
@@ -441,22 +437,10 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
             if (response != null) {
                 // If we have a valid response, also update the cached version
-                serverManager.updateServer(
-                    server.copy(
-                        _version = response.version
-                    )
-                )
+                updateServerWithConfig(response)
                 localStorage.putLong(
                     PREF_CHECK_SENSOR_REGISTRATION_NEXT,
                     System.currentTimeMillis() + TimeUnit.HOURS.toMillis(4)
-                )
-                serverManager.updateServer(
-                    server.copy(
-                        connection = server.connection.copy(
-                            cloudUrl = response.remoteUiUrl,
-                            cloudhookUrl = response.cloudhookUrl
-                        )
-                    )
                 )
                 return response
             }
@@ -464,6 +448,23 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
         if (causeException != null) throw IntegrationException(causeException)
         else throw IntegrationException("Error calling integration request get_config")
+    }
+
+    /**
+     * Update this repository's [server] with information from a [GetConfigResponse] like original
+     * name and core version.
+     */
+    private fun updateServerWithConfig(config: GetConfigResponse) {
+        serverManager.updateServer(
+            server.copy(
+                _name = config.locationName,
+                _version = config.version,
+                connection = server.connection.copy(
+                    cloudUrl = config.remoteUiUrl,
+                    cloudhookUrl = config.cloudhookUrl
+                )
+            )
+        )
     }
 
     override suspend fun getServices(): List<Service>? {
