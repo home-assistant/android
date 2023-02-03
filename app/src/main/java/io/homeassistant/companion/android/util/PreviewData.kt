@@ -4,7 +4,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import java.util.Calendar
 
-val notificationItem = NotificationItem(1, 1636389288682, "testing", "{\"message\":\"test\"}", "FCM")
+val notificationItem = NotificationItem(1, 1636389288682, "testing", "{\"message\":\"test\"}", "FCM", null)
 
 val wearDeviceName = "Device Name"
 

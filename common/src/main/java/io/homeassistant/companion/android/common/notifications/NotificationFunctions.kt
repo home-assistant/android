@@ -26,6 +26,7 @@ object NotificationData {
     const val TAG = "MessagingService"
     const val TITLE = "title"
     const val MESSAGE = "message"
+    const val WEBHOOK_ID = "webhook_id"
     const val GROUP_PREFIX = "group_"
     const val CHANNEL = "channel"
     const val IMPORTANCE = "importance"

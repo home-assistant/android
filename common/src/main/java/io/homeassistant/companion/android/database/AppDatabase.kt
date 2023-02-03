@@ -693,10 +693,14 @@ abstract class AppDatabase : RoomDatabase() {
                     remove("token_type")
                 }
                 integrationStorage.edit { remove("ha_version") }
+
+                // Attribute existing notifications to the existing server
+                db.execSQL("UPDATE `notification_history` SET `server_id` = $serverId")
+
                 // TODO migration
                 //  - auth/integration prefs prefix with server specific
                 //  - settings copy with server ID, 0 = shared
-                //  - notifications/tiles/sensors/widgets update with server ID
+                //  - tiles/sensors/widgets update with server ID
             }
         }
 

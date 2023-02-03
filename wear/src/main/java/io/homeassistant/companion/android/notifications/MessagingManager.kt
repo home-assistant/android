@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.notifications.DeviceCommandData
 import io.homeassistant.companion.android.common.notifications.NotificationData
 import io.homeassistant.companion.android.common.notifications.commandBeaconMonitor
@@ -27,6 +28,7 @@ import javax.inject.Inject
 
 class MessagingManager @Inject constructor(
     @ApplicationContext val context: Context,
+    private val serverManager: ServerManager,
     private val sensorDao: SensorDao,
 ) {
 
@@ -41,9 +43,13 @@ class MessagingManager @Inject constructor(
         val notificationDao = AppDatabase.getInstance(context).notificationDao()
         val now = System.currentTimeMillis()
 
-        val jsonObject = (notificationData as Map<*, *>?)?.let { JSONObject(it) }
+        val jsonData = notificationData as Map<String, String>?
+        val jsonObject = jsonData?.let { JSONObject(it) }
+        val serverId = jsonData?.get(NotificationData.WEBHOOK_ID)?.let {
+            serverManager.getServer(webhookId = it)?.id
+        }
         val notificationRow =
-            NotificationItem(0, now, notificationData[NotificationData.MESSAGE].toString(), jsonObject.toString(), source)
+            NotificationItem(0, now, notificationData[NotificationData.MESSAGE].toString(), jsonObject.toString(), source, serverId)
         notificationDao.add(notificationRow)
 
         when (notificationData[NotificationData.MESSAGE]) {

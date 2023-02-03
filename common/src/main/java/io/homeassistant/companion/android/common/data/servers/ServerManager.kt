@@ -32,6 +32,12 @@ interface ServerManager {
     fun getServer(id: Int = SERVER_ID_ACTIVE): Server?
 
     /**
+     * Get the server for the provided webhook ID
+     * @return [Server] or `null` if there is no server for the webhook ID
+     */
+    fun getServer(webhookId: String): Server?
+
+    /**
      * Update a server based on the provided object
      */
     fun updateServer(server: Server)

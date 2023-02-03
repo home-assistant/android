@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 38,
-    "identityHash": "648de6cbdd5fa45cc8448022930b224c",
+    "identityHash": "c05df3c148e3f6c908324c9e762b50f4",
     "entities": [
       {
         "tableName": "sensor_attributes",
@@ -534,7 +534,7 @@
       },
       {
         "tableName": "notification_history",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `received` INTEGER NOT NULL, `message` TEXT NOT NULL, `data` TEXT NOT NULL, `source` TEXT NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `received` INTEGER NOT NULL, `message` TEXT NOT NULL, `data` TEXT NOT NULL, `source` TEXT NOT NULL, `server_id` INTEGER)",
         "fields": [
           {
             "fieldPath": "id",
@@ -565,6 +565,12 @@
             "columnName": "source",
             "affinity": "TEXT",
             "notNull": true
+          },
+          {
+            "fieldPath": "serverId",
+            "columnName": "server_id",
+            "affinity": "INTEGER",
+            "notNull": false
           }
         ],
         "primaryKey": {
@@ -889,7 +895,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '648de6cbdd5fa45cc8448022930b224c')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c05df3c148e3f6c908324c9e762b50f4')"
     ]
   }
 }

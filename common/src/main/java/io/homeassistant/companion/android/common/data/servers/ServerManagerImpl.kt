@@ -82,6 +82,9 @@ class ServerManagerImpl @Inject constructor(
         return serverId?.let { _servers[serverId] ?: serverDao.get(serverId) }
     }
 
+    override fun getServer(webhookId: String): Server? =
+        _servers.values.firstOrNull { it.connection.webhookId == webhookId }
+
     override fun updateServer(server: Server) {
         _servers[server.id] = server.apply { connection.wifiHelper = wifiHelper }
         if (server.type == ServerType.DEFAULT) {
