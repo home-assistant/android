@@ -2,7 +2,7 @@
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
     <release version="2023.2 - Phone" versioncode="2">
-        <change>Add support to navigate to any sensor that has latitude and longitude attributes</change>
+        <change>Android Auto: Add support to navigate to any sensor that has latitude and longitude attributes</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2023.2 - Wear" versioncode="1">
