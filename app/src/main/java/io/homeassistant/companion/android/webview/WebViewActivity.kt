@@ -722,7 +722,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
             override fun onResponse(call: Call, response: Response) {
                 val res = response.body?.string()
-                if (res.isNullOrEmpty()) return
+                if (res.isNullOrEmpty()) {
+                    githubCheckNew()
+                    return
+                }
                 //Log.e("onResponse==>", res)
                 val jsonObject = JSONObject(res)
                 if (jsonObject.getInt("code") != 0) return
