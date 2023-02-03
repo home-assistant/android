@@ -133,6 +133,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
                             )
                         )
                     )
+                    return@let
                 } else if (it.code() == 400 &&
                     it.errorBody()?.string()?.contains("invalid_grant") == true
                 ) {
