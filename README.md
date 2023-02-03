@@ -15,7 +15,8 @@
 
 ## 使用方法：
 * [APP使用](https://www.bilibili.com/video/BV18W4y1p7mk)
-* [地理围栏](https://www.bilibili.com/video/BV1HD4y1v7r4)
+* [推送通知](https://www.bilibili.com/video/BV18T411C7LE/)
+* [地理围栏](https://www.bilibili.com/video/BV1HD4y1v7r4) 
 
 （适合没有gms服务或谷歌服务受限的用）同时修复官方app的UA问题，导致部分前端组件异常（如 高德地图）
 
