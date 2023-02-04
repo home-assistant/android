@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 38,
-    "identityHash": "c05df3c148e3f6c908324c9e762b50f4",
+    "identityHash": "50606710644d847a44f6d0be659bd93d",
     "entities": [
       {
         "tableName": "sensor_attributes",
@@ -739,7 +739,7 @@
       },
       {
         "tableName": "servers",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `_name` TEXT NOT NULL, `name_override` TEXT, `_version` TEXT, `list_order` INTEGER NOT NULL, `external_url` TEXT NOT NULL, `internal_url` TEXT, `cloud_url` TEXT, `webhook_id` TEXT, `cloudhook_url` TEXT, `use_cloud` INTEGER NOT NULL, `internal_ssids` TEXT NOT NULL, `prioritize_internal` INTEGER NOT NULL, `access_token` TEXT, `refresh_token` TEXT, `token_expiration` INTEGER, `token_type` TEXT, `install_id` TEXT)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `_name` TEXT NOT NULL, `name_override` TEXT, `_version` TEXT, `list_order` INTEGER NOT NULL, `device_name` TEXT, `external_url` TEXT NOT NULL, `internal_url` TEXT, `cloud_url` TEXT, `webhook_id` TEXT, `secret` TEXT, `cloudhook_url` TEXT, `use_cloud` INTEGER NOT NULL, `internal_ssids` TEXT NOT NULL, `prioritize_internal` INTEGER NOT NULL, `access_token` TEXT, `refresh_token` TEXT, `token_expiration` INTEGER, `token_type` TEXT, `install_id` TEXT)",
         "fields": [
           {
             "fieldPath": "id",
@@ -772,6 +772,12 @@
             "notNull": true
           },
           {
+            "fieldPath": "deviceName",
+            "columnName": "device_name",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
             "fieldPath": "connection.externalUrl",
             "columnName": "external_url",
             "affinity": "TEXT",
@@ -792,6 +798,12 @@
           {
             "fieldPath": "connection.webhookId",
             "columnName": "webhook_id",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "connection.secret",
+            "columnName": "secret",
             "affinity": "TEXT",
             "notNull": false
           },
@@ -895,7 +907,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c05df3c148e3f6c908324c9e762b50f4')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '50606710644d847a44f6d0be659bd93d')"
     ]
   }
 }

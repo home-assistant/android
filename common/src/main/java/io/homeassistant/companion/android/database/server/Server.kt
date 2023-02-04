@@ -23,11 +23,13 @@ data class Server(
     val type: ServerType = ServerType.DEFAULT,
     @ColumnInfo(name = "list_order")
     val listOrder: Int = -1,
+    @ColumnInfo(name = "device_name")
+    val deviceName: String? = null,
     @Embedded val connection: ServerConnectionInfo,
     @Embedded val session: ServerSessionInfo
 ) {
-    constructor(id: Int, _name: String, nameOverride: String?, _version: String?, listOrder: Int, connection: ServerConnectionInfo, session: ServerSessionInfo) :
-        this(id, _name, nameOverride, _version, ServerType.DEFAULT, listOrder, connection, session)
+    constructor(id: Int, _name: String, nameOverride: String?, _version: String?, listOrder: Int, deviceName: String?, connection: ServerConnectionInfo, session: ServerSessionInfo) :
+        this(id, _name, nameOverride, _version, ServerType.DEFAULT, listOrder, deviceName, connection, session)
 
     val friendlyName: String
         get() = nameOverride ?: _name.ifBlank { connection.externalUrl }

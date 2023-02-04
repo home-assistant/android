@@ -337,7 +337,7 @@ class SettingsFragment constructor(
         presenter.getServers().forEachIndexed { index, server ->
             val serverPreference = Preference(requireContext())
             serverPreference.title = server.friendlyName
-            serverPreference.summary = serverManager.integrationRepository(server.id).getRegistration().deviceName
+            serverPreference.summary = server.deviceName
             serverPreference.order = index
             try {
                 serverPreference.icon = AppCompatResources.getDrawable(requireContext(), commonR.drawable.ic_stat_ic_notification_blue)

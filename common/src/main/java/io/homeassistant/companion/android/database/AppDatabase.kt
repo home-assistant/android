@@ -663,16 +663,20 @@ abstract class AppDatabase : RoomDatabase() {
 
                 val integrationStorage = appContext.getSharedPreferences("integration_0", Context.MODE_PRIVATE)
                 val integrationHaVersion = integrationStorage.getString("ha_version", null)
+                val integrationDeviceName = integrationStorage.getString("device_name", null)
+                val integrationSecret = integrationStorage.getString("secret", null)
 
                 val serverValues = ContentValues().apply {
                     put("_name", "")
                     putNull("name_override")
                     integrationHaVersion?.let { put("_version", it) } ?: run { putNull("_version") }
                     put("list_order", -1)
+                    integrationDeviceName?.let { put("device_name", it) } ?: run { putNull("device_name") }
                     put("external_url", urlExternal)
                     urlInternal?.let { put("internal_url", it) } ?: run { putNull("internal_url") }
                     urlCloud?.let { put("cloud_url", it) } ?: run { putNull("cloud_url") }
                     urlWebhook?.let { put("webhook_id", it) } ?: run { putNull("webhook_id") }
+                    integrationSecret?.let { put("secret", it) } ?: run { putNull("secret") }
                     urlCloudhook?.let { put("cloudhook_url", it) } ?: run { putNull("cloudhook_url") }
                     put("use_cloud", urlUseCloud)
                     put("internal_ssids", jacksonObjectMapper().writeValueAsString(urlInternalSsids))
@@ -692,9 +696,13 @@ abstract class AppDatabase : RoomDatabase() {
                     remove("expires_date")
                     remove("token_type")
                 }
-                integrationStorage.edit { remove("ha_version") }
+                integrationStorage.edit {
+                    remove("ha_version")
+                    remove("device_name")
+                    remove("secret")
+                }
 
-                // Copy existing settings to server - ID 0 is used for shared settings
+                // Copy existing DB settings to existing server - ID 0 is used for shared settings
                 val existingSettings = db.query("SELECT * FROM `settings`")
                 existingSettings.use {
                     if (existingSettings.count > 0) {
@@ -713,11 +721,52 @@ abstract class AppDatabase : RoomDatabase() {
                     }
                 }
 
+                // Attribute existing shared preferences to the existing server
+                if (authStorage.contains("biometric_enabled")) {
+                    authStorage.getBoolean("biometric_enabled", false).let {
+                        authStorage.edit { putBoolean("${serverId}_biometric_enabled", it) }
+                    }
+                }
+                if (authStorage.contains("biometric_home_bypass_enabled")) {
+                    authStorage.getBoolean("biometric_home_bypass_enabled", false).let {
+                        authStorage.edit { putBoolean("${serverId}_biometric_home_bypass_enabled", it) }
+                    }
+                }
+                authStorage.edit {
+                    remove("biometric_enabled")
+                    remove("biometric_home_bypass_enabled")
+                }
+                if (integrationStorage.contains("sensor_reg_last")) {
+                    integrationStorage.getLong("sensor_reg_last", 0).let {
+                        integrationStorage.edit { putLong("${serverId}_sensor_reg_last", it) }
+                    }
+                }
+                if (integrationStorage.contains("session_timeout")) {
+                    integrationStorage.getInt("session_timeout", 0).let {
+                        integrationStorage.edit { putInt("${serverId}_session_timeout", it) }
+                    }
+                }
+                if (integrationStorage.contains("session_expire")) {
+                    integrationStorage.getLong("session_expire", 0).let {
+                        integrationStorage.edit { putLong("${serverId}_session_expire", it) }
+                    }
+                }
+                if (integrationStorage.contains("sec_warning_last")) {
+                    integrationStorage.getLong("sec_warning_last", 0).let {
+                        integrationStorage.edit { putLong("${serverId}_sec_warning_last", it) }
+                    }
+                }
+                integrationStorage.edit {
+                    remove("sensor_reg_last")
+                    remove("session_timeout")
+                    remove("session_expire")
+                    remove("sec_warning_last")
+                }
+
                 // Attribute existing rows to the existing server
                 db.execSQL("UPDATE `notification_history` SET `server_id` = $serverId")
 
                 // TODO migration
-                //  - auth/integration prefs prefix with server specific
                 //  - tiles/sensors/widgets update with server ID
             }
         }

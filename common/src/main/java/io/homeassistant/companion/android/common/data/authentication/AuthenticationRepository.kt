@@ -13,6 +13,8 @@ interface AuthenticationRepository {
 
     suspend fun revokeSession()
 
+    suspend fun deletePreferences()
+
     suspend fun getSessionState(): SessionState
 
     suspend fun buildAuthenticationUrl(baseUrl: String): String

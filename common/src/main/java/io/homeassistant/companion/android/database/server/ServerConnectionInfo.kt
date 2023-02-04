@@ -21,6 +21,8 @@ data class ServerConnectionInfo(
     val cloudUrl: String? = null,
     @ColumnInfo(name = "webhook_id")
     val webhookId: String? = null,
+    @ColumnInfo(name = "secret")
+    val secret: String? = null,
     @ColumnInfo(name = "cloudhook_url")
     val cloudhookUrl: String? = null,
     @ColumnInfo(name = "use_cloud")

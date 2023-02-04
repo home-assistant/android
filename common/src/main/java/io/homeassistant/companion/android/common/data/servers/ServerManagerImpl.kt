@@ -110,8 +110,10 @@ class ServerManagerImpl @Inject constructor(
         serverDao.delete(id)
     }
 
-    private fun removeServerFromManager(id: Int) {
+    private suspend fun removeServerFromManager(id: Int) {
+        authenticationRepository(id).deletePreferences()
         authenticationRepos.remove(id)
+        integrationRepository(id).deletePreferences()
         integrationRepos.remove(id)
         webSocketRepos[id]?.shutdown()
         webSocketRepos.remove(id)

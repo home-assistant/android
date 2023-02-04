@@ -50,11 +50,8 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         private const val OS_NAME = "Android"
         private const val PUSH_URL = BuildConfig.PUSH_URL
 
-        private const val PREF_APP_VERSION = "app_version"
-        private const val PREF_DEVICE_NAME = "device_name"
-        private const val PREF_PUSH_TOKEN = "push_token"
-
-        private const val PREF_SECRET = "secret"
+        private const val PREF_APP_VERSION = "app_version" // Note: _not_ server-specific
+        private const val PREF_PUSH_TOKEN = "push_token" // Note: _not_ server-specific
 
         private const val PREF_CHECK_SENSOR_REGISTRATION_NEXT = "sensor_reg_last"
         private const val PREF_SESSION_TIMEOUT = "session_timeout"
@@ -99,11 +96,11 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                         webhookId = response.webhookId,
                         cloudhookUrl = response.cloudhookUrl,
                         cloudUrl = response.remoteUiUrl,
-                        useCloud = response.remoteUiUrl != null
+                        useCloud = response.remoteUiUrl != null,
+                        secret = response.secret
                     )
                 )
             )
-            localStorage.putString(PREF_SECRET, response.secret) // TODO what is this used for?
         } catch (e: Exception) {
             Log.e(TAG, "Unable to save device registration", e)
         }
@@ -135,7 +132,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     override suspend fun getRegistration(): DeviceRegistration {
         return DeviceRegistration(
             localStorage.getString(PREF_APP_VERSION),
-            localStorage.getString(PREF_DEVICE_NAME),
+            server.deviceName,
             localStorage.getString(PREF_PUSH_TOKEN)
         )
     }
@@ -144,9 +141,17 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         if (deviceRegistration.appVersion != null)
             localStorage.putString(PREF_APP_VERSION, deviceRegistration.appVersion)
         if (deviceRegistration.deviceName != null)
-            localStorage.putString(PREF_DEVICE_NAME, deviceRegistration.deviceName)
+            serverManager.updateServer(server.copy(deviceName = deviceRegistration.deviceName))
         if (deviceRegistration.pushToken != null)
             localStorage.putString(PREF_PUSH_TOKEN, deviceRegistration.pushToken)
+    }
+
+    override suspend fun deletePreferences() {
+        localStorage.remove("${serverId}_$PREF_CHECK_SENSOR_REGISTRATION_NEXT")
+        localStorage.remove("${serverId}_$PREF_SESSION_TIMEOUT")
+        localStorage.remove("${serverId}_$PREF_SESSION_EXPIRE")
+        localStorage.remove("${serverId}_$PREF_SEC_WARNING_NEXT")
+        // app version and push token is device-specific
     }
 
     private fun isRegistered(): Boolean {
@@ -347,22 +352,17 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         appActive = active
     }
 
-    override suspend fun sessionTimeOut(value: Int) {
-        localStorage.putInt(PREF_SESSION_TIMEOUT, value)
-    }
+    override suspend fun sessionTimeOut(value: Int) =
+        localStorage.putInt("${serverId}_$PREF_SESSION_TIMEOUT", value)
 
-    override suspend fun getSessionTimeOut(): Int {
-        return localStorage.getInt(PREF_SESSION_TIMEOUT) ?: 0
-    }
+    override suspend fun getSessionTimeOut(): Int =
+        localStorage.getInt("${serverId}_$PREF_SESSION_TIMEOUT") ?: 0
 
-    override suspend fun setSessionExpireMillis(value: Long) {
-        Log.d(TAG, "setSessionExpireMillis(): $value")
-        localStorage.putLong(PREF_SESSION_EXPIRE, value)
-    }
+    override suspend fun setSessionExpireMillis(value: Long) =
+        localStorage.putLong("${serverId}_$PREF_SESSION_EXPIRE", value)
 
-    private suspend fun getSessionExpireMillis(): Long {
-        return localStorage.getLong(PREF_SESSION_EXPIRE) ?: 0
-    }
+    private suspend fun getSessionExpireMillis(): Long =
+        localStorage.getLong("${serverId}_$PREF_SESSION_EXPIRE") ?: 0
 
     override suspend fun getNotificationRateLimits(): RateLimitResponse {
         val pushToken = localStorage.getString(PREF_PUSH_TOKEN) ?: ""
@@ -387,7 +387,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
     override suspend fun getHomeAssistantVersion(): String {
         val current = System.currentTimeMillis()
-        val next = localStorage.getLong(PREF_CHECK_SENSOR_REGISTRATION_NEXT) ?: 0
+        val next = localStorage.getLong("${serverId}_$PREF_CHECK_SENSOR_REGISTRATION_NEXT") ?: 0
         if (current <= next)
             return server._version
                 ?: "" // Skip checking HA version as it has not been 4 hours yet
@@ -396,7 +396,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             getConfig().let { response ->
                 updateServerWithConfig(response)
                 localStorage.putLong(
-                    PREF_CHECK_SENSOR_REGISTRATION_NEXT,
+                    "${serverId}_$PREF_CHECK_SENSOR_REGISTRATION_NEXT",
                     current + TimeUnit.HOURS.toMillis(4)
                 )
                 response.version
@@ -439,7 +439,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 // If we have a valid response, also update the cached version
                 updateServerWithConfig(response)
                 localStorage.putLong(
-                    PREF_CHECK_SENSOR_REGISTRATION_NEXT,
+                    "${serverId}_$PREF_CHECK_SENSOR_REGISTRATION_NEXT",
                     System.currentTimeMillis() + TimeUnit.HOURS.toMillis(4)
                 )
                 return response
@@ -631,9 +631,9 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
     override suspend fun shouldNotifySecurityWarning(): Boolean {
         val current = System.currentTimeMillis()
-        val next = localStorage.getLong(PREF_SEC_WARNING_NEXT) ?: 0
+        val next = localStorage.getLong("${serverId}_$PREF_SEC_WARNING_NEXT") ?: 0
         return if (current > next) {
-            localStorage.putLong(PREF_SEC_WARNING_NEXT, current + (86400000)) // 24 hours
+            localStorage.putLong("${serverId}_$PREF_SEC_WARNING_NEXT", current + (86400000)) // 24 hours
             true
         } else {
             false

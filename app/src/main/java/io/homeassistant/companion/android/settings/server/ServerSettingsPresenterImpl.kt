@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.settings.server
 
 import android.util.Log
 import androidx.preference.PreferenceDataStore
-import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -52,7 +51,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
     override fun getString(key: String?, defValue: String?): String? = runBlocking {
         when (key) {
             "server_name" -> serverManager.getServer(serverId)?.nameOverride
-            "registration_name" -> serverManager.integrationRepository(serverId).getRegistration().deviceName
+            "registration_name" -> serverManager.getServer(serverId)?.deviceName
             "connection_internal" -> (serverManager.getServer(serverId)?.connection?.getUrl(isInternal = true, force = true) ?: "").toString()
             "session_timeout" -> serverManager.integrationRepository(serverId).getSessionTimeOut().toString()
             else -> throw IllegalArgumentException("No string found by this key: $key")
@@ -73,10 +72,12 @@ class ServerSettingsPresenterImpl @Inject constructor(
                     view.updateServerName(serverManager.getServer(serverId)?.friendlyName ?: "")
                 }
                 "registration_name" -> {
-                    try {
-                        serverManager.integrationRepository(serverId).updateRegistration(DeviceRegistration(deviceName = value!!))
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Issue updating registration with new device name", e)
+                    serverManager.getServer(serverId)?.let {
+                        serverManager.updateServer(
+                            it.copy(
+                                deviceName = value?.ifBlank { null }
+                            )
+                        )
                     }
                 }
                 "connection_internal" -> {

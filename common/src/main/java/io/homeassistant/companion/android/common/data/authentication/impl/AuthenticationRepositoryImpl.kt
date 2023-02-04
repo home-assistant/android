@@ -83,6 +83,11 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
         )
     }
 
+    override suspend fun deletePreferences() {
+        localStorage.remove("${serverId}_$PREF_BIOMETRIC_ENABLED")
+        localStorage.remove("${serverId}_$PREF_BIOMETRIC_HOME_BYPASS_ENABLED")
+    }
+
     override suspend fun getSessionState(): SessionState {
         return if (server.session.isComplete() && server.session.installId == installId && server.connection.getUrl() != null) {
             SessionState.CONNECTED
@@ -144,21 +149,17 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
         }
     }
 
-    override suspend fun setLockEnabled(enabled: Boolean) {
-        localStorage.putBoolean(PREF_BIOMETRIC_ENABLED, enabled)
-    }
+    override suspend fun setLockEnabled(enabled: Boolean) =
+        localStorage.putBoolean("${serverId}_$PREF_BIOMETRIC_ENABLED", enabled)
 
-    override suspend fun setLockHomeBypassEnabled(enabled: Boolean) {
-        localStorage.putBoolean(PREF_BIOMETRIC_HOME_BYPASS_ENABLED, enabled)
-    }
+    override suspend fun setLockHomeBypassEnabled(enabled: Boolean) =
+        localStorage.putBoolean("${serverId}_$PREF_BIOMETRIC_HOME_BYPASS_ENABLED", enabled)
 
-    override suspend fun isLockEnabledRaw(): Boolean {
-        return localStorage.getBoolean(PREF_BIOMETRIC_ENABLED)
-    }
+    override suspend fun isLockEnabledRaw(): Boolean =
+        localStorage.getBoolean("${serverId}_$PREF_BIOMETRIC_ENABLED")
 
-    override suspend fun isLockHomeBypassEnabled(): Boolean {
-        return localStorage.getBoolean(PREF_BIOMETRIC_HOME_BYPASS_ENABLED)
-    }
+    override suspend fun isLockHomeBypassEnabled(): Boolean =
+        localStorage.getBoolean("${serverId}_$PREF_BIOMETRIC_HOME_BYPASS_ENABLED")
 
     override suspend fun isLockEnabled(): Boolean {
         val raw = isLockEnabledRaw()
