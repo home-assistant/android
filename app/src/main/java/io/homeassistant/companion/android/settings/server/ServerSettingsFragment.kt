@@ -1,10 +1,13 @@
 package io.homeassistant.companion.android.settings.server
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.text.InputType
 import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
@@ -12,6 +15,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.commit
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
@@ -22,10 +26,12 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.LocationPermissionInfoHandler
+import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.ssid.SsidFragment
 import io.homeassistant.companion.android.settings.url.ExternalUrlFragment
 import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
+import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
@@ -47,6 +53,9 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
     }
 
     private var serverId = -1
+
+    private var serverDeleteDialog: AlertDialog? = null
+    private var serverDeleteHandler = Handler(Looper.getMainLooper())
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         arguments?.let {
@@ -139,6 +148,27 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
                     )
                     addToBackStack(getString(commonR.string.websocket_setting_name))
                 }
+                return@setOnPreferenceClickListener true
+            }
+        }
+
+        findPreference<Preference>("delete_server")?.let {
+            it.setOnPreferenceClickListener {
+                AlertDialog.Builder(requireContext())
+                    .setMessage(commonR.string.server_delete_confirm)
+                    .setPositiveButton(commonR.string.delete) { dialog, _ ->
+                        dialog.cancel()
+                        serverDeleteHandler.postDelayed({
+                            serverDeleteDialog = AlertDialog.Builder(requireContext())
+                                .setMessage(commonR.string.server_delete_working)
+                                .setCancelable(false)
+                                .create()
+                            serverDeleteDialog?.show()
+                        }, 2500L)
+                        lifecycleScope.launch { presenter.deleteServer() }
+                    }
+                    .setNegativeButton(commonR.string.cancel, null)
+                    .show()
                 return@setOnPreferenceClickListener true
             }
         }
@@ -288,6 +318,19 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
             }
         }
         return true
+    }
+
+    override fun onRemovedServer(success: Boolean, hasAnyRemaining: Boolean) {
+        serverDeleteHandler.removeCallbacksAndMessages(null)
+        serverDeleteDialog?.cancel()
+        if (success && context != null) {
+            if (hasAnyRemaining) { // Return to the main settings screen
+                parentFragmentManager.popBackStack()
+            } else { // Relaunch app
+                startActivity(Intent(requireContext(), LaunchActivity::class.java))
+                requireActivity().finishAffinity()
+            }
+        }
     }
 
     private fun onPermissionsResult(results: Map<String, Boolean>) {

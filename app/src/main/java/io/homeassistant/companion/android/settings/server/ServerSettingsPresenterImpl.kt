@@ -103,6 +103,21 @@ class ServerSettingsPresenterImpl @Inject constructor(
         }
     }
 
+    override suspend fun deleteServer() {
+        serverManager.getServer(serverId)?.let {
+            try {
+                serverManager.authenticationRepository(serverId).revokeSession()
+            } catch (e: Exception) {
+                Log.w(TAG, "Unable to revoke session for server", e)
+                // Remove server anyway, the user wants to delete and we don't need the server for that
+            }
+            serverManager.removeServer(serverId)
+            view.onRemovedServer(success = true, hasAnyRemaining = serverManager.defaultServers.any())
+        } ?: run {
+            view.onRemovedServer(success = false, hasAnyRemaining = true)
+        }
+    }
+
     override fun onFinish() {
         mainScope.cancel()
     }

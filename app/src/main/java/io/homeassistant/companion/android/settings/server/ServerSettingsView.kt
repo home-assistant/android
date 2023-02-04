@@ -5,4 +5,5 @@ interface ServerSettingsView {
     fun enableInternalConnection(isEnabled: Boolean)
     fun updateExternalUrl(url: String, useCloud: Boolean)
     fun updateSsids(ssids: List<String>)
+    fun onRemovedServer(success: Boolean, hasAnyRemaining: Boolean)
 }

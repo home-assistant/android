@@ -56,5 +56,9 @@
             android:icon="@drawable/ic_websocket"
             android:title="@string/websocket_setting_name"
             android:summary="@string/websocket_setting_summary" />
+        <Preference
+            android:key="delete_server"
+            android:icon="@drawable/ic_clear"
+            android:title="@string/server_delete"/>
     </PreferenceCategory>
 </PreferenceScreen>

@@ -5,6 +5,7 @@ import androidx.preference.PreferenceDataStore
 interface ServerSettingsPresenter {
     fun init(view: ServerSettingsView, serverId: Int)
     fun getPreferenceDataStore(): PreferenceDataStore
+    suspend fun deleteServer()
     fun onFinish()
 
     fun updateServerName()
