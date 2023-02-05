@@ -23,6 +23,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -96,9 +97,9 @@ class SettingsPresenterImpl @Inject constructor(
         mainScope.cancel()
     }
 
-    override fun getServers(): List<Server> {
-        return serverManager.defaultServers // TODO offer a flow version
-    }
+    override fun getServersFlow(): StateFlow<List<Server>> = serverManager.defaultServersFlow
+
+    override fun getServerCount(): Int = serverManager.defaultServers.size
 
     override suspend fun getNotificationRateLimits(): RateLimitResponse? = withContext(Dispatchers.IO) {
         try {
@@ -113,8 +114,6 @@ class SettingsPresenterImpl @Inject constructor(
     override fun showChangeLog(context: Context) {
         changeLog.showChangeLog(context, true)
     }
-
-    override fun getServerCount(): Int = serverManager.defaultServers.size
 
     override suspend fun addServer(result: OnboardApp.Output?) {
         if (result != null) {

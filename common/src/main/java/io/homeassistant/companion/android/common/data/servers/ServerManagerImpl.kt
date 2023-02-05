@@ -16,6 +16,9 @@ import io.homeassistant.companion.android.database.settings.SettingsDao
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
@@ -35,6 +38,7 @@ class ServerManagerImpl @Inject constructor(
     private val ioScope = CoroutineScope(Dispatchers.IO + Job())
 
     private val _servers = mutableMapOf<Int, Server>()
+    private val _defaultServersFlow = MutableStateFlow<List<Server>>(emptyList())
 
     private val authenticationRepos = mutableMapOf<Int, AuthenticationRepository>()
     private val integrationRepos = mutableMapOf<Int, IntegrationRepository>()
@@ -49,14 +53,18 @@ class ServerManagerImpl @Inject constructor(
     override val defaultServers: List<Server>
         get() = _servers.values.filter { it.type == ServerType.DEFAULT }.toList()
 
+    override val defaultServersFlow: StateFlow<List<Server>>
+        get() = _defaultServersFlow.asStateFlow()
+
     init {
         // Initial (blocking) load
         serverDao.getAll().forEach {
             _servers[it.id] = it.apply { connection.wifiHelper = wifiHelper }
         }
 
-        // Listen for updates
+        // Listen for updates and update flow
         ioScope.launch {
+            _defaultServersFlow.emit(defaultServers)
             serverDao.getAllFlow().collect { servers ->
                 _servers
                     .filter {
@@ -69,6 +77,7 @@ class ServerManagerImpl @Inject constructor(
                 servers.forEach {
                     _servers[it.id] = it.apply { connection.wifiHelper = wifiHelper }
                 }
+                _defaultServersFlow.emit(defaultServers)
             }
         }
     }

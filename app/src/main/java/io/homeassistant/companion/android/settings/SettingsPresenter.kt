@@ -5,13 +5,14 @@ import androidx.preference.PreferenceDataStore
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.onboarding.OnboardApp
+import kotlinx.coroutines.flow.StateFlow
 
 interface SettingsPresenter {
     fun getPreferenceDataStore(): PreferenceDataStore
     fun onFinish()
-    fun getServerCount(): Int
     suspend fun addServer(result: OnboardApp.Output?)
-    fun getServers(): List<Server>
+    fun getServersFlow(): StateFlow<List<Server>>
+    fun getServerCount(): Int
     suspend fun getNotificationRateLimits(): RateLimitResponse?
     fun showChangeLog(context: Context)
 }

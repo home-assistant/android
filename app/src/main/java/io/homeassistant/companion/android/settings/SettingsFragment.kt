@@ -16,7 +16,9 @@ import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
 import androidx.fragment.app.commit
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
@@ -25,6 +27,7 @@ import androidx.preference.SwitchPreference
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.settings.controls.ManageControlsSettingsFragment
@@ -41,7 +44,6 @@ import io.homeassistant.companion.android.settings.wear.SettingsWearActivity
 import io.homeassistant.companion.android.settings.wear.SettingsWearDetection
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -90,6 +92,14 @@ class SettingsFragment constructor(
         removeSystemFromThemesIfNeeded()
 
         updateBackgroundAccessPref()
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                presenter.getServersFlow().collect {
+                    updateServers(it)
+                }
+            }
+        }
 
         findPreference<Preference>("server_add")?.let {
             it.setOnPreferenceClickListener {
@@ -320,24 +330,29 @@ class SettingsFragment constructor(
         }
     }
 
-    private suspend fun updateServers() = serverMutex.withLock {
+    private suspend fun updateServers(servers: List<Server>) = serverMutex.withLock {
         val category = findPreference<PreferenceCategory>("servers_devices_category")
 
         val numPreferences = category?.preferenceCount ?: 0
-        val removePreferences = mutableListOf<Preference>()
+        val serverPreferences = mutableListOf<Preference>()
+        val serverKeys = servers.mapIndexed { index, server ->
+            "server_${index}_${server.id}_${server.friendlyName}_${server.deviceName}"
+        }
         for (i in 0 until numPreferences) {
             category?.getPreference(i)?.let {
-                if (it.key != "server_add" && it.key != "wear_settings") removePreferences += it
+                if (it.key != "server_add" && it.key != "wear_settings") serverPreferences += it
             }
         }
-        removePreferences.forEach {
-            category?.removePreference(it)
+        serverPreferences.forEach {
+            if (it.key !in serverKeys) category?.removePreference(it)
         }
 
-        presenter.getServers().forEachIndexed { index, server ->
+        servers.forEachIndexed { index, server ->
+            if (serverKeys[index] in serverPreferences.map { it.key }) return@forEachIndexed // Already exists!
             val serverPreference = Preference(requireContext())
             serverPreference.title = server.friendlyName
             serverPreference.summary = server.deviceName
+            serverPreference.key = serverKeys[index]
             serverPreference.order = index
             try {
                 serverPreference.icon = AppCompatResources.getDrawable(requireContext(), commonR.drawable.ic_stat_ic_notification_blue)
@@ -379,8 +394,6 @@ class SettingsFragment constructor(
     private fun onOnboardingComplete(result: OnboardApp.Output?) {
         lifecycleScope.launch {
             presenter.addServer(result)
-            delay(500L)
-            updateServers()
         }
     }
 
@@ -416,10 +429,6 @@ class SettingsFragment constructor(
     override fun onResume() {
         super.onResume()
         activity?.title = getString(commonR.string.companion_app)
-
-        lifecycleScope.launch {
-            updateServers()
-        }
     }
 
     override fun onDestroy() {
