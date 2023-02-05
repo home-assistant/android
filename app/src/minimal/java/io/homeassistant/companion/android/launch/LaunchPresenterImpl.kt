@@ -13,15 +13,17 @@ class LaunchPresenterImpl @Inject constructor(
 ) : LaunchPresenterBase(view, serverManager) {
     override fun resyncRegistration() {
         if (!serverManager.isRegistered()) return
-        mainScope.launch {
-            try {
-                serverManager.integrationRepository().updateRegistration(
-                    DeviceRegistration(
-                        "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
+        serverManager.defaultServers.forEach {
+            ioScope.launch {
+                try {
+                    serverManager.integrationRepository(it.id).updateRegistration(
+                        DeviceRegistration(
+                            "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
+                        )
                     )
-                )
-            } catch (e: Exception) {
-                Log.e(TAG, "Issue updating Registration", e)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Issue updating Registration", e)
+                }
             }
         }
     }

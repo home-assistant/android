@@ -22,7 +22,11 @@ abstract class LaunchPresenterBase(
 
     override fun onViewReady() {
         mainScope.launch {
-            // TODO delete servers without valid session (ie different device)
+            // Remove any invalid servers (incomplete, partly migrated from another device)
+            serverManager.defaultServers
+                .filter { serverManager.authenticationRepository(it.id).getSessionState() == SessionState.ANONYMOUS }
+                .forEach { serverManager.removeServer(it.id) }
+
             if (
                 serverManager.isRegistered() &&
                 serverManager.authenticationRepository().getSessionState() == SessionState.CONNECTED

@@ -61,13 +61,16 @@ class HomePresenterImpl @Inject constructor(
 
     override fun onViewReady() {
         mainScope.launch {
+            // Remove any invalid servers (incomplete, partly migrated from another device)
+            serverManager.defaultServers
+                .filter { serverManager.authenticationRepository(it.id).getSessionState() == SessionState.ANONYMOUS }
+                .forEach { serverManager.removeServer(it.id) }
+
             if (
                 serverManager.isRegistered() &&
                 serverManager.authenticationRepository().getSessionState() == SessionState.CONNECTED
             ) {
                 resyncRegistration()
-            } else if (false) { // TODO the app can't have a valid session without a registration
-                view.displayMobileAppIntegration()
             } else {
                 view.displayOnBoarding()
             }
@@ -177,18 +180,20 @@ class HomePresenterImpl @Inject constructor(
     }
 
     private fun resyncRegistration() {
-        mainScope.launch {
-            try {
-                serverManager.integrationRepository().updateRegistration(
-                    DeviceRegistration(
-                        "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-                        null,
-                        getMessagingToken(),
-                        false
+        serverManager.defaultServers.forEach {
+            mainScope.launch {
+                try {
+                    serverManager.integrationRepository(it.id).updateRegistration(
+                        DeviceRegistration(
+                            "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                            null,
+                            getMessagingToken(),
+                            false
+                        )
                     )
-                )
-            } catch (e: Exception) {
-                Log.e(TAG, "Issue updating Registration", e)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Issue updating Registration", e)
+                }
             }
         }
     }

@@ -50,8 +50,14 @@ class ServerManagerImpl @Inject constructor(
         get() = _servers.values.filter { it.type == ServerType.DEFAULT }.toList()
 
     init {
+        // Initial (blocking) load
+        serverDao.getAll().forEach {
+            _servers[it.id] = it.apply { connection.wifiHelper = wifiHelper }
+        }
+
+        // Listen for updates
         ioScope.launch {
-            serverDao.getAll().collect { servers ->
+            serverDao.getAllFlow().collect { servers ->
                 _servers
                     .filter {
                         it.value.type == ServerType.DEFAULT &&
@@ -98,7 +104,7 @@ class ServerManagerImpl @Inject constructor(
     }
 
     override fun getServer(webhookId: String): Server? =
-        _servers.values.firstOrNull { it.connection.webhookId == webhookId }
+        _servers.values.firstOrNull { it.connection.webhookId == webhookId } ?: serverDao.get(webhookId)
 
     override fun activateServer(id: Int) {
         if (id != SERVER_ID_ACTIVE && _servers[id] != null && _servers[id]?.type == ServerType.DEFAULT) {
@@ -124,16 +130,16 @@ class ServerManagerImpl @Inject constructor(
     }
 
     override suspend fun removeServer(id: Int) {
+        authenticationRepository(id).deletePreferences()
+        integrationRepository(id).deletePreferences()
         removeServerFromManager(id)
         if (localStorage.getInt(PREF_ACTIVE_SERVER) == id) localStorage.remove(PREF_ACTIVE_SERVER)
         settingsDao.delete(id)
         serverDao.delete(id)
     }
 
-    private suspend fun removeServerFromManager(id: Int) {
-        authenticationRepository(id).deletePreferences()
+    private fun removeServerFromManager(id: Int) {
         authenticationRepos.remove(id)
-        integrationRepository(id).deletePreferences()
         integrationRepos.remove(id)
         webSocketRepos[id]?.shutdown()
         webSocketRepos.remove(id)

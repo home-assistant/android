@@ -17,11 +17,11 @@ import io.homeassistant.companion.android.common.R as commonR
 class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationView {
     companion object {
         private const val TAG = "MobileAppIntegrationActivity"
-        val EXTRA_SERVER_ID = "server_id"
+        val EXTRA_SERVER = "server"
 
         fun newInstance(context: Context, serverId: Int): Intent {
             return Intent(context, MobileAppIntegrationActivity::class.java).apply {
-                putExtra(EXTRA_SERVER_ID, serverId)
+                putExtra(EXTRA_SERVER, serverId)
             }
         }
     }
@@ -33,7 +33,7 @@ class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationVi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val serverId = intent.getIntExtra(EXTRA_SERVER_ID, 0)
+        val serverId = intent.getIntExtra(EXTRA_SERVER, 0)
         if (serverId == 0) finish()
 
         binding = ActivityIntegrationBinding.inflate(layoutInflater)

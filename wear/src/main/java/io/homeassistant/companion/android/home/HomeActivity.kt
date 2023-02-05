@@ -12,7 +12,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.home.views.LoadHomePage
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
-import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationActivity
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
 import kotlinx.coroutines.Job
@@ -88,12 +87,6 @@ class HomeActivity : ComponentActivity(), HomeView {
 
     override fun displayOnBoarding() {
         val intent = OnboardingActivity.newInstance(this)
-        startActivity(intent)
-        finish()
-    }
-
-    override fun displayMobileAppIntegration() {
-        val intent = MobileAppIntegrationActivity.newInstance(this, 0) // TODO
         startActivity(intent)
         finish()
     }
