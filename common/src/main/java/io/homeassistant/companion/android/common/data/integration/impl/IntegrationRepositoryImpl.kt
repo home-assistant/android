@@ -101,6 +101,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                     )
                 )
             )
+            getConfig() // To get version, name, etc stored
         } catch (e: Exception) {
             Log.e(TAG, "Unable to save device registration", e)
         }

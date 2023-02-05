@@ -41,6 +41,13 @@ interface ServerManager {
     fun getServer(webhookId: String): Server?
 
     /**
+     * Mark the server for the provided ID as 'active', the default to use when no specific ID is
+     * provided. Only IDs for servers with the type [ServerType.DEFAULT] are accepted, other IDs are
+     * ignored.
+     */
+    fun activateServer(id: Int)
+
+    /**
      * Update a server based on the provided object
      */
     fun updateServer(server: Server)

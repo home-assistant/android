@@ -8,6 +8,7 @@ interface ServerSettingsPresenter {
     suspend fun deleteServer()
     fun onFinish()
 
+    fun isInactiveServer(): Boolean
     fun updateServerName()
     fun updateUrlStatus()
     fun isSsidUsed(): Boolean

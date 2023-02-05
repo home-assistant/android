@@ -88,7 +88,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
         localStorage.remove("${serverId}_$PREF_BIOMETRIC_HOME_BYPASS_ENABLED")
     }
 
-    override suspend fun getSessionState(): SessionState {
+    override fun getSessionState(): SessionState {
         return if (server.session.isComplete() && server.session.installId == installId && server.connection.getUrl() != null) {
             SessionState.CONNECTED
         } else {

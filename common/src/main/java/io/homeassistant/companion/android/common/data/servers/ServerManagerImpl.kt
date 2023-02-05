@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.data.servers
 
+import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepositoryFactory
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -16,7 +17,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
+import javax.inject.Named
 import kotlin.math.min
 
 class ServerManagerImpl @Inject constructor(
@@ -25,7 +28,8 @@ class ServerManagerImpl @Inject constructor(
     private val webSocketRepositoryFactory: WebSocketRepositoryFactory,
     private val serverDao: ServerDao,
     private val settingsDao: SettingsDao,
-    private val wifiHelper: WifiHelper
+    private val wifiHelper: WifiHelper,
+    @Named("session") private val localStorage: LocalStorage
 ) : ServerManager {
 
     private val ioScope = CoroutineScope(Dispatchers.IO + Job())
@@ -37,6 +41,10 @@ class ServerManagerImpl @Inject constructor(
     private val webSocketRepos = mutableMapOf<Int, WebSocketRepository>()
 
     private val illegalServerException = IllegalArgumentException("No server for ID")
+
+    companion object {
+        private const val PREF_ACTIVE_SERVER = "active_server"
+    }
 
     override val defaultServers: List<Server>
         get() = _servers.values.filter { it.type == ServerType.DEFAULT }.toList()
@@ -77,7 +85,12 @@ class ServerManagerImpl @Inject constructor(
         }
     }
 
-    private fun activeServerId(): Int? = _servers.keys.maxOfOrNull { it } // TODO proper active server management
+    private fun activeServerId(): Int? = runBlocking {
+        val pref = localStorage.getInt(PREF_ACTIVE_SERVER)
+
+        if (pref != null && _servers[pref] != null) pref
+        else _servers.keys.maxOfOrNull { it }
+    }
 
     override fun getServer(id: Int): Server? {
         val serverId = if (id == SERVER_ID_ACTIVE) activeServerId() else id
@@ -86,6 +99,12 @@ class ServerManagerImpl @Inject constructor(
 
     override fun getServer(webhookId: String): Server? =
         _servers.values.firstOrNull { it.connection.webhookId == webhookId }
+
+    override fun activateServer(id: Int) {
+        if (id != SERVER_ID_ACTIVE && _servers[id] != null && _servers[id]?.type == ServerType.DEFAULT) {
+            ioScope.launch { localStorage.putInt(PREF_ACTIVE_SERVER, id) }
+        }
+    }
 
     override fun updateServer(server: Server) {
         _servers[server.id] = server.apply { connection.wifiHelper = wifiHelper }
@@ -106,6 +125,7 @@ class ServerManagerImpl @Inject constructor(
 
     override suspend fun removeServer(id: Int) {
         removeServerFromManager(id)
+        if (localStorage.getInt(PREF_ACTIVE_SERVER) == id) localStorage.remove(PREF_ACTIVE_SERVER)
         settingsDao.delete(id)
         serverDao.delete(id)
     }

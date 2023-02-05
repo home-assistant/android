@@ -31,6 +31,7 @@ import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.ssid.SsidFragment
 import io.homeassistant.companion.android.settings.url.ExternalUrlFragment
 import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
+import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import javax.inject.Inject
@@ -77,6 +78,19 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
                     .show()
             }
             isValid
+        }
+
+        if (presenter.isInactiveServer()) {
+            findPreference<Preference>("activate_server")?.let {
+                it.isVisible = true
+                it.setOnPreferenceClickListener {
+                    val intent = WebViewActivity.newInstance(requireContext(), null, serverId).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                    }
+                    requireContext().startActivity(intent)
+                    return@setOnPreferenceClickListener true
+                }
+            }
         }
 
         findPreference<SwitchPreference>("app_lock")?.setOnPreferenceChangeListener { _, newValue ->

@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+    <Preference
+        android:key="activate_server"
+        android:icon="@drawable/ic_launch"
+        android:title="@string/server_activate"
+        app:isPreferenceVisible="false"/>
     <PreferenceCategory
         android:title="@string/device_registration">
         <EditTextPreference

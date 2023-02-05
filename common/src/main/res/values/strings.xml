@@ -648,6 +648,7 @@
     <string name="sensors">Sensors</string>
     <string name="server_settings">Server Settings</string>
     <string name="servers_devices_category">Servers &amp; Devices</string>
+    <string name="server_activate">Activate Server</string>
     <string name="server_add">Add server</string>
     <string name="server_delete">Delete server</string>
     <string name="server_delete_confirm">Are you sure you want to delete this server from the app?</string>

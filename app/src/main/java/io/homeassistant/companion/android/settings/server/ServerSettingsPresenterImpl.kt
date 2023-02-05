@@ -122,6 +122,8 @@ class ServerSettingsPresenterImpl @Inject constructor(
         mainScope.cancel()
     }
 
+    override fun isInactiveServer(): Boolean = serverManager.getServer()?.id != serverId
+
     override fun updateServerName() =
         view.updateServerName(serverManager.getServer(serverId)?.friendlyName ?: "")
 
