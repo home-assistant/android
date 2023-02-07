@@ -128,7 +128,7 @@ class PhoneStateSensorManager : SensorManager {
 
                 if (info != null) {
                     try {
-                        displayName = info.displayName?.toString() ?: displayName
+                        displayName = info.displayName?.toString() ?: info.carrierName.toString()
                         attrs["carrier name"] = info.carrierName
                         attrs["iso country code"] = info.countryIso
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
