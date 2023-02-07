@@ -49,8 +49,6 @@ class PhoneStateSensorManager : SensorManager {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#cellular-provider-sensor"
     }
-    override val enabledByDefault: Boolean
-        get() = false
     override val name: Int
         get() = commonR.string.sensor_name_phone
     override fun hasSensor(context: Context): Boolean {
@@ -75,7 +73,7 @@ class PhoneStateSensorManager : SensorManager {
     }
 
     private fun checkPhoneState(context: Context) {
-        if (isEnabled(context, phoneState.id)) {
+        if (isEnabled(context, phoneState)) {
             var currentPhoneState = "unknown"
 
             if (checkPermission(context, phoneState.id)) {
@@ -114,7 +112,7 @@ class PhoneStateSensorManager : SensorManager {
             1 -> sim_2
             else -> throw IllegalArgumentException("Invalid sim slot: $slotIndex")
         }
-        if (!isEnabled(context, basicSimSensor.id))
+        if (!isEnabled(context, basicSimSensor))
             return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
             var displayName = "Unavailable"

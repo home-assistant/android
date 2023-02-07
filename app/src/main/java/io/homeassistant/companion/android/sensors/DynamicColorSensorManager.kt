@@ -25,8 +25,6 @@ class DynamicColorSensorManager : SensorManager {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#dynamic-color-sensor"
     }
-    override val enabledByDefault: Boolean
-        get() = false
     override val name: Int
         get() = commonR.string.sensor_name_dynamic_color
 
@@ -48,7 +46,7 @@ class DynamicColorSensorManager : SensorManager {
 
     private fun updateAccentColor(context: Context) {
 
-        if (!isEnabled(context, accentColorSensor.id))
+        if (!isEnabled(context, accentColorSensor))
             return
 
         val dynamicColorContext = DynamicColors.wrapContextIfAvailable(context)

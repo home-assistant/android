@@ -27,8 +27,6 @@ class LastUpdateManager : SensorManager {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#last-update-trigger-sensor"
     }
-    override val enabledByDefault: Boolean
-        get() = false
     override val name: Int
         get() = commonR.string.sensor_name_last_update
 
@@ -48,7 +46,7 @@ class LastUpdateManager : SensorManager {
 
     fun sendLastUpdate(context: Context, intentAction: String?) {
 
-        if (!isEnabled(context, lastUpdate.id))
+        if (!isEnabled(context, lastUpdate))
             return
 
         if (intentAction.isNullOrEmpty())

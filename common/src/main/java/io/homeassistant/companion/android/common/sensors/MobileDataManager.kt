@@ -34,8 +34,6 @@ class MobileDataManager : SensorManager {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#mobile-data-sensors"
     }
-    override val enabledByDefault: Boolean
-        get() = false
     override val name: Int
         get() = commonR.string.sensor_name_mobile_data
 
@@ -66,7 +64,7 @@ class MobileDataManager : SensorManager {
         settingKey: String,
         icon: String
     ) {
-        if (!isEnabled(context, sensor.id))
+        if (!isEnabled(context, sensor))
             return
 
         var enabled = false

@@ -43,8 +43,6 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/wear-os/sensors"
     }
-    override val enabledByDefault: Boolean
-        get() = false
 
     override val name: Int
         get() = commonR.string.sensor_name_heart_rate
@@ -73,7 +71,7 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
     }
 
     private fun updateHeartRate() {
-        if (!isEnabled(latestContext, heartRate.id))
+        if (!isEnabled(latestContext, heartRate))
             return
 
         val now = System.currentTimeMillis()

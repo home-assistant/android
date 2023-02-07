@@ -94,8 +94,6 @@ abstract class AppSensorManagerBase : SensorManager {
         )
     }
 
-    override val enabledByDefault: Boolean
-        get() = false
     override val name: Int
         get() = commonR.string.sensor_name_app_sensor
 
@@ -140,7 +138,7 @@ abstract class AppSensorManagerBase : SensorManager {
 
     private fun updateCurrentVersion(context: Context) {
 
-        if (!isEnabled(context, currentVersion.id))
+        if (!isEnabled(context, currentVersion))
             return
 
         val state = getCurrentVersion()
@@ -156,7 +154,7 @@ abstract class AppSensorManagerBase : SensorManager {
 
     private fun updateAppRxGb(context: Context, appUid: Int) {
 
-        if (!isEnabled(context, app_rx_gb.id))
+        if (!isEnabled(context, app_rx_gb))
             return
 
         val appRx = try {
@@ -177,7 +175,7 @@ abstract class AppSensorManagerBase : SensorManager {
 
     private fun updateAppTxGb(context: Context, appUid: Int) {
 
-        if (!isEnabled(context, app_tx_gb.id))
+        if (!isEnabled(context, app_tx_gb))
             return
 
         val appTx = try {
@@ -198,7 +196,7 @@ abstract class AppSensorManagerBase : SensorManager {
 
     private fun updateAppMemory(context: Context) {
 
-        if (!isEnabled(context, app_memory.id))
+        if (!isEnabled(context, app_memory))
             return
 
         val runTime = Runtime.getRuntime()
@@ -220,7 +218,7 @@ abstract class AppSensorManagerBase : SensorManager {
 
     @RequiresApi(Build.VERSION_CODES.M)
     private fun updateAppInactive(context: Context, usageStatsManager: UsageStatsManager) {
-        if (!isEnabled(context, app_inactive.id))
+        if (!isEnabled(context, app_inactive))
             return
 
         val isAppInactive = usageStatsManager.isAppInactive(context.packageName)
@@ -238,7 +236,7 @@ abstract class AppSensorManagerBase : SensorManager {
 
     @RequiresApi(Build.VERSION_CODES.P)
     private fun updateAppStandbyBucket(context: Context, usageStatsManager: UsageStatsManager) {
-        if (!isEnabled(context, app_standby_bucket.id))
+        if (!isEnabled(context, app_standby_bucket))
             return
 
         val appStandbyBucket = when (usageStatsManager.appStandbyBucket) {
@@ -260,7 +258,7 @@ abstract class AppSensorManagerBase : SensorManager {
     }
 
     private fun updateImportanceCheck(context: Context) {
-        if (!isEnabled(context, app_importance.id))
+        if (!isEnabled(context, app_importance))
             return
 
         val appManager = context.getSystemService<ActivityManager>()!!

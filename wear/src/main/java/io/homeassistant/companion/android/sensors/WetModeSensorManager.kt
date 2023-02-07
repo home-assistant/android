@@ -26,9 +26,6 @@ class WetModeSensorManager : SensorManager {
 
     private var wetModeEnabled: Boolean = false
 
-    override val enabledByDefault: Boolean
-        get() = false
-
     override val name: Int
         get() = commonR.string.sensor_name_wet_mode
 
@@ -60,7 +57,7 @@ class WetModeSensorManager : SensorManager {
     }
 
     private fun updateWetMode(context: Context) {
-        if (!isEnabled(context, wetModeSensor.id))
+        if (!isEnabled(context, wetModeSensor))
             return
 
         onSensorUpdated(

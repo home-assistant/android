@@ -35,8 +35,6 @@ class PressureSensorManager : SensorManager, SensorEventListener {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#pressure-sensor"
     }
-    override val enabledByDefault: Boolean
-        get() = false
 
     override val name: Int
         get() = commonR.string.sensor_name_pressure
@@ -60,7 +58,7 @@ class PressureSensorManager : SensorManager, SensorEventListener {
     }
 
     private fun updatePressureSensor() {
-        if (!isEnabled(latestContext, pressureSensor.id))
+        if (!isEnabled(latestContext, pressureSensor))
             return
 
         val now = System.currentTimeMillis()

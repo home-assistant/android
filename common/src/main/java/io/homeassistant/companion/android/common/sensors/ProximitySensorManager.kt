@@ -34,8 +34,6 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#proximity-sensor"
     }
-    override val enabledByDefault: Boolean
-        get() = false
 
     override val name: Int
         get() = commonR.string.sensor_name_proximity
@@ -59,7 +57,7 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
     }
 
     private fun updateProximitySensor() {
-        if (!isEnabled(latestContext, proximitySensor.id))
+        if (!isEnabled(latestContext, proximitySensor))
             return
 
         val now = System.currentTimeMillis()

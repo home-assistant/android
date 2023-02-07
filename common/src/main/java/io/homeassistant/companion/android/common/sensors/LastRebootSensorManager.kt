@@ -37,8 +37,6 @@ class LastRebootSensorManager : SensorManager {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#last-reboot-sensor"
     }
-    override val enabledByDefault: Boolean
-        get() = false
     override val name: Int
         get() = commonR.string.sensor_name_last_reboot
 
@@ -58,7 +56,7 @@ class LastRebootSensorManager : SensorManager {
 
     @SuppressLint("SimpleDateFormat")
     private fun updateLastReboot(context: Context) {
-        if (!isEnabled(context, lastRebootSensor.id))
+        if (!isEnabled(context, lastRebootSensor))
             return
 
         var timeInMillis = 0L

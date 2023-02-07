@@ -58,7 +58,7 @@ fun SensorUi(
 
     val perm = manager.checkPermission(LocalContext.current, basicSensor.id)
     ToggleChip(
-        checked = (sensor == null && manager.enabledByDefault) ||
+        checked = (sensor == null && basicSensor.enabledByDefault) ||
             (sensor?.enabled == true && perm),
         onCheckedChange = { enabled ->
             val permissions = manager.requiredPermissions(basicSensor.id)

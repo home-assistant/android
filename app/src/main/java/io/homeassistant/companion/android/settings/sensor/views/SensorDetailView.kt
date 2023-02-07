@@ -93,8 +93,7 @@ fun SensorDetailView(
 
     val sensorEnabled = viewModel.sensor?.sensor?.enabled
         ?: (
-            viewModel.basicSensor != null && viewModel.sensorManager?.enabledByDefault == true &&
-                viewModel.sensorManager.checkPermission(context, viewModel.basicSensor.id)
+            viewModel.basicSensor != null && viewModel.basicSensor.enabledByDefault && viewModel.sensorManager?.checkPermission(context, viewModel.basicSensor.id) == true
             )
 
     val scaffoldState = rememberScaffoldState()

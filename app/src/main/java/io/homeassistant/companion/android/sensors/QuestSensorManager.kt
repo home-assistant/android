@@ -25,9 +25,6 @@ class QuestSensorManager : SensorManager {
         return "https://companion.home-assistant.io/docs/oculus-quest/"
     }
 
-    override val enabledByDefault: Boolean
-        get() = false
-
     override val name: Int
         get() = commonR.string.sensor_name_quest
 
@@ -62,7 +59,7 @@ class QuestSensorManager : SensorManager {
     }
 
     private fun updateHeadsetMount(context: Context, intent: Intent) {
-        if (!isEnabled(context, headsetMounted.id))
+        if (!isEnabled(context, headsetMounted))
             return
 
         val state: Boolean = getHeadsetState(intent)

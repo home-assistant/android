@@ -27,9 +27,6 @@ class DisplaySensorManager : SensorManager {
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#screen-off-timeout-sensor"
         )
     }
-
-    override val enabledByDefault: Boolean
-        get() = false
     override val name: Int
         get() = commonR.string.sensor_name_display_sensors
 
@@ -49,7 +46,7 @@ class DisplaySensorManager : SensorManager {
     }
 
     private fun updateScreenBrightness(context: Context) {
-        if (!isEnabled(context, screenBrightness.id))
+        if (!isEnabled(context, screenBrightness))
             return
 
         var brightness = 0
@@ -79,7 +76,7 @@ class DisplaySensorManager : SensorManager {
     }
 
     private fun updateScreenTimeout(context: Context) {
-        if (!isEnabled(context, screenOffTimeout.id))
+        if (!isEnabled(context, screenOffTimeout))
             return
 
         var timeout = 0

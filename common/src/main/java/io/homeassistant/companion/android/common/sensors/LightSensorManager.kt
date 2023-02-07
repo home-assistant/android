@@ -32,9 +32,6 @@ class LightSensorManager : SensorManager, SensorEventListener {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#light-sensor"
     }
-    override val enabledByDefault: Boolean
-        get() = false
-
     override val name: Int
         get() = commonR.string.sensor_name_light
 
@@ -62,7 +59,7 @@ class LightSensorManager : SensorManager, SensorEventListener {
     }
 
     private fun updateLightSensor() {
-        if (!isEnabled(latestContext, lightSensor.id))
+        if (!isEnabled(latestContext, lightSensor))
             return
 
         val now = System.currentTimeMillis()

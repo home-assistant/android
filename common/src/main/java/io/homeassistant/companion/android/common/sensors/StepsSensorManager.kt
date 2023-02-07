@@ -34,9 +34,6 @@ class StepsSensorManager : SensorManager, SensorEventListener {
         return "https://companion.home-assistant.io/docs/core/sensors#pedometer-sensors"
     }
 
-    override val enabledByDefault: Boolean
-        get() = false
-
     override val name: Int
         get() = commonR.string.sensor_name_steps
 
@@ -68,7 +65,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
     }
 
     private fun updateStepsSensor() {
-        if (!isEnabled(latestContext, stepsSensor.id))
+        if (!isEnabled(latestContext, stepsSensor))
             return
 
         if (checkPermission(latestContext, stepsSensor.id)) {

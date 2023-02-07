@@ -61,8 +61,6 @@ class StorageSensorManager : SensorManager {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#storage-sensor"
     }
-    override val enabledByDefault: Boolean
-        get() = false
     override val name: Int
         get() = commonR.string.sensor_name_storage
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
@@ -81,7 +79,7 @@ class StorageSensorManager : SensorManager {
     }
 
     private fun updateInternalStorageSensor(context: Context) {
-        if (!isEnabled(context, storageSensor.id))
+        if (!isEnabled(context, storageSensor))
             return
 
         val path = Environment.getDataDirectory()
@@ -100,7 +98,7 @@ class StorageSensorManager : SensorManager {
     }
 
     private fun updateExternalStorageSensor(context: Context) {
-        if (!isEnabled(context, externalStorage.id))
+        if (!isEnabled(context, externalStorage))
             return
 
         val externalStoragePath = getExternalStoragePathIfAvailable(context)

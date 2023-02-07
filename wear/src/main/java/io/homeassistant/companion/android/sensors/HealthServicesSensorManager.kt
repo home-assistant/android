@@ -96,8 +96,6 @@ class HealthServicesSensorManager : SensorManager {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/wear-os/sensors#health-services"
     }
-    override val enabledByDefault: Boolean
-        get() = false
 
     override val name: Int
         get() = commonR.string.sensor_name_health_services
@@ -140,11 +138,11 @@ class HealthServicesSensorManager : SensorManager {
     }
 
     private fun updateHealthServices() {
-        val activityStateEnabled = isEnabled(latestContext, userActivityState.id)
-        val dailyFloorEnabled = isEnabled(latestContext, dailyFloors.id)
-        val dailyDistanceEnabled = isEnabled(latestContext, dailyDistance.id)
-        val dailyCaloriesEnabled = isEnabled(latestContext, dailyCalories.id)
-        val dailyStepsEnabled = isEnabled(latestContext, dailySteps.id)
+        val activityStateEnabled = isEnabled(latestContext, userActivityState)
+        val dailyFloorEnabled = isEnabled(latestContext, dailyFloors)
+        val dailyDistanceEnabled = isEnabled(latestContext, dailyDistance)
+        val dailyCaloriesEnabled = isEnabled(latestContext, dailyCalories)
+        val dailyStepsEnabled = isEnabled(latestContext, dailySteps)
 
         if (
             !activityStateEnabled && !dailyFloorEnabled && !dailyDistanceEnabled &&
