@@ -1,0 +1,126 @@
+{
+  "project_info": {
+    "project_number": "664749274432",
+    "project_id": "cogent-spring-373807",
+    "storage_bucket": "cogent-spring-373807.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:664749274432:android:eed97083a5b3ed6b85f6a5",
+        "android_client_info": {
+          "package_name": "io.homeassistant.companion.android"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "664749274432-b57ho8nbbu5r7pe1rsjogd58tkpua7ai.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCKNHv5UvU109z2FpZVFg3HxBk0R1bcN8I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "664749274432-b57ho8nbbu5r7pe1rsjogd58tkpua7ai.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:664749274432:android:7ad417a94899c76f85f6a5",
+        "android_client_info": {
+          "package_name": "io.homeassistant.companion.android.debug"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "664749274432-b57ho8nbbu5r7pe1rsjogd58tkpua7ai.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCKNHv5UvU109z2FpZVFg3HxBk0R1bcN8I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "664749274432-b57ho8nbbu5r7pe1rsjogd58tkpua7ai.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:664749274432:android:10d2041a4e28f90085f6a5",
+        "android_client_info": {
+          "package_name": "io.homeassistant.companion.android.minimal"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "664749274432-b57ho8nbbu5r7pe1rsjogd58tkpua7ai.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCKNHv5UvU109z2FpZVFg3HxBk0R1bcN8I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "664749274432-b57ho8nbbu5r7pe1rsjogd58tkpua7ai.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:664749274432:android:e70158b94b12c24285f6a5",
+        "android_client_info": {
+          "package_name": "io.homeassistant.companion.android.minimal.debug"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "664749274432-b57ho8nbbu5r7pe1rsjogd58tkpua7ai.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCKNHv5UvU109z2FpZVFg3HxBk0R1bcN8I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "664749274432-b57ho8nbbu5r7pe1rsjogd58tkpua7ai.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

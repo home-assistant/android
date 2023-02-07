@@ -1,0 +1,4 @@
+<resources>
+
+    <style name="Theme.HomeAssistantAndriod" parent="android:Theme.Material.Light.DarkActionBar" />
+</resources>
