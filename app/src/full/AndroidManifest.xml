@@ -60,6 +60,17 @@
                 <category android:name="androidx.car.app.category.IOT"/>
             </intent-filter>
         </service>
+        <service
+            android:name="com.google.android.gms.metadata.ModuleDependencies"
+            android:enabled="false"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.android.gms.metadata.MODULE_DEPENDENCIES" />
+            </intent-filter>
+            <meta-data
+                android:name="home:-1:preferred"
+                android:value=""/>
+        </service>
     </application>
 
 </manifest>
