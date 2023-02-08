@@ -107,7 +107,6 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
                 SensorReceiver.updateAllSensors(context)
             }
         }
-
         if (hasSleepSegmentEvent(intent) && isEnabled(context, sleepSegment)) {
             Log.d(TAG, "Sleep segment event detected")
             val sleepSegmentEvent = getSleepSegmentEvent(intent)

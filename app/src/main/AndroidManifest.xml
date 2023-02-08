@@ -249,7 +249,8 @@
             android:enabled="true"
             android:exported="true">
             <intent-filter>
-                <action android:name="io.homeassistant.companion.android.background.REQUEST_ACTIVITY_UPDATES" />
+                <action android:name="io.homeassistant.companion.android.background.UPDATE_ACTIVITY" />
+                <action android:name="io.homeassistant.companion.android.background.SLEEP_ACTIVITY" />
             </intent-filter>
         </receiver>
 

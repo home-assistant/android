@@ -86,6 +86,7 @@ play {
 }
 
 dependencies {
+    implementation(project(":google"))
     implementation(project(":common"))
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.8.10")

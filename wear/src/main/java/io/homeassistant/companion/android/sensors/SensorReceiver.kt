@@ -54,6 +54,7 @@ class SensorReceiver : SensorReceiverBase() {
     companion object {
         const val TAG = "SensorReceiver"
         private val allManager = listOf(
+            ActivitySensorManager(),
             AppSensorManager(),
             AudioSensorManager(),
             BatterySensorManager(),
