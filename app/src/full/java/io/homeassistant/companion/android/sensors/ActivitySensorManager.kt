@@ -29,7 +29,6 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
     companion object {
 
         internal const val TAG = "ActivitySM"
-        private var sleepRegistration = false
 
         private val activity = SensorManager.BasicSensor(
             "detected_activity",
@@ -153,12 +152,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
         if (isEnabled(context, activity)) {
             enableActivityUpdates(context, ActivitySensorManager::class.java)
         }
-        if (
-            (
-                isEnabled(context, sleepConfidence) ||
-                    isEnabled(context, sleepSegment)
-                ) && !sleepRegistration
-        ) {
+        if (isEnabled(context, sleepConfidence) || isEnabled(context, sleepSegment)) {
             val pendingIntent = getSleepPendingIntent(context, ActivitySensorManager::class.java)
             Log.d(TAG, "Registering for sleep updates")
             val task = enableSleepUpdates(
@@ -178,12 +172,10 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
             )
             task.addOnSuccessListener {
                 Log.d(TAG, "Successfully registered for sleep updates")
-                sleepRegistration = true
             }
             task.addOnFailureListener {
                 Log.e(TAG, "Failed to register for sleep updates", it)
                 removeSleepUpdates(context, pendingIntent)
-                sleepRegistration = false
             }
         }
     }
