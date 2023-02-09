@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
+  <string name="shortcutLongLabel">进入APP设置</string>
+  <string name="shortcutShortLabel">Hass设置</string>
+  <string name="shortcutLongLabel_github">GitHub查看更新</string>
+  <string name="shortcutShortLabel_github">Hass GitHub</string>
   <string name="add_service_data_field">添加字段</string>
   <string name="add_widget">添加小部件</string>
   <string name="app_version_info">应用版本信息</string>

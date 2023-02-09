@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_widget"
+        android:shortcutId="settings shortcut"
+        android:shortcutLongLabel="@string/shortcutLongLabel"
+        android:shortcutShortLabel="@string/shortcutShortLabel">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="io.homeassistant.companion.android.settings.SettingsActivity"
+            android:targetPackage="io.homeassistant.companion.android" />
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_github"
+        android:shortcutId="github shortcut"
+        android:shortcutLongLabel="@string/shortcutLongLabel_github"
+        android:shortcutShortLabel="@string/shortcutShortLabel_github">
+        <intent
+            android:action="android.intent.action.VIEW" android:data="https://github.com/nesror/Home-Assistant-Companion-for-Android">
+        </intent>
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+</shortcuts>
