@@ -323,8 +323,10 @@ class MainViewModel @Inject constructor(
         basicSensor: SensorManager.BasicSensor,
         isEnabled: Boolean
     ) {
-        sensorDao.setSensorsEnabled(listOf(basicSensor.id), isEnabled)
-        SensorReceiver.updateAllSensors(getApplication())
+        homePresenter.getServerId()?.let { serverId ->
+            sensorDao.setSensorsEnabled(listOf(basicSensor.id), serverId, isEnabled)
+            SensorReceiver.updateAllSensors(getApplication())
+        }
     }
 
     fun updateAllSensors(sensorManager: SensorManager) {

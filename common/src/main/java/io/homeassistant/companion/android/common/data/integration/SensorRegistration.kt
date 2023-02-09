@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.common.data.integration
 
 data class SensorRegistration<T>(
     val uniqueId: String,
+    val serverId: Int,
     val state: T,
     val type: String,
     val icon: String,

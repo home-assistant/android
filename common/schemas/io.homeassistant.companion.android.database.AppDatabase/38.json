@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 38,
-    "identityHash": "50606710644d847a44f6d0be659bd93d",
+    "identityHash": "12562fdf96883ae9c2657636dd62e945",
     "entities": [
       {
         "tableName": "sensor_attributes",
@@ -77,13 +77,20 @@
       },
       {
         "tableName": "sensors",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER DEFAULT NULL, `state` TEXT NOT NULL, `last_sent_state` TEXT DEFAULT NULL, `last_sent_icon` TEXT DEFAULT NULL, `state_type` TEXT NOT NULL, `type` TEXT NOT NULL, `icon` TEXT NOT NULL, `name` TEXT NOT NULL, `device_class` TEXT, `unit_of_measurement` TEXT, `state_class` TEXT, `entity_category` TEXT, `core_registration` TEXT, `app_registration` TEXT, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `enabled` INTEGER NOT NULL, `registered` INTEGER DEFAULT NULL, `state` TEXT NOT NULL, `last_sent_state` TEXT DEFAULT NULL, `last_sent_icon` TEXT DEFAULT NULL, `state_type` TEXT NOT NULL, `type` TEXT NOT NULL, `icon` TEXT NOT NULL, `name` TEXT NOT NULL, `device_class` TEXT, `unit_of_measurement` TEXT, `state_class` TEXT, `entity_category` TEXT, `core_registration` TEXT, `app_registration` TEXT, PRIMARY KEY(`id`, `server_id`))",
         "fields": [
           {
             "fieldPath": "id",
             "columnName": "id",
             "affinity": "TEXT",
             "notNull": true
+          },
+          {
+            "fieldPath": "serverId",
+            "columnName": "server_id",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
           },
           {
             "fieldPath": "enabled",
@@ -182,7 +189,8 @@
         "primaryKey": {
           "autoGenerate": false,
           "columnNames": [
-            "id"
+            "id",
+            "server_id"
           ]
         },
         "indices": [],
@@ -907,7 +915,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '50606710644d847a44f6d0be659bd93d')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '12562fdf96883ae9c2657636dd62e945')"
     ]
   }
 }

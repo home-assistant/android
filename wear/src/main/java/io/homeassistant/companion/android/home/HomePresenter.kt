@@ -25,6 +25,7 @@ interface HomePresenter {
     fun onFinish()
 
     fun isConnected(): Boolean
+    fun getServerId(): Int?
     fun getWebSocketState(): WebSocketState?
 
     suspend fun getEntities(): List<Entity<*>>?

@@ -200,6 +200,8 @@ class HomePresenterImpl @Inject constructor(
 
     override fun isConnected(): Boolean = serverManager.isRegistered()
 
+    override fun getServerId(): Int? = serverManager.getServer()?.id
+
     override fun getWebSocketState(): WebSocketState? {
         return serverManager.webSocketRepository().getConnectionState()
     }

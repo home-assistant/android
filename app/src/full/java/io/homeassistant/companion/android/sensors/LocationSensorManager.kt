@@ -37,6 +37,7 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
+import io.homeassistant.companion.android.database.sensor.toSensorWithAttributes
 import io.homeassistant.companion.android.location.HighAccuracyLocationService
 import io.homeassistant.companion.android.notifications.MessagingManager
 import kotlinx.coroutines.CoroutineScope
@@ -998,7 +999,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
         val now = System.currentTimeMillis()
         val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
-        val fullSensor = sensorDao.getFull(singleAccurateLocation.id)
+        val fullSensor = sensorDao.getFull(singleAccurateLocation.id).toSensorWithAttributes()
         val latestAccurateLocation = fullSensor?.attributes?.firstOrNull { it.name == "lastAccurateLocationRequest" }?.value?.toLongOrNull() ?: 0L
 
         val sensorSettings = sensorDao.getSettings(singleAccurateLocation.id)

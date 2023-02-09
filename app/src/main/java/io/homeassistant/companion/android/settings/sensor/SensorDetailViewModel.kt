@@ -24,6 +24,7 @@ import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.database.sensor.SensorWithAttributes
+import io.homeassistant.companion.android.database.sensor.toSensorWithAttributes
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.sensors.LastAppSensorManager
@@ -117,8 +118,8 @@ class SensorDetailViewModel @Inject constructor(
         val sensorFlow = sensorDao.getFullFlow(sensorId)
         viewModelScope.launch {
             sensorFlow.collect {
-                sensor = it
-                if (!sensorCheckedEnabled) checkSensorEnabled(it)
+                sensor = it.toSensorWithAttributes()
+                if (!sensorCheckedEnabled) checkSensorEnabled(sensor)
             }
         }
     }
@@ -227,7 +228,9 @@ class SensorDetailViewModel @Inject constructor(
     }
 
     private suspend fun updateSensorEntity(isEnabled: Boolean) {
-        sensorDao.setSensorsEnabled(listOf(sensorId), isEnabled)
+        serverManager.defaultServers.forEach {
+            sensorDao.setSensorsEnabled(listOf(sensorId), it.id, isEnabled)
+        }
         refreshSensorData()
     }
 

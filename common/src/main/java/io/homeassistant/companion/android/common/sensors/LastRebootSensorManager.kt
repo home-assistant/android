@@ -7,6 +7,7 @@ import android.util.Log
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
+import io.homeassistant.companion.android.database.sensor.toSensorWithAttributes
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -65,7 +66,7 @@ class LastRebootSensorManager : SensorManager {
         var utc = "unavailable"
 
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
-        val fullSensor = sensorDao.getFull(lastRebootSensor.id)
+        val fullSensor = sensorDao.getFull(lastRebootSensor.id).toSensorWithAttributes()
         val sensorSetting = sensorDao.getSettings(lastRebootSensor.id)
         val lastTimeMillis = fullSensor?.attributes?.firstOrNull { it.name == TIME_MILLISECONDS }?.value?.toLongOrNull() ?: 0L
         val settingDeadband = sensorSetting.firstOrNull { it.name == SETTING_DEADBAND }?.value?.toIntOrNull() ?: 60000

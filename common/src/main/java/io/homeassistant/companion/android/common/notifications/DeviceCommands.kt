@@ -151,7 +151,7 @@ fun commandBleTransmitter(
 
         // Force the transmitter to restart and send updated attributes
         mainScope.launch {
-            sensorDao.updateLastSentStateAndIcon(
+            sensorDao.updateLastSentStatesAndIcons(
                 BluetoothSensorManager.bleTransmitter.id,
                 null,
                 null

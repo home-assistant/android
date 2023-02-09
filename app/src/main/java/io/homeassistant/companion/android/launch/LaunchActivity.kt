@@ -194,18 +194,19 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                 .show()
             return
         }
-        setLocationTracking(deviceTrackingEnabled)
+        setLocationTracking(serverId, deviceTrackingEnabled)
         setNotifications(serverId, notificationsEnabled)
         displayWebview()
     }
 
-    private suspend fun setLocationTracking(enabled: Boolean) {
+    private suspend fun setLocationTracking(serverId: Int, enabled: Boolean) {
         sensorDao.setSensorsEnabled(
             sensorIds = listOf(
                 LocationSensorManager.backgroundLocation.id,
                 LocationSensorManager.zoneLocation.id,
                 LocationSensorManager.singleAccurateLocation.id
             ),
+            serverId = serverId,
             enabled = enabled
         )
     }

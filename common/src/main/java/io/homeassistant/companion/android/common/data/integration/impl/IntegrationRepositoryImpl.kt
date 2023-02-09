@@ -554,9 +554,12 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     }
 
     override suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>) {
-        val canRegisterCategoryStateClass = isHomeAssistantVersionAtLeast(2021, 11, 0)
-        val canRegisterEntityDisabledState = isHomeAssistantVersionAtLeast(2022, 6, 0)
-        val canRegisterDeviceClassDistance = isHomeAssistantVersionAtLeast(2022, 10, 0)
+        // Version is read from server variable (cached) to prevent multiple failed requests in a
+        // row and very long suspend if server is offline for a longer period of time. This function
+        // will only be called from other places which already refresh the config + version.
+        val canRegisterCategoryStateClass = server.version?.isAtLeast(2021, 11, 0) == true
+        val canRegisterEntityDisabledState = server.version?.isAtLeast(2022, 6, 0) == true
+        val canRegisterDeviceClassDistance = server.version?.isAtLeast(2022, 10, 0) == true
         val integrationRequest = IntegrationRequest(
             "register_sensor",
             SensorRequest(

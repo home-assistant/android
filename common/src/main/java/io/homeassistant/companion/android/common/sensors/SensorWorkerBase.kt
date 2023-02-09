@@ -36,9 +36,12 @@ abstract class SensorWorkerBase(
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         val sensorDao = AppDatabase.getInstance(applicationContext).sensorDao()
         val enabledSensorCount = sensorDao.getEnabledCount() ?: 0
-        val currentCoreSupportsDisabledSensors =
-            serverManager.getServer()?.version?.isAtLeast(2022, 6, 0) == true
-        if (enabledSensorCount > 0 || currentCoreSupportsDisabledSensors) {
+        if (
+            enabledSensorCount > 0 ||
+            serverManager.defaultServers.any {
+                serverManager.integrationRepository(it.id).isHomeAssistantVersionAtLeast(2022, 6, 0)
+            }
+        ) {
             createNotificationChannel()
             val notification = NotificationCompat.Builder(applicationContext, sensorWorkerChannel)
                 .setSmallIcon(commonR.drawable.ic_stat_ic_notification)
@@ -58,9 +61,8 @@ abstract class SensorWorkerBase(
             }
 
             val lastUpdateSensor = sensorDao.get(LastUpdateManager.lastUpdate.id)
-            if (lastUpdateSensor != null) {
-                if (lastUpdateSensor.enabled)
-                    LastUpdateManager().sendLastUpdate(appContext, TAG)
+            if (lastUpdateSensor.any { it.enabled }) {
+                LastUpdateManager().sendLastUpdate(appContext, TAG)
             }
             sensorReceiver.updateSensors(appContext, serverManager, sensorDao, null)
         }

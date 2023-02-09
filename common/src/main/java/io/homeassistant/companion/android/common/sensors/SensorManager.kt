@@ -8,6 +8,11 @@ import android.os.Process.myPid
 import android.os.Process.myUid
 import androidx.core.content.getSystemService
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.components.SingletonComponent
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.SensorSetting
@@ -80,8 +85,12 @@ interface SensorManager {
     fun isEnabled(context: Context, sensorId: String): Boolean {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val permission = checkPermission(context, sensorId)
-        val sensor = sensorDao.getOrDefault(sensorId, permission, enabledByDefault)
-        return sensor.enabled
+        return sensorDao.getAnyIsEnabled(
+            sensorId,
+            serverManager(context).defaultServers.map { it.id },
+            permission,
+            enabledByDefault
+        )
     }
 
     /**
@@ -191,8 +200,11 @@ interface SensorManager {
         forceUpdate: Boolean = false,
     ) {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
-        val sensor = sensorDao.get(basicSensor.id)?.let {
-            it.copy(
+        val sensors = sensorDao.get(basicSensor.id)
+        if (sensors.isEmpty()) return
+
+        sensors.forEach {
+            val sensor = it.copy(
                 state = state.toString(),
                 stateType = when (state) {
                     is Boolean -> "boolean"
@@ -211,9 +223,8 @@ interface SensorManager {
                 lastSentState = if (forceUpdate) null else it.lastSentState,
                 lastSentIcon = if (forceUpdate) null else it.lastSentIcon,
             )
-        } ?: return
-
-        sensorDao.update(sensor)
+            sensorDao.update(sensor)
+        }
         sensorDao.replaceAllAttributes(
             basicSensor.id,
             attributes = attributes.map { item ->
@@ -252,6 +263,19 @@ interface SensorManager {
             }
         )
     }
+
+    @EntryPoint
+    @InstallIn(SingletonComponent::class)
+    interface SensorManagerEntryPoint {
+        fun serverManager(): ServerManager
+    }
+
+    fun serverManager(context: Context) =
+        EntryPointAccessors.fromApplication(
+            context.applicationContext,
+            SensorManagerEntryPoint::class.java
+        )
+            .serverManager()
 }
 
 fun SensorManager.id(): String {

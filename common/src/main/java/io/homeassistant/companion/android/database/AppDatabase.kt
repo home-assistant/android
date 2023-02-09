@@ -639,7 +639,14 @@ abstract class AppDatabase : RoomDatabase() {
         class Migration37to38 : AutoMigrationSpec {
             override fun onPostMigrate(db: SupportSQLiteDatabase) {
                 val urlStorage = appContext.getSharedPreferences("url_0", Context.MODE_PRIVATE)
-                val urlExternal = urlStorage.getString("remote_url", null) ?: return
+                val urlExternal = urlStorage.getString("remote_url", null)
+                if (urlExternal.isNullOrBlank()) { // Cleanup anything that shouldn't be linked
+                    db.execSQL("DELETE FROM `sensors`")
+                    db.execSQL("DELETE FROM `sensor_attributes`")
+                    db.execSQL("DELETE FROM `sensor_settings`")
+                    return
+                }
+
                 val urlInternal = urlStorage.getString("local_url", null)
                 val urlCloud = urlStorage.getString("remote_ui_url", null)
                 val urlWebhook = urlStorage.getString("webhook_id", null)
@@ -765,9 +772,10 @@ abstract class AppDatabase : RoomDatabase() {
 
                 // Attribute existing rows to the existing server
                 db.execSQL("UPDATE `notification_history` SET `server_id` = $serverId")
+                db.execSQL("UPDATE `sensors` SET `server_id` = $serverId")
 
                 // TODO migration
-                //  - tiles/sensors/widgets update with server ID
+                //  - tiles/widgets update with server ID
             }
         }
 

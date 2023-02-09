@@ -9,6 +9,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager.Comp
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepositoryFactory
 import io.homeassistant.companion.android.common.data.wifi.WifiHelper
+import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerDao
 import io.homeassistant.companion.android.database.server.ServerType
@@ -30,6 +31,7 @@ class ServerManagerImpl @Inject constructor(
     private val integrationRepositoryFactory: IntegrationRepositoryFactory,
     private val webSocketRepositoryFactory: WebSocketRepositoryFactory,
     private val serverDao: ServerDao,
+    private val sensorDao: SensorDao,
     private val settingsDao: SettingsDao,
     private val wifiHelper: WifiHelper,
     @Named("session") private val localStorage: LocalStorage
@@ -144,10 +146,15 @@ class ServerManagerImpl @Inject constructor(
         removeServerFromManager(id)
         if (localStorage.getInt(PREF_ACTIVE_SERVER) == id) localStorage.remove(PREF_ACTIVE_SERVER)
         settingsDao.delete(id)
+        sensorDao.removeServer(id)
         serverDao.delete(id)
     }
 
-    private fun removeServerFromManager(id: Int) {
+    private suspend fun removeServerFromManager(id: Int) {
+        if (_servers[id]?.type == ServerType.TEMPORARY) {
+            authenticationRepository(id).deletePreferences()
+            integrationRepository(id).deletePreferences()
+        } // else handled in removeServer
         authenticationRepos.remove(id)
         integrationRepos.remove(id)
         webSocketRepos[id]?.shutdown()
