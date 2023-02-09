@@ -165,8 +165,11 @@ class AuthenticationFragment : Fragment() {
     }
 
     private fun buildAuthUrl(base: String): String {
+        val url = base.toHttpUrl().toUrl()
+        val port = if (url.port > 0) ":${url.port}" else ""
+        val baseUrl = "${url.protocol}://${url.host}$port"
         return try {
-            base.toHttpUrl()
+            baseUrl.toHttpUrl()
                 .newBuilder()
                 .addPathSegments("auth/authorize")
                 .addEncodedQueryParameter("response_type", "code")
