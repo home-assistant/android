@@ -33,7 +33,6 @@ import androidx.annotation.RequiresApi
 import androidx.biometric.BiometricManager
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.app.RemoteInput
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.core.text.isDigitsOnly
@@ -47,10 +46,15 @@ import io.homeassistant.companion.android.common.notifications.DeviceCommandData
 import io.homeassistant.companion.android.common.notifications.NotificationData
 import io.homeassistant.companion.android.common.notifications.commandBeaconMonitor
 import io.homeassistant.companion.android.common.notifications.commandBleTransmitter
+import io.homeassistant.companion.android.common.notifications.createAction
+import io.homeassistant.companion.android.common.notifications.createActionEventIntent
 import io.homeassistant.companion.android.common.notifications.createChannelID
+import io.homeassistant.companion.android.common.notifications.createNotificationActionItems
+import io.homeassistant.companion.android.common.notifications.createPendingIntent
 import io.homeassistant.companion.android.common.notifications.getGroupNotificationBuilder
 import io.homeassistant.companion.android.common.notifications.handleChannel
 import io.homeassistant.companion.android.common.notifications.handleColor
+import io.homeassistant.companion.android.common.notifications.handleReplyHistory
 import io.homeassistant.companion.android.common.notifications.handleSmallIcon
 import io.homeassistant.companion.android.common.notifications.handleText
 import io.homeassistant.companion.android.common.notifications.parseColor
@@ -121,10 +125,8 @@ class MessagingManager @Inject constructor(
         const val PERSISTENT = "persistent"
         const val CHRONOMETER = "chronometer"
         const val WHEN = "when"
-        const val KEY_TEXT_REPLY = "key_text_reply"
         const val INTENT_CLASS_NAME = "intent_class_name"
         const val URI = "URI"
-        const val REPLY = "REPLY"
         const val HIGH_ACCURACY_UPDATE_INTERVAL = "high_accuracy_update_interval"
         const val PACKAGE_NAME = "package_name"
         const val CONFIRMATION = "confirmation"
@@ -237,10 +239,6 @@ class MessagingManager @Inject constructor(
         const val VIDEO_INCREMENT_MICROSECONDS = 750000L
         const val VIDEO_GUESS_MILLISECONDS = 7000L
 
-        // Values for a notification that has been replied to
-        const val SOURCE_REPLY = "REPLY_"
-        const val SOURCE_REPLY_HISTORY = "reply_history_"
-
         // Values for temporarily added keys
         const val THIS_SERVER_ID = "server_id"
     }
@@ -253,8 +251,8 @@ class MessagingManager @Inject constructor(
         var jsonData = notificationData
         val notificationId: Long
 
-        if (source.startsWith(SOURCE_REPLY)) {
-            notificationId = source.substringAfter(SOURCE_REPLY).toLong()
+        if (source.startsWith(NotificationData.SOURCE_REPLY)) {
+            notificationId = source.substringAfter(NotificationData.SOURCE_REPLY).toLong()
             notificationDao.get(notificationId.toInt())?.let {
                 val dbData: Map<String, String> = jacksonObjectMapper().readValue(it.data)
 
@@ -898,7 +896,7 @@ class MessagingManager @Inject constructor(
 
         handleVisibility(notificationBuilder, data)
 
-        handleActions(notificationBuilder, tag, messageId, id, data)
+        handleActions(notificationBuilder, messageId, id, data)
 
         handleReplyHistory(notificationBuilder, data)
 
@@ -1097,7 +1095,7 @@ class MessagingManager @Inject constructor(
         builder: NotificationCompat.Builder,
         data: Map<String, String>
     ) {
-        val sticky = data["sticky"]?.toBoolean() ?: false
+        val sticky = data[NotificationData.STICKY]?.toBoolean() ?: false
         builder.setAutoCancel(!sticky)
     }
 
@@ -1314,77 +1312,51 @@ class MessagingManager @Inject constructor(
 
     private fun handleActions(
         builder: NotificationCompat.Builder,
-        tag: String?,
         messageId: Int,
         databaseId: Long?,
         data: Map<String, String>
     ) {
         for (i in 1..3) {
             if (data.containsKey("action_${i}_key")) {
-                val notificationAction = NotificationAction(
-                    data["action_${i}_key"].toString(),
-                    data["action_${i}_title"].toString(),
-                    data["action_${i}_uri"],
-                    data
+                val notificationAction = createNotificationActionItems(data, i)
+                val eventIntent = createActionEventIntent(
+                    context,
+                    data,
+                    messageId,
+                    notificationAction,
+                    databaseId,
+                    NotificationActionReceiver::class.java
                 )
-                val eventIntent = Intent(context, NotificationActionReceiver::class.java).apply {
-                    action = NotificationActionReceiver.FIRE_EVENT
-                    if (data["sticky"]?.toBoolean() != true) {
-                        putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_TAG, tag)
-                        putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_ID, messageId)
-                    }
-                    putExtra(
-                        NotificationActionReceiver.EXTRA_NOTIFICATION_ACTION,
-                        notificationAction
-                    )
-                    putExtra(
-                        NotificationActionReceiver.EXTRA_NOTIFICATION_DB,
-                        databaseId
-                    )
-                }
 
                 when (notificationAction.key) {
                     URI -> {
                         if (!notificationAction.uri.isNullOrBlank()) {
-                            builder.addAction(
-                                commonR.drawable.ic_globe,
-                                notificationAction.title,
-                                createOpenUriPendingIntent(notificationAction.uri, data)
+                            createAction(
+                                context,
+                                notificationAction,
+                                builder,
+                                createOpenUriPendingIntent(notificationAction.uri!!, data),
+                                "uri"
                             )
                         }
                     }
-                    REPLY -> {
-                        val remoteInput: RemoteInput = RemoteInput.Builder(KEY_TEXT_REPLY).run {
-                            setLabel(context.getString(commonR.string.action_reply))
-                            build()
-                        }
-                        val replyPendingIntent = PendingIntent.getBroadcast(
+                    NotificationData.REPLY -> {
+                        val replyPendingIntent = createPendingIntent(
                             context,
                             messageId,
                             eventIntent,
-                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+                            "reply"
                         )
-                        val action: NotificationCompat.Action = NotificationCompat.Action.Builder(
-                            R.drawable.ic_baseline_reply_24,
-                            notificationAction.title,
-                            replyPendingIntent
-                        )
-                            .addRemoteInput(remoteInput)
-                            .build()
-                        builder.addAction(action)
+                        createAction(context, notificationAction, builder, replyPendingIntent, "reply")
                     }
                     else -> {
-                        val actionPendingIntent = PendingIntent.getBroadcast(
+                        val actionPendingIntent = createPendingIntent(
                             context,
                             (notificationAction.title.hashCode() + System.currentTimeMillis()).toInt(),
                             eventIntent,
-                            PendingIntent.FLAG_IMMUTABLE
+                            "action"
                         )
-                        builder.addAction(
-                            commonR.drawable.ic_stat_ic_notification,
-                            notificationAction.title,
-                            actionPendingIntent
-                        )
+                        createAction(context, notificationAction, builder, actionPendingIntent, "action")
                     }
                 }
             }
@@ -1457,22 +1429,6 @@ class MessagingManager @Inject constructor(
                 intent,
             PendingIntent.FLAG_IMMUTABLE
         )
-    }
-
-    private fun handleReplyHistory(
-        builder: NotificationCompat.Builder,
-        data: Map<String, String>
-    ) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            val replies = data.entries
-                .filter { it.key.startsWith(SOURCE_REPLY_HISTORY) }
-                .sortedBy { it.key.substringAfter(SOURCE_REPLY_HISTORY).toInt() }
-            if (replies.any()) {
-                val history = replies.map { it.value }.reversed().toTypedArray() // Reverse to have latest replies first
-                builder.setRemoteInputHistory(history)
-                builder.setOnlyAlertOnce(true) // Overwrites user settings to match system defaults
-            }
-        }
     }
 
     @RequiresApi(Build.VERSION_CODES.M)

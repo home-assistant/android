@@ -2,7 +2,9 @@ package io.homeassistant.companion.android.common.notifications
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.graphics.Color
 import android.media.AudioAttributes
 import android.media.AudioManager
@@ -13,6 +15,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.app.RemoteInput
 import androidx.core.content.ContextCompat
 import androidx.core.text.HtmlCompat
 import com.mikepenz.iconics.IconicsDrawable
@@ -35,6 +38,19 @@ object NotificationData {
     const val NOTIFICATION_ICON = "notification_icon"
     const val ALERT_ONCE = "alert_once"
     const val COMMAND = "command"
+    const val STICKY = "sticky"
+    const val KEY_TEXT_REPLY = "key_text_reply"
+    const val REPLY = "REPLY"
+
+    // Values for a notification that has been replied to
+    const val SOURCE_REPLY = "REPLY_"
+    const val SOURCE_REPLY_HISTORY = "reply_history_"
+
+    const val FIRE_EVENT = "FIRE_EVENT"
+    const val EXTRA_NOTIFICATION_TAG = "EXTRA_NOTIFICATION_TAG"
+    const val EXTRA_NOTIFICATION_ID = "EXTRA_NOTIFICATION_ID"
+    const val EXTRA_NOTIFICATION_DB = "EXTRA_NOTIFICATION_DB"
+    const val EXTRA_NOTIFICATION_ACTION = "EXTRA_ACTION_KEY"
 
     // Channel streams
     const val ALARM_STREAM = "alarm_stream"
@@ -272,5 +288,103 @@ fun handleText(
         val text = prepareText(it)
         builder.setContentText(text)
         builder.setStyle(NotificationCompat.BigTextStyle().bigText(text))
+    }
+}
+
+fun createAction(
+    context: Context,
+    notificationAction: NotificationAction,
+    builder: NotificationCompat.Builder,
+    pendingIntent: PendingIntent,
+    type: String
+) {
+    val remoteInput: RemoteInput = RemoteInput.Builder(NotificationData.KEY_TEXT_REPLY).run {
+        setLabel(context.getString(R.string.action_reply))
+        build()
+    }
+    val action = NotificationCompat.Action.Builder(
+        when (type) {
+            "action" -> R.drawable.ic_stat_ic_notification
+            "uri" -> R.drawable.ic_globe
+            else -> R.drawable.ic_baseline_reply_24
+        },
+        notificationAction.title,
+        pendingIntent
+    )
+    if (type == "reply")
+        action.addRemoteInput(remoteInput)
+    builder.addAction(
+        action.build()
+    )
+        .build()
+}
+
+fun createPendingIntent(
+    context: Context,
+    requestCode: Int,
+    intent: Intent,
+    type: String
+): PendingIntent {
+    return PendingIntent.getBroadcast(
+        context,
+        requestCode,
+        intent,
+        if (type == "reply")
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+        else
+            PendingIntent.FLAG_IMMUTABLE
+    )
+}
+
+fun createNotificationActionItems(
+    data: Map<String, String>,
+    i: Int
+): NotificationAction {
+    return NotificationAction(
+        data["action_${i}_key"].toString(),
+        data["action_${i}_title"].toString(),
+        data["action_${i}_uri"],
+        data
+    )
+}
+
+fun createActionEventIntent(
+    context: Context,
+    data: Map<String, String>,
+    messageId: Int,
+    notificationAction: NotificationAction,
+    databaseId: Long?,
+    receiver: Class<*>
+): Intent {
+    return Intent(context, receiver).apply {
+        action = NotificationData.FIRE_EVENT
+        if (data[NotificationData.STICKY]?.toBoolean() != true) {
+            putExtra(NotificationData.EXTRA_NOTIFICATION_TAG, data[NotificationData.TAG])
+            putExtra(NotificationData.EXTRA_NOTIFICATION_ID, messageId)
+        }
+        putExtra(
+            NotificationData.EXTRA_NOTIFICATION_ACTION,
+            notificationAction
+        )
+        putExtra(
+            NotificationData.EXTRA_NOTIFICATION_DB,
+            databaseId
+        )
+    }
+}
+
+fun handleReplyHistory(
+    builder: NotificationCompat.Builder,
+    data: Map<String, String>
+) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        val replies = data.entries
+            .filter { it.key.startsWith(NotificationData.SOURCE_REPLY_HISTORY) }
+            .sortedBy { it.key.substringAfter(NotificationData.SOURCE_REPLY_HISTORY).toInt() }
+        if (replies.any()) {
+            val history = replies.map { it.value }.reversed().toTypedArray() // Reverse to have latest replies first
+            builder.setRemoteInputHistory(history)
+            builder.setOnlyAlertOnce(true) // Overwrites user settings to match system defaults
+        }
     }
 }

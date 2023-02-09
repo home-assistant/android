@@ -5,14 +5,21 @@ import android.content.Context
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.notifications.DeviceCommandData
 import io.homeassistant.companion.android.common.notifications.NotificationData
 import io.homeassistant.companion.android.common.notifications.commandBeaconMonitor
 import io.homeassistant.companion.android.common.notifications.commandBleTransmitter
+import io.homeassistant.companion.android.common.notifications.createAction
+import io.homeassistant.companion.android.common.notifications.createActionEventIntent
+import io.homeassistant.companion.android.common.notifications.createNotificationActionItems
+import io.homeassistant.companion.android.common.notifications.createPendingIntent
 import io.homeassistant.companion.android.common.notifications.getGroupNotificationBuilder
 import io.homeassistant.companion.android.common.notifications.handleChannel
+import io.homeassistant.companion.android.common.notifications.handleReplyHistory
 import io.homeassistant.companion.android.common.notifications.handleSmallIcon
 import io.homeassistant.companion.android.common.notifications.handleText
 import io.homeassistant.companion.android.common.util.TextToSpeechData
@@ -20,7 +27,7 @@ import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.getActiveNotification
 import io.homeassistant.companion.android.common.util.speakText
 import io.homeassistant.companion.android.common.util.stopTTS
-import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import kotlinx.coroutines.CoroutineScope
@@ -33,6 +40,7 @@ class MessagingManager @Inject constructor(
     @ApplicationContext val context: Context,
     private val serverManager: ServerManager,
     private val sensorDao: SensorDao,
+    private val notificationDao: NotificationDao,
 ) {
 
     companion object {
@@ -43,17 +51,34 @@ class MessagingManager @Inject constructor(
 
     fun handleMessage(notificationData: Map<String, String>, source: String) {
 
-        val notificationDao = AppDatabase.getInstance(context).notificationDao()
-        val now = System.currentTimeMillis()
+        var now = System.currentTimeMillis()
+        var jsonData = notificationData
+        val notificationId: Long
 
-        val jsonData = notificationData as Map<String, String>?
-        val jsonObject = jsonData?.let { JSONObject(it) }
-        val serverId = jsonData?.get(NotificationData.WEBHOOK_ID)?.let {
-            serverManager.getServer(webhookId = it)?.id
+        if (source.startsWith(NotificationData.SOURCE_REPLY)) {
+            notificationId = source.substringAfter(NotificationData.SOURCE_REPLY).toLong()
+            notificationDao.get(notificationId.toInt())?.let {
+                val dbData: Map<String, String> = jacksonObjectMapper().readValue(it.data)
+
+                now = it.received // Allow for updating the existing notification without a tag
+                jsonData = jsonData + dbData // Add the notificationData, this contains the reply text
+            } ?: return
+        } else {
+            val jsonObject = (notificationData as Map<*, *>?)?.let { JSONObject(it) }
+            val receivedServer = jsonData[NotificationData.WEBHOOK_ID]?.let {
+                serverManager.getServer(webhookId = it)?.id
+            }
+            val notificationRow =
+                NotificationItem(
+                    0,
+                    now,
+                    notificationData[NotificationData.MESSAGE].toString(),
+                    jsonObject.toString(),
+                    source,
+                    receivedServer
+                )
+            notificationId = notificationDao.add(notificationRow)
         }
-        val notificationRow =
-            NotificationItem(0, now, notificationData[NotificationData.MESSAGE].toString(), jsonObject.toString(), source, serverId)
-        notificationDao.add(notificationRow)
 
         when (notificationData[NotificationData.MESSAGE]) {
             DeviceCommandData.COMMAND_BEACON_MONITOR -> {
@@ -68,12 +93,12 @@ class MessagingManager @Inject constructor(
             }
             TextToSpeechData.TTS -> speakText(context, notificationData)
             TextToSpeechData.COMMAND_STOP_TTS -> stopTTS()
-            else -> sendNotification(notificationData, now)
+            else -> sendNotification(notificationData, notificationId, now)
         }
     }
 
     @SuppressLint("MissingPermission")
-    private fun sendNotification(data: Map<String, String>, received: Long? = null) {
+    private fun sendNotification(data: Map<String, String>, id: Long? = null, received: Long? = null) {
         val notificationManagerCompat = NotificationManagerCompat.from(context)
 
         val tag = data["tag"]
@@ -102,6 +127,10 @@ class MessagingManager @Inject constructor(
 
         handleText(notificationBuilder, data)
 
+        handleActions(notificationBuilder, messageId, id, data)
+
+        handleReplyHistory(notificationBuilder, data)
+
         notificationManagerCompat.apply {
             Log.d(TAG, "Show notification with tag \"$tag\" and id \"$messageId\"")
             notify(tag, messageId, notificationBuilder.build())
@@ -115,6 +144,48 @@ class MessagingManager @Inject constructor(
                         "Remove group notification with tag \"$previousGroup\" and id \"$previousGroupId\""
                     )
                     notificationManagerCompat.cancelGroupIfNeeded(previousGroup, previousGroupId)
+                }
+            }
+        }
+    }
+
+    private fun handleActions(
+        builder: NotificationCompat.Builder,
+        messageId: Int,
+        databaseId: Long?,
+        data: Map<String, String>
+    ) {
+        for (i in 1..3) {
+            if (data.containsKey("action_${i}_key")) {
+                val notificationAction = createNotificationActionItems(data, i)
+                val eventIntent = createActionEventIntent(
+                    context,
+                    data,
+                    messageId,
+                    notificationAction,
+                    databaseId,
+                    NotificationActionReceiver::class.java
+                )
+
+                when (notificationAction.key) {
+                    NotificationData.REPLY -> {
+                        val replyPendingIntent = createPendingIntent(
+                            context,
+                            messageId,
+                            eventIntent,
+                            "reply"
+                        )
+                        createAction(context, notificationAction, builder, replyPendingIntent, "reply")
+                    }
+                    else -> {
+                        val actionPendingIntent = createPendingIntent(
+                            context,
+                            (notificationAction.title.hashCode() + System.currentTimeMillis()).toInt(),
+                            eventIntent,
+                            "action"
+                        )
+                        createAction(context, notificationAction, builder, actionPendingIntent, "action")
+                    }
                 }
             }
         }
