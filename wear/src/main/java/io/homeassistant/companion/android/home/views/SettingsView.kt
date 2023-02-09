@@ -23,6 +23,7 @@ import androidx.wear.compose.material.rememberScalingLazyListState
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.wearColorPalette
@@ -251,6 +252,14 @@ fun SettingsView(
                             backgroundColor = Color.Red,
                             contentColor = Color.Black
                         )
+                    )
+                }
+                item {
+                    ListHeader(commonR.string.application_version)
+                }
+                item {
+                    Text(
+                        text = BuildConfig.VERSION_NAME
                     )
                 }
             }
