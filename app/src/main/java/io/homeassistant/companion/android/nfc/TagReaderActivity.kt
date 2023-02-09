@@ -61,8 +61,16 @@ class TagReaderActivity : BaseActivity() {
         val nfcTagId = UrlHandler.splitNfcTagId(url)
         Log.d(TAG, "Tag ID: $nfcTagId")
         if (nfcTagId != null && serverManager.isRegistered()) {
-            serverManager.integrationRepository().scanTag(hashMapOf("tag_id" to nfcTagId))
-            Log.d(TAG, "Tag scanned to HA successfully")
+            serverManager.defaultServers.forEach {
+                lifecycleScope.launch {
+                    try {
+                        serverManager.integrationRepository(it.id).scanTag(hashMapOf("tag_id" to nfcTagId))
+                        Log.d(TAG, "Tag scanned to HA successfully")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Tag not scanned to HA", e)
+                    }
+                }
+            }
         } else {
             showProcessingError(isNfcTag)
         }
