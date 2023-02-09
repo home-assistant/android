@@ -149,11 +149,9 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
     }
 
     override fun requestSensorUpdate(context: Context) {
-        if (isEnabled(context, activity)) {
-            enableActivityUpdates(context, ActivitySensorManager::class.java)
-        }
+        enableActivityUpdates(context, ActivitySensorManager::class.java, isEnabled(context, activity))
+        val pendingIntent = getSleepPendingIntent(context, ActivitySensorManager::class.java)
         if (isEnabled(context, sleepConfidence) || isEnabled(context, sleepSegment)) {
-            val pendingIntent = getSleepPendingIntent(context, ActivitySensorManager::class.java)
             Log.d(TAG, "Registering for sleep updates")
             val task = enableSleepUpdates(
                 context,
@@ -177,6 +175,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
                 Log.e(TAG, "Failed to register for sleep updates", it)
                 removeSleepUpdates(context, pendingIntent)
             }
-        }
+        } else
+            removeSleepUpdates(context, pendingIntent)
     }
 }

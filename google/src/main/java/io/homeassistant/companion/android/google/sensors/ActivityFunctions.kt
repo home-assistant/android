@@ -126,12 +126,14 @@ fun getSleepSegmentStatus(int: Int): String {
     }
 }
 
-fun enableActivityUpdates(context: Context, activity: Class<*>) {
+fun enableActivityUpdates(context: Context, activity: Class<*>, enabled: Boolean) {
     val actReg = ActivityRecognition.getClient(context)
     val pendingIntent = getActivityPendingIntent(context, activity)
     Log.d(TAG, "Unregistering for activity updates.")
     actReg.removeActivityUpdates(pendingIntent)
 
+    if (!enabled)
+        return
     Log.d(TAG, "Registering for activity updates.")
     val fastUpdate = SensorReceiverBase.shouldDoFastUpdates(context)
     actReg.requestActivityUpdates(TimeUnit.MINUTES.toMillis(if (fastUpdate) 1 else 2), pendingIntent)
