@@ -166,8 +166,8 @@ class AuthenticationFragment : Fragment() {
     }
 
     private fun buildAuthUrl(base: String): String {
-        val url = base.toHttpUrl()
         return try {
+            val url = base.toHttpUrl()
             HttpUrl.Builder()
                 .scheme(url.scheme)
                 .host(url.host)
