@@ -33,6 +33,7 @@ import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegr
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.TLSWebViewClient
 import io.homeassistant.companion.android.util.isStarted
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
@@ -165,12 +166,12 @@ class AuthenticationFragment : Fragment() {
     }
 
     private fun buildAuthUrl(base: String): String {
-        val url = base.toHttpUrl().toUrl()
-        val port = if (url.port > 0) ":${url.port}" else ""
-        val baseUrl = "${url.protocol}://${url.host}$port"
+        val url = base.toHttpUrl()
         return try {
-            baseUrl.toHttpUrl()
-                .newBuilder()
+            HttpUrl.Builder()
+                .scheme(url.scheme)
+                .host(url.host)
+                .port(url.port)
                 .addPathSegments("auth/authorize")
                 .addEncodedQueryParameter("response_type", "code")
                 .addEncodedQueryParameter("client_id", AuthenticationService.CLIENT_ID)
