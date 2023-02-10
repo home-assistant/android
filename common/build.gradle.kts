@@ -60,7 +60,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
 
     implementation("com.google.dagger:hilt-android:2.44.2")
-    kapt("com.google.dagger:hilt-android-compiler:2.44.2")
+    kapt("com.google.dagger:hilt-android-compiler:2.45")
 
     api("androidx.room:room-runtime:2.5.0")
     api("androidx.room:room-ktx:2.5.0")
