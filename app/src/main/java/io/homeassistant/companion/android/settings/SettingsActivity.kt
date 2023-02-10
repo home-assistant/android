@@ -138,10 +138,16 @@ class SettingsActivity : BaseActivity() {
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
-        if (hasFocus) {
+        if (hasFocus && !isFinishing) {
             val appLocked = runBlocking {
-                if (serverManager.isRegistered()) serverManager.integrationRepository().isAppLocked()
-                else false
+                if (serverManager.isRegistered()) {
+                    try {
+                        serverManager.integrationRepository().isAppLocked()
+                    } catch (e: IllegalArgumentException) {
+                        Log.w(TAG, "Cannot determine app locked state")
+                        false
+                    }
+                } else false
             }
 
             if (appLocked) {

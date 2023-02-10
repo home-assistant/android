@@ -71,6 +71,13 @@ class WebViewPresenterImpl @Inject constructor(
                 server = serverManager.getServer(serverId)
             }
 
+            try {
+                if (serverManager.authenticationRepository(serverId).getSessionState() == SessionState.ANONYMOUS) return@launch
+            } catch (e: IllegalArgumentException) {
+                Log.w(TAG, "Unable to get server session state, not continuing")
+                return@launch
+            }
+
             val serverConnectionInfo = server?.connection
             url = serverConnectionInfo?.getUrl(
                 serverConnectionInfo.isInternal() || (serverConnectionInfo.prioritizeInternal && !DisabledLocationHandler.isLocationEnabled(view as Context))
@@ -193,9 +200,14 @@ class WebViewPresenterImpl @Inject constructor(
     }
 
     override fun isAppLocked(): Boolean = runBlocking {
-        serverManager.getServer(serverId)?.let {
-            serverManager.integrationRepository(serverId).isAppLocked()
-        } ?: false
+        if (serverManager.isRegistered()) {
+            try {
+                serverManager.integrationRepository(serverId).isAppLocked()
+            } catch (e: IllegalArgumentException) {
+                Log.w(TAG, "Cannot determine app locked state")
+                false
+            }
+        } else false
     }
 
     override fun setAppActive(active: Boolean) = runBlocking {

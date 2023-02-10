@@ -81,6 +81,13 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
             server.session.refreshToken!!,
             AuthenticationService.REVOKE_ACTION
         )
+        serverManager.updateServer(
+            server.copy(
+                session = server.session.copy(
+                    refreshToken = null
+                )
+            )
+        )
     }
 
     override suspend fun deletePreferences() {

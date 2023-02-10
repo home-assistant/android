@@ -996,7 +996,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
-        if (hasFocus) {
+        if (hasFocus && !isFinishing) {
             appLocked = presenter.isAppLocked()
             if (appLocked) {
                 binding.blurView.setBlurEnabled(true)

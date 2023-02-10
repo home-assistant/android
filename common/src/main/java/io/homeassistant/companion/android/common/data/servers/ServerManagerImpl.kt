@@ -46,8 +46,6 @@ class ServerManagerImpl @Inject constructor(
     private val integrationRepos = mutableMapOf<Int, IntegrationRepository>()
     private val webSocketRepos = mutableMapOf<Int, WebSocketRepository>()
 
-    private val illegalServerException = IllegalArgumentException("No server for ID")
-
     companion object {
         private const val PREF_ACTIVE_SERVER = "active_server"
     }
@@ -165,7 +163,7 @@ class ServerManagerImpl @Inject constructor(
     override fun authenticationRepository(serverId: Int): AuthenticationRepository {
         val id = if (serverId == SERVER_ID_ACTIVE) activeServerId() else serverId
         return authenticationRepos[id] ?: run {
-            if (id == null || _servers[id] == null) throw illegalServerException
+            if (id == null || _servers[id] == null) throw IllegalArgumentException("No server for ID")
             authenticationRepos[id] = authenticationRepositoryFactory.create(id)
             authenticationRepos[id]!!
         }
@@ -174,7 +172,7 @@ class ServerManagerImpl @Inject constructor(
     override fun integrationRepository(serverId: Int): IntegrationRepository {
         val id = if (serverId == SERVER_ID_ACTIVE) activeServerId() else serverId
         return integrationRepos[id] ?: run {
-            if (id == null || _servers[id] == null) throw illegalServerException
+            if (id == null || _servers[id] == null) throw IllegalArgumentException("No server for ID")
             integrationRepos[id] = integrationRepositoryFactory.create(id)
             integrationRepos[id]!!
         }
@@ -183,7 +181,7 @@ class ServerManagerImpl @Inject constructor(
     override fun webSocketRepository(serverId: Int): WebSocketRepository {
         val id = if (serverId == SERVER_ID_ACTIVE) activeServerId() else serverId
         return webSocketRepos[id] ?: run {
-            if (id == null || _servers[id] == null) throw illegalServerException
+            if (id == null || _servers[id] == null) throw IllegalArgumentException("No server for ID")
             webSocketRepos[id] = webSocketRepositoryFactory.create(id)
             webSocketRepos[id]!!
         }
