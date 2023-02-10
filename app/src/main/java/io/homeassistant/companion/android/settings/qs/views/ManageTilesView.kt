@@ -51,6 +51,7 @@ fun ManageTilesView(
     val context = LocalContext.current
     val scrollState = rememberScrollState()
     var expandedTile by remember { mutableStateOf(false) }
+    var expandedServer by remember { mutableStateOf(false) }
     var expandedEntity by remember { mutableStateOf(false) }
 
     val scaffoldState = rememberScaffoldState()
@@ -118,21 +119,44 @@ fun ManageTilesView(
                     )
                 }
 
+                if (viewModel.servers.size > 1 || viewModel.servers.none { it.id == viewModel.selectedServerId }) {
+                    Text(
+                        text = stringResource(id = R.string.tile_server),
+                        fontSize = 15.sp
+                    )
+                    Box {
+                        OutlinedButton(onClick = { expandedServer = true }) {
+                            Text(text = viewModel.servers.firstOrNull { it.id == viewModel.selectedServerId }?.friendlyName.orEmpty())
+                        }
+                        DropdownMenu(expanded = expandedServer, onDismissRequest = { expandedServer = false }) {
+                            for (item in viewModel.servers) {
+                                DropdownMenuItem(onClick = {
+                                    viewModel.selectServerId(item.id)
+                                    expandedServer = false
+                                }) {
+                                    Text(text = item.friendlyName, fontSize = 15.sp)
+                                }
+                            }
+                        }
+                    }
+                }
+
                 Text(
                     text = stringResource(id = R.string.tile_entity),
                     fontSize = 15.sp
                 )
-                OutlinedButton(onClick = { expandedEntity = true }) {
-                    Text(text = viewModel.selectedEntityId)
-                }
-
-                DropdownMenu(expanded = expandedEntity, onDismissRequest = { expandedEntity = false }) {
-                    for (item in viewModel.sortedEntities) {
-                        DropdownMenuItem(onClick = {
-                            viewModel.selectEntityId(item.entityId)
-                            expandedEntity = false
-                        }) {
-                            Text(text = item.entityId, fontSize = 15.sp)
+                Box {
+                    OutlinedButton(onClick = { expandedEntity = true }) {
+                        Text(text = viewModel.selectedEntityId)
+                    }
+                    DropdownMenu(expanded = expandedEntity, onDismissRequest = { expandedEntity = false }) {
+                        for (item in viewModel.sortedEntities) {
+                            DropdownMenuItem(onClick = {
+                                viewModel.selectEntityId(item.entityId)
+                                expandedEntity = false
+                            }) {
+                                Text(text = item.entityId, fontSize = 15.sp)
+                            }
                         }
                     }
                 }
@@ -194,7 +218,9 @@ fun ManageTilesView(
 
                 Button(
                     onClick = { viewModel.addTile() },
-                    enabled = viewModel.tileLabel.isNotBlank() && viewModel.selectedEntityId.isNotBlank()
+                    enabled = viewModel.tileLabel.isNotBlank() &&
+                        viewModel.selectedServerId in viewModel.servers.map { it.id } &&
+                        viewModel.selectedEntityId in viewModel.sortedEntities.map { it.entityId }
                 ) {
                     Text(stringResource(viewModel.submitButtonLabel))
                 }

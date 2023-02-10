@@ -73,6 +73,8 @@ import io.homeassistant.companion.android.qs.Tile7Service
 import io.homeassistant.companion.android.qs.Tile8Service
 import io.homeassistant.companion.android.qs.Tile9Service
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
@@ -146,7 +148,11 @@ class ManageTilesViewModel @Inject constructor(
     var selectedTile by mutableStateOf(slots[0])
         private set
 
+    var servers by mutableStateOf(serverManager.defaultServers)
+        private set
     var sortedEntities by mutableStateOf<List<Entity<*>>>(emptyList())
+        private set
+    var selectedServerId by mutableStateOf(ServerManager.SERVER_ID_ACTIVE)
         private set
     var selectedIconId by mutableStateOf<Int?>(null)
         private set
@@ -161,6 +167,8 @@ class ManageTilesViewModel @Inject constructor(
     var tileAuthRequired by mutableStateOf(false)
     private var selectedTileId = 0
     private var selectedTileAdded = false
+
+    private val entities = mutableMapOf<Int, List<Entity<*>>>()
 
     private val _tileInfoSnackbar = MutableSharedFlow<Int>(replay = 1)
     var tileInfoSnackbar = _tileInfoSnackbar.asSharedFlow()
@@ -178,8 +186,17 @@ class ManageTilesViewModel @Inject constructor(
         }
 
         viewModelScope.launch(Dispatchers.IO) {
-            sortedEntities = serverManager.integrationRepository().getEntities().orEmpty()
-                .filter { it.domain in ManageTilesFragment.validDomains }
+            serverManager.defaultServers.map {
+                async {
+                    entities[it.id] = try {
+                        serverManager.integrationRepository(it.id).getEntities().orEmpty()
+                            .filter { it.domain in ManageTilesFragment.validDomains }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Couldn't load entities for server", e)
+                        emptyList()
+                    }
+                }
+            }.awaitAll()
             withContext(Dispatchers.Main) {
                 // The entities list might not have been loaded when the tile data was loaded
                 selectTile(slots.indexOf(selectedTile))
@@ -204,16 +221,31 @@ class ManageTilesViewModel @Inject constructor(
             tileDao.get(tile.id).also {
                 selectedTileId = it?.id ?: 0
                 selectedTileAdded = it?.added ?: false
+                selectedServerId =
+                    if (it?.serverId == null || it.serverId == 0) serverManager.getServer()?.id ?: 0
+                    else serverManager.getServer(it.serverId)?.id ?: serverManager.getServer()?.id ?: 0
                 selectedShouldVibrate = it?.shouldVibrate ?: false
                 tileAuthRequired = it?.authRequired ?: false
                 submitButtonLabel =
                     if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2 || it?.added == true) commonR.string.tile_save
                     else commonR.string.tile_add
+                loadEntities(selectedServerId)
                 if (it?.isSetup == true) {
                     updateExistingTileFields(it)
                 }
             }
         }
+    }
+
+    fun selectServerId(serverId: Int) {
+        val resetEntity = serverId != selectedServerId
+        selectedServerId = serverId
+        loadEntities(serverId)
+        if (resetEntity) selectEntityId("")
+    }
+
+    private fun loadEntities(serverId: Int) {
+        sortedEntities = entities[serverId] ?: emptyList()
     }
 
     fun selectEntityId(entityId: String) {
@@ -257,6 +289,7 @@ class ManageTilesViewModel @Inject constructor(
             val tileData = TileEntity(
                 id = selectedTileId,
                 tileId = selectedTile.id,
+                serverId = selectedServerId,
                 added = selectedTileAdded,
                 iconId = selectedIconId,
                 entityId = selectedEntityId,

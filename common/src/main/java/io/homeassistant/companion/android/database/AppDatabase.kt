@@ -772,10 +772,11 @@ abstract class AppDatabase : RoomDatabase() {
 
                 // Attribute existing rows to the existing server
                 db.execSQL("UPDATE `notification_history` SET `server_id` = $serverId")
+                db.execSQL("UPDATE `qs_tiles` SET `server_id` = $serverId")
                 db.execSQL("UPDATE `sensors` SET `server_id` = $serverId")
 
                 // TODO migration
-                //  - tiles/widgets update with server ID
+                //  - widgets update with server ID
             }
         }
 

@@ -807,6 +807,7 @@
     <string name="tile_missing_entity_title">Missing Valid Entity Domains</string>
     <string name="tile_not_setup">Requires setup</string>
     <string name="tile_save">Update Tile Data</string>
+    <string name="tile_server">Select a server (required)</string>
     <string name="tile_settings">Tile settings</string>
     <string name="tile_subtitle">Tile Subtitle</string>
     <string name="tile_updated">Tile Data updated</string>

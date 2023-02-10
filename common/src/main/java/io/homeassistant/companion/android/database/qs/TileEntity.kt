@@ -12,6 +12,8 @@ data class TileEntity(
     val tileId: String,
     @ColumnInfo(name = "added", defaultValue = "1")
     val added: Boolean,
+    @ColumnInfo(name = "server_id", defaultValue = "0")
+    val serverId: Int,
     @ColumnInfo(name = "icon_id")
     val iconId: Int?,
     @ColumnInfo(name = "entity_id")
