@@ -14,9 +14,11 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.core.content.getSystemService
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.lifecycle.AndroidViewModel
@@ -49,11 +51,16 @@ class ManageShortcutsViewModel @Inject constructor(
     var dynamicShortcuts: MutableList<ShortcutInfo> = shortcutManager.dynamicShortcuts
         private set
 
-    var entities = mutableStateMapOf<String, Entity<*>>()
+    var servers by mutableStateOf(serverManager.defaultServers)
         private set
+    var entities = mutableStateMapOf<Int, List<Entity<*>>>()
+        private set
+
+    private val currentServerId = serverManager.getServer()?.id ?: 0
 
     data class Shortcut(
         var id: MutableState<String?>,
+        var serverId: MutableState<Int>,
         var selectedIcon: MutableState<Int>,
         var label: MutableState<String>,
         var desc: MutableState<String>,
@@ -68,8 +75,16 @@ class ManageShortcutsViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            serverManager.integrationRepository().getEntities()?.forEach {
-                entities[it.entityId] = it
+            serverManager.defaultServers.forEach { server ->
+                launch {
+                    entities[server.id] = try {
+                        serverManager.integrationRepository(server.id).getEntities().orEmpty()
+                            .sortedBy { it.entityId }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Couldn't load entities for server", e)
+                        emptyList()
+                    }
+                }
             }
         }
         Log.d(TAG, "We have ${dynamicShortcuts.size} dynamic shortcuts")
@@ -83,6 +98,7 @@ class ManageShortcutsViewModel @Inject constructor(
             shortcuts.add(
                 Shortcut(
                     mutableStateOf(""),
+                    mutableStateOf(currentServerId),
                     mutableStateOf(0),
                     mutableStateOf(""),
                     mutableStateOf(""),
@@ -100,10 +116,10 @@ class ManageShortcutsViewModel @Inject constructor(
         }
     }
 
-    fun createShortcut(shortcutId: String, shortcutLabel: String, shortcutDesc: String, shortcutPath: String, bitmap: Bitmap? = null, iconId: Int) {
+    fun createShortcut(shortcutId: String, serverId: Int, shortcutLabel: String, shortcutDesc: String, shortcutPath: String, bitmap: Bitmap? = null, iconId: Int) {
         Log.d(TAG, "Attempt to add shortcut $shortcutId")
         val intent = Intent(
-            WebViewActivity.newInstance(getApplication(), shortcutPath).addFlags(
+            WebViewActivity.newInstance(getApplication(), shortcutPath, serverId).addFlags(
                 Intent.FLAG_ACTIVITY_NEW_TASK
             )
         )
@@ -156,6 +172,7 @@ class ManageShortcutsViewModel @Inject constructor(
         for (item in pinnedShortcuts) {
             if (item.id == shortcutId) {
                 shortcuts.last().id.value = item.id
+                shortcuts.last().serverId.value = item.intent?.extras?.getInt("server", currentServerId) ?: currentServerId
                 shortcuts.last().label.value = item.shortLabel.toString()
                 shortcuts.last().desc.value = item.longLabel.toString()
                 shortcuts.last().path.value = item.intent?.action.toString()
@@ -175,6 +192,7 @@ class ManageShortcutsViewModel @Inject constructor(
             for (item in dynamicShortcuts) {
                 if (item.id == shortcutId) {
                     Log.d(TAG, "setting ${item.id} data")
+                    shortcuts[index].serverId.value = item.intent?.extras?.getInt("server", currentServerId) ?: currentServerId
                     shortcuts[index].label.value = item.shortLabel.toString()
                     shortcuts[index].desc.value = item.longLabel.toString()
                     shortcuts[index].path.value = item.intent?.action.toString()

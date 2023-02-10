@@ -223,7 +223,7 @@ class ManageTilesViewModel @Inject constructor(
                 selectedTileAdded = it?.added ?: false
                 selectedServerId =
                     if (it?.serverId == null || it.serverId == 0) serverManager.getServer()?.id ?: 0
-                    else serverManager.getServer(it.serverId)?.id ?: serverManager.getServer()?.id ?: 0
+                    else it.serverId
                 selectedShouldVibrate = it?.shouldVibrate ?: false
                 tileAuthRequired = it?.authRequired ?: false
                 submitButtonLabel =

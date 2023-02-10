@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.settings.qs.ManageTilesViewModel
+import io.homeassistant.companion.android.util.compose.ServerDropdownButton
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
@@ -51,7 +52,6 @@ fun ManageTilesView(
     val context = LocalContext.current
     val scrollState = rememberScrollState()
     var expandedTile by remember { mutableStateOf(false) }
-    var expandedServer by remember { mutableStateOf(false) }
     var expandedEntity by remember { mutableStateOf(false) }
 
     val scaffoldState = rememberScaffoldState()
@@ -124,21 +124,11 @@ fun ManageTilesView(
                         text = stringResource(id = R.string.tile_server),
                         fontSize = 15.sp
                     )
-                    Box {
-                        OutlinedButton(onClick = { expandedServer = true }) {
-                            Text(text = viewModel.servers.firstOrNull { it.id == viewModel.selectedServerId }?.friendlyName.orEmpty())
-                        }
-                        DropdownMenu(expanded = expandedServer, onDismissRequest = { expandedServer = false }) {
-                            for (item in viewModel.servers) {
-                                DropdownMenuItem(onClick = {
-                                    viewModel.selectServerId(item.id)
-                                    expandedServer = false
-                                }) {
-                                    Text(text = item.friendlyName, fontSize = 15.sp)
-                                }
-                            }
-                        }
-                    }
+                    ServerDropdownButton(
+                        servers = viewModel.servers,
+                        current = viewModel.selectedServerId,
+                        onSelected = viewModel::selectServerId
+                    )
                 }
 
                 Text(
