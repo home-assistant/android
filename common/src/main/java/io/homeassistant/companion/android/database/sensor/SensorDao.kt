@@ -166,6 +166,7 @@ interface SensorDao {
                             serverId = it,
                             registered = null,
                             state = "",
+                            stateType = "",
                             lastSentState = null,
                             lastSentIcon = null,
                             coreRegistration = null
