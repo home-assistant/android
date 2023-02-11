@@ -159,7 +159,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                     messagingToken
                 )
             )
-            serverManager.convertTemporaryServer(serverId)
+            serverId = serverManager.convertTemporaryServer(serverId)
         } catch (e: Exception) {
             // Fatal errors: if one of these calls fail, the app cannot proceed.
             // Show an error, clean up the session and require new registration.
@@ -194,8 +194,10 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                 .show()
             return
         }
-        setLocationTracking(serverId, deviceTrackingEnabled)
-        setNotifications(serverId, notificationsEnabled)
+        serverId?.let {
+            setLocationTracking(serverId, deviceTrackingEnabled)
+            setNotifications(serverId, notificationsEnabled)
+        }
         displayWebview()
     }
 

@@ -12,6 +12,10 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerType
+import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
+import io.homeassistant.companion.android.database.settings.Setting
+import io.homeassistant.companion.android.database.settings.SettingsDao
+import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.onboarding.getMessagingToken
@@ -34,7 +38,8 @@ class SettingsPresenterImpl @Inject constructor(
     private val prefsRepository: PrefsRepository,
     private val themesManager: ThemesManager,
     private val langsManager: LanguagesManager,
-    private val changeLog: ChangeLog
+    private val changeLog: ChangeLog,
+    private val settingsDao: SettingsDao
 ) : SettingsPresenter, PreferenceDataStore() {
 
     companion object {
@@ -117,7 +122,7 @@ class SettingsPresenterImpl @Inject constructor(
 
     override suspend fun addServer(result: OnboardApp.Output?) {
         if (result != null) {
-            val (url, authCode, deviceName, _, _) = result
+            val (url, authCode, deviceName, _, notificationsEnabled) = result
             val messagingToken = getMessagingToken()
             var serverId: Int? = null
             try {
@@ -139,7 +144,16 @@ class SettingsPresenterImpl @Inject constructor(
                         messagingToken
                     )
                 )
-                serverManager.convertTemporaryServer(serverId)
+                serverId = serverManager.convertTemporaryServer(serverId)
+                if (BuildConfig.FLAVOR != "full" && serverId != null) {
+                    settingsDao.insert(
+                        Setting(
+                            serverId,
+                            if (notificationsEnabled) WebsocketSetting.ALWAYS else WebsocketSetting.NEVER,
+                            SensorUpdateFrequencySetting.NORMAL
+                        )
+                    )
+                }
             } catch (e: Exception) {
                 Log.e(LaunchActivity.TAG, "Exception while registering", e)
                 try {
