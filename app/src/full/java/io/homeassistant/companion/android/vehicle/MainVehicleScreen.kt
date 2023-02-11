@@ -30,6 +30,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.launch.LaunchActivity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -40,7 +41,9 @@ import io.homeassistant.companion.android.common.R as commonR
 class MainVehicleScreen(
     carContext: CarContext,
     val serverManager: ServerManager,
-    private val allEntities: Flow<Map<String, Entity<*>>>
+    private val serverId: StateFlow<Int>,
+    private val allEntities: Flow<Map<String, Entity<*>>>,
+    private val onChangeServer: (Int) -> Unit
 ) : Screen(carContext) {
 
     companion object {
@@ -156,7 +159,7 @@ class MainVehicleScreen(
                         screenManager.push(
                             EntityGridVehicleScreen(
                                 carContext,
-                                serverManager.integrationRepository(),
+                                serverManager.integrationRepository(serverId.value),
                                 friendlyDomain,
                                 allEntities.map { it.values.filter { entity -> entity.domain == domain } }
                             )
@@ -186,13 +189,47 @@ class MainVehicleScreen(
                     screenManager.push(
                         MapVehicleScreen(
                             carContext,
-                            serverManager.integrationRepository(),
+                            serverManager.integrationRepository(serverId.value),
                             allEntities.map { it.values.filter { entity -> entity.domain in MAP_DOMAINS } }
                         )
                     )
                 }
                 .build()
         )
+
+        if (serverManager.defaultServers.size > 1) {
+            listBuilder.addItem(
+                Row.Builder()
+                    .setImage(
+                        CarIcon.Builder(
+                            IconicsDrawable(
+                                carContext,
+                                CommunityMaterial.Icon2.cmd_home_switch
+                            ).apply {
+                                sizeDp = 48
+                            }.toAndroidIconCompat()
+                        )
+                            .setTint(CarColor.DEFAULT)
+                            .build()
+                    )
+                    .setTitle(carContext.getString(commonR.string.aa_change_server))
+                    .setOnClickListener {
+                        Log.i(TAG, "Change server clicked")
+                        screenManager.pushForResult(
+                            ChangeServerScreen(
+                                carContext,
+                                serverManager,
+                                serverId
+                            )
+                        ) {
+                            it?.toString()?.toIntOrNull()?.let { serverId ->
+                                onChangeServer(serverId)
+                            }
+                        }
+                    }
+                    .build()
+            )
+        }
 
         return ListTemplate.Builder().apply {
             setTitle(carContext.getString(commonR.string.app_name))
