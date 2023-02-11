@@ -771,12 +771,14 @@ abstract class AppDatabase : RoomDatabase() {
                 }
 
                 // Attribute existing rows to the existing server
+                db.execSQL("UPDATE `button_widgets` SET `server_id` = $serverId")
+                db.execSQL("UPDATE `camera_widgets` SET `server_id` = $serverId")
+                db.execSQL("UPDATE `media_player_controls_widgets` SET `server_id` = $serverId")
                 db.execSQL("UPDATE `notification_history` SET `server_id` = $serverId")
                 db.execSQL("UPDATE `qs_tiles` SET `server_id` = $serverId")
                 db.execSQL("UPDATE `sensors` SET `server_id` = $serverId")
-
-                // TODO migration
-                //  - widgets update with server ID
+                db.execSQL("UPDATE `static_widget` SET `server_id` = $serverId")
+                db.execSQL("UPDATE `template_widgets` SET `server_id` = $serverId")
             }
         }
 

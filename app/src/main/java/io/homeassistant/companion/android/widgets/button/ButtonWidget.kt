@@ -51,6 +51,7 @@ class ButtonWidget : AppWidgetProvider() {
         internal const val RECEIVE_DATA =
             "io.homeassistant.companion.android.widgets.button.ButtonWidget.RECEIVE_DATA"
 
+        internal const val EXTRA_SERVER_ID = "EXTRA_SERVER_ID"
         internal const val EXTRA_DOMAIN = "EXTRA_DOMAIN"
         internal const val EXTRA_SERVICE = "EXTRA_SERVICE"
         internal const val EXTRA_SERVICE_DATA = "EXTRA_SERVICE_DATA"
@@ -319,7 +320,7 @@ class ButtonWidget : AppWidgetProvider() {
                     }
 
                     Log.d(TAG, "Sending service call to Home Assistant")
-                    serverManager.integrationRepository().callService(domain, service, serviceDataMap)
+                    serverManager.integrationRepository(widget.serverId).callService(domain, service, serviceDataMap)
                     Log.d(TAG, "Service call sent successfully")
 
                     // If service call does not throw an exception, send positive feedback
@@ -358,6 +359,7 @@ class ButtonWidget : AppWidgetProvider() {
     private fun saveServiceCallConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
         if (extras == null) return
 
+        val serverId = if (extras.containsKey(EXTRA_SERVER_ID)) extras.getInt(EXTRA_SERVER_ID) else null
         val domain: String? = extras.getString(EXTRA_DOMAIN)
         val service: String? = extras.getString(EXTRA_SERVICE)
         val serviceData: String? = extras.getString(EXTRA_SERVICE_DATA)
@@ -367,7 +369,7 @@ class ButtonWidget : AppWidgetProvider() {
         val backgroundType: WidgetBackgroundType = extras.getSerializable(EXTRA_BACKGROUND_TYPE) as WidgetBackgroundType
         val textColor: String? = extras.getString(EXTRA_TEXT_COLOR)
 
-        if (domain == null || service == null || serviceData == null) {
+        if (serverId == null || domain == null || service == null || serviceData == null) {
             Log.e(TAG, "Did not receive complete service call data")
             return
         }
@@ -383,7 +385,7 @@ class ButtonWidget : AppWidgetProvider() {
                     "label: " + label
             )
 
-            val widget = ButtonWidgetEntity(appWidgetId, icon, domain, service, serviceData, label, backgroundType, textColor, requireAuthentication)
+            val widget = ButtonWidgetEntity(appWidgetId, serverId, icon, domain, service, serviceData, label, backgroundType, textColor, requireAuthentication)
             buttonWidgetDao.add(widget)
 
             // It is the responsibility of the configuration activity to update the app widget

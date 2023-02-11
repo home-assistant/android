@@ -37,6 +37,7 @@ class CameraWidget : AppWidgetProvider() {
         internal const val UPDATE_IMAGE =
             "io.homeassistant.companion.android.widgets.camera.CameraWidget.UPDATE_IMAGE"
 
+        internal const val EXTRA_SERVER_ID = "EXTRA_SERVER_ID"
         internal const val EXTRA_ENTITY_ID = "EXTRA_ENTITY_ID"
         private var lastIntent = ""
     }
@@ -114,14 +115,14 @@ class CameraWidget : AppWidgetProvider() {
             if (widget != null) {
                 var entityPictureUrl: String?
                 try {
-                    entityPictureUrl = retrieveCameraImageUrl(widget.entityId)
+                    entityPictureUrl = retrieveCameraImageUrl(widget.serverId, widget.entityId)
                     setViewVisibility(R.id.widgetCameraError, View.GONE)
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed to fetch entity or entity does not exist", e)
                     setViewVisibility(R.id.widgetCameraError, View.VISIBLE)
                     entityPictureUrl = null
                 }
-                val baseUrl = serverManager.getServer()?.connection?.getUrl().toString().removeSuffix("/")
+                val baseUrl = serverManager.getServer(widget.serverId)?.connection?.getUrl().toString().removeSuffix("/")
                 val url = "$baseUrl$entityPictureUrl"
                 if (entityPictureUrl == null) {
                     setImageViewResource(
@@ -184,8 +185,8 @@ class CameraWidget : AppWidgetProvider() {
         }
     }
 
-    private suspend fun retrieveCameraImageUrl(entityId: String): String? {
-        val entity = serverManager.integrationRepository().getEntity(entityId)
+    private suspend fun retrieveCameraImageUrl(serverId: Int, entityId: String): String? {
+        val entity = serverManager.integrationRepository(serverId).getEntity(entityId)
         return entity?.attributes?.get("entity_picture")?.toString()
     }
 
@@ -211,9 +212,10 @@ class CameraWidget : AppWidgetProvider() {
     private fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
         if (extras == null) return
 
+        val serverSelection = if (extras.containsKey(EXTRA_SERVER_ID)) extras.getInt(EXTRA_SERVER_ID) else null
         val entitySelection: String? = extras.getString(EXTRA_ENTITY_ID)
 
-        if (entitySelection == null) {
+        if (serverSelection == null || entitySelection == null) {
             Log.e(TAG, "Did not receive complete configuration data")
             return
         }
@@ -227,6 +229,7 @@ class CameraWidget : AppWidgetProvider() {
             cameraWidgetDao.add(
                 CameraWidgetEntity(
                     appWidgetId,
+                    serverSelection,
                     entitySelection
                 )
             )

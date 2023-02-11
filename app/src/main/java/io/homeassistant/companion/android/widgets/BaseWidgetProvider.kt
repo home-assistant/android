@@ -93,17 +93,21 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             updateAllWidgets(context)
 
             val allWidgets = getAllWidgetIdsWithEntities(context)
-            val widgetsWithDifferentEntities = allWidgets.filter { it.value != widgetEntities[it.key] }
+            val widgetsWithDifferentEntities = allWidgets.filter { it.value.second != widgetEntities[it.key] }
             if (widgetsWithDifferentEntities.isNotEmpty()) {
                 context.applicationContext.registerReceiver(
                     this@BaseWidgetProvider,
                     IntentFilter(Intent.ACTION_SCREEN_OFF)
                 )
 
-                widgetsWithDifferentEntities.forEach { (id, entities) ->
+                widgetsWithDifferentEntities.forEach { (id, pair) ->
                     widgetJobs[id]?.cancel()
 
-                    val entityUpdates = serverManager.integrationRepository().getEntityUpdates(entities)
+                    val (serverId, entities) = pair.first to pair.second
+                    val entityUpdates =
+                        if (serverManager.getServer(serverId) != null) {
+                            serverManager.integrationRepository(serverId).getEntityUpdates(entities)
+                        } else null
                     if (entityUpdates != null) {
                         widgetEntities[id] = entities
                         widgetJobs[id] = widgetScope!!.launch {
@@ -171,7 +175,8 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
 
     abstract fun getWidgetProvider(context: Context): ComponentName
     abstract suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity<Map<String, Any>>? = null): RemoteViews
-    abstract suspend fun getAllWidgetIdsWithEntities(context: Context): Map<Int, List<String>>
+    // A map of widget IDs to [server ID, list of entity IDs]
+    abstract suspend fun getAllWidgetIdsWithEntities(context: Context): Map<Int, Pair<Int, List<String>>>
     abstract fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int)
     abstract suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity<*>)
 }

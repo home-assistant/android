@@ -15,8 +15,30 @@
             style="@style/TextAppearance.HomeAssistant.Headline"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
             android:text="@string/create_template" />
 
+        <LinearLayout
+            android:id="@+id/server_select"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:padding="5dp"
+                android:text="@string/widget_spinner_server" />
+
+            <Spinner
+                android:id="@+id/server_select_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical" />
+        </LinearLayout>
 
         <androidx.appcompat.widget.AppCompatEditText
             android:id="@+id/templateText"

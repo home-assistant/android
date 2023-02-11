@@ -10,13 +10,13 @@ import android.util.Log
 import android.view.View
 import android.widget.AdapterView
 import android.widget.AutoCompleteTextView
+import android.widget.Spinner
 import android.widget.Toast
 import androidx.core.content.getSystemService
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
-import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.databinding.WidgetCameraConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
@@ -35,17 +35,24 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.camera.CameraWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
     }
 
+    private lateinit var binding: WidgetCameraConfigureBinding
+
+    override val serverSelect: View
+        get() = binding.serverSelect
+
+    override val serverSelectList: Spinner
+        get() = binding.serverSelectList
+
     private var requestLauncherSetup = false
 
-    @Inject
-    lateinit var serverManager: ServerManager
-
-    private var entities = LinkedHashMap<String, Entity<Any>>()
+    private var entities = mutableMapOf<Int, List<Entity<Any>>>()
     private var selectedEntity: Entity<Any>? = null
 
     @Inject
     lateinit var cameraWidgetDao: CameraWidgetDao
     override val dao get() = cameraWidgetDao
+
+    private var entityAdapter: SingleItemArrayAdapter<Entity<Any>>? = null
 
     public override fun onCreate(icicle: Bundle?) {
         super.onCreate(icicle)
@@ -54,12 +61,12 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         // out of the widget placement if the user presses the back button.
         setResult(RESULT_CANCELED)
 
-        val binding = WidgetCameraConfigureBinding.inflate(layoutInflater)
+        binding = WidgetCameraConfigureBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         binding.addButton.setOnClickListener {
             if (requestLauncherSetup) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && selectedEntity != null) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && isValidServerId() && selectedEntity != null) {
                     getSystemService<AppWidgetManager>()?.requestPinAppWidget(
                         ComponentName(this, CameraWidget::class.java),
                         null,
@@ -100,7 +107,7 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             binding.addButton.setText(commonR.string.update_widget)
             val entity = runBlocking {
                 try {
-                    serverManager.integrationRepository().getEntity(cameraWidget.entityId)
+                    serverManager.integrationRepository(cameraWidget.serverId).getEntity(cameraWidget.entityId)
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to get entity information", e)
                     Toast.makeText(applicationContext, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
@@ -113,32 +120,44 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             }
         }
 
-        val entityAdapter = SingleItemArrayAdapter<Entity<Any>>(this) { it?.entityId ?: "" }
+        setupServerSelect(cameraWidget?.serverId)
+
+        entityAdapter = SingleItemArrayAdapter(this) { it?.entityId ?: "" }
 
         binding.widgetTextConfigEntityId.setAdapter(entityAdapter)
         binding.widgetTextConfigEntityId.onFocusChangeListener = dropDownOnFocus
         binding.widgetTextConfigEntityId.onItemClickListener = entityDropDownOnItemClick
 
-        lifecycleScope.launch {
-            try {
-                // Fetch entities
-                val fetchedEntities = serverManager.integrationRepository().getEntities()
-                fetchedEntities?.forEach {
-                    if (it.domain == "camera") {
-                        entities[it.entityId] = it
-                    }
+        serverManager.defaultServers.forEach { server ->
+            lifecycleScope.launch {
+                try {
+                    val fetchedEntities = serverManager.integrationRepository(server.id).getEntities().orEmpty()
+                        .filter { it.domain == "camera" }
+                    entities[server.id] = fetchedEntities
+                    if (server.id == selectedServerId) setAdapterEntities(server.id)
+                } catch (e: Exception) {
+                    // If entities fail to load, it's okay to pass
+                    // an empty map to the dynamicFieldAdapter
+                    Log.e(TAG, "Failed to query entities", e)
                 }
-                entityAdapter.addAll(entities.values)
-                entityAdapter.sort()
-
-                runOnUiThread {
-                    entityAdapter.notifyDataSetChanged()
-                }
-            } catch (e: Exception) {
-                // If entities fail to load, it's okay to pass
-                // an empty map to the dynamicFieldAdapter
-                Log.e(TAG, "Failed to query entities", e)
             }
+        }
+    }
+
+    override fun onServerSelected(serverId: Int) {
+        selectedEntity = null
+        binding.widgetTextConfigEntityId.setText("")
+        setAdapterEntities(serverId)
+    }
+
+    private fun setAdapterEntities(serverId: Int) {
+        entityAdapter?.let { adapter ->
+            adapter.clearAll()
+            if (entities[serverId] != null) {
+                adapter.addAll(entities[serverId].orEmpty().toMutableList())
+                adapter.sort()
+            }
+            runOnUiThread { adapter.notifyDataSetChanged() }
         }
     }
 
@@ -168,6 +187,10 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
             intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
 
+            intent.putExtra(
+                CameraWidget.EXTRA_SERVER_ID,
+                selectedServerId!!
+            )
             intent.putExtra(
                 CameraWidget.EXTRA_ENTITY_ID,
                 selectedEntity!!.entityId

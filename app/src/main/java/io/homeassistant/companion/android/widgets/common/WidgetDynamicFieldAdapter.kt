@@ -14,8 +14,8 @@ import io.homeassistant.companion.android.databinding.WidgetButtonConfigureDynam
 import kotlin.Exception
 
 class WidgetDynamicFieldAdapter(
-    private val services: HashMap<String, Service>,
-    private val entities: HashMap<String, Entity<Any>>,
+    private var services: HashMap<String, Service>,
+    private var entities: HashMap<String, Entity<Any>>,
     private val serviceFieldList: ArrayList<ServiceFieldBinder>
 ) : RecyclerView.Adapter<WidgetDynamicFieldAdapter.ViewHolder>() {
 
@@ -156,6 +156,11 @@ class WidgetDynamicFieldAdapter(
                 }
             }
         }
+    }
+
+    fun replaceValues(services: HashMap<String, Service>, entities: HashMap<String, Entity<Any>>) {
+        this.services = services
+        this.entities = entities
     }
 
     private fun String.toJsonType(): Any? {
