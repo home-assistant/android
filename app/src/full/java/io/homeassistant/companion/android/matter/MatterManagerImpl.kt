@@ -22,9 +22,9 @@ class MatterManagerImpl @Inject constructor(
     override fun appSupportsCommissioning(): Boolean =
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1
 
-    override suspend fun coreSupportsCommissioning(): Boolean {
-        if (!serverManager.isRegistered()) return false
-        val config = serverManager.webSocketRepository().getConfig()
+    override suspend fun coreSupportsCommissioning(serverId: Int): Boolean {
+        if (!serverManager.isRegistered() || serverManager.getServer(serverId) == null) return false
+        val config = serverManager.webSocketRepository(serverId).getConfig()
         return config != null && config.components.contains("matter")
     }
 
@@ -47,18 +47,18 @@ class MatterManagerImpl @Inject constructor(
         }
     }
 
-    override suspend fun commissionDevice(code: String): MatterCommissionResponse? {
+    override suspend fun commissionDevice(code: String, serverId: Int): MatterCommissionResponse? {
         return try {
-            serverManager.webSocketRepository().commissionMatterDevice(code)
+            serverManager.webSocketRepository(serverId).commissionMatterDevice(code)
         } catch (e: Exception) {
             Log.e(TAG, "Error while executing server commissioning request", e)
             null
         }
     }
 
-    override suspend fun commissionOnNetworkDevice(pin: Long): MatterCommissionResponse? {
+    override suspend fun commissionOnNetworkDevice(pin: Long, serverId: Int): MatterCommissionResponse? {
         return try {
-            serverManager.webSocketRepository().commissionMatterDeviceOnNetwork(pin)
+            serverManager.webSocketRepository(serverId).commissionMatterDeviceOnNetwork(pin)
         } catch (e: Exception) {
             Log.e(TAG, "Error while executing server commissioning request", e)
             null

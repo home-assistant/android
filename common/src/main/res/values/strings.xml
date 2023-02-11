@@ -349,6 +349,7 @@
     <string name="matter_commissioning_unavailable">Matter is currently unavailable</string>
     <string name="matter_shared_title">Add Matter device</string>
     <string name="matter_shared_status_not_registered">Please connect to your Home Assistant server before adding a Matter device.</string>
+    <string name="matter_shared_status_select_server">Which server would you like to use?</string>
     <string name="matter_shared_status_not_supported">To add a Matter device, please update your Home Assistant server and add Matter first.</string>
     <string name="matter_shared_status_confirmation_named">Do you want to add %1$s to Home Assistant?</string>
     <string name="matter_shared_status_confirmation">Do you want to add this Matter device to Home Assistant?</string>

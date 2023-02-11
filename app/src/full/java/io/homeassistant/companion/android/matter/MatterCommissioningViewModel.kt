@@ -21,6 +21,7 @@ class MatterCommissioningViewModel @Inject constructor(
     sealed class CommissioningFlowStep {
         object NotStarted : CommissioningFlowStep()
         object NotRegistered : CommissioningFlowStep()
+        object SelectServer : CommissioningFlowStep()
         object CheckingCore : CommissioningFlowStep()
         object NotSupported : CommissioningFlowStep()
         object Confirmation : CommissioningFlowStep()
@@ -32,7 +33,10 @@ class MatterCommissioningViewModel @Inject constructor(
     var step by mutableStateOf<CommissioningFlowStep>(CommissioningFlowStep.NotStarted)
         private set
 
-    fun checkSupport() {
+    var serverId by mutableStateOf(0)
+        private set
+
+    fun checkSetup() {
         viewModelScope.launch {
             if (step != CommissioningFlowStep.NotStarted) return@launch
 
@@ -41,9 +45,30 @@ class MatterCommissioningViewModel @Inject constructor(
                 return@launch
             }
 
+            if (serverManager.defaultServers.size > 1) {
+                step = CommissioningFlowStep.SelectServer
+            } else {
+                serverManager.getServer()?.id?.let {
+                    checkSupport(it)
+                } ?: run {
+                    step = CommissioningFlowStep.NotSupported
+                }
+            }
+        }
+    }
+
+    fun checkSupport(id: Int) {
+        viewModelScope.launch {
+            val server = serverManager.getServer(id)
+            if (server == null) {
+                step = CommissioningFlowStep.NotSupported
+                return@launch
+            }
+
+            serverId = id
             step = CommissioningFlowStep.CheckingCore
 
-            val coreSupport = matterManager.coreSupportsCommissioning()
+            val coreSupport = matterManager.coreSupportsCommissioning(id)
             step =
                 if (coreSupport) CommissioningFlowStep.Confirmation
                 else CommissioningFlowStep.NotSupported
@@ -54,7 +79,7 @@ class MatterCommissioningViewModel @Inject constructor(
         viewModelScope.launch {
             step = CommissioningFlowStep.Working
 
-            val result = matterManager.commissionDevice(code)
+            val result = matterManager.commissionDevice(code, serverId)
             step =
                 if (result?.success == true) CommissioningFlowStep.Success
                 else CommissioningFlowStep.Failure(result?.errorCode)

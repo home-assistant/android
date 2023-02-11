@@ -12,8 +12,11 @@ import com.google.accompanist.themeadapter.material.MdcTheme
 import com.google.android.gms.home.matter.Matter
 import com.google.android.gms.home.matter.commissioning.SharedDeviceData
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.matter.views.MatterCommissioningView
 import io.homeassistant.companion.android.webview.WebViewActivity
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MatterCommissioningActivity : AppCompatActivity() {
@@ -22,9 +25,13 @@ class MatterCommissioningActivity : AppCompatActivity() {
         private const val TAG = "MatterCommissioningActi"
     }
 
+    @Inject
+    lateinit var serverManager: ServerManager
+
     private val viewModel: MatterCommissioningViewModel by viewModels()
     private var deviceCode: String? = null
     private var deviceName by mutableStateOf<String?>(null)
+    private var servers by mutableStateOf<List<Server>>(emptyList())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,12 +41,15 @@ class MatterCommissioningActivity : AppCompatActivity() {
                 MatterCommissioningView(
                     step = viewModel.step,
                     deviceName = deviceName,
+                    servers = servers,
+                    onSelectServer = viewModel::checkSupport,
                     onConfirmCommissioning = { deviceCode?.let { viewModel.commissionDeviceWithCode(it) } },
                     onClose = { finish() },
                     onContinue = { continueToApp(false) }
                 )
             }
         }
+        servers = serverManager.defaultServers
     }
 
     override fun onResume() {
@@ -59,7 +69,7 @@ class MatterCommissioningActivity : AppCompatActivity() {
 
                 deviceName = data.deviceName
                 deviceCode = data.manualPairingCode
-                viewModel.checkSupport()
+                viewModel.checkSetup()
             } catch (e: SharedDeviceData.InvalidSharedDeviceDataException) {
                 Log.e(TAG, "Received incomplete Matter commissioning data, launching webview")
                 continueToApp(true)
@@ -71,7 +81,7 @@ class MatterCommissioningActivity : AppCompatActivity() {
     }
 
     private fun continueToApp(hideTransition: Boolean) {
-        startActivity(WebViewActivity.newInstance(this))
+        startActivity(WebViewActivity.newInstance(this, null, viewModel.serverId))
         finish()
         if (hideTransition) { // Disable activity start/stop animation
             overridePendingTransition(0, 0)
