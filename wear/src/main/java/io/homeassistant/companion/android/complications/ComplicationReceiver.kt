@@ -59,9 +59,6 @@ class ComplicationReceiver : BroadcastReceiver() {
     private fun onScreenOn(context: Context) {
         if (!serverManager.isRegistered()) return
         scope.launch {
-            if (!integrationUseCase.isRegistered()) {
-                return@launch
-            }
             updateAllComplications(context)
         }
     }
