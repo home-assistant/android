@@ -764,8 +764,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     override fun onPause() {
         super.onPause()
-        SensorReceiver.updateAllSensors(this)
         presenter.setAppActive(false)
+        if (!isFinishing) SensorReceiver.updateAllSensors(this)
     }
 
     private suspend fun checkAndWarnForDisabledLocation() {
