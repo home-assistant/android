@@ -787,6 +787,25 @@ abstract class AppDatabase : RoomDatabase() {
                         putStringSet("controls_auth_entities", newIds)
                     }
                 }
+
+                val existingZones = db.query("SELECT * FROM `sensor_settings` WHERE `sensor_id` = 'location_background' AND `name` = 'location_ham_only_enter_zone'")
+                existingZones.use {
+                    if (existingZones.count > 0) {
+                        if (it.moveToFirst()) {
+                            it.getColumnIndex("value").let { index ->
+                                val setting = if (index > -1) it.getString(index) else null
+                                if (!setting.isNullOrBlank()) {
+                                    val newSetting = setting.split(", ")
+                                        .joinToString { zone -> "${serverId}_$zone" }
+                                    db.execSQL(
+                                        "UPDATE `sensor_settings` SET `value` = '$newSetting' " +
+                                            "WHERE `sensor_id` = 'location_background' AND `name` = 'location_ham_only_enter_zone'"
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 

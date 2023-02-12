@@ -29,6 +29,8 @@ import io.homeassistant.companion.android.database.settings.SensorUpdateFrequenc
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.sensors.LastAppSensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -104,7 +106,12 @@ class SensorDetailViewModel @Inject constructor(
         Log.d(TAG, "Get zones from Home Assistant for listing zones in preferences...")
         runBlocking {
             try {
-                val cachedZones = serverManager.integrationRepository().getZones().map { it.entityId }
+                val cachedZones = mutableListOf<String>()
+                serverManager.defaultServers.map { server ->
+                    async {
+                        serverManager.integrationRepository(server.id).getZones().map { "${server.id}_${it.entityId}" }
+                    }
+                }.awaitAll().forEach { cachedZones.addAll(it) }
                 Log.d(TAG, "Successfully received " + cachedZones.size + " zones (" + cachedZones + ") from Home Assistant")
                 cachedZones
             } catch (e: Exception) {
@@ -186,7 +193,8 @@ class SensorDetailViewModel @Inject constructor(
             setting = setting,
             entries = when {
                 setting.valueType == SensorSettingType.LIST ||
-                    setting.valueType == SensorSettingType.LIST_BLUETOOTH ->
+                    setting.valueType == SensorSettingType.LIST_BLUETOOTH ||
+                    setting.valueType == SensorSettingType.LIST_ZONES ->
                     listKeys.zip(listEntries)
                 setting.valueType.listType ->
                     listEntries.map { it to it }
@@ -195,7 +203,8 @@ class SensorDetailViewModel @Inject constructor(
             },
             entriesSelected = when {
                 setting.valueType == SensorSettingType.LIST ||
-                    setting.valueType == SensorSettingType.LIST_BLUETOOTH ->
+                    setting.valueType == SensorSettingType.LIST_BLUETOOTH ||
+                    setting.valueType == SensorSettingType.LIST_ZONES ->
                     setting.value.split(", ").filter { listKeys.contains(it) }
                 setting.valueType.listType ->
                     setting.value.split(", ").filter { listEntries.contains(it) }
@@ -304,6 +313,8 @@ class SensorDetailViewModel @Inject constructor(
                 setting.entries
             SensorSettingType.LIST_BLUETOOTH ->
                 BluetoothUtils.getBluetoothDevices(getApplication()).map { it.address }
+            SensorSettingType.LIST_ZONES ->
+                zones
             else ->
                 emptyList()
         }
@@ -334,8 +345,20 @@ class SensorDetailViewModel @Inject constructor(
                     .orEmpty()
                 devices.map { it.name }.plus(entriesNotInDevices)
             }
-            SensorSettingType.LIST_ZONES ->
-                entries ?: zones
+            SensorSettingType.LIST_ZONES -> {
+                val servers = serverManager.defaultServers
+                val zonesWithNames = zones
+                    .filter { entries == null || entries.contains(it) }
+                    .map {
+                        val server = servers.first { s -> s.id == it.split("_")[0].toInt() }
+                        val zone = it.split("_")[1]
+                        if (servers.size > 1) "${server.friendlyName}: $zone" else zone
+                    }
+                val entriesNotInZones = entries
+                    ?.filter { entry -> !zones.contains(entry) }
+                    .orEmpty()
+                zonesWithNames.plus(entriesNotInZones)
+            }
             SensorSettingType.LIST_BEACONS -> {
                 // show current beacons and also previously selected UUIDs
                 entries ?: (sensorManager as BluetoothSensorManager).getBeaconUUIDs()
