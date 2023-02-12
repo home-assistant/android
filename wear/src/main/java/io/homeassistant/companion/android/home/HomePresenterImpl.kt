@@ -277,4 +277,12 @@ class HomePresenterImpl @Inject constructor(
     override suspend fun setTemplateTileRefreshInterval(interval: Int) {
         wearPrefsRepository.setTemplateTileRefreshInterval(interval)
     }
+
+    override suspend fun getWearFavoritesOnly(): Boolean {
+        return wearPrefsRepository.getWearFavoritesOnly()
+    }
+
+    override suspend fun setWearFavoritesOnly(enabled: Boolean) {
+        wearPrefsRepository.setWearFavoritesOnly(enabled)
+    }
 }

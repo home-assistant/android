@@ -564,7 +564,9 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             "register_sensor",
             SensorRequest(
                 sensorRegistration.uniqueId,
-                if (canRegisterEntityDisabledState && sensorRegistration.disabled) null else sensorRegistration.state,
+                if (canRegisterEntityDisabledState && sensorRegistration.disabled) null
+                else if (sensorRegistration.state is String) sensorRegistration.state.ifBlank { null }
+                else sensorRegistration.state,
                 sensorRegistration.type,
                 sensorRegistration.icon,
                 sensorRegistration.attributes,
@@ -604,7 +606,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             sensors.map {
                 SensorRequest(
                     it.uniqueId,
-                    it.state,
+                    if (it.state is String) it.state.ifBlank { null } else it.state,
                     it.type,
                     it.icon,
                     it.attributes

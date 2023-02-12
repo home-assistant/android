@@ -65,6 +65,7 @@ class MainVehicleScreen(
         private val MAP_DOMAINS = listOf(
             "device_tracker",
             "person",
+            "sensor",
             "zone",
         )
     }

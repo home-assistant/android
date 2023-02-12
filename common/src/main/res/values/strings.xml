@@ -1027,4 +1027,5 @@
     <string name="assist">Assist</string>
     <string name="not_registered">Please launch the Home Assistant app and login before you can use the assist feature.</string>
     <string name="ha_assist">HA: Assist</string>
+    <string name="only_favorites">Only Show Favorites</string>
 </resources>

@@ -68,8 +68,10 @@ fun SettingsView(
     onClickLogout: () -> Unit,
     isHapticEnabled: Boolean,
     isToastEnabled: Boolean,
+    isFavoritesOnly: Boolean,
     onHapticEnabled: (Boolean) -> Unit,
     onToastEnabled: (Boolean) -> Unit,
+    setFavoritesOnly: (Boolean) -> Unit,
     onClickTemplateTile: () -> Unit
 ) {
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
@@ -103,6 +105,30 @@ fun SettingsView(
                         secondaryLabel = stringResource(commonR.string.irreversible),
                         enabled = favorites.isNotEmpty(),
                         onClick = onClearFavorites
+                    )
+                }
+                item {
+                    ToggleChip(
+                        modifier = Modifier.fillMaxWidth(),
+                        checked = isFavoritesOnly,
+                        onCheckedChange = { setFavoritesOnly(it) },
+                        label = { Text(stringResource(commonR.string.only_favorites)) },
+                        enabled = favorites.isNotEmpty(),
+                        toggleControl = {
+                            Icon(
+                                imageVector = ToggleChipDefaults.switchIcon(isFavoritesOnly),
+                                contentDescription = if (isFavoritesOnly)
+                                    stringResource(commonR.string.enabled)
+                                else
+                                    stringResource(commonR.string.disabled)
+                            )
+                        },
+                        appIcon = {
+                            Image(
+                                asset = CommunityMaterial.Icon2.cmd_home_heart,
+                                colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                            )
+                        }
                     )
                 }
                 item {
@@ -245,7 +271,9 @@ private fun PreviewSettingsView() {
         onClickLogout = {},
         isHapticEnabled = true,
         isToastEnabled = false,
+        isFavoritesOnly = false,
         onHapticEnabled = {},
-        onToastEnabled = {}
+        onToastEnabled = {},
+        setFavoritesOnly = {}
     ) {}
 }
