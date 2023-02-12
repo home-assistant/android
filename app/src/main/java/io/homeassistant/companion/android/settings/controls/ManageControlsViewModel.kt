@@ -5,6 +5,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
@@ -16,6 +17,8 @@ import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.controls.HaControlsProviderService
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -35,23 +38,27 @@ class ManageControlsViewModel @Inject constructor(
     var entitiesLoaded by mutableStateOf(false)
         private set
 
-    val entitiesList = mutableStateListOf<Entity<*>>()
+    val entitiesList = mutableStateMapOf<Int, List<Entity<*>>>()
 
     init {
         viewModelScope.launch {
             authRequired = prefsRepository.getControlsAuthRequired()
             authRequiredList.addAll(prefsRepository.getControlsAuthEntities())
 
-            val entities = serverManager.integrationRepository().getEntities()
-                ?.filter { it.domain in HaControlsProviderService.getSupportedDomains() }
-                ?.sortedWith(
-                    compareBy(String.CASE_INSENSITIVE_ORDER) {
-                        (it.attributes as Map<String, Any>)["friendly_name"].toString()
+            serverManager.defaultServers.map { server ->
+                async {
+                    val entities = serverManager.integrationRepository(server.id).getEntities()
+                        ?.filter { it.domain in HaControlsProviderService.getSupportedDomains() }
+                        ?.sortedWith(
+                            compareBy(String.CASE_INSENSITIVE_ORDER) {
+                                (it.attributes as Map<String, Any>)["friendly_name"].toString()
+                            }
+                        )
+                    if (entities != null) {
+                        entitiesList[server.id] = entities
                     }
-                )
-            if (entities != null) {
-                entitiesList.addAll(entities)
-            }
+                }
+            }.awaitAll()
             entitiesLoaded = true
         }
     }
@@ -66,25 +73,41 @@ class ManageControlsViewModel @Inject constructor(
         }
     }
 
-    fun toggleAuthForEntity(entityId: String) {
+    fun toggleAuthForEntity(entityId: String, serverId: Int) {
         viewModelScope.launch {
             var newAuthRequired = ControlsAuthRequiredSetting.SELECTION
+            val settingId = "$serverId.$entityId"
 
             if (authRequired == ControlsAuthRequiredSetting.ALL) {
                 // User wants this accessible, so add everything except selected
-                authRequiredList.addAll(
-                    entitiesList.map { it.entityId }.filter { it != entityId }
-                )
-            } else if (authRequiredList.contains(entityId)) {
-                authRequiredList.remove(entityId)
+                entitiesList.forEach { (server, entities) ->
+                    authRequiredList.addAll(
+                        entities.filter { server != serverId || it.entityId != entityId }
+                            .map { "$server.${it.entityId}" }
+                    )
+                }
+            } else if (authRequiredList.contains(settingId)) {
+                authRequiredList.remove(settingId)
             } else {
-                authRequiredList.add(entityId)
+                authRequiredList.add(settingId)
             }
+
+            // If list contains entities for servers that no longer exist, clean up
+            authRequiredList.groupBy { it.split(".")[0].toIntOrNull() }
+                .forEach {
+                    if (it.key == null || serverManager.getServer(it.key!!) == null) {
+                        authRequiredList.removeAll(it.value)
+                    }
+                }
 
             // If none or all are selected, clean up
             if (authRequiredList.isEmpty()) {
                 newAuthRequired = ControlsAuthRequiredSetting.NONE
-            } else if (entitiesList.all { authRequiredList.contains(it.entityId) }) {
+            } else if (
+                entitiesList.all { (server, entities) ->
+                    entities.all { authRequiredList.contains("$server.${it.entityId}") }
+                }
+            ) {
                 newAuthRequired = ControlsAuthRequiredSetting.ALL
             }
 

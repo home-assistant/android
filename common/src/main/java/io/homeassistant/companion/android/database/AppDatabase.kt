@@ -779,6 +779,14 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("UPDATE `sensors` SET `server_id` = $serverId")
                 db.execSQL("UPDATE `static_widget` SET `server_id` = $serverId")
                 db.execSQL("UPDATE `template_widgets` SET `server_id` = $serverId")
+
+                val prefsStorage = appContext.getSharedPreferences("themes_0", Context.MODE_PRIVATE)
+                prefsStorage.getStringSet("controls_auth_entities", null)?.let {
+                    val newIds = it.map { control -> "$serverId.$control" }.toSet()
+                    prefsStorage.edit {
+                        putStringSet("controls_auth_entities", newIds)
+                    }
+                }
             }
         }
 
