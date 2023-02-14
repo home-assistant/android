@@ -36,13 +36,13 @@ interface ServerManager {
     suspend fun addServer(server: Server): Int
 
     /**
-     * Get the server for the provided ID
+     * Get the server for the provided ID.
      * @return [Server] or `null` if there is no server for the ID
      */
     fun getServer(id: Int = SERVER_ID_ACTIVE): Server?
 
     /**
-     * Get the server for the provided webhook ID
+     * Get the server for the provided webhook ID.
      * @return [Server] or `null` if there is no server for the webhook ID
      */
     fun getServer(webhookId: String): Server?
@@ -55,19 +55,19 @@ interface ServerManager {
     fun activateServer(id: Int)
 
     /**
-     * Update a server based on the provided object
+     * Update a server based on the provided object.
      */
     fun updateServer(server: Server)
 
     /**
-     * Convert a temporary server in the manager to a default server
+     * Convert a temporary server in the manager to a default server.
      * @return ID for the added server, or null if the server wasn't converted
      */
     suspend fun convertTemporaryServer(id: Int): Int?
 
     /**
      * Remove the server for the provided ID from the manager and if required the database, and
-     * clean up all related resources for it
+     * clean up all related resources for it.
      */
     suspend fun removeServer(id: Int)
 
