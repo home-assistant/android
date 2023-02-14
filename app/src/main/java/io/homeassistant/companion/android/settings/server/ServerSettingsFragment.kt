@@ -80,7 +80,7 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
             isValid
         }
 
-        if (presenter.isInactiveServer()) {
+        if (presenter.hasMultipleServers()) {
             findPreference<Preference>("activate_server")?.let {
                 it.isVisible = true
                 it.setOnPreferenceClickListener {
