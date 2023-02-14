@@ -15,7 +15,10 @@ class SettingsFragmentFactory @Inject constructor(
     @SuppressLint("NewApi")
     override fun instantiate(classLoader: ClassLoader, className: String): Fragment {
         return when (className) {
-            SettingsFragment::class.java.name -> SettingsFragment(settingsPresenter, languagesProvider, serverManager)
+            SettingsFragment::class.java.name -> SettingsFragment(
+                settingsPresenter,
+                languagesProvider
+            )
             else -> super.instantiate(classLoader, className)
         }
     }

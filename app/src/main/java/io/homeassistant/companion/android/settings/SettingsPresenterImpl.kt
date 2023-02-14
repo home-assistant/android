@@ -48,6 +48,8 @@ class SettingsPresenterImpl @Inject constructor(
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
+    private lateinit var view: SettingsView
+
     override fun getBoolean(key: String, defValue: Boolean): Boolean = runBlocking {
         return@runBlocking when (key) {
             "fullscreen" -> prefsRepository.isFullScreenEnabled()
@@ -92,6 +94,10 @@ class SettingsPresenterImpl @Inject constructor(
                 else -> throw IllegalArgumentException("No string found by this key: $key")
             }
         }
+    }
+
+    override fun init(view: SettingsView) {
+        this.view = view
     }
 
     override fun getPreferenceDataStore(): PreferenceDataStore {
@@ -144,6 +150,9 @@ class SettingsPresenterImpl @Inject constructor(
                         messagingToken
                     )
                 )
+                serverManager.getServer()?.id?.let {
+                    serverManager.activateServer(it) // Prevent unexpected active server changes
+                }
                 serverId = serverManager.convertTemporaryServer(serverId)
                 if (BuildConfig.FLAVOR != "full" && serverId != null) {
                     settingsDao.insert(
@@ -154,6 +163,7 @@ class SettingsPresenterImpl @Inject constructor(
                         )
                     )
                 }
+                view.onAddServerResult(true, serverId)
             } catch (e: Exception) {
                 Log.e(LaunchActivity.TAG, "Exception while registering", e)
                 try {
@@ -164,6 +174,7 @@ class SettingsPresenterImpl @Inject constructor(
                 } catch (e: Exception) {
                     Log.e(LaunchActivity.TAG, "Can't revoke session", e)
                 }
+                view.onAddServerResult(false, null)
             }
         }
     }

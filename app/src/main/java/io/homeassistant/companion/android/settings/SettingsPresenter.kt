@@ -8,6 +8,7 @@ import io.homeassistant.companion.android.onboarding.OnboardApp
 import kotlinx.coroutines.flow.StateFlow
 
 interface SettingsPresenter {
+    fun init(view: SettingsView)
     fun getPreferenceDataStore(): PreferenceDataStore
     fun onFinish()
     suspend fun addServer(result: OnboardApp.Output?)

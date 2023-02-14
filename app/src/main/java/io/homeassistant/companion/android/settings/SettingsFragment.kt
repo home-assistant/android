@@ -24,9 +24,9 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
+import com.google.android.material.snackbar.Snackbar
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.onboarding.OnboardApp
@@ -43,6 +43,7 @@ import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSett
 import io.homeassistant.companion.android.settings.wear.SettingsWearActivity
 import io.homeassistant.companion.android.settings.wear.SettingsWearDetection
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
+import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -53,11 +54,10 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import io.homeassistant.companion.android.common.R as commonR
 
-class SettingsFragment constructor(
+class SettingsFragment(
     val presenter: SettingsPresenter,
-    val langProvider: LanguagesProvider,
-    private val serverManager: ServerManager
-) : PreferenceFragmentCompat() {
+    val langProvider: LanguagesProvider
+) : SettingsView, PreferenceFragmentCompat() {
 
     companion object {
         private const val TAG = "SettingsFragment"
@@ -75,7 +75,11 @@ class SettingsFragment constructor(
 
     private val serverMutex = Mutex()
 
+    private var snackbar: Snackbar? = null
+
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        presenter.init(this)
+
         preferenceManager.preferenceDataStore = presenter.getPreferenceDataStore()
 
         setPreferencesFromResource(R.xml.preferences, rootKey)
@@ -429,6 +433,31 @@ class SettingsFragment constructor(
             context?.getSystemService<PowerManager>()
                 ?.isIgnoringBatteryOptimizations(requireActivity().packageName)
                 ?: false
+    }
+
+    override fun onAddServerResult(success: Boolean, serverId: Int?) {
+        view?.let {
+            snackbar = Snackbar.make(
+                it,
+                if (success) commonR.string.server_add_success else commonR.string.server_add_failed,
+                5_000
+            ).apply {
+                if (success && serverId != null) {
+                    setAction(commonR.string.activate) {
+                        val intent = WebViewActivity.newInstance(requireContext(), null, serverId).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                        }
+                        requireContext().startActivity(intent)
+                    }
+                }
+                show()
+            }
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        snackbar?.dismiss()
     }
 
     override fun onResume() {
