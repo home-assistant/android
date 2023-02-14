@@ -16,7 +16,6 @@ import io.homeassistant.companion.android.database.settings.SensorUpdateFrequenc
 import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
-import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.onboarding.getMessagingToken
 import io.homeassistant.companion.android.settings.language.LanguagesManager
@@ -165,14 +164,14 @@ class SettingsPresenterImpl @Inject constructor(
                 }
                 view.onAddServerResult(true, serverId)
             } catch (e: Exception) {
-                Log.e(LaunchActivity.TAG, "Exception while registering", e)
+                Log.e(TAG, "Exception while registering", e)
                 try {
                     if (serverId != null) {
                         serverManager.authenticationRepository(serverId).revokeSession()
                         serverManager.removeServer(serverId)
                     }
                 } catch (e: Exception) {
-                    Log.e(LaunchActivity.TAG, "Can't revoke session", e)
+                    Log.e(TAG, "Can't revoke session", e)
                 }
                 view.onAddServerResult(false, null)
             }
