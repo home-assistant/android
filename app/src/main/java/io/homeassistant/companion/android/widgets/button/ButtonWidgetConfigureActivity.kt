@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.widgets.button
 
+import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
@@ -16,6 +17,7 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.EditText
+import android.widget.Spinner
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
@@ -25,7 +27,6 @@ import androidx.core.graphics.toColorInt
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.google.android.material.color.DynamicColors
 import com.maltaisn.icondialog.IconDialog
 import com.maltaisn.icondialog.IconDialogSettings
@@ -35,7 +36,6 @@ import com.maltaisn.icondialog.pack.IconPackLoader
 import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.Service
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -59,22 +59,27 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
     }
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
-
-    @Inject
     lateinit var buttonWidgetDao: ButtonWidgetDao
     override val dao get() = buttonWidgetDao
 
     private lateinit var iconPack: IconPack
 
-    private var services = HashMap<String, Service>()
-    private var entities = HashMap<String, Entity<Any>>()
+    private var services = mutableMapOf<Int, HashMap<String, Service>>()
+    private var entities = mutableMapOf<Int, HashMap<String, Entity<Any>>>()
     private var dynamicFields = ArrayList<ServiceFieldBinder>()
     private lateinit var dynamicFieldAdapter: WidgetDynamicFieldAdapter
 
     private lateinit var binding: WidgetButtonConfigureBinding
 
+    override val serverSelect: View
+        get() = binding.serverSelect
+
+    override val serverSelectList: Spinner
+        get() = binding.serverSelectList
+
     private var requestLauncherSetup = false
+
+    private var serviceAdapter: SingleItemArrayAdapter<Service>? = null
 
     private val onAddFieldListener = View.OnClickListener {
         val context = this@ButtonWidgetConfigureActivity
@@ -109,10 +114,11 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
 
     private val serviceTextWatcher: TextWatcher = (
         object : TextWatcher {
+            @SuppressLint("NotifyDataSetChanged")
             override fun afterTextChanged(p0: Editable?) {
                 val serviceText: String = p0.toString()
 
-                if (services.keys.contains(serviceText)) {
+                if (services[selectedServerId].orEmpty().keys.contains(serviceText)) {
                     Log.d(TAG, "Valid domain and service--processing dynamic fields")
 
                     // Make sure there are not already any dynamic fields created
@@ -121,7 +127,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
 
                     // We only call this if servicesAvailable was fetched and is not null,
                     // so we can safely assume that it is not null here
-                    val serviceData = services[serviceText]!!.serviceData
+                    val serviceData = services[selectedServerId]!![serviceText]!!.serviceData
                     val target = serviceData.target
                     val fields = serviceData.fields
 
@@ -228,80 +234,44 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
         } else {
             binding.backgroundType.setSelection(0)
         }
+
+        setupServerSelect(buttonWidget?.serverId)
+
         // Create an icon pack loader with application context.
         val loader = IconPackLoader(this)
 
-        val serviceAdapter = SingleItemArrayAdapter<Service>(this) {
+        serviceAdapter = SingleItemArrayAdapter<Service>(this) {
             if (it != null) getServiceString(it) else ""
         }
         binding.widgetTextConfigService.setAdapter(serviceAdapter)
         binding.widgetTextConfigService.onFocusChangeListener = dropDownOnFocus
 
-        lifecycleScope.launch {
-            try {
-                // Fetch services
-                integrationUseCase.getServices()?.forEach {
-                    services[getServiceString(it)] = it
+        serverManager.defaultServers.forEach { server ->
+            lifecycleScope.launch {
+                try {
+                    services[server.id] = HashMap()
+                    serverManager.integrationRepository(server.id).getServices()?.forEach {
+                        services[server.id]!![getServiceString(it)] = it
+                    }
+                    if (server.id == selectedServerId) setAdapterServices(server.id)
+                } catch (e: Exception) {
+                    // Custom components can cause services to not load
+                    // Display error text
+                    Log.e(TAG, "Unable to load services from Home Assistant", e)
+                    if (server.id == selectedServerId) binding.widgetConfigServiceError.visibility = VISIBLE
                 }
-                Log.d(TAG, "Services found: $services")
-                serviceAdapter.addAll(services.values)
-                serviceAdapter.sort()
-                if (buttonWidget != null) {
-                    val serviceData = services[serviceText]!!.serviceData
-                    val target = serviceData.target
-                    val fields = serviceData.fields
-                    val fieldKeys = fields.keys
-                    Log.d(TAG, "Fields applicable to this service: $fields")
-                    val serviceDataMap: HashMap<String, Any> =
-                        jacksonObjectMapper().readValue(buttonWidget.serviceData)
-                    val addedFields = mutableSetOf<String>()
-                    for (item in serviceDataMap) {
-                        val value: String = item.value.toString().replace("[", "").replace("]", "") + if (item.key == "entity_id") ", " else ""
-                        dynamicFields.add(ServiceFieldBinder(serviceText, item.key, value))
-                        addedFields.add(item.key)
-                    }
-                    if (target !== false && !addedFields.contains("entity_id")) {
-                        dynamicFields.add(0, ServiceFieldBinder(serviceText, "entity_id"))
-                    }
-                    fieldKeys.sorted().forEach { fieldKey ->
-                        Log.d(TAG, "Creating a text input box for $fieldKey")
-
-                        // Insert a dynamic layout
-                        // IDs get priority and go at the top, since the other fields
-                        // are usually optional but the ID is required
-                        if (!addedFields.contains(fieldKey)) {
-                            if (fieldKey.contains("_id"))
-                                dynamicFields.add(0, ServiceFieldBinder(serviceText, fieldKey))
-                            else
-                                dynamicFields.add(ServiceFieldBinder(serviceText, fieldKey))
-                        }
-                    }
-                    integrationUseCase.getEntities()?.forEach {
-                        entities[it.entityId] = it
-                    }
-                    dynamicFieldAdapter.notifyDataSetChanged()
-                }
-
-                // Update service adapter
-                runOnUiThread {
-                    serviceAdapter.notifyDataSetChanged()
-                    serviceAdapter.filter.filter(binding.widgetTextConfigService.text)
-                }
-            } catch (e: Exception) {
-                // Custom components can cause services to not load
-                // Display error text
-                Log.e(TAG, "Unable to load services from Home Assistant", e)
-                binding.widgetConfigServiceError.visibility = VISIBLE
             }
-
-            try {
-                // Fetch entities
-                integrationUseCase.getEntities()?.forEach {
-                    entities[it.entityId] = it
+            lifecycleScope.launch {
+                try {
+                    entities[server.id] = HashMap()
+                    serverManager.integrationRepository(server.id).getEntities()?.forEach {
+                        entities[server.id]!![it.entityId] = it
+                    }
+                    if (server.id == selectedServerId) setAdapterServices(server.id)
+                } catch (e: Exception) {
+                    // If entities fail to load, it's okay to pass
+                    // an empty map to the dynamicFieldAdapter
                 }
-            } catch (e: Exception) {
-                // If entities fail to load, it's okay to pass
-                // an empty map to the dynamicFieldAdapter
             }
         }
 
@@ -324,7 +294,11 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
             if (requestLauncherSetup) {
                 val widgetConfigService = binding.widgetTextConfigService.text.toString()
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-                    (widgetConfigService in services || widgetConfigService.split(".", limit = 2).size == 2)
+                    selectedServerId != null &&
+                    (
+                        widgetConfigService in services[selectedServerId].orEmpty().keys ||
+                            widgetConfigService.split(".", limit = 2).size == 2
+                        )
                 ) {
                     getSystemService<AppWidgetManager>()?.requestPinAppWidget(
                         ComponentName(this, ButtonWidget::class.java),
@@ -342,7 +316,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
             }
         }
 
-        dynamicFieldAdapter = WidgetDynamicFieldAdapter(services, entities, dynamicFields)
+        dynamicFieldAdapter = WidgetDynamicFieldAdapter(HashMap(), HashMap(), dynamicFields)
         binding.widgetConfigFieldsLayout.adapter = dynamicFieldAdapter
         binding.widgetConfigFieldsLayout.layoutManager = LinearLayoutManager(this)
 
@@ -370,6 +344,32 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
                 AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID
             )
             onAddWidget()
+        }
+    }
+
+    override fun onServerSelected(serverId: Int) {
+        binding.widgetTextConfigService.setText("")
+        setAdapterServices(serverId)
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    private fun setAdapterServices(serverId: Int) {
+        Log.d(TAG, "Services found: $services")
+        serviceAdapter?.clearAll()
+        if (services[serverId] != null) {
+            serviceAdapter?.addAll(services[serverId]?.values.orEmpty().toMutableList())
+            serviceAdapter?.sort()
+        }
+        dynamicFieldAdapter.replaceValues(
+            services[serverId].orEmpty() as HashMap<String, Service>,
+            entities[serverId].orEmpty() as HashMap<String, Entity<Any>>
+        )
+
+        serviceTextWatcher.afterTextChanged(binding.widgetTextConfigService.text)
+
+        // Update service adapter
+        runOnUiThread {
+            serviceAdapter?.filter?.filter(binding.widgetTextConfigService.text)
         }
     }
 
@@ -407,8 +407,14 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
 
             intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
 
+            intent.putExtra(
+                ButtonWidget.EXTRA_SERVER_ID,
+                selectedServerId!!
+            )
+
             // Analyze and send service and domain
             val serviceText = binding.widgetTextConfigService.text.toString()
+            val services = services[selectedServerId].orEmpty()
             val domain = services[serviceText]?.domain ?: serviceText.split(".", limit = 2)[0]
             val service = services[serviceText]?.service ?: serviceText.split(".", limit = 2)[1]
             intent.putExtra(

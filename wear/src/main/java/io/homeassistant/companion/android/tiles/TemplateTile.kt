@@ -37,8 +37,8 @@ import com.fasterxml.jackson.databind.JsonMappingException
 import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -52,7 +52,7 @@ class TemplateTile : TileService() {
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
+    lateinit var serverManager: ServerManager
 
     @Inject
     lateinit var wearPrefsRepository: WearPrefsRepository
@@ -75,7 +75,8 @@ class TemplateTile : TileService() {
 
             val template = wearPrefsRepository.getTemplateTileContent()
             val renderedText = try {
-                integrationUseCase.renderTemplate(template, mapOf()).toString()
+                if (serverManager.isRegistered()) serverManager.integrationRepository().renderTemplate(template, mapOf()).toString()
+                else ""
             } catch (e: Exception) {
                 Log.e("TemplateTile", "Exception while rendering template", e)
                 // JsonMappingException suggests that template is not a String (= error)

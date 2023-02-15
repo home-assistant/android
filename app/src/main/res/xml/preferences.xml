@@ -7,6 +7,11 @@
         android:title="@string/servers_devices_category">
         <!-- Servers will be added at runtime -->
         <Preference
+            android:key="server_add"
+            android:icon="@drawable/ic_plus"
+            android:order="998"
+            android:title="@string/server_add" />
+        <Preference
             android:key="wear_settings"
             app:isPreferenceVisible="false"
             android:title="@string/wear_os_settings_title"

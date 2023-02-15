@@ -9,6 +9,7 @@ import android.view.MenuItem
 import android.view.ViewGroup
 import androidx.appcompat.widget.SearchView
 import androidx.biometric.BiometricManager
+import androidx.fragment.app.commit
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
@@ -19,7 +20,7 @@ import eightbitlab.com.blurview.RenderScriptBlur
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
 import io.homeassistant.companion.android.settings.sensor.SensorDetailFragment
@@ -32,7 +33,7 @@ import io.homeassistant.companion.android.common.R as commonR
 class SettingsActivity : BaseActivity() {
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
+    lateinit var serverManager: ServerManager
 
     private lateinit var authenticator: Authenticator
     private lateinit var blurView: BlurView
@@ -81,12 +82,13 @@ class SettingsActivity : BaseActivity() {
 
         if (savedInstanceState == null) {
             val settingsNavigation = intent.getStringExtra("fragment")
-            supportFragmentManager
-                .beginTransaction()
-                .replace(
+            supportFragmentManager.commit {
+                replace(
                     R.id.content,
                     when {
-                        settingsNavigation == "websocket" -> WebsocketSettingFragment::class.java
+                        settingsNavigation == "websocket" ->
+                            if (serverManager.defaultServers.size == 1) WebsocketSettingFragment::class.java
+                            else SettingsFragment::class.java
                         settingsNavigation == "notification_history" -> NotificationHistoryFragment::class.java
                         settingsNavigation?.startsWith("sensors/") == true -> SensorDetailFragment::class.java
                         settingsNavigation?.startsWith("tiles/") == true -> ManageTilesFragment::class.java
@@ -98,23 +100,28 @@ class SettingsActivity : BaseActivity() {
                     } else if (settingsNavigation?.startsWith("tiles/") == true) {
                         val tileId = settingsNavigation.split("/")[1]
                         Bundle().apply { putString("id", tileId) }
+                    } else if (settingsNavigation == "websocket") {
+                        val servers = serverManager.defaultServers
+                        if (servers.size == 1) {
+                            Bundle().apply { putInt(WebsocketSettingFragment.EXTRA_SERVER, servers[0].id) }
+                        } else null
                     } else null
                 )
-                .commit()
+            }
         }
     }
 
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
         runBlocking {
-            integrationUseCase.setAppActive(false)
+            if (serverManager.isRegistered()) serverManager.integrationRepository().setAppActive(false)
         }
     }
 
     override fun onPause() {
         super.onPause()
         runBlocking {
-            integrationUseCase.setAppActive(false)
+            if (serverManager.isRegistered()) serverManager.integrationRepository().setAppActive(false)
         }
     }
 
@@ -122,7 +129,8 @@ class SettingsActivity : BaseActivity() {
         super.onResume()
 
         val appLocked = runBlocking {
-            integrationUseCase.isAppLocked()
+            if (serverManager.isRegistered()) serverManager.integrationRepository().isAppLocked()
+            else false
         }
 
         blurView.setBlurEnabled(appLocked)
@@ -130,9 +138,16 @@ class SettingsActivity : BaseActivity() {
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
-        if (hasFocus) {
+        if (hasFocus && !isFinishing) {
             val appLocked = runBlocking {
-                integrationUseCase.isAppLocked()
+                if (serverManager.isRegistered()) {
+                    try {
+                        serverManager.integrationRepository().isAppLocked()
+                    } catch (e: IllegalArgumentException) {
+                        Log.w(TAG, "Cannot determine app locked state")
+                        false
+                    }
+                } else false
             }
 
             if (appLocked) {
@@ -162,7 +177,7 @@ class SettingsActivity : BaseActivity() {
                     Log.d(TAG, "Authentication successful, unlocking app")
                     blurView.setBlurEnabled(false)
                     runBlocking {
-                        integrationUseCase.setAppActive(true)
+                        if (serverManager.isRegistered()) serverManager.integrationRepository().setAppActive(true)
                     }
                 }
                 Authenticator.CANCELED -> {

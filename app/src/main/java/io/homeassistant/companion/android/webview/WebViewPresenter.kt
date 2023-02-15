@@ -9,13 +9,15 @@ interface WebViewPresenter {
 
     fun onViewReady(path: String?)
 
+    fun getActiveServer(): Int
+    fun updateActiveServer()
+    fun setActiveServer(id: Int)
+
     fun onGetExternalAuth(context: Context, callback: String, force: Boolean)
 
     fun checkSecurityVersion()
 
     fun onRevokeExternalAuth(callback: String)
-
-    fun clearKnownUrls()
 
     fun isFullScreen(): Boolean
 

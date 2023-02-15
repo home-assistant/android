@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.onboarding.manual_setup
 import androidx.annotation.StringRes
 
 interface ManualSetupView {
-    fun startIntegration()
+    fun startIntegration(serverId: Int)
 
     fun showLoading()
 

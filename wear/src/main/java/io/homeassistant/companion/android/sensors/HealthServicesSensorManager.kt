@@ -203,7 +203,7 @@ class HealthServicesSensorManager : SensorManager {
                 val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
                 val sensorData = sensorDao.get(userActivityState.id)
 
-                if (sensorData?.state != sensorData?.lastSentState || forceUpdate)
+                if (sensorData.any { it.state != it.lastSentState } || forceUpdate)
                     SensorReceiver.updateAllSensors(latestContext)
             }
 
@@ -242,7 +242,9 @@ class HealthServicesSensorManager : SensorManager {
             override fun onPermissionLost() {
                 val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
                 runBlocking {
-                    sensorDao.setSensorsEnabled(listOf(userActivityState.id), false)
+                    serverManager(latestContext).defaultServers.forEach {
+                        sensorDao.setSensorsEnabled(listOf(userActivityState.id), it.id, false)
+                    }
                 }
             }
 

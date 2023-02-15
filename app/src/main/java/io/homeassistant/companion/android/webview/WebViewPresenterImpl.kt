@@ -6,11 +6,9 @@ import android.graphics.Color
 import android.net.Uri
 import android.util.Log
 import dagger.hilt.android.qualifiers.ActivityContext
-import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.SessionState
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
-import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.matter.MatterFrontendCommissioningStatus
 import io.homeassistant.companion.android.matter.MatterManager
@@ -36,9 +34,7 @@ import io.homeassistant.companion.android.common.R as commonR
 
 class WebViewPresenterImpl @Inject constructor(
     @ActivityContext context: Context,
-    private val urlUseCase: UrlRepository,
-    private val authenticationUseCase: AuthenticationRepository,
-    private val integrationUseCase: IntegrationRepository,
+    private val serverManager: ServerManager,
     private val prefsRepository: PrefsRepository,
     private val matterUseCase: MatterManager
 ) : WebViewPresenter {
@@ -51,35 +47,81 @@ class WebViewPresenterImpl @Inject constructor(
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
+    private var serverId: Int = ServerManager.SERVER_ID_ACTIVE
+
     private var url: URL? = null
+    private var urlForServer: Int? = null
 
     private val _matterCommissioningStatus = MutableStateFlow(MatterFrontendCommissioningStatus.NOT_STARTED)
 
     private var matterCommissioningIntentSender: IntentSender? = null
 
+    init {
+        updateActiveServer()
+    }
+
     override fun onViewReady(path: String?) {
         mainScope.launch {
             val oldUrl = url
-            url = urlUseCase.getUrl(urlUseCase.isInternal() || (urlUseCase.isPrioritizeInternal() && !DisabledLocationHandler.isLocationEnabled(view as Context)))
+            val oldUrlForServer = urlForServer
+
+            var server = serverManager.getServer(serverId)
+            if (server == null) {
+                setActiveServer(ServerManager.SERVER_ID_ACTIVE)
+                server = serverManager.getServer(serverId)
+            }
+
+            try {
+                if (serverManager.authenticationRepository(serverId).getSessionState() == SessionState.ANONYMOUS) return@launch
+            } catch (e: IllegalArgumentException) {
+                Log.w(TAG, "Unable to get server session state, not continuing")
+                return@launch
+            }
+
+            val serverConnectionInfo = server?.connection
+            url = serverConnectionInfo?.getUrl(
+                serverConnectionInfo.isInternal() || (serverConnectionInfo.prioritizeInternal && !DisabledLocationHandler.isLocationEnabled(view as Context))
+            )
+            urlForServer = server?.id
 
             if (path != null && !path.startsWith("entityId:")) {
                 url = UrlHandler.handle(url, path)
             }
 
             /*
-            We only want to cause the UI to reload if the URL that we need to load has changed.  An
-            example of this would be opening the app on wifi with a local url then loosing wifi
-            signal and reopening app.  Without this we would still be trying to use the internal
-            url externally.
+            We only want to cause the UI to reload if the server or URL that we need to load has
+            changed. An example of this would be opening the app on wifi with a local url then
+            loosing wifi signal and reopening app. Without this we would still be trying to use the
+            internal url externally.
              */
-            if (oldUrl?.host != url?.host) {
+            if (oldUrlForServer != urlForServer || oldUrl?.host != url?.host) {
                 view.loadUrl(
                     Uri.parse(url.toString())
                         .buildUpon()
                         .appendQueryParameter("external_auth", "1")
                         .build()
-                        .toString()
+                        .toString(),
+                    oldUrlForServer == urlForServer
                 )
+            }
+        }
+    }
+
+    override fun getActiveServer(): Int = serverId
+
+    override fun updateActiveServer() {
+        if (serverManager.isRegistered()) {
+            serverManager.getServer()?.let {
+                serverId = it.id
+            }
+        }
+    }
+
+    override fun setActiveServer(id: Int) {
+        serverManager.getServer(id)?.let {
+            if (serverManager.authenticationRepository(id).getSessionState() == SessionState.CONNECTED) {
+                serverManager.activateServer(id)
+                serverId = id
             }
         }
     }
@@ -87,8 +129,8 @@ class WebViewPresenterImpl @Inject constructor(
     override fun checkSecurityVersion() {
         mainScope.launch {
             try {
-                if (!integrationUseCase.isHomeAssistantVersionAtLeast(2021, 1, 5)) {
-                    if (integrationUseCase.shouldNotifySecurityWarning()) {
+                if (!serverManager.integrationRepository(serverId).isHomeAssistantVersionAtLeast(2021, 1, 5)) {
+                    if (serverManager.integrationRepository(serverId).shouldNotifySecurityWarning()) {
                         view.showError(WebView.ErrorType.SECURITY_WARNING)
                     } else {
                         Log.w(TAG, "Still not updated but have already notified.")
@@ -103,10 +145,10 @@ class WebViewPresenterImpl @Inject constructor(
     override fun onGetExternalAuth(context: Context, callback: String, force: Boolean) {
         mainScope.launch {
             try {
-                view.setExternalAuth("$callback(true, ${authenticationUseCase.retrieveExternalAuthentication(force)})")
+                view.setExternalAuth("$callback(true, ${serverManager.authenticationRepository(serverId).retrieveExternalAuthentication(force)})")
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to retrieve external auth", e)
-                val anonymousSession = authenticationUseCase.getSessionState() == SessionState.ANONYMOUS
+                val anonymousSession = serverManager.getServer(serverId) == null || serverManager.authenticationRepository(serverId).getSessionState() == SessionState.ANONYMOUS
                 view.setExternalAuth("$callback(false)")
                 view.showError(
                     errorType = when {
@@ -128,21 +170,16 @@ class WebViewPresenterImpl @Inject constructor(
     override fun onRevokeExternalAuth(callback: String) {
         mainScope.launch {
             try {
-                authenticationUseCase.revokeSession()
+                serverManager.getServer(serverId)?.let {
+                    serverManager.authenticationRepository(it.id).revokeSession()
+                    serverManager.removeServer(it.id)
+                }
                 view.setExternalAuth("$callback(true)")
                 view.relaunchApp()
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to revoke session", e)
                 view.setExternalAuth("$callback(false)")
             }
-        }
-    }
-
-    override fun clearKnownUrls() {
-        mainScope.launch {
-            urlUseCase.saveUrl("", true)
-            urlUseCase.saveUrl("", false)
-            urlUseCase.updateCloudUrls(null, null)
         }
     }
 
@@ -162,22 +199,27 @@ class WebViewPresenterImpl @Inject constructor(
         prefsRepository.isWebViewDebugEnabled()
     }
 
-    override fun isAppLocked(): Boolean {
-        return runBlocking {
-            integrationUseCase.isAppLocked()
-        }
+    override fun isAppLocked(): Boolean = runBlocking {
+        if (serverManager.isRegistered()) {
+            try {
+                serverManager.integrationRepository(serverId).isAppLocked()
+            } catch (e: IllegalArgumentException) {
+                Log.w(TAG, "Cannot determine app locked state")
+                false
+            }
+        } else false
     }
 
-    override fun setAppActive(active: Boolean) {
-        return runBlocking {
-            integrationUseCase.setAppActive(active)
-        }
+    override fun setAppActive(active: Boolean) = runBlocking {
+        serverManager.getServer(serverId)?.let {
+            serverManager.integrationRepository(serverId).setAppActive(active)
+        } ?: Unit
     }
 
-    override fun isLockEnabled(): Boolean {
-        return runBlocking {
-            authenticationUseCase.isLockEnabled()
-        }
+    override fun isLockEnabled(): Boolean = runBlocking {
+        serverManager.getServer(serverId)?.let {
+            serverManager.authenticationRepository(serverId).isLockEnabled()
+        } ?: false
     }
 
     override fun isAutoPlayVideoEnabled(): Boolean = runBlocking {
@@ -188,26 +230,23 @@ class WebViewPresenterImpl @Inject constructor(
         prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled()
     }
 
-    override fun sessionTimeOut(): Int {
-        return runBlocking {
-            integrationUseCase.getSessionTimeOut()
-        }
+    override fun sessionTimeOut(): Int = runBlocking {
+        serverManager.getServer(serverId)?.let {
+            serverManager.integrationRepository(serverId).getSessionTimeOut()
+        } ?: 0
     }
 
     override fun onFinish() {
         mainScope.cancel()
     }
 
-    override fun isSsidUsed(): Boolean {
-        return runBlocking {
-            urlUseCase.getHomeWifiSsids().isNotEmpty()
-        }
-    }
+    override fun isSsidUsed(): Boolean =
+        serverManager.getServer(serverId)?.connection?.internalSsids?.isNotEmpty() == true
 
-    override fun getAuthorizationHeader(): String {
-        return runBlocking {
-            authenticationUseCase.buildBearerToken()
-        }
+    override fun getAuthorizationHeader(): String = runBlocking {
+        serverManager.getServer(serverId)?.let {
+            serverManager.authenticationRepository(serverId).buildBearerToken()
+        } ?: ""
     }
 
     override suspend fun parseWebViewColor(webViewColor: String): Int = withContext(Dispatchers.IO) {

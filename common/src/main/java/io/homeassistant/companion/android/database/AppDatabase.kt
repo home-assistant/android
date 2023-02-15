@@ -4,6 +4,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.ContentValues
 import android.content.Context
+import android.database.sqlite.SQLiteDatabase
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -11,6 +12,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.edit
 import androidx.core.content.getSystemService
 import androidx.room.AutoMigration
 import androidx.room.Database
@@ -23,6 +25,7 @@ import androidx.room.TypeConverters
 import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.util.databaseChannel
 import io.homeassistant.companion.android.database.authentication.Authentication
@@ -37,6 +40,8 @@ import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingTypeConverter
+import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.database.server.ServerDao
 import io.homeassistant.companion.android.database.settings.LocalNotificationSettingConverter
 import io.homeassistant.companion.android.database.settings.LocalSensorSettingConverter
 import io.homeassistant.companion.android.database.settings.Setting
@@ -59,6 +64,8 @@ import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundTypeConverter
 import kotlinx.coroutines.runBlocking
+import java.util.UUID
+import kotlin.collections.ArrayList
 import io.homeassistant.companion.android.common.R as commonR
 
 @Database(
@@ -77,9 +84,10 @@ import io.homeassistant.companion.android.common.R as commonR
         Favorites::class,
         FavoriteCaches::class,
         EntityStateComplications::class,
+        Server::class,
         Setting::class
     ],
-    version = 37,
+    version = 38,
     autoMigrations = [
         AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
@@ -94,6 +102,7 @@ import io.homeassistant.companion.android.common.R as commonR
         AutoMigration(from = 34, to = 35),
         AutoMigration(from = 35, to = 36),
         AutoMigration(from = 36, to = 37, spec = AppDatabase.Companion.Migration36to37::class),
+        AutoMigration(from = 37, to = 38, spec = AppDatabase.Companion.Migration37to38::class),
     ]
 )
 @TypeConverters(
@@ -116,6 +125,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun favoritesDao(): FavoritesDao
     abstract fun favoriteCachesDao(): FavoriteCachesDao
     abstract fun entityStateComplicationsDao(): EntityStateComplicationsDao
+    abstract fun serverDao(): ServerDao
     abstract fun settingsDao(): SettingsDao
 
     companion object {
@@ -625,6 +635,179 @@ abstract class AppDatabase : RoomDatabase() {
             )
         )
         class Migration36to37 : AutoMigrationSpec
+
+        class Migration37to38 : AutoMigrationSpec {
+            override fun onPostMigrate(db: SupportSQLiteDatabase) {
+                val urlStorage = appContext.getSharedPreferences("url_0", Context.MODE_PRIVATE)
+                val urlExternal = urlStorage.getString("remote_url", null)
+                if (urlExternal.isNullOrBlank()) { // Cleanup anything that shouldn't be linked
+                    db.execSQL("DELETE FROM `sensors`")
+                    db.execSQL("DELETE FROM `sensor_attributes`")
+                    db.execSQL("DELETE FROM `sensor_settings`")
+                    return
+                }
+
+                val urlInternal = urlStorage.getString("local_url", null)
+                val urlCloud = urlStorage.getString("remote_ui_url", null)
+                val urlWebhook = urlStorage.getString("webhook_id", null)
+                val urlCloudhook = urlStorage.getString("cloudhook_url", null)
+                val urlUseCloud = urlStorage.getBoolean("use_cloud", false)
+                val urlInternalSsids = urlStorage.getStringSet("wifi_ssids", emptySet()).orEmpty().toList()
+                val urlPrioritizeInternal = urlStorage.getBoolean("prioritize_internal", false)
+
+                val authStorage = appContext.getSharedPreferences("session_0", Context.MODE_PRIVATE)
+                val authAccessToken = authStorage.getString("access_token", null)
+                val authRefreshToken = authStorage.getString("refresh_token", null)
+                val authTokenExpiration = if (authStorage.contains("expires_date")) authStorage.getLong("expires_date", 0) else null
+                val authTokenType = authStorage.getString("token_type", null)
+                val authInstallId = if (authStorage.contains("install_id")) {
+                    authStorage.getString("install_id", "")
+                } else {
+                    val uuid = UUID.randomUUID().toString()
+                    authStorage.edit { putString("install_id", uuid) }
+                    uuid
+                }
+
+                val integrationStorage = appContext.getSharedPreferences("integration_0", Context.MODE_PRIVATE)
+                val integrationHaVersion = integrationStorage.getString("ha_version", null)
+                val integrationDeviceName = integrationStorage.getString("device_name", null)
+                val integrationSecret = integrationStorage.getString("secret", null)
+
+                val serverValues = ContentValues().apply {
+                    put("_name", "")
+                    putNull("name_override")
+                    integrationHaVersion?.let { put("_version", it) } ?: run { putNull("_version") }
+                    put("list_order", -1)
+                    integrationDeviceName?.let { put("device_name", it) } ?: run { putNull("device_name") }
+                    put("external_url", urlExternal)
+                    urlInternal?.let { put("internal_url", it) } ?: run { putNull("internal_url") }
+                    urlCloud?.let { put("cloud_url", it) } ?: run { putNull("cloud_url") }
+                    urlWebhook?.let { put("webhook_id", it) } ?: run { putNull("webhook_id") }
+                    integrationSecret?.let { put("secret", it) } ?: run { putNull("secret") }
+                    urlCloudhook?.let { put("cloudhook_url", it) } ?: run { putNull("cloudhook_url") }
+                    put("use_cloud", urlUseCloud)
+                    put("internal_ssids", jacksonObjectMapper().writeValueAsString(urlInternalSsids))
+                    put("prioritize_internal", urlPrioritizeInternal)
+                    authAccessToken?.let { put("access_token", it) } ?: run { putNull("access_token") }
+                    authRefreshToken?.let { put("refresh_token", it) } ?: run { putNull("refresh_token") }
+                    authTokenExpiration?.let { put("token_expiration", it) } ?: run { putNull("token_expiration") }
+                    authTokenType?.let { put("token_type", it) } ?: run { putNull("token_type") }
+                    authAccessToken?.let { put("install_id", authInstallId) } ?: run { putNull("install_id") }
+                }
+                val serverId = db.insert("servers", SQLiteDatabase.CONFLICT_REPLACE, serverValues)
+
+                urlStorage.edit { clear() }
+                authStorage.edit {
+                    remove("access_token")
+                    remove("refresh_token")
+                    remove("expires_date")
+                    remove("token_type")
+                }
+                integrationStorage.edit {
+                    remove("ha_version")
+                    remove("device_name")
+                    remove("secret")
+                }
+
+                // Copy existing DB settings to existing server - ID 0 is used for shared settings
+                val existingSettings = db.query("SELECT * FROM `settings`")
+                existingSettings.use {
+                    if (existingSettings.count > 0) {
+                        if (it.moveToFirst()) {
+                            val settingValues = ContentValues().apply {
+                                put("id", serverId)
+                                it.getColumnIndex("websocket_setting").let { index ->
+                                    put("websocket_setting", if (index > -1) it.getString(index) else "NEVER")
+                                }
+                                it.getColumnIndex("sensor_update_frequency").let { index ->
+                                    put("sensor_update_frequency", if (index > -1) it.getString(index) else "NORMAL")
+                                }
+                            }
+                            db.insert("settings", SQLiteDatabase.CONFLICT_REPLACE, settingValues)
+                        }
+                    }
+                }
+
+                // Attribute existing shared preferences to the existing server
+                if (authStorage.contains("biometric_enabled")) {
+                    authStorage.getBoolean("biometric_enabled", false).let {
+                        authStorage.edit { putBoolean("${serverId}_biometric_enabled", it) }
+                    }
+                }
+                if (authStorage.contains("biometric_home_bypass_enabled")) {
+                    authStorage.getBoolean("biometric_home_bypass_enabled", false).let {
+                        authStorage.edit { putBoolean("${serverId}_biometric_home_bypass_enabled", it) }
+                    }
+                }
+                authStorage.edit {
+                    remove("biometric_enabled")
+                    remove("biometric_home_bypass_enabled")
+                }
+                if (integrationStorage.contains("sensor_reg_last")) {
+                    integrationStorage.getLong("sensor_reg_last", 0).let {
+                        integrationStorage.edit { putLong("${serverId}_sensor_reg_last", it) }
+                    }
+                }
+                if (integrationStorage.contains("session_timeout")) {
+                    integrationStorage.getInt("session_timeout", 0).let {
+                        integrationStorage.edit { putInt("${serverId}_session_timeout", it) }
+                    }
+                }
+                if (integrationStorage.contains("session_expire")) {
+                    integrationStorage.getLong("session_expire", 0).let {
+                        integrationStorage.edit { putLong("${serverId}_session_expire", it) }
+                    }
+                }
+                if (integrationStorage.contains("sec_warning_last")) {
+                    integrationStorage.getLong("sec_warning_last", 0).let {
+                        integrationStorage.edit { putLong("${serverId}_sec_warning_last", it) }
+                    }
+                }
+                integrationStorage.edit {
+                    remove("sensor_reg_last")
+                    remove("session_timeout")
+                    remove("session_expire")
+                    remove("sec_warning_last")
+                }
+
+                // Attribute existing rows to the existing server
+                db.execSQL("UPDATE `button_widgets` SET `server_id` = $serverId")
+                db.execSQL("UPDATE `camera_widgets` SET `server_id` = $serverId")
+                db.execSQL("UPDATE `media_player_controls_widgets` SET `server_id` = $serverId")
+                db.execSQL("UPDATE `notification_history` SET `server_id` = $serverId")
+                db.execSQL("UPDATE `qs_tiles` SET `server_id` = $serverId")
+                db.execSQL("UPDATE `sensors` SET `server_id` = $serverId")
+                db.execSQL("UPDATE `static_widget` SET `server_id` = $serverId")
+                db.execSQL("UPDATE `template_widgets` SET `server_id` = $serverId")
+
+                val prefsStorage = appContext.getSharedPreferences("themes_0", Context.MODE_PRIVATE)
+                prefsStorage.getStringSet("controls_auth_entities", null)?.let {
+                    val newIds = it.map { control -> "$serverId.$control" }.toSet()
+                    prefsStorage.edit {
+                        putStringSet("controls_auth_entities", newIds)
+                    }
+                }
+
+                val existingZones = db.query("SELECT * FROM `sensor_settings` WHERE `sensor_id` = 'location_background' AND `name` = 'location_ham_only_enter_zone'")
+                existingZones.use {
+                    if (existingZones.count > 0) {
+                        if (it.moveToFirst()) {
+                            it.getColumnIndex("value").let { index ->
+                                val setting = if (index > -1) it.getString(index) else null
+                                if (!setting.isNullOrBlank()) {
+                                    val newSetting = setting.split(", ")
+                                        .joinToString { zone -> "${serverId}_$zone" }
+                                    db.execSQL(
+                                        "UPDATE `sensor_settings` SET `value` = '$newSetting' " +
+                                            "WHERE `sensor_id` = 'location_background' AND `name` = 'location_ham_only_enter_zone'"
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         private fun createNotificationChannel() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

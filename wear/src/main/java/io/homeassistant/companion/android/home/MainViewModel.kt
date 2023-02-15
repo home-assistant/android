@@ -138,10 +138,8 @@ class MainViewModel @Inject constructor(
     }
 
     fun loadEntities() {
+        if (!homePresenter.isConnected()) return
         viewModelScope.launch {
-            if (!homePresenter.isConnected()) {
-                return@launch
-            }
             try {
                 // Load initial state
                 loadingState.value = LoadingState.LOADING
@@ -176,6 +174,7 @@ class MainViewModel @Inject constructor(
     }
 
     suspend fun updateUI() = withContext(Dispatchers.IO) {
+        if (!homePresenter.isConnected()) return@withContext
         val getAreaRegistry = async { homePresenter.getAreaRegistry() }
         val getDeviceRegistry = async { homePresenter.getDeviceRegistry() }
         val getEntityRegistry = async { homePresenter.getEntityRegistry() }
@@ -333,8 +332,10 @@ class MainViewModel @Inject constructor(
         basicSensor: SensorManager.BasicSensor,
         isEnabled: Boolean
     ) {
-        sensorDao.setSensorsEnabled(listOf(basicSensor.id), isEnabled)
-        SensorReceiver.updateAllSensors(getApplication())
+        homePresenter.getServerId()?.let { serverId ->
+            sensorDao.setSensorsEnabled(listOf(basicSensor.id), serverId, isEnabled)
+            SensorReceiver.updateAllSensors(getApplication())
+        }
     }
 
     fun updateAllSensors(sensorManager: SensorManager) {

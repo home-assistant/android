@@ -22,7 +22,7 @@ import com.google.android.gms.wearable.Wearable
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -33,7 +33,7 @@ import io.homeassistant.companion.android.common.R as commonR
 
 @HiltViewModel
 class SettingsWearViewModel @Inject constructor(
-    private val integrationUseCase: IntegrationRepository,
+    private val serverManager: ServerManager,
     application: Application
 ) :
     AndroidViewModel(application),
@@ -102,8 +102,10 @@ class SettingsWearViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
-            integrationUseCase.getEntities()?.forEach {
-                entities[it.entityId] = it
+            if (serverManager.isRegistered()) {
+                serverManager.integrationRepository().getEntities()?.forEach {
+                    entities[it.entityId] = it
+                }
             }
         }
     }
@@ -118,7 +120,7 @@ class SettingsWearViewModel @Inject constructor(
             viewModelScope.launch {
                 try {
                     templateTileContentRendered.value =
-                        integrationUseCase.renderTemplate(template, mapOf()).toString()
+                        serverManager.integrationRepository().renderTemplate(template, mapOf()).toString()
                 } catch (e: Exception) {
                     Log.e(TAG, "Exception while rendering template", e)
                     // JsonMappingException suggests that template is not a String (= error)

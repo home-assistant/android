@@ -13,12 +13,15 @@ interface SettingsDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(setting: Setting)
 
-    @Query("SELECT * FROM Settings WHERE id = :id")
+    @Query("SELECT * FROM settings WHERE id = :id")
     fun get(id: Int): Setting?
 
-    @Query("SELECT * FROM Settings WHERE id = :id")
+    @Query("SELECT * FROM settings WHERE id = :id")
     fun getFlow(id: Int): Flow<Setting>
 
     @Update
     fun update(setting: Setting)
+
+    @Query("DELETE FROM settings WHERE id = :id")
+    suspend fun delete(id: Int)
 }

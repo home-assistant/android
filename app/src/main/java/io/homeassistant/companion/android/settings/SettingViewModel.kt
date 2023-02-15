@@ -26,7 +26,6 @@ class SettingViewModel @Inject constructor(
         return setting
     }
 
-    // Once we support more than one instance we can get the setting per instance
     fun getSettingFlow(id: Int): Flow<Setting> = settingsDao.getFlow(id)
 
     fun updateWebsocketSetting(id: Int, setting: WebsocketSetting) {

@@ -7,12 +7,12 @@ import android.os.Build
 import android.util.Log
 import com.google.android.gms.home.matter.Matter
 import com.google.android.gms.home.matter.commissioning.CommissioningRequest
-import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
 import javax.inject.Inject
 
 class MatterManagerImpl @Inject constructor(
-    private val websocketRepository: WebSocketRepository
+    private val serverManager: ServerManager
 ) : MatterManager {
 
     companion object {
@@ -22,8 +22,9 @@ class MatterManagerImpl @Inject constructor(
     override fun appSupportsCommissioning(): Boolean =
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1
 
-    override suspend fun coreSupportsCommissioning(): Boolean {
-        val config = websocketRepository.getConfig()
+    override suspend fun coreSupportsCommissioning(serverId: Int): Boolean {
+        if (!serverManager.isRegistered() || serverManager.getServer(serverId) == null) return false
+        val config = serverManager.webSocketRepository(serverId).getConfig()
         return config != null && config.components.contains("matter")
     }
 
@@ -46,18 +47,18 @@ class MatterManagerImpl @Inject constructor(
         }
     }
 
-    override suspend fun commissionDevice(code: String): MatterCommissionResponse? {
+    override suspend fun commissionDevice(code: String, serverId: Int): MatterCommissionResponse? {
         return try {
-            websocketRepository.commissionMatterDevice(code)
+            serverManager.webSocketRepository(serverId).commissionMatterDevice(code)
         } catch (e: Exception) {
             Log.e(TAG, "Error while executing server commissioning request", e)
             null
         }
     }
 
-    override suspend fun commissionOnNetworkDevice(pin: Long): MatterCommissionResponse? {
+    override suspend fun commissionOnNetworkDevice(pin: Long, serverId: Int): MatterCommissionResponse? {
         return try {
-            websocketRepository.commissionMatterDeviceOnNetwork(pin)
+            serverManager.webSocketRepository(serverId).commissionMatterDeviceOnNetwork(pin)
         } catch (e: Exception) {
             Log.e(TAG, "Error while executing server commissioning request", e)
             null

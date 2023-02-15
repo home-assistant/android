@@ -32,6 +32,7 @@ class EntityWidget : BaseWidgetProvider() {
     companion object {
         private const val TAG = "StaticWidget"
 
+        internal const val EXTRA_SERVER_ID = "EXTRA_SERVER_ID"
         internal const val EXTRA_ENTITY_ID = "EXTRA_ENTITY_ID"
         internal const val EXTRA_ATTRIBUTE_IDS = "EXTRA_ATTRIBUTE_IDS"
         internal const val EXTRA_LABEL = "EXTRA_LABEL"
@@ -60,6 +61,7 @@ class EntityWidget : BaseWidgetProvider() {
         val useDynamicColors = widget?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
         val views = RemoteViews(context.packageName, if (useDynamicColors) R.layout.widget_static_wrapper_dynamiccolor else R.layout.widget_static_wrapper_default).apply {
             if (widget != null) {
+                val serverId = widget.serverId
                 val entityId: String = widget.entityId
                 val attributeIds: String? = widget.attributeIds
                 val label: String? = widget.label
@@ -79,7 +81,7 @@ class EntityWidget : BaseWidgetProvider() {
 
                 // Content
                 val resolvedText = resolveTextToShow(
-                    context,
+                    serverId,
                     entityId,
                     suggestedEntity,
                     attributeIds,
@@ -122,11 +124,11 @@ class EntityWidget : BaseWidgetProvider() {
         return views
     }
 
-    override suspend fun getAllWidgetIdsWithEntities(context: Context): Map<Int, List<String>> =
-        staticWidgetDao.getAll().associate { it.id to listOf(it.entityId) }
+    override suspend fun getAllWidgetIdsWithEntities(context: Context): Map<Int, Pair<Int, List<String>>> =
+        staticWidgetDao.getAll().associate { it.id to (it.serverId to listOf(it.entityId)) }
 
     private suspend fun resolveTextToShow(
-        context: Context,
+        serverId: Int,
         entityId: String?,
         suggestedEntity: Entity<Map<String, Any>>?,
         attributeIds: String?,
@@ -140,7 +142,7 @@ class EntityWidget : BaseWidgetProvider() {
             entity = if (suggestedEntity != null && suggestedEntity.entityId == entityId) {
                 suggestedEntity
             } else {
-                entityId?.let { integrationUseCase.getEntity(it) }
+                entityId?.let { serverManager.integrationRepository(serverId).getEntity(it) }
             }
         } catch (e: Exception) {
             Log.e(TAG, "Unable to fetch entity", e)
@@ -174,6 +176,7 @@ class EntityWidget : BaseWidgetProvider() {
     override fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
         if (extras == null) return
 
+        val serverId = if (extras.containsKey(EXTRA_SERVER_ID)) extras.getInt(EXTRA_SERVER_ID) else null
         val entitySelection: String? = extras.getString(EXTRA_ENTITY_ID)
         val attributeSelection: ArrayList<String>? = extras.getStringArrayList(EXTRA_ATTRIBUTE_IDS)
         val labelSelection: String? = extras.getString(EXTRA_LABEL)
@@ -183,7 +186,7 @@ class EntityWidget : BaseWidgetProvider() {
         val backgroundTypeSelection: WidgetBackgroundType = extras.getSerializable(EXTRA_BACKGROUND_TYPE) as WidgetBackgroundType
         val textColorSelection: String? = extras.getString(EXTRA_TEXT_COLOR)
 
-        if (entitySelection == null) {
+        if (serverId == null || entitySelection == null) {
             Log.e(TAG, "Did not receive complete service call data")
             return
         }
@@ -198,6 +201,7 @@ class EntityWidget : BaseWidgetProvider() {
             staticWidgetDao.add(
                 StaticWidgetEntity(
                     appWidgetId,
+                    serverId,
                     entitySelection,
                     attributeSelection?.joinToString(","),
                     labelSelection,

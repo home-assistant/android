@@ -19,6 +19,10 @@ import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -27,6 +31,8 @@ import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
+import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.getEntityDomainString
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -35,11 +41,14 @@ fun ManageControlsView(
     authSetting: ControlsAuthRequiredSetting,
     authRequiredList: List<String>,
     entitiesLoaded: Boolean,
-    entitiesList: List<Entity<*>>,
+    entitiesList: Map<Int, List<Entity<*>>>,
+    serversList: List<Server>,
+    defaultServer: Int,
     onSelectAll: () -> Unit,
     onSelectNone: () -> Unit,
-    onSelectEntity: (String) -> Unit
+    onSelectEntity: (String, Int) -> Unit
 ) {
+    var selectedServer by remember { mutableStateOf(defaultServer) }
     LazyColumn(contentPadding = PaddingValues(vertical = 16.dp)) {
         item {
             Text(
@@ -68,8 +77,18 @@ fun ManageControlsView(
                         }
                     }
                 }
-                items(entitiesList.size, key = { entitiesList[it].entityId }) { index ->
-                    val entity = entitiesList[index] as Entity<Map<String, Any>>
+                if (serversList.size > 1) {
+                    item {
+                        ServerExposedDropdownMenu(
+                            servers = serversList,
+                            current = selectedServer,
+                            onSelected = { selectedServer = it },
+                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+                        )
+                    }
+                }
+                items(entitiesList[selectedServer]!!.size, key = { "$selectedServer.${entitiesList[selectedServer]?.get(it)?.entityId}" }) { index ->
+                    val entity = entitiesList[selectedServer]?.get(index) as Entity<Map<String, Any>>
                     ManageControlsEntity(
                         entityName = (
                             entity.attributes["friendly_name"]
@@ -80,10 +99,10 @@ fun ManageControlsView(
                             authSetting == ControlsAuthRequiredSetting.NONE ||
                                 (
                                     authSetting == ControlsAuthRequiredSetting.SELECTION &&
-                                        !authRequiredList.contains(entity.entityId)
+                                        !authRequiredList.contains("$selectedServer.${entity.entityId}")
                                     )
                             ),
-                        onClick = { onSelectEntity(entity.entityId) }
+                        onClick = { onSelectEntity(entity.entityId, selectedServer) }
                     )
                 }
             } else {

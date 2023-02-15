@@ -12,7 +12,7 @@ class MatterManagerImpl @Inject constructor() : MatterManager {
 
     override fun appSupportsCommissioning(): Boolean = false
 
-    override suspend fun coreSupportsCommissioning(): Boolean = false
+    override suspend fun coreSupportsCommissioning(serverId: Int): Boolean = false
 
     override fun startNewCommissioningFlow(
         context: Context,
@@ -22,7 +22,7 @@ class MatterManagerImpl @Inject constructor() : MatterManager {
         onFailure(IllegalStateException("Matter commissioning is not supported with the minimal flavor"))
     }
 
-    override suspend fun commissionDevice(code: String): MatterCommissionResponse? = null
+    override suspend fun commissionDevice(code: String, serverId: Int): MatterCommissionResponse? = null
 
-    override suspend fun commissionOnNetworkDevice(pin: Long): MatterCommissionResponse? = null
+    override suspend fun commissionOnNetworkDevice(pin: Long, serverId: Int): MatterCommissionResponse? = null
 }

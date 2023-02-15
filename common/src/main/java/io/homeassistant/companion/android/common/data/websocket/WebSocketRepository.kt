@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.common.data.websocket
 
+import dagger.assisted.AssistedFactory
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketRepositoryImpl
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
@@ -19,6 +21,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface WebSocketRepository {
     fun getConnectionState(): WebSocketState?
+    fun shutdown()
     suspend fun sendPing(): Boolean
     suspend fun getConfig(): GetConfigResponse?
     suspend fun getStates(): List<EntityResponse<Any>>?
@@ -39,4 +42,9 @@ interface WebSocketRepository {
     suspend fun commissionMatterDevice(code: String): MatterCommissionResponse?
     suspend fun commissionMatterDeviceOnNetwork(pin: Long): MatterCommissionResponse?
     suspend fun getConversation(speech: String): ConversationResponse?
+}
+
+@AssistedFactory
+interface WebSocketRepositoryFactory {
+    fun create(serverId: Int): WebSocketRepositoryImpl
 }

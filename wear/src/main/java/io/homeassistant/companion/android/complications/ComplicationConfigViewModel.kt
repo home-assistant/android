@@ -14,9 +14,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
-import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.database.wear.EntityStateComplications
@@ -30,9 +29,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ComplicationConfigViewModel @Inject constructor(
     application: Application,
+    private val serverManager: ServerManager,
     private val favoritesDao: FavoritesDao,
-    private val integrationUseCase: IntegrationRepository,
-    private val webSocketUseCase: WebSocketRepository,
     private val entityStateComplicationsDao: EntityStateComplicationsDao
 ) : AndroidViewModel(application) {
     companion object {
@@ -64,20 +62,20 @@ class ComplicationConfigViewModel @Inject constructor(
 
     private fun loadEntities() {
         viewModelScope.launch {
-            if (!integrationUseCase.isRegistered()) {
+            if (!serverManager.isRegistered()) {
                 loadingState = LoadingState.ERROR
                 return@launch
             }
             try {
                 // Load initial state
                 loadingState = LoadingState.LOADING
-                integrationUseCase.getEntities()?.forEach {
+                serverManager.integrationRepository().getEntities()?.forEach {
                     entities[it.entityId] = it
                 }
                 updateEntityDomains()
 
                 // Finished initial load, update state
-                val webSocketState = webSocketUseCase.getConnectionState()
+                val webSocketState = serverManager.webSocketRepository().getConnectionState()
                 if (webSocketState == WebSocketState.CLOSED_AUTH) {
                     loadingState = LoadingState.ERROR
                     return@launch

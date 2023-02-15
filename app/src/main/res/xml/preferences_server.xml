@@ -1,6 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+    <Preference
+        android:key="activate_server"
+        android:icon="@drawable/ic_launch"
+        android:title="@string/server_activate"
+        app:isPreferenceVisible="false"/>
+    <PreferenceCategory
+        android:title="@string/device_registration">
+        <EditTextPreference
+            android:key="server_name"
+            android:icon="@drawable/ic_stat_ic_notification_blue"
+            android:title="@string/server_name"/>
+        <EditTextPreference
+            android:key="registration_name"
+            android:icon="@drawable/ic_edit"
+            android:title="@string/device_name"
+            app:useSimpleSummaryProvider="true"/>
+    </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/pref_connection_title">
         <Preference
@@ -15,14 +32,6 @@
         <EditTextPreference
             android:key="connection_internal"
             android:title="@string/pref_connection_internal"
-            app:useSimpleSummaryProvider="true"/>
-    </PreferenceCategory>
-    <PreferenceCategory
-        android:title="@string/device_registration">
-        <EditTextPreference
-            android:key="registration_name"
-            android:icon="@drawable/ic_edit"
-            android:title="@string/device_name"
             app:useSimpleSummaryProvider="true"/>
     </PreferenceCategory>
     <PreferenceCategory
@@ -52,5 +61,9 @@
             android:icon="@drawable/ic_websocket"
             android:title="@string/websocket_setting_name"
             android:summary="@string/websocket_setting_summary" />
+        <Preference
+            android:key="delete_server"
+            android:icon="@drawable/ic_clear"
+            android:title="@string/server_delete"/>
     </PreferenceCategory>
 </PreferenceScreen>

@@ -11,6 +11,7 @@ import android.util.Log
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.Spinner
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.core.graphics.toColorInt
@@ -20,7 +21,6 @@ import androidx.lifecycle.lifecycleScope
 import com.fasterxml.jackson.databind.JsonMappingException
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetTemplateConfigureBinding
@@ -41,13 +41,16 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     }
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
-
-    @Inject
     lateinit var templateWidgetDao: TemplateWidgetDao
     override val dao get() = templateWidgetDao
 
     private lateinit var binding: WidgetTemplateConfigureBinding
+
+    override val serverSelect: View
+        get() = binding.serverSelect
+
+    override val serverSelectList: Spinner
+        get() = binding.serverSelectList
 
     private var requestLauncherSetup = false
 
@@ -89,6 +92,8 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             backgroundTypeValues.add(0, getString(commonR.string.widget_background_type_dynamiccolor))
         binding.backgroundType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
 
+        setupServerSelect(templateWidget?.serverId)
+
         if (templateWidget != null) {
             binding.templateText.setText(templateWidget.template)
             binding.textSize.setText(templateWidget.textSize.toInt().toString())
@@ -120,15 +125,7 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         }
 
         binding.templateText.doAfterTextChanged { editableText ->
-            if (editableText == null)
-                return@doAfterTextChanged
-            if (editableText.isNotEmpty()) {
-                binding.addButton.isEnabled = true
-                renderTemplateText(editableText.toString())
-            } else {
-                binding.renderedTemplate.text = getString(commonR.string.empty_template)
-                binding.addButton.isEnabled = false
-            }
+            renderTemplateText()
         }
 
         binding.backgroundType.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
@@ -162,6 +159,18 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         }
     }
 
+    override fun onServerSelected(serverId: Int) = renderTemplateText()
+
+    private fun renderTemplateText() {
+        val editableText = binding.templateText.text ?: return
+        if (editableText.isNotEmpty()) {
+            renderTemplateText(editableText.toString())
+        } else {
+            binding.renderedTemplate.text = getString(commonR.string.empty_template)
+            binding.addButton.isEnabled = false
+        }
+    }
+
     private fun onAddWidget() {
         if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
             showAddWidgetError()
@@ -172,6 +181,7 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             action = TemplateWidget.RECEIVE_DATA
             component = ComponentName(applicationContext, TemplateWidget::class.java)
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            putExtra(TemplateWidget.EXTRA_SERVER_ID, selectedServerId)
             putExtra(TemplateWidget.EXTRA_TEMPLATE, binding.templateText.text.toString())
             putExtra(TemplateWidget.EXTRA_TEXT_SIZE, binding.textSize.text.toString().toFloat())
             putExtra(
@@ -214,7 +224,7 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             var enabled: Boolean
             withContext(Dispatchers.IO) {
                 try {
-                    templateText = integrationUseCase.renderTemplate(template, mapOf()).toString()
+                    templateText = serverManager.integrationRepository(selectedServerId!!).renderTemplate(template, mapOf()).toString()
                     enabled = true
                 } catch (e: Exception) {
                     Log.e(TAG, "Exception while rendering template", e)
@@ -227,7 +237,7 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 }
             }
             binding.renderedTemplate.text = fromHtml(templateText)
-            binding.addButton.isEnabled = enabled
+            binding.addButton.isEnabled = enabled && isValidServerId()
         }
     }
 }

@@ -3,8 +3,10 @@
     <string name="aa_app_not_logged_in">Not logged in</string>
     <string name="aa_navigation">Navigation</string>
     <string name="aa_no_entities_with_locations">No entities with locations found.</string>
+    <string name="aa_change_server">Change server</string>
     <string name="account">Account</string>
     <string name="action_reply">Reply</string>
+    <string name="activate">Activate</string>
     <string name="activity_intent_error">Unable to send activity intent, please check command format</string>
     <string name="add_device">Add device</string>
     <string name="add_service_data_field">Add Field</string>
@@ -148,6 +150,7 @@
     <string name="create_template">Create Template</string>
     <string name="database_event_failure">Unable to send migration failure event to Home Assistant</string>
     <string name="database_migration_failed">Database migration failed, all sensor and widget data has been reset. Please re-enable your sensors and recreate your widgets.</string>
+    <string name="delete">Delete</string>
     <string name="delete_all_notifications">Delete all notifications from history</string>
     <string name="delete_shortcut">Delete Shortcut</string>
     <string name="delete_this_notification">Delete this notification from history</string>
@@ -348,6 +351,7 @@
     <string name="matter_commissioning_unavailable">Matter is currently unavailable</string>
     <string name="matter_shared_title">Add Matter device</string>
     <string name="matter_shared_status_not_registered">Please connect to your Home Assistant server before adding a Matter device.</string>
+    <string name="matter_shared_status_select_server">Which server would you like to use?</string>
     <string name="matter_shared_status_not_supported">To add a Matter device, please update your Home Assistant server and add Matter first.</string>
     <string name="matter_shared_status_confirmation_named">Do you want to add %1$s to Home Assistant?</string>
     <string name="matter_shared_status_confirmation">Do you want to add this Matter device to Home Assistant?</string>
@@ -647,6 +651,15 @@
     <string name="sensors">Sensors</string>
     <string name="server_settings">Server Settings</string>
     <string name="servers_devices_category">Servers &amp; Devices</string>
+    <string name="server_activate">Activate Server</string>
+    <string name="server_add">Add Server</string>
+    <string name="server_add_success">Server added</string>
+    <string name="server_add_failed">Couldn\'t add server</string>
+    <string name="server_select">Select server</string>
+    <string name="server_delete">Delete Server</string>
+    <string name="server_delete_confirm">Are you sure you want to delete this server from the app?</string>
+    <string name="server_delete_working">Deleting server…</string>
+    <string name="server_name">Server Name</string>
     <string name="service_call_failure">Unable to send service call</string>
     <string name="session_timeout_title">Session TimeOut (in seconds)</string>
     <string name="set_favorite">Set Favorites</string>
@@ -800,6 +813,7 @@
     <string name="tile_missing_entity_title">Missing Valid Entity Domains</string>
     <string name="tile_not_setup">Requires setup</string>
     <string name="tile_save">Update Tile Data</string>
+    <string name="tile_server">Select a server (required)</string>
     <string name="tile_settings">Tile settings</string>
     <string name="tile_subtitle">Tile Subtitle</string>
     <string name="tile_updated">Tile Data updated</string>
@@ -876,6 +890,7 @@
     <string name="widget_separator_input_hint">No separator</string>
     <string name="widget_separator_label">State and attribute separator:</string>
     <string name="widget_spinner_icon">Icon:</string>
+    <string name="widget_spinner_server">Server:</string>
     <string name="widget_state_separator_label">State and attribute separator:</string>
     <string name="widget_static_image_description">Entity State</string>
     <string name="widget_template_error">Unable to render the template</string>

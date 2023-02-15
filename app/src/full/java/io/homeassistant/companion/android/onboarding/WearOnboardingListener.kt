@@ -7,8 +7,7 @@ import com.google.android.gms.wearable.PutDataRequest
 import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.WearableListenerService
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
-import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
@@ -16,10 +15,7 @@ import javax.inject.Inject
 class WearOnboardingListener : WearableListenerService() {
 
     @Inject
-    lateinit var authenticationUseCase: AuthenticationRepository
-
-    @Inject
-    lateinit var urlUseCase: UrlRepository
+    lateinit var serverManager: ServerManager
 
     override fun onMessageReceived(event: MessageEvent) {
         Log.d("WearOnboardingListener", "onMessageReceived: $event")
@@ -33,7 +29,7 @@ class WearOnboardingListener : WearableListenerService() {
     private fun sendHomeAssistantInstance(nodeId: String) = runBlocking {
         Log.d("WearOnboardingListener", "sendHomeAssistantInstance: $nodeId")
         // Retrieve current instance
-        val url = urlUseCase.getUrl(false)
+        val url = serverManager.getServer()?.connection?.getUrl(false)
 
         if (url != null) {
             // Put as DataMap in data layer

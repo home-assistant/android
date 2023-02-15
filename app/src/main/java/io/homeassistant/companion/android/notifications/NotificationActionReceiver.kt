@@ -9,8 +9,9 @@ import android.widget.Toast
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.cancel
+import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.notifications.MessagingManager.Companion.KEY_TEXT_REPLY
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,10 +35,13 @@ class NotificationActionReceiver : BroadcastReceiver() {
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
+    lateinit var serverManager: ServerManager
 
     @Inject
     lateinit var messagingManager: MessagingManager
+
+    @Inject
+    lateinit var notificationDao: NotificationDao
 
     override fun onReceive(context: Context, intent: Intent) {
 
@@ -92,18 +96,22 @@ class NotificationActionReceiver : BroadcastReceiver() {
         }
 
         when (intent.action) {
-            FIRE_EVENT -> fireEvent(notificationAction, onComplete, onFailure)
+            FIRE_EVENT -> {
+                val serverId = notificationDao.get(databaseId.toInt())?.serverId ?: ServerManager.SERVER_ID_ACTIVE
+                fireEvent(notificationAction, serverId, onComplete, onFailure)
+            }
         }
     }
 
     private fun fireEvent(
         action: NotificationAction,
+        serverId: Int,
         onComplete: () -> Unit,
         onFailure: () -> Unit
     ) {
         ioScope.launch {
             try {
-                integrationUseCase.fireEvent(
+                serverManager.integrationRepository(serverId).fireEvent(
                     "mobile_app_notification_action",
                     action.data
                         .filter { !it.key.startsWith(MessagingManager.SOURCE_REPLY_HISTORY) }

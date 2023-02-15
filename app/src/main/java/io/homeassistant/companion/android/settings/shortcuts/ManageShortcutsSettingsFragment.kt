@@ -24,12 +24,10 @@ import com.maltaisn.icondialog.pack.IconPackLoader
 import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.settings.shortcuts.views.ManageShortcutsView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
@@ -66,8 +64,6 @@ class ManageShortcutsSettingsFragment : Fragment(), IconDialog.Callback {
             it.intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://companion.home-assistant.io/docs/integrations/android-shortcuts"))
         }
     }
-    @Inject
-    lateinit var integrationUseCase: IntegrationRepository
 
     override fun onCreateView(
         inflater: LayoutInflater,

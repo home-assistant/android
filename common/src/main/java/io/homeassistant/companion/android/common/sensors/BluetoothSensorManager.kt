@@ -104,8 +104,7 @@ class BluetoothSensorManager : SensorManager {
         fun enableDisableBLETransmitter(context: Context, transmitEnabled: Boolean) {
             val sensorDao = AppDatabase.getInstance(context).sensorDao()
             val sensorEntity = sensorDao.get(bleTransmitter.id)
-            val sensorEnabled = (sensorEntity != null && sensorEntity.enabled)
-            if (!sensorEnabled)
+            if (sensorEntity.none { it.enabled })
                 return
 
             TransmitterManager.stopTransmitting(bleTransmitterDevice) // stop in all instances, clean up state if start required
@@ -118,8 +117,7 @@ class BluetoothSensorManager : SensorManager {
         fun enableDisableBeaconMonitor(context: Context, monitorEnabled: Boolean) {
             val sensorDao = AppDatabase.getInstance(context).sensorDao()
             val sensorEntity = sensorDao.get(beaconMonitor.id)
-            val sensorEnabled = (sensorEntity != null && sensorEntity.enabled)
-            if (!sensorEnabled)
+            if (sensorEntity.none { it.enabled })
                 return
 
             if (monitorEnabled) {
@@ -351,7 +349,7 @@ class BluetoothSensorManager : SensorManager {
             TransmitterManager.stopTransmitting(bleTransmitterDevice)
         }
 
-        val lastState = AppDatabase.getInstance(context).sensorDao().get(bleTransmitter.id)?.state ?: "unknown"
+        val lastState = AppDatabase.getInstance(context).sensorDao().get(bleTransmitter.id).firstOrNull()?.state ?: "unknown"
         val state = if (isBtOn(context)) bleTransmitterDevice.state else "Bluetooth is turned off"
         val icon = if (bleTransmitterDevice.transmitting) "mdi:bluetooth" else "mdi:bluetooth-off"
         onSensorUpdated(

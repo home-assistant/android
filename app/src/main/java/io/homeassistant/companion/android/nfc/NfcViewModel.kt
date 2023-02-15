@@ -9,7 +9,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.util.Navigator
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -20,7 +20,7 @@ import io.homeassistant.companion.android.common.R as commonR
 
 @HiltViewModel
 class NfcViewModel @Inject constructor(
-    private val integrationUseCase: IntegrationRepository,
+    private val serverManager: ServerManager,
     application: Application
 ) : AndroidViewModel(application) {
 
@@ -46,7 +46,7 @@ class NfcViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            usesAndroidDeviceId = !integrationUseCase.isHomeAssistantVersionAtLeast(2022, 12, 0)
+            usesAndroidDeviceId = serverManager.getServer()?.version?.isAtLeast(2022, 12, 0) == false
         }
     }
 
@@ -110,7 +110,7 @@ class NfcViewModel @Inject constructor(
         viewModelScope.launch {
             nfcTagIdentifier?.let {
                 try {
-                    integrationUseCase.scanTag(
+                    serverManager.integrationRepository().scanTag(
                         hashMapOf("tag_id" to it)
                     )
                     _nfcResultSnackbar.emit(commonR.string.nfc_event_fired_success)

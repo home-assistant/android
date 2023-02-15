@@ -15,17 +15,20 @@ import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.WearableListenerService
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
-import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
-import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.database.server.ServerConnectionInfo
+import io.homeassistant.companion.android.database.server.ServerSessionInfo
+import io.homeassistant.companion.android.database.server.ServerType
 import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.wear.getAll
 import io.homeassistant.companion.android.database.wear.replaceAll
 import io.homeassistant.companion.android.home.HomeActivity
 import io.homeassistant.companion.android.home.HomePresenterImpl
 import io.homeassistant.companion.android.onboarding.getMessagingToken
+import io.homeassistant.companion.android.util.UrlUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -37,13 +40,7 @@ import javax.inject.Inject
 class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChangedListener {
 
     @Inject
-    lateinit var authenticationRepository: AuthenticationRepository
-
-    @Inject
-    lateinit var urlRepository: UrlRepository
-
-    @Inject
-    lateinit var integrationUseCase: IntegrationRepository
+    lateinit var serverManager: ServerManager
 
     @Inject
     lateinit var wearPrefsRepository: WearPrefsRepository
@@ -77,7 +74,7 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
         val currentFavorites = favoritesDao.getAll()
         val putDataRequest = PutDataMapRequest.create("/config").run {
             dataMap.putLong(KEY_UPDATE_TIME, System.nanoTime())
-            dataMap.putBoolean(KEY_IS_AUTHENTICATED, integrationUseCase.isRegistered())
+            dataMap.putBoolean(KEY_IS_AUTHENTICATED, serverManager.isRegistered())
             dataMap.putString(KEY_SUPPORTED_DOMAINS, objectMapper.writeValueAsString(HomePresenterImpl.supportedDomains))
             dataMap.putString(KEY_FAVORITES, objectMapper.writeValueAsString(currentFavorites))
             dataMap.putString(KEY_TEMPLATE_TILE, wearPrefsRepository.getTemplateTileContent())
@@ -117,6 +114,7 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
     }
 
     private fun login(dataMap: DataMap) = mainScope.launch {
+        var serverId: Int? = null
         try {
             val url = dataMap.getString("URL", "")
             val authCode = dataMap.getString("AuthCode", "")
@@ -124,9 +122,18 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
             val deviceTrackingEnabled = dataMap.getBoolean("LocationTracking")
             val notificationsEnabled = dataMap.getString("Notifications")
 
-            urlRepository.saveUrl(url)
-            authenticationRepository.registerAuthorizationCode(authCode)
-            integrationUseCase.registerDevice(
+            val formattedUrl = UrlUtil.formattedUrlString(url)
+            val server = Server(
+                _name = "",
+                type = ServerType.TEMPORARY,
+                connection = ServerConnectionInfo(
+                    externalUrl = formattedUrl
+                ),
+                session = ServerSessionInfo()
+            )
+            serverId = serverManager.addServer(server)
+            serverManager.authenticationRepository(serverId).registerAuthorizationCode(authCode)
+            serverManager.integrationRepository(serverId).registerDevice(
                 DeviceRegistration(
                     "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
                     deviceName,
@@ -134,12 +141,21 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
                     false
                 )
             )
+            serverManager.convertTemporaryServer(serverId)
 
             val intent = HomeActivity.newInstance(applicationContext)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             startActivity(intent)
         } catch (e: Exception) {
             Log.e(TAG, "Unable to login to Home Assistant", e)
+            try {
+                if (serverId != null) {
+                    serverManager.authenticationRepository(serverId).revokeSession()
+                    serverManager.removeServer(serverId)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Can't revoke session", e)
+            }
         }
 
         sendPhoneData()

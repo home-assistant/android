@@ -7,17 +7,15 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
-import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class ConversationViewModel @Inject constructor(
     application: Application,
-    private val integrationUseCase: IntegrationRepository,
-    private val webSocketRepository: WebSocketRepository,
+    private val serverManager: ServerManager,
     private val wearPrefsRepository: WearPrefsRepository
 ) : AndroidViewModel(application) {
 
@@ -41,16 +39,19 @@ class ConversationViewModel @Inject constructor(
 
     fun getConversation() {
         viewModelScope.launch {
-            conversationResult = integrationUseCase.getConversation(speechResult) ?: ""
+            conversationResult =
+                if (serverManager.isRegistered()) serverManager.integrationRepository().getConversation(speechResult) ?: ""
+                else ""
         }
     }
 
     suspend fun isSupportConversation() {
         checkSupportProgress = true
-        isRegistered = integrationUseCase.isRegistered()
+        isRegistered = serverManager.isRegistered()
         supportsConversation =
-            integrationUseCase.isHomeAssistantVersionAtLeast(2023, 1, 0) &&
-            webSocketRepository.getConfig()?.components?.contains("conversation") == true
+            serverManager.isRegistered() &&
+            serverManager.integrationRepository().isHomeAssistantVersionAtLeast(2023, 1, 0) &&
+            serverManager.webSocketRepository().getConfig()?.components?.contains("conversation") == true
         isHapticEnabled.value = wearPrefsRepository.getWearHapticFeedback()
         checkSupportProgress = false
     }

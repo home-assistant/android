@@ -23,6 +23,24 @@ class WifiHelperImpl @Inject constructor(
                 connectivityManager.activeNetworkInfo?.type == ConnectivityManager.TYPE_WIFI
         }
 
+    override fun isUsingSpecificWifi(networks: List<String>): Boolean {
+        if (networks.isEmpty()) return false
+        val formattedSsid = getWifiSsid()?.removeSurrounding("\"")
+        val formattedBssid = getWifiBssid()
+        return (
+            formattedSsid != null &&
+                (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || formattedSsid !== WifiManager.UNKNOWN_SSID) &&
+                formattedSsid in networks
+            ) || (
+            formattedBssid != null &&
+                formattedBssid != WifiHelper.INVALID_BSSID &&
+                networks.any {
+                    it.startsWith(WifiHelper.BSSID_PREFIX) &&
+                        it.removePrefix(WifiHelper.BSSID_PREFIX).equals(formattedBssid, ignoreCase = true)
+                }
+            )
+    }
+
     override fun getWifiSsid(): String? =
         wifiManager.connectionInfo.ssid
 

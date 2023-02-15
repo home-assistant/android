@@ -8,6 +8,8 @@ import androidx.room.PrimaryKey
 data class ButtonWidgetEntity(
     @PrimaryKey
     override val id: Int,
+    @ColumnInfo(name = "server_id", defaultValue = "0")
+    override val serverId: Int,
     @ColumnInfo(name = "icon_id")
     val iconId: Int,
     @ColumnInfo(name = "domain")

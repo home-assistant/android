@@ -41,10 +41,8 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
-import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.notifications.DeviceCommandData
 import io.homeassistant.companion.android.common.notifications.NotificationData
 import io.homeassistant.companion.android.common.notifications.commandBeaconMonitor
@@ -98,9 +96,7 @@ import io.homeassistant.companion.android.common.R as commonR
 class MessagingManager @Inject constructor(
     @ApplicationContext val context: Context,
     private val okHttpClient: OkHttpClient,
-    private val integrationUseCase: IntegrationRepository,
-    private val urlUseCase: UrlRepository,
-    private val authenticationUseCase: AuthenticationRepository,
+    private val serverManager: ServerManager,
     private val prefsRepository: PrefsRepository,
     private val notificationDao: NotificationDao,
     private val sensorDao: SensorDao,
@@ -244,6 +240,9 @@ class MessagingManager @Inject constructor(
         // Values for a notification that has been replied to
         const val SOURCE_REPLY = "REPLY_"
         const val SOURCE_REPLY_HISTORY = "reply_history_"
+
+        // Values for temporarily added keys
+        const val THIS_SERVER_ID = "server_id"
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
@@ -264,21 +263,30 @@ class MessagingManager @Inject constructor(
             } ?: return
         } else {
             val jsonObject = JSONObject(jsonData)
+            val receivedServer = jsonData[NotificationData.WEBHOOK_ID]?.let {
+                serverManager.getServer(webhookId = it)?.id
+            }
             val notificationRow =
-                NotificationItem(0, now, jsonData[NotificationData.MESSAGE].toString(), jsonObject.toString(), source)
+                NotificationItem(0, now, jsonData[NotificationData.MESSAGE].toString(), jsonObject.toString(), source, receivedServer)
             notificationId = notificationDao.add(notificationRow)
 
             val confirmation = jsonData[CONFIRMATION]?.toBoolean() ?: false
             if (confirmation) {
                 mainScope.launch {
                     try {
-                        integrationUseCase.fireEvent("mobile_app_notification_received", jsonData)
+                        serverManager.integrationRepository(receivedServer ?: ServerManager.SERVER_ID_ACTIVE)
+                            .fireEvent("mobile_app_notification_received", jsonData)
                     } catch (e: Exception) {
                         Log.e(TAG, "Unable to send notification received event", e)
                     }
                 }
             }
         }
+
+        val serverId = jsonData[NotificationData.WEBHOOK_ID]?.let { webhookId ->
+            serverManager.getServer(webhookId = webhookId)?.id
+        } ?: ServerManager.SERVER_ID_ACTIVE
+        jsonData = jsonData + mutableMapOf<String, String>().apply { put(THIS_SERVER_ID, serverId.toString()) }
 
         when {
             jsonData[NotificationData.MESSAGE] == REQUEST_LOCATION_UPDATE -> {
@@ -720,9 +728,9 @@ class MessagingManager @Inject constructor(
                     if (!Settings.canDrawOverlays(context))
                         notifyMissingPermission(message.toString())
                     else
-                        openWebview(command)
+                        openWebview(command, data)
                 } else
-                    openWebview(command)
+                    openWebview(command, data)
             }
             COMMAND_SCREEN_ON -> {
                 if (!command.isNullOrEmpty()) {
@@ -882,6 +890,8 @@ class MessagingManager @Inject constructor(
 
         handleSubject(notificationBuilder, data)
 
+        handleServer(notificationBuilder, data)
+
         handleImage(notificationBuilder, data)
 
         handleVideo(notificationBuilder, data)
@@ -892,9 +902,9 @@ class MessagingManager @Inject constructor(
 
         handleReplyHistory(notificationBuilder, data)
 
-        handleDeleteIntent(notificationBuilder, data, messageId, group, groupId)
+        handleDeleteIntent(notificationBuilder, data, messageId, group, groupId, id)
 
-        handleContentIntent(notificationBuilder, messageId, group, groupId, data)
+        handleContentIntent(notificationBuilder, data)
 
         handleChronometer(notificationBuilder, data)
 
@@ -947,13 +957,10 @@ class MessagingManager @Inject constructor(
 
     private fun handleContentIntent(
         builder: NotificationCompat.Builder,
-        messageId: Int,
-        group: String?,
-        groupId: Int,
         data: Map<String, String>
     ) {
         val actionUri = data["clickAction"] ?: "/"
-        builder.setContentIntent(createOpenUriPendingIntent(actionUri))
+        builder.setContentIntent(createOpenUriPendingIntent(actionUri, data))
     }
 
     private fun handleDeleteIntent(
@@ -961,14 +968,14 @@ class MessagingManager @Inject constructor(
         data: Map<String, String>,
         messageId: Int,
         group: String?,
-        groupId: Int
-
+        groupId: Int,
+        databaseId: Long?
     ) {
-
         val deleteIntent = Intent(context, NotificationDeleteReceiver::class.java).apply {
             putExtra(NotificationDeleteReceiver.EXTRA_DATA, HashMap(data))
             putExtra(NotificationDeleteReceiver.EXTRA_NOTIFICATION_GROUP, group)
             putExtra(NotificationDeleteReceiver.EXTRA_NOTIFICATION_GROUP_ID, groupId)
+            putExtra(NotificationDeleteReceiver.EXTRA_NOTIFICATION_DB, databaseId)
         }
         val deletePendingIntent = PendingIntent.getBroadcast(
             context,
@@ -1103,13 +1110,27 @@ class MessagingManager @Inject constructor(
         }
     }
 
+    private fun handleServer(
+        builder: NotificationCompat.Builder,
+        data: Map<String, String>
+    ) {
+        data[NotificationData.WEBHOOK_ID]?.let { webhookId ->
+            if (serverManager.defaultServers.size > 1) {
+                serverManager.getServer(webhookId = webhookId)?.let {
+                    builder.setSubText(it.friendlyName)
+                }
+            }
+        }
+    }
+
     private suspend fun handleLargeIcon(
         builder: NotificationCompat.Builder,
         data: Map<String, String>
     ) {
         data[ICON_URL]?.let {
-            val url = UrlHandler.handle(urlUseCase.getUrl(), it)
-            val bitmap = getImageBitmap(url, !UrlHandler.isAbsoluteUrl(it))
+            val serverId = data[THIS_SERVER_ID]!!.toInt()
+            val url = UrlHandler.handle(serverManager.getServer(serverId)?.connection?.getUrl(), it)
+            val bitmap = getImageBitmap(serverId, url, !UrlHandler.isAbsoluteUrl(it))
             if (bitmap != null) {
                 builder.setLargeIcon(bitmap)
             }
@@ -1121,8 +1142,9 @@ class MessagingManager @Inject constructor(
         data: Map<String, String>
     ) {
         data[IMAGE_URL]?.let {
-            val url = UrlHandler.handle(urlUseCase.getUrl(), it)
-            val bitmap = getImageBitmap(url, !UrlHandler.isAbsoluteUrl(it))
+            val serverId = data[THIS_SERVER_ID]!!.toInt()
+            val url = UrlHandler.handle(serverManager.getServer(serverId)?.connection?.getUrl(), it)
+            val bitmap = getImageBitmap(serverId, url, !UrlHandler.isAbsoluteUrl(it))
             if (bitmap != null) {
                 builder
                     .setLargeIcon(bitmap)
@@ -1135,7 +1157,7 @@ class MessagingManager @Inject constructor(
         }
     }
 
-    private suspend fun getImageBitmap(url: URL?, requiresAuth: Boolean = false): Bitmap? =
+    private suspend fun getImageBitmap(serverId: Int, url: URL?, requiresAuth: Boolean = false): Bitmap? =
         withContext(
             Dispatchers.IO
         ) {
@@ -1147,7 +1169,7 @@ class MessagingManager @Inject constructor(
                 val request = Request.Builder().apply {
                     url(url)
                     if (requiresAuth) {
-                        addHeader("Authorization", authenticationUseCase.buildBearerToken())
+                        addHeader("Authorization", serverManager.authenticationRepository(serverId).buildBearerToken())
                     }
                 }.build()
 
@@ -1165,8 +1187,9 @@ class MessagingManager @Inject constructor(
         data: Map<String, String>
     ) {
         data[VIDEO_URL]?.let {
-            val url = UrlHandler.handle(urlUseCase.getUrl(), it)
-            getVideoFrames(url, !UrlHandler.isAbsoluteUrl(it))?.let { frames ->
+            val serverId = data[THIS_SERVER_ID]!!.toInt()
+            val url = UrlHandler.handle(serverManager.getServer(serverId)?.connection?.getUrl(), it)
+            getVideoFrames(serverId, url, !UrlHandler.isAbsoluteUrl(it))?.let { frames ->
                 Log.d(TAG, "Found ${frames.size} frames for video notification")
                 RemoteViews(context.packageName, R.layout.view_image_flipper).let { remoteViewFlipper ->
                     if (frames.isNotEmpty()) {
@@ -1198,7 +1221,7 @@ class MessagingManager @Inject constructor(
         }
     }
 
-    private suspend fun getVideoFrames(url: URL?, requiresAuth: Boolean = false): List<Bitmap>? =
+    private suspend fun getVideoFrames(serverId: Int, url: URL?, requiresAuth: Boolean = false): List<Bitmap>? =
         withContext(
             Dispatchers.IO
         ) {
@@ -1213,7 +1236,7 @@ class MessagingManager @Inject constructor(
                     val request = Request.Builder().apply {
                         url(url)
                         if (requiresAuth) {
-                            addHeader("Authorization", authenticationUseCase.buildBearerToken())
+                            addHeader("Authorization", serverManager.authenticationRepository(serverId).buildBearerToken())
                         }
                     }.build()
                     val response = okHttpClient.newCall(request).execute()
@@ -1326,7 +1349,7 @@ class MessagingManager @Inject constructor(
                             builder.addAction(
                                 commonR.drawable.ic_globe,
                                 notificationAction.title,
-                                createOpenUriPendingIntent(notificationAction.uri)
+                                createOpenUriPendingIntent(notificationAction.uri, data)
                             )
                         }
                     }
@@ -1369,13 +1392,15 @@ class MessagingManager @Inject constructor(
     }
 
     private fun createOpenUriPendingIntent(
-        uri: String
+        uri: String,
+        data: Map<String, String>
     ): PendingIntent {
+        val serverId = data[THIS_SERVER_ID]!!.toInt()
         val needsPackage = uri.startsWith(APP_PREFIX) || uri.startsWith(INTENT_PREFIX)
         val otherApp = needsPackage || UrlHandler.isAbsoluteUrl(uri) || uri.startsWith(DEEP_LINK_PREFIX)
         val intent = when {
             uri.isBlank() -> {
-                WebViewActivity.newInstance(context)
+                WebViewActivity.newInstance(context, null, serverId)
             }
             uri.startsWith(APP_PREFIX) -> {
                 context.packageManager.getLaunchIntentForPackage(uri.substringAfter(APP_PREFIX))
@@ -1387,7 +1412,7 @@ class MessagingManager @Inject constructor(
                 if (uri.substringAfter(SETTINGS_PREFIX) == NOTIFICATION_HISTORY)
                     SettingsActivity.newInstance(context)
                 else
-                    WebViewActivity.newInstance(context)
+                    WebViewActivity.newInstance(context, null, serverId)
             }
             UrlHandler.isAbsoluteUrl(uri) || uri.startsWith(DEEP_LINK_PREFIX) -> {
                 Intent(Intent.ACTION_VIEW).apply {
@@ -1400,9 +1425,9 @@ class MessagingManager @Inject constructor(
                 }
             }
             else -> {
-                WebViewActivity.newInstance(context, uri)
+                WebViewActivity.newInstance(context, uri, serverId)
             }
-        } ?: WebViewActivity.newInstance(context)
+        } ?: WebViewActivity.newInstance(context, null, serverId)
 
         if (uri.startsWith(SETTINGS_PREFIX) && uri.substringAfter(SETTINGS_PREFIX) == NOTIFICATION_HISTORY)
             intent.putExtra("fragment", NOTIFICATION_HISTORY)
@@ -1633,12 +1658,16 @@ class MessagingManager @Inject constructor(
         }
     }
 
-    private fun openWebview(title: String?) {
+    private fun openWebview(
+        title: String?,
+        data: Map<String, String>
+    ) {
         try {
+            val serverId = data[THIS_SERVER_ID]!!.toInt()
             val intent = if (title.isNullOrEmpty())
-                WebViewActivity.newInstance(context)
+                WebViewActivity.newInstance(context, null, serverId)
             else
-                WebViewActivity.newInstance(context, title)
+                WebViewActivity.newInstance(context, title, serverId)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
             context.startActivity(intent)
@@ -1673,15 +1702,16 @@ class MessagingManager @Inject constructor(
         val homeBypassEnableValue = data[HOME_BYPASS_ENABLED]?.lowercase()?.toBooleanStrictOrNull()
 
         val canAuth = (BiometricManager.from(context).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS)
+        val serverId = data[THIS_SERVER_ID]!!.toInt()
         if (canAuth) {
             if (appLockEnableValue != null) {
-                authenticationUseCase.setLockEnabled(appLockEnableValue)
+                serverManager.authenticationRepository(serverId).setLockEnabled(appLockEnableValue)
             }
             if (appLockTimeoutValue != null) {
-                integrationUseCase.sessionTimeOut(appLockTimeoutValue)
+                serverManager.integrationRepository(serverId).sessionTimeOut(appLockTimeoutValue)
             }
             if (homeBypassEnableValue != null) {
-                authenticationUseCase.setLockHomeBypassEnabled(homeBypassEnableValue)
+                serverManager.authenticationRepository(serverId).setLockHomeBypassEnabled(homeBypassEnableValue)
             }
         } else {
             Log.w(TAG, "Not changing App-Lock settings. BiometricManager cannot Authenticate!")

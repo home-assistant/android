@@ -8,6 +8,8 @@ import androidx.room.PrimaryKey
 data class TemplateWidgetEntity(
     @PrimaryKey
     override val id: Int,
+    @ColumnInfo(name = "server_id", defaultValue = "0")
+    override val serverId: Int,
     @ColumnInfo(name = "template")
     val template: String,
     @ColumnInfo(name = "text_size", defaultValue = "12.0")

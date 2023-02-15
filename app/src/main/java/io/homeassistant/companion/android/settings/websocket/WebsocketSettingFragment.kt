@@ -29,6 +29,10 @@ import io.homeassistant.companion.android.common.R as commonR
 @AndroidEntryPoint
 class WebsocketSettingFragment : Fragment() {
 
+    companion object {
+        const val EXTRA_SERVER = "server"
+    }
+
     val viewModel: SettingViewModel by viewModels()
 
     private var isIgnoringBatteryOptimizations by mutableStateOf(false)
@@ -37,9 +41,14 @@ class WebsocketSettingFragment : Fragment() {
         setIgnoringBatteryOptimizations()
     }
 
+    private var serverId = -1
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
+        arguments?.let {
+            serverId = it.getInt(EXTRA_SERVER, serverId)
+        }
     }
 
     override fun onPrepareOptionsMenu(menu: Menu) {
@@ -59,12 +68,12 @@ class WebsocketSettingFragment : Fragment() {
         return ComposeView(requireContext()).apply {
             setContent {
                 MdcTheme {
-                    val settings = viewModel.getSettingFlow(0)
-                        .collectAsState(initial = viewModel.getSetting(0))
+                    val settings = viewModel.getSettingFlow(serverId)
+                        .collectAsState(initial = viewModel.getSetting(serverId))
                     WebsocketSettingView(
                         websocketSetting = settings.value.websocketSetting,
                         unrestrictedBackgroundAccess = isIgnoringBatteryOptimizations,
-                        onSettingChanged = { viewModel.updateWebsocketSetting(0, it) },
+                        onSettingChanged = { viewModel.updateWebsocketSetting(serverId, it) },
                         onBackgroundAccessTapped = {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                                 requestBackgroundAccessResult.launch(
