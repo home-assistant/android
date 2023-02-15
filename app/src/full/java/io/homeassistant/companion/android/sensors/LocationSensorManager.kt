@@ -234,8 +234,8 @@ class LocationSensorManager : LocationSensorManagerBase() {
             return
         }
 
-        val backgroundEnabled = isEnabled(latestContext, backgroundLocation.id)
-        val zoneEnabled = isEnabled(latestContext, zoneLocation.id)
+        val backgroundEnabled = isEnabled(latestContext, backgroundLocation)
+        val zoneEnabled = isEnabled(latestContext, zoneLocation)
 
         ioScope.launch {
             try {
@@ -285,8 +285,8 @@ class LocationSensorManager : LocationSensorManagerBase() {
     private suspend fun setupBackgroundLocation(backgroundEnabled: Boolean? = null, zoneEnabled: Boolean? = null) {
         var isBackgroundEnabled = backgroundEnabled
         var isZoneEnable = zoneEnabled
-        if (isBackgroundEnabled == null) isBackgroundEnabled = isEnabled(latestContext, backgroundLocation.id)
-        if (isZoneEnable == null) isZoneEnable = isEnabled(latestContext, zoneLocation.id)
+        if (isBackgroundEnabled == null) isBackgroundEnabled = isEnabled(latestContext, backgroundLocation)
+        if (isZoneEnable == null) isZoneEnable = isEnabled(latestContext, zoneLocation)
 
         if (isBackgroundEnabled) {
             val updateIntervalHighAccuracySeconds = getHighAccuracyModeUpdateInterval()
@@ -675,7 +675,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
     private fun handleGeoUpdate(intent: Intent) {
         Log.d(TAG, "Received geofence update.")
-        if (!isEnabled(latestContext, zoneLocation.id)) {
+        if (!isEnabled(latestContext, zoneLocation)) {
             isZoneLocationSetup = false
             Log.w(TAG, "Unregistering geofences as zone tracking is disabled and intent was received")
             removeGeofenceUpdateRequests()
@@ -958,7 +958,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
     }
 
     private fun getHighAccuracyModeTriggerRange(): Int {
-        val enabled = isEnabled(latestContext, zoneLocation.id)
+        val enabled = isEnabled(latestContext, zoneLocation)
 
         if (!enabled) return 0
 
@@ -982,7 +982,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
     }
 
     private fun getHighAccuracyModeZones(expandedZones: Boolean): List<String> {
-        val enabled = isEnabled(latestContext, zoneLocation.id)
+        val enabled = isEnabled(latestContext, zoneLocation)
 
         if (!enabled) return emptyList()
 
@@ -1007,7 +1007,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             Log.w(TAG, "Not getting single accurate location because of permissions.")
             return
         }
-        if (!isEnabled(latestContext, singleAccurateLocation.id)) {
+        if (!isEnabled(latestContext, singleAccurateLocation)) {
             Log.w(TAG, "Requested single accurate location but it is not enabled.")
             return
         }
@@ -1104,8 +1104,6 @@ class LocationSensorManager : LocationSensorManagerBase() {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/location"
     }
-    override val enabledByDefault: Boolean
-        get() = false
 
     override val name: Int
         get() = commonR.string.sensor_name_location
@@ -1142,13 +1140,13 @@ class LocationSensorManager : LocationSensorManagerBase() {
         context: Context
     ) {
         latestContext = context
-        if (isEnabled(context, zoneLocation.id) || isEnabled(context, backgroundLocation.id))
+        if (isEnabled(context, zoneLocation) || isEnabled(context, backgroundLocation))
             setupLocationTracking()
         val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
         val sensorSetting = sensorDao.getSettings(singleAccurateLocation.id)
         val includeSensorUpdate = sensorSetting.firstOrNull { it.name == SETTING_INCLUDE_SENSOR_UPDATE }?.value ?: "false"
         if (includeSensorUpdate == "true") {
-            if (isEnabled(context, singleAccurateLocation.id)) {
+            if (isEnabled(context, singleAccurateLocation)) {
                 context.sendBroadcast(
                     Intent(context, this.javaClass).apply {
                         action = ACTION_REQUEST_ACCURATE_LOCATION_UPDATE

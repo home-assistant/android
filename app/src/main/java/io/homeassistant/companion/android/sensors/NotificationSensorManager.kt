@@ -77,8 +77,6 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(lastNotification, lastRemovedNotification, activeNotificationCount, mediaSession)
     }
-    override val enabledByDefault: Boolean
-        get() = false
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return arrayOf(Manifest.permission.BIND_NOTIFICATION_LISTENER_SERVICE)
@@ -109,7 +107,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
 
         updateActiveNotificationCount()
 
-        if (!isEnabled(applicationContext, lastNotification.id))
+        if (!isEnabled(applicationContext, lastNotification))
             return
 
         val allowPackages = getSetting(
@@ -167,7 +165,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
 
         updateActiveNotificationCount()
 
-        if (!isEnabled(applicationContext, lastRemovedNotification.id))
+        if (!isEnabled(applicationContext, lastRemovedNotification))
             return
 
         val allowPackages = getSetting(
@@ -221,7 +219,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
     }
 
     private fun updateActiveNotificationCount() {
-        if (!isEnabled(applicationContext, activeNotificationCount.id) || !listenerConnected)
+        if (!isEnabled(applicationContext, activeNotificationCount) || !listenerConnected)
             return
 
         try {
@@ -250,7 +248,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
     }
 
     private fun updateMediaSession(context: Context) {
-        if (!isEnabled(context, mediaSession.id))
+        if (!isEnabled(context, mediaSession))
             return
 
         val mediaSessionManager = context.getSystemService<MediaSessionManager>()!!

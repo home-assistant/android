@@ -352,7 +352,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             for (manager in SensorReceiver.MANAGERS) {
                 for (basicSensor in manager.getAvailableSensors(getApplication())) {
-                    manager.isEnabled(getApplication(), basicSensor.id)
+                    manager.isEnabled(getApplication(), basicSensor)
                 }
             }
         }

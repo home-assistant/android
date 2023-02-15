@@ -135,8 +135,6 @@ class BluetoothSensorManager : SensorManager {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#bluetooth-sensors"
     }
-    override val enabledByDefault: Boolean
-        get() = false
     override val name: Int
         get() = commonR.string.sensor_name_bluetooth
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
@@ -197,7 +195,7 @@ class BluetoothSensorManager : SensorManager {
     }
 
     private fun updateBluetoothConnectionSensor(context: Context) {
-        if (!isEnabled(context, bluetoothConnection.id))
+        if (!isEnabled(context, bluetoothConnection))
             return
 
         var totalConnectedDevices = 0
@@ -235,7 +233,7 @@ class BluetoothSensorManager : SensorManager {
     }
 
     private fun updateBluetoothState(context: Context) {
-        if (!isEnabled(context, bluetoothState.id))
+        if (!isEnabled(context, bluetoothState))
             return
         val icon = if (isBtOn(context)) "mdi:bluetooth" else "mdi:bluetooth-off"
         onSensorUpdated(
@@ -295,7 +293,7 @@ class BluetoothSensorManager : SensorManager {
     }
 
     private fun updateBeaconMonitoringDevice(context: Context) {
-        if (!isEnabled(context, beaconMonitor.id)) {
+        if (!isEnabled(context, beaconMonitor)) {
             return
         }
 
@@ -321,7 +319,7 @@ class BluetoothSensorManager : SensorManager {
         monitoringManager.scanPeriod = scanPeriod
         monitoringManager.scanInterval = scanInterval
 
-        if (!isEnabled(context, beaconMonitor.id) || ! monitoringActive || restart) {
+        if (!isEnabled(context, beaconMonitor) || ! monitoringActive || restart) {
             monitoringManager.stopMonitoring(context, beaconMonitoringDevice)
         } else {
             monitoringManager.startMonitoring(context, beaconMonitoringDevice)
@@ -333,7 +331,7 @@ class BluetoothSensorManager : SensorManager {
         updateBLEDevice(context)
 
         // sensor disabled, stop transmitting if we have been
-        if (!isEnabled(context, bleTransmitter.id)) {
+        if (!isEnabled(context, bleTransmitter)) {
             TransmitterManager.stopTransmitting(bleTransmitterDevice)
             return
         }
@@ -368,7 +366,7 @@ class BluetoothSensorManager : SensorManager {
     }
 
     fun updateBeaconMonitoringSensor(context: Context) {
-        if (!isEnabled(context, beaconMonitor.id)) {
+        if (!isEnabled(context, beaconMonitor)) {
             return
         }
 

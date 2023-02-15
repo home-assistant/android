@@ -61,8 +61,6 @@ class TrafficStatsManager : SensorManager {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#traffic-stats-sensor"
     }
-    override val enabledByDefault: Boolean
-        get() = false
     override val name: Int
         get() = commonR.string.sensor_name_traffic_stats
 
@@ -98,7 +96,7 @@ class TrafficStatsManager : SensorManager {
 
     private fun updateMobileRxBytes(context: Context) {
 
-        if (!isEnabled(context, rxBytesMobile.id))
+        if (!isEnabled(context, rxBytesMobile))
             return
 
         val mobileRx = try {
@@ -119,7 +117,7 @@ class TrafficStatsManager : SensorManager {
 
     private fun updateMobileTxBytes(context: Context) {
 
-        if (!isEnabled(context, txBytesMobile.id))
+        if (!isEnabled(context, txBytesMobile))
             return
 
         val mobileTx = try {
@@ -139,7 +137,7 @@ class TrafficStatsManager : SensorManager {
     }
     private fun updateTotalRxBytes(context: Context) {
 
-        if (!isEnabled(context, rxBytesTotal.id))
+        if (!isEnabled(context, rxBytesTotal))
             return
 
         val totalRx = try {
@@ -160,7 +158,7 @@ class TrafficStatsManager : SensorManager {
 
     private fun updateTotalTxBytes(context: Context) {
 
-        if (!isEnabled(context, txBytesTotal.id))
+        if (!isEnabled(context, txBytesTotal))
             return
 
         val totalTx = try {

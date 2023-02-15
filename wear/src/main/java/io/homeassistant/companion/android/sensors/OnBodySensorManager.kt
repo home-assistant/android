@@ -33,8 +33,6 @@ class OnBodySensorManager : SensorManager, SensorEventListener {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/wear-os/sensors"
     }
-    override val enabledByDefault: Boolean
-        get() = false
 
     override val name: Int
         get() = commonR.string.sensor_name_on_body
@@ -58,7 +56,7 @@ class OnBodySensorManager : SensorManager, SensorEventListener {
     }
 
     private fun updateOnBodySensor() {
-        if (!isEnabled(latestContext, onBodySensor.id))
+        if (!isEnabled(latestContext, onBodySensor))
             return
 
         mySensorManager = latestContext.getSystemService()!!

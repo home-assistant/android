@@ -25,8 +25,6 @@ class TheaterModeSensorManager : SensorManager {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/wear-os/sensors"
     }
-    override val enabledByDefault: Boolean
-        get() = false
     override val name: Int
         get() = commonR.string.sensor_name_theater_mode
 
@@ -44,7 +42,7 @@ class TheaterModeSensorManager : SensorManager {
 
     private fun updateTheaterMode(context: Context) {
 
-        if (!isEnabled(context, theaterMode.id))
+        if (!isEnabled(context, theaterMode))
             return
 
         val state = try {

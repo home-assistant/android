@@ -22,7 +22,8 @@ class BatterySensorManager : SensorManager {
             deviceClass = "battery",
             unitOfMeasurement = "%",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            enabledByDefault = true
         )
         private val batteryState = SensorManager.BasicSensor(
             "battery_state",
@@ -31,7 +32,8 @@ class BatterySensorManager : SensorManager {
             commonR.string.sensor_description_battery_state,
             "mdi:battery-charging",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
+            enabledByDefault = true
         )
         val isChargingState = SensorManager.BasicSensor(
             "is_charging",
@@ -50,7 +52,8 @@ class BatterySensorManager : SensorManager {
             commonR.string.sensor_description_charger_type,
             "mdi:power-plug",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
+            enabledByDefault = true
         )
         private val batteryHealthState = SensorManager.BasicSensor(
             "battery_health",
@@ -97,9 +100,6 @@ class BatterySensorManager : SensorManager {
         return "https://companion.home-assistant.io/docs/core/sensors#battery-sensors"
     }
 
-    override val enabledByDefault: Boolean
-        get() = true
-
     override val name: Int
         get() = commonR.string.sensor_name_battery
 
@@ -141,7 +141,7 @@ class BatterySensorManager : SensorManager {
     }
 
     private fun updateBatteryLevel(context: Context, intent: Intent) {
-        if (!isEnabled(context, batteryLevel.id))
+        if (!isEnabled(context, batteryLevel))
             return
 
         val percentage = getBatteryPercentage(intent)
@@ -172,7 +172,7 @@ class BatterySensorManager : SensorManager {
     }
 
     private fun updateBatteryState(context: Context, intent: Intent) {
-        if (!isEnabled(context, batteryState.id))
+        if (!isEnabled(context, batteryState))
             return
 
         val chargingStatus = getChargingStatus(intent)
@@ -194,7 +194,7 @@ class BatterySensorManager : SensorManager {
     }
 
     private fun updateIsCharging(context: Context, intent: Intent) {
-        if (!isEnabled(context, isChargingState.id))
+        if (!isEnabled(context, isChargingState))
             return
 
         val isCharging = getIsCharging(intent)
@@ -210,7 +210,7 @@ class BatterySensorManager : SensorManager {
     }
 
     private fun updateChargerType(context: Context, intent: Intent) {
-        if (!isEnabled(context, chargerTypeState.id))
+        if (!isEnabled(context, chargerTypeState))
             return
 
         val chargerType = getChargerType(intent)
@@ -231,7 +231,7 @@ class BatterySensorManager : SensorManager {
     }
 
     private fun updateBatteryHealth(context: Context, intent: Intent) {
-        if (!isEnabled(context, batteryHealthState.id))
+        if (!isEnabled(context, batteryHealthState))
             return
 
         val batteryHealth = getBatteryHealth(intent)
@@ -250,7 +250,7 @@ class BatterySensorManager : SensorManager {
     }
 
     private fun updateBatteryTemperature(context: Context, intent: Intent) {
-        if (!isEnabled(context, batteryTemperature.id))
+        if (!isEnabled(context, batteryTemperature))
             return
 
         val batteryTemp = getBatteryTemperature(intent)
@@ -265,7 +265,7 @@ class BatterySensorManager : SensorManager {
     }
 
     private fun updateBatteryPower(context: Context, intent: Intent) {
-        if (!isEnabled(context, batteryPower.id))
+        if (!isEnabled(context, batteryPower))
             return
 
         val voltage = getBatteryVolts(intent)

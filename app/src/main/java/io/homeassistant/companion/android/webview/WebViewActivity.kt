@@ -777,7 +777,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
         for (manager in SensorReceiver.MANAGERS) {
             for (basicSensor in manager.getAvailableSensors(this)) {
-                if (manager.isEnabled(this, basicSensor.id)) {
+                if (manager.isEnabled(this, basicSensor)) {
                     var permissions = manager.requiredPermissions(basicSensor.id)
 
                     val fineLocation = DisabledLocationHandler.containsLocationPermission(permissions, true)

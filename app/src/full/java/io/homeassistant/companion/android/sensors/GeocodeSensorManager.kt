@@ -40,8 +40,6 @@ class GeocodeSensorManager : SensorManager {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#geocoded-location-sensor"
     }
-    override val enabledByDefault: Boolean
-        get() = false
     override val name: Int
         get() = commonR.string.sensor_name_geolocation
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
@@ -72,7 +70,7 @@ class GeocodeSensorManager : SensorManager {
     }
 
     private suspend fun updateGeocodedLocation(context: Context) {
-        if (!isEnabled(context, geocodedLocation.id) || !checkPermission(context, geocodedLocation.id)) {
+        if (!isEnabled(context, geocodedLocation) || !checkPermission(context, geocodedLocation.id)) {
             return
         }
 

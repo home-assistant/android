@@ -32,7 +32,6 @@ interface SensorManager {
     }
 
     val name: Int
-    val enabledByDefault: Boolean
 
     data class BasicSensor(
         val id: String,
@@ -45,7 +44,8 @@ interface SensorManager {
         val docsLink: String? = null,
         val stateClass: String? = null,
         val entityCategory: String? = null,
-        val updateType: UpdateType = UpdateType.WORKER
+        val updateType: UpdateType = UpdateType.WORKER,
+        val enabledByDefault: Boolean = false
     ) {
         enum class UpdateType {
             INTENT, WORKER, LOCATION, CUSTOM
@@ -82,14 +82,14 @@ interface SensorManager {
         return mode == AppOpsManager.MODE_ALLOWED
     }
 
-    fun isEnabled(context: Context, sensorId: String): Boolean {
+    fun isEnabled(context: Context, basicSensor: BasicSensor): Boolean {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
-        val permission = checkPermission(context, sensorId)
+        val permission = checkPermission(context, basicSensor.id)
         return sensorDao.getAnyIsEnabled(
-            sensorId,
+            basicSensor.id,
             serverManager(context).defaultServers.map { it.id },
             permission,
-            enabledByDefault
+            basicSensor.enabledByDefault
         )
     }
 

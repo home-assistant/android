@@ -27,8 +27,6 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
         )
     }
 
-    override val enabledByDefault: Boolean
-        get() = false
     override val name: Int
         get() = commonR.string.sensor_name_android_auto
 
@@ -48,7 +46,7 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
 
     override fun requestSensorUpdate(context: Context) {
         this.context = context
-        if (!isEnabled(context, androidAutoConnected.id)) {
+        if (!isEnabled(context, androidAutoConnected)) {
             return
         }
         CoroutineScope(Dispatchers.Main + Job()).launch {
@@ -60,7 +58,7 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
     }
 
     override fun onChanged(type: Int?) {
-        if (!isEnabled(context, androidAutoConnected.id)) {
+        if (!isEnabled(context, androidAutoConnected)) {
             CoroutineScope(Dispatchers.Main + Job()).launch {
                 carConnection?.type?.removeObserver(this@AndroidAutoSensorManager)
             }
