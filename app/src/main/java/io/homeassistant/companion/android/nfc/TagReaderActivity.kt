@@ -14,6 +14,8 @@ import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.nfc.views.TagReaderView
 import io.homeassistant.companion.android.util.UrlHandler
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
@@ -61,8 +63,8 @@ class TagReaderActivity : BaseActivity() {
         val nfcTagId = UrlHandler.splitNfcTagId(url)
         Log.d(TAG, "Tag ID: $nfcTagId")
         if (nfcTagId != null && serverManager.isRegistered()) {
-            serverManager.defaultServers.forEach {
-                lifecycleScope.launch {
+            serverManager.defaultServers.map {
+                lifecycleScope.async {
                     try {
                         serverManager.integrationRepository(it.id).scanTag(hashMapOf("tag_id" to nfcTagId))
                         Log.d(TAG, "Tag scanned to HA successfully")
@@ -70,7 +72,7 @@ class TagReaderActivity : BaseActivity() {
                         Log.e(TAG, "Tag not scanned to HA", e)
                     }
                 }
-            }
+            }.awaitAll()
         } else {
             showProcessingError(isNfcTag)
         }
