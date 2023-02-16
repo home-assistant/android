@@ -41,6 +41,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.notifications.DeviceCommandData
@@ -1701,7 +1702,7 @@ class MessagingManager @Inject constructor(
         val appLockTimeoutValue = data[APP_LOCK_TIMEOUT]?.toIntOrNull()
         val homeBypassEnableValue = data[HOME_BYPASS_ENABLED]?.lowercase()?.toBooleanStrictOrNull()
 
-        val canAuth = (BiometricManager.from(context).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS)
+        val canAuth = (BiometricManager.from(context).canAuthenticate(Authenticator.AUTH_TYPES) == BiometricManager.BIOMETRIC_SUCCESS)
         val serverId = data[THIS_SERVER_ID]!!.toInt()
         if (canAuth) {
             if (appLockEnableValue != null) {
