@@ -66,7 +66,7 @@ dependencies {
     api("androidx.room:room-ktx:2.5.0")
     kapt("androidx.room:room-compiler:2.5.0")
 
-    api("androidx.work:work-runtime-ktx:2.7.1")
+    api("androidx.work:work-runtime-ktx:2.8.0")
 
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-jackson:2.9.0")
