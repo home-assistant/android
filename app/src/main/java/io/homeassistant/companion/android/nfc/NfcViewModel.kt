@@ -11,6 +11,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.util.Navigator
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
@@ -109,13 +111,20 @@ class NfcViewModel @Inject constructor(
     fun fireNfcTagEvent() {
         viewModelScope.launch {
             nfcTagIdentifier?.let {
-                try {
-                    serverManager.integrationRepository().scanTag(
-                        hashMapOf("tag_id" to it)
-                    )
+                val results = serverManager.defaultServers.map { server ->
+                    async {
+                        try {
+                            serverManager.integrationRepository(server.id).scanTag(hashMapOf("tag_id" to it))
+                            true
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Unable to send tag to Home Assistant.", e)
+                            false
+                        }
+                    }
+                }
+                if (results.awaitAll().any { it }) {
                     _nfcResultSnackbar.emit(commonR.string.nfc_event_fired_success)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Unable to send tag to Home Assistant.", e)
+                } else {
                     _nfcResultSnackbar.emit(commonR.string.nfc_event_fired_fail)
                 }
             } ?: _nfcResultSnackbar.emit(commonR.string.nfc_event_fired_fail)
