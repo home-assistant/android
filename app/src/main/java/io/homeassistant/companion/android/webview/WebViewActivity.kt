@@ -91,6 +91,7 @@ import io.homeassistant.companion.android.nfc.WriteNfcTag
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.SettingsActivity
+import io.homeassistant.companion.android.settings.server.ServerChooserFragment
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.ChangeLog
 import io.homeassistant.companion.android.util.DataUriDownloadManager
@@ -281,11 +282,24 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     direction: SwipeDirection,
                     pointerCount: Int
                 ): Boolean {
-                    if (pointerCount == 3 &&
-                        direction == SwipeDirection.DOWN &&
-                        velocity >= 150
-                    ) {
-                        dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_E))
+                    if (pointerCount == 3 && velocity >= 75) {
+                        when (direction) {
+                            SwipeDirection.LEFT -> presenter.nextServer()
+                            SwipeDirection.RIGHT -> presenter.previousServer()
+                            SwipeDirection.UP -> {
+                                val serverChooser = ServerChooserFragment()
+                                supportFragmentManager.setFragmentResultListener(ServerChooserFragment.RESULT_KEY, this@WebViewActivity) { _, bundle ->
+                                    if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
+                                        presenter.switchActiveServer(bundle.getInt(ServerChooserFragment.RESULT_SERVER))
+                                    }
+                                    supportFragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)
+                                }
+                                serverChooser.show(supportFragmentManager, ServerChooserFragment.TAG)
+                            }
+                            SwipeDirection.DOWN -> {
+                                dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_E))
+                            }
+                        }
                     }
                     return appLocked
                 }

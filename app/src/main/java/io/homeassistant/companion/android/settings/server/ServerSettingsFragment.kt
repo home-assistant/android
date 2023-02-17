@@ -18,6 +18,7 @@ import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
+import androidx.preference.Preference.OnPreferenceClickListener
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
@@ -81,15 +82,20 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         }
 
         if (presenter.hasMultipleServers()) {
+            val activateClickListener = OnPreferenceClickListener {
+                val intent = WebViewActivity.newInstance(requireContext(), null, serverId).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                }
+                requireContext().startActivity(intent)
+                return@OnPreferenceClickListener true
+            }
             findPreference<Preference>("activate_server")?.let {
                 it.isVisible = true
-                it.setOnPreferenceClickListener {
-                    val intent = WebViewActivity.newInstance(requireContext(), null, serverId).apply {
-                        addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                    }
-                    requireContext().startActivity(intent)
-                    return@setOnPreferenceClickListener true
-                }
+                it.onPreferenceClickListener = activateClickListener
+            }
+            findPreference<Preference>("activate_server_hint")?.let {
+                it.isVisible = true
+                it.onPreferenceClickListener = activateClickListener
             }
         }
 
