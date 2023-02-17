@@ -204,7 +204,7 @@ class SettingsActivity : BaseActivity() {
     }
 
     fun requestAuthentication(title: String, callback: (Int) -> Boolean): Boolean {
-        return if (BiometricManager.from(this).canAuthenticate() != BiometricManager.BIOMETRIC_SUCCESS) {
+        return if (BiometricManager.from(this).canAuthenticate(Authenticator.AUTH_TYPES) != BiometricManager.BIOMETRIC_SUCCESS) {
             false
         } else {
             externalAuthCallback = callback
