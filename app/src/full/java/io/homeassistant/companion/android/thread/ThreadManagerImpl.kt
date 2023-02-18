@@ -12,6 +12,8 @@ import com.google.android.gms.threadnetwork.ThreadNetworkCredentials
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetResponse
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
 import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -38,14 +40,40 @@ class ThreadManagerImpl @Inject constructor(
             HomeAssistantVersion.fromString(config.version)?.isAtLeast(2023, 3, 0) == true
     }
 
+    override suspend fun syncPreferredDataset(
+        context: Context,
+        serverId: Int,
+        scope: CoroutineScope
+    ): IntentSender? {
+        if (!appSupportsThread() || !coreSupportsThread(serverId)) return null
+
+        val getDeviceDataset = scope.async { getPreferredDatasetFromDevice(context) }
+        val getCoreDataset = scope.async { getPreferredDatasetFromServer(serverId) }
+        val deviceThreadIntent = getDeviceDataset.await()
+        val coreThreadDataset = getCoreDataset.await()
+
+        if (deviceThreadIntent == null && coreThreadDataset != null) {
+            try {
+                importDatasetFromServer(context, coreThreadDataset.datasetId, serverId)
+                Log.d(TAG, "Thread import to device completed")
+            } catch (e: Exception) {
+                Log.e(TAG, "Thread import to device failed", e)
+            }
+        } else if (deviceThreadIntent != null && coreThreadDataset == null) {
+            Log.d(TAG, "Thread export is ready")
+            return deviceThreadIntent
+        } // else if device and core both have or don't have datasets, continue
+
+        return null
+    }
+
     override suspend fun getPreferredDatasetFromServer(serverId: Int): ThreadDatasetResponse? {
         val datasets = serverManager.webSocketRepository(serverId).getThreadDatasets()
         return datasets?.firstOrNull { it.preferred }
     }
 
-    override suspend fun importPreferredDatasetFromServer(context: Context, serverId: Int) {
-        val preferred = getPreferredDatasetFromServer(serverId) ?: return
-        val tlv = serverManager.webSocketRepository(serverId).getThreadDatasetTlv(preferred.datasetId)?.tlvAsByteArray
+    override suspend fun importDatasetFromServer(context: Context, datasetId: String, serverId: Int) {
+        val tlv = serverManager.webSocketRepository(serverId).getThreadDatasetTlv(datasetId)?.tlvAsByteArray
         if (tlv != null) {
             val threadBorderAgent = ThreadBorderAgent.newBuilder(BORDER_AGENT_ID.toByteArray()).build()
             val threadNetworkCredentials = ThreadNetworkCredentials.fromActiveOperationalDataset(tlv)
@@ -57,7 +85,7 @@ class ThreadManagerImpl @Inject constructor(
         }
     }
 
-    override suspend fun getThreadPreferredDatasetExport(context: Context): IntentSender? = suspendCoroutine { cont ->
+    override suspend fun getPreferredDatasetFromDevice(context: Context): IntentSender? = suspendCoroutine { cont ->
         if (appSupportsThread()) {
             ThreadNetwork.getClient(context)
                 .preferredCredentials

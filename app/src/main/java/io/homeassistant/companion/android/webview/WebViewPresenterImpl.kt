@@ -19,7 +19,6 @@ import io.homeassistant.companion.android.util.UrlHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -295,36 +294,15 @@ class WebViewPresenterImpl @Inject constructor(
             _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.REQUESTED)
 
             mainScope.launch {
-                if (!threadUseCase.appSupportsThread() || !threadUseCase.coreSupportsThread(serverId)) {
-                    startMatterCommissioningFlow(context)
-                    return@launch
-                }
-
-                val getDeviceThreadIntent = async { threadUseCase.getThreadPreferredDatasetExport(context) }
-                val getCoreThreadDataset = async { threadUseCase.getPreferredDatasetFromServer(serverId) }
-                val deviceThreadIntent = getDeviceThreadIntent.await()
-                val coreThreadDataset = getCoreThreadDataset.await()
-                if (deviceThreadIntent == null && coreThreadDataset != null) {
-                    startThreadPreferredCredentialsImport(context)
-                } else if (deviceThreadIntent != null && coreThreadDataset == null) {
-                    Log.d(TAG, "Thread export is ready")
+                val deviceThreadIntent = threadUseCase.syncPreferredDataset(context, serverId, this)
+                if (deviceThreadIntent != null) {
                     matterCommissioningIntentSender = deviceThreadIntent
                     _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.THREAD_EXPORT_TO_SERVER)
-                } else { // If device and core both have or don't have datasets, skip import/export
+                } else {
                     startMatterCommissioningFlow(context)
                 }
             }
         } // else already waiting for a result, don't send another request
-    }
-
-    private suspend fun startThreadPreferredCredentialsImport(context: Context) {
-        try {
-            threadUseCase.importPreferredDatasetFromServer(context, serverId)
-            Log.d(TAG, "Thread import to device completed")
-        } catch (e: Exception) {
-            Log.e(TAG, "Thread import to device failed, continuing with commissioning")
-        }
-        startMatterCommissioningFlow(context)
     }
 
     private fun startMatterCommissioningFlow(context: Context) {
