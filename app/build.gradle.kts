@@ -168,6 +168,7 @@ dependencies {
 
     "fullImplementation"("com.google.android.gms:play-services-location:21.0.1")
     "fullImplementation"("com.google.android.gms:play-services-home:16.0.0")
+    "fullImplementation"("com.google.android.gms:play-services-threadnetwork:16.0.0-beta02")
     "fullImplementation"(platform("com.google.firebase:firebase-bom:31.1.1"))
     "fullImplementation"("com.google.firebase:firebase-messaging")
     "fullImplementation"("io.sentry:sentry-android:6.14.0")
