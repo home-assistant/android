@@ -2,13 +2,17 @@
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
     <release version="2023.2 - Phone" versioncode="2">
+        <change>Multi-server support! Add additional servers in Companion App Settings.</change>
         <change>Android Auto: Add support to navigate to any sensor that has latitude and longitude attributes</change>
+        <change>Change sensor enabled by default logic, new users will no longer have Battery Power, Battery Temperature or Is Charging sensors enabled by default</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2023.2 - Wear" versioncode="1">
         <change>Add Text To Speech notifications</change>
         <change>Add watchface complication for Assist</change>
         <change>Add new setting to only show favorites on the home screen</change>
+        <change>Show app version number in settings</change>
+        <change>Note: Multi-server not currently supported on Wear OS</change>
         <change>Bug fixes and dependency updates</change>
     </release>
 </changelog>
