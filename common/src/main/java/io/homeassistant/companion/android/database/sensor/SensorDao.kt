@@ -28,6 +28,10 @@ interface SensorDao {
     fun getFull(id: String): Map<Sensor, List<Attribute>>
 
     @Transaction
+    @Query("SELECT * FROM sensors LEFT JOIN sensor_attributes ON sensors.id = sensor_attributes.sensor_id WHERE sensors.id = :id AND sensors.server_id = :serverId")
+    fun getFull(id: String, serverId: Int): Map<Sensor, List<Attribute>>
+
+    @Transaction
     @Query("SELECT * FROM sensors LEFT JOIN sensor_attributes ON sensors.id = sensor_attributes.sensor_id WHERE sensors.id = :id")
     fun getFullFlow(id: String): Flow<Map<Sensor, List<Attribute>>>
 
@@ -159,19 +163,8 @@ interface SensorDao {
             val newServers = servers.filter { it !in sensorList.map { sensor -> sensor.serverId } }
             if (newServers.isNotEmpty()) {
                 // If we have any new servers but don't have entries create one for updates.
-                val singleSensor = sensorList.first()
                 newServers.forEach {
-                    add(
-                        singleSensor.copy(
-                            serverId = it,
-                            registered = null,
-                            state = "",
-                            stateType = "",
-                            lastSentState = null,
-                            lastSentIcon = null,
-                            coreRegistration = null
-                        )
-                    )
+                    add(Sensor(sensorId, it, enabled = permission && enabledByDefault, state = ""))
                 }
                 changedList = true
             }
