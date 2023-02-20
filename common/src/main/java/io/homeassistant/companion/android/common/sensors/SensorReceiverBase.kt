@@ -110,10 +110,11 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                     val eventData = intent.extras?.keySet()?.map { it.toString() to intent.extras?.get(it).toString() }?.toMap()?.plus("intent" to intent.action.toString())
                         ?: mapOf("intent" to intent.action.toString())
                     Log.d(tag, "Event data: $eventData")
-                    serverManager.defaultServers.forEach { server ->
+                    sensorDao.get(LastUpdateManager.lastUpdate.id).forEach { sensor ->
+                        if (!sensor.enabled) return@forEach
                         ioScope.launch {
                             try {
-                                serverManager.integrationRepository(server.id).fireEvent(
+                                serverManager.integrationRepository(sensor.serverId).fireEvent(
                                     "android.intent_received",
                                     eventData as Map<String, Any>
                                 )
