@@ -40,6 +40,11 @@
             android:title="@string/fullscreen"
             android:summary="@string/fullscreen_def"/>
         <SwitchPreference
+            android:icon="@drawable/ic_landscape"
+            android:key="landscape"
+            android:summary="@string/landscape_def"
+            android:title="@string/landscape" />
+        <SwitchPreference
             android:key="keep_screen_on"
             android:icon="@drawable/ic_phone_check"
             android:title="@string/keep_screen_on"

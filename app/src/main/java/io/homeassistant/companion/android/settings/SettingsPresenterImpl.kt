@@ -52,6 +52,7 @@ class SettingsPresenterImpl @Inject constructor(
     override fun getBoolean(key: String, defValue: Boolean): Boolean = runBlocking {
         return@runBlocking when (key) {
             "fullscreen" -> prefsRepository.isFullScreenEnabled()
+            "landscape" -> prefsRepository.isLandscapeEnabled()
             "keep_screen_on" -> prefsRepository.isKeepScreenOnEnabled()
             "pinch_to_zoom" -> prefsRepository.isPinchToZoomEnabled()
             "crash_reporting" -> prefsRepository.isCrashReporting()
@@ -66,6 +67,7 @@ class SettingsPresenterImpl @Inject constructor(
         mainScope.launch {
             when (key) {
                 "fullscreen" -> prefsRepository.setFullScreenEnabled(value)
+                "landscape" -> prefsRepository.setLandscapeEnabled(value)
                 "keep_screen_on" -> prefsRepository.setKeepScreenOnEnabled(value)
                 "pinch_to_zoom" -> prefsRepository.setPinchToZoomEnabled(value)
                 "crash_reporting" -> prefsRepository.setCrashReporting(value)

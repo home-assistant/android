@@ -23,6 +23,7 @@ class PrefsRepositoryImpl @Inject constructor(
         private const val PREF_CONTROLS_AUTH_ENTITIES = "controls_auth_entities"
         private const val PREF_FULLSCREEN_ENABLED = "fullscreen_enabled"
         private const val PREF_KEEP_SCREEN_ON_ENABLED = "keep_screen_on_enabled"
+        private const val PREF_LANDSCAPE_ENABLED = "keep_landscape_enabled"
         private const val PREF_PINCH_TO_ZOOM_ENABLED = "pinch_to_zoom_enabled"
         private const val PREF_AUTOPLAY_VIDEO = "autoplay_video"
         private const val PREF_ALWAYS_SHOW_FIRST_VIEW_ON_APP_START = "always_show_first_view_on_app_start"
@@ -46,6 +47,9 @@ class PrefsRepositoryImpl @Inject constructor(
                 }
                 integrationStorage.getBooleanOrNull(PREF_KEEP_SCREEN_ON_ENABLED)?.let {
                     localStorage.putBoolean(PREF_KEEP_SCREEN_ON_ENABLED, it)
+                }
+                integrationStorage.getBooleanOrNull(PREF_LANDSCAPE_ENABLED)?.let {
+                    localStorage.putBoolean(PREF_LANDSCAPE_ENABLED, it)
                 }
                 integrationStorage.getBooleanOrNull(PREF_PINCH_TO_ZOOM_ENABLED)?.let {
                     localStorage.putBoolean(PREF_PINCH_TO_ZOOM_ENABLED, it)
@@ -130,6 +134,14 @@ class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setKeepScreenOnEnabled(enabled: Boolean) {
         localStorage.putBoolean(PREF_KEEP_SCREEN_ON_ENABLED, enabled)
+    }
+
+    override suspend fun isLandscapeEnabled(): Boolean {
+        return localStorage.getBoolean(PREF_LANDSCAPE_ENABLED)
+    }
+
+    override suspend fun setLandscapeEnabled(enabled: Boolean) {
+        localStorage.putBoolean(PREF_LANDSCAPE_ENABLED, enabled)
     }
 
     override suspend fun isPinchToZoomEnabled(): Boolean {
