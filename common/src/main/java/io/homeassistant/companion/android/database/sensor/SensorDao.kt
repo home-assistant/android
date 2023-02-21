@@ -132,14 +132,10 @@ interface SensorDao {
     }
 
     @Transaction
-    fun getOrDefault(sensorId: String, serverId: Int, permission: Boolean, enabledByDefault: Boolean): Sensor {
-        var sensor = get(sensorId, serverId)
+    fun getOrDefault(sensorId: String, serverId: Int, permission: Boolean, enabledByDefault: Boolean): Sensor? {
+        val sensor = get(sensorId, serverId)
 
-        if (sensor == null) {
-            // If we haven't created the entity yet do so and default to enabled if required
-            sensor = Sensor(sensorId, serverId, enabled = permission && enabledByDefault, state = "")
-            add(sensor)
-        } else if (sensor.enabled && !permission) {
+        if (sensor?.enabled == true && !permission) {
             // If we don't have permission but we are still enabled then we aren't really enabled.
             sensor.enabled = false
             update(sensor)
