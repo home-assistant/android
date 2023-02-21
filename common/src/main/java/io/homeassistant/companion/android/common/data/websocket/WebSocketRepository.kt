@@ -16,6 +16,8 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ge
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TemplateUpdatedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetTlvResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TriggerEvent
 import kotlinx.coroutines.flow.Flow
 
@@ -41,6 +43,9 @@ interface WebSocketRepository {
     suspend fun ackNotification(confirmId: String): Boolean
     suspend fun commissionMatterDevice(code: String): MatterCommissionResponse?
     suspend fun commissionMatterDeviceOnNetwork(pin: Long): MatterCommissionResponse?
+    suspend fun getThreadDatasets(): List<ThreadDatasetResponse>?
+    suspend fun getThreadDatasetTlv(datasetId: String): ThreadDatasetTlvResponse?
+    suspend fun addThreadDataset(tlv: ByteArray): Boolean
     suspend fun getConversation(speech: String): ConversationResponse?
 }
 

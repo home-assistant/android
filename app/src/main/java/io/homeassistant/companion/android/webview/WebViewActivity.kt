@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.webview
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.app.DownloadManager
 import android.app.PictureInPictureParams
 import android.content.ActivityNotFoundException
@@ -164,9 +163,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         mFilePathCallback = null
     }
     private val commissionMatterDevice = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-        // Any errors will have been shown in the UI provided by Play Services
-        if (result.resultCode == Activity.RESULT_OK) Log.d(TAG, "Matter commissioning returned success")
-        else Log.d(TAG, "Matter commissioning returned with non-OK code ${result.resultCode}")
+        presenter.onMatterCommissioningIntentResult(this, result)
     }
 
     @Inject
@@ -683,6 +680,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 presenter.getMatterCommissioningStatusFlow().collect {
                     Log.d(TAG, "Matter commissioning status changed to $it")
                     when (it) {
+                        MatterFrontendCommissioningStatus.THREAD_EXPORT_TO_SERVER,
                         MatterFrontendCommissioningStatus.IN_PROGRESS -> {
                             presenter.getMatterCommissioningIntent()?.let { intentSender ->
                                 commissionMatterDevice.launch(IntentSenderRequest.Builder(intentSender).build())

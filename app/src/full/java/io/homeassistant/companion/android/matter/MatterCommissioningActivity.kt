@@ -3,11 +3,14 @@ package io.homeassistant.companion.android.matter
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.compose.setContent
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.themeadapter.material.MdcTheme
 import com.google.android.gms.home.matter.Matter
 import com.google.android.gms.home.matter.commissioning.SharedDeviceData
@@ -16,6 +19,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.matter.views.MatterCommissioningView
 import io.homeassistant.companion.android.webview.WebViewActivity
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -33,6 +37,10 @@ class MatterCommissioningActivity : AppCompatActivity() {
     private var deviceName by mutableStateOf<String?>(null)
     private var servers by mutableStateOf<List<Server>>(emptyList())
 
+    private val threadPermissionLauncher = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+        deviceCode?.let { viewModel.onThreadPermissionResult(result, it) }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -43,7 +51,7 @@ class MatterCommissioningActivity : AppCompatActivity() {
                     deviceName = deviceName,
                     servers = servers,
                     onSelectServer = viewModel::checkSupport,
-                    onConfirmCommissioning = { deviceCode?.let { viewModel.commissionDeviceWithCode(it) } },
+                    onConfirmCommissioning = { startCommissioning() },
                     onClose = { finish() },
                     onContinue = { continueToApp(false) }
                 )
@@ -77,6 +85,19 @@ class MatterCommissioningActivity : AppCompatActivity() {
         } else {
             Log.d(TAG, "No Matter commissioning data, launching webview")
             continueToApp(true)
+        }
+    }
+
+    private fun startCommissioning() {
+        lifecycleScope.launch {
+            val threadIntent = viewModel.syncThreadIfNecessary()
+            if (threadIntent != null) {
+                threadPermissionLauncher.launch(IntentSenderRequest.Builder(threadIntent).build())
+            } else {
+                deviceCode?.let {
+                    viewModel.commissionDeviceWithCode(it)
+                }
+            }
         }
     }
 

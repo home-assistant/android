@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.matter
 
 import android.app.Application
+import android.content.IntentSender
+import androidx.activity.result.ActivityResult
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -8,12 +10,14 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.thread.ThreadManager
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class MatterCommissioningViewModel @Inject constructor(
     private val matterManager: MatterManager,
+    private val threadManager: ThreadManager,
     private val serverManager: ServerManager,
     application: Application
 ) : AndroidViewModel(application) {
@@ -72,6 +76,22 @@ class MatterCommissioningViewModel @Inject constructor(
             step =
                 if (coreSupport) CommissioningFlowStep.Confirmation
                 else CommissioningFlowStep.NotSupported
+        }
+    }
+
+    suspend fun syncThreadIfNecessary(): IntentSender? {
+        step = CommissioningFlowStep.Working
+        return threadManager.syncPreferredDataset(
+            getApplication<Application>().applicationContext,
+            serverId,
+            viewModelScope
+        )
+    }
+
+    fun onThreadPermissionResult(result: ActivityResult, code: String) {
+        viewModelScope.launch {
+            threadManager.sendThreadDatasetExportResult(result, serverId)
+            commissionDeviceWithCode(code)
         }
     }
 

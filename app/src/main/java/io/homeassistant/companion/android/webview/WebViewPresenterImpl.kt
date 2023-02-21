@@ -1,10 +1,12 @@
 package io.homeassistant.companion.android.webview
 
+import android.app.Activity
 import android.content.Context
 import android.content.IntentSender
 import android.graphics.Color
 import android.net.Uri
 import android.util.Log
+import androidx.activity.result.ActivityResult
 import dagger.hilt.android.qualifiers.ActivityContext
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
@@ -12,6 +14,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.matter.MatterFrontendCommissioningStatus
 import io.homeassistant.companion.android.matter.MatterManager
+import io.homeassistant.companion.android.thread.ThreadManager
 import io.homeassistant.companion.android.util.UrlHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -36,7 +39,8 @@ class WebViewPresenterImpl @Inject constructor(
     @ActivityContext context: Context,
     private val serverManager: ServerManager,
     private val prefsRepository: PrefsRepository,
-    private val matterUseCase: MatterManager
+    private val matterUseCase: MatterManager,
+    private val threadUseCase: ThreadManager
 ) : WebViewPresenter {
 
     companion object {
@@ -289,19 +293,31 @@ class WebViewPresenterImpl @Inject constructor(
         if (_matterCommissioningStatus.value != MatterFrontendCommissioningStatus.REQUESTED) {
             _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.REQUESTED)
 
-            matterUseCase.startNewCommissioningFlow(
-                context,
-                { intentSender ->
-                    Log.d(TAG, "Matter commissioning is ready")
-                    matterCommissioningIntentSender = intentSender
-                    _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.IN_PROGRESS)
-                },
-                { e ->
-                    Log.e(TAG, "Matter commissioning couldn't be prepared", e)
-                    _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.ERROR)
+            mainScope.launch {
+                val deviceThreadIntent = threadUseCase.syncPreferredDataset(context, serverId, this)
+                if (deviceThreadIntent != null) {
+                    matterCommissioningIntentSender = deviceThreadIntent
+                    _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.THREAD_EXPORT_TO_SERVER)
+                } else {
+                    startMatterCommissioningFlow(context)
                 }
-            )
+            }
         } // else already waiting for a result, don't send another request
+    }
+
+    private fun startMatterCommissioningFlow(context: Context) {
+        matterUseCase.startNewCommissioningFlow(
+            context,
+            { intentSender ->
+                Log.d(TAG, "Matter commissioning is ready")
+                matterCommissioningIntentSender = intentSender
+                _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.IN_PROGRESS)
+            },
+            { e ->
+                Log.e(TAG, "Matter commissioning couldn't be prepared", e)
+                _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.ERROR)
+            }
+        )
     }
 
     override fun getMatterCommissioningStatusFlow(): Flow<MatterFrontendCommissioningStatus> =
@@ -311,6 +327,22 @@ class WebViewPresenterImpl @Inject constructor(
         val intent = matterCommissioningIntentSender
         matterCommissioningIntentSender = null
         return intent
+    }
+
+    override fun onMatterCommissioningIntentResult(context: Context, result: ActivityResult) {
+        when (_matterCommissioningStatus.value) {
+            MatterFrontendCommissioningStatus.THREAD_EXPORT_TO_SERVER -> {
+                mainScope.launch {
+                    threadUseCase.sendThreadDatasetExportResult(result, serverId)
+                    startMatterCommissioningFlow(context)
+                }
+            }
+            else -> {
+                // Any errors will have been shown in the UI provided by Play Services
+                if (result.resultCode == Activity.RESULT_OK) Log.d(TAG, "Matter commissioning returned success")
+                else Log.d(TAG, "Matter commissioning returned with non-OK code ${result.resultCode}")
+            }
+        }
     }
 
     override fun confirmMatterCommissioningError() {

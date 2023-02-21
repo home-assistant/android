@@ -36,7 +36,10 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ma
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TemplateUpdatedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetTlvResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TriggerEvent
+import io.homeassistant.companion.android.common.util.toHexString
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -392,6 +395,52 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
                 } else null
             )
         }
+    }
+
+    /**
+     * Return a list of all Thread datasets known to the server.
+     * @return List with [ThreadDatasetResponse]s, or `null` if not an admin or no response.
+     */
+    override suspend fun getThreadDatasets(): List<ThreadDatasetResponse>? {
+        val response = sendMessage(
+            mapOf(
+                "type" to "thread/list_datasets"
+            )
+        )
+        return if (response?.success == true && response.result?.contains("datasets") == true) {
+            mapper.convertValue(response.result["datasets"]!!)
+        } else null
+    }
+
+    /**
+     * Return the TLV value for a dataset.
+     * @return [ThreadDatasetTlvResponse] for the Thread dataset, or `null` if not found, not an
+     * admin or no response.
+     */
+    override suspend fun getThreadDatasetTlv(datasetId: String): ThreadDatasetTlvResponse? {
+        val response = sendMessage(
+            mapOf(
+                "type" to "thread/get_dataset_tlv",
+                "dataset_id" to datasetId
+            )
+        )
+
+        return mapResponse(response)
+    }
+
+    /**
+     * Add a new set of Thread network credentials to the server.
+     * @return `true` if the server indicated success
+     */
+    override suspend fun addThreadDataset(tlv: ByteArray): Boolean {
+        val response = sendMessage(
+            mapOf(
+                "type" to "thread/add_dataset_tlv",
+                "source" to "Google",
+                "tlv" to tlv.toHexString()
+            )
+        )
+        return response?.success == true
     }
 
     private suspend fun connect(): Boolean {
