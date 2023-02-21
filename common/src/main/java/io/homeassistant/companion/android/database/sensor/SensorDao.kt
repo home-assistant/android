@@ -109,6 +109,13 @@ interface SensorDao {
     suspend fun getEnabledCount(): Int?
 
     @Transaction
+    suspend fun setSensorEnabled(sensorId: String, serverIds: List<Int>, enabled: Boolean) {
+        serverIds.forEach {
+            setSensorsEnabled(listOf(sensorId), it, enabled)
+        }
+    }
+
+    @Transaction
     suspend fun setSensorsEnabled(sensorIds: List<String>, serverId: Int, enabled: Boolean) {
         coroutineScope {
             sensorIds.map { sensorId ->

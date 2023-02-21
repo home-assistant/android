@@ -646,6 +646,8 @@
     <string name="sensor_settings">Sensor Settings</string>
     <string name="sensor_summary">Use this to manage what sensors are enabled/disabled.</string>
     <string name="sensor_title">Manage Sensors</string>
+    <string name="sensor_unfold_less">Hide Server Settings</string>
+    <string name="sensor_unfold_more">Show Server Settings</string>
     <string name="sensor">Sensor</string>
     <string name="sensors_with_settings">The following sensors offer custom settings: %1$s</string>
     <string name="sensors">Sensors</string>

@@ -183,7 +183,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
 
         try {
             serverManager.defaultServers.map { server ->
-                ioScope.async { syncSensorsWithServer(context, server, sensorDao) }
+                ioScope.async { syncSensorsWithServer(context, serverManager, server, sensorDao) }
             }.awaitAll()
             Log.i(tag, "Sensor updates and sync completed")
         } catch (e: Exception) {
@@ -193,6 +193,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
 
     private suspend fun syncSensorsWithServer(
         context: Context,
+        serverManager: ServerManager,
         server: Server,
         sensorDao: SensorDao
     ): Boolean {

@@ -3,10 +3,12 @@ package io.homeassistant.companion.android.settings.sensor.views
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -68,9 +70,9 @@ import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.sensors.SensorManager
-import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
+import io.homeassistant.companion.android.database.sensor.SensorWithAttributes
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.settings.sensor.SensorDetailViewModel
 import io.homeassistant.companion.android.util.compose.MdcAlertDialog
@@ -82,7 +84,7 @@ import io.homeassistant.companion.android.common.R as commonR
 @Composable
 fun SensorDetailView(
     viewModel: SensorDetailViewModel,
-    onSetEnabled: (Boolean) -> Unit,
+    onSetEnabled: (Boolean, Int?) -> Unit,
     onToggleSettingSubmitted: (SensorSetting) -> Unit,
     onDialogSettingClicked: (SensorSetting) -> Unit,
     onDialogSettingSubmitted: (SensorDetailViewModel.Companion.SettingDialogState) -> Unit
@@ -105,7 +107,7 @@ fun SensorDetailView(
             ).let { result ->
                 if (result == SnackbarResult.ActionPerformed) {
                     if (it.actionOpensSettings) context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}")))
-                    else onSetEnabled(true)
+                    else onSetEnabled(true, it.serverId)
                 }
             }
         }.launchIn(this)
@@ -132,8 +134,9 @@ fun SensorDetailView(
                 item {
                     SensorDetailTopPanel(
                         basicSensor = viewModel.basicSensor,
-                        dbSensor = viewModel.sensor?.sensor,
-                        sensorEnabled = sensorEnabled,
+                        dbSensor = viewModel.sensors,
+                        sensorsExpanded = viewModel.serversStateExpand.value,
+                        serverNames = viewModel.serverNames,
                         onSetEnabled = onSetEnabled
                     )
                 }
@@ -239,18 +242,20 @@ fun SensorDetailView(
 @Composable
 fun SensorDetailTopPanel(
     basicSensor: SensorManager.BasicSensor,
-    dbSensor: Sensor?,
-    sensorEnabled: Boolean,
-    onSetEnabled: (Boolean) -> Unit
+    dbSensor: List<SensorWithAttributes>,
+    sensorsExpanded: Boolean,
+    serverNames: Map<Int, String>,
+    onSetEnabled: (Boolean, Int?) -> Unit
 ) {
     val context = LocalContext.current
+    val sensor = dbSensor.map { it.sensor }.maxByOrNull { it.enabled }
 
     Surface(color = colorResource(commonR.color.colorSensorTopBackground)) {
         Column {
             CompositionLocalProvider(
-                LocalContentAlpha provides (if (sensorEnabled) ContentAlpha.high else ContentAlpha.disabled)
+                LocalContentAlpha provides (if (sensor?.enabled == true) ContentAlpha.high else ContentAlpha.disabled)
             ) {
-                val cardElevation: Dp by animateDpAsState(if (sensorEnabled) 8.dp else 1.dp)
+                val cardElevation: Dp by animateDpAsState(if (sensor?.enabled == true) 8.dp else 1.dp)
                 Card(
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 32.dp),
                     elevation = cardElevation
@@ -263,10 +268,8 @@ fun SensorDetailTopPanel(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         var iconToUse = basicSensor.statelessIcon
-                        dbSensor?.let {
-                            if (it.enabled && it.icon.isNotBlank()) {
-                                iconToUse = it.icon
-                            }
+                        if (sensor?.enabled == true && sensor.icon.isNotBlank()) {
+                            iconToUse = sensor.icon
                         }
                         val mdiIcon = try {
                             IconicsDrawable(context, "cmd-${iconToUse.split(":")[1]}").icon
@@ -278,9 +281,9 @@ fun SensorDetailTopPanel(
                                 contentDescription = stringResource(commonR.string.icon),
                                 modifier = Modifier
                                     .size(24.dp)
-                                    .alpha(if (sensorEnabled) ContentAlpha.high else ContentAlpha.disabled),
+                                    .alpha(if (sensor?.enabled == true) ContentAlpha.high else ContentAlpha.disabled),
                                 colorFilter = ColorFilter.tint(
-                                    if (sensorEnabled) colorResource(commonR.color.colorSensorIconEnabled)
+                                    if (sensor?.enabled == true) colorResource(commonR.color.colorSensorIconEnabled)
                                     else contentColorFor(backgroundColor = MaterialTheme.colors.background)
                                 )
                             )
@@ -294,12 +297,12 @@ fun SensorDetailTopPanel(
                         )
                         SelectionContainer(modifier = Modifier.weight(0.5f)) {
                             Text(
-                                text = if (dbSensor?.enabled == true) {
-                                    if (dbSensor.state.isBlank()) {
+                                text = if (sensor?.enabled == true) {
+                                    if (sensor.state.isBlank()) {
                                         stringResource(commonR.string.enabled)
                                     } else {
-                                        if (dbSensor.unitOfMeasurement.isNullOrBlank()) dbSensor.state
-                                        else "${dbSensor.state} ${dbSensor.unitOfMeasurement}"
+                                        if (sensor.unitOfMeasurement.isNullOrBlank()) sensor.state
+                                        else "${sensor.state} ${sensor.unitOfMeasurement}"
                                     }
                                 } else {
                                     stringResource(commonR.string.disabled)
@@ -311,42 +314,70 @@ fun SensorDetailTopPanel(
                 }
             }
 
-            val enableBarModifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 64.dp)
-                .clickable {
-                    onSetEnabled(!sensorEnabled)
-                }
-            Column(
-                modifier =
-                if (sensorEnabled) Modifier
-                    .background(colorResource(commonR.color.colorSensorTopEnabled))
-                    .then(enableBarModifier)
-                else enableBarModifier
-            ) {
-                Row(
-                    modifier = Modifier
-                        .padding(all = 16.dp)
-                        .weight(1f),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = stringResource(
-                            if (basicSensor.type == "binary_sensor" || basicSensor.type == "sensor") commonR.string.enable_sensor
-                            else (if (sensorEnabled) commonR.string.enabled else commonR.string.disabled)
-                        ),
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Switch(
-                        checked = sensorEnabled,
-                        onCheckedChange = null,
-                        modifier = Modifier.padding(start = 16.dp),
-                        colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(commonR.color.colorSwitchUncheckedThumb))
+            Column(modifier = Modifier.animateContentSize()) {
+                if (sensorsExpanded) {
+                    dbSensor.forEach { thisSensor ->
+                        SensorDetailEnableRow(
+                            basicSensor = basicSensor,
+                            enabled = thisSensor.sensor.enabled,
+                            serverName = serverNames[thisSensor.sensor.serverId],
+                            onSetEnabled = { onSetEnabled(!thisSensor.sensor.enabled, thisSensor.sensor.serverId) }
+                        )
+                    }
+                } else {
+                    SensorDetailEnableRow(
+                        basicSensor = basicSensor,
+                        enabled = sensor?.enabled == true,
+                        serverName = null,
+                        onSetEnabled = { onSetEnabled(sensor?.enabled != true, null) }
                     )
                 }
             }
             Divider()
+        }
+    }
+}
+
+@Composable
+fun SensorDetailEnableRow(
+    basicSensor: SensorManager.BasicSensor,
+    enabled: Boolean,
+    serverName: String?,
+    onSetEnabled: () -> Unit
+) {
+    val enableBarModifier = Modifier
+        .fillMaxWidth()
+        .heightIn(min = 64.dp)
+        .clickable { onSetEnabled() }
+    val switchDescription = stringResource(
+        if (basicSensor.type == "binary_sensor" || basicSensor.type == "sensor") commonR.string.enable_sensor
+        else (if (enabled) commonR.string.enabled else commonR.string.disabled)
+    )
+    Box(
+        modifier =
+        if (enabled) Modifier
+            .background(colorResource(commonR.color.colorSensorTopEnabled))
+            .then(enableBarModifier)
+        else enableBarModifier,
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(all = 16.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = if (serverName.isNullOrBlank()) switchDescription else "$serverName: $switchDescription",
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.weight(1f)
+            )
+            Switch(
+                checked = enabled,
+                onCheckedChange = null,
+                modifier = Modifier.padding(start = 16.dp),
+                colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(commonR.color.colorSwitchUncheckedThumb))
+            )
         }
     }
 }
