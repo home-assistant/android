@@ -215,6 +215,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var exoBottom: Int = 0
     private var exoMute: Boolean = true
     private var failedConnection = "external"
+    private var clearHistory = false
     private var moreInfoEntity = ""
     private val moreInfoMutex = Mutex()
     private var currentAutoplay: Boolean = false
@@ -328,6 +329,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 }
 
                 override fun onPageFinished(view: WebView?, url: String?) {
+                    if (clearHistory) {
+                        webView.clearHistory()
+                        clearHistory = false
+                    }
                     enablePinchToZoom()
                     if (moreInfoEntity != "" && view?.progress == 100 && isConnected) {
                         ioScope.launch {
@@ -1088,9 +1093,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     override fun loadUrl(url: String, keepHistory: Boolean) {
         loadedUrl = url
+        clearHistory = !keepHistory
         webView.loadUrl(url)
         waitForConnection()
-        if (!keepHistory) webView.clearHistory()
     }
 
     override fun setStatusBarAndNavigationBarColor(statusBarColor: Int, navigationBarColor: Int) {
