@@ -153,7 +153,7 @@ class SensorDetailViewModel @Inject constructor(
                 val expandable = sensors.size > 1 && (sensors.all { it.sensor.enabled } || sensors.all { !it.sensor.enabled })
                 _serversShowExpand.emit(expandable)
                 if (!expandable) {
-                    if (sensors.size == 1 && serversDoExpand.value) {
+                    if (sensors.size == 1) {
                         _serversDoExpand.emit(false)
                     } else {
                         _serversDoExpand.emit(true)
