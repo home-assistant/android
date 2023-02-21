@@ -170,8 +170,19 @@ interface SensorDao {
             val newServers = servers.filter { it !in sensorList.map { sensor -> sensor.serverId } }
             if (newServers.isNotEmpty()) {
                 // If we have any new servers but don't have entries create one for updates.
+                val singleSensor = sensorList.maxBy { it.enabled } // Prefer enabled
                 newServers.forEach {
-                    add(Sensor(sensorId, it, enabled = permission && enabledByDefault, state = ""))
+                    add(
+                        singleSensor.copy(
+                            serverId = it,
+                            registered = null,
+                            state = "",
+                            stateType = "",
+                            lastSentState = null,
+                            lastSentIcon = null,
+                            coreRegistration = null
+                        )
+                    )
                 }
                 changedList = true
             }
