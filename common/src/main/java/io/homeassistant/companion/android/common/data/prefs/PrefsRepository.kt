@@ -35,9 +35,9 @@ interface PrefsRepository {
 
     suspend fun setKeepScreenOnEnabled(enabled: Boolean)
 
-    suspend fun isLandscapeEnabled(): Boolean
+    suspend fun getScreenOrientation(): String?
 
-    suspend fun setLandscapeEnabled(enabled: Boolean)
+    suspend fun saveScreenOrientation(orientation: String?)
 
     suspend fun isPinchToZoomEnabled(): Boolean
 

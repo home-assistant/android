@@ -39,11 +39,14 @@
             android:icon="@drawable/ic_fullscreen"
             android:title="@string/fullscreen"
             android:summary="@string/fullscreen_def"/>
-        <SwitchPreference
+        <ListPreference
+            android:key="screen_orientation"
+            android:defaultValue="@string/screen_orientation_option_value_system"
+            android:entries="@array/pref_screen_orientation_option_labels"
+            android:entryValues="@array/pref_screen_orientation_option_values"
             android:icon="@drawable/ic_landscape"
-            android:key="landscape"
-            android:summary="@string/landscape_def"
-            android:title="@string/landscape" />
+            android:summary="@string/screen_orientation_def"
+            android:title="@string/screen_orientation_title_settings"/>
         <SwitchPreference
             android:key="keep_screen_on"
             android:icon="@drawable/ic_phone_check"

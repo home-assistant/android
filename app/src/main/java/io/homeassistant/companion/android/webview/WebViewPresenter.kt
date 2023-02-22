@@ -21,7 +21,7 @@ interface WebViewPresenter {
 
     fun isFullScreen(): Boolean
 
-    fun isLandscape(): Boolean
+    fun getScreenOrientation(): String?
 
     fun isKeepScreenOnEnabled(): Boolean
 

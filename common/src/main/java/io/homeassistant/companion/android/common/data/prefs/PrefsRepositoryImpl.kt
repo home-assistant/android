@@ -19,11 +19,11 @@ class PrefsRepositoryImpl @Inject constructor(
         private const val PREF_THEME = "theme"
         private const val PREF_LANG = "lang"
         private const val PREF_LOCALES = "locales"
+        private const val PREF_SCREEN_ORIENTATION = "screen_orientation"
         private const val PREF_CONTROLS_AUTH_REQUIRED = "controls_auth_required"
         private const val PREF_CONTROLS_AUTH_ENTITIES = "controls_auth_entities"
         private const val PREF_FULLSCREEN_ENABLED = "fullscreen_enabled"
         private const val PREF_KEEP_SCREEN_ON_ENABLED = "keep_screen_on_enabled"
-        private const val PREF_LANDSCAPE_ENABLED = "keep_landscape_enabled"
         private const val PREF_PINCH_TO_ZOOM_ENABLED = "pinch_to_zoom_enabled"
         private const val PREF_AUTOPLAY_VIDEO = "autoplay_video"
         private const val PREF_ALWAYS_SHOW_FIRST_VIEW_ON_APP_START = "always_show_first_view_on_app_start"
@@ -47,9 +47,6 @@ class PrefsRepositoryImpl @Inject constructor(
                 }
                 integrationStorage.getBooleanOrNull(PREF_KEEP_SCREEN_ON_ENABLED)?.let {
                     localStorage.putBoolean(PREF_KEEP_SCREEN_ON_ENABLED, it)
-                }
-                integrationStorage.getBooleanOrNull(PREF_LANDSCAPE_ENABLED)?.let {
-                    localStorage.putBoolean(PREF_LANDSCAPE_ENABLED, it)
                 }
                 integrationStorage.getBooleanOrNull(PREF_PINCH_TO_ZOOM_ENABLED)?.let {
                     localStorage.putBoolean(PREF_PINCH_TO_ZOOM_ENABLED, it)
@@ -101,6 +98,14 @@ class PrefsRepositoryImpl @Inject constructor(
         localStorage.putString(PREF_LOCALES, locales)
     }
 
+    override suspend fun getScreenOrientation(): String? {
+        return localStorage.getString(PREF_SCREEN_ORIENTATION)
+    }
+
+    override suspend fun saveScreenOrientation(orientation: String?) {
+        localStorage.putString(PREF_SCREEN_ORIENTATION, orientation)
+    }
+
     override suspend fun getControlsAuthRequired(): ControlsAuthRequiredSetting {
         val current = localStorage.getString(PREF_CONTROLS_AUTH_REQUIRED)
         return ControlsAuthRequiredSetting.values().firstOrNull {
@@ -134,14 +139,6 @@ class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setKeepScreenOnEnabled(enabled: Boolean) {
         localStorage.putBoolean(PREF_KEEP_SCREEN_ON_ENABLED, enabled)
-    }
-
-    override suspend fun isLandscapeEnabled(): Boolean {
-        return localStorage.getBoolean(PREF_LANDSCAPE_ENABLED)
-    }
-
-    override suspend fun setLandscapeEnabled(enabled: Boolean) {
-        localStorage.putBoolean(PREF_LANDSCAPE_ENABLED, enabled)
     }
 
     override suspend fun isPinchToZoomEnabled(): Boolean {

@@ -187,8 +187,8 @@ class WebViewPresenterImpl @Inject constructor(
         prefsRepository.isFullScreenEnabled()
     }
 
-    override fun isLandscape(): Boolean = runBlocking {
-        prefsRepository.isLandscapeEnabled()
+    override fun getScreenOrientation(): String? = runBlocking {
+        prefsRepository.getScreenOrientation()
     }
 
     override fun isKeepScreenOnEnabled(): Boolean = runBlocking {
