@@ -241,7 +241,6 @@
     <string name="firebase_error_title">Firebase Error</string>
     <string name="fullscreen_def">Put application in full screen</string>
     <string name="fullscreen">Fullscreen</string>
-    <string name="screen_orientation_def">Fix device in landscape orientation</string>
     <string name="screen_orientation_title_settings">Screen orientation</string>
     <string name="screen_orientation_option_label_system">Follow System Settings</string>
     <string name="screen_orientation_option_label_portrait">Portrait</string>

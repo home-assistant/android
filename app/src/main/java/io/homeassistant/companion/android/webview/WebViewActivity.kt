@@ -745,12 +745,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG || presenter.isWebViewDebugEnabled())
 
-        requestedOrientation = if (presenter.getScreenOrientation() == applicationContext.getString(commonR.string.screen_orientation_option_value_portrait))
-            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-        else if (presenter.getScreenOrientation() == applicationContext.getString(commonR.string.screen_orientation_option_value_landscape))
-            ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-        else
-            ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        requestedOrientation = when (presenter.getScreenOrientation()) {
+            getString(commonR.string.screen_orientation_option_value_portrait) -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            getString(commonR.string.screen_orientation_option_value_landscape) -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+            else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        }
 
         if (presenter.isKeepScreenOnEnabled())
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)

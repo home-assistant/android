@@ -44,9 +44,9 @@
             android:defaultValue="@string/screen_orientation_option_value_system"
             android:entries="@array/pref_screen_orientation_option_labels"
             android:entryValues="@array/pref_screen_orientation_option_values"
-            android:icon="@drawable/ic_landscape"
-            android:summary="@string/screen_orientation_def"
-            android:title="@string/screen_orientation_title_settings"/>
+            android:icon="@drawable/ic_screen_orientation"
+            android:title="@string/screen_orientation_title_settings"
+            app:useSimpleSummaryProvider="true"/>
         <SwitchPreference
             android:key="keep_screen_on"
             android:icon="@drawable/ic_phone_check"
