@@ -307,6 +307,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 }
             })
 
+            settings.minimumFontSize = 5
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             settings.displayZoomControls = false
