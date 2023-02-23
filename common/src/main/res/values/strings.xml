@@ -651,7 +651,8 @@
     <string name="sensors">Sensors</string>
     <string name="server_settings">Server Settings</string>
     <string name="servers_devices_category">Servers &amp; Devices</string>
-    <string name="server_activate">Activate Server</string>
+    <string name="server_activate">Activate</string>
+    <string name="server_activate_swipe_hint">Tip: Quickly activate using a three-finger swipe left, right, or up when viewing a server.</string>
     <string name="server_add">Add Server</string>
     <string name="server_add_success">Server added</string>
     <string name="server_add_failed">Couldn\'t add server</string>

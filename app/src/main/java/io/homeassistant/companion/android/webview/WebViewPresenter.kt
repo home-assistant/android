@@ -13,6 +13,9 @@ interface WebViewPresenter {
     fun getActiveServer(): Int
     fun updateActiveServer()
     fun setActiveServer(id: Int)
+    fun switchActiveServer(id: Int)
+    fun nextServer()
+    fun previousServer()
 
     fun onGetExternalAuth(context: Context, callback: String, force: Boolean)
 

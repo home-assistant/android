@@ -130,6 +130,27 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
+    override fun switchActiveServer(id: Int) {
+        setActiveServer(id)
+        onViewReady(null)
+    }
+
+    override fun nextServer() = moveToServer(next = true)
+
+    override fun previousServer() = moveToServer(next = false)
+
+    private fun moveToServer(next: Boolean) {
+        val servers = serverManager.defaultServers
+        if (servers.size < 2) return
+        val currentServerIndex = servers.indexOfFirst { it.id == serverId }
+        if (currentServerIndex > -1) {
+            var newServerIndex = if (next) currentServerIndex + 1 else currentServerIndex - 1
+            if (newServerIndex == servers.size) newServerIndex = 0
+            if (newServerIndex < 0) newServerIndex = servers.size - 1
+            servers.getOrNull(newServerIndex)?.let { switchActiveServer(it.id) }
+        }
+    }
+
     override fun checkSecurityVersion() {
         mainScope.launch {
             try {
