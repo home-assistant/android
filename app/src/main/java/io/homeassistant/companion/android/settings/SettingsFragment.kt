@@ -108,10 +108,7 @@ class SettingsFragment(
         findPreference<Preference>("server_add")?.let {
             it.setOnPreferenceClickListener {
                 requestOnboardingResult.launch(
-                    OnboardApp.Input(
-                        url = "", // Skip the 'Welcome' screen
-                        locationTrackingPossible = false // Skip because sensors are shared
-                    )
+                    OnboardApp.Input(url = "") // Empty url skips the 'Welcome' screen
                 )
                 return@setOnPreferenceClickListener true
             }
