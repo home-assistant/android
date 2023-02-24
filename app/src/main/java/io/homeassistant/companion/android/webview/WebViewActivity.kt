@@ -6,6 +6,7 @@ import android.app.PictureInPictureParams
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Color
@@ -761,6 +762,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         enablePinchToZoom()
 
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG || presenter.isWebViewDebugEnabled())
+
+        requestedOrientation = when (presenter.getScreenOrientation()) {
+            getString(commonR.string.screen_orientation_option_value_portrait) -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            getString(commonR.string.screen_orientation_option_value_landscape) -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+            else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        }
 
         if (presenter.isKeepScreenOnEnabled())
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)

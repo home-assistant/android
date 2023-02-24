@@ -25,6 +25,8 @@ interface WebViewPresenter {
 
     fun isFullScreen(): Boolean
 
+    fun getScreenOrientation(): String?
+
     fun isKeepScreenOnEnabled(): Boolean
 
     fun isPinchToZoomEnabled(): Boolean

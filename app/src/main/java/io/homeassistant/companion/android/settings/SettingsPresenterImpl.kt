@@ -81,6 +81,7 @@ class SettingsPresenterImpl @Inject constructor(
         when (key) {
             "themes" -> themesManager.getCurrentTheme()
             "languages" -> langsManager.getCurrentLang()
+            "screen_orientation" -> prefsRepository.getScreenOrientation()
             else -> throw IllegalArgumentException("No string found by this key: $key")
         }
     }
@@ -90,6 +91,7 @@ class SettingsPresenterImpl @Inject constructor(
             when (key) {
                 "themes" -> themesManager.saveTheme(value)
                 "languages" -> langsManager.saveLang(value)
+                "screen_orientation" -> prefsRepository.saveScreenOrientation(value)
                 else -> throw IllegalArgumentException("No string found by this key: $key")
             }
         }
