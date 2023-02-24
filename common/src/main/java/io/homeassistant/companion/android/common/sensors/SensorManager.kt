@@ -82,6 +82,7 @@ interface SensorManager {
         return mode == AppOpsManager.MODE_ALLOWED
     }
 
+    /** @return `true` if this sensor is enabled on any server */
     fun isEnabled(context: Context, basicSensor: BasicSensor): Boolean {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val permission = checkPermission(context, basicSensor.id)
@@ -91,6 +92,25 @@ interface SensorManager {
             permission,
             basicSensor.enabledByDefault
         )
+    }
+
+    /** @return `true` if this sensor is enabled for the specified server */
+    fun isEnabled(context: Context, basicSensor: BasicSensor, serverId: Int): Boolean {
+        val sensorDao = AppDatabase.getInstance(context).sensorDao()
+        val permission = checkPermission(context, basicSensor.id)
+        return sensorDao.getOrDefault(
+            basicSensor.id,
+            serverId,
+            permission,
+            basicSensor.enabledByDefault
+        )?.enabled == true
+    }
+
+    /** @return Set of server IDs for which this sensor is enabled */
+    fun getEnabledServers(context: Context, basicSensor: BasicSensor): Set<Int> {
+        val sensorDao = AppDatabase.getInstance(context).sensorDao()
+        val permission = checkPermission(context, basicSensor.id)
+        return sensorDao.get(basicSensor.id).filter { it.enabled && permission }.map { it.serverId }.toSet()
     }
 
     /**

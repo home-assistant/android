@@ -38,6 +38,25 @@
     </group>
 
     <group
+        android:id="@+id/sensor_detail_server_group"
+        android:visible="false">
+
+        <item
+            android:id="@+id/action_sensor_expand"
+            android:icon="@drawable/ic_unfold_more"
+            android:title="@string/sensor_unfold_more"
+            android:visible="false"
+            app:showAsAction="ifRoom"/>
+
+        <item
+            android:id="@+id/action_sensor_collapse"
+            android:icon="@drawable/ic_unfold_less"
+            android:title="@string/sensor_unfold_less"
+            android:visible="false"
+            app:showAsAction="ifRoom"/>
+    </group>
+
+    <group
         android:id="@+id/log_toolbar_group"
         android:visible="false">
 

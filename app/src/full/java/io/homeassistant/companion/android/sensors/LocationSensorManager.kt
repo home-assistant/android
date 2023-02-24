@@ -149,7 +149,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
         private var zones = mutableMapOf<Int, Array<Entity<ZoneAttributes>>>()
         private var zonesLastReceived = mutableMapOf<Int, Long>()
 
-        private var geofenceRegistered = mutableListOf<Int>()
+        private var geofenceRegistered = mutableSetOf<Int>()
 
         private var lastHighAccuracyMode = false
         private var lastHighAccuracyUpdateInterval = DEFAULT_UPDATE_INTERVAL_HA_SECONDS
@@ -236,6 +236,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
         val backgroundEnabled = isEnabled(latestContext, backgroundLocation)
         val zoneEnabled = isEnabled(latestContext, zoneLocation)
+        val zoneServers = getEnabledServers(latestContext, zoneLocation)
 
         ioScope.launch {
             try {
@@ -255,6 +256,11 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 }
                 if (zoneEnabled && !isZoneLocationSetup) {
                     isZoneLocationSetup = true
+                    requestZoneUpdates()
+                }
+                if (zoneEnabled && isZoneLocationSetup && geofenceRegistered != zoneServers) {
+                    Log.d(TAG, "Zone enabled servers changed. Reconfigure zones.")
+                    removeGeofenceUpdateRequests()
                     requestZoneUpdates()
                 }
 
@@ -620,8 +626,8 @@ class LocationSensorManager : LocationSensorManagerBase() {
             return
         }
 
-        if (serverManager.defaultServers.all { it.id in geofenceRegistered }) {
-            Log.w(TAG, "Not registering for zones as we already have")
+        if (geofenceRegistered == getEnabledServers(latestContext, zoneLocation)) {
+            Log.w(TAG, "Not registering for zones as we already have / haven't")
             return
         }
 
@@ -642,7 +648,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
     private fun handleLocationUpdate(intent: Intent) {
         Log.d(TAG, "Received location update.")
-        val serverIds = serverManager.defaultServers.map { it.id }
+        val serverIds = getEnabledServers(latestContext, backgroundLocation)
         serverIds.forEach {
             lastLocationReceived[it] = System.currentTimeMillis()
         }
@@ -729,6 +735,8 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 runBlocking {
                     try {
                         val serverId = zone.split("_")[0].toIntOrNull() ?: return@runBlocking
+                        val enabled = isEnabled(latestContext, backgroundLocation, serverId)
+                        if (!enabled) return@runBlocking
                         serverManager.integrationRepository(serverId).fireEvent(zoneStatusEvent, zoneAttr as Map<String, Any>)
                         Log.d(TAG, "Event sent to Home Assistant")
                     } catch (e: Exception) {
@@ -754,8 +762,8 @@ class LocationSensorManager : LocationSensorManagerBase() {
             )
             requestSingleAccurateLocation()
         } else {
-            serverManager.defaultServers.forEach {
-                sendLocationUpdate(geofencingEvent.triggeringLocation!!, it.id, true)
+            getEnabledServers(latestContext, backgroundLocation).forEach {
+                sendLocationUpdate(geofencingEvent.triggeringLocation!!, it, true)
             }
         }
 
@@ -876,7 +884,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                     latestContext.sendBroadcast(intent)
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Could not update location.", e)
+                Log.e(TAG, "Could not update location for $serverId.", e)
             }
         }
     }
@@ -920,16 +928,16 @@ class LocationSensorManager : LocationSensorManagerBase() {
         val highAccuracyTriggerRange = getHighAccuracyModeTriggerRange()
         val highAccuracyZones = getHighAccuracyModeZones(false)
 
-        serverManager.defaultServers.map { server ->
+        getEnabledServers(latestContext, zoneLocation).map { serverId ->
             ioScope.async {
-                val configuredZones = getZones(server.id, forceRefresh = true)
+                val configuredZones = getZones(serverId, forceRefresh = true)
                 configuredZones.forEach {
-                    addGeofenceToBuilder(geofencingRequestBuilder, server.id, it)
+                    addGeofenceToBuilder(geofencingRequestBuilder, serverId, it)
                     if (highAccuracyTriggerRange > 0 && highAccuracyZones.contains(it.entityId)) {
-                        addGeofenceToBuilder(geofencingRequestBuilder, server.id, it, highAccuracyTriggerRange)
+                        addGeofenceToBuilder(geofencingRequestBuilder, serverId, it, highAccuracyTriggerRange)
                     }
                 }
-                geofenceRegistered.add(server.id)
+                geofenceRegistered.add(serverId)
             }
         }.awaitAll()
         return geofencingRequestBuilder.build()
@@ -1067,8 +1075,8 @@ class LocationSensorManager : LocationSensorManagerBase() {
                                 Log.d(TAG, "Location accurate enough, all done with high accuracy.")
                                 runBlocking {
                                     locationResult.lastLocation?.let {
-                                        serverManager.defaultServers.forEach { server ->
-                                            sendLocationUpdate(it, server.id)
+                                        getEnabledServers(latestContext, singleAccurateLocation).forEach { serverId ->
+                                            sendLocationUpdate(it, serverId)
                                         }
                                     }
                                 }
@@ -1081,8 +1089,8 @@ class LocationSensorManager : LocationSensorManagerBase() {
                                 )
                                 if (locationResult.lastLocation!!.accuracy <= minAccuracy * 2) {
                                     runBlocking {
-                                        serverManager.defaultServers.forEach {
-                                            sendLocationUpdate(locationResult.lastLocation!!, it.id)
+                                        getEnabledServers(latestContext, singleAccurateLocation).forEach { serverId ->
+                                            sendLocationUpdate(locationResult.lastLocation!!, serverId)
                                         }
                                     }
                                 }
