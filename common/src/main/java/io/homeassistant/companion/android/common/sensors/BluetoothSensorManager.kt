@@ -375,6 +375,7 @@ class BluetoothSensorManager : SensorManager {
 
     fun updateBeaconMonitoringSensor(context: Context) {
         if (!isEnabled(context, beaconMonitor)) {
+            monitoringManager.stopMonitoring(context, beaconMonitoringDevice)
             return
         }
 

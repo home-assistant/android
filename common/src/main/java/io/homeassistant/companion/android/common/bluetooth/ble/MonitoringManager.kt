@@ -1,6 +1,13 @@
 package io.homeassistant.companion.android.common.bluetooth.ble
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Context
+import android.os.Build
+import androidx.core.app.NotificationCompat
+import androidx.core.content.getSystemService
+import io.homeassistant.companion.android.common.BuildConfig
+import io.homeassistant.companion.android.common.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -33,6 +40,9 @@ class MonitoringManager {
         if (!this::beaconManager.isInitialized) {
             beaconManager = BeaconManager.getInstanceForApplication(context)
 
+            if (BuildConfig.DEBUG)
+                BeaconManager.setDebug(true)
+
             // find iBeacons
             beaconManager.beaconParsers.add(
                 BeaconParser()
@@ -58,6 +68,17 @@ class MonitoringManager {
             }
         }
 
+        val builder = NotificationCompat.Builder(context, "beacon")
+        builder.setSmallIcon(R.drawable.ic_stat_ic_notification)
+        builder.setContentTitle("scanning")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel("beacon", "Beacon", NotificationManager.IMPORTANCE_LOW)
+            val notifManager = context.getSystemService<NotificationManager>()!!
+            notifManager.createNotificationChannel(channel)
+            builder.setChannelId("beacon")
+        }
+        beaconManager.enableForegroundServiceScanning(builder.build(), 444)
+        beaconManager.setEnableScheduledScanJobs(false)
         beaconManager.startRangingBeacons(region)
         haMonitor.sensorManager.updateBeaconMonitoringSensor(context)
     }
@@ -65,6 +86,7 @@ class MonitoringManager {
     fun stopMonitoring(context: Context, haMonitor: IBeaconMonitor) {
         if (isMonitoring()) {
             beaconManager.stopRangingBeacons(region)
+            beaconManager.disableForegroundServiceScanning()
             haMonitor.sensorManager.updateBeaconMonitoringSensor(context)
         }
     }
