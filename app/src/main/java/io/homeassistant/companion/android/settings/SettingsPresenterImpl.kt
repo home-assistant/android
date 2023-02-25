@@ -8,6 +8,7 @@ import io.homeassistant.companion.android.common.data.integration.DeviceRegistra
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
@@ -18,6 +19,7 @@ import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.onboarding.getMessagingToken
+import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.ChangeLog
@@ -38,7 +40,8 @@ class SettingsPresenterImpl @Inject constructor(
     private val themesManager: ThemesManager,
     private val langsManager: LanguagesManager,
     private val changeLog: ChangeLog,
-    private val settingsDao: SettingsDao
+    private val settingsDao: SettingsDao,
+    private val sensorDao: SensorDao
 ) : SettingsPresenter, PreferenceDataStore() {
 
     companion object {
@@ -129,7 +132,7 @@ class SettingsPresenterImpl @Inject constructor(
 
     override suspend fun addServer(result: OnboardApp.Output?) {
         if (result != null) {
-            val (url, authCode, deviceName, _, notificationsEnabled) = result
+            val (url, authCode, deviceName, deviceTrackingEnabled, notificationsEnabled) = result
             val messagingToken = getMessagingToken()
             var serverId: Int? = null
             try {
@@ -155,14 +158,9 @@ class SettingsPresenterImpl @Inject constructor(
                     serverManager.activateServer(it) // Prevent unexpected active server changes
                 }
                 serverId = serverManager.convertTemporaryServer(serverId)
-                if (BuildConfig.FLAVOR != "full" && serverId != null) {
-                    settingsDao.insert(
-                        Setting(
-                            serverId,
-                            if (notificationsEnabled) WebsocketSetting.ALWAYS else WebsocketSetting.NEVER,
-                            SensorUpdateFrequencySetting.NORMAL
-                        )
-                    )
+                serverId?.let {
+                    setLocationTracking(it, deviceTrackingEnabled)
+                    setNotifications(it, notificationsEnabled)
                 }
                 view.onAddServerResult(true, serverId)
             } catch (e: Exception) {
@@ -177,6 +175,32 @@ class SettingsPresenterImpl @Inject constructor(
                 }
                 view.onAddServerResult(false, null)
             }
+        }
+    }
+
+    private suspend fun setLocationTracking(serverId: Int, enabled: Boolean) {
+        sensorDao.setSensorsEnabled(
+            sensorIds = listOf(
+                LocationSensorManager.backgroundLocation.id,
+                LocationSensorManager.zoneLocation.id,
+                LocationSensorManager.singleAccurateLocation.id
+            ),
+            serverId = serverId,
+            enabled = enabled
+        )
+    }
+
+    private fun setNotifications(serverId: Int, enabled: Boolean) {
+        // Full: this only refers to the system permission on Android 13+ so no changes are necessary.
+        // Minimal: change persistent connection setting to reflect preference.
+        if (BuildConfig.FLAVOR != "full") {
+            settingsDao.insert(
+                Setting(
+                    serverId,
+                    if (enabled) WebsocketSetting.ALWAYS else WebsocketSetting.NEVER,
+                    SensorUpdateFrequencySetting.NORMAL
+                )
+            )
         }
     }
 }
