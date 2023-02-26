@@ -1042,4 +1042,5 @@
     <string name="ha_assist">HA: Assist</string>
     <string name="only_favorites">Only Show Favorites</string>
     <string name="beacon_scanning">Beacon Scanning</string>
+    <string name="stop_scanning">Stop Scanning</string>
 </resources>
