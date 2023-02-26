@@ -8,6 +8,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.util.beaconMonitorChannel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -68,14 +69,13 @@ class MonitoringManager {
             }
         }
 
-        val builder = NotificationCompat.Builder(context, "beacon")
+        val builder = NotificationCompat.Builder(context, beaconMonitorChannel)
         builder.setSmallIcon(R.drawable.ic_stat_ic_notification)
-        builder.setContentTitle("scanning")
+        builder.setContentTitle(context.getString(R.string.beacon_scanning))
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel("beacon", "Beacon", NotificationManager.IMPORTANCE_LOW)
+            val channel = NotificationChannel(beaconMonitorChannel, context.getString(R.string.beacon_scanning), NotificationManager.IMPORTANCE_LOW)
             val notifManager = context.getSystemService<NotificationManager>()!!
             notifManager.createNotificationChannel(channel)
-            builder.setChannelId("beacon")
         }
         beaconManager.enableForegroundServiceScanning(builder.build(), 444)
         beaconManager.setEnableScheduledScanJobs(false)
