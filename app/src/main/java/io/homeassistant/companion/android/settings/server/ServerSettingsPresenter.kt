@@ -14,5 +14,5 @@ interface ServerSettingsPresenter {
     fun isSsidUsed(): Boolean
     fun clearSsids()
 
-    fun setAppActive()
+    fun setAppActive(active: Boolean)
 }

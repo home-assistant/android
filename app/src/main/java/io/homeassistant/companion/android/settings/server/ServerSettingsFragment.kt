@@ -42,7 +42,7 @@ import io.homeassistant.companion.android.common.R as commonR
 class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
 
     companion object {
-        private const val TAG = "ServerSettingsFragment"
+        const val TAG = "ServerSettingsFragment"
 
         const val EXTRA_SERVER = "server"
     }
@@ -302,7 +302,7 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         switchLock?.isChecked = success
 
         // Prevent requesting authentication after just enabling the app lock
-        presenter.setAppActive()
+        presenter.setAppActive(true)
 
         findPreference<SwitchPreference>("app_lock_home_bypass")?.isVisible = success
         findPreference<EditTextPreference>("session_timeout")?.isVisible = success
@@ -382,4 +382,6 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         presenter.onFinish()
         super.onDestroy()
     }
+
+    fun getServerId(): Int = serverId
 }
