@@ -5,6 +5,7 @@
     android:layout_height="match_parent"
     android:minHeight="40dp"
     android:minWidth="40dp"
+    android:background="@drawable/widget_transparent_background"
     android:theme="@style/Theme.HomeAssistant.Widget">
 
     <ImageView
