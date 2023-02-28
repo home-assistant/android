@@ -1041,6 +1041,6 @@
     <string name="not_registered">Please launch the Home Assistant app and login before you can use the assist feature.</string>
     <string name="ha_assist">HA: Assist</string>
     <string name="only_favorites">Only Show Favorites</string>
-    <string name="beacon_scanning">Beacon Scanning</string>
+    <string name="beacon_scanning">Beacon Monitor Scanning</string>
     <string name="stop_scanning">Stop Scanning</string>
 </resources>
