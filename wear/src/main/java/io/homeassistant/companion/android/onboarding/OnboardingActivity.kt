@@ -21,7 +21,7 @@ import com.google.android.gms.wearable.Wearable
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationActivity
-import io.homeassistant.companion.android.onboarding.manual_setup.ManualSetupActivity
+import io.homeassistant.companion.android.onboarding.manual.ManualSetupActivity
 import io.homeassistant.companion.android.util.LoadingView
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch

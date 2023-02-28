@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.widgets.media_player_controls
+package io.homeassistant.companion.android.widgets.mediaplayer
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
