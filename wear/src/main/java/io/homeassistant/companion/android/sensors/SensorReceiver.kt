@@ -81,10 +81,11 @@ class SensorReceiver : SensorReceiverBase() {
             TrafficStatsManager(),
             WetModeSensorManager()
         )
-        val MANAGERS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
+        val MANAGERS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             allManager.plus(HealthServicesSensorManager())
-        else
+        } else {
             allManager
+        }
 
         const val ACTION_REQUEST_SENSORS_UPDATE =
             "io.homeassistant.companion.android.background.REQUEST_SENSORS_UPDATE"

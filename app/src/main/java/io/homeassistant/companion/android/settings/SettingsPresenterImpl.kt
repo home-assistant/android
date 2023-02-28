@@ -118,8 +118,11 @@ class SettingsPresenterImpl @Inject constructor(
 
     override suspend fun getNotificationRateLimits(): RateLimitResponse? = withContext(Dispatchers.IO) {
         try {
-            if (serverManager.isRegistered()) serverManager.integrationRepository().getNotificationRateLimits()
-            else null
+            if (serverManager.isRegistered()) {
+                serverManager.integrationRepository().getNotificationRateLimits()
+            } else {
+                null
+            }
         } catch (e: Exception) {
             Log.d(TAG, "Unable to get rate limits")
             return@withContext null

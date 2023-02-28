@@ -65,8 +65,9 @@ class StepsSensorManager : SensorManager, SensorEventListener {
     }
 
     private fun updateStepsSensor() {
-        if (!isEnabled(latestContext, stepsSensor))
+        if (!isEnabled(latestContext, stepsSensor)) {
             return
+        }
 
         if (checkPermission(latestContext, stepsSensor.id)) {
             val now = System.currentTimeMillis()

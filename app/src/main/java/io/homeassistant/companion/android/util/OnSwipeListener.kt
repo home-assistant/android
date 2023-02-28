@@ -148,11 +148,17 @@ abstract class OnSwipeListener : View.OnTouchListener {
         companion object {
             fun fromVelocity(velocityX: Float, velocityY: Float): SwipeDirection {
                 return if (abs(velocityX) > abs(velocityY)) {
-                    if (velocityX > 0) RIGHT
-                    else LEFT
+                    if (velocityX > 0) {
+                        RIGHT
+                    } else {
+                        LEFT
+                    }
                 } else {
-                    if (velocityY > 0) DOWN
-                    else UP
+                    if (velocityY > 0) {
+                        DOWN
+                    } else {
+                        UP
+                    }
                 }
             }
         }

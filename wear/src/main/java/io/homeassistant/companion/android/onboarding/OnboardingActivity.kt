@@ -59,12 +59,18 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
 
         adapter = ServerListAdapter(ArrayList())
         adapter.onInstanceClicked = { instance ->
-            if (phoneSignInAvailable) startPhoneSignIn(instance)
-            else presenter.onInstanceClickedWithoutApp(this, instance.url.toString())
+            if (phoneSignInAvailable) {
+                startPhoneSignIn(instance)
+            } else {
+                presenter.onInstanceClickedWithoutApp(this, instance.url.toString())
+            }
         }
         adapter.onManualSetupClicked = {
-            if (phoneSignInAvailable) startPhoneSignIn(null)
-            else startManualSetup()
+            if (phoneSignInAvailable) {
+                startPhoneSignIn(null)
+            } else {
+                startManualSetup()
+            }
         }
 
         capabilityClient = Wearable.getCapabilityClient(this)

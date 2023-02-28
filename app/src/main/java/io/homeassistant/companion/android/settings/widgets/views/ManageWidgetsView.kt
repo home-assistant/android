@@ -150,13 +150,13 @@ fun ManageWidgetsView(
                 widgetLabel = { item ->
                     val label = item.label
                     if (!label.isNullOrEmpty()) label else "${item.domain}.${item.service}"
-                },
+                }
             )
             widgetItems(
                 viewModel.cameraWidgetList.value,
                 widgetType = WidgetType.CAMERA,
                 title = R.string.camera_widgets,
-                widgetLabel = { item -> item.entityId },
+                widgetLabel = { item -> item.entityId }
             )
             widgetItems(
                 viewModel.staticWidgetList.value,
@@ -165,7 +165,7 @@ fun ManageWidgetsView(
                 widgetLabel = { item ->
                     val label = item.label
                     if (!label.isNullOrEmpty()) label else "${item.entityId} ${item.stateSeparator} ${item.attributeIds.orEmpty()}"
-                },
+                }
             )
             widgetItems(
                 viewModel.mediaWidgetList.value,
@@ -174,13 +174,13 @@ fun ManageWidgetsView(
                 widgetLabel = { item ->
                     val label = item.label
                     if (!label.isNullOrEmpty()) label else item.entityId
-                },
+                }
             )
             widgetItems(
                 viewModel.templateWidgetList.value,
                 widgetType = WidgetType.TEMPLATE,
                 title = R.string.template_widgets,
-                widgetLabel = { item -> item.template },
+                widgetLabel = { item -> item.template }
             )
         }
     }
@@ -239,7 +239,7 @@ private fun PopupWidgetRow(
 private fun WidgetRow(
     widgetLabel: String,
     widgetId: Int,
-    widgetType: WidgetType,
+    widgetType: WidgetType
 ) {
     val context = LocalContext.current
     Row {

@@ -30,8 +30,9 @@ class HomeAssistantSearcher constructor(
     private var multicastLock: WifiManager.MulticastLock? = null
 
     fun beginSearch() {
-        if (isSearching)
+        if (isSearching) {
             return
+        }
         isSearching = true
         try {
             nsdManager.discoverServices(SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, this)
@@ -54,8 +55,9 @@ class HomeAssistantSearcher constructor(
     }
 
     fun stopSearch() {
-        if (!isSearching)
+        if (!isSearching) {
             return
+        }
         isSearching = false
         try {
             nsdManager.stopServiceDiscovery(this)

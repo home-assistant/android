@@ -39,8 +39,9 @@ class DNDSensorManager : SensorManager {
     }
 
     override fun requestSensorUpdate(context: Context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             updateDNDState(context)
+        }
     }
 
     @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.M)
@@ -49,9 +50,9 @@ class DNDSensorManager : SensorManager {
     }
 
     private fun updateDNDState(context: Context) {
-
-        if (!isEnabled(context, dndSensor))
+        if (!isEnabled(context, dndSensor)) {
             return
+        }
 
         val notificationManager =
             context.getSystemService<NotificationManager>()

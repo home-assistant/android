@@ -42,9 +42,11 @@ class MobileDataManager : SensorManager {
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
-        return if (sensorId == mobileDataRoaming.id)
+        return if (sensorId == mobileDataRoaming.id) {
             arrayOf(Manifest.permission.READ_PHONE_STATE)
-        else arrayOf()
+        } else {
+            arrayOf()
+        }
     }
 
     override fun hasSensor(context: Context): Boolean {
@@ -64,15 +66,16 @@ class MobileDataManager : SensorManager {
         settingKey: String,
         icon: String
     ) {
-        if (!isEnabled(context, sensor))
+        if (!isEnabled(context, sensor)) {
             return
+        }
 
         var enabled = false
         val telephonyManager = context.applicationContext.getSystemService<TelephonyManager>()
         if (telephonyManager?.simState == TelephonyManager.SIM_STATE_READY) {
-            enabled = if (sensor.id == mobileDataRoaming.id && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+            enabled = if (sensor.id == mobileDataRoaming.id && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 telephonyManager.isDataRoamingEnabled
-            else {
+            } else {
                 getInt(context.contentResolver, settingKey, 0) == 1
             }
         }

@@ -71,9 +71,9 @@ class PowerSensorManager : SensorManager {
     }
 
     private fun updateInteractive(context: Context, powerManager: PowerManager) {
-
-        if (!isEnabled(context, interactiveDevice))
+        if (!isEnabled(context, interactiveDevice)) {
             return
+        }
 
         val interactiveState = powerManager.isInteractive
         val icon = if (interactiveState) "mdi:cellphone" else "mdi:cellphone-off"
@@ -89,9 +89,9 @@ class PowerSensorManager : SensorManager {
 
     @RequiresApi(Build.VERSION_CODES.M)
     private fun updateDoze(context: Context, powerManager: PowerManager) {
-
-        if (!isEnabled(context, doze))
+        if (!isEnabled(context, doze)) {
             return
+        }
 
         val dozeState = powerManager.isDeviceIdleMode
         val icon = if (dozeState) "mdi:sleep" else "mdi:sleep-off"
@@ -110,9 +110,9 @@ class PowerSensorManager : SensorManager {
     }
 
     private fun updatePowerSave(context: Context, powerManager: PowerManager) {
-
-        if (!isEnabled(context, powerSave))
+        if (!isEnabled(context, powerSave)) {
             return
+        }
 
         val powerSaveState = powerManager.isPowerSaveMode
 

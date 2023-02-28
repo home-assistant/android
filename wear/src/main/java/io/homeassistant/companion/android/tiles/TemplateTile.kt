@@ -75,13 +75,19 @@ class TemplateTile : TileService() {
 
             val template = wearPrefsRepository.getTemplateTileContent()
             val renderedText = try {
-                if (serverManager.isRegistered()) serverManager.integrationRepository().renderTemplate(template, mapOf()).toString()
-                else ""
+                if (serverManager.isRegistered()) {
+                    serverManager.integrationRepository().renderTemplate(template, mapOf()).toString()
+                } else {
+                    ""
+                }
             } catch (e: Exception) {
                 Log.e("TemplateTile", "Exception while rendering template", e)
                 // JsonMappingException suggests that template is not a String (= error)
-                if (e.cause is JsonMappingException) getString(commonR.string.template_error)
-                else getString(commonR.string.template_render_error)
+                if (e.cause is JsonMappingException) {
+                    getString(commonR.string.template_error)
+                } else {
+                    getString(commonR.string.template_render_error)
+                }
             }
 
             Tile.Builder()

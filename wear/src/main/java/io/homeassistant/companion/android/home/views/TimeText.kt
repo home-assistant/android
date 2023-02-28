@@ -16,7 +16,7 @@ fun TimeText(
     AnimatedVisibility(
         visible = visible,
         enter = slideInVertically(),
-        exit = slideOutVertically(),
+        exit = slideOutVertically()
     ) {
         TimeText()
     }

@@ -132,10 +132,11 @@ class ManageShortcutsViewModel @Inject constructor(
             .setShortLabel(shortcutLabel)
             .setLongLabel(shortcutDesc)
             .setIcon(
-                if (bitmap != null)
+                if (bitmap != null) {
                     Icon.createWithBitmap(bitmap)
-                else
+                } else {
                     Icon.createWithResource(getApplication(), R.drawable.ic_stat_ic_notification_blue)
+                }
             )
             .setIntent(intent)
             .build()
@@ -177,12 +178,14 @@ class ManageShortcutsViewModel @Inject constructor(
                 shortcuts.last().desc.value = item.longLabel.toString()
                 shortcuts.last().path.value = item.intent?.action.toString()
                 shortcuts.last().selectedIcon.value = item.intent?.extras?.getInt("iconId").toString().toIntOrNull() ?: 0
-                if (shortcuts.last().selectedIcon.value != 0)
+                if (shortcuts.last().selectedIcon.value != 0) {
                     shortcuts.last().drawable.value = getTileIcon(shortcuts.last().selectedIcon.value)
-                if (shortcuts.last().path.value.startsWith("entityId:"))
+                }
+                if (shortcuts.last().path.value.startsWith("entityId:")) {
                     shortcuts.last().type.value = "entityId"
-                else
+                } else {
                     shortcuts.last().type.value = "lovelace"
+                }
             }
         }
     }
@@ -197,12 +200,14 @@ class ManageShortcutsViewModel @Inject constructor(
                     shortcuts[index].desc.value = item.longLabel.toString()
                     shortcuts[index].path.value = item.intent?.action.toString()
                     shortcuts[index].selectedIcon.value = item.intent?.extras?.getInt("iconId").toString().toIntOrNull() ?: 0
-                    if (shortcuts[index].selectedIcon.value != 0)
+                    if (shortcuts[index].selectedIcon.value != 0) {
                         shortcuts[index].drawable.value = getTileIcon(shortcuts[index].selectedIcon.value)
-                    if (shortcuts[index].path.value.startsWith("entityId:"))
+                    }
+                    if (shortcuts[index].path.value.startsWith("entityId:")) {
                         shortcuts[index].type.value = "entityId"
-                    else
+                    } else {
                         shortcuts[index].type.value = "lovelace"
+                    }
                 }
             }
         }

@@ -31,10 +31,11 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
         get() = commonR.string.sensor_name_android_auto
 
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             listOf(androidAutoConnected)
-        else
+        } else {
             emptyList()
+        }
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
@@ -85,7 +86,7 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
             androidAutoConnected.statelessIcon,
             mapOf(
                 "connection_type" to typeString
-            ),
+            )
         )
     }
 }

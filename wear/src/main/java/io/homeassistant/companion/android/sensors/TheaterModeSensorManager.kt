@@ -41,9 +41,9 @@ class TheaterModeSensorManager : SensorManager {
     }
 
     private fun updateTheaterMode(context: Context) {
-
-        if (!isEnabled(context, theaterMode))
+        if (!isEnabled(context, theaterMode)) {
             return
+        }
 
         val state = try {
             Settings.Global.getInt(context.contentResolver, if (Build.MANUFACTURER == "samsung") "setting_theater_mode_on" else "theater_mode_on") == 1

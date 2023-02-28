@@ -22,8 +22,9 @@ class AssistDataSourceService : ComplicationDataSourceService() {
     }
 
     override fun onComplicationRequest(request: ComplicationRequest, listener: ComplicationRequestListener) {
-        if (request.complicationType != ComplicationType.MONOCHROMATIC_IMAGE)
+        if (request.complicationType != ComplicationType.MONOCHROMATIC_IMAGE) {
             return
+        }
 
         listener.onComplicationData(
             MonochromaticImageComplicationData.Builder(

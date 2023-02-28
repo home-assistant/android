@@ -41,9 +41,9 @@ class TimeZoneManager : SensorManager {
     }
 
     private fun updateTimeZone(context: Context) {
-
-        if (!isEnabled(context, currentTimeZone))
+        if (!isEnabled(context, currentTimeZone)) {
             return
+        }
 
         val timeZone: TimeZone = TimeZone.getDefault()
         val currentlyInDst = timeZone.inDaylightTime(Date())

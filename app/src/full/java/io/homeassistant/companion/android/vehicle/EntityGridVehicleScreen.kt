@@ -33,7 +33,7 @@ class EntityGridVehicleScreen(
     carContext: CarContext,
     val integrationRepository: IntegrationRepository,
     val title: String,
-    val entitiesFlow: Flow<List<Entity<*>>>,
+    val entitiesFlow: Flow<List<Entity<*>>>
 ) : Screen(carContext) {
 
     companion object {

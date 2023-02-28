@@ -31,7 +31,9 @@ class LanguagesManager @Inject constructor(
                 if (lang.isNullOrEmpty()) {
                     prefs.saveLang(DEF_LOCALE)
                     DEF_LOCALE
-                } else lang
+                } else {
+                    lang
+                }
             }
         }
     }
@@ -42,8 +44,11 @@ class LanguagesManager @Inject constructor(
                 val currentLang = getCurrentLang()
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     val languages =
-                        if (lang == DEF_LOCALE) LocaleListCompat.getEmptyLocaleList()
-                        else LocaleListCompat.forLanguageTags(lang)
+                        if (lang == DEF_LOCALE) {
+                            LocaleListCompat.getEmptyLocaleList()
+                        } else {
+                            LocaleListCompat.forLanguageTags(lang)
+                        }
                     AppCompatDelegate.setApplicationLocales(languages) // Applying will also save it
                 } else if (currentLang != lang) {
                     prefs.saveLang(lang)
@@ -59,8 +64,11 @@ class LanguagesManager @Inject constructor(
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.TIRAMISU) {
             val lang = getCurrentLang()
             val languages =
-                if (lang == DEF_LOCALE) LocaleListCompat.getEmptyLocaleList()
-                else LocaleListCompat.forLanguageTags(lang)
+                if (lang == DEF_LOCALE) {
+                    LocaleListCompat.getEmptyLocaleList()
+                } else {
+                    LocaleListCompat.forLanguageTags(lang)
+                }
             AppCompatDelegate.setApplicationLocales(languages)
         } // else on Android 13+ the system will manage the app's language
     }
@@ -72,8 +80,11 @@ class LanguagesManager @Inject constructor(
 
         // First run on Android 13: save in AndroidX, update app preference
         val languages =
-            if (lang == DEF_LOCALE) LocaleListCompat.getEmptyLocaleList()
-            else LocaleListCompat.forLanguageTags(lang)
+            if (lang == DEF_LOCALE) {
+                LocaleListCompat.getEmptyLocaleList()
+            } else {
+                LocaleListCompat.forLanguageTags(lang)
+            }
         AppCompatDelegate.setApplicationLocales(languages)
         prefs.saveLang(SYSTEM_MANAGES_LOCALE)
     }

@@ -108,10 +108,11 @@ fun MainConfigView(
                     },
                     secondaryLabel = {
                         Text(
-                            if (loaded)
+                            if (loaded) {
                                 entity?.friendlyName ?: ""
-                            else
+                            } else {
                                 stringResource(R.string.loading)
+                            }
                         )
                     },
                     enabled = loaded,

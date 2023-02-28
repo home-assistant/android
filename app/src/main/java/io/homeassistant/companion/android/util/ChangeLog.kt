@@ -25,12 +25,14 @@ class ChangeLog @Inject constructor() {
         }
         if (isDarkTheme) {
             val darkThemeChangeLog = DarkThemeChangeLog(context)
-            if ((!darkThemeChangeLog.isFirstRunEver && darkThemeChangeLog.isFirstRun) || forceShow)
+            if ((!darkThemeChangeLog.isFirstRunEver && darkThemeChangeLog.isFirstRun) || forceShow) {
                 darkThemeChangeLog.fullLogDialog.show()
+            }
         } else {
             val changeLog = ChangeLog(context)
-            if ((!changeLog.isFirstRunEver && changeLog.isFirstRun) || forceShow)
+            if ((!changeLog.isFirstRunEver && changeLog.isFirstRun) || forceShow) {
                 changeLog.fullLogDialog.show()
+            }
         }
     }
 }

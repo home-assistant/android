@@ -79,7 +79,8 @@ class SettingsWearMainView : AppCompatActivity() {
         if (result != null) {
             val (url, authCode, deviceName, deviceTrackingEnabled, _) = result
             settingsWearViewModel.sendAuthToWear(url, authCode, deviceName, deviceTrackingEnabled, true)
-        } else
+        } else {
             Log.e(TAG, "onOnboardingComplete: Activity result returned null intent data")
+        }
     }
 }

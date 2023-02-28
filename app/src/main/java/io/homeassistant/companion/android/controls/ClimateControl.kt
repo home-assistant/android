@@ -58,10 +58,12 @@ object ClimateControl : HaControl {
             entity.attributes["current_temperature"] as? Number
             )?.toFloat() ?: 0f
         // Ensure the current value is never lower than the minimum or higher than the maximum
-        if (currentValue < minValue)
+        if (currentValue < minValue) {
             currentValue = minValue
-        if (currentValue > maxValue)
+        }
+        if (currentValue > maxValue) {
             currentValue = maxValue
+        }
 
         val temperatureUnit = entity.attributes["temperature_unit"] ?: ""
         val temperatureStepSize = (entity.attributes["target_temperature_step"] as? Number)?.toFloat()
@@ -100,10 +102,11 @@ object ClimateControl : HaControl {
     }
 
     override fun getDeviceType(entity: Entity<Map<String, Any>>): Int =
-        if (entityShouldBePresentedAsThermostat(entity))
+        if (entityShouldBePresentedAsThermostat(entity)) {
             DeviceTypes.TYPE_THERMOSTAT
-        else
+        } else {
             DeviceTypes.TYPE_AC_HEATER
+        }
 
     override fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String =
         context.getString(commonR.string.domain_climate)

@@ -102,6 +102,7 @@ class SensorDetailViewModel @Inject constructor(
     /** A list of all sensors (for each server) with states */
     var sensors by mutableStateOf<List<SensorWithAttributes>>(emptyList())
         private set
+
     /** A sensor for displaying the main state in the UI */
     var sensor by mutableStateOf<SensorWithAttributes?>(null)
         private set
@@ -208,10 +209,12 @@ class SensorDetailViewModel @Inject constructor(
 
         viewModelScope.launch {
             updateSensorEntity(isEnabled, serverId)
-            if (isEnabled) try {
-                sensorManager?.requestSensorUpdate(getApplication())
-            } catch (e: Exception) {
-                Log.e(TAG, "Exception while requesting update for sensor $sensorId", e)
+            if (isEnabled) {
+                try {
+                    sensorManager?.requestSensorUpdate(getApplication())
+                } catch (e: Exception) {
+                    Log.e(TAG, "Exception while requesting update for sensor $sensorId", e)
+                }
             }
         }
     }
@@ -274,8 +277,11 @@ class SensorDetailViewModel @Inject constructor(
 
     private suspend fun updateSensorEntity(isEnabled: Boolean, serverId: Int?) {
         val serverIds =
-            if (serverId == null) serverManager.defaultServers.map { it.id }
-            else listOf(serverId)
+            if (serverId == null) {
+                serverManager.defaultServers.map { it.id }
+            } else {
+                listOf(serverId)
+            }
         sensorDao.setSensorEnabled(sensorId, serverIds, isEnabled)
         refreshSensorData()
     }

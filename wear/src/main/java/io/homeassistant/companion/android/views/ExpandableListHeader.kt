@@ -30,7 +30,9 @@ fun <K> rememberExpandedStates(
 ): SnapshotStateMap<K, Boolean> {
     val defaultExpanded = if (initialKeys is Collection) {
         initialKeys.size == 1
-    } else false
+    } else {
+        false
+    }
     return remember {
         mutableStateMapOf<K, Boolean>().apply {
             initialKeys.forEach { key ->

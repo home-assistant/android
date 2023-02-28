@@ -142,7 +142,9 @@ class TemplateWidget : AppWidgetProvider() {
                     val templateUpdates =
                         if (serverManager.getServer(widget.serverId) != null) {
                             serverManager.integrationRepository(widget.serverId).getTemplateUpdates(widget.template)
-                        } else null
+                        } else {
+                            null
+                        }
                     if (templateUpdates != null) {
                         widgetTemplates[widget.id] = widget.template
                         widgetJobs[widget.id] = widgetScope!!.launch {

@@ -299,7 +299,6 @@ class ButtonWidget : AppWidgetProvider() {
             } else {
                 // If everything loaded correctly, package the service data and attempt the call
                 try {
-
                     // Convert JSON to HashMap
                     val serviceDataMap: HashMap<String, Any> =
                         jacksonObjectMapper().readValue(serviceDataJson)

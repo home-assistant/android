@@ -69,10 +69,12 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         val extras = intent.extras
         if (extras != null) {
             appWidgetId = extras.getInt(
-                AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID
+                AppWidgetManager.EXTRA_APPWIDGET_ID,
+                AppWidgetManager.INVALID_APPWIDGET_ID
             )
             requestLauncherSetup = extras.getBoolean(
-                ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, false
+                ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER,
+                false
             )
         }
 
@@ -88,8 +90,9 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             getString(commonR.string.widget_background_type_daynight),
             getString(commonR.string.widget_background_type_transparent)
         )
-        if (DynamicColors.isDynamicColorAvailable())
+        if (DynamicColors.isDynamicColorAvailable()) {
             backgroundTypeValues.add(0, getString(commonR.string.widget_background_type_dynamiccolor))
+        }
         binding.backgroundType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
 
         setupServerSelect(templateWidget?.serverId)
@@ -98,9 +101,9 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             binding.templateText.setText(templateWidget.template)
             binding.textSize.setText(templateWidget.textSize.toInt().toString())
             binding.addButton.setText(commonR.string.update_widget)
-            if (templateWidget.template.isNotEmpty())
+            if (templateWidget.template.isNotEmpty()) {
                 renderTemplateText(templateWidget.template)
-            else {
+            } else {
                 binding.renderedTemplate.text = getString(commonR.string.empty_template)
                 binding.addButton.isEnabled = false
             }
@@ -152,7 +155,9 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
                         )
                     )
-                } else showAddWidgetError() // this shouldn't be possible
+                } else {
+                    showAddWidgetError() // this shouldn't be possible
+                }
             } else {
                 onAddWidget()
             }
@@ -194,9 +199,11 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             )
             putExtra(
                 TemplateWidget.EXTRA_TEXT_COLOR,
-                if (binding.backgroundType.selectedItem as String? == getString(commonR.string.widget_background_type_transparent))
+                if (binding.backgroundType.selectedItem as String? == getString(commonR.string.widget_background_type_transparent)) {
                     getHexForColor(if (binding.textColorWhite.isChecked) android.R.color.white else commonR.color.colorWidgetButtonLabelBlack)
-                else null
+                } else {
+                    null
+                }
             )
         }
         applicationContext.sendBroadcast(createIntent)
@@ -212,7 +219,8 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         super.onNewIntent(intent)
         if (intent != null && intent.extras != null && intent.hasExtra(PIN_WIDGET_CALLBACK)) {
             appWidgetId = intent.extras!!.getInt(
-                AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID
+                AppWidgetManager.EXTRA_APPWIDGET_ID,
+                AppWidgetManager.INVALID_APPWIDGET_ID
             )
             onAddWidget()
         }
@@ -230,8 +238,11 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                     Log.e(TAG, "Exception while rendering template", e)
                     // JsonMappingException suggests that template is not a String (= error)
                     templateText = getString(
-                        if (e.cause is JsonMappingException) commonR.string.template_error
-                        else commonR.string.template_render_error
+                        if (e.cause is JsonMappingException) {
+                            commonR.string.template_error
+                        } else {
+                            commonR.string.template_render_error
+                        }
                     )
                     enabled = false
                 }

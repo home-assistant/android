@@ -43,8 +43,9 @@ fun SetFavoritesView(
     WearAppTheme {
         Scaffold(
             positionIndicator = {
-                if (scalingLazyListState.isScrollInProgress)
+                if (scalingLazyListState.isScrollInProgress) {
                     PositionIndicator(scalingLazyListState = scalingLazyListState)
+                }
             },
             timeText = { TimeText(!scalingLazyListState.isScrollInProgress) }
         ) {
@@ -114,10 +115,11 @@ private fun FavoriteToggleChip(
         toggleControl = {
             Icon(
                 imageVector = ToggleChipDefaults.switchIcon(checked),
-                contentDescription = if (checked)
+                contentDescription = if (checked) {
                     stringResource(commonR.string.enabled)
-                else
+                } else {
                     stringResource(commonR.string.disabled)
+                }
             )
         }
     )

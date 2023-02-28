@@ -91,8 +91,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
             if (!isSensorEnabled(sensor!!)) {
                 Log.d(
                     tag,
-                    String.format
-                    (
+                    String.format(
                         "Sensor %s corresponding to received event %s is disabled, skipping sensors update",
                         sensor,
                         intent.action
@@ -168,8 +167,9 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         managers.forEach { manager ->
             // Since we don't have this manager injected it doesn't fulfil its injects, manually
             // inject for now I guess?
-            if (manager is LocationSensorManagerBase)
+            if (manager is LocationSensorManagerBase) {
                 manager.serverManager = serverManager
+            }
 
             val hasSensor = manager.hasSensor(context)
             if (hasSensor) {
@@ -330,8 +330,11 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                 // Don't trigger re-registration when the server is down or job was cancelled
                 val exceptionOk = e is IntegrationException &&
                     (e.cause is IOException || e.cause is CancellationException)
-                if (exceptionOk) Log.w(tag, "Exception while updating sensors: ${e::class.java.simpleName}: ${e.cause?.let { it::class.java.name } }")
-                else Log.e(tag, "Exception while updating sensors.", e)
+                if (exceptionOk) {
+                    Log.w(tag, "Exception while updating sensors: ${e::class.java.simpleName}: ${e.cause?.let { it::class.java.name } }")
+                } else {
+                    Log.e(tag, "Exception while updating sensors.", e)
+                }
                 exceptionOk
             }
 
@@ -347,7 +350,9 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                     }
                 }
             }
-        } else Log.d(tag, "Nothing to update for server ${server.id} (${server.friendlyName})")
+        } else {
+            Log.d(tag, "Nothing to update for server ${server.id} (${server.friendlyName})")
+        }
         return success
     }
 
@@ -406,7 +411,9 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                 notificationManager.getNotificationChannel(sensorCoreSyncChannel)
             if (notificationChannel == null) {
                 notificationChannel = NotificationChannel(
-                    sensorCoreSyncChannel, sensorCoreSyncChannel, NotificationManager.IMPORTANCE_DEFAULT
+                    sensorCoreSyncChannel,
+                    sensorCoreSyncChannel,
+                    NotificationManager.IMPORTANCE_DEFAULT
                 )
                 notificationManager.createNotificationChannel(notificationChannel)
             }

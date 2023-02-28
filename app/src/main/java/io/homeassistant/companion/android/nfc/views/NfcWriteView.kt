@@ -57,12 +57,15 @@ fun NfcWriteView(
     ) {
         Image(
             asset = CommunityMaterial.Icon3.cmd_nfc_tap,
-            colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface),
+            colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface)
         )
         Text(
             text =
-            if (isNfcEnabled) stringResource(commonR.string.nfc_write_tag_instructions, identifier ?: "")
-            else stringResource(commonR.string.nfc_write_tag_turnon),
+            if (isNfcEnabled) {
+                stringResource(commonR.string.nfc_write_tag_instructions, identifier ?: "")
+            } else {
+                stringResource(commonR.string.nfc_write_tag_turnon)
+            },
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth(0.75f)
