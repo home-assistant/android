@@ -1022,14 +1022,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus && !isFinishing) {
-            appLocked = presenter.isAppLocked()
-            if (appLocked) {
-                binding.blurView.setBlurEnabled(true)
-                authenticator.authenticate(getString(commonR.string.biometric_title))
-            } else {
-                binding.blurView.setBlurEnabled(false)
-            }
-
+            unlockAppIfNeeded()
             val path = intent.getStringExtra(EXTRA_PATH)
             presenter.onViewReady(path)
             if (path?.startsWith("entityId:") == true)
@@ -1040,6 +1033,16 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 hideSystemUI()
             else
                 showSystemUI()
+        }
+    }
+
+    override fun unlockAppIfNeeded() {
+        appLocked = presenter.isAppLocked()
+        if (appLocked) {
+            binding.blurView.setBlurEnabled(true)
+            authenticator.authenticate(getString(commonR.string.biometric_title))
+        } else {
+            binding.blurView.setBlurEnabled(false)
         }
     }
 

@@ -131,8 +131,12 @@ class WebViewPresenterImpl @Inject constructor(
     }
 
     override fun switchActiveServer(id: Int) {
+        if (serverId != id && serverId != ServerManager.SERVER_ID_ACTIVE) {
+            setAppActive(false) // 'Lock' old server
+        }
         setActiveServer(id)
         onViewReady(null)
+        view.unlockAppIfNeeded()
     }
 
     override fun nextServer() = moveToServer(next = true)

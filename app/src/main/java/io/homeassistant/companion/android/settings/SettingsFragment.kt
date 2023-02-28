@@ -27,6 +27,7 @@ import androidx.preference.SwitchPreference
 import com.google.android.material.snackbar.Snackbar
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.onboarding.OnboardApp
@@ -73,6 +74,7 @@ class SettingsFragment(
 
     private val requestOnboardingResult = registerForActivityResult(OnboardApp(), this::onOnboardingComplete)
 
+    private var serverAuth: Int? = null
     private val serverMutex = Mutex()
 
     private var snackbar: Snackbar? = null
@@ -366,13 +368,16 @@ class SettingsFragment(
                 Log.e(TAG, "Unable to set the server icon", e)
             }
             serverPreference.setOnPreferenceClickListener {
-                parentFragmentManager.commit {
-                    replace(
-                        R.id.content,
-                        ServerSettingsFragment::class.java,
-                        Bundle().apply { putInt(ServerSettingsFragment.EXTRA_SERVER, server.id) }
-                    )
-                    addToBackStack(getString(commonR.string.server_settings))
+                serverAuth = server.id
+                val settingsActivity = requireActivity() as SettingsActivity
+                val needsAuth = settingsActivity.isAppLocked(server.id)
+                if (!needsAuth) {
+                    onServerLockResult(Authenticator.SUCCESS)
+                } else {
+                    val canAuth = settingsActivity.requestAuthentication(getString(commonR.string.biometric_set_title), ::onServerLockResult)
+                    if (!canAuth) {
+                        onServerLockResult(Authenticator.SUCCESS)
+                    }
                 }
                 return@setOnPreferenceClickListener true
             }
@@ -395,6 +400,22 @@ class SettingsFragment(
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
                 uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION
         }
+    }
+
+    private fun onServerLockResult(result: Int): Boolean {
+        if (result == Authenticator.SUCCESS && serverAuth != null) {
+            (activity as? SettingsActivity)?.setAppActive(serverAuth, true)
+            parentFragmentManager.commit {
+                replace(
+                    R.id.content,
+                    ServerSettingsFragment::class.java,
+                    Bundle().apply { putInt(ServerSettingsFragment.EXTRA_SERVER, serverAuth!!) },
+                    ServerSettingsFragment.TAG
+                )
+                addToBackStack(getString(commonR.string.server_settings))
+            }
+        }
+        return true
     }
 
     private fun onOnboardingComplete(result: OnboardApp.Output?) {
