@@ -26,6 +26,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import io.homeassistant.companion.android.common.R as commonR
@@ -53,7 +54,7 @@ fun ExternalUrlInputView(
                 urlInput = it
                 urlError = false
             },
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, autoCorrect = false, keyboardType = KeyboardType.Uri),
             keyboardActions = KeyboardActions(
                 onDone = {
                     urlError = !performUrlUpdate(urlInput?.trim(), url, onSaveUrl)

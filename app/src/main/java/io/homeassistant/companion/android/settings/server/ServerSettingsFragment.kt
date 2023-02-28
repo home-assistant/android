@@ -133,6 +133,9 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         }
 
         findPreference<EditTextPreference>("connection_internal")?.let {
+            it.setOnBindEditTextListener { edit ->
+                edit.inputType = InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+            }
             it.onPreferenceChangeListener =
                 onChangeUrlValidator
         }
