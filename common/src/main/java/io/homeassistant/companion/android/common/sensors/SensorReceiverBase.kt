@@ -33,6 +33,8 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.IOException
+import java.net.ConnectException
+import java.net.SocketTimeoutException
 import java.util.Locale
 import javax.inject.Inject
 
@@ -213,6 +215,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
             null
         }
 
+        var serverIsReachable = true
         val enabledRegistrations = mutableListOf<SensorRegistration<Any>>()
 
         managers.forEach { manager ->
@@ -296,6 +299,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                     }
                 } else if (
                     canBeRegistered &&
+                    serverIsReachable &&
                     (sensor.enabled || supportsDisabledSensors) &&
                     (currentAppVersion != sensor.appRegistration || currentHAversion != sensor.coreRegistration)
                 ) {
@@ -309,6 +313,10 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                         sensorDao.update(sensor)
                     } catch (e: Exception) {
                         Log.e(tag, "Issue re-registering sensor ${basicSensor.id}", e)
+                        if (e is IntegrationException && (e.cause is ConnectException || e.cause is SocketTimeoutException)) {
+                            Log.w(tag, "Server can't be reached, skipping other registrations for sensors due to version change")
+                            serverIsReachable = false
+                        }
                     }
                 }
 
