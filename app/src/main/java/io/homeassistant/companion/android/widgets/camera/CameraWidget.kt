@@ -154,7 +154,7 @@ class CameraWidget : AppWidgetProvider() {
                         }
                         try {
                             picasso.invalidate(url)
-                            picasso.load(url).resize(1024, 600).into(
+                            picasso.load(url).into(
                                 this,
                                 R.id.widgetCameraImage,
                                 intArrayOf(appWidgetId)
