@@ -45,8 +45,9 @@ class MonitoringManager {
         if (!this::beaconManager.isInitialized) {
             beaconManager = BeaconManager.getInstanceForApplication(context)
 
-            if (BuildConfig.DEBUG)
+            if (BuildConfig.DEBUG) {
                 BeaconManager.setDebug(true)
+            }
 
             // find iBeacons
             beaconManager.beaconParsers.add(
