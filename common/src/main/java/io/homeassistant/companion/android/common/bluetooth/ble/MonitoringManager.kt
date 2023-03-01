@@ -84,7 +84,7 @@ class MonitoringManager {
         val stopScanningIntent = Intent(context, SensorUpdateReceiver::class.java)
         stopScanningIntent.action = SensorReceiverBase.ACTION_STOP_BEACON_SCANNING
         val stopScanningPendingIntent = PendingIntent.getBroadcast(context, 0, stopScanningIntent, PendingIntent.FLAG_MUTABLE)
-        builder.addAction(0, context.getString(R.string.stop_scanning), stopScanningPendingIntent)
+        builder.addAction(0, context.getString(R.string.disable), stopScanningPendingIntent)
         beaconManager.enableForegroundServiceScanning(builder.build(), 444)
         beaconManager.setEnableScheduledScanJobs(false)
         beaconManager.startRangingBeacons(region)
