@@ -107,8 +107,9 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
 
         updateActiveNotificationCount()
 
-        if (!isEnabled(applicationContext, lastNotification))
+        if (!isEnabled(applicationContext, lastNotification)) {
             return
+        }
 
         val allowPackages = getSetting(
             applicationContext,
@@ -141,8 +142,9 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             .plus("category" to sbn.notification.category)
             .toMutableMap()
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             attr["channel_id"] = sbn.notification.channelId
+        }
 
         // Attempt to use the text of the notification but fallback to package name if all else fails.
         val state = attr["android.text"] ?: attr["android.title"] ?: sbn.packageName
@@ -153,7 +155,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             state.toString().take(255),
             lastNotification.statelessIcon,
             attr,
-            forceUpdate = true,
+            forceUpdate = true
         )
 
         // Need to send update!
@@ -165,8 +167,9 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
 
         updateActiveNotificationCount()
 
-        if (!isEnabled(applicationContext, lastRemovedNotification))
+        if (!isEnabled(applicationContext, lastRemovedNotification)) {
             return
+        }
 
         val allowPackages = getSetting(
             applicationContext,
@@ -199,8 +202,9 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             .plus("category" to sbn.notification.category)
             .toMutableMap()
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             attr["channel_id"] = sbn.notification.channelId
+        }
 
         // Attempt to use the text of the notification but fallback to package name if all else fails.
         val state = attr["android.text"] ?: attr["android.title"] ?: sbn.packageName
@@ -211,7 +215,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             state.toString().take(255),
             lastRemovedNotification.statelessIcon,
             attr,
-            forceUpdate = true,
+            forceUpdate = true
         )
 
         // Need to send update!
@@ -219,8 +223,9 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
     }
 
     private fun updateActiveNotificationCount() {
-        if (!isEnabled(applicationContext, activeNotificationCount) || !listenerConnected)
+        if (!isEnabled(applicationContext, activeNotificationCount) || !listenerConnected) {
             return
+        }
 
         try {
             val attr: MutableMap<String, Any?> = mutableMapOf()
@@ -232,8 +237,9 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
                     .plus("${item.packageName}_${item.id}_group_id" to item.notification.group)
                     .plus("${item.packageName}_${item.id}_category" to item.notification.category)
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     attr["${item.packageName}_${item.id}_channel_id"] = item.notification.channelId
+                }
             }
             onSensorUpdated(
                 applicationContext,
@@ -248,8 +254,9 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
     }
 
     private fun updateMediaSession(context: Context) {
-        if (!isEnabled(context, mediaSession))
+        if (!isEnabled(context, mediaSession)) {
             return
+        }
 
         val mediaSessionManager = context.getSystemService<MediaSessionManager>()!!
         val mediaList = mediaSessionManager.getActiveSessions(ComponentName(context, NotificationSensorManager::class.java))
@@ -307,8 +314,11 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             bundle.keySet().associate { key ->
                 val keyValue = when (val value = bundle.get(key)) {
                     is Array<*> -> {
-                        if (value.all { it is Bundle }) value.map { mappedBundle(it as Bundle) ?: value }
-                        else value.toList()
+                        if (value.all { it is Bundle }) {
+                            value.map { mappedBundle(it as Bundle) ?: value }
+                        } else {
+                            value.toList()
+                        }
                     }
                     is BooleanArray -> value.toList()
                     is Bundle -> mappedBundle(value) ?: value

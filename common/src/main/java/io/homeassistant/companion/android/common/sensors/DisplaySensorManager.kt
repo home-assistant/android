@@ -46,8 +46,9 @@ class DisplaySensorManager : SensorManager {
     }
 
     private fun updateScreenBrightness(context: Context) {
-        if (!isEnabled(context, screenBrightness))
+        if (!isEnabled(context, screenBrightness)) {
             return
+        }
 
         var brightness = 0
         var auto = false
@@ -76,8 +77,9 @@ class DisplaySensorManager : SensorManager {
     }
 
     private fun updateScreenTimeout(context: Context) {
-        if (!isEnabled(context, screenOffTimeout))
+        if (!isEnabled(context, screenOffTimeout)) {
             return
+        }
 
         var timeout = 0
 

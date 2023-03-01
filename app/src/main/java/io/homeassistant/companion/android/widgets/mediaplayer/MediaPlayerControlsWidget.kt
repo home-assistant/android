@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.widgets.media_player_controls
+package io.homeassistant.companion.android.widgets.mediaplayer
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
@@ -231,8 +231,9 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                 var iconBitmap = IconicsDrawable(context, CommunityMaterial.Icon.cmd_cast).toBitmap()
                 if (icon?.startsWith("mdi") == true && icon.substringAfter(":").isNotBlank()) {
                     val iconDrawable = IconicsDrawable(context, "cmd-${icon.substringAfter(":")}")
-                    if (iconDrawable.icon != null)
+                    if (iconDrawable.icon != null) {
                         iconBitmap = iconDrawable.toBitmap()
+                    }
                 }
 
                 setImageViewBitmap(
@@ -421,8 +422,9 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
             }
         } catch (e: Exception) {
             Log.d(TAG, "Failed to fetch entity or entity does not exist")
-            if (lastIntent == UPDATE_MEDIA_IMAGE)
+            if (lastIntent == UPDATE_MEDIA_IMAGE) {
                 Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
+            }
             return null
         }
 
@@ -560,8 +562,9 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
             }
             if (currentEntityInfo == null) {
                 Log.d(TAG, "Failed to fetch entity or entity does not exist")
-                if (lastIntent != Intent.ACTION_SCREEN_ON)
+                if (lastIntent != Intent.ACTION_SCREEN_ON) {
                     Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
+                }
                 return@launch
             }
 
@@ -643,8 +646,9 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
             }
             if (currentEntityInfo == null) {
                 Log.d(TAG, "Failed to fetch entity or entity does not exist")
-                if (lastIntent != Intent.ACTION_SCREEN_ON)
+                if (lastIntent != Intent.ACTION_SCREEN_ON) {
                     Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
+                }
                 return@launch
             }
 

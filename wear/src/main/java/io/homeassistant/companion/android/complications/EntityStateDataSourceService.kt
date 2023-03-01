@@ -25,6 +25,7 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
 
     @Inject
     lateinit var serverManager: ServerManager
+
     @Inject
     lateinit var entityStateComplicationsDao: EntityStateComplicationsDao
 
@@ -33,8 +34,9 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
     }
 
     override suspend fun onComplicationRequest(request: ComplicationRequest): ComplicationData? {
-        if (request.complicationType != ComplicationType.SHORT_TEXT)
+        if (request.complicationType != ComplicationType.SHORT_TEXT) {
             return null
+        }
 
         val id = request.complicationInstanceId
 
@@ -82,9 +84,9 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
                 MonochromaticImage.Builder(
                     Icon.createWithResource(
                         this,
-                        io.homeassistant.companion.android.R.drawable.ic_lightbulb,
-                    ),
-                ).build(),
+                        io.homeassistant.companion.android.R.drawable.ic_lightbulb
+                    )
+                ).build()
             )
             .setTitle(PlainComplicationText.Builder(getText(R.string.entity)).build())
             .build()

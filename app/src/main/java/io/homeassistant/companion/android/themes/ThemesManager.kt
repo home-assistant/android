@@ -21,10 +21,14 @@ class ThemesManager @Inject constructor(
             if (theme.isNullOrEmpty()) {
                 val toSetTheme = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                     "system"
-                } else "light"
+                } else {
+                    "light"
+                }
                 themesUseCase.saveTheme(toSetTheme)
                 toSetTheme
-            } else theme
+            } else {
+                theme
+            }
         }
     }
 
@@ -54,7 +58,8 @@ class ThemesManager @Inject constructor(
             // unable to update. These deprecated settings are set to preserve compatibility for
             // those users. Issue: https://github.com/home-assistant/android/issues/2985
             WebSettingsCompat.setForceDarkStrategy(
-                webSettings, WebSettingsCompat.DARK_STRATEGY_WEB_THEME_DARKENING_ONLY
+                webSettings,
+                WebSettingsCompat.DARK_STRATEGY_WEB_THEME_DARKENING_ONLY
             )
             when (theme) {
                 "dark" -> {

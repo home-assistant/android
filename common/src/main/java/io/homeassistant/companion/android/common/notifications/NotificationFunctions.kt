@@ -81,8 +81,9 @@ fun handleChannel(
             handleImportance(data)
         )
 
-        if (channelName == NotificationData.ALARM_STREAM)
+        if (channelName == NotificationData.ALARM_STREAM) {
             handleChannelSound(context, channel)
+        }
 
         setChannelLedColor(context, data, channel)
         setChannelVibrationPattern(data, channel)
@@ -95,7 +96,6 @@ fun handleChannel(
 fun handleImportance(
     data: Map<String, String>
 ): Int {
-
     when (data[NotificationData.IMPORTANCE]) {
         "high" -> {
             return NotificationManager.IMPORTANCE_HIGH
@@ -210,12 +210,14 @@ fun handleSmallIcon(
         val iconName = notificationIcon.split(":")[1]
         val iconDrawable =
             IconicsDrawable(context, "cmd-$iconName")
-        if (iconDrawable.icon != null)
+        if (iconDrawable.icon != null) {
             builder.setSmallIcon(iconDrawable.toAndroidIconCompat())
-        else
+        } else {
             builder.setSmallIcon(R.drawable.ic_stat_ic_notification)
-    } else
+        }
+    } else {
         builder.setSmallIcon(R.drawable.ic_stat_ic_notification)
+    }
 }
 
 fun getGroupNotificationBuilder(
@@ -224,7 +226,6 @@ fun getGroupNotificationBuilder(
     group: String,
     data: Map<String, String>
 ): NotificationCompat.Builder {
-
     val groupNotificationBuilder = NotificationCompat.Builder(context, channelId)
         .setStyle(
             NotificationCompat.BigTextStyle()
@@ -235,8 +236,9 @@ fun getGroupNotificationBuilder(
         .setGroup(group)
         .setGroupSummary(true)
 
-    if (data[NotificationData.ALERT_ONCE].toBoolean())
+    if (data[NotificationData.ALERT_ONCE].toBoolean()) {
         groupNotificationBuilder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
+    }
     handleColor(context, groupNotificationBuilder, data)
     handleSmallIcon(context, groupNotificationBuilder, data)
     return groupNotificationBuilder

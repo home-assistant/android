@@ -144,10 +144,11 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
                         // Insert a dynamic layout
                         // IDs get priority and go at the top, since the other fields
                         // are usually optional but the ID is required
-                        if (fieldKey.contains("_id"))
+                        if (fieldKey.contains("_id")) {
                             dynamicFields.add(0, ServiceFieldBinder(serviceText, fieldKey))
-                        else
+                        } else {
                             dynamicFields.add(ServiceFieldBinder(serviceText, fieldKey))
+                        }
                     }
 
                     dynamicFieldAdapter.notifyDataSetChanged()
@@ -183,10 +184,12 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
         val extras = intent.extras
         if (extras != null) {
             appWidgetId = extras.getInt(
-                AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID
+                AppWidgetManager.EXTRA_APPWIDGET_ID,
+                AppWidgetManager.INVALID_APPWIDGET_ID
             )
             requestLauncherSetup = extras.getBoolean(
-                ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, false
+                ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER,
+                false
             )
         }
 
@@ -203,8 +206,9 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
             getString(commonR.string.widget_background_type_daynight),
             getString(commonR.string.widget_background_type_transparent)
         )
-        if (DynamicColors.isDynamicColorAvailable())
+        if (DynamicColors.isDynamicColorAvailable()) {
             backgroundTypeValues.add(0, getString(commonR.string.widget_background_type_dynamiccolor))
+        }
         binding.backgroundType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
 
         if (buttonWidget != null) {
@@ -280,8 +284,11 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
         binding.backgroundType.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 binding.textColor.visibility =
-                    if (parent?.adapter?.getItem(position) == getString(commonR.string.widget_background_type_transparent)) View.VISIBLE
-                    else View.GONE
+                    if (parent?.adapter?.getItem(position) == getString(commonR.string.widget_background_type_transparent)) {
+                        View.VISIBLE
+                    } else {
+                        View.GONE
+                    }
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {
@@ -310,7 +317,9 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
                         )
                     )
-                } else showAddWidgetError()
+                } else {
+                    showAddWidgetError()
+                }
             } else {
                 onAddWidget()
             }
@@ -341,7 +350,8 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
         super.onNewIntent(intent)
         if (intent != null && intent.extras != null && intent.hasExtra(PIN_WIDGET_CALLBACK)) {
             appWidgetId = intent.extras!!.getInt(
-                AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID
+                AppWidgetManager.EXTRA_APPWIDGET_ID,
+                AppWidgetManager.INVALID_APPWIDGET_ID
             )
             onAddWidget()
         }
@@ -466,9 +476,11 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
 
             intent.putExtra(
                 ButtonWidget.EXTRA_TEXT_COLOR,
-                if (binding.backgroundType.selectedItem as String? == getString(commonR.string.widget_background_type_transparent))
+                if (binding.backgroundType.selectedItem as String? == getString(commonR.string.widget_background_type_transparent)) {
                     getHexForColor(if (binding.textColorWhite.isChecked) android.R.color.white else commonR.color.colorWidgetButtonLabelBlack)
-                else null
+                } else {
+                    null
+                }
             )
 
             intent.putExtra(ButtonWidget.EXTRA_REQUIRE_AUTHENTICATION, binding.widgetCheckboxRequireAuthentication.isChecked)

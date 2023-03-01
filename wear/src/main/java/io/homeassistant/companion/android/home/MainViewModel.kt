@@ -195,23 +195,27 @@ class MainViewModel @Inject constructor(
             entities.clear()
             it.forEach { state -> updateEntityStates(state) }
         }
-        if (!isFavoritesOnly)
+        if (!isFavoritesOnly) {
             updateEntityDomains()
+        }
     }
 
     suspend fun entityUpdates() {
-        if (!homePresenter.isConnected())
+        if (!homePresenter.isConnected()) {
             return
+        }
         homePresenter.getEntityUpdates(supportedEntities.value)?.collect {
             updateEntityStates(it)
-            if (!isFavoritesOnly)
+            if (!isFavoritesOnly) {
                 updateEntityDomains()
+            }
         }
     }
 
     suspend fun areaUpdates() {
-        if (!homePresenter.isConnected() || isFavoritesOnly)
+        if (!homePresenter.isConnected() || isFavoritesOnly) {
             return
+        }
         homePresenter.getAreaRegistryUpdates()?.collect {
             areaRegistry = homePresenter.getAreaRegistry()
             areas.clear()
@@ -223,8 +227,9 @@ class MainViewModel @Inject constructor(
     }
 
     suspend fun deviceUpdates() {
-        if (!homePresenter.isConnected() || isFavoritesOnly)
+        if (!homePresenter.isConnected() || isFavoritesOnly) {
             return
+        }
         homePresenter.getDeviceRegistryUpdates()?.collect {
             deviceRegistry = homePresenter.getDeviceRegistry()
             updateEntityDomains()
@@ -232,8 +237,9 @@ class MainViewModel @Inject constructor(
     }
 
     suspend fun entityRegistryUpdates() {
-        if (!homePresenter.isConnected())
+        if (!homePresenter.isConnected()) {
             return
+        }
         homePresenter.getEntityRegistryUpdates()?.collect {
             entityRegistry = homePresenter.getEntityRegistry()
             _supportedEntities.value = getSupportedEntities()
@@ -319,10 +325,12 @@ class MainViewModel @Inject constructor(
                 .first { basicSensor -> basicSensor.id == sensorId }
             updateSensorEntity(sensorsDao, basicSensor, isEnabled)
 
-            if (isEnabled) try {
-                sensorManager.requestSensorUpdate(getApplication())
-            } catch (e: Exception) {
-                Log.e(TAG, "Exception while requesting update for sensor $sensorId", e)
+            if (isEnabled) {
+                try {
+                    sensorManager.requestSensorUpdate(getApplication())
+                } catch (e: Exception) {
+                    Log.e(TAG, "Exception while requesting update for sensor $sensorId", e)
+                }
             }
         }
     }

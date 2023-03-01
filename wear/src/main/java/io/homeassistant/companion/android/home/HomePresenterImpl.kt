@@ -91,10 +91,11 @@ class HomePresenterImpl @Inject constructor(
             "button", "input_button" -> "press"
             "lock" -> {
                 // Defaults to locking, to be save
-                if (state == "locked")
+                if (state == "locked") {
                     "unlock"
-                else
+                } else {
                     "lock"
+                }
             }
             in toggleDomains -> "toggle"
             else -> "turn_on"

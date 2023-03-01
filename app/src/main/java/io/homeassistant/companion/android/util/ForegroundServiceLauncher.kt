@@ -31,8 +31,9 @@ class ForegroundServiceLauncher(private val serviceClass: Class<out Service>) {
             ContextCompat.startForegroundService(context, Intent(context, serviceClass).apply { block() })
             Log.d(TAG, "Start service ${serviceClass.simpleName}")
         } else {
-            if (restartInProcess) Log.w(TAG, "Cannot start service ${serviceClass.simpleName}. Service currently restarting...")
-            else if (isRunning) Log.w(TAG, "Cannot start service ${serviceClass.simpleName}. Service is not running...")
+            if (restartInProcess) {
+                Log.w(TAG, "Cannot start service ${serviceClass.simpleName}. Service currently restarting...")
+            } else if (isRunning) Log.w(TAG, "Cannot start service ${serviceClass.simpleName}. Service is not running...")
         }
     }
 
@@ -40,8 +41,9 @@ class ForegroundServiceLauncher(private val serviceClass: Class<out Service>) {
     fun stopService(context: Context) {
         if (isStarting || restartInProcess) {
             shouldStop = true
-            if (restartInProcess) Log.d(TAG, "Stop service ${serviceClass.simpleName}. Service currently restarting. Stopping service after it is restarted.")
-            else if (isStarting) Log.d(TAG, "Stop service ${serviceClass.simpleName}. Service is currently starting. Stopping service after it is started.")
+            if (restartInProcess) {
+                Log.d(TAG, "Stop service ${serviceClass.simpleName}. Service currently restarting. Stopping service after it is restarted.")
+            } else if (isStarting) Log.d(TAG, "Stop service ${serviceClass.simpleName}. Service is currently starting. Stopping service after it is started.")
         } else if (isRunning) {
             context.stopService(Intent(context, serviceClass))
             Log.d(TAG, "Stop service ${serviceClass.simpleName}")
@@ -72,8 +74,9 @@ class ForegroundServiceLauncher(private val serviceClass: Class<out Service>) {
                 startService(context, block)
             }
         } else {
-            if (restartInProcess) Log.w(TAG, "Cannot restart service ${serviceClass.simpleName}. Service currently restarting...")
-            else if (isStarting) Log.w(TAG, "Cannot restart service ${serviceClass.simpleName}. Service is currently starting...")
+            if (restartInProcess) {
+                Log.w(TAG, "Cannot restart service ${serviceClass.simpleName}. Service currently restarting...")
+            } else if (isStarting) Log.w(TAG, "Cannot restart service ${serviceClass.simpleName}. Service is currently starting...")
         }
     }
 

@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.widgets.media_player_controls
+package io.homeassistant.companion.android.widgets.mediaplayer
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
@@ -87,7 +87,9 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
                         )
                     )
-                } else showAddWidgetError()
+                } else {
+                    showAddWidgetError()
+                }
             } else {
                 onAddWidget()
             }
@@ -98,10 +100,12 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
         val extras = intent.extras
         if (extras != null) {
             appWidgetId = extras.getInt(
-                AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID
+                AppWidgetManager.EXTRA_APPWIDGET_ID,
+                AppWidgetManager.INVALID_APPWIDGET_ID
             )
             requestLauncherSetup = extras.getBoolean(
-                ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, false
+                ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER,
+                false
             )
         }
 
@@ -152,8 +156,9 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
                         backgroundTypeValues.indexOf(getString(commonR.string.widget_background_type_daynight))
                 }
             )
-            if (entities != null)
+            if (entities != null) {
                 selectedEntities.addAll(entities)
+            }
             binding.addButton.setText(commonR.string.update_widget)
         }
         entityAdapter = SingleItemArrayAdapter(this) { it?.entityId ?: "" }
@@ -279,7 +284,8 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
         super.onNewIntent(intent)
         if (intent != null && intent.extras != null && intent.hasExtra(PIN_WIDGET_CALLBACK)) {
             appWidgetId = intent.extras!!.getInt(
-                AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID
+                AppWidgetManager.EXTRA_APPWIDGET_ID,
+                AppWidgetManager.INVALID_APPWIDGET_ID
             )
             onAddWidget()
         }

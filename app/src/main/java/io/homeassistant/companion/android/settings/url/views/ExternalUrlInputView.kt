@@ -73,7 +73,9 @@ fun ExternalUrlInputView(
                         contentDescription = stringResource(commonR.string.url_invalid)
                     )
                 }
-            } else null,
+            } else {
+                null
+            },
             modifier = Modifier
                 .focusRequester(focusRequester)
                 .fillMaxWidth()

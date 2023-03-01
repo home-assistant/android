@@ -126,8 +126,9 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                         notificationsEnabled
                     )
                 }
-            } else
+            } else {
                 Log.e(TAG, "onOnboardingComplete: Activity result returned null intent data")
+            }
         }
     }
 

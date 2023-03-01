@@ -33,7 +33,6 @@ fun SensorListView(
     viewModel: SensorSettingsViewModel,
     onSensorClicked: (String) -> Unit
 ) {
-
     LazyColumn {
         viewModel.allSensors.forEach { (manager, currentSensors) ->
             stickyHeader(
@@ -101,8 +100,11 @@ fun SensorRow(
             if (dbSensor.state.isBlank()) {
                 stringResource(commonR.string.enabled)
             } else {
-                if (basicSensor.unitOfMeasurement.isNullOrBlank()) dbSensor.state
-                else "${dbSensor.state} ${basicSensor.unitOfMeasurement}"
+                if (basicSensor.unitOfMeasurement.isNullOrBlank()) {
+                    dbSensor.state
+                } else {
+                    "${dbSensor.state} ${basicSensor.unitOfMeasurement}"
+                }
             }
         } else {
             stringResource(commonR.string.disabled)

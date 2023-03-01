@@ -54,10 +54,11 @@ class TileActionReceiver : BroadcastReceiver() {
                         } catch (e: Exception) {
                             null
                         }
-                        if (lockEntity?.state == "locked")
+                        if (lockEntity?.state == "locked") {
                             "unlock"
-                        else
+                        } else {
                             "lock"
+                        }
                     }
                     in HomePresenterImpl.toggleDomains -> "toggle"
                     else -> "turn_on"

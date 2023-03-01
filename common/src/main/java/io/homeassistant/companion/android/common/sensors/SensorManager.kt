@@ -66,9 +66,9 @@ interface SensorManager {
 
     fun checkPermission(context: Context, sensorId: String): Boolean {
         return requiredPermissions(sensorId).all {
-            if (sensorId != "last_used_app")
+            if (sensorId != "last_used_app") {
                 context.checkPermission(it, myPid(), myUid()) == PackageManager.PERMISSION_GRANTED
-            else {
+            } else {
                 checkUsageStatsPermission(context)
             }
         }
@@ -198,15 +198,16 @@ interface SensorManager {
         settingType: SensorSettingType,
         default: String,
         enabled: Boolean = true,
-        entries: List<String> = arrayListOf(),
+        entries: List<String> = arrayListOf()
     ): String {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val setting = sensorDao
             .getSettings(sensor.id)
             .firstOrNull { it.name == settingName }
             ?.value
-        if (setting == null)
+        if (setting == null) {
             sensorDao.add(SensorSetting(sensor.id, settingName, default, settingType, enabled, entries = entries))
+        }
 
         return setting ?: default
     }
@@ -217,7 +218,7 @@ interface SensorManager {
         state: Any,
         mdiIcon: String,
         attributes: Map<String, Any?>,
-        forceUpdate: Boolean = false,
+        forceUpdate: Boolean = false
     ) {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val sensors = sensorDao.get(basicSensor.id)
@@ -241,7 +242,7 @@ interface SensorManager {
                 stateClass = basicSensor.stateClass,
                 entityCategory = basicSensor.entityCategory,
                 lastSentState = if (forceUpdate) null else it.lastSentState,
-                lastSentIcon = if (forceUpdate) null else it.lastSentIcon,
+                lastSentIcon = if (forceUpdate) null else it.lastSentIcon
             )
             sensorDao.update(sensor)
         }

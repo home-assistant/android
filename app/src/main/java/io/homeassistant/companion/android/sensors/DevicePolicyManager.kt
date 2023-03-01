@@ -52,9 +52,9 @@ class DevicePolicyManager : SensorManager {
     }
 
     private fun updateWorkProfile(context: Context) {
-
-        if (!isEnabled(context, isWorkProfile))
+        if (!isEnabled(context, isWorkProfile)) {
             return
+        }
 
         onSensorUpdated(
             context,

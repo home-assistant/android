@@ -22,7 +22,7 @@ object SettingsWearDetection {
         } catch (e: Exception) {
             if (e is ApiException && e.statusCode == CommonStatusCodes.API_NOT_CONNECTED && e.message?.contains("API_UNAVAILABLE") == true) {
                 // Wearable.API is not available on this device.
-                Log.d(TAG, "API unavailable for discovering nodes (no Wear)",)
+                Log.d(TAG, "API unavailable for discovering nodes (no Wear)")
             } else {
                 Log.e(TAG, "Exception while discovering nodes", e)
             }

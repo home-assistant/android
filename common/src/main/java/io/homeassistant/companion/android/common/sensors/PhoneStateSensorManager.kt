@@ -55,9 +55,11 @@ class PhoneStateSensorManager : SensorManager {
         return context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
     }
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1)
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
             listOf(phoneState, sim_1, sim_2)
-        else listOf(phoneState)
+        } else {
+            listOf(phoneState)
+        }
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
@@ -94,8 +96,9 @@ class PhoneStateSensorManager : SensorManager {
 
     private fun updatePhoneStateSensor(context: Context, state: String) {
         var phoneIcon = "mdi:phone"
-        if (state == "ringing" || state == "offhook")
+        if (state == "ringing" || state == "offhook") {
             phoneIcon += "-in-talk"
+        }
 
         onSensorUpdated(
             context,
@@ -112,8 +115,9 @@ class PhoneStateSensorManager : SensorManager {
             1 -> sim_2
             else -> throw IllegalArgumentException("Invalid sim slot: $slotIndex")
         }
-        if (!isEnabled(context, basicSimSensor))
+        if (!isEnabled(context, basicSimSensor)) {
             return
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
             var displayName = "Unavailable"
             val attrs = mutableMapOf<String, Any>()

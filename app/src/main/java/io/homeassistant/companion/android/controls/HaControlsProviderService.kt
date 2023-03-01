@@ -247,8 +247,11 @@ class HaControlsProviderService : ControlsProviderService() {
         if (serverManager.getServer(serverId) == null) {
             controlIds.forEach {
                 val entityId =
-                    if (it.split(".")[0].toIntOrNull() != null) it.removePrefix("$serverId.")
-                    else it
+                    if (it.split(".")[0].toIntOrNull() != null) {
+                        it.removePrefix("$serverId.")
+                    } else {
+                        it
+                    }
                 val entity = getFailedEntity(entityId, Exception())
                 domainToHaControl["ha_failed"]?.createControl(
                     applicationContext,
@@ -257,7 +260,7 @@ class HaControlsProviderService : ControlsProviderService() {
                         systemId = it,
                         entityId = entityId,
                         serverId = serverId,
-                        area = getAreaForEntity(entity.entityId, serverId),
+                        area = getAreaForEntity(entity.entityId, serverId)
                     )
                 )?.let { control -> subscriber.onNext(control) }
             }
@@ -269,8 +272,11 @@ class HaControlsProviderService : ControlsProviderService() {
         val getDeviceRegistry = ioScope.async { serverManager.webSocketRepository(serverId).getDeviceRegistry() }
         val getEntityRegistry = ioScope.async { serverManager.webSocketRepository(serverId).getEntityRegistry() }
         val entityIds = controlIds.map {
-            if (it.split(".")[0].toIntOrNull() != null) it.removePrefix("$serverId.")
-            else it
+            if (it.split(".")[0].toIntOrNull() != null) {
+                it.removePrefix("$serverId.")
+            } else {
+                it
+            }
         }
         val entities = mutableMapOf<String, Entity<Map<String, Any>>>()
         val baseUrl = serverManager.getServer(serverId)?.connection?.getUrl()?.toString()?.removeSuffix("/") ?: ""
@@ -386,8 +392,9 @@ class HaControlsProviderService : ControlsProviderService() {
                             baseUrl = baseUrl
                         )
                     )
-                    if (control != null)
+                    if (control != null) {
                         subscriber.onNext(control)
+                    }
                 }
             }
         }
@@ -422,8 +429,11 @@ class HaControlsProviderService : ControlsProviderService() {
         baseUrl: String
     ) {
         val entityIds = controlIds.map {
-            if (it.split(".")[0].toIntOrNull() != null) it.removePrefix("$serverId.")
-            else it
+            if (it.split(".")[0].toIntOrNull() != null) {
+                it.removePrefix("$serverId.")
+            } else {
+                it
+            }
         }
         entities.forEach {
             coroutineScope.launch {
@@ -449,8 +459,9 @@ class HaControlsProviderService : ControlsProviderService() {
                         info
                     )
                 }
-                if (control != null)
+                if (control != null) {
                     subscriber.onNext(control)
+                }
             }
         }
     }
@@ -485,6 +496,8 @@ class HaControlsProviderService : ControlsProviderService() {
             } else {
                 setting == ControlsAuthRequiredSetting.ALL
             }
-        } else false
+        } else {
+            false
+        }
     }
 }

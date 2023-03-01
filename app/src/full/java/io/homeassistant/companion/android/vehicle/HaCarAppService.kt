@@ -86,7 +86,9 @@ class HaCarAppService : CarAppService() {
                     serverManager.integrationRepository(id).getEntities()
                         ?.associate { it.entityId to it }
                         ?.toMutableMap()
-                } else null
+                } else {
+                    null
+                }
             if (entities != null) {
                 allEntities.emit(entities.toImmutableMap())
                 serverManager.integrationRepository(id).getEntityUpdates()?.collect { entity ->

@@ -59,8 +59,9 @@ class LightSensorManager : SensorManager, SensorEventListener {
     }
 
     private fun updateLightSensor() {
-        if (!isEnabled(latestContext, lightSensor))
+        if (!isEnabled(latestContext, lightSensor)) {
             return
+        }
 
         val now = System.currentTimeMillis()
         if (listenerLastRegistered + SensorManager.SENSOR_LISTENER_TIMEOUT < now && isListenerRegistered) {

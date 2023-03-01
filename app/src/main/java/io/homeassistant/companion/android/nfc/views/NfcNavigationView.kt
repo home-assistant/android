@@ -69,8 +69,11 @@ fun LoadNfcView(
                 title = { Text(stringResource(commonR.string.nfc_title_settings)) },
                 navigationIcon = {
                     IconButton(onClick = {
-                        if (canNavigateUp.value) navController.navigateUp()
-                        else pressedUpAtRoot()
+                        if (canNavigateUp.value) {
+                            navController.navigateUp()
+                        } else {
+                            pressedUpAtRoot()
+                        }
                     }) {
                         Icon(
                             imageVector = Icons.Outlined.ArrowBack,
@@ -116,7 +119,9 @@ fun LoadNfcView(
                     identifier = viewModel.nfcTagIdentifier,
                     onSetIdentifier = if (viewModel.nfcIdentifierIsEditable) {
                         { viewModel.setTagIdentifier(it) }
-                    } else null
+                    } else {
+                        null
+                    }
                 )
             }
             composable(NfcSetupActivity.NAV_EDIT) {

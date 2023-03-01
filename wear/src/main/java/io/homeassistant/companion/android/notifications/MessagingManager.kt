@@ -32,7 +32,7 @@ import javax.inject.Inject
 class MessagingManager @Inject constructor(
     @ApplicationContext val context: Context,
     private val serverManager: ServerManager,
-    private val sensorDao: SensorDao,
+    private val sensorDao: SensorDao
 ) {
 
     companion object {
@@ -42,7 +42,6 @@ class MessagingManager @Inject constructor(
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     fun handleMessage(notificationData: Map<String, String>, source: String) {
-
         val notificationDao = AppDatabase.getInstance(context).notificationDao()
         val now = System.currentTimeMillis()
 

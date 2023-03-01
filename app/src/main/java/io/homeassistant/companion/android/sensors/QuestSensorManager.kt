@@ -59,8 +59,9 @@ class QuestSensorManager : SensorManager {
     }
 
     private fun updateHeadsetMount(context: Context, intent: Intent) {
-        if (!isEnabled(context, headsetMounted))
+        if (!isEnabled(context, headsetMounted)) {
             return
+        }
 
         val state: Boolean = getHeadsetState(intent)
 

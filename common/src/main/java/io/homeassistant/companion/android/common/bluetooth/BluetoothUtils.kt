@@ -16,7 +16,6 @@ object BluetoothUtils {
             context.applicationContext.getSystemService<BluetoothManager>()!!
 
         if (bluetoothManager.adapter != null) {
-
             val adapter = bluetoothManager.adapter
             val isBtOn = adapter.isEnabled
 

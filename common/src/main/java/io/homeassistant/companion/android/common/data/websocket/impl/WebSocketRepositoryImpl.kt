@@ -141,7 +141,6 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
     }
 
     override suspend fun getAreaRegistry(): List<AreaRegistryResponse>? {
-
         val socketResponse = sendMessage(
             mapOf(
                 "type" to "config/area_registry/list"
@@ -152,7 +151,6 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
     }
 
     override suspend fun getDeviceRegistry(): List<DeviceRegistryResponse>? {
-
         val socketResponse = sendMessage(
             mapOf(
                 "type" to "config/device_registry/list"
@@ -163,7 +161,6 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
     }
 
     override suspend fun getEntityRegistry(): List<EntityRegistryResponse>? {
-
         val socketResponse = sendMessage(
             mapOf(
                 "type" to "config/entity_registry/list"
@@ -364,7 +361,9 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
                     response.error.get("code").let {
                         if (it.isNumber) it.asInt() else null
                     }
-                } else null
+                } else {
+                    null
+                }
             )
         }
     }
@@ -392,7 +391,9 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
                     response.error.get("code").let {
                         if (it.isNumber) it.asInt() else null
                     }
-                } else null
+                } else {
+                    null
+                }
             )
         }
     }
@@ -409,7 +410,9 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
         )
         return if (response?.success == true && response.result?.contains("datasets") == true) {
             mapper.convertValue(response.result["datasets"]!!)
-        } else null
+        } else {
+            null
+        }
     }
 
     /**
@@ -648,8 +651,9 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
                 connected = CompletableDeferred()
                 connection = null
                 connectionHaVersion = null
-                if (connectionState != WebSocketState.CLOSED_AUTH)
+                if (connectionState != WebSocketState.CLOSED_AUTH) {
                     connectionState = WebSocketState.CLOSED_OTHER
+                }
                 synchronized(activeMessages) {
                     activeMessages
                         .filterValues { it.eventFlow == null }

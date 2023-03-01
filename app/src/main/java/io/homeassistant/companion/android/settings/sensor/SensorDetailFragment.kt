@@ -136,13 +136,16 @@ class SensorDetailFragment : Fragment() {
                     DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), it.sensors)
                 } else {
                     LocationPermissionInfoHandler.showLocationPermInfoDialogIfNeeded(
-                        requireContext(), it.permissions!!,
+                        requireContext(),
+                        it.permissions!!,
                         continueYesCallback = {
                             requestForServer = it.serverId
                             permissionsRequest.launch(
                                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
                                     it.permissions.toSet().minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION).toTypedArray()
-                                } else it.permissions
+                                } else {
+                                    it.permissions
+                                }
                             )
                         }
                     )

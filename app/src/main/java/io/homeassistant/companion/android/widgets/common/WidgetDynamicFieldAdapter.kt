@@ -54,8 +54,11 @@ class WidgetDynamicFieldAdapter(
         // Reformat text to "Capital Words" instead of "capital_words"
         binding.dynamicAutocompleteLabel.text =
             fieldKey.split("_").map {
-                if (it == "id") it.toUpperCase()
-                else it.capitalize()
+                if (it == "id") {
+                    it.toUpperCase()
+                } else {
+                    it.capitalize()
+                }
             }.joinToString(" ")
 
         // If the field has an example, use it as a hint

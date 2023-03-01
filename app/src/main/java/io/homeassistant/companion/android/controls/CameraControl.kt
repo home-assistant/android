@@ -46,7 +46,9 @@ object CameraControl : HaControl {
 
         val image = if (baseUrl != null && (entity.attributes["entity_picture"] as? String)?.isNotBlank() == true) {
             getThumbnail(baseUrl + entity.attributes["entity_picture"] as String)
-        } else null
+        } else {
+            null
+        }
         val icon = if (image != null) {
             Icon.createWithBitmap(image)
         } else {

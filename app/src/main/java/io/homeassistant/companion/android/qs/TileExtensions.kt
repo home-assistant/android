@@ -157,15 +157,18 @@ abstract class TileExtensions : TileService() {
                                 null
                             }
                         }
-                    } else null
+                    } else {
+                        null
+                    }
                 if (tileData.entityId.split('.')[0] in toggleDomainsWithLock) {
                     tile.state = when {
                         state?.state in validActiveStates -> Tile.STATE_ACTIVE
                         state?.state != null && state.state !in validActiveStates -> Tile.STATE_INACTIVE
                         else -> Tile.STATE_UNAVAILABLE
                     }
-                } else
+                } else {
                     tile.state = Tile.STATE_INACTIVE
+                }
 
                 getTileIcon(tileData.iconId, state, context)?.let { icon ->
                     tile.icon = Icon.createWithBitmap(icon)
@@ -180,8 +183,11 @@ abstract class TileExtensions : TileService() {
                     Log.d(TAG, "No tile data found for tile ID: $tileId")
                 }
                 tile.state =
-                    if (serverManager.isRegistered()) Tile.STATE_INACTIVE
-                    else Tile.STATE_UNAVAILABLE
+                    if (serverManager.isRegistered()) {
+                        Tile.STATE_INACTIVE
+                    } else {
+                        Tile.STATE_UNAVAILABLE
+                    }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     tile.subtitle = getString(commonR.string.tile_not_setup)
                 }
@@ -207,8 +213,9 @@ abstract class TileExtensions : TileService() {
             if (tileData?.shouldVibrate == true) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     vm?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
-                } else
+                } else {
                     vm?.vibrate(500)
+                }
             }
             if (tileData?.authRequired == true && isSecure) {
                 unlockAndRun {
@@ -238,10 +245,11 @@ abstract class TileExtensions : TileService() {
                             in toggleDomains -> "toggle"
                             "lock" -> {
                                 val state = serverManager.integrationRepository(tileData.serverId).getEntity(tileData.entityId)
-                                if (state?.state == "locked")
+                                if (state?.state == "locked") {
                                     "unlock"
-                                else
+                                } else {
                                     "lock"
+                                }
                             }
                             else -> "turn_on"
                         },
@@ -276,8 +284,9 @@ abstract class TileExtensions : TileService() {
             val vm = getSystemService<Vibrator>()
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 vm?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK))
-            } else
+            } else {
                 vm?.vibrate(1000)
+            }
         }
         withContext(Dispatchers.Main) {
             Toast.makeText(
