@@ -32,8 +32,9 @@ fun SensorsView(
     WearAppTheme {
         Scaffold(
             positionIndicator = {
-                if (scalingLazyListState.isScrollInProgress)
+                if (scalingLazyListState.isScrollInProgress) {
                     PositionIndicator(scalingLazyListState = scalingLazyListState)
+                }
             },
             timeText = { TimeText(!scalingLazyListState.isScrollInProgress) }
         ) {

@@ -67,7 +67,9 @@ class TrafficStatsManager : SensorManager {
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return if (hasCellular) {
             listOf(rxBytesMobile, txBytesMobile, rxBytesTotal, txBytesTotal)
-        } else listOf(rxBytesTotal, txBytesTotal)
+        } else {
+            listOf(rxBytesTotal, txBytesTotal)
+        }
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
@@ -80,8 +82,9 @@ class TrafficStatsManager : SensorManager {
         var networkCapabilities: NetworkCapabilities?
         for (item in networkInfo) {
             networkCapabilities = cm.getNetworkCapabilities(item)
-            if (!hasCellular)
+            if (!hasCellular) {
                 hasCellular = networkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ?: false
+            }
         }
         return true
     }
@@ -95,9 +98,9 @@ class TrafficStatsManager : SensorManager {
     }
 
     private fun updateMobileRxBytes(context: Context) {
-
-        if (!isEnabled(context, rxBytesMobile))
+        if (!isEnabled(context, rxBytesMobile)) {
             return
+        }
 
         val mobileRx = try {
             TrafficStats.getMobileRxBytes().toFloat() / GB
@@ -116,9 +119,9 @@ class TrafficStatsManager : SensorManager {
     }
 
     private fun updateMobileTxBytes(context: Context) {
-
-        if (!isEnabled(context, txBytesMobile))
+        if (!isEnabled(context, txBytesMobile)) {
             return
+        }
 
         val mobileTx = try {
             TrafficStats.getMobileTxBytes().toFloat() / GB
@@ -136,9 +139,9 @@ class TrafficStatsManager : SensorManager {
         )
     }
     private fun updateTotalRxBytes(context: Context) {
-
-        if (!isEnabled(context, rxBytesTotal))
+        if (!isEnabled(context, rxBytesTotal)) {
             return
+        }
 
         val totalRx = try {
             TrafficStats.getTotalRxBytes().toFloat().absoluteValue / GB
@@ -157,9 +160,9 @@ class TrafficStatsManager : SensorManager {
     }
 
     private fun updateTotalTxBytes(context: Context) {
-
-        if (!isEnabled(context, txBytesTotal))
+        if (!isEnabled(context, txBytesTotal)) {
             return
+        }
 
         val totalTx = try {
             TrafficStats.getTotalTxBytes().toFloat().absoluteValue / GB

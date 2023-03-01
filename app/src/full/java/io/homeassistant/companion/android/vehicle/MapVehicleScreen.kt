@@ -34,7 +34,7 @@ import io.homeassistant.companion.android.common.R as commonR
 class MapVehicleScreen(
     carContext: CarContext,
     val integrationRepository: IntegrationRepository,
-    val entitiesFlow: Flow<List<Entity<*>>>,
+    val entitiesFlow: Flow<List<Entity<*>>>
 ) : Screen(carContext) {
 
     companion object {

@@ -59,8 +59,11 @@ fun TransparentChip(
                 color = contentColorFor(MaterialTheme.colors.onSurface),
                 style = MaterialTheme.typography.body2,
                 modifier =
-                if (icon != null) Modifier.padding(end = 16.dp)
-                else Modifier.padding(horizontal = 16.dp)
+                if (icon != null) {
+                    Modifier.padding(end = 16.dp)
+                } else {
+                    Modifier.padding(horizontal = 16.dp)
+                }
             )
         }
     }

@@ -57,8 +57,9 @@ class WetModeSensorManager : SensorManager {
     }
 
     private fun updateWetMode(context: Context) {
-        if (!isEnabled(context, wetModeSensor))
+        if (!isEnabled(context, wetModeSensor)) {
             return
+        }
 
         onSensorUpdated(
             context,

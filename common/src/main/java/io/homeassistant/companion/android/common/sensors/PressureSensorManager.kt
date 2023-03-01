@@ -58,8 +58,9 @@ class PressureSensorManager : SensorManager, SensorEventListener {
     }
 
     private fun updatePressureSensor() {
-        if (!isEnabled(latestContext, pressureSensor))
+        if (!isEnabled(latestContext, pressureSensor)) {
             return
+        }
 
         val now = System.currentTimeMillis()
         if (listenerLastRegistered + SensorManager.SENSOR_LISTENER_TIMEOUT < now && isListenerRegistered) {

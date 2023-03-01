@@ -64,7 +64,6 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-
         when (intent.action) {
             ACTION_UPDATE_ACTIVITY -> handleActivityUpdate(intent, context)
             ACTION_SLEEP_ACTIVITY -> handleSleepUpdate(intent, context)
@@ -100,8 +99,9 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
             val result = ActivityRecognitionResult.extractResult(intent)
             var probActivity = result?.let { typeToString(it.mostProbableActivity) }
 
-            if (probActivity == "on_foot")
+            if (probActivity == "on_foot") {
                 probActivity = result?.let { getSubActivity(it) }
+            }
 
             if (probActivity != null && result != null) {
                 onSensorUpdated(
@@ -274,7 +274,6 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
     }
 
     private fun getSensorIcon(activity: String): String {
-
         return when (activity) {
             "in_vehicle" -> "mdi:car"
             "on_bicycle" -> "mdi:bike"

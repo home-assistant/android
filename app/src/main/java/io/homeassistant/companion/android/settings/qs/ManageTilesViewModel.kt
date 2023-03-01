@@ -222,13 +222,19 @@ class ManageTilesViewModel @Inject constructor(
                 selectedTileId = it?.id ?: 0
                 selectedTileAdded = it?.added ?: false
                 selectedServerId =
-                    if (it?.serverId == null || it.serverId == 0) serverManager.getServer()?.id ?: 0
-                    else it.serverId
+                    if (it?.serverId == null || it.serverId == 0) {
+                        serverManager.getServer()?.id ?: 0
+                    } else {
+                        it.serverId
+                    }
                 selectedShouldVibrate = it?.shouldVibrate ?: false
                 tileAuthRequired = it?.authRequired ?: false
                 submitButtonLabel =
-                    if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2 || it?.added == true) commonR.string.tile_save
-                    else commonR.string.tile_add
+                    if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2 || it?.added == true) {
+                        commonR.string.tile_save
+                    } else {
+                        commonR.string.tile_add
+                    }
                 loadEntities(selectedServerId)
                 if (it?.isSetup == true) {
                     updateExistingTileFields(it)
@@ -278,8 +284,11 @@ class ManageTilesViewModel @Inject constructor(
         tileAuthRequired = currentTile.authRequired
         selectIcon(
             currentTile.iconId?.let {
-                if (::iconPack.isInitialized) iconPack.getIcon(it)
-                else null
+                if (::iconPack.isInitialized) {
+                    iconPack.getIcon(it)
+                } else {
+                    null
+                }
             }
         )
     }

@@ -37,6 +37,7 @@ class LastAppSensorManager : SensorManager {
     override fun hasSensor(context: Context): Boolean {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
     }
+
     @RequiresApi(Build.VERSION_CODES.M)
     override fun requiredPermissions(sensorId: String): Array<String> {
         return arrayOf(Manifest.permission.PACKAGE_USAGE_STATS)
@@ -51,8 +52,9 @@ class LastAppSensorManager : SensorManager {
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP_MR1)
     private fun updateLastApp(context: Context) {
-        if (!isEnabled(context, last_used))
+        if (!isEnabled(context, last_used)) {
             return
+        }
 
         val usageStats = context.getSystemService<UsageStatsManager>()!!
         val current = System.currentTimeMillis()

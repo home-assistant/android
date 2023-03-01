@@ -135,10 +135,11 @@ class NetworkSensorManager : SensorManager {
             wifiSignalStrength,
             publicIp
         )
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             list.plus(networkType)
-        else
+        } else {
             list
+        }
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
@@ -175,8 +176,9 @@ class NetworkSensorManager : SensorManager {
     }
 
     private fun updateWifiConnectionSensor(context: Context) {
-        if (!isEnabled(context, wifiConnection))
+        if (!isEnabled(context, wifiConnection)) {
             return
+        }
 
         var conInfo: WifiInfo? = null
         var ssid = "Unknown"
@@ -216,8 +218,9 @@ class NetworkSensorManager : SensorManager {
     }
 
     private fun updateBSSIDSensor(context: Context) {
-        if (!isEnabled(context, bssidState))
+        if (!isEnabled(context, bssidState)) {
             return
+        }
 
         var conInfo: WifiInfo? = null
 
@@ -240,10 +243,11 @@ class NetworkSensorManager : SensorManager {
                 sensorDao.add(SensorSetting(bssidState.id, settingName, bssid, SensorSettingType.STRING))
             }
         } else {
-            if (currentSetting != "")
+            if (currentSetting != "") {
                 bssid = currentSetting
-            else
+            } else {
                 sensorDao.removeSetting(bssidState.id, settingName)
+            }
 
             sensorDao.add(SensorSetting(bssidState.id, SETTING_GET_CURRENT_BSSID, "false", SensorSettingType.TOGGLE))
         }
@@ -259,8 +263,9 @@ class NetworkSensorManager : SensorManager {
     }
 
     private fun updateWifiIPSensor(context: Context) {
-        if (!isEnabled(context, wifiIp))
+        if (!isEnabled(context, wifiIp)) {
             return
+        }
 
         var deviceIp = "Unknown"
 
@@ -286,8 +291,9 @@ class NetworkSensorManager : SensorManager {
     }
 
     private fun updateWifiLinkSpeedSensor(context: Context) {
-        if (!isEnabled(context, wifiLinkSpeed))
+        if (!isEnabled(context, wifiLinkSpeed)) {
             return
+        }
 
         var linkSpeed = 0
         var rssi = -1
@@ -329,8 +335,9 @@ class NetworkSensorManager : SensorManager {
     }
 
     private fun updateWifiSensor(context: Context) {
-        if (!isEnabled(context, wifiState))
+        if (!isEnabled(context, wifiState)) {
             return
+        }
 
         var wifiEnabled = false
 
@@ -352,8 +359,9 @@ class NetworkSensorManager : SensorManager {
     }
 
     private fun updateWifiFrequencySensor(context: Context) {
-        if (!isEnabled(context, wifiFrequency))
+        if (!isEnabled(context, wifiFrequency)) {
             return
+        }
 
         var frequency = 0
 
@@ -379,8 +387,9 @@ class NetworkSensorManager : SensorManager {
     }
 
     private fun updateWifiSignalStrengthSensor(context: Context) {
-        if (!isEnabled(context, wifiSignalStrength))
+        if (!isEnabled(context, wifiSignalStrength)) {
             return
+        }
 
         var rssi = -1
 
@@ -422,8 +431,9 @@ class NetworkSensorManager : SensorManager {
     }
 
     private fun updatePublicIpSensor(context: Context) {
-        if (!isEnabled(context, publicIp))
+        if (!isEnabled(context, publicIp)) {
             return
+        }
 
         var ip = "unknown"
         val client = OkHttpClient()
@@ -457,8 +467,9 @@ class NetworkSensorManager : SensorManager {
     @SuppressLint("MissingPermission")
     @RequiresApi(Build.VERSION_CODES.M)
     private fun updateNetworkType(context: Context) {
-        if (!isEnabled(context, networkType))
+        if (!isEnabled(context, networkType)) {
             return
+        }
 
         val connectivityManager = context.getSystemService<ConnectivityManager>()
         val activeNetwork = connectivityManager?.activeNetwork

@@ -27,7 +27,6 @@ fun TemplateTileSettingsView(
     refreshInterval: Int,
     onClickRefreshInterval: () -> Unit
 ) {
-
     ThemeLazyColumn {
         item {
             ListHeader(id = R.string.template_tile)

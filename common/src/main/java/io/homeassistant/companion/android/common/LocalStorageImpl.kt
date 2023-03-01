@@ -56,7 +56,9 @@ class LocalStorageImpl(private val sharedPreferences: SharedPreferences) : Local
     override suspend fun getBooleanOrNull(key: String): Boolean? =
         if (sharedPreferences.contains(key)) {
             sharedPreferences.getBoolean(key, false)
-        } else null
+        } else {
+            null
+        }
 
     override suspend fun putStringSet(key: String, value: Set<String>) {
         sharedPreferences.edit().putStringSet(key, value).apply()

@@ -102,7 +102,7 @@ import io.homeassistant.companion.android.common.R as commonR
         AutoMigration(from = 34, to = 35),
         AutoMigration(from = 35, to = 36),
         AutoMigration(from = 36, to = 37, spec = AppDatabase.Companion.Migration36to37::class),
-        AutoMigration(from = 37, to = 38, spec = AppDatabase.Companion.Migration37to38::class),
+        AutoMigration(from = 37, to = 38, spec = AppDatabase.Companion.Migration37to38::class)
     ]
 )
 @TypeConverters(
@@ -282,8 +282,9 @@ abstract class AppDatabase : RoomDatabase() {
                         database.insert("sensors", OnConflictStrategy.REPLACE, it)
                     }
                 }
-                if (migrationFailed)
+                if (migrationFailed) {
                     notifyMigrationFailed()
+                }
 
                 database.execSQL("CREATE TABLE IF NOT EXISTS `sensor_attributes` (`sensor_id` TEXT NOT NULL, `name` TEXT NOT NULL, `value` TEXT NOT NULL, PRIMARY KEY(`sensor_id`, `name`))")
             }
@@ -341,8 +342,9 @@ abstract class AppDatabase : RoomDatabase() {
                         database.insert("sensors", OnConflictStrategy.REPLACE, it)
                     }
                 }
-                if (migrationFailed)
+                if (migrationFailed) {
                     notifyMigrationFailed()
+                }
             }
         }
 
@@ -385,7 +387,6 @@ abstract class AppDatabase : RoomDatabase() {
 
         private val MIGRATION_16_17 = object : Migration(16, 17) {
             override fun migrate(database: SupportSQLiteDatabase) {
-
                 val cursor = database.query("SELECT * FROM sensor_settings")
                 val sensorSettings = mutableListOf<ContentValues>()
                 var migrationSuccessful = false
@@ -393,10 +394,8 @@ abstract class AppDatabase : RoomDatabase() {
                 try {
                     if (cursor.moveToFirst()) {
                         while (cursor.moveToNext()) {
-
                             sensorSettings.add(
                                 ContentValues().also {
-
                                     val currentSensorId = cursor.getString(cursor.getColumnIndex("sensor_id"))
                                     val currentSensorSettingName = cursor.getString(cursor.getColumnIndex("name"))
                                     var entries: String = ""
@@ -485,8 +484,9 @@ abstract class AppDatabase : RoomDatabase() {
                         database.insert("sensor_settings", OnConflictStrategy.REPLACE, it)
                     }
                 }
-                if (migrationFailed)
+                if (migrationFailed) {
                     notifyMigrationFailed()
+                }
             }
         }
 
@@ -817,7 +817,9 @@ abstract class AppDatabase : RoomDatabase() {
                     notificationManager.getNotificationChannel(databaseChannel)
                 if (notificationChannel == null) {
                     notificationChannel = NotificationChannel(
-                        databaseChannel, TAG, NotificationManager.IMPORTANCE_HIGH
+                        databaseChannel,
+                        TAG,
+                        NotificationManager.IMPORTANCE_HIGH
                     )
                     notificationManager.createNotificationChannel(notificationChannel)
                 }

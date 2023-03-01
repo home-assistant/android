@@ -52,8 +52,9 @@ class NotificationDetailFragment : Fragment() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == R.id.action_delete)
+        if (item.itemId == R.id.action_delete) {
             deleteConfirmation()
+        }
         return super.onOptionsItemSelected(item)
     }
 

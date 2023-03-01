@@ -74,8 +74,11 @@ class MatterCommissioningViewModel @Inject constructor(
 
             val coreSupport = matterManager.coreSupportsCommissioning(id)
             step =
-                if (coreSupport) CommissioningFlowStep.Confirmation
-                else CommissioningFlowStep.NotSupported
+                if (coreSupport) {
+                    CommissioningFlowStep.Confirmation
+                } else {
+                    CommissioningFlowStep.NotSupported
+                }
         }
     }
 
@@ -101,8 +104,11 @@ class MatterCommissioningViewModel @Inject constructor(
 
             val result = matterManager.commissionDevice(code, serverId)
             step =
-                if (result?.success == true) CommissioningFlowStep.Success
-                else CommissioningFlowStep.Failure(result?.errorCode)
+                if (result?.success == true) {
+                    CommissioningFlowStep.Success
+                } else {
+                    CommissioningFlowStep.Failure(result?.errorCode)
+                }
         }
     }
 }

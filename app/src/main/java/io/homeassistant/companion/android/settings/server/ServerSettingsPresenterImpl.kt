@@ -119,6 +119,9 @@ class ServerSettingsPresenterImpl @Inject constructor(
     }
 
     override fun onFinish() {
+        if (serverManager.getServer()?.id != serverId) {
+            setAppActive(false)
+        }
         mainScope.cancel()
     }
 
@@ -174,7 +177,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
         }
     }
 
-    override fun setAppActive() = runBlocking {
-        serverManager.integrationRepository(serverId).setAppActive(true)
+    override fun setAppActive(active: Boolean) = runBlocking {
+        serverManager.integrationRepository(serverId).setAppActive(active)
     }
 }

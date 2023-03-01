@@ -56,8 +56,9 @@ class OnBodySensorManager : SensorManager, SensorEventListener {
     }
 
     private fun updateOnBodySensor() {
-        if (!isEnabled(latestContext, onBodySensor))
+        if (!isEnabled(latestContext, onBodySensor)) {
             return
+        }
 
         mySensorManager = latestContext.getSystemService()!!
 

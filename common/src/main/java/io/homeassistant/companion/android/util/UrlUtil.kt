@@ -8,17 +8,21 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 object UrlUtil {
     fun formattedUrlString(url: String): String {
-        return if (url == "") throw MalformedHttpUrlException() else try {
-            val httpUrl = url.toHttpUrl()
-            HttpUrl.Builder()
-                .scheme(httpUrl.scheme)
-                .host(httpUrl.host)
-                .port(httpUrl.port)
-                .toString()
-        } catch (e: IllegalArgumentException) {
-            throw MalformedHttpUrlException(
-                e.message
-            )
+        return if (url == "") {
+            throw MalformedHttpUrlException()
+        } else {
+            try {
+                val httpUrl = url.toHttpUrl()
+                HttpUrl.Builder()
+                    .scheme(httpUrl.scheme)
+                    .host(httpUrl.host)
+                    .port(httpUrl.port)
+                    .toString()
+            } catch (e: IllegalArgumentException) {
+                throw MalformedHttpUrlException(
+                    e.message
+                )
+            }
         }
     }
 

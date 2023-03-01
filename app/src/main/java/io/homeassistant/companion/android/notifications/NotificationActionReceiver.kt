@@ -44,7 +44,6 @@ class NotificationActionReceiver : BroadcastReceiver() {
     lateinit var notificationDao: NotificationDao
 
     override fun onReceive(context: Context, intent: Intent) {
-
         val notificationAction =
             intent.getParcelableExtra<NotificationAction>(EXTRA_NOTIFICATION_ACTION)
 

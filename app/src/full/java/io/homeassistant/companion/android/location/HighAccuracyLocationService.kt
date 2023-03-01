@@ -51,7 +51,6 @@ class HighAccuracyLocationService : Service() {
 
         @Synchronized
         fun stopService(context: Context) {
-
             Log.d(TAG, "Try stopping high accuracy location service...")
             LAUNCHER.stopService(context)
         }

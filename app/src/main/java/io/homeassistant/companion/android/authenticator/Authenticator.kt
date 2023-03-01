@@ -18,15 +18,17 @@ class Authenticator(context: Context, fragmentActivity: FragmentActivity, callba
 
     private val executor = ContextCompat.getMainExecutor(context)
     private val biometricPrompt = BiometricPrompt(
-        fragmentActivity, executor,
+        fragmentActivity,
+        executor,
         object : BiometricPrompt.AuthenticationCallback() {
             override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                 super.onAuthenticationError(errorCode, errString)
                 Log.d("Unlock", "onAuthenticationError -> $errorCode :: $errString")
-                if (errorCode == BiometricPrompt.ERROR_USER_CANCELED)
+                if (errorCode == BiometricPrompt.ERROR_USER_CANCELED) {
                     callback(CANCELED)
-                else
+                } else {
                     callback(ERROR)
+                }
             }
             override fun onAuthenticationFailed() {
                 super.onAuthenticationFailed()

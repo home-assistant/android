@@ -142,7 +142,7 @@
                 android:resource="@xml/entity_widget_info" />
         </receiver>
 
-        <receiver android:name=".widgets.media_player_controls.MediaPlayerControlsWidget" android:label="@string/widget_media_player_description"
+        <receiver android:name=".widgets.mediaplayer.MediaPlayerControlsWidget" android:label="@string/widget_media_player_description"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -205,7 +205,7 @@
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>
         </activity>
-        <activity android:name=".widgets.media_player_controls.MediaPlayerControlsWidgetConfigureActivity"
+        <activity android:name=".widgets.mediaplayer.MediaPlayerControlsWidgetConfigureActivity"
             android:configChanges="orientation|screenSize"
             android:exported="true">
             <intent-filter>

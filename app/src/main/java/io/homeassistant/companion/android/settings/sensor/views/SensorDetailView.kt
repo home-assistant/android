@@ -106,8 +106,11 @@ fun SensorDetailView(
                 context.getString(commonR.string.settings)
             ).let { result ->
                 if (result == SnackbarResult.ActionPerformed) {
-                    if (it.actionOpensSettings) context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}")))
-                    else onSetEnabled(true, it.serverId)
+                    if (it.actionOpensSettings) {
+                        context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}")))
+                    } else {
+                        onSetEnabled(true, it.serverId)
+                    }
                 }
             }
         }.launchIn(this)
@@ -121,13 +124,15 @@ fun SensorDetailView(
                 userSetting = viewModel.settingUpdateFrequency,
                 onDismiss = { sensorUpdateTypeInfo = false }
             )
-        } else viewModel.sensorSettingsDialog?.let {
-            SensorDetailSettingDialog(
-                viewModel = viewModel,
-                state = it,
-                onDismiss = { viewModel.cancelSettingWithDialog() },
-                onSubmit = { state -> onDialogSettingSubmitted(state) }
-            )
+        } else {
+            viewModel.sensorSettingsDialog?.let {
+                SensorDetailSettingDialog(
+                    viewModel = viewModel,
+                    state = it,
+                    onDismiss = { viewModel.cancelSettingWithDialog() },
+                    onSubmit = { state -> onDialogSettingSubmitted(state) }
+                )
+            }
         }
         LazyColumn(modifier = Modifier.padding(contentPadding)) {
             if (viewModel.sensorManager != null && viewModel.basicSensor != null) {
@@ -214,8 +219,11 @@ fun SensorDetailView(
                                     SensorDetailRow(
                                         title = viewModel.getSettingTranslatedTitle(setting.name),
                                         summary =
-                                        if (summaryValues.any()) viewModel.getSettingEntries(setting, summaryValues).joinToString(", ")
-                                        else stringResource(commonR.string.none_selected),
+                                        if (summaryValues.any()) {
+                                            viewModel.getSettingEntries(setting, summaryValues).joinToString(", ")
+                                        } else {
+                                            stringResource(commonR.string.none_selected)
+                                        },
                                         enabled = setting.enabled,
                                         clickable = setting.enabled,
                                         onClick = { onDialogSettingClicked(setting) }
@@ -283,8 +291,11 @@ fun SensorDetailTopPanel(
                                     .size(24.dp)
                                     .alpha(if (sensor?.enabled == true) ContentAlpha.high else ContentAlpha.disabled),
                                 colorFilter = ColorFilter.tint(
-                                    if (sensor?.enabled == true) colorResource(commonR.color.colorSensorIconEnabled)
-                                    else contentColorFor(backgroundColor = MaterialTheme.colors.background)
+                                    if (sensor?.enabled == true) {
+                                        colorResource(commonR.color.colorSensorIconEnabled)
+                                    } else {
+                                        contentColorFor(backgroundColor = MaterialTheme.colors.background)
+                                    }
                                 )
                             )
                             Spacer(modifier = Modifier.width(16.dp))
@@ -301,8 +312,11 @@ fun SensorDetailTopPanel(
                                     if (sensor.state.isBlank()) {
                                         stringResource(commonR.string.enabled)
                                     } else {
-                                        if (sensor.unitOfMeasurement.isNullOrBlank()) sensor.state
-                                        else "${sensor.state} ${sensor.unitOfMeasurement}"
+                                        if (sensor.unitOfMeasurement.isNullOrBlank()) {
+                                            sensor.state
+                                        } else {
+                                            "${sensor.state} ${sensor.unitOfMeasurement}"
+                                        }
                                     }
                                 } else {
                                     stringResource(commonR.string.disabled)
@@ -350,15 +364,21 @@ fun SensorDetailEnableRow(
         .heightIn(min = 64.dp)
         .clickable { onSetEnabled() }
     val switchDescription = stringResource(
-        if (basicSensor.type == "binary_sensor" || basicSensor.type == "sensor") commonR.string.enable_sensor
-        else (if (enabled) commonR.string.enabled else commonR.string.disabled)
+        if (basicSensor.type == "binary_sensor" || basicSensor.type == "sensor") {
+            commonR.string.enable_sensor
+        } else {
+            (if (enabled) commonR.string.enabled else commonR.string.disabled)
+        }
     )
     Box(
         modifier =
-        if (enabled) Modifier
-            .background(colorResource(commonR.color.colorSensorTopEnabled))
-            .then(enableBarModifier)
-        else enableBarModifier,
+        if (enabled) {
+            Modifier
+                .background(colorResource(commonR.color.colorSensorTopEnabled))
+                .then(enableBarModifier)
+        } else {
+            enableBarModifier
+        },
         contentAlignment = Alignment.Center
     ) {
         Row(
@@ -432,8 +452,11 @@ fun SensorDetailRow(
                 Text(text = title, style = MaterialTheme.typography.body1)
                 if (summary != null) {
                     CompositionLocalProvider(LocalContentAlpha provides (if (enabled) ContentAlpha.medium else ContentAlpha.disabled)) {
-                        if (selectingEnabled) SelectionContainer { Text(text = summary, style = MaterialTheme.typography.body2) }
-                        else Text(text = summary, style = MaterialTheme.typography.body2)
+                        if (selectingEnabled) {
+                            SelectionContainer { Text(text = summary, style = MaterialTheme.typography.body2) }
+                        } else {
+                            Text(text = summary, style = MaterialTheme.typography.body2)
+                        }
                     }
                 }
             }
@@ -479,8 +502,9 @@ fun SensorDetailSettingDialog(
                                     inputValue.value = id
                                     onSubmit(state.copy().apply { setting.value = inputValue.value })
                                 } else {
-                                    if (checkedValue.contains(id) && !isChecked) checkedValue.remove(id)
-                                    else if (!checkedValue.contains(id) && isChecked) checkedValue.add(id)
+                                    if (checkedValue.contains(id) && !isChecked) {
+                                        checkedValue.remove(id)
+                                    } else if (!checkedValue.contains(id) && isChecked) checkedValue.add(id)
                                 }
                             }
                         )
@@ -512,7 +536,9 @@ fun SensorDetailSettingDialog(
                 }
                 onSubmit(state.copy().apply { setting.value = inputValue.value })
             }
-        } else null, // list is saved when selecting a value
+        } else {
+            null
+        }, // list is saved when selecting a value
         contentPadding = if (listSettingDialog) PaddingValues(all = 0.dp) else PaddingValues(horizontal = 24.dp)
     )
 }

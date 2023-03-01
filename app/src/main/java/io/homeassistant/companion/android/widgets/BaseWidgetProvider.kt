@@ -107,7 +107,9 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                     val entityUpdates =
                         if (serverManager.getServer(serverId) != null) {
                             serverManager.integrationRepository(serverId).getEntityUpdates(entities)
-                        } else null
+                        } else {
+                            null
+                        }
                     if (entityUpdates != null) {
                         widgetEntities[id] = entities
                         widgetJobs[id] = widgetScope!!.launch {
@@ -175,6 +177,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
 
     abstract fun getWidgetProvider(context: Context): ComponentName
     abstract suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity<Map<String, Any>>? = null): RemoteViews
+
     // A map of widget IDs to [server ID, list of entity IDs]
     abstract suspend fun getAllWidgetIdsWithEntities(context: Context): Map<Int, Pair<Int, List<String>>>
     abstract fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int)

@@ -199,8 +199,11 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 when (command) {
                     DeviceCommandData.TURN_ON, DeviceCommandData.TURN_OFF, MessagingManager.FORCE_ON -> {
                         var turnOn = command != DeviceCommandData.TURN_OFF
-                        if (turnOn) Log.d(TAG, "Forcing of high accuracy mode enabled")
-                        else Log.d(TAG, "Forcing of high accuracy mode disabled")
+                        if (turnOn) {
+                            Log.d(TAG, "Forcing of high accuracy mode enabled")
+                        } else {
+                            Log.d(TAG, "Forcing of high accuracy mode disabled")
+                        }
                         forceHighAccuracyModeOn = turnOn
                         forceHighAccuracyModeOff = false
                         setHighAccuracyModeSetting(latestContext, turnOn)
@@ -219,8 +222,9 @@ class LocationSensorManager : LocationSensorManagerBase() {
                     }
 
                     MessagingManager.HIGH_ACCURACY_SET_UPDATE_INTERVAL -> {
-                        if (lastHighAccuracyMode)
+                        if (lastHighAccuracyMode) {
                             restartHighAccuracyService(getHighAccuracyModeIntervalSetting(latestContext))
+                        }
                     }
                 }
             }
@@ -311,7 +315,6 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 if (highAccuracyModeEnabled != lastHighAccuracyMode ||
                     updateIntervalHighAccuracySeconds != lastHighAccuracyUpdateInterval
                 ) {
-
                     if (highAccuracyModeEnabled) {
                         Log.d(TAG, "High accuracy mode parameters changed. Enable high accuracy mode.")
                         if (updateIntervalHighAccuracySeconds != lastHighAccuracyUpdateInterval) {
@@ -416,7 +419,6 @@ class LocationSensorManager : LocationSensorManagerBase() {
     }
 
     private fun getHighAccuracyModeState(): Boolean {
-
         var highAccuracyMode = getHighAccuracyModeSetting()
 
         if (!highAccuracyMode) return false
@@ -447,7 +449,6 @@ class LocationSensorManager : LocationSensorManagerBase() {
     }
 
     private fun shouldEnableHighAccuracyMode(): Boolean {
-
         val highAccuracyModeBTDevicesSetting = getSetting(
             latestContext,
             backgroundLocation,
@@ -485,8 +486,9 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 if (foundDevices.isNotEmpty()) {
                     highAccuracyModeBTDevices.remove(it)
                     foundDevices.forEach { btDevice ->
-                        if (!highAccuracyModeBTDevices.contains(btDevice.address))
+                        if (!highAccuracyModeBTDevices.contains(btDevice.address)) {
                             highAccuracyModeBTDevices.add(btDevice.address)
+                        }
                     }
                     updatedBtDeviceNames = true
                 }
@@ -506,8 +508,11 @@ class LocationSensorManager : LocationSensorManagerBase() {
             btDevConnected = bluetoothDevices.any { it.connected && highAccuracyModeBTDevices.contains(it.address) }
 
             if (!forceHighAccuracyModeOn && !forceHighAccuracyModeOff) {
-                if (!btDevConnected) Log.d(TAG, "High accuracy mode disabled, because defined ($highAccuracyModeBTDevices) bluetooth device(s) not connected (Connected devices: $bluetoothDevices)")
-                else Log.d(TAG, "High accuracy mode enabled, because defined ($highAccuracyModeBTDevices) bluetooth device(s) connected (Connected devices: $bluetoothDevices)")
+                if (!btDevConnected) {
+                    Log.d(TAG, "High accuracy mode disabled, because defined ($highAccuracyModeBTDevices) bluetooth device(s) not connected (Connected devices: $bluetoothDevices)")
+                } else {
+                    Log.d(TAG, "High accuracy mode enabled, because defined ($highAccuracyModeBTDevices) bluetooth device(s) connected (Connected devices: $bluetoothDevices)")
+                }
             }
         }
 
@@ -524,8 +529,11 @@ class LocationSensorManager : LocationSensorManagerBase() {
             inZone = zoneExpEntered || zoneExited
 
             if (!forceHighAccuracyModeOn && !forceHighAccuracyModeOff) {
-                if (!inZone) Log.d(TAG, "High accuracy mode disabled, because not in zone $highAccuracyExpZones")
-                else Log.d(TAG, "High accuracy mode enabled, because in zone $highAccuracyExpZones")
+                if (!inZone) {
+                    Log.d(TAG, "High accuracy mode disabled, because not in zone $highAccuracyExpZones")
+                } else {
+                    Log.d(TAG, "High accuracy mode enabled, because in zone $highAccuracyExpZones")
+                }
             }
         }
 
@@ -572,11 +580,14 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 settingName = SETTING_SEND_LOCATION_AS,
                 settingType = SensorSettingType.LIST,
                 entries = listOf(
-                    SEND_LOCATION_AS_EXACT, SEND_LOCATION_AS_ZONE_ONLY
+                    SEND_LOCATION_AS_EXACT,
+                    SEND_LOCATION_AS_ZONE_ONLY
                 ),
                 default = SEND_LOCATION_AS_EXACT
             )
-        } else SEND_LOCATION_AS_EXACT
+        } else {
+            SEND_LOCATION_AS_EXACT
+        }
     }
 
     private fun removeAllLocationUpdateRequests() {
@@ -590,7 +601,9 @@ class LocationSensorManager : LocationSensorManagerBase() {
             Log.d(TAG, "Removing background location requests.")
             val backgroundIntent = getLocationUpdateIntent(false)
             fusedLocationProviderClient?.removeLocationUpdates(backgroundIntent)
-        } else Log.d(TAG, "Cannot remove background location requests. Location provider is not set.")
+        } else {
+            Log.d(TAG, "Cannot remove background location requests. Location provider is not set.")
+        }
     }
 
     private fun removeGeofenceUpdateRequests() {
@@ -601,7 +614,9 @@ class LocationSensorManager : LocationSensorManagerBase() {
             geofenceRegistered.clear()
             lastEnteredGeoZones.clear()
             lastExitedGeoZones.clear()
-        } else Log.d(TAG, "Cannot remove geofence location requests. Geofence provider is not set.")
+        } else {
+            Log.d(TAG, "Cannot remove geofence location requests. Geofence provider is not set.")
+        }
     }
 
     private fun requestLocationUpdates() {
@@ -1148,8 +1163,9 @@ class LocationSensorManager : LocationSensorManagerBase() {
         context: Context
     ) {
         latestContext = context
-        if (isEnabled(context, zoneLocation) || isEnabled(context, backgroundLocation))
+        if (isEnabled(context, zoneLocation) || isEnabled(context, backgroundLocation)) {
             setupLocationTracking()
+        }
         val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
         val sensorSetting = sensorDao.getSettings(singleAccurateLocation.id)
         val includeSensorUpdate = sensorSetting.firstOrNull { it.name == SETTING_INCLUDE_SENSOR_UPDATE }?.value ?: "false"
@@ -1161,7 +1177,8 @@ class LocationSensorManager : LocationSensorManagerBase() {
                     }
                 )
             }
-        } else
+        } else {
             sensorDao.add(SensorSetting(singleAccurateLocation.id, SETTING_INCLUDE_SENSOR_UPDATE, "false", SensorSettingType.TOGGLE))
+        }
     }
 }

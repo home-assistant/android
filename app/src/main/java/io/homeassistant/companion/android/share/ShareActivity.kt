@@ -35,10 +35,11 @@ class ShareActivity : BaseActivity() {
                 data["subject"] = it
             }
             intent.getStringExtra(Intent.EXTRA_TEXT)?.let {
-                if (it.toHttpUrlOrNull() == null)
+                if (it.toHttpUrlOrNull() == null) {
                     data["text"] = it
-                else
+                } else {
                     data["url"] = it
+                }
             }
         }
         runBlocking {

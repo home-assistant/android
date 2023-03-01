@@ -44,8 +44,11 @@ class TagReaderActivity : BaseActivity() {
                 val isNfcTag = intent.action == NfcAdapter.ACTION_NDEF_DISCOVERED
 
                 val url =
-                    if (isNfcTag) NFCUtil.extractUrlFromNFCIntent(intent)
-                    else intent.data
+                    if (isNfcTag) {
+                        NFCUtil.extractUrlFromNFCIntent(intent)
+                    } else {
+                        intent.data
+                    }
                 try {
                     handleTag(url, isNfcTag)
                 } catch (e: Exception) {

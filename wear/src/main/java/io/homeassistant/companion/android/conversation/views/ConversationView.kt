@@ -35,14 +35,14 @@ import io.homeassistant.companion.android.theme.WearAppTheme
 fun ConversationResultView(
     conversationViewModel: ConversationViewModel
 ) {
-
     val scrollState = rememberScalingLazyListState()
 
     WearAppTheme {
         Scaffold(
             positionIndicator = {
-                if (scrollState.isScrollInProgress)
+                if (scrollState.isScrollInProgress) {
                     PositionIndicator(scalingLazyListState = scrollState)
+                }
             },
             timeText = { TimeText(visible = !scrollState.isScrollInProgress) }
         ) {
@@ -67,7 +67,7 @@ fun ConversationResultView(
                         Spacer(Modifier.padding(4.dp))
                     }
                 }
-                if (conversationViewModel.conversationResult.isNotEmpty())
+                if (conversationViewModel.conversationResult.isNotEmpty()) {
                     item {
                         if (conversationViewModel.isHapticEnabled.value) {
                             val haptic = LocalHapticFeedback.current
@@ -82,6 +82,7 @@ fun ConversationResultView(
                             true
                         )
                     }
+                }
             }
         }
     }
@@ -101,10 +102,11 @@ fun SpeechBubble(text: String, isResponse: Boolean) {
         Box(
             modifier = Modifier
                 .background(
-                    if (isResponse)
+                    if (isResponse) {
                         colorResource(R.color.colorAccent)
-                    else
-                        colorResource(R.color.colorSpeechText),
+                    } else {
+                        colorResource(R.color.colorSpeechText)
+                    },
                     AbsoluteRoundedCornerShape(
                         topLeftPercent = 30,
                         topRightPercent = 30,
@@ -116,10 +118,11 @@ fun SpeechBubble(text: String, isResponse: Boolean) {
         ) {
             Text(
                 text = text,
-                color = if (isResponse)
+                color = if (isResponse) {
                     Color.White
-                else
-                    Color.Black,
+                } else {
+                    Color.Black
+                },
                 modifier = Modifier
                     .padding(2.dp)
             )

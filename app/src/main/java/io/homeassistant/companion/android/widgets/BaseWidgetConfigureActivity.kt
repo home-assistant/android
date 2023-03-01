@@ -33,8 +33,11 @@ abstract class BaseWidgetConfigureActivity : BaseActivity() {
         serverSelectList.adapter =
             ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, servers.map { it.friendlyName })
         serverSelectList.setSelection(
-            if (widgetServerId != null) servers.indexOfFirst { it.id == widgetServerId }
-            else servers.indexOfFirst { it.id == activeServerId }
+            if (widgetServerId != null) {
+                servers.indexOfFirst { it.id == widgetServerId }
+            } else {
+                servers.indexOfFirst { it.id == activeServerId }
+            }
         )
 
         if (

@@ -126,8 +126,11 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             }
         }
 
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration request update_registration")
+        if (causeException != null) {
+            throw IntegrationException(causeException)
+        } else {
+            throw IntegrationException("Error calling integration request update_registration")
+        }
     }
 
     override suspend fun getRegistration(): DeviceRegistration {
@@ -139,12 +142,15 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     }
 
     private suspend fun persistDeviceRegistration(deviceRegistration: DeviceRegistration) {
-        if (deviceRegistration.appVersion != null)
+        if (deviceRegistration.appVersion != null) {
             localStorage.putString(PREF_APP_VERSION, deviceRegistration.appVersion)
-        if (deviceRegistration.deviceName != null)
+        }
+        if (deviceRegistration.deviceName != null) {
             serverManager.updateServer(server.copy(deviceName = deviceRegistration.deviceName))
-        if (deviceRegistration.pushToken != null)
+        }
+        if (deviceRegistration.pushToken != null) {
             localStorage.putString(PREF_PUSH_TOKEN, deviceRegistration.pushToken)
+        }
     }
 
     override suspend fun deletePreferences() {
@@ -176,8 +182,11 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             }
         }
 
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration request render_template")
+        if (causeException != null) {
+            throw IntegrationException(causeException)
+        } else {
+            throw IntegrationException("Error calling integration request render_template")
+        }
     }
 
     override suspend fun getTemplateUpdates(template: String): Flow<String?>? {
@@ -204,12 +213,16 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
             }
             // if we had a successful call we can return
-            if (wasSuccess)
+            if (wasSuccess) {
                 return
+            }
         }
 
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration request update_location")
+        if (causeException != null) {
+            throw IntegrationException(causeException)
+        } else {
+            throw IntegrationException("Error calling integration request update_location")
+        }
     }
 
     override suspend fun callService(
@@ -242,12 +255,16 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
             }
             // if we had a successful call we can return
-            if (wasSuccess)
+            if (wasSuccess) {
                 return
+            }
         }
 
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration request call_service")
+        if (causeException != null) {
+            throw IntegrationException(causeException)
+        } else {
+            throw IntegrationException("Error calling integration request call_service")
+        }
     }
 
     override suspend fun scanTag(data: HashMap<String, Any>) {
@@ -269,12 +286,16 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
             }
             // if we had a successful call we can return
-            if (wasSuccess)
+            if (wasSuccess) {
                 return
+            }
         }
 
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration request scan_tag")
+        if (causeException != null) {
+            throw IntegrationException(causeException)
+        } else {
+            throw IntegrationException("Error calling integration request scan_tag")
+        }
     }
 
     override suspend fun fireEvent(eventType: String, eventData: Map<String, Any>) {
@@ -301,12 +322,16 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
             }
             // if we had a successful call we can return
-            if (wasSuccess)
+            if (wasSuccess) {
                 return
+            }
         }
 
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration request fire_event")
+        if (causeException != null) {
+            throw IntegrationException(causeException)
+        } else {
+            throw IntegrationException("Error calling integration request fire_event")
+        }
     }
 
     override suspend fun getZones(): Array<Entity<ZoneAttributes>> {
@@ -330,8 +355,11 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             }
         }
 
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration request get_zones")
+        if (causeException != null) {
+            throw IntegrationException(causeException)
+        } else {
+            throw IntegrationException("Error calling integration request get_zones")
+        }
     }
 
     override suspend fun isAppLocked(): Boolean {
@@ -379,19 +407,24 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             causeException = e
             Log.e(TAG, "Unable to get notification rate limits", e)
         }
-        if (checkRateLimits != null)
+        if (checkRateLimits != null) {
             return checkRateLimits
+        }
 
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling checkRateLimits")
+        if (causeException != null) {
+            throw IntegrationException(causeException)
+        } else {
+            throw IntegrationException("Error calling checkRateLimits")
+        }
     }
 
     override suspend fun getHomeAssistantVersion(): String {
         val current = System.currentTimeMillis()
         val next = localStorage.getLong("${serverId}_$PREF_CHECK_SENSOR_REGISTRATION_NEXT") ?: 0
-        if (current <= next)
+        if (current <= next) {
             return server._version
                 ?: "" // Skip checking HA version as it has not been 4 hours yet
+        }
 
         return try {
             getConfig().let { response ->
@@ -447,8 +480,11 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             }
         }
 
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration request get_config")
+        if (causeException != null) {
+            throw IntegrationException(causeException)
+        } else {
+            throw IntegrationException("Error calling integration request get_config")
+        }
     }
 
     /**
@@ -564,9 +600,13 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             "register_sensor",
             SensorRequest(
                 sensorRegistration.uniqueId,
-                if (canRegisterEntityDisabledState && sensorRegistration.disabled) null
-                else if (sensorRegistration.state is String) sensorRegistration.state.ifBlank { null }
-                else sensorRegistration.state,
+                if (canRegisterEntityDisabledState && sensorRegistration.disabled) {
+                    null
+                } else if (sensorRegistration.state is String) {
+                    sensorRegistration.state.ifBlank { null }
+                } else {
+                    sensorRegistration.state
+                },
                 sensorRegistration.type,
                 sensorRegistration.icon,
                 sensorRegistration.attributes,
@@ -596,8 +636,11 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
             }
         }
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration request register_sensor")
+        if (causeException != null) {
+            throw IntegrationException(causeException)
+        } else {
+            throw IntegrationException("Error calling integration request register_sensor")
+        }
     }
 
     override suspend fun updateSensors(sensors: Array<SensorRegistration<Any>>): Boolean {
@@ -631,8 +674,11 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             }
         }
 
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration update_sensor_states")
+        if (causeException != null) {
+            throw IntegrationException(causeException)
+        } else {
+            throw IntegrationException("Error calling integration update_sensor_states")
+        }
     }
 
     override suspend fun shouldNotifySecurityWarning(): Boolean {
