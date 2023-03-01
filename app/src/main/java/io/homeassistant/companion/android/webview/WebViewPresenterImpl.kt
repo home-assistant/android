@@ -240,7 +240,9 @@ class WebViewPresenterImpl @Inject constructor(
                 Log.w(TAG, "Cannot determine app locked state")
                 false
             }
-        } else false
+        } else {
+            false
+        }
     }
 
     override fun setAppActive(active: Boolean) = runBlocking {
@@ -313,7 +315,9 @@ class WebViewPresenterImpl @Inject constructor(
                 m.group(2).toInt(),
                 m.group(3).toInt()
             )
-        } else Color.parseColor(colorString)
+        } else {
+            Color.parseColor(colorString)
+        }
     }
 
     override fun appCanCommissionMatterDevice(): Boolean = matterUseCase.appSupportsCommissioning()
@@ -368,8 +372,11 @@ class WebViewPresenterImpl @Inject constructor(
             }
             else -> {
                 // Any errors will have been shown in the UI provided by Play Services
-                if (result.resultCode == Activity.RESULT_OK) Log.d(TAG, "Matter commissioning returned success")
-                else Log.d(TAG, "Matter commissioning returned with non-OK code ${result.resultCode}")
+                if (result.resultCode == Activity.RESULT_OK) {
+                    Log.d(TAG, "Matter commissioning returned success")
+                } else {
+                    Log.d(TAG, "Matter commissioning returned with non-OK code ${result.resultCode}")
+                }
             }
         }
     }

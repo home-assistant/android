@@ -103,8 +103,11 @@ class ServerManagerImpl @Inject constructor(
     private fun activeServerId(): Int? = runBlocking {
         val pref = localStorage.getInt(PREF_ACTIVE_SERVER)
 
-        if (pref != null && _servers[pref] != null) pref
-        else _servers.keys.maxOfOrNull { it }
+        if (pref != null && _servers[pref] != null) {
+            pref
+        } else {
+            _servers.keys.maxOfOrNull { it }
+        }
     }
 
     override fun getServer(id: Int): Server? {

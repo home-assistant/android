@@ -92,7 +92,9 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
                         )
                     )
-                } else showAddWidgetError()
+                } else {
+                    showAddWidgetError()
+                }
             } else {
                 onAddWidget()
             }
@@ -103,10 +105,12 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         val extras = intent.extras
         if (extras != null) {
             appWidgetId = extras.getInt(
-                AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID
+                AppWidgetManager.EXTRA_APPWIDGET_ID,
+                AppWidgetManager.INVALID_APPWIDGET_ID
             )
             requestLauncherSetup = extras.getBoolean(
-                ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, false
+                ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER,
+                false
             )
         }
 
@@ -122,8 +126,9 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             getString(commonR.string.widget_background_type_daynight),
             getString(commonR.string.widget_background_type_transparent)
         )
-        if (DynamicColors.isDynamicColorAvailable())
+        if (DynamicColors.isDynamicColorAvailable()) {
             backgroundTypeValues.add(0, getString(commonR.string.widget_background_type_dynamiccolor))
+        }
         binding.backgroundType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
 
         if (staticWidget != null) {
@@ -198,8 +203,11 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         binding.backgroundType.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 binding.textColor.visibility =
-                    if (parent?.adapter?.getItem(position) == getString(commonR.string.widget_background_type_transparent)) View.VISIBLE
-                    else View.GONE
+                    if (parent?.adapter?.getItem(position) == getString(commonR.string.widget_background_type_transparent)) {
+                        View.VISIBLE
+                    } else {
+                        View.GONE
+                    }
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {
@@ -288,10 +296,11 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 selectedServerId!!
             )
 
-            val entity = if (selectedEntity == null)
+            val entity = if (selectedEntity == null) {
                 binding.widgetTextConfigEntityId.text.toString()
-            else
+            } else {
                 selectedEntity!!.entityId
+            }
             if (entity !in entities[selectedServerId].orEmpty().map { it.entityId }) {
                 showAddWidgetError()
                 return
@@ -317,10 +326,11 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             )
 
             if (appendAttributes) {
-                val attributes = if (selectedAttributeIds.isNullOrEmpty())
+                val attributes = if (selectedAttributeIds.isNullOrEmpty()) {
                     binding.widgetTextConfigAttribute.text.toString()
-                else
+                } else {
                     selectedAttributeIds
+                }
                 intent.putExtra(
                     EntityWidget.EXTRA_ATTRIBUTE_IDS,
                     attributes
@@ -343,9 +353,11 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
             intent.putExtra(
                 EntityWidget.EXTRA_TEXT_COLOR,
-                if (binding.backgroundType.selectedItem as String? == getString(commonR.string.widget_background_type_transparent))
+                if (binding.backgroundType.selectedItem as String? == getString(commonR.string.widget_background_type_transparent)) {
                     getHexForColor(if (binding.textColorWhite.isChecked) android.R.color.white else commonR.color.colorWidgetButtonLabelBlack)
-                else null
+                } else {
+                    null
+                }
             )
 
             context.sendBroadcast(intent)
@@ -366,7 +378,8 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         super.onNewIntent(intent)
         if (intent != null && intent.extras != null && intent.hasExtra(PIN_WIDGET_CALLBACK)) {
             appWidgetId = intent.extras!!.getInt(
-                AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID
+                AppWidgetManager.EXTRA_APPWIDGET_ID,
+                AppWidgetManager.INVALID_APPWIDGET_ID
             )
             onAddWidget()
         }

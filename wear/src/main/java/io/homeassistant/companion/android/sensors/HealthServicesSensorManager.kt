@@ -102,10 +102,12 @@ class HealthServicesSensorManager : SensorManager {
 
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         latestContext = context
-        if (healthClient == null)
+        if (healthClient == null) {
             healthClient = HealthServices.getClient(latestContext)
-        if (passiveMonitoringClient == null)
+        }
+        if (passiveMonitoringClient == null) {
             passiveMonitoringClient = healthClient?.passiveMonitoringClient
+        }
         if (passiveMonitoringCapabilities == null) {
             passiveMonitoringCapabilities = passiveMonitoringClient?.getCapabilitiesAsync()?.await()
             Log.d(TAG, "Supported capabilities: $passiveMonitoringCapabilities")
@@ -113,14 +115,18 @@ class HealthServicesSensorManager : SensorManager {
 
         val supportedSensors = mutableListOf(userActivityState)
 
-        if (passiveMonitoringCapabilities?.supportedDataTypesPassiveMonitoring?.contains(DataType.FLOORS_DAILY) == true)
+        if (passiveMonitoringCapabilities?.supportedDataTypesPassiveMonitoring?.contains(DataType.FLOORS_DAILY) == true) {
             supportedSensors += dailyFloors
-        if (passiveMonitoringCapabilities?.supportedDataTypesPassiveMonitoring?.contains(DataType.DISTANCE_DAILY) == true)
+        }
+        if (passiveMonitoringCapabilities?.supportedDataTypesPassiveMonitoring?.contains(DataType.DISTANCE_DAILY) == true) {
             supportedSensors += dailyDistance
-        if (passiveMonitoringCapabilities?.supportedDataTypesPassiveMonitoring?.contains(DataType.CALORIES_DAILY) == true)
+        }
+        if (passiveMonitoringCapabilities?.supportedDataTypesPassiveMonitoring?.contains(DataType.CALORIES_DAILY) == true) {
             supportedSensors += dailyCalories
-        if (passiveMonitoringCapabilities?.supportedDataTypesPassiveMonitoring?.contains(DataType.STEPS_DAILY) == true)
+        }
+        if (passiveMonitoringCapabilities?.supportedDataTypesPassiveMonitoring?.contains(DataType.STEPS_DAILY) == true) {
             supportedSensors += dailySteps
+        }
         return supportedSensors
     }
 
@@ -156,14 +162,18 @@ class HealthServicesSensorManager : SensorManager {
         if (passiveMonitoringClient == null) passiveMonitoringClient = healthClient?.passiveMonitoringClient
 
         val dataTypes = mutableSetOf<DataType<*, *>>()
-        if (dailyFloorEnabled)
+        if (dailyFloorEnabled) {
             dataTypes += DataType.FLOORS_DAILY
-        if (dailyDistanceEnabled)
+        }
+        if (dailyDistanceEnabled) {
             dataTypes += DataType.DISTANCE_DAILY
-        if (dailyCaloriesEnabled)
+        }
+        if (dailyCaloriesEnabled) {
             dataTypes += DataType.CALORIES_DAILY
-        if (dailyStepsEnabled)
+        }
+        if (dailyStepsEnabled) {
             dataTypes += DataType.STEPS_DAILY
+        }
 
         passiveListenerConfig = PassiveListenerConfig.builder()
             .setShouldUserActivityInfoBeRequested(activityStateEnabled)
@@ -201,8 +211,9 @@ class HealthServicesSensorManager : SensorManager {
                 val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
                 val sensorData = sensorDao.get(userActivityState.id)
 
-                if (sensorData.any { it.state != it.lastSentState } || forceUpdate)
+                if (sensorData.any { it.state != it.lastSentState } || forceUpdate) {
                     SensorReceiver.updateAllSensors(latestContext)
+                }
             }
 
             override fun onNewDataPointsReceived(dataPoints: DataPointContainer) {

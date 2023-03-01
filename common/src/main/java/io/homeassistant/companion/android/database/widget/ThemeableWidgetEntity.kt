@@ -14,6 +14,7 @@ enum class WidgetBackgroundType {
 class WidgetBackgroundTypeConverter {
     @TypeConverter
     fun toWidgetBackgroundType(setting: String): WidgetBackgroundType = WidgetBackgroundType.valueOf(setting)
+
     @TypeConverter
     fun fromWidgetBackgroundType(setting: WidgetBackgroundType): String = setting.name
 }

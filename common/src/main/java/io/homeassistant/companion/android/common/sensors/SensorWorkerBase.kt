@@ -75,7 +75,9 @@ abstract class SensorWorkerBase(
                 notificationManager.getNotificationChannel(sensorWorkerChannel)
             if (notificationChannel == null) {
                 notificationChannel = NotificationChannel(
-                    sensorWorkerChannel, TAG, NotificationManager.IMPORTANCE_LOW
+                    sensorWorkerChannel,
+                    TAG,
+                    NotificationManager.IMPORTANCE_LOW
                 )
                 notificationManager.createNotificationChannel(notificationChannel)
             }

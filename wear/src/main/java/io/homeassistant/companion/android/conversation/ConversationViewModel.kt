@@ -40,8 +40,11 @@ class ConversationViewModel @Inject constructor(
     fun getConversation() {
         viewModelScope.launch {
             conversationResult =
-                if (serverManager.isRegistered()) serverManager.integrationRepository().getConversation(speechResult) ?: ""
-                else ""
+                if (serverManager.isRegistered()) {
+                    serverManager.integrationRepository().getConversation(speechResult) ?: ""
+                } else {
+                    ""
+                }
         }
     }
 

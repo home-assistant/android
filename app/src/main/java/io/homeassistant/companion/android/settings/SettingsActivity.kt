@@ -88,8 +88,11 @@ class SettingsActivity : BaseActivity() {
                     R.id.content,
                     when {
                         settingsNavigation == "websocket" ->
-                            if (serverManager.defaultServers.size == 1) WebsocketSettingFragment::class.java
-                            else SettingsFragment::class.java
+                            if (serverManager.defaultServers.size == 1) {
+                                WebsocketSettingFragment::class.java
+                            } else {
+                                SettingsFragment::class.java
+                            }
                         settingsNavigation == "notification_history" -> NotificationHistoryFragment::class.java
                         settingsNavigation?.startsWith("sensors/") == true -> SensorDetailFragment::class.java
                         settingsNavigation?.startsWith("tiles/") == true -> ManageTilesFragment::class.java
@@ -105,8 +108,12 @@ class SettingsActivity : BaseActivity() {
                         val servers = serverManager.defaultServers
                         if (servers.size == 1) {
                             Bundle().apply { putInt(WebsocketSettingFragment.EXTRA_SERVER, servers[0].id) }
-                        } else null
-                    } else null
+                        } else {
+                            null
+                        }
+                    } else {
+                        null
+                    }
                 )
             }
         }

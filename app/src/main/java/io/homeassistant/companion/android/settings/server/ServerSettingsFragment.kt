@@ -236,16 +236,22 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
     override fun updateExternalUrl(url: String, useCloud: Boolean) {
         findPreference<Preference>("connection_external")?.let {
             it.summary =
-                if (useCloud) getString(commonR.string.input_cloud)
-                else url
+                if (useCloud) {
+                    getString(commonR.string.input_cloud)
+                } else {
+                    url
+                }
         }
     }
 
     override fun updateSsids(ssids: List<String>) {
         findPreference<Preference>("connection_internal_ssids")?.let {
             it.summary =
-                if (ssids.isEmpty()) getString(commonR.string.pref_connection_ssids_empty)
-                else ssids.joinToString()
+                if (ssids.isEmpty()) {
+                    getString(commonR.string.pref_connection_ssids_empty)
+                } else {
+                    ssids.joinToString()
+                }
         }
     }
 
@@ -259,13 +265,16 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         if (DisabledLocationHandler.isLocationEnabled(requireContext())) {
             if (!checkPermission(permissionsToCheck)) {
                 LocationPermissionInfoHandler.showLocationPermInfoDialogIfNeeded(
-                    requireContext(), permissionsToCheck,
+                    requireContext(),
+                    permissionsToCheck,
                     continueYesCallback = {
                         requestLocationPermission()
                         // showSsidSettings() will be called if permission is granted
                     }
                 )
-            } else showSsidSettings()
+            } else {
+                showSsidSettings()
+            }
         } else {
             if (presenter.isSsidUsed()) {
                 DisabledLocationHandler.showLocationDisabledWarnDialog(
@@ -273,7 +282,8 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
                     arrayOf(
                         getString(commonR.string.pref_connection_wifi)
                     ),
-                    showAsNotification = false, withDisableOption = true
+                    showAsNotification = false,
+                    withDisableOption = true
                 ) {
                     presenter.clearSsids()
                 }

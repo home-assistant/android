@@ -56,8 +56,9 @@ class LastRebootSensorManager : SensorManager {
 
     @SuppressLint("SimpleDateFormat")
     private fun updateLastReboot(context: Context) {
-        if (!isEnabled(context, lastRebootSensor))
+        if (!isEnabled(context, lastRebootSensor)) {
             return
+        }
 
         var timeInMillis = 0L
         var local = ""
@@ -72,8 +73,9 @@ class LastRebootSensorManager : SensorManager {
         try {
             timeInMillis = System.currentTimeMillis() - SystemClock.elapsedRealtime()
             val diffMillis = (timeInMillis - lastTimeMillis).absoluteValue
-            if (lastTimeMillis != 0L && settingDeadband > diffMillis)
+            if (lastTimeMillis != 0L && settingDeadband > diffMillis) {
                 return
+            }
             val cal: Calendar = GregorianCalendar()
             cal.timeInMillis = timeInMillis
             local = cal.time.toString()

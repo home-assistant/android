@@ -46,8 +46,11 @@ object DisabledLocationHandler {
         return if (fineLocation == null) {
             containsFineLocation && containsCoarseLocation
         } else {
-            if (fineLocation) containsFineLocation
-            else containsCoarseLocation
+            if (fineLocation) {
+                containsFineLocation
+            } else {
+                containsCoarseLocation
+            }
         }
     }
 
@@ -81,15 +84,16 @@ object DisabledLocationHandler {
         if ((!withDisableOption || callback == null) && showAsNotification) {
             val notificationManager = NotificationManagerCompat.from(context)
             if (notificationManager.getActiveNotification(DISABLED_LOCATION_WARN_ID, DISABLED_LOCATION_WARN_ID.hashCode()) == null) {
-
                 if (VERSION.SDK_INT >= VERSION_CODES.O) {
                     val channel = NotificationChannel(locationDisabledChannel, context.applicationContext.getString(commonR.string.location_warn_channel), NotificationManager.IMPORTANCE_DEFAULT)
                     notificationManager.createNotificationChannel(channel)
                 }
 
                 val pendingIntent = PendingIntent.getActivity(
-                    context, 0,
-                    intent, PendingIntent.FLAG_IMMUTABLE
+                    context,
+                    0,
+                    intent,
+                    PendingIntent.FLAG_IMMUTABLE
                 )
 
                 val notificationBuilder = NotificationCompat.Builder(context, locationDisabledChannel)

@@ -198,8 +198,9 @@ class WebsocketManager(
             }
             // Message and title are in the root unlike all the others.
             listOf("message", "title").forEach { key ->
-                if (it.containsKey(key))
+                if (it.containsKey(key)) {
                     flattened[key] = it[key].toString()
+                }
             }
             serverManager.getServer(serverId)?.let { server ->
                 flattened["webhook_id"] = server.connection.webhookId.toString()

@@ -94,7 +94,9 @@ fun <T> Entity<T>.getCoverPosition(): EntityPosition? {
         if (
             domain != "cover" ||
             (attributes as Map<*, *>)["current_position"] == null
-        ) return null
+        ) {
+            return null
+        }
 
         val minValue = 0f
         val maxValue = 100f
@@ -276,26 +278,29 @@ fun <T> Entity<T>.getIcon(context: Context): IIcon? {
             "group" -> CommunityMaterial.Icon2.cmd_google_circles_communities
             "homeassistant" -> CommunityMaterial.Icon2.cmd_home_assistant
             "homekit" -> CommunityMaterial.Icon2.cmd_home_automation
-            "humidifier" -> if (compareState == "off")
+            "humidifier" -> if (compareState == "off") {
                 CommunityMaterial.Icon.cmd_air_humidifier_off
-            else
+            } else {
                 CommunityMaterial.Icon.cmd_air_humidifier
+            }
             "image_processing" -> CommunityMaterial.Icon2.cmd_image_filter_frames
             "input_boolean" -> if (!entityId.endsWith(".ha_android_placeholder")) {
-                if (compareState == "on")
+                if (compareState == "on") {
                     CommunityMaterial.Icon.cmd_check_circle_outline
-                else
+                } else {
                     CommunityMaterial.Icon.cmd_close_circle_outline
+                }
             } else { // For SimplifiedEntity without state, use a more generic icon
                 CommunityMaterial.Icon3.cmd_toggle_switch_outline
             }
             "input_button" -> CommunityMaterial.Icon2.cmd_gesture_tap_button
-            "input_datetime" -> if (attributes["has_date"] == false)
+            "input_datetime" -> if (attributes["has_date"] == false) {
                 CommunityMaterial.Icon.cmd_clock
-            else if (attributes["has_time"] == false)
+            } else if (attributes["has_time"] == false) {
                 CommunityMaterial.Icon.cmd_calendar
-            else
+            } else {
                 CommunityMaterial.Icon.cmd_calendar_clock
+            }
             "input_select" -> CommunityMaterial.Icon2.cmd_form_dropdown
             "input_text" -> CommunityMaterial.Icon2.cmd_form_textbox
             "light" -> CommunityMaterial.Icon2.cmd_lightbulb
@@ -342,10 +347,11 @@ fun <T> Entity<T>.getIcon(context: Context): IIcon? {
             "sensor" -> CommunityMaterial.Icon.cmd_eye
             "siren" -> CommunityMaterial.Icon.cmd_bullhorn
             "simple_alarm" -> CommunityMaterial.Icon.cmd_bell
-            "sun" -> if (compareState == "above_horizon")
+            "sun" -> if (compareState == "above_horizon") {
                 CommunityMaterial.Icon3.cmd_white_balance_sunny
-            else
+            } else {
                 CommunityMaterial.Icon3.cmd_weather_night
+            }
             "switch" -> if (!entityId.endsWith(".ha_android_placeholder")) {
                 when (attributes["device_class"]) {
                     "outlet" -> if (compareState == "on") CommunityMaterial.Icon3.cmd_power_plug else CommunityMaterial.Icon3.cmd_power_plug_off

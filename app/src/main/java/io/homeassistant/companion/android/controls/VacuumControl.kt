@@ -45,10 +45,11 @@ object VacuumControl : HaControl {
             ToggleTemplate(
                 entity.entityId,
                 ControlButton(
-                    if (entitySupportedFeatures and SUPPORT_TURN_ON == SUPPORT_TURN_ON)
+                    if (entitySupportedFeatures and SUPPORT_TURN_ON == SUPPORT_TURN_ON) {
                         entity.state == "on"
-                    else
-                        entity.state == "cleaning",
+                    } else {
+                        entity.state == "cleaning"
+                    },
                     "Description"
                 )
             )
@@ -68,9 +69,9 @@ object VacuumControl : HaControl {
     ): Boolean {
         integrationRepository.callService(
             action.templateId.split(".")[0],
-            if (entitySupportedFeatures and SUPPORT_TURN_ON == SUPPORT_TURN_ON)
+            if (entitySupportedFeatures and SUPPORT_TURN_ON == SUPPORT_TURN_ON) {
                 if ((action as? BooleanAction)?.newState == true) "turn_on" else "turn_off"
-            else if ((action as? BooleanAction)?.newState == true) "start" else "return_to_base",
+            } else if ((action as? BooleanAction)?.newState == true) "start" else "return_to_base",
             hashMapOf(
                 "entity_id" to action.templateId
             )

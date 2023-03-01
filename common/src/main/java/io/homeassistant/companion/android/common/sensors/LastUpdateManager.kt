@@ -45,12 +45,13 @@ class LastUpdateManager : SensorManager {
     }
 
     fun sendLastUpdate(context: Context, intentAction: String?) {
-
-        if (!isEnabled(context, lastUpdate))
+        if (!isEnabled(context, lastUpdate)) {
             return
+        }
 
-        if (intentAction.isNullOrEmpty())
+        if (intentAction.isNullOrEmpty()) {
             return
+        }
 
         Log.d(TAG, "Last update is $intentAction")
 

@@ -61,7 +61,6 @@ class MobileAppIntegrationFragment : Fragment() {
     private fun onLocationTrackingChanged(isChecked: Boolean) {
         var checked = isChecked
         if (isChecked) {
-
             val locationEnabled = DisabledLocationHandler.isLocationEnabled(requireContext())
             val permissionOk = LocationSensorManager().checkPermission(
                 requireContext(),

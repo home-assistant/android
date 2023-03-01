@@ -40,7 +40,6 @@ fun ManualSetupView(
             .fillMaxWidth()
             .padding(16.dp)
     ) {
-
         OnboardingHeaderView(
             icon = CommunityMaterial.Icon3.cmd_web,
             title = stringResource(id = commonR.string.manual_title)

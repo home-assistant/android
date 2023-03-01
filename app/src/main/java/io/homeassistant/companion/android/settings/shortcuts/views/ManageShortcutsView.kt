@@ -57,10 +57,11 @@ fun ManageShortcutsView(
             Divider()
         }
 
-        val shortcutCount = if (viewModel.canPinShortcuts)
+        val shortcutCount = if (viewModel.canPinShortcuts) {
             ManageShortcutsSettingsFragment.MAX_SHORTCUTS + 1
-        else
+        } else {
             ManageShortcutsSettingsFragment.MAX_SHORTCUTS
+        }
 
         items(shortcutCount) { i ->
             CreateShortcutView(
@@ -85,9 +86,13 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, icon
     val shortcutId = ManageShortcutsSettingsFragment.SHORTCUT_PREFIX + "_" + index
 
     Text(
-        text = if (index < 6) stringResource(id = R.string.shortcut) + " $index" else stringResource(
-            id = R.string.shortcut_pinned
-        ),
+        text = if (index < 6) {
+            stringResource(id = R.string.shortcut) + " $index"
+        } else {
+            stringResource(
+                id = R.string.shortcut_pinned
+            )
+        },
         fontSize = 20.sp,
         color = colorResource(id = R.color.colorAccent),
         modifier = Modifier.padding(top = 20.dp)
@@ -169,10 +174,11 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, icon
         onValueChange = { viewModel.shortcuts[i].label.value = it },
         label = {
             Text(
-                if (index < 6)
+                if (index < 6) {
                     "${stringResource(id = R.string.shortcut)} $index ${stringResource(id = R.string.label)}"
-                else
+                } else {
                     stringResource(id = R.string.shortcut_pinned_label)
+                }
             )
         },
         modifier = Modifier.padding(top = 16.dp)
@@ -183,10 +189,11 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, icon
         onValueChange = { viewModel.shortcuts[i].desc.value = it },
         label = {
             Text(
-                if (index < 6)
+                if (index < 6) {
                     "${stringResource(id = R.string.shortcut)} $index ${stringResource(id = R.string.description)}"
-                else
+                } else {
                     stringResource(id = R.string.shortcut_pinned_desc)
+                }
             )
         },
         modifier = Modifier.padding(top = 16.dp, bottom = 16.dp)
@@ -251,8 +258,9 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, icon
     Button(
         onClick = {
             if (index < 6) {
-                if (viewModel.shortcuts[i].delete.value)
+                if (viewModel.shortcuts[i].delete.value) {
                     Toast.makeText(context, R.string.shortcut_updated, Toast.LENGTH_SHORT).show()
+                }
                 viewModel.shortcuts[i].delete.value = true
             }
             viewModel.createShortcut(
@@ -276,13 +284,13 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, icon
             text = stringResource(
                 id =
                 if (
-                    if (index < 6)
+                    if (index < 6) {
                         viewModel.shortcuts[i].delete.value
-                    else {
+                    } else {
                         var isCurrentPinned = false
-                        if (viewModel.pinnedShortcuts.isEmpty())
+                        if (viewModel.pinnedShortcuts.isEmpty()) {
                             isCurrentPinned = false
-                        else {
+                        } else {
                             for (item in viewModel.pinnedShortcuts) {
                                 isCurrentPinned = when (item.id) {
                                     viewModel.shortcuts.last().id.value -> true
@@ -292,7 +300,11 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, icon
                         }
                         isCurrentPinned
                     }
-                ) R.string.update_shortcut else R.string.add_shortcut
+                ) {
+                    R.string.update_shortcut
+                } else {
+                    R.string.add_shortcut
+                }
             )
         )
     }

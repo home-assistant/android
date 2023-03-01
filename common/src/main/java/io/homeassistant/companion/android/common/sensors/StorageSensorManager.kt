@@ -79,8 +79,9 @@ class StorageSensorManager : SensorManager {
     }
 
     private fun updateInternalStorageSensor(context: Context) {
-        if (!isEnabled(context, storageSensor))
+        if (!isEnabled(context, storageSensor)) {
             return
+        }
 
         val path = Environment.getDataDirectory()
         val internalStorageStats = getStorageStats(path)
@@ -98,8 +99,9 @@ class StorageSensorManager : SensorManager {
     }
 
     private fun updateExternalStorageSensor(context: Context) {
-        if (!isEnabled(context, externalStorage))
+        if (!isEnabled(context, externalStorage)) {
             return
+        }
 
         val externalStoragePath = getExternalStoragePathIfAvailable(context)
         val externalStorageStats = externalStoragePath?.let {

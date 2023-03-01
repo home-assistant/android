@@ -78,8 +78,11 @@ class LogFragment : Fragment() {
                 override fun onTabReselected(tab: TabLayout.Tab?) {
                     (requireView().findViewById<ScrollView>(R.id.logScrollview))?.apply {
                         post {
-                            if (tab?.id == R.id.logTabCrash) fullScroll(ScrollView.FOCUS_UP)
-                            else fullScroll(ScrollView.FOCUS_DOWN)
+                            if (tab?.id == R.id.logTabCrash) {
+                                fullScroll(ScrollView.FOCUS_UP)
+                            } else {
+                                fullScroll(ScrollView.FOCUS_DOWN)
+                            }
                         }
                     }
                 }
@@ -160,7 +163,6 @@ class LogFragment : Fragment() {
                 fLogFile.appendText(currentLog)
 
                 if (fLogFile.exists()) {
-
                     val uriToLog: Uri = FileProvider.getUriForFile(requireContext(), requireContext().packageName + ".provider", fLogFile)
 
                     val sendIntent: Intent = Intent().apply {

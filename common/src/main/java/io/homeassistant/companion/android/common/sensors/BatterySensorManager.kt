@@ -141,8 +141,9 @@ class BatterySensorManager : SensorManager {
     }
 
     private fun updateBatteryLevel(context: Context, intent: Intent) {
-        if (!isEnabled(context, batteryLevel))
+        if (!isEnabled(context, batteryLevel)) {
             return
+        }
 
         val percentage = getBatteryPercentage(intent)
         val baseIcon = when (getChargingStatus(intent)) {
@@ -172,8 +173,9 @@ class BatterySensorManager : SensorManager {
     }
 
     private fun updateBatteryState(context: Context, intent: Intent) {
-        if (!isEnabled(context, batteryState))
+        if (!isEnabled(context, batteryState)) {
             return
+        }
 
         val chargingStatus = getChargingStatus(intent)
 
@@ -194,8 +196,9 @@ class BatterySensorManager : SensorManager {
     }
 
     private fun updateIsCharging(context: Context, intent: Intent) {
-        if (!isEnabled(context, isChargingState))
+        if (!isEnabled(context, isChargingState)) {
             return
+        }
 
         val isCharging = getIsCharging(intent)
 
@@ -210,8 +213,9 @@ class BatterySensorManager : SensorManager {
     }
 
     private fun updateChargerType(context: Context, intent: Intent) {
-        if (!isEnabled(context, chargerTypeState))
+        if (!isEnabled(context, chargerTypeState)) {
             return
+        }
 
         val chargerType = getChargerType(intent)
 
@@ -231,8 +235,9 @@ class BatterySensorManager : SensorManager {
     }
 
     private fun updateBatteryHealth(context: Context, intent: Intent) {
-        if (!isEnabled(context, batteryHealthState))
+        if (!isEnabled(context, batteryHealthState)) {
             return
+        }
 
         val batteryHealth = getBatteryHealth(intent)
 
@@ -250,8 +255,9 @@ class BatterySensorManager : SensorManager {
     }
 
     private fun updateBatteryTemperature(context: Context, intent: Intent) {
-        if (!isEnabled(context, batteryTemperature))
+        if (!isEnabled(context, batteryTemperature)) {
             return
+        }
 
         val batteryTemp = getBatteryTemperature(intent)
 
@@ -265,8 +271,9 @@ class BatterySensorManager : SensorManager {
     }
 
     private fun updateBatteryPower(context: Context, intent: Intent) {
-        if (!isEnabled(context, batteryPower))
+        if (!isEnabled(context, batteryPower)) {
             return
+        }
 
         val voltage = getBatteryVolts(intent)
         val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager

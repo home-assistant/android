@@ -58,7 +58,7 @@ class MainVehicleScreen(
             "lock" to commonR.string.locks,
             "scene" to commonR.string.scenes,
             "script" to commonR.string.scripts,
-            "switch" to commonR.string.switches,
+            "switch" to commonR.string.switches
         )
         private val SUPPORTED_DOMAINS = SUPPORTED_DOMAINS_WITH_STRING.keys
 
@@ -66,7 +66,7 @@ class MainVehicleScreen(
             "device_tracker",
             "person",
             "sensor",
-            "zone",
+            "zone"
         )
     }
 

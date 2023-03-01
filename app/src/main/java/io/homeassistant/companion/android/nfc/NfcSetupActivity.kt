@@ -46,8 +46,9 @@ class NfcSetupActivity : BaseActivity() {
         fun newInstance(context: Context, tagId: String? = null, messageId: Int = -1): Intent {
             return Intent(context, NfcSetupActivity::class.java).apply {
                 putExtra(EXTRA_MESSAGE_ID, messageId)
-                if (tagId != null)
+                if (tagId != null) {
                     putExtra(EXTRA_TAG_VALUE, tagId)
+                }
             }
         }
     }

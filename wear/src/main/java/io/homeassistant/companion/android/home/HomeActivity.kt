@@ -72,8 +72,9 @@ class HomeActivity : ComponentActivity(), HomeView {
         mainViewModel.initAllSensors()
 
         lifecycleScope.launch {
-            if (mainViewModel.loadingState.value == MainViewModel.LoadingState.READY)
+            if (mainViewModel.loadingState.value == MainViewModel.LoadingState.READY) {
                 mainViewModel.updateUI()
+            }
         }
     }
 

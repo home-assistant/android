@@ -125,8 +125,11 @@ class SettingsWearViewModel @Inject constructor(
                     Log.e(TAG, "Exception while rendering template", e)
                     // JsonMappingException suggests that template is not a String (= error)
                     templateTileContentRendered.value = getApplication<Application>().getString(
-                        if (e.cause is JsonMappingException) commonR.string.template_error
-                        else commonR.string.template_render_error
+                        if (e.cause is JsonMappingException) {
+                            commonR.string.template_error
+                        } else {
+                            commonR.string.template_render_error
+                        }
                     )
                 }
             }
@@ -136,10 +139,11 @@ class SettingsWearViewModel @Inject constructor(
     }
 
     fun onEntitySelected(checked: Boolean, entityId: String) {
-        if (checked)
+        if (checked) {
             favoriteEntityIds.add(entityId)
-        else
+        } else {
             favoriteEntityIds.remove(entityId)
+        }
         sendHomeFavorites(favoriteEntityIds.toList())
     }
 

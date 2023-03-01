@@ -57,8 +57,9 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
     }
 
     private fun updateProximitySensor() {
-        if (!isEnabled(latestContext, proximitySensor))
+        if (!isEnabled(latestContext, proximitySensor)) {
             return
+        }
 
         val now = System.currentTimeMillis()
         if (listenerLastRegistered + SensorManager.SENSOR_LISTENER_TIMEOUT < now && isListenerRegistered) {

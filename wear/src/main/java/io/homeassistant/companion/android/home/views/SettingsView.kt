@@ -80,8 +80,9 @@ fun SettingsView(
     WearAppTheme {
         Scaffold(
             positionIndicator = {
-                if (scalingLazyListState.isScrollInProgress)
+                if (scalingLazyListState.isScrollInProgress) {
                     PositionIndicator(scalingLazyListState = scalingLazyListState)
+                }
             },
             timeText = { TimeText(!scalingLazyListState.isScrollInProgress) }
         ) {
@@ -118,10 +119,11 @@ fun SettingsView(
                         toggleControl = {
                             Icon(
                                 imageVector = ToggleChipDefaults.switchIcon(isFavoritesOnly),
-                                contentDescription = if (isFavoritesOnly)
+                                contentDescription = if (isFavoritesOnly) {
                                     stringResource(commonR.string.enabled)
-                                else
+                                } else {
                                     stringResource(commonR.string.disabled)
+                                }
                             )
                         },
                         appIcon = {
@@ -152,20 +154,22 @@ fun SettingsView(
                         appIcon = {
                             Image(
                                 asset =
-                                if (isHapticEnabled)
+                                if (isHapticEnabled) {
                                     CommunityMaterial.Icon3.cmd_watch_vibrate
-                                else
-                                    CommunityMaterial.Icon3.cmd_watch_vibrate_off,
+                                } else {
+                                    CommunityMaterial.Icon3.cmd_watch_vibrate_off
+                                },
                                 colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
                             )
                         },
                         toggleControl = {
                             Icon(
                                 imageVector = ToggleChipDefaults.checkboxIcon(isHapticEnabled),
-                                contentDescription = if (isHapticEnabled)
+                                contentDescription = if (isHapticEnabled) {
                                     stringResource(commonR.string.enabled)
-                                else
+                                } else {
                                     stringResource(commonR.string.disabled)
+                                }
                             )
                         }
                     )
@@ -181,20 +185,22 @@ fun SettingsView(
                         appIcon = {
                             Image(
                                 asset =
-                                if (isToastEnabled)
+                                if (isToastEnabled) {
                                     CommunityMaterial.Icon3.cmd_message
-                                else
-                                    CommunityMaterial.Icon3.cmd_message_off,
+                                } else {
+                                    CommunityMaterial.Icon3.cmd_message_off
+                                },
                                 colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
                             )
                         },
                         toggleControl = {
                             Icon(
                                 imageVector = ToggleChipDefaults.checkboxIcon(isToastEnabled),
-                                contentDescription = if (isHapticEnabled)
+                                contentDescription = if (isHapticEnabled) {
                                     stringResource(commonR.string.enabled)
-                                else
+                                } else {
                                     stringResource(commonR.string.disabled)
+                                }
                             )
                         }
                     )

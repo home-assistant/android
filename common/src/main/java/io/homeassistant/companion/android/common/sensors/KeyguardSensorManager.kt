@@ -67,10 +67,12 @@ class KeyguardSensorManager : SensorManager {
         context: Context
     ) {
         val km = context.getSystemService<KeyguardManager>()!!
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
             updateDeviceLocked(context, km)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             updateDeviceSecure(context, km)
+        }
 
         updateKeyguardLocked(context, km)
         updateKeyguardSecure(context, km)
@@ -78,9 +80,9 @@ class KeyguardSensorManager : SensorManager {
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP_MR1)
     private fun updateDeviceLocked(context: Context, km: KeyguardManager) {
-
-        if (!isEnabled(context, deviceLocked))
+        if (!isEnabled(context, deviceLocked)) {
             return
+        }
 
         val isLocked = km.isDeviceLocked
         val icon = if (isLocked) "mdi:cellphone-lock" else "mdi:cellphone"
@@ -96,9 +98,9 @@ class KeyguardSensorManager : SensorManager {
 
     @RequiresApi(Build.VERSION_CODES.M)
     private fun updateDeviceSecure(context: Context, km: KeyguardManager) {
-
-        if (!isEnabled(context, deviceSecure))
+        if (!isEnabled(context, deviceSecure)) {
             return
+        }
 
         val isSecure = km.isDeviceSecure
         val icon = if (isSecure) "mdi:cellphone-key" else "mdi:cellphone"
@@ -113,9 +115,9 @@ class KeyguardSensorManager : SensorManager {
     }
 
     private fun updateKeyguardLocked(context: Context, km: KeyguardManager) {
-
-        if (!isEnabled(context, keyguardLocked))
+        if (!isEnabled(context, keyguardLocked)) {
             return
+        }
 
         val isLocked = km.isKeyguardLocked
         val icon = if (isLocked) "mdi:cellphone-lock" else "mdi:cellphone"
@@ -130,9 +132,9 @@ class KeyguardSensorManager : SensorManager {
     }
 
     private fun updateKeyguardSecure(context: Context, km: KeyguardManager) {
-
-        if (!isEnabled(context, keyguardSecure))
+        if (!isEnabled(context, keyguardSecure)) {
             return
+        }
 
         val isSecure = km.isKeyguardSecure
         val icon = if (isSecure) "mdi:cellphone-key" else "mdi:cellphone"

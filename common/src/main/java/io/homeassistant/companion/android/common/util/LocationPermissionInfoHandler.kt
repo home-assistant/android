@@ -24,6 +24,8 @@ object LocationPermissionInfoHandler {
                     if (continueNoCallback != null) continueNoCallback()
                 }
                 .show()
-        } else continueYesCallback()
+        } else {
+            continueYesCallback()
+        }
     }
 }

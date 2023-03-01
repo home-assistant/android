@@ -149,8 +149,9 @@ class CameraWidget : AppWidgetProvider() {
                     Log.d(TAG, "Fetching camera image")
                     Handler(Looper.getMainLooper()).post {
                         val picasso = Picasso.get()
-                        if (BuildConfig.DEBUG)
+                        if (BuildConfig.DEBUG) {
                             picasso.isLoggingEnabled = true
+                        }
                         try {
                             picasso.invalidate(url)
                             picasso.load(url).resize(1024, 600).into(

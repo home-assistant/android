@@ -61,12 +61,18 @@ data class CompressedEntityState(
             lastChanged = Calendar.getInstance().apply { timeInMillis = round(lastChanged!! * 1000).toLong() },
             lastUpdated = Calendar.getInstance().apply {
                 timeInMillis =
-                    if (lastUpdated != null) round(lastUpdated * 1000).toLong()
-                    else round(lastChanged!! * 1000).toLong()
+                    if (lastUpdated != null) {
+                        round(lastUpdated * 1000).toLong()
+                    } else {
+                        round(lastChanged!! * 1000).toLong()
+                    }
             },
             context =
-            if (context is String) mapOf("id" to context, "parent_id" to null, "user_id" to null)
-            else context as? Map<String, Any?>
+            if (context is String) {
+                mapOf("id" to context, "parent_id" to null, "user_id" to null)
+            } else {
+                context as? Map<String, Any?>
+            }
         )
     }
 }

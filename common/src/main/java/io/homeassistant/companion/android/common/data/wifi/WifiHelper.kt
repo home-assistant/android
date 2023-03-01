@@ -9,6 +9,7 @@ interface WifiHelper {
 
     /** Returns if the active data connection is using Wi-Fi */
     fun isUsingWifi(): Boolean
+
     /** Returns if the active data connection is using one of the provided Wi-Fi networks */
     fun isUsingSpecificWifi(networks: List<String>): Boolean
     fun getWifiSsid(): String?

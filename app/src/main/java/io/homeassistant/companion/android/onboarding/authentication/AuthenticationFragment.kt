@@ -92,10 +92,11 @@ class AuthenticationFragment : Fragment() {
                                             requireContext().getString(
                                                 commonR.string.error_http_generic,
                                                 error?.errorCode,
-                                                if (error?.description.isNullOrBlank())
+                                                if (error?.description.isNullOrBlank()) {
                                                     commonR.string.no_description
-                                                else
+                                                } else {
                                                     error?.description
+                                                }
                                             ),
                                             null,
                                             error
@@ -131,12 +132,14 @@ class AuthenticationFragment : Fragment() {
                                                 requireContext().getString(
                                                     commonR.string.error_http_generic,
                                                     errorResponse?.statusCode,
-                                                    if (errorResponse?.reasonPhrase.isNullOrBlank())
+                                                    if (errorResponse?.reasonPhrase.isNullOrBlank()) {
                                                         requireContext().getString(commonR.string.no_description)
-                                                    else
+                                                    } else {
                                                         errorResponse?.reasonPhrase
+                                                    }
                                                 ),
-                                                null, null
+                                                null,
+                                                null
                                             )
                                         }
                                     }
