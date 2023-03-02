@@ -164,8 +164,8 @@ fun commandBleTransmitter(
                 null
             )
         }
-        BluetoothSensorManager().requestSensorUpdate(context)
-        SensorUpdateReceiver.updateSensors(context)
     }
+    BluetoothSensorManager().requestSensorUpdate(context)
+    SensorUpdateReceiver.updateSensors(context)
     return true
 }
