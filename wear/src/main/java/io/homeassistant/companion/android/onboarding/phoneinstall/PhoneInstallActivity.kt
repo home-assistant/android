@@ -10,10 +10,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.wear.activity.ConfirmationActivity
 import androidx.wear.remote.interactions.RemoteActivityHelper
-import androidx.work.await
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupActivity
 import io.homeassistant.companion.android.theme.WearAppTheme
+import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
 import io.homeassistant.companion.android.common.R as commonR
 
