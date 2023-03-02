@@ -22,6 +22,7 @@ import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.rememberScalingLazyListState
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.home.views.TimeText
 import io.homeassistant.companion.android.views.ThemeLazyColumn
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -37,7 +38,8 @@ fun PhoneInstallView(
             if (scrollState.isScrollInProgress) {
                 PositionIndicator(scalingLazyListState = scrollState)
             }
-        }
+        },
+        timeText = { TimeText(visible = !scrollState.isScrollInProgress) }
     ) {
         Box(modifier = Modifier.background(MaterialTheme.colors.background)) {
             ThemeLazyColumn(state = scrollState) {
