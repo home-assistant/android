@@ -14,6 +14,7 @@
     <string name="add_ssid">Add</string>
     <string name="add_ssid_name_suggestion">Add %1$s</string>
     <string name="add_widget">Add widget</string>
+    <string name="advanced">Advanced</string>
     <string name="all_entities">All entities</string>
     <string name="allow">Allow</string>
     <string name="always_show_first_view_on_app_start">Always show first view on app start</string>
@@ -263,7 +264,9 @@
     <string name="input_cloud">Use Home Assistant Cloud</string>
     <string name="input_url_hint">https://example.duckdns.org:8123</string>
     <string name="input_url">Home Assistant URL</string>
+    <string name="install">Install</string>
     <string name="install_app">Install App on Wear Device</string>
+    <string name="install_phone_to_continue">Install Home Assistant on your phone to continue</string>
     <plurals name="interval_hours">
         <item quantity="one">%d hour</item>
         <item quantity="other">%d hours</item>
@@ -370,9 +373,9 @@
     <string name="media_player">Media player</string>
     <string name="media_player_widget_desc">Control any media player and see current now playing image</string>
     <string name="message_checking">Checking Wear Devices with App</string>
-    <string name="message_missing_all">The Wear app is missing on your watch, click the button below to install the app.\n\nNote: Currently the Wear OS app requires you to be enrolled in the beta for the phone app. If the button does not work then please join the beta: https://play.google.com/apps/testing/io.homeassistant.companion.android</string>
+    <string name="message_missing_all">The Wear app is missing on your watch, click the button below to install the app.</string>
     <string name="message_no_connected_nodes">No connected Wear devices, please make sure Bluetooth is on and your watch is paired.</string>
-    <string name="message_some_installed">The Wear app is installed on some of your Wear devices: (%1$s)\n\nClick the button below to install the app on the other devices.\n\nNote: Currently the Wear OS app requires you to be enrolled in the beta for the phone app. If the button does not work then please join the beta: https://play.google.com/apps/testing/io.homeassistant.companion.android</string>
+    <string name="message_some_installed">The Wear app is installed on some of your Wear devices: (%1$s)\n\nClick the button below to install the app on the other devices.</string>
     <string name="missing_command_permission">Please open the Home Assistant app and send the command again in order to grant the proper permissions. You will be taken to a page to either grant the Home Assistant app the permission, or you will need to select Permissions from the details page and then grant the missing permission. For command_bluetooth the name of the permission is Nearby devices. If you are attempting to use command_activity to make a phone call you will also need to grant Phone permissions.</string>
     <string name="areas">Areas</string>
     <string name="more_entities">More entities</string>

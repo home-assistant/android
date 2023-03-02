@@ -21,7 +21,7 @@ import com.google.android.gms.wearable.Wearable
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationActivity
-import io.homeassistant.companion.android.onboarding.manual.ManualSetupActivity
+import io.homeassistant.companion.android.onboarding.phoneinstall.PhoneInstallActivity
 import io.homeassistant.companion.android.util.LoadingView
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
@@ -49,6 +49,7 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
     private lateinit var loadingView: LoadingView
 
     private var phoneSignInAvailable = false
+    private var phoneInstallOpened = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,7 +70,7 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
             if (phoneSignInAvailable) {
                 startPhoneSignIn(null)
             } else {
-                startManualSetup()
+                requestPhoneAppInstall()
             }
         }
 
@@ -107,9 +108,7 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
         Wearable.getDataClient(this).removeListener(presenter)
     }
 
-    private fun startManualSetup() {
-        startActivity(ManualSetupActivity.newInstance(this))
-    }
+    private fun requestPhoneAppInstall() = startActivity(PhoneInstallActivity.newInstance(this))
 
     private fun startPhoneSignIn(instance: HomeAssistantInstance?) {
         lifecycleScope.launch {
@@ -131,7 +130,7 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
                     if (instance != null) {
                         presenter.onInstanceClickedWithoutApp(this@OnboardingActivity, instance.url.toString())
                     } else {
-                        startManualSetup()
+                        requestPhoneAppInstall()
                     }
                 } else {
                     Log.e(TAG, "Unable to open sign in activity on phone", e)
@@ -241,6 +240,11 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
 
         Log.d(TAG, "requestPhoneSignIn: found ${capabilityInfo.nodes.size} nodes")
         phoneSignInAvailable = capabilityInfo.nodes.size > 0
+
+        if (!phoneSignInAvailable && !phoneInstallOpened) {
+            phoneInstallOpened = true
+            requestPhoneAppInstall()
+        }
     }
 
     override fun onDestroy() {

@@ -73,6 +73,7 @@
         <activity android:name=".onboarding.OnboardingActivity" />
         <activity android:name=".onboarding.integration.MobileAppIntegrationActivity" />
         <activity android:name=".onboarding.manual.ManualSetupActivity" />
+        <activity android:name=".onboarding.phoneinstall.PhoneInstallActivity" />
         <activity android:name=".complications.ComplicationConfigActivity"
             android:exported="true">
             <intent-filter>
