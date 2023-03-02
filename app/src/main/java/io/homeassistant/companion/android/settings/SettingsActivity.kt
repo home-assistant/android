@@ -207,7 +207,11 @@ class SettingsActivity : BaseActivity() {
 
     fun setAppActive(serverId: Int?, active: Boolean) = runBlocking {
         serverManager.getServer(serverId ?: ServerManager.SERVER_ID_ACTIVE)?.let {
-            serverManager.integrationRepository(it.id).setAppActive(active)
+            try {
+                serverManager.integrationRepository(it.id).setAppActive(active)
+            } catch (e: IllegalArgumentException) {
+                Log.w(TAG, "Cannot set app active $active for server $serverId")
+            }
         }
     }
 
