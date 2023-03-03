@@ -7,6 +7,7 @@
         <change>Change sensor enabled by default logic, new users will no longer have Battery Power, Battery Temperature or Is Charging sensors enabled by default</change>
         <change>Add new setting to lock screen orientation when view dashboards</change>
         <change>Camera Widget: Make background transparent, remove resizing so image is not stretched, allow widget to be smaller if required</change>
+        <change>Beacon Monitor: Use a foreground service notification for reliable background scanning, you may adjust the appearance using the notification channel</change>
         <change>Set a lower minimum font size when viewing dashboards to improve low resolution devices</change>
         <change>Bug fixes, design improvements and dependency updates</change>
     </release>
@@ -14,6 +15,7 @@
         <change>Add Text To Speech notifications</change>
         <change>Add watchface complication for Assist</change>
         <change>Add new setting to only show favorites on the home screen</change>
+        <change>Prompt to install phone app if missing</change>
         <change>Show app version number in settings</change>
         <change>Note: Multi-server not currently supported on Wear OS</change>
         <change>Bug fixes, design improvements and dependency updates</change>
