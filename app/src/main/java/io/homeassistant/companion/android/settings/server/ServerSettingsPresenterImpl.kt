@@ -112,7 +112,10 @@ class ServerSettingsPresenterImpl @Inject constructor(
                 // Remove server anyway, the user wants to delete and we don't need the server for that
             }
             serverManager.removeServer(serverId)
-            view.onRemovedServer(success = true, hasAnyRemaining = serverManager.defaultServers.any())
+            view.onRemovedServer(
+                success = true,
+                hasAnyRemaining = serverManager.defaultServers.any { it.id != serverId }
+            )
         } ?: run {
             view.onRemovedServer(success = false, hasAnyRemaining = true)
         }
@@ -178,6 +181,11 @@ class ServerSettingsPresenterImpl @Inject constructor(
     }
 
     override fun setAppActive(active: Boolean) = runBlocking {
-        serverManager.integrationRepository(serverId).setAppActive(active)
+        try {
+            serverManager.integrationRepository(serverId).setAppActive(active)
+        } catch (e: IllegalArgumentException) {
+            Log.w(TAG, "Cannot set app active $active for server $serverId")
+            Unit
+        }
     }
 }

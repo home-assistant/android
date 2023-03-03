@@ -247,7 +247,12 @@ class WebViewPresenterImpl @Inject constructor(
 
     override fun setAppActive(active: Boolean) = runBlocking {
         serverManager.getServer(serverId)?.let {
-            serverManager.integrationRepository(serverId).setAppActive(active)
+            try {
+                serverManager.integrationRepository(serverId).setAppActive(active)
+            } catch (e: IllegalStateException) {
+                Log.w(TAG, "Cannot set app active $active for server $serverId")
+                Unit
+            }
         } ?: Unit
     }
 

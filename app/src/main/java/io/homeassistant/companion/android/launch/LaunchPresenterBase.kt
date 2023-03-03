@@ -27,13 +27,17 @@ abstract class LaunchPresenterBase(
                 .filter { serverManager.authenticationRepository(it.id).getSessionState() == SessionState.ANONYMOUS }
                 .forEach { serverManager.removeServer(it.id) }
 
-            if (
-                serverManager.isRegistered() &&
-                serverManager.authenticationRepository().getSessionState() == SessionState.CONNECTED
-            ) {
-                resyncRegistration()
-                view.displayWebview()
-            } else {
+            try {
+                if (
+                    serverManager.isRegistered() &&
+                    serverManager.authenticationRepository().getSessionState() == SessionState.CONNECTED
+                ) {
+                    resyncRegistration()
+                    view.displayWebview()
+                } else {
+                    view.displayOnBoarding(false)
+                }
+            } catch (e: IllegalArgumentException) { // Server was just removed, nothing is added
                 view.displayOnBoarding(false)
             }
         }
