@@ -112,7 +112,10 @@ class ServerSettingsPresenterImpl @Inject constructor(
                 // Remove server anyway, the user wants to delete and we don't need the server for that
             }
             serverManager.removeServer(serverId)
-            view.onRemovedServer(success = true, hasAnyRemaining = serverManager.defaultServers.any())
+            view.onRemovedServer(
+                success = true,
+                hasAnyRemaining = serverManager.defaultServers.any { it.id != serverId }
+            )
         } ?: run {
             view.onRemovedServer(success = false, hasAnyRemaining = true)
         }
