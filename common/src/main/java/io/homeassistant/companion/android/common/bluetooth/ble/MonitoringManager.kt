@@ -66,10 +66,12 @@ class MonitoringManager {
             region = buildRegion()
             scope.launch(Dispatchers.Main) {
                 beaconManager.getRegionViewModel(region).rangedBeacons.observeForever { beacons ->
-                    haMonitor.setBeacons(
-                        context,
-                        beacons
-                    )
+                    if(beaconManager.isAnyConsumerBound) {
+                        haMonitor.setBeacons(
+                            context,
+                            beacons
+                        )
+                    }
                 }
             }
         }
@@ -95,6 +97,7 @@ class MonitoringManager {
     fun stopMonitoring(context: Context, haMonitor: IBeaconMonitor) {
         if (isMonitoring()) {
             beaconManager.stopRangingBeacons(region)
+            haMonitor.clearBeacons()
             beaconManager.disableForegroundServiceScanning()
             haMonitor.sensorManager.updateBeaconMonitoringSensor(context)
         }

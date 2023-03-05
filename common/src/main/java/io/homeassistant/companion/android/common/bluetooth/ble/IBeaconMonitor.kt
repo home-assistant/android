@@ -38,6 +38,10 @@ class IBeaconMonitor {
         }
     }
 
+    fun clearBeacons() {
+        beacons = listOf()
+    }
+
     fun setBeacons(context: Context, newBeacons: Collection<Beacon>) {
         lastSeenBeacons = newBeacons // unfiltered list, for the settings UI
         var requireUpdate = false
