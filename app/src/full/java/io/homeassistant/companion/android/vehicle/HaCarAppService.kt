@@ -10,6 +10,8 @@ import androidx.car.app.Screen
 import androidx.car.app.Session
 import androidx.car.app.SessionInfo
 import androidx.car.app.validation.HostValidator
+import androidx.car.app.hardware.CarHardwareManager
+import androidx.car.app.hardware.info.CarInfo
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
@@ -31,6 +33,8 @@ class HaCarAppService : CarAppService() {
 
     companion object {
         private const val TAG = "HaCarAppService"
+        var carInfo: CarInfo? = null
+            private set
     }
 
     @Inject
@@ -65,7 +69,10 @@ class HaCarAppService : CarAppService() {
                 1
             )
 
+            @RequiresApi(Build.VERSION_CODES.P)
             override fun onCreateScreen(intent: Intent): Screen {
+                carInfo = carContext.getCarService(CarHardwareManager::class.java).carInfo
+
                 return MainVehicleScreen(
                     carContext,
                     serverManager,

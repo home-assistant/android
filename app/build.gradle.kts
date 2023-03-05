@@ -22,7 +22,7 @@ android {
 
     defaultConfig {
         applicationId = "io.homeassistant.companion.android"
-        minSdk = 21
+        minSdk = 23
         targetSdk = 33
 
         versionName = System.getenv("VERSION") ?: "LOCAL"
@@ -210,6 +210,7 @@ dependencies {
     implementation("com.github.AppDevNext:ChangeLog:3.4")
 
     "fullImplementation"("androidx.car.app:app:1.3.0-rc01")
+    implementation("androidx.car.app:app-projected:1.2.0")
 }
 
 // Disable to fix memory leak and be compatible with the configuration cache.
