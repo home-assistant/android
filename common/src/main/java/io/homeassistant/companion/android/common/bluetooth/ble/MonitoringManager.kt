@@ -66,7 +66,7 @@ class MonitoringManager {
             region = buildRegion()
             scope.launch(Dispatchers.Main) {
                 beaconManager.getRegionViewModel(region).rangedBeacons.observeForever { beacons ->
-                    if(beaconManager.isAnyConsumerBound) {
+                    if (beaconManager.isAnyConsumerBound) {
                         haMonitor.setBeacons(
                             context,
                             beacons
