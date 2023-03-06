@@ -42,6 +42,10 @@ class CarInfoSensorManager: SensorManager, OnCarDataAvailableListener<EnergyLeve
         return "https://companion.home-assistant.io/docs/core/sensors"
     }
 
+    override fun hasSensor(context: Context): Boolean {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
+    }
+
     override val name: Int
         get() = R.string.sensor_name_car_info
 
