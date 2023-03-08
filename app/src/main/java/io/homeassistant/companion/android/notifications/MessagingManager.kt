@@ -112,6 +112,7 @@ class MessagingManager @Inject constructor(
         const val MARKET_PREFIX = "https://play.google.com/store/apps/details?id="
         const val SETTINGS_PREFIX = "settings://"
         const val NOTIFICATION_HISTORY = "notification_history"
+        const val NO_ACTION = "noAction"
 
         const val SUBJECT = "subject"
         const val TIMEOUT = "timeout"
@@ -979,7 +980,9 @@ class MessagingManager @Inject constructor(
         data: Map<String, String>
     ) {
         val actionUri = data["clickAction"] ?: "/"
-        builder.setContentIntent(createOpenUriPendingIntent(actionUri, data))
+        if (actionUri != NO_ACTION) {
+            builder.setContentIntent(createOpenUriPendingIntent(actionUri, data))
+        }
     }
 
     private fun handleDeleteIntent(
