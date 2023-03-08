@@ -5,6 +5,10 @@
 ![visit](https://visitor-badge.glitch.me/badge?page_id=nesror.Home-Assistant-Companion-for-Android&left_text=visit)
 [![Build and Release apk](https://github.com/nesror/android/workflows/Build%20and%20Release%20apk/badge.svg)](https://github.com/nesror/Home-Assistant-Companion-for-Android/actions/workflows/main.yml)
 
+### 公众号  
+关注公众号及时获取最新版，各种使用技巧以及Hass的新奇玩法
+<img src="gzh.png" height="120"/>
+
 #### 高德地理编码api免费每日有使用上线，如果地理编码出不来了可以下载源码进行修改。已经升级账号，一般情况下不会达到上限
 
 * 欢迎捐赠，以便地理编码功能可以持续服务  
