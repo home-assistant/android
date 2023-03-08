@@ -108,10 +108,6 @@ class BluetoothSensorManager : SensorManager {
                 return
             }
 
-            TransmitterManager.stopTransmitting(bleTransmitterDevice) // stop in all instances, clean up state if start required
-            if (transmitEnabled) {
-                TransmitterManager.startTransmitting(context, bleTransmitterDevice)
-            }
             sensorDao.add(SensorSetting(bleTransmitter.id, SETTING_BLE_TRANSMIT_ENABLED, transmitEnabled.toString(), SensorSettingType.TOGGLE))
         }
 
