@@ -9,9 +9,9 @@ import androidx.car.app.CarAppService
 import androidx.car.app.Screen
 import androidx.car.app.Session
 import androidx.car.app.SessionInfo
-import androidx.car.app.validation.HostValidator
 import androidx.car.app.hardware.CarHardwareManager
 import androidx.car.app.hardware.info.CarInfo
+import androidx.car.app.validation.HostValidator
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R

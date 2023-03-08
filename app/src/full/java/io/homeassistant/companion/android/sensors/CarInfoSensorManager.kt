@@ -11,7 +11,7 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.vehicle.HaCarAppService
 
-class CarInfoSensorManager: SensorManager, OnCarDataAvailableListener<EnergyLevel> {
+class CarInfoSensorManager : SensorManager, OnCarDataAvailableListener<EnergyLevel> {
 
     companion object {
         private const val TAG = "CarInfoSM"
@@ -24,7 +24,7 @@ class CarInfoSensorManager: SensorManager, OnCarDataAvailableListener<EnergyLeve
             R.string.sensor_description_car_info_fuel_level,
             "mdi:barrel",
             unitOfMeasurement = "%",
-            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT
         )
         private val batteryLevel = SensorManager.BasicSensor(
             "car_info_battery_level",
@@ -33,7 +33,7 @@ class CarInfoSensorManager: SensorManager, OnCarDataAvailableListener<EnergyLeve
             R.string.sensor_description_car_info_battery_level,
             "mdi:car-battery",
             unitOfMeasurement = "%",
-            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT
         )
     }
     private lateinit var latestContext: Context
@@ -51,10 +51,11 @@ class CarInfoSensorManager: SensorManager, OnCarDataAvailableListener<EnergyLeve
 
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(
-            fuelLevel, batteryLevel
+            fuelLevel,
+            batteryLevel
         )
     }
-    
+
     override fun requiredPermissions(sensorId: String): Array<String> {
         return when {
             (sensorId == fuelLevel.id || sensorId == batteryLevel.id) -> {
@@ -74,8 +75,9 @@ class CarInfoSensorManager: SensorManager, OnCarDataAvailableListener<EnergyLeve
 
     @RequiresApi(Build.VERSION_CODES.P)
     private fun updateEnergy() {
-        if (!isEnabled(latestContext, fuelLevel) && !isEnabled(latestContext, batteryLevel))
+        if (!isEnabled(latestContext, fuelLevel) && !isEnabled(latestContext, batteryLevel)) {
             return
+        }
 
         val now = System.currentTimeMillis()
         if (listenerLastRegistered + SensorManager.SENSOR_LISTENER_TIMEOUT < now && isListenerRegistered) {
@@ -84,7 +86,7 @@ class CarInfoSensorManager: SensorManager, OnCarDataAvailableListener<EnergyLeve
             isListenerRegistered = false
         }
 
-        if(HaCarAppService.carInfo != null) {
+        if (HaCarAppService.carInfo != null) {
             HaCarAppService.carInfo?.addEnergyLevelListener(latestContext.mainExecutor, this)
             Log.d(TAG, "CarInfo sensor listener registered")
             isListenerRegistered = true
