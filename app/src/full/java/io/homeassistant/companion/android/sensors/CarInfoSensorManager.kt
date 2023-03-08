@@ -54,9 +54,14 @@ class CarInfoSensorManager: SensorManager, OnCarDataAvailableListener<EnergyLeve
             fuelLevel, batteryLevel
         )
     }
-
+    
     override fun requiredPermissions(sensorId: String): Array<String> {
-        return arrayOf("com.google.android.gms.permission.CAR_FUEL")
+        return when {
+            (sensorId == fuelLevel.id || sensorId == batteryLevel.id) -> {
+                arrayOf("com.google.android.gms.permission.CAR_FUEL")
+            }
+            else -> emptyArray()
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.P)
