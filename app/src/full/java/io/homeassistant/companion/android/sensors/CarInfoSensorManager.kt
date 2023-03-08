@@ -91,7 +91,7 @@ class CarInfoSensorManager: SensorManager, OnCarDataAvailableListener<EnergyLeve
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCarDataAvailable(data: EnergyLevel) {
-        if (data.fuelPercent.status == CarValue.STATUS_SUCCESS) {
+        if (data.fuelPercent.status == CarValue.STATUS_SUCCESS && isEnabled(latestContext, fuelLevel)) {
             onSensorUpdated(
                 latestContext,
                 fuelLevel,
@@ -100,7 +100,7 @@ class CarInfoSensorManager: SensorManager, OnCarDataAvailableListener<EnergyLeve
                 mapOf()
             )
         }
-        if (data.batteryPercent.status == CarValue.STATUS_SUCCESS) {
+        if (data.batteryPercent.status == CarValue.STATUS_SUCCESS && isEnabled(latestContext, batteryLevel)) {
             onSensorUpdated(
                 latestContext,
                 batteryLevel,
