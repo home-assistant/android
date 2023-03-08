@@ -28,6 +28,7 @@ class LaunchPresenterImpl @Inject constructor(
                             getMessagingToken()
                         )
                     )
+                    serverManager.integrationRepository(it.id).getConfig() // Update cached data
                 } catch (e: Exception) {
                     Log.e(TAG, "Issue updating Registration", e)
                 }

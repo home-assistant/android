@@ -26,6 +26,7 @@ import io.homeassistant.companion.android.database.sensor.SensorDao
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 import javax.inject.Inject
 
@@ -49,25 +50,29 @@ class MessagingManager @Inject constructor(
         val jsonObject = jsonData?.let { JSONObject(it) }
         val serverId = jsonData?.get(NotificationData.WEBHOOK_ID)?.let {
             serverManager.getServer(webhookId = it)?.id
-        }
+        } ?: ServerManager.SERVER_ID_ACTIVE
         val notificationRow =
             NotificationItem(0, now, notificationData[NotificationData.MESSAGE].toString(), jsonObject.toString(), source, serverId)
         notificationDao.add(notificationRow)
 
-        when (notificationData[NotificationData.MESSAGE]) {
-            DeviceCommandData.COMMAND_BEACON_MONITOR -> {
-                if (!commandBeaconMonitor(context, notificationData)) {
-                    sendNotification(notificationData, now)
+        mainScope.launch {
+            val allowCommands = serverManager.integrationRepository(serverId).isTrusted()
+            val message = notificationData[NotificationData.MESSAGE]
+            when {
+                message == DeviceCommandData.COMMAND_BEACON_MONITOR && allowCommands -> {
+                    if (!commandBeaconMonitor(context, notificationData)) {
+                        sendNotification(notificationData, now)
+                    }
                 }
-            }
-            DeviceCommandData.COMMAND_BLE_TRANSMITTER -> {
-                if (!commandBleTransmitter(context, notificationData, sensorDao, mainScope)) {
-                    sendNotification(notificationData)
+                message == DeviceCommandData.COMMAND_BLE_TRANSMITTER && allowCommands -> {
+                    if (!commandBleTransmitter(context, notificationData, sensorDao, mainScope)) {
+                        sendNotification(notificationData)
+                    }
                 }
+                message == TextToSpeechData.TTS -> speakText(context, notificationData)
+                message == TextToSpeechData.COMMAND_STOP_TTS && allowCommands -> stopTTS()
+                else -> sendNotification(notificationData, now)
             }
-            TextToSpeechData.TTS -> speakText(context, notificationData)
-            TextToSpeechData.COMMAND_STOP_TTS -> stopTTS()
-            else -> sendNotification(notificationData, now)
         }
     }
 

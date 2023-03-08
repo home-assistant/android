@@ -32,6 +32,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
 
     override fun getBoolean(key: String?, defValue: Boolean): Boolean = runBlocking {
         when (key) {
+            "trust_server" -> serverManager.integrationRepository(serverId).isTrusted()
             "app_lock" -> serverManager.authenticationRepository(serverId).isLockEnabledRaw()
             "app_lock_home_bypass" -> serverManager.authenticationRepository(serverId).isLockHomeBypassEnabled()
             else -> throw IllegalArgumentException("No boolean found by this key: $key")
@@ -41,6 +42,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
     override fun putBoolean(key: String?, value: Boolean) {
         mainScope.launch {
             when (key) {
+                "trust_server" -> serverManager.integrationRepository(serverId).setTrusted(value)
                 "app_lock" -> serverManager.authenticationRepository(serverId).setLockEnabled(value)
                 "app_lock_home_bypass" -> serverManager.authenticationRepository(serverId).setLockHomeBypassEnabled(value)
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
