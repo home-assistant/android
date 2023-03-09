@@ -504,7 +504,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                         val alreadyGranted = ArrayList<String>()
                         val toBeGranted = ArrayList<String>()
                         request?.resources?.forEach {
-
                             if (it == PermissionRequest.RESOURCE_VIDEO_CAPTURE) {
                                 if (ActivityCompat.checkSelfPermission(
                                         context,
