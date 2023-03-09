@@ -70,7 +70,7 @@ class MessagingManager @Inject constructor(
                     }
                 }
                 message == TextToSpeechData.TTS -> speakText(context, notificationData)
-                message == TextToSpeechData.COMMAND_STOP_TTS && allowCommands -> stopTTS()
+                message == TextToSpeechData.COMMAND_STOP_TTS -> stopTTS()
                 else -> sendNotification(notificationData, now)
             }
         }

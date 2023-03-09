@@ -211,7 +211,6 @@ class MessagingManager @Inject constructor(
             COMMAND_LAUNCH_APP,
             COMMAND_APP_LOCK,
             COMMAND_PERSISTENT_CONNECTION,
-            TextToSpeechData.COMMAND_STOP_TTS,
             COMMAND_AUTO_SCREEN_BRIGHTNESS,
             COMMAND_SCREEN_BRIGHTNESS_LEVEL,
             COMMAND_SCREEN_OFF_TIMEOUT
@@ -301,17 +300,18 @@ class MessagingManager @Inject constructor(
                     Log.d(TAG, "Request location update")
                     requestAccurateLocationUpdate()
                 }
-                jsonData[NotificationData.MESSAGE] == CLEAR_NOTIFICATION && !jsonData["tag"].isNullOrBlank() && allowCommands -> {
+                jsonData[NotificationData.MESSAGE] == CLEAR_NOTIFICATION && !jsonData["tag"].isNullOrBlank() -> {
                     Log.d(TAG, "Clearing notification with tag: ${jsonData["tag"]}")
                     clearNotification(jsonData["tag"]!!)
                 }
-                jsonData[NotificationData.MESSAGE] == REMOVE_CHANNEL && !jsonData[NotificationData.CHANNEL].isNullOrBlank() && allowCommands -> {
+                jsonData[NotificationData.MESSAGE] == REMOVE_CHANNEL && !jsonData[NotificationData.CHANNEL].isNullOrBlank() -> {
                     Log.d(TAG, "Removing Notification channel ${jsonData[NotificationData.CHANNEL]}")
                     removeNotificationChannel(jsonData[NotificationData.CHANNEL]!!)
                 }
                 jsonData[NotificationData.MESSAGE] == TextToSpeechData.TTS -> {
                     speakText(context, jsonData)
                 }
+                jsonData[NotificationData.MESSAGE] == TextToSpeechData.COMMAND_STOP_TTS -> stopTTS()
                 jsonData[NotificationData.MESSAGE] in DEVICE_COMMANDS && allowCommands -> {
                     Log.d(TAG, "Processing device command")
                     when (jsonData[NotificationData.MESSAGE]) {
@@ -504,7 +504,6 @@ class MessagingManager @Inject constructor(
                                 else -> handleDeviceCommands(jsonData)
                             }
                         }
-                        TextToSpeechData.COMMAND_STOP_TTS -> stopTTS()
                         COMMAND_AUTO_SCREEN_BRIGHTNESS -> {
                             if (!jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND] in DeviceCommandData.ENABLE_COMMANDS) {
                                 handleDeviceCommands(jsonData)
