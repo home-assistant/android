@@ -140,9 +140,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     }
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
-    private val requestPermission =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-            webView.reload()
+    private val requestPermissions =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+            if (it.any { it.value }) {
+                webView.reload()
+            }
         }
     private val requestStoragePermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
@@ -499,16 +501,19 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
                 override fun onPermissionRequest(request: PermissionRequest?) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        val alreadyGranted = ArrayList<String>()
+                        val toBeGranted = ArrayList<String>()
                         request?.resources?.forEach {
+
                             if (it == PermissionRequest.RESOURCE_VIDEO_CAPTURE) {
                                 if (ActivityCompat.checkSelfPermission(
                                         context,
                                         android.Manifest.permission.CAMERA
                                     ) == PackageManager.PERMISSION_GRANTED
                                 ) {
-                                    request.grant(arrayOf(it))
+                                    alreadyGranted.add(it)
                                 } else {
-                                    requestPermission.launch(android.Manifest.permission.CAMERA)
+                                    toBeGranted.add(android.Manifest.permission.CAMERA)
                                 }
                             } else if (it == PermissionRequest.RESOURCE_AUDIO_CAPTURE) {
                                 if (ActivityCompat.checkSelfPermission(
@@ -516,21 +521,19 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                         android.Manifest.permission.RECORD_AUDIO
                                     ) == PackageManager.PERMISSION_GRANTED
                                 ) {
-                                    request.grant(arrayOf(it))
+                                    alreadyGranted.add(it)
                                 } else {
-                                    requestPermission.launch(
-                                        android.Manifest.permission.RECORD_AUDIO
-                                    )
-                                }
-                            } else if (it == PermissionRequest.RESOURCE_AUDIO_CAPTURE) {
-                                if (ActivityCompat.checkSelfPermission(
-                                        context,
-                                        android.Manifest.permission.MODIFY_AUDIO_SETTINGS
-                                    ) == PackageManager.PERMISSION_GRANTED
-                                ) {
-                                    request.grant(arrayOf(it))
+                                    toBeGranted.add(android.Manifest.permission.RECORD_AUDIO)
                                 }
                             }
+                        }
+                        if (alreadyGranted.size > 0) {
+                            request?.grant(alreadyGranted.toTypedArray())
+                        }
+                        if (toBeGranted.size > 0) {
+                            requestPermissions.launch(
+                                toBeGranted.toTypedArray()
+                            )
                         }
                     } else {
                         // If we are before M we already have permission, just grant it.
