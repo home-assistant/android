@@ -6,12 +6,10 @@
 [![Build and Release apk](https://github.com/nesror/android/workflows/Build%20and%20Release%20apk/badge.svg)](https://github.com/nesror/Home-Assistant-Companion-for-Android/actions/workflows/main.yml)
 
 ### 公众号  
-关注公众号及时获取最新版，各种使用技巧以及Hass的新奇玩法
+关注公众号及时获取最新版，各种使用技巧以及Hass的新奇玩法(回复 最新版 可以获取最新版的下载地址)
 
 <img src="gzh.png" height="120"/>
 
-## 下载地址：
-[APK](https://github.com/nesror/Home-Assistant-Companion-for-Android/releases/latest)
 
 ## 使用方法：
 * [APP使用](https://www.bilibili.com/video/BV18W4y1p7mk)
