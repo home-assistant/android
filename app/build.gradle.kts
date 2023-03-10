@@ -194,7 +194,6 @@ dependencies {
     "fullImplementation"("com.google.android.gms:play-services-wearable:18.0.0")
     "fullImplementation"("androidx.wear:wear-remote-interactions:1.0.0")
     "fullImplementation"("com.amap.api:location:6.1.0")
-    implementation("com.tencent.bugly:crashreport:latest.release")
 
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.webkit:webkit:1.5.0")
