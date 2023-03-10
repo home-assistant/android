@@ -10,12 +10,6 @@
 
 <img src="gzh.png" height="120"/>
 
-#### 高德地理编码api免费每日有使用上线，如果地理编码出不来了可以下载源码进行修改。已经升级账号，一般情况下不会达到上限
-
-* 欢迎捐赠，以便地理编码功能可以持续服务   
-
- <img src="ali.png" height="400"/> <img src="wx.jpeg" height="400"/>
-
 ## 下载地址：
 [APK](https://github.com/nesror/Home-Assistant-Companion-for-Android/releases/latest)
 
@@ -24,6 +18,12 @@
 * [推送通知](https://www.bilibili.com/video/BV18T411C7LE/)
 * [地理围栏](https://www.bilibili.com/video/BV1HD4y1v7r4) 
 * [快捷开关，快捷方式，小部件](https://www.bilibili.com/video/BV1524y1q7gE/)
+
+#### 高德地理编码api免费每日有使用上线，如果地理编码出不来了可以下载源码进行修改。已经升级账号，一般情况下不会达到上限
+
+* 欢迎捐赠，以便地理编码功能可以持续服务   
+
+ <img src="ali.png" height="400"/> <img src="wx.jpeg" height="400"/>
 
 （适合没有gms服务或谷歌服务受限的用）同时修复官方app的UA问题，导致部分前端组件异常（如 高德地图）
 
