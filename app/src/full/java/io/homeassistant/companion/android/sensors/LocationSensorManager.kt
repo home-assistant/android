@@ -10,7 +10,6 @@ import android.os.Build
 import android.os.Looper
 import android.os.PowerManager
 import android.util.Log
-import android.widget.Toast
 import androidx.core.content.getSystemService
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.Geofence
@@ -747,17 +746,15 @@ class LocationSensorManager : LocationSensorManagerBase() {
                     "vertical_accuracy" to if (Build.VERSION.SDK_INT >= 26) geofencingEvent.triggeringLocation!!.verticalAccuracyMeters.toInt() else 0,
                     "zone" to zone
                 )
-                runBlocking {
+                ioScope.launch {
                     try {
-                        val serverId = zone.split("_")[0].toIntOrNull() ?: return@runBlocking
-                        val enabled = isEnabled(latestContext, backgroundLocation, serverId)
-                        if (!enabled) return@runBlocking
+                        val serverId = zone.split("_")[0].toIntOrNull() ?: return@launch
+                        val enabled = isEnabled(latestContext, zoneLocation, serverId)
+                        if (!enabled) return@launch
                         serverManager.integrationRepository(serverId).fireEvent(zoneStatusEvent, zoneAttr as Map<String, Any>)
                         Log.d(TAG, "Event sent to Home Assistant")
                     } catch (e: Exception) {
                         Log.e(TAG, "Unable to send event to Home Assistant", e)
-                        Toast.makeText(latestContext, commonR.string.zone_event_failure, Toast.LENGTH_LONG)
-                            .show()
                     }
                 }
             }
@@ -777,8 +774,10 @@ class LocationSensorManager : LocationSensorManagerBase() {
             )
             requestSingleAccurateLocation()
         } else {
-            getEnabledServers(latestContext, backgroundLocation).forEach {
-                sendLocationUpdate(geofencingEvent.triggeringLocation!!, it, true)
+            getEnabledServers(latestContext, zoneLocation).forEach {
+                ioScope.launch {
+                    sendLocationUpdate(geofencingEvent.triggeringLocation!!, it, true)
+                }
             }
         }
 

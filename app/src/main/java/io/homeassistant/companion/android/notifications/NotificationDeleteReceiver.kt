@@ -9,7 +9,10 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.database.notification.NotificationDao
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -21,6 +24,8 @@ class NotificationDeleteReceiver : BroadcastReceiver() {
         const val EXTRA_NOTIFICATION_DB = "EXTRA_NOTIFICATION_DB"
         const val TAG = "NotifDeleteReceiver"
     }
+
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
     @Inject
     lateinit var serverManager: ServerManager
@@ -40,7 +45,7 @@ class NotificationDeleteReceiver : BroadcastReceiver() {
         // Then only the empty group is left and needs to be cancelled
         notificationManagerCompat.cancelGroupIfNeeded(group, groupId)
 
-        runBlocking {
+        ioScope.launch {
             try {
                 val databaseId = intent.getLongExtra(EXTRA_NOTIFICATION_DB, 0)
                 val serverId = notificationDao.get(databaseId.toInt())?.serverId ?: ServerManager.SERVER_ID_ACTIVE
