@@ -15,7 +15,6 @@ import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
 import android.telephony.TelephonyManager
-import com.tencent.bugly.crashreport.CrashReport
 import dagger.hilt.android.HiltAndroidApp
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
@@ -53,8 +52,6 @@ open class HomeAssistantApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-
-        initBugLy()
 
         registerActivityLifecycleCallbacks(LifecycleHandler)
 
@@ -242,13 +239,6 @@ open class HomeAssistantApplication : Application() {
         registerReceiver(entityWidget, screenIntentFilter)
         registerReceiver(mediaPlayerWidget, screenIntentFilter)
         registerReceiver(templateWidget, screenIntentFilter)
-    }
-
-
-    private fun initBugLy() {
-        CrashReport.initCrashReport(applicationContext, "b2a551d187", BuildConfig.DEBUG)
-        CrashReport.setDeviceId(applicationContext, getDeviceId(applicationContext))
-        CrashReport.setDeviceModel(applicationContext, Build.MODEL)
     }
 
     @SuppressLint("HardwareIds")
