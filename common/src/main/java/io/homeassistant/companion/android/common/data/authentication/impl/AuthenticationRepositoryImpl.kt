@@ -76,11 +76,18 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
             Log.e(TAG, "Unable to revoke session.")
             return
         }
-        authenticationService.revokeToken(
-            url.newBuilder().addPathSegments("auth/token").build(),
-            server.session.refreshToken!!,
-            AuthenticationService.REVOKE_ACTION
-        )
+        if (server.version?.isAtLeast(2022, 9, 0) == true) {
+            authenticationService.revokeToken(
+                url.newBuilder().addPathSegments("auth/revoke").build(),
+                server.session.refreshToken!!
+            )
+        } else {
+            authenticationService.revokeTokenLegacy(
+                url.newBuilder().addPathSegments("auth/token").build(),
+                server.session.refreshToken!!,
+                AuthenticationService.REVOKE_ACTION
+            )
+        }
         serverManager.updateServer(
             server.copy(
                 session = server.session.copy(
