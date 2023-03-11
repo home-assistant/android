@@ -102,6 +102,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 )
             )
             getConfig() // To get version, name, etc stored
+            webSocketRepository.getCurrentUser() // To get user info stored
         } catch (e: Exception) {
             Log.e(TAG, "Unable to save device registration", e)
         }

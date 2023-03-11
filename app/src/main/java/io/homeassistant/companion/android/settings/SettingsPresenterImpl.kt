@@ -13,6 +13,7 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerType
+import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
@@ -146,7 +147,8 @@ class SettingsPresenterImpl @Inject constructor(
                     connection = ServerConnectionInfo(
                         externalUrl = formattedUrl
                     ),
-                    session = ServerSessionInfo()
+                    session = ServerSessionInfo(),
+                    user = ServerUserInfo()
                 )
                 serverId = serverManager.addServer(server)
                 serverManager.authenticationRepository(serverId).registerAuthorizationCode(authCode)

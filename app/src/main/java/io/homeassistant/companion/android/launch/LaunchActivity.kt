@@ -21,6 +21,7 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerType
+import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.onboarding.getMessagingToken
@@ -149,7 +150,8 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                 connection = ServerConnectionInfo(
                     externalUrl = formattedUrl
                 ),
-                session = ServerSessionInfo()
+                session = ServerSessionInfo(),
+                user = ServerUserInfo()
             )
             serverId = serverManager.addServer(server)
             serverManager.authenticationRepository(serverId).registerAuthorizationCode(authCode)

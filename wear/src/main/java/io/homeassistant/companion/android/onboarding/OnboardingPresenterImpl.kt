@@ -18,6 +18,7 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerType
+import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.util.UrlUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -143,7 +144,8 @@ class OnboardingPresenterImpl @Inject constructor(
                     connection = ServerConnectionInfo(
                         externalUrl = formattedUrl
                     ),
-                    session = ServerSessionInfo()
+                    session = ServerSessionInfo(),
+                    user = ServerUserInfo()
                 )
                 serverId = serverManager.addServer(server)
                 serverManager.authenticationRepository(serverId).registerAuthorizationCode(code)
