@@ -10,8 +10,8 @@ import android.os.Message
 import android.os.Parcelable
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import io.homeassistant.companion.android.update.AppUtil.downLoadApk
-import io.homeassistant.companion.android.update.AppUtil.getDownloadId
+import io.homeassistant.companion.android.update.UpdateUtil.downLoadApk
+import io.homeassistant.companion.android.update.UpdateUtil.getDownloadId
 import kotlinx.parcelize.Parcelize
 import java.lang.ref.WeakReference
 

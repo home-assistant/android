@@ -10,15 +10,120 @@ import android.net.Uri
 import android.os.Build
 import android.os.StrictMode
 import android.os.StrictMode.VmPolicy
-import android.provider.Settings
+import android.util.Log
 import android.view.View
+import android.widget.Toast
 import androidx.core.content.FileProvider
+import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.util.getAppMetaDataString
+import okhttp3.*
+import org.json.JSONObject
 import java.io.File
+import java.io.IOException
 import java.util.*
 
-
-object AppUtil {
+object UpdateUtil {
     private var mDownloadId: Long = 0
+
+    fun checkNew(context: Activity,okHttpClient: OkHttpClient) {
+        HintDialog(context).show()
+
+        val checkTime = context.getSharedPreferences("config", Context.MODE_PRIVATE).getLong(
+            UpdateActivity.CHECK_TIME,
+            0
+        )
+        if (System.currentTimeMillis() - checkTime < 24 * 60 * 60 * 1000) {
+            return
+        }
+
+        val formBody: RequestBody = FormBody.Builder()
+            .add("_api_key", context.getAppMetaDataString("pgy_api_key"))
+            .add("appKey", "8a601dcac3098f0d5c89fa9fe416ca94")
+            .add("buildVersion", BuildConfig.VERSION_NAME)
+            .build()
+        val request = Request.Builder().apply {
+            url("https://www.pgyer.com/apiv2/app/check")
+            post(formBody)
+        }.build()
+        okHttpClient.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e("checkNew==>", e.toString())
+                githubCheckNew(context,okHttpClient)
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val res = response.body?.string()
+                if (res.isNullOrEmpty()) {
+                    githubCheckNew(context,okHttpClient)
+                    return
+                }
+                //Log.e("onResponse==>", res)
+                val jsonObject = JSONObject(res)
+                if (jsonObject.getInt("code") != 0) {
+                    githubCheckNew(context,okHttpClient)
+                    return
+                }
+                val dataObject = jsonObject.getJSONObject("data")
+                val buildHaveNewVersion = dataObject.getBoolean("buildHaveNewVersion")
+                if (!buildHaveNewVersion) return
+                val downloadURL = dataObject.getString("downloadURL")
+                val ver = dataObject.getString("buildVersion")
+                val desc = try {
+                    dataObject.getString("buildUpdateDescription")
+                } catch (e: Exception) {
+                    "有新版本了！"
+                }
+                val updateInfo = UpdateInfo(ver, desc, downloadURL)
+                val intent = Intent(context, UpdateActivity::class.java)
+                intent.putExtra(UpdateActivity.UPDATE_INFO, updateInfo)
+                context.startActivity(intent)
+                context.overridePendingTransition(0, 0)
+            }
+
+        })
+    }
+
+    private fun githubCheckNew(context: Activity,okHttpClient: OkHttpClient) {
+        Toast.makeText(
+            context,
+            "次数用尽检查更新失败，尝试备用更新，推荐关注公众号：UnknownExceptions 回复最新版进行更新",
+            Toast.LENGTH_SHORT
+        ).show()
+        val request = Request.Builder().apply {
+            url("https://github.com/nesror/Home-Assistant-Companion-for-Android/releases/latest")
+        }.build()
+        okHttpClient.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e("checkNew==>", e.toString())
+                Toast.makeText(
+                    context,
+                    "有新版本了！",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val url = response.request.url.toString()
+                val ver = url.split("/").last()
+                Log.d("checkNew==>ver:", ver)
+                if (!BuildConfig.VERSION_NAME.contains(ver)) {
+                    val apkUrl =
+                        "https://github.com/nesror/Home-Assistant-Companion-for-Android/releases/download/$ver/app-full-release.apk"
+                    Log.d("checkNew==>apkUrl:", apkUrl)
+                    val updateInfo = UpdateInfo(
+                        ver, "由于使用人数已超过最大免费下载限制，建议关注公众号进行更新！\n" +
+                                "公众号：UnknownExceptions 回复 最新版 获取新版本\n" +
+                                "同时有新奇好玩的智能家居玩法分享", apkUrl
+                    )
+                    val intent = Intent(context, UpdateActivity::class.java)
+                    intent.putExtra(UpdateActivity.UPDATE_INFO, updateInfo)
+                    context.startActivity(intent)
+                    context.overridePendingTransition(0, 0)
+                }
+            }
+
+        })
+    }
 
     fun getActivityFromView(view: View): Activity? {
         var context: Context = view.context

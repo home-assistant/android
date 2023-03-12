@@ -15,10 +15,31 @@
             android:layout_height="wrap_content"
             android:paddingLeft="10dp"
             android:paddingRight="10dp"
-            android:text="发现新版本\n有新版本了，赶快更新看看"
+            android:text="更新内容"
             android:gravity="center"
             android:textColor="#191919"
             android:textSize="16sp"/>
+
+    <LinearLayout
+        android:id="@+id/gzh"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal">
+        <ImageView
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:src="@mipmap/ic_gzh" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:text="使用人数已超过最大免费下载限制，建议关注公众号进行更新！\n公众号：UnknownExceptions\n扫码或点击复制公众号名称"
+            android:gravity="center"
+            android:textColor="#191919"
+            android:textSize="16sp"/>
+    </LinearLayout>
+
 
     <ProgressBar
             android:id="@+id/progress"
@@ -64,7 +85,7 @@
                 android:textColor="#F61C1C"
                 android:background="?android:attr/selectableItemBackground"
                 android:textSize="16sp"
-                android:text="更新"/>
+                android:text="直接更新"/>
     </LinearLayout>
 
 </LinearLayout>

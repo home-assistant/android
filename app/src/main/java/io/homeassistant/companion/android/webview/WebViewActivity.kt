@@ -50,7 +50,6 @@ import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.video.VideoSize
-import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import eightbitlab.com.blurview.RenderScriptBlur
 import io.homeassistant.companion.android.BaseActivity
@@ -73,9 +72,7 @@ import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.themes.ThemesManager
-import io.homeassistant.companion.android.update.UpdateActivity
-import io.homeassistant.companion.android.update.UpdateActivity.Companion.UPDATE_INFO
-import io.homeassistant.companion.android.update.UpdateInfo
+import io.homeassistant.companion.android.update.UpdateUtil
 import io.homeassistant.companion.android.util.*
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebView.ErrorType
@@ -85,7 +82,6 @@ import okhttp3.*
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.chromium.net.CronetEngine
 import org.json.JSONObject
-import java.io.IOException
 import java.util.concurrent.Executors
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
@@ -206,7 +202,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        checkNew()
+        UpdateUtil.checkNew(this, okHttpClient)
 
         binding = ActivityWebviewBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -692,86 +688,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 }
             }
         }
-    }
-
-    private fun checkNew() {
-        val checkTime = getSharedPreferences("config", Context.MODE_PRIVATE).getLong(
-            UpdateActivity.CHECK_TIME,
-            0
-        )
-        if (System.currentTimeMillis() - checkTime < 24 * 60 * 60 * 1000) {
-            return
-        }
-        val formBody: RequestBody = FormBody.Builder()
-            .add("_api_key", getAppMetaDataString("pgy_api_key"))
-            .add("appKey", "8a601dcac3098f0d5c89fa9fe416ca94")
-            .add("buildVersion", BuildConfig.VERSION_NAME)
-            .build()
-        val request = Request.Builder().apply {
-            url("https://www.pgyer.com/apiv2/app/check")
-            post(formBody)
-        }.build()
-        okHttpClient.newCall(request).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                Log.e("checkNew==>", e.toString())
-                githubCheckNew()
-            }
-
-            override fun onResponse(call: Call, response: Response) {
-                val res = response.body?.string()
-                if (res.isNullOrEmpty()) {
-                    githubCheckNew()
-                    return
-                }
-                //Log.e("onResponse==>", res)
-                val jsonObject = JSONObject(res)
-                if (jsonObject.getInt("code") != 0) return
-                val dataObject = jsonObject.getJSONObject("data")
-                val buildHaveNewVersion = dataObject.getBoolean("buildHaveNewVersion")
-                if (!buildHaveNewVersion) return
-                val downloadURL = dataObject.getString("downloadURL")
-                val ver = dataObject.getString("buildVersion")
-                val updateInfo = UpdateInfo(ver, "", downloadURL)
-                val intent = Intent(this@WebViewActivity, UpdateActivity::class.java)
-                intent.putExtra(UPDATE_INFO, updateInfo)
-                this@WebViewActivity.startActivity(intent)
-                this@WebViewActivity.overridePendingTransition(0, 0)
-            }
-
-        })
-    }
-
-    private fun githubCheckNew() {
-        val request = Request.Builder().apply {
-            url("https://github.com/nesror/Home-Assistant-Companion-for-Android/releases/latest")
-        }.build()
-        okHttpClient.newCall(request).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                Log.e("checkNew==>", e.toString())
-                Snackbar.make(
-                    binding.webview,
-                    "检查更新失败，请检查是否可以正常访问github:" + e.message.toString(),
-                    Snackbar.LENGTH_SHORT
-                ).show()
-            }
-
-            override fun onResponse(call: Call, response: Response) {
-                val url = response.request.url.toString()
-                val ver = url.split("/").last()
-                Log.d("checkNew==>ver:", ver)
-                if (!BuildConfig.VERSION_NAME.contains(ver)) {
-                    val apkUrl =
-                        "https://github.com/nesror/Home-Assistant-Companion-for-Android/releases/download/$ver/app-full-release.apk"
-                    Log.d("checkNew==>apkUrl:", apkUrl)
-                    val updateInfo = UpdateInfo(ver, "", apkUrl)
-                    val intent = Intent(this@WebViewActivity, UpdateActivity::class.java)
-                    intent.putExtra(UPDATE_INFO, updateInfo)
-                    this@WebViewActivity.startActivity(intent)
-                    this@WebViewActivity.overridePendingTransition(0, 0)
-                }
-            }
-
-        })
     }
 
     private fun getAndSetStatusBarNavigationBarColors() {

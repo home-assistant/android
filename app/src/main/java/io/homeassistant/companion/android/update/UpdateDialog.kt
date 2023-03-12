@@ -1,11 +1,14 @@
 package io.homeassistant.companion.android.update
 
 import android.annotation.SuppressLint
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.os.Bundle
 import android.view.View
 import android.widget.ProgressBar
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatDialog
 import io.homeassistant.companion.android.R
 
@@ -41,6 +44,14 @@ class UpdateDialog(context: Context, private val updateInfo: UpdateInfo) :
         } else {
             progress?.visibility = View.GONE
             layoutBtn?.visibility = View.VISIBLE
+        }
+
+        findViewById<View>(R.id.gzh)?.setOnClickListener {
+            val clipboard: ClipboardManager? =
+                context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager?
+            val clip = ClipData.newPlainText("UnknownExceptions", "UnknownExceptions")
+            clipboard?.setPrimaryClip(clip)
+            Toast.makeText(context, "已复制公众号名称到剪切板，点击弹窗外部关闭弹窗！", Toast.LENGTH_SHORT).show()
         }
     }
 
