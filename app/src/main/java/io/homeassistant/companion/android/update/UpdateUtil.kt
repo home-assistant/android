@@ -25,8 +25,17 @@ import java.util.*
 object UpdateUtil {
     private var mDownloadId: Long = 0
 
-    fun checkNew(context: Activity,okHttpClient: OkHttpClient) {
-        HintDialog(context).show()
+    fun checkNew(context: Activity, okHttpClient: OkHttpClient) {
+        val showHint = context.getSharedPreferences("config", Context.MODE_PRIVATE).getBoolean(
+            "showHint",
+            false
+        )
+        if (!showHint) {
+            HintDialog(context).show()
+            context.getSharedPreferences("config", Context.MODE_PRIVATE).edit()
+                .putBoolean("showHint", true)
+                .apply()
+        }
 
         val checkTime = context.getSharedPreferences("config", Context.MODE_PRIVATE).getLong(
             UpdateActivity.CHECK_TIME,
@@ -48,19 +57,19 @@ object UpdateUtil {
         okHttpClient.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 Log.e("checkNew==>", e.toString())
-                githubCheckNew(context,okHttpClient)
+                githubCheckNew(context, okHttpClient)
             }
 
             override fun onResponse(call: Call, response: Response) {
                 val res = response.body?.string()
                 if (res.isNullOrEmpty()) {
-                    githubCheckNew(context,okHttpClient)
+                    githubCheckNew(context, okHttpClient)
                     return
                 }
                 //Log.e("onResponse==>", res)
                 val jsonObject = JSONObject(res)
                 if (jsonObject.getInt("code") != 0) {
-                    githubCheckNew(context,okHttpClient)
+                    githubCheckNew(context, okHttpClient)
                     return
                 }
                 val dataObject = jsonObject.getJSONObject("data")
@@ -83,7 +92,7 @@ object UpdateUtil {
         })
     }
 
-    private fun githubCheckNew(context: Activity,okHttpClient: OkHttpClient) {
+    private fun githubCheckNew(context: Activity, okHttpClient: OkHttpClient) {
         Toast.makeText(
             context,
             "次数用尽检查更新失败，尝试备用更新，推荐关注公众号：UnknownExceptions 回复最新版进行更新",
