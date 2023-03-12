@@ -51,7 +51,6 @@ import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.video.VideoSize
 import com.google.android.material.snackbar.Snackbar
-import com.tencent.bugly.crashreport.CrashReport
 import dagger.hilt.android.AndroidEntryPoint
 import eightbitlab.com.blurview.RenderScriptBlur
 import io.homeassistant.companion.android.BaseActivity
@@ -242,8 +241,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         decor = window.decorView as FrameLayout
 
         webView = binding.webview
-
-        CrashReport.setJavascriptMonitor(webView, true)
 
         val onBackPressed = object : OnBackPressedCallback(webView.canGoBack()) {
             override fun handleOnBackPressed() {
