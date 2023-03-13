@@ -1,15 +1,30 @@
 package io.homeassistant.companion.android.sensors
 
+import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.car.app.CarContext
 import androidx.car.app.connection.CarConnection
+import androidx.car.app.notification.CarAppExtender
+import androidx.car.app.notification.CarAppNotificationBroadcastReceiver
+import androidx.car.app.notification.CarNotificationManager
+import androidx.car.app.notification.CarPendingIntent
+import androidx.core.app.NotificationChannelCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.Observer
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.vehicle.HaCarAppService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import io.homeassistant.companion.android.common.R as commonR
+
 
 class AndroidAutoSensorManager : SensorManager, Observer<Int> {
 
@@ -58,6 +73,7 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onChanged(type: Int?) {
         if (!isEnabled(context, androidAutoConnected)) {
             CoroutineScope(Dispatchers.Main + Job()).launch {
@@ -79,6 +95,11 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
                 false to "Unknown($type)"
             }
         }
+
+        if(connected) {
+            startNotif()
+        }
+
         onSensorUpdated(
             context,
             androidAutoConnected,
@@ -88,5 +109,31 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
                 "connection_type" to typeString
             )
         )
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun startNotif() {
+        val manager = CarNotificationManager.from(context)
+
+        val channelID = "HA_AA_OPEN"
+        val chan = NotificationChannelCompat.Builder(channelID, NotificationManagerCompat.IMPORTANCE_HIGH)
+            .setName("Open Android Auto App")
+            .build()
+        manager.createNotificationChannel(chan)
+
+        val intent = Intent(Intent.ACTION_VIEW)
+            .setComponent(ComponentName(context, HaCarAppService::class.java))
+
+        val notification = NotificationCompat.Builder(context, channelID)
+            .setContentTitle("Open Home Assistant app to enable CarInfo sensors")
+            .setSmallIcon(io.homeassistant.companion.android.common.R.drawable.ic_stat_ic_notification)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .extend(
+                CarAppExtender.Builder()
+                    .setContentIntent(CarPendingIntent.getCarApp(context, intent.hashCode(), intent, 0))
+                    .build()
+            )
+        manager.notify(-1, notification)
     }
 }
