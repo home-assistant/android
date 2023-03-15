@@ -39,6 +39,13 @@ interface AuthenticationService {
     @POST
     suspend fun revokeToken(
         @Url url: HttpUrl,
+        @Field("token") refreshToken: String
+    )
+
+    @FormUrlEncoded
+    @POST
+    suspend fun revokeTokenLegacy(
+        @Url url: HttpUrl,
         @Field("token") refreshToken: String,
         @Field("action") action: String
     )
