@@ -212,7 +212,6 @@ class MessagingManager @Inject constructor(
             COMMAND_LAUNCH_APP,
             COMMAND_APP_LOCK,
             COMMAND_PERSISTENT_CONNECTION,
-            TextToSpeechData.COMMAND_STOP_TTS,
             COMMAND_AUTO_SCREEN_BRIGHTNESS,
             COMMAND_SCREEN_BRIGHTNESS_LEVEL,
             COMMAND_SCREEN_OFF_TIMEOUT
@@ -295,40 +294,40 @@ class MessagingManager @Inject constructor(
         } ?: ServerManager.SERVER_ID_ACTIVE
         jsonData = jsonData + mutableMapOf<String, String>().apply { put(THIS_SERVER_ID, serverId.toString()) }
 
-        when {
-            jsonData[NotificationData.MESSAGE] == REQUEST_LOCATION_UPDATE -> {
-                Log.d(TAG, "Request location update")
-                requestAccurateLocationUpdate()
-            }
-            jsonData[NotificationData.MESSAGE] == CLEAR_NOTIFICATION && !jsonData["tag"].isNullOrBlank() -> {
-                Log.d(TAG, "Clearing notification with tag: ${jsonData["tag"]}")
-                clearNotification(jsonData["tag"]!!)
-            }
-            jsonData[NotificationData.MESSAGE] == REMOVE_CHANNEL && !jsonData[NotificationData.CHANNEL].isNullOrBlank() -> {
-                Log.d(TAG, "Removing Notification channel ${jsonData[NotificationData.CHANNEL]}")
-                removeNotificationChannel(jsonData[NotificationData.CHANNEL]!!)
-            }
-            jsonData[NotificationData.MESSAGE] == TextToSpeechData.TTS -> {
-                speakText(context, jsonData)
-            }
-            jsonData[NotificationData.MESSAGE] in DEVICE_COMMANDS -> {
-                Log.d(TAG, "Processing device command")
-                when (jsonData[NotificationData.MESSAGE]) {
-                    COMMAND_DND -> {
-                        if (jsonData[NotificationData.COMMAND] in DND_COMMANDS) {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                handleDeviceCommands(jsonData)
-                            } else {
-                                mainScope.launch {
+        mainScope.launch {
+            val allowCommands = serverManager.integrationRepository(serverId).isTrusted()
+            when {
+                jsonData[NotificationData.MESSAGE] == REQUEST_LOCATION_UPDATE && allowCommands -> {
+                    Log.d(TAG, "Request location update")
+                    requestAccurateLocationUpdate()
+                }
+                jsonData[NotificationData.MESSAGE] == CLEAR_NOTIFICATION && !jsonData["tag"].isNullOrBlank() -> {
+                    Log.d(TAG, "Clearing notification with tag: ${jsonData["tag"]}")
+                    clearNotification(jsonData["tag"]!!)
+                }
+                jsonData[NotificationData.MESSAGE] == REMOVE_CHANNEL && !jsonData[NotificationData.CHANNEL].isNullOrBlank() -> {
+                    Log.d(TAG, "Removing Notification channel ${jsonData[NotificationData.CHANNEL]}")
+                    removeNotificationChannel(jsonData[NotificationData.CHANNEL]!!)
+                }
+                jsonData[NotificationData.MESSAGE] == TextToSpeechData.TTS -> {
+                    speakText(context, jsonData)
+                }
+                jsonData[NotificationData.MESSAGE] == TextToSpeechData.COMMAND_STOP_TTS -> stopTTS()
+                jsonData[NotificationData.MESSAGE] in DEVICE_COMMANDS && allowCommands -> {
+                    Log.d(TAG, "Processing device command")
+                    when (jsonData[NotificationData.MESSAGE]) {
+                        COMMAND_DND -> {
+                            if (jsonData[NotificationData.COMMAND] in DND_COMMANDS) {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                    handleDeviceCommands(jsonData)
+                                } else {
                                     Log.d(
                                         TAG,
                                         "Posting notification to device as it does not support DND commands"
                                     )
                                     sendNotification(jsonData)
                                 }
-                            }
-                        } else {
-                            mainScope.launch {
+                            } else {
                                 Log.d(
                                     TAG,
                                     "Invalid DND command received, posting notification to device"
@@ -336,12 +335,10 @@ class MessagingManager @Inject constructor(
                                 sendNotification(jsonData)
                             }
                         }
-                    }
-                    COMMAND_RINGER_MODE -> {
-                        if (jsonData[NotificationData.COMMAND] in RM_COMMANDS) {
-                            handleDeviceCommands(jsonData)
-                        } else {
-                            mainScope.launch {
+                        COMMAND_RINGER_MODE -> {
+                            if (jsonData[NotificationData.COMMAND] in RM_COMMANDS) {
+                                handleDeviceCommands(jsonData)
+                            } else {
                                 Log.d(
                                     TAG,
                                     "Invalid ringer mode command received, posting notification to device"
@@ -349,12 +346,10 @@ class MessagingManager @Inject constructor(
                                 sendNotification(jsonData)
                             }
                         }
-                    }
-                    COMMAND_BROADCAST_INTENT -> {
-                        if (!jsonData[INTENT_ACTION].isNullOrEmpty() && !jsonData[INTENT_PACKAGE_NAME].isNullOrEmpty()) {
-                            handleDeviceCommands(jsonData)
-                        } else {
-                            mainScope.launch {
+                        COMMAND_BROADCAST_INTENT -> {
+                            if (!jsonData[INTENT_ACTION].isNullOrEmpty() && !jsonData[INTENT_PACKAGE_NAME].isNullOrEmpty()) {
+                                handleDeviceCommands(jsonData)
+                            } else {
                                 Log.d(
                                     TAG,
                                     "Invalid broadcast command received, posting notification to device"
@@ -362,14 +357,12 @@ class MessagingManager @Inject constructor(
                                 sendNotification(jsonData)
                             }
                         }
-                    }
-                    COMMAND_VOLUME_LEVEL -> {
-                        if (!jsonData[NotificationData.MEDIA_STREAM].isNullOrEmpty() && jsonData[NotificationData.MEDIA_STREAM] in CHANNEL_VOLUME_STREAM &&
-                            !jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND]?.toIntOrNull() != null
-                        ) {
-                            handleDeviceCommands(jsonData)
-                        } else {
-                            mainScope.launch {
+                        COMMAND_VOLUME_LEVEL -> {
+                            if (!jsonData[NotificationData.MEDIA_STREAM].isNullOrEmpty() && jsonData[NotificationData.MEDIA_STREAM] in CHANNEL_VOLUME_STREAM &&
+                                !jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND]?.toIntOrNull() != null
+                            ) {
+                                handleDeviceCommands(jsonData)
+                            } else {
                                 Log.d(
                                     TAG,
                                     "Invalid volume command received, posting notification to device"
@@ -377,16 +370,14 @@ class MessagingManager @Inject constructor(
                                 sendNotification(jsonData)
                             }
                         }
-                    }
-                    COMMAND_BLUETOOTH -> {
-                        if (
-                            !jsonData[NotificationData.COMMAND].isNullOrEmpty() &&
-                            jsonData[NotificationData.COMMAND] in DeviceCommandData.ENABLE_COMMANDS &&
-                            Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
-                        ) {
-                            handleDeviceCommands(jsonData)
-                        } else {
-                            mainScope.launch {
+                        COMMAND_BLUETOOTH -> {
+                            if (
+                                !jsonData[NotificationData.COMMAND].isNullOrEmpty() &&
+                                jsonData[NotificationData.COMMAND] in DeviceCommandData.ENABLE_COMMANDS &&
+                                Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
+                            ) {
+                                handleDeviceCommands(jsonData)
+                            } else {
                                 Log.d(
                                     TAG,
                                     "Invalid bluetooth command received, posting notification to device"
@@ -394,32 +385,26 @@ class MessagingManager @Inject constructor(
                                 sendNotification(jsonData)
                             }
                         }
-                    }
-                    DeviceCommandData.COMMAND_BLE_TRANSMITTER -> {
-                        if (!commandBleTransmitter(context, jsonData, sensorDao, mainScope)) {
-                            mainScope.launch {
+                        DeviceCommandData.COMMAND_BLE_TRANSMITTER -> {
+                            if (!commandBleTransmitter(context, jsonData, sensorDao, mainScope)) {
                                 sendNotification(jsonData)
                             }
                         }
-                    }
-                    DeviceCommandData.COMMAND_BEACON_MONITOR -> {
-                        if (!commandBeaconMonitor(context, jsonData)) {
-                            mainScope.launch {
+                        DeviceCommandData.COMMAND_BEACON_MONITOR -> {
+                            if (!commandBeaconMonitor(context, jsonData)) {
                                 sendNotification(jsonData)
                             }
                         }
-                    }
-                    COMMAND_HIGH_ACCURACY_MODE -> {
-                        if ((!jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND] in DeviceCommandData.ENABLE_COMMANDS) ||
-                            (!jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND] in FORCE_COMMANDS) ||
-                            (
-                                !jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND] == HIGH_ACCURACY_SET_UPDATE_INTERVAL &&
-                                    jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toIntOrNull() != null && jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toInt()!! >= 5
-                                )
-                        ) {
-                            handleDeviceCommands(jsonData)
-                        } else {
-                            mainScope.launch {
+                        COMMAND_HIGH_ACCURACY_MODE -> {
+                            if ((!jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND] in DeviceCommandData.ENABLE_COMMANDS) ||
+                                (!jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND] in FORCE_COMMANDS) ||
+                                (
+                                    !jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND] == HIGH_ACCURACY_SET_UPDATE_INTERVAL &&
+                                        jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toIntOrNull() != null && jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toInt()!! >= 5
+                                    )
+                            ) {
+                                handleDeviceCommands(jsonData)
+                            } else {
                                 Log.d(
                                     TAG,
                                     "Invalid high accuracy mode command received, posting notification to device"
@@ -427,12 +412,10 @@ class MessagingManager @Inject constructor(
                                 sendNotification(jsonData)
                             }
                         }
-                    }
-                    COMMAND_ACTIVITY -> {
-                        if (!jsonData[INTENT_ACTION].isNullOrEmpty()) {
-                            handleDeviceCommands(jsonData)
-                        } else {
-                            mainScope.launch {
+                        COMMAND_ACTIVITY -> {
+                            if (!jsonData[INTENT_ACTION].isNullOrEmpty()) {
+                                handleDeviceCommands(jsonData)
+                            } else {
                                 Log.d(
                                     TAG,
                                     "Invalid activity command received, posting notification to device"
@@ -440,25 +423,23 @@ class MessagingManager @Inject constructor(
                                 sendNotification(jsonData)
                             }
                         }
-                    }
-                    COMMAND_APP_LOCK -> {
-                        val appLockEnablePresent = jsonData[APP_LOCK_ENABLED] != null
-                        val appLockTimeoutPresent = jsonData[APP_LOCK_TIMEOUT] != null
-                        val homeBypassEnablePresent = jsonData[HOME_BYPASS_ENABLED] != null
+                        COMMAND_APP_LOCK -> {
+                            val appLockEnablePresent = jsonData[APP_LOCK_ENABLED] != null
+                            val appLockTimeoutPresent = jsonData[APP_LOCK_TIMEOUT] != null
+                            val homeBypassEnablePresent = jsonData[HOME_BYPASS_ENABLED] != null
 
-                        val appLockEnableValue = jsonData[APP_LOCK_ENABLED]?.lowercase()?.toBooleanStrictOrNull()
-                        val appLockTimeoutValue = jsonData[APP_LOCK_TIMEOUT]?.toIntOrNull()
-                        val homeBypassEnableValue = jsonData[HOME_BYPASS_ENABLED]?.lowercase()?.toBooleanStrictOrNull()
+                            val appLockEnableValue = jsonData[APP_LOCK_ENABLED]?.lowercase()?.toBooleanStrictOrNull()
+                            val appLockTimeoutValue = jsonData[APP_LOCK_TIMEOUT]?.toIntOrNull()
+                            val homeBypassEnableValue = jsonData[HOME_BYPASS_ENABLED]?.lowercase()?.toBooleanStrictOrNull()
 
-                        val invalid = (!appLockEnablePresent && !appLockTimeoutPresent && !homeBypassEnablePresent) ||
-                            (appLockEnablePresent && appLockEnableValue == null) ||
-                            (appLockTimeoutPresent && (appLockTimeoutValue == null || appLockTimeoutValue < 0)) ||
-                            (homeBypassEnablePresent && homeBypassEnableValue == null)
+                            val invalid = (!appLockEnablePresent && !appLockTimeoutPresent && !homeBypassEnablePresent) ||
+                                (appLockEnablePresent && appLockEnableValue == null) ||
+                                (appLockTimeoutPresent && (appLockTimeoutValue == null || appLockTimeoutValue < 0)) ||
+                                (homeBypassEnablePresent && homeBypassEnableValue == null)
 
-                        if (!invalid) {
-                            handleDeviceCommands(jsonData)
-                        } else {
-                            mainScope.launch {
+                            if (!invalid) {
+                                handleDeviceCommands(jsonData)
+                            } else {
                                 Log.d(
                                     TAG,
                                     "Invalid app lock command received, posting notification to device"
@@ -466,28 +447,24 @@ class MessagingManager @Inject constructor(
                                 sendNotification(jsonData)
                             }
                         }
-                    }
-                    COMMAND_WEBVIEW -> {
-                        handleDeviceCommands(jsonData)
-                    }
-                    COMMAND_SCREEN_ON -> {
-                        handleDeviceCommands(jsonData)
-                    }
-                    COMMAND_MEDIA -> {
-                        if (!jsonData[MEDIA_COMMAND].isNullOrEmpty() && jsonData[MEDIA_COMMAND] in MEDIA_COMMANDS && !jsonData[MEDIA_PACKAGE_NAME].isNullOrEmpty()) {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-                                handleDeviceCommands(jsonData)
-                            } else {
-                                mainScope.launch {
+                        COMMAND_WEBVIEW -> {
+                            handleDeviceCommands(jsonData)
+                        }
+                        COMMAND_SCREEN_ON -> {
+                            handleDeviceCommands(jsonData)
+                        }
+                        COMMAND_MEDIA -> {
+                            if (!jsonData[MEDIA_COMMAND].isNullOrEmpty() && jsonData[MEDIA_COMMAND] in MEDIA_COMMANDS && !jsonData[MEDIA_PACKAGE_NAME].isNullOrEmpty()) {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                                    handleDeviceCommands(jsonData)
+                                } else {
                                     Log.d(
                                         TAG,
                                         "Posting notification to device as it does not support media commands"
                                     )
                                     sendNotification(jsonData)
                                 }
-                            }
-                        } else {
-                            mainScope.launch {
+                            } else {
                                 Log.d(
                                     TAG,
                                     "Invalid media command received, posting notification to device"
@@ -495,13 +472,11 @@ class MessagingManager @Inject constructor(
                                 sendNotification(jsonData)
                             }
                         }
-                    }
-                    COMMAND_UPDATE_SENSORS -> SensorReceiver.updateAllSensors(context)
-                    COMMAND_LAUNCH_APP -> {
-                        if (!jsonData[PACKAGE_NAME].isNullOrEmpty()) {
-                            handleDeviceCommands(jsonData)
-                        } else {
-                            mainScope.launch {
+                        COMMAND_UPDATE_SENSORS -> SensorReceiver.updateAllSensors(context)
+                        COMMAND_LAUNCH_APP -> {
+                            if (!jsonData[PACKAGE_NAME].isNullOrEmpty()) {
+                                handleDeviceCommands(jsonData)
+                            } else {
                                 Log.d(
                                     TAG,
                                     "Missing package name for app to launch, posting notification to device"
@@ -509,57 +484,48 @@ class MessagingManager @Inject constructor(
                                 sendNotification(jsonData)
                             }
                         }
-                    }
-                    COMMAND_PERSISTENT_CONNECTION -> {
-                        val validPersistentTypes = WebsocketSetting.values().map { setting -> setting.name }
+                        COMMAND_PERSISTENT_CONNECTION -> {
+                            val validPersistentTypes = WebsocketSetting.values().map { setting -> setting.name }
 
-                        when {
-                            jsonData[PERSISTENT].isNullOrEmpty() -> {
-                                mainScope.launch {
+                            when {
+                                jsonData[PERSISTENT].isNullOrEmpty() -> {
                                     Log.d(
                                         TAG,
                                         "Missing persistent modifier, posting notification to device"
                                     )
                                     sendNotification(jsonData)
                                 }
-                            }
-                            jsonData[PERSISTENT]!!.uppercase() !in validPersistentTypes -> {
-                                mainScope.launch {
+                                jsonData[PERSISTENT]!!.uppercase() !in validPersistentTypes -> {
                                     Log.d(
                                         TAG,
                                         "Persistent modifier is not one of $validPersistentTypes"
                                     )
                                     sendNotification(jsonData)
                                 }
+                                else -> handleDeviceCommands(jsonData)
                             }
-                            else -> handleDeviceCommands(jsonData)
                         }
-                    }
-                    TextToSpeechData.COMMAND_STOP_TTS -> stopTTS()
-                    COMMAND_AUTO_SCREEN_BRIGHTNESS -> {
-                        if (!jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND] in DeviceCommandData.ENABLE_COMMANDS) {
-                            handleDeviceCommands(jsonData)
-                        } else {
-                            mainScope.launch {
+                        COMMAND_AUTO_SCREEN_BRIGHTNESS -> {
+                            if (!jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND] in DeviceCommandData.ENABLE_COMMANDS) {
+                                handleDeviceCommands(jsonData)
+                            } else {
                                 sendNotification(jsonData)
                             }
                         }
-                    }
-                    COMMAND_SCREEN_BRIGHTNESS_LEVEL, COMMAND_SCREEN_OFF_TIMEOUT -> {
-                        if (!jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND]?.toIntOrNull() != null) {
-                            handleDeviceCommands(jsonData)
-                        } else {
-                            mainScope.launch {
+                        COMMAND_SCREEN_BRIGHTNESS_LEVEL, COMMAND_SCREEN_OFF_TIMEOUT -> {
+                            if (!jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND]?.toIntOrNull() != null) {
+                                handleDeviceCommands(jsonData)
+                            } else {
                                 sendNotification(jsonData)
                             }
                         }
+                        else -> Log.d(TAG, "No command received")
                     }
-                    else -> Log.d(TAG, "No command received")
                 }
-            }
-            else -> mainScope.launch {
-                Log.d(TAG, "Creating notification with following data: $jsonData")
-                sendNotification(jsonData, notificationId, now)
+                else -> {
+                    Log.d(TAG, "Creating notification with following data: $jsonData")
+                    sendNotification(jsonData, notificationId, now)
+                }
             }
         }
     }
