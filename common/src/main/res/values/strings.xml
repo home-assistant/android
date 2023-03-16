@@ -833,6 +833,8 @@
     <string name="tile_updated">Tile Data updated</string>
     <string name="tiles">Tiles</string>
     <string name="toast_message">%1$s was selected</string>
+    <string name="trust_server_title">Remotely control app &amp; device</string>
+    <string name="trust_server_summary">Manage enabled sensors and use notification commands from this server</string>
     <string name="tts_error">Unable to process notification \"%1$s\" as text to speech.</string>
     <string name="tts_no_text">Please set the text for text to speech to process</string>
     <string name="unable_to_register">Unable to Register Application</string>
