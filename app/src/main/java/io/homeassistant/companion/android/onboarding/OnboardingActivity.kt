@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationManagerCompat
 import androidx.fragment.app.commit
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationFragment
@@ -17,7 +18,7 @@ import io.homeassistant.companion.android.onboarding.manual.ManualSetupFragment
 import io.homeassistant.companion.android.onboarding.welcome.WelcomeFragment
 
 @AndroidEntryPoint
-class OnboardingActivity : AppCompatActivity() {
+class OnboardingActivity : BaseActivity() {
 
     companion object {
         private const val AUTHENTICATION_FRAGMENT = "authentication_fragment"
