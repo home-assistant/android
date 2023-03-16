@@ -103,6 +103,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 )
             )
             getConfig() // To get version, name, etc stored
+            webSocketRepository.getCurrentUser() // To get user info stored
         } catch (e: Exception) {
             Log.e(TAG, "Unable to save device registration", e)
         }
@@ -583,18 +584,33 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     }
 
     override suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity<*>>? {
-        return webSocketRepository.getStateChanges(entityIds)
-            ?.filter { it.toState != null }
-            ?.map {
-                Entity(
-                    it.toState!!.entityId,
-                    it.toState.state,
-                    it.toState.attributes,
-                    it.toState.lastChanged,
-                    it.toState.lastUpdated,
-                    it.toState.context
-                )
-            }
+        return if (server.user.isAdmin == true) {
+            webSocketRepository.getStateChanges(entityIds)
+                ?.filter { it.toState != null }
+                ?.map {
+                    Entity(
+                        it.toState!!.entityId,
+                        it.toState.state,
+                        it.toState.attributes,
+                        it.toState.lastChanged,
+                        it.toState.lastUpdated,
+                        it.toState.context
+                    )
+                }
+        } else {
+            webSocketRepository.getStateChanges()
+                ?.filter { it.newState != null && entityIds.contains(it.entityId) }
+                ?.map {
+                    Entity(
+                        it.newState!!.entityId,
+                        it.newState.state,
+                        it.newState.attributes,
+                        it.newState.lastChanged,
+                        it.newState.lastUpdated,
+                        it.newState.context
+                    )
+                }
+        }
     }
 
     override suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>) {

@@ -25,6 +25,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ar
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ConversationResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.CurrentUserResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DomainResponse
@@ -40,6 +41,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Th
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetTlvResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TriggerEvent
 import io.homeassistant.companion.android.common.util.toHexString
+import io.homeassistant.companion.android.database.server.ServerUserInfo
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -128,6 +130,18 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
         )
 
         return mapResponse(socketResponse)
+    }
+
+    override suspend fun getCurrentUser(): CurrentUserResponse? {
+        val socketResponse = sendMessage(
+            mapOf(
+                "type" to "auth/current_user"
+            )
+        )
+
+        val response: CurrentUserResponse? = mapResponse(socketResponse)
+        response?.let { updateServerWithUser(it) }
+        return response
     }
 
     override suspend fun getStates(): List<EntityResponse<Any>>? {
@@ -444,6 +458,25 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
             )
         )
         return response?.success == true
+    }
+
+    /**
+     * Update this repository's [server] with information from a [CurrentUserResponse] like user
+     * name and admin status.
+     */
+    private fun updateServerWithUser(user: CurrentUserResponse) {
+        server?.let {
+            serverManager.updateServer(
+                it.copy(
+                    user = ServerUserInfo(
+                        id = user.id,
+                        name = user.name,
+                        isOwner = user.isOwner,
+                        isAdmin = user.isAdmin
+                    )
+                )
+            )
+        }
     }
 
     private suspend fun connect(): Boolean {

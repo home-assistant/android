@@ -22,6 +22,7 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerType
+import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.wear.getAll
 import io.homeassistant.companion.android.database.wear.replaceAll
@@ -129,7 +130,8 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
                 connection = ServerConnectionInfo(
                     externalUrl = formattedUrl
                 ),
-                session = ServerSessionInfo()
+                session = ServerSessionInfo(),
+                user = ServerUserInfo()
             )
             serverId = serverManager.addServer(server)
             serverManager.authenticationRepository(serverId).registerAuthorizationCode(authCode)
