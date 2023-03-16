@@ -1,6 +1,5 @@
 import com.github.triplet.gradle.androidpublisher.ResolutionStrategy
 import com.google.gms.googleservices.GoogleServicesPlugin.GoogleServicesPluginConfig
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     id("com.android.application")
@@ -45,16 +44,12 @@ android {
         getByName("main") {
             java {
                 srcDirs("../app/src/main/java", "../app/src/full/java")
-
-
             }
             res {
                 srcDirs("../app/src/main/res", "../app/src/full/res")
             }
             manifest.srcFile("src/main/AndroidManifest.xml")
         }
-
-
     }
 
     buildFeatures {
