@@ -28,7 +28,8 @@ android {
         targetSdk = 33
 
         versionName = System.getenv("VERSION") ?: "LOCAL"
-        versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
+        // We add 2 because the app, wear (+1) and automotive versions need to have different version codes.
+        versionCode = (System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1) + 2
 
         manifestPlaceholders["sentryRelease"] = "$applicationId@$versionName"
         manifestPlaceholders["sentryDsn"] = System.getenv("SENTRY_DSN") ?: ""
