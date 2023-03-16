@@ -28,6 +28,7 @@ jobs:
         run: |
           cp .github/mock-google-services.json app/google-services.json
           cp .github/mock-google-services.json wear/google-services.json
+          cp .github/mock-google-services.json automotive/google-services.json
 
       - name: Validate ktlint
         run: ./gradlew ktlintCheck
