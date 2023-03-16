@@ -29,7 +29,7 @@ android {
 
         versionName = System.getenv("VERSION") ?: "LOCAL"
         // We add 2 because the app, wear (+1) and automotive versions need to have different version codes.
-        versionCode = (System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1) + 2
+        versionCode = (System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1) + 3
 
         manifestPlaceholders["sentryRelease"] = "$applicationId@$versionName"
         manifestPlaceholders["sentryDsn"] = System.getenv("SENTRY_DSN") ?: ""
