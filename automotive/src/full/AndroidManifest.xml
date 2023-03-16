@@ -53,7 +53,7 @@
             android:name="androidx.car.app.minCarApiLevel"
             android:value="1"/>
         <meta-data
-            android:name="com.google.android.gms.car.application"
+            android:name="com.android.automotive"
             android:resource="@xml/automotive_app_desc"/>
         <service
             android:name=".vehicle.HaCarAppService"
