@@ -180,15 +180,15 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.10.0")
     implementation("com.squareup.picasso:picasso:2.8")
 
-    "fullImplementation"("com.google.android.gms:play-services-location:21.0.1")
-    "fullImplementation"("com.google.android.gms:play-services-home:16.0.0")
-    "fullImplementation"("com.google.android.gms:play-services-threadnetwork:16.0.0-beta02")
-    "fullImplementation"(platform("com.google.firebase:firebase-bom:31.2.2"))
-    "fullImplementation"("com.google.firebase:firebase-messaging")
-    "fullImplementation"("io.sentry:sentry-android:6.14.0")
-    "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
-    "fullImplementation"("com.google.android.gms:play-services-wearable:18.0.0")
-    "fullImplementation"("androidx.wear:wear-remote-interactions:1.0.0")
+    implementation("com.google.android.gms:play-services-location:21.0.1")
+    implementation("com.google.android.gms:play-services-home:16.0.0")
+    implementation("com.google.android.gms:play-services-threadnetwork:16.0.0-beta02")
+    implementation(platform("com.google.firebase:firebase-bom:31.2.2"))
+    implementation("com.google.firebase:firebase-messaging")
+    implementation("io.sentry:sentry-android:6.14.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
+    implementation("com.google.android.gms:play-services-wearable:18.0.0")
+    implementation("androidx.wear:wear-remote-interactions:1.0.0")
 
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.webkit:webkit:1.6.0")
@@ -196,7 +196,7 @@ dependencies {
     implementation("com.google.android.exoplayer:exoplayer-core:2.18.2")
     implementation("com.google.android.exoplayer:exoplayer-hls:2.18.2")
     implementation("com.google.android.exoplayer:exoplayer-ui:2.18.2")
-    "fullImplementation"("com.google.android.exoplayer:extension-cronet:2.18.2")
+    implementation("com.google.android.exoplayer:extension-cronet:2.18.2")
     "minimalImplementation"("com.google.android.exoplayer:extension-cronet:2.18.2") {
         exclude(group = "com.google.android.gms", module = "play-services-cronet")
     }
@@ -220,11 +220,11 @@ dependencies {
     implementation("com.mikepenz:iconics-compose:5.4.0")
     implementation("com.mikepenz:community-material-typeface:7.0.96.0-kotlin@aar")
 
-    "fullImplementation"("org.burnoutcrew.composereorderable:reorderable:0.9.6")
+    implementation("org.burnoutcrew.composereorderable:reorderable:0.9.6")
     implementation("com.github.AppDevNext:ChangeLog:3.4")
 
-    "fullImplementation"("androidx.car.app:app:1.3.0-rc01")
-    "fullImplementation"("androidx.car.app:app-automotive:1.3.0-rc01")
+    implementation("androidx.car.app:app:1.3.0-rc01")
+    implementation("androidx.car.app:app-automotive:1.3.0-rc01")
 }
 
 // Disable to fix memory leak and be compatible with the configuration cache.
