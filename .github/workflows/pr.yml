@@ -56,6 +56,7 @@ jobs:
         run: |
           cp .github/mock-google-services.json app/google-services.json
           cp .github/mock-google-services.json wear/google-services.json
+          cp .github/mock-google-services.json automotive/google-services.json
 
       - name: Validate Lint
         run: ./gradlew lint
@@ -95,7 +96,8 @@ jobs:
       run: |
         cp .github/mock-google-services.json app/google-services.json
         cp .github/mock-google-services.json wear/google-services.json
-    
+        cp .github/mock-google-services.json automotive/google-services.json
+        
     - uses: ./.github/actions/create-release-notes
       name: Create Release Notes
 
