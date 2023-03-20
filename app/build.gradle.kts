@@ -171,7 +171,7 @@ dependencies {
     "fullImplementation"("com.google.android.gms:play-services-threadnetwork:16.0.0")
     "fullImplementation"(platform("com.google.firebase:firebase-bom:31.2.3"))
     "fullImplementation"("com.google.firebase:firebase-messaging")
-    "fullImplementation"("io.sentry:sentry-android:6.15.0")
+    "fullImplementation"("io.sentry:sentry-android:6.16.0")
     "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
     "fullImplementation"("com.google.android.gms:play-services-wearable:18.0.0")
     "fullImplementation"("androidx.wear:wear-remote-interactions:1.0.0")
