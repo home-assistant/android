@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android
 
 import android.car.Car
-import android.car.drivingstate.CarUxRestrictions
 import android.car.drivingstate.CarUxRestrictionsManager
 import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
