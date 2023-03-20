@@ -16,7 +16,6 @@ open class BaseActivity : AppCompatActivity() {
         registerListener()
     }
 
-
     override fun onStop() {
         super.onStop()
         carRestrictionManager?.unregisterListener()
@@ -28,7 +27,7 @@ open class BaseActivity : AppCompatActivity() {
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
             car = Car.createCar(this)
             carRestrictionManager =
-                car?.getCarManager(Car.CAR_UX_RESTRICTION_SERVICE) as CarUxRestrictionsManager;
+                car?.getCarManager(Car.CAR_UX_RESTRICTION_SERVICE) as CarUxRestrictionsManager
             var listener =
                 CarUxRestrictionsManager.OnUxRestrictionsChangedListener { restrictions ->
                     if (restrictions.isRequiresDistractionOptimization) {
@@ -36,12 +35,10 @@ open class BaseActivity : AppCompatActivity() {
                     }
                 }
             carRestrictionManager?.registerListener(listener)
-
         }
     }
 
     private fun startCarAppActivity() {
-
         startActivity(
             Intent(
                 this,
