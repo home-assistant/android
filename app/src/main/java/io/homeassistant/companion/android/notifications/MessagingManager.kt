@@ -800,6 +800,47 @@ class MessagingManager @Inject constructor(
                     "short" -> intent.putExtra(chunks[0], value.toShort())
                     "boolean" -> intent.putExtra(chunks[0], value.toBoolean())
                     "char" -> intent.putExtra(chunks[0], value[0].toChar())
+                    "byte" -> intent.putExtra(chunks[0], value.toByte())
+                    "boolean[]" -> intent.putExtra(
+                        chunks[0],
+                        value.split(";").map { it.toBoolean() }.toBooleanArray()
+                    )
+                    "byte[]" -> intent.putExtra(
+                        chunks[0],
+                        value.split(";").map { it.toByte() }.toByteArray()
+                    )
+                    "short[]" -> intent.putExtra(
+                        chunks[0],
+                        value.split(";").map { it.toShort() }.toShortArray()
+                    )
+                    "char[]" -> intent.putExtra(
+                        chunks[0],
+                        value.split(";").map { it[0].toChar() }.toCharArray()
+                    )
+                    "int[]" -> intent.putExtra(
+                        chunks[0],
+                        value.split(";").map { it.toInt() }.toIntArray()
+                    )
+                    "long[]" -> intent.putExtra(
+                        chunks[0],
+                        value.split(";").map { it.toLong() }.toLongArray()
+                    )
+                    "float[]" -> intent.putExtra(
+                        chunks[0],
+                        value.split(";").map { it.toFloat() }.toFloatArray()
+                    )
+                    "double[]" -> intent.putExtra(
+                        chunks[0],
+                        value.split(";").map { it.toDouble() }.toDoubleArray()
+                    )
+                    "String[]" -> intent.putExtra(
+                        chunks[0],
+                        value.split(";").toTypedArray()
+                    )
+                    "String[].urlencoded" -> intent.putExtra(
+                        chunks[0],
+                        value.split(";").map { URLDecoder.decode(value, "UTF-8") }.toTypedArray()
+                    )
                     "ArrayList<Integer>" -> intent.putIntegerArrayListExtra(
                         chunks[0],
                         value.split(";").map { it.toInt() }.toCollection(ArrayList())
@@ -807,6 +848,10 @@ class MessagingManager @Inject constructor(
                     "ArrayList<String>" -> intent.putStringArrayListExtra(
                         chunks[0],
                         value.split(";").toCollection(ArrayList())
+                    )
+                    "ArrayList<String>.urlencoded" -> intent.putStringArrayListExtra(
+                        chunks[0],
+                        value.split(";").map { URLDecoder.decode(value, "UTF-8") }.toCollection(ArrayList())
                     )
                     else -> {
                         intent.putExtra(chunks[0], value)
