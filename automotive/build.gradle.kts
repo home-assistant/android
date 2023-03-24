@@ -71,12 +71,6 @@ android {
         targetCompatibility(JavaVersion.VERSION_11)
     }
 
-    firebaseAppDistribution {
-        serviceCredentialsFile = "firebaseAppDistributionServiceCredentialsFile.json"
-        releaseNotesFile = "./app/build/outputs/changelogBeta"
-        groups = "continuous-deployment"
-    }
-
     signingConfigs {
         create("release") {
             storeFile = file(System.getenv("KEYSTORE_PATH") ?: "release_keystore.keystore")
@@ -148,7 +142,7 @@ play {
     track.set("internal")
     resolutionStrategy.set(ResolutionStrategy.IGNORE)
     // We will depend on the wear commit.
-    commit.set(true)
+    commit.set(false)
 }
 
 dependencies {

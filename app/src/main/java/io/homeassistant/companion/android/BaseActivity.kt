@@ -8,8 +8,8 @@ import android.content.pm.PackageManager
 import androidx.appcompat.app.AppCompatActivity
 
 open class BaseActivity : AppCompatActivity() {
-    var car: Car? = null
-    var carRestrictionManager: CarUxRestrictionsManager? = null
+    private var car: Car? = null
+    private var carRestrictionManager: CarUxRestrictionsManager? = null
 
     override fun onResume() {
         super.onResume()
@@ -23,7 +23,7 @@ open class BaseActivity : AppCompatActivity() {
         car = null
     }
 
-    fun registerListener() {
+    private fun registerListener() {
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
             car = Car.createCar(this)
             carRestrictionManager =

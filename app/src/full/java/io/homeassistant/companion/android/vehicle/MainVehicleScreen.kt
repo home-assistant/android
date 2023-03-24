@@ -1,12 +1,16 @@
 package io.homeassistant.companion.android.vehicle
 
+import android.car.Car
+import android.car.drivingstate.CarUxRestrictionsManager
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
 import androidx.car.app.model.Action
+import androidx.car.app.model.ActionStrip
 import androidx.car.app.model.CarColor
 import androidx.car.app.model.CarIcon
 import androidx.car.app.model.ItemList
@@ -15,7 +19,9 @@ import androidx.car.app.model.MessageTemplate
 import androidx.car.app.model.ParkedOnlyOnClickListener
 import androidx.car.app.model.Row
 import androidx.car.app.model.Template
+import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.mikepenz.iconics.IconicsDrawable
@@ -72,17 +78,30 @@ class MainVehicleScreen(
 
     private var isLoggedIn: Boolean? = null
     private val domains = mutableSetOf<String>()
+    private var car: Car? = null
+    private var carRestrictionManager: CarUxRestrictionsManager? = null
+    private val iDrivingOptimized
+        get() = car?.let {
+            (it.getCarManager(
+                Car.CAR_UX_RESTRICTION_SERVICE
+            ) as CarUxRestrictionsManager)
+                .getCurrentCarUxRestrictions().isRequiresDistractionOptimization()
+        } ?: false
+
+    private val isAutomotive get() = carContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
 
     init {
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 isLoggedIn = serverManager.isRegistered() &&
-                    serverManager.authenticationRepository().getSessionState() == SessionState.CONNECTED
+                        serverManager.authenticationRepository()
+                            .getSessionState() == SessionState.CONNECTED
                 invalidate()
                 while (isLoggedIn != true) {
                     delay(1000)
                     isLoggedIn = serverManager.isRegistered() &&
-                        serverManager.authenticationRepository().getSessionState() == SessionState.CONNECTED
+                            serverManager.authenticationRepository()
+                                .getSessionState() == SessionState.CONNECTED
                     invalidate()
                 }
                 allEntities.collect { entities ->
@@ -96,6 +115,19 @@ class MainVehicleScreen(
                 }
             }
         }
+
+        lifecycle.addObserver(object : DefaultLifecycleObserver {
+
+            override fun onResume(owner: LifecycleOwner) {
+                registerAutomotiveRestrictionListener()
+            }
+
+            override fun onPause(owner: LifecycleOwner) {
+                carRestrictionManager?.unregisterListener()
+                car?.disconnect()
+                car = null
+            }
+        })
     }
 
     override fun onGetTemplate(): Template {
@@ -109,11 +141,18 @@ class MainVehicleScreen(
                         .setOnClickListener(
                             ParkedOnlyOnClickListener.create {
                                 Log.i(TAG, "Starting login activity")
-                                carContext.startActivity(
-                                    Intent(carContext, LaunchActivity::class.java).apply {
-                                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                with(carContext) {
+                                    startActivity(
+                                        Intent(
+                                            carContext,
+                                            LaunchActivity::class.java
+                                        ).apply {
+                                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                        })
+                                    if (isAutomotive) {
+                                        finishCarApp()
                                     }
-                                )
+                                }
                             }
                         )
                         .build()
@@ -235,6 +274,26 @@ class MainVehicleScreen(
         return ListTemplate.Builder().apply {
             setTitle(carContext.getString(commonR.string.app_name))
             setHeaderAction(Action.APP_ICON)
+            if (isAutomotive && !iDrivingOptimized) {
+                setActionStrip(
+                    ActionStrip.Builder().addAction(
+                        Action.Builder()
+                            .setTitle(carContext.getString(commonR.string.aa_launch_native))
+                            .setOnClickListener {
+                                with(carContext) {
+                                    startActivity(Intent(
+                                        carContext,
+                                        LaunchActivity::class.java
+                                    ).apply {
+                                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                    })
+                                    finishCarApp()
+                                }
+
+                            }.build()
+                    ).build()
+                )
+            }
             if (domains.isEmpty()) {
                 setLoading(true)
             } else {
@@ -242,5 +301,18 @@ class MainVehicleScreen(
                 setSingleList(listBuilder.build())
             }
         }.build()
+    }
+
+    private fun registerAutomotiveRestrictionListener() {
+        if (carContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            car = Car.createCar(carContext)
+            carRestrictionManager =
+                car?.getCarManager(Car.CAR_UX_RESTRICTION_SERVICE) as CarUxRestrictionsManager
+            var listener =
+                CarUxRestrictionsManager.OnUxRestrictionsChangedListener { restrictions ->
+                    invalidate()
+                }
+            carRestrictionManager?.registerListener(listener)
+        }
     }
 }
