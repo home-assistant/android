@@ -58,14 +58,14 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
         }
     }
 
-    override fun onChanged(type: Int?) {
+    override fun onChanged(value: Int) {
         if (!isEnabled(context, androidAutoConnected)) {
             CoroutineScope(Dispatchers.Main + Job()).launch {
                 carConnection?.type?.removeObserver(this@AndroidAutoSensorManager)
             }
             return
         }
-        val (connected, typeString) = when (type) {
+        val (connected, typeString) = when (value) {
             CarConnection.CONNECTION_TYPE_NOT_CONNECTED -> {
                 false to "Disconnected"
             }
@@ -76,7 +76,7 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
                 true to "Native"
             }
             else -> {
-                false to "Unknown($type)"
+                false to "Unknown($value)"
             }
         }
         onSensorUpdated(
