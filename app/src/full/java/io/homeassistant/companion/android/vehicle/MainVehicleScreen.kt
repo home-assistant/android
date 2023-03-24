@@ -82,10 +82,9 @@ class MainVehicleScreen(
     private var carRestrictionManager: CarUxRestrictionsManager? = null
     private val iDrivingOptimized
         get() = car?.let {
-            (it.getCarManager(
-                Car.CAR_UX_RESTRICTION_SERVICE
-            ) as CarUxRestrictionsManager)
-                .getCurrentCarUxRestrictions().isRequiresDistractionOptimization()
+            (
+                it.getCarManager(Car.CAR_UX_RESTRICTION_SERVICE) as CarUxRestrictionsManager
+                ).getCurrentCarUxRestrictions().isRequiresDistractionOptimization()
         } ?: false
 
     private val isAutomotive get() = carContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
@@ -94,14 +93,14 @@ class MainVehicleScreen(
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 isLoggedIn = serverManager.isRegistered() &&
-                        serverManager.authenticationRepository()
-                            .getSessionState() == SessionState.CONNECTED
+                    serverManager.authenticationRepository()
+                    .getSessionState() == SessionState.CONNECTED
                 invalidate()
                 while (isLoggedIn != true) {
                     delay(1000)
                     isLoggedIn = serverManager.isRegistered() &&
-                            serverManager.authenticationRepository()
-                                .getSessionState() == SessionState.CONNECTED
+                        serverManager.authenticationRepository()
+                        .getSessionState() == SessionState.CONNECTED
                     invalidate()
                 }
                 allEntities.collect { entities ->
@@ -140,19 +139,7 @@ class MainVehicleScreen(
                         .setTitle(carContext.getString(commonR.string.login))
                         .setOnClickListener(
                             ParkedOnlyOnClickListener.create {
-                                Log.i(TAG, "Starting login activity")
-                                with(carContext) {
-                                    startActivity(
-                                        Intent(
-                                            carContext,
-                                            LaunchActivity::class.java
-                                        ).apply {
-                                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                                        })
-                                    if (isAutomotive) {
-                                        finishCarApp()
-                                    }
-                                }
+                                startNativeActivity()
                             }
                         )
                         .build()
@@ -280,16 +267,7 @@ class MainVehicleScreen(
                         Action.Builder()
                             .setTitle(carContext.getString(commonR.string.aa_launch_native))
                             .setOnClickListener {
-                                with(carContext) {
-                                    startActivity(Intent(
-                                        carContext,
-                                        LaunchActivity::class.java
-                                    ).apply {
-                                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                                    })
-                                    finishCarApp()
-                                }
-
+                                startNativeActivity()
                             }.build()
                     ).build()
                 )
@@ -305,6 +283,7 @@ class MainVehicleScreen(
 
     private fun registerAutomotiveRestrictionListener() {
         if (carContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            Log.i(TAG, "Register for Automotive Restrictions")
             car = Car.createCar(carContext)
             carRestrictionManager =
                 car?.getCarManager(Car.CAR_UX_RESTRICTION_SERVICE) as CarUxRestrictionsManager
@@ -313,6 +292,22 @@ class MainVehicleScreen(
                     invalidate()
                 }
             carRestrictionManager?.registerListener(listener)
+        }
+    }
+    private fun startNativeActivity() {
+        Log.i(TAG, "Starting login activity")
+        with(carContext) {
+            startActivity(
+                Intent(
+                    carContext,
+                    LaunchActivity::class.java
+                ).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+            )
+            if (isAutomotive) {
+                finishCarApp()
+            }
         }
     }
 }
