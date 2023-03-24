@@ -46,13 +46,13 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
     private var carConnection: CarConnection? = null
 
     override fun requestSensorUpdate(context: Context) {
-        this.context = context
+        this.context = context.applicationContext
         if (!isEnabled(context, androidAutoConnected)) {
             return
         }
         CoroutineScope(Dispatchers.Main + Job()).launch {
             if (carConnection == null) {
-                carConnection = CarConnection(context)
+                carConnection = CarConnection(context.applicationContext)
             }
             carConnection?.type?.observeForever(this@AndroidAutoSensorManager)
         }
