@@ -100,33 +100,33 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
             if (result != null) {
                 val (url, authCode, deviceName, deviceTrackingEnabled, notificationsEnabled) = result
                 val messagingToken = getMessagingToken()
-                if (messagingToken.isBlank() && BuildConfig.FLAVOR == "full") {
-                    AlertDialog.Builder(this@LaunchActivity)
-                        .setTitle(commonR.string.firebase_error_title)
-                        .setMessage(commonR.string.firebase_error_message)
-                        .setPositiveButton(commonR.string.continue_connect) { _, _ ->
-                            mainScope.launch {
-                                registerAndOpenWebview(
-                                    url,
-                                    authCode,
-                                    deviceName,
-                                    messagingToken,
-                                    deviceTrackingEnabled,
-                                    notificationsEnabled
-                                )
-                            }
-                        }
-                        .show()
-                } else {
-                    registerAndOpenWebview(
-                        url,
-                        authCode,
-                        deviceName,
-                        messagingToken,
-                        deviceTrackingEnabled,
-                        notificationsEnabled
-                    )
-                }
+//                if (messagingToken.isBlank() && BuildConfig.FLAVOR == "full") {
+//                    AlertDialog.Builder(this@LaunchActivity)
+//                        .setTitle(commonR.string.firebase_error_title)
+//                        .setMessage(commonR.string.firebase_error_message)
+//                        .setPositiveButton(commonR.string.continue_connect) { _, _ ->
+//                            mainScope.launch {
+//                                registerAndOpenWebview(
+//                                    url,
+//                                    authCode,
+//                                    deviceName,
+//                                    messagingToken,
+//                                    deviceTrackingEnabled,
+//                                    notificationsEnabled
+//                                )
+//                            }
+//                        }
+//                        .show()
+//                } else {
+                registerAndOpenWebview(
+                    url,
+                    authCode,
+                    deviceName,
+                    messagingToken,
+                    deviceTrackingEnabled,
+                    notificationsEnabled
+                )
+                // }
             } else {
                 Log.e(TAG, "onOnboardingComplete: Activity result returned null intent data")
             }
