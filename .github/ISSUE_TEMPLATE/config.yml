@@ -1,8 +1,0 @@
-blank_issues_enabled: false
-contact_links:
-  - name: Incorrect or missing information in the app documentation
-    url: https://github.com/home-assistant/companion.home-assistant/issues
-    about: Our documentation has its own issue tracker. Please report issues with the companion docs there.
-  - name: I'm unsure where to go
-    url: https://www.home-assistant.io/join-chat
-    about: If you are unsure where to go, then joining our chat is recommended; Just ask!

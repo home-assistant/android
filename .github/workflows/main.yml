@@ -33,5 +33,5 @@ jobs:
         with:
           url: https://www.pgyer.com/apiv2/app/upload
           method: POST
-          forms: '{"_api_key":"${{ secrets.PGY_API_KEY }}","buildInstallType":1,"buildUpdateDescription":"优化更新功能"}'
+          forms: '{"_api_key":"${{ secrets.PGY_API_KEY }}","buildInstallType":1,"buildUpdateDescription":"合并官方2023.3版本代码"}'
           fileForms: '{"file":"app/build/outputs/apk/full/release/app-full-release.apk"}'
