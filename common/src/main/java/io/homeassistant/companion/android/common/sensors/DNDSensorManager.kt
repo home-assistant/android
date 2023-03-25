@@ -27,8 +27,6 @@ class DNDSensorManager : SensorManager {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#do-not-disturb-sensor"
     }
-    override val enabledByDefault: Boolean
-        get() = false
     override val name: Int
         get() = commonR.string.sensor_name_dnd
 
@@ -41,8 +39,9 @@ class DNDSensorManager : SensorManager {
     }
 
     override fun requestSensorUpdate(context: Context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             updateDNDState(context)
+        }
     }
 
     @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.M)
@@ -51,9 +50,9 @@ class DNDSensorManager : SensorManager {
     }
 
     private fun updateDNDState(context: Context) {
-
-        if (!isEnabled(context, dndSensor.id))
+        if (!isEnabled(context, dndSensor)) {
             return
+        }
 
         val notificationManager =
             context.getSystemService<NotificationManager>()

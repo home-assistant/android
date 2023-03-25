@@ -38,7 +38,6 @@ fun SetTileShortcutsView(
     isShowShortcutTextEnabled: Boolean,
     onShowShortcutTextEnabled: (Boolean) -> Unit
 ) {
-
     WearAppTheme {
         ThemeLazyColumn {
             item {
@@ -55,20 +54,22 @@ fun SetTileShortcutsView(
                     appIcon = {
                         Image(
                             asset =
-                            if (isShowShortcutTextEnabled)
+                            if (isShowShortcutTextEnabled) {
                                 CommunityMaterial.Icon.cmd_alphabetical
-                            else
-                                CommunityMaterial.Icon.cmd_alphabetical_off,
+                            } else {
+                                CommunityMaterial.Icon.cmd_alphabetical_off
+                            },
                             colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
                         )
                     },
                     toggleControl = {
                         Icon(
                             imageVector = ToggleChipDefaults.checkboxIcon(isShowShortcutTextEnabled),
-                            contentDescription = if (isShowShortcutTextEnabled)
+                            contentDescription = if (isShowShortcutTextEnabled) {
                                 stringResource(commonR.string.show)
-                            else
+                            } else {
                                 stringResource(commonR.string.hide)
+                            }
                         )
                     }
                 )

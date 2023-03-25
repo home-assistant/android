@@ -3,9 +3,11 @@ package io.homeassistant.companion.android.home
 import android.app.Application
 import android.util.Log
 import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -108,6 +110,8 @@ class MainViewModel @Inject constructor(
         private set
     var templateTileRefreshInterval = mutableStateOf(0)
         private set
+    var isFavoritesOnly by mutableStateOf(false)
+        private set
 
     fun supportedDomains(): List<String> = HomePresenterImpl.supportedDomains
 
@@ -129,14 +133,13 @@ class MainViewModel @Inject constructor(
             isShowShortcutTextEnabled.value = homePresenter.getShowShortcutText()
             templateTileContent.value = homePresenter.getTemplateTileContent()
             templateTileRefreshInterval.value = homePresenter.getTemplateTileRefreshInterval()
+            isFavoritesOnly = homePresenter.getWearFavoritesOnly()
         }
     }
 
     fun loadEntities() {
+        if (!homePresenter.isConnected()) return
         viewModelScope.launch {
-            if (!homePresenter.isConnected()) {
-                return@launch
-            }
             try {
                 // Load initial state
                 loadingState.value = LoadingState.LOADING
@@ -171,16 +174,19 @@ class MainViewModel @Inject constructor(
     }
 
     suspend fun updateUI() = withContext(Dispatchers.IO) {
+        if (!homePresenter.isConnected()) return@withContext
         val getAreaRegistry = async { homePresenter.getAreaRegistry() }
         val getDeviceRegistry = async { homePresenter.getDeviceRegistry() }
         val getEntityRegistry = async { homePresenter.getEntityRegistry() }
         val getEntities = async { homePresenter.getEntities() }
 
-        areaRegistry = getAreaRegistry.await()?.also {
-            areas.clear()
-            areas.addAll(it)
+        if (!isFavoritesOnly) {
+            areaRegistry = getAreaRegistry.await()?.also {
+                areas.clear()
+                areas.addAll(it)
+            }
+            deviceRegistry = getDeviceRegistry.await()
         }
-        deviceRegistry = getDeviceRegistry.await()
         entityRegistry = getEntityRegistry.await()
 
         _supportedEntities.value = getSupportedEntities()
@@ -189,21 +195,27 @@ class MainViewModel @Inject constructor(
             entities.clear()
             it.forEach { state -> updateEntityStates(state) }
         }
-        updateEntityDomains()
-    }
-
-    suspend fun entityUpdates() {
-        if (!homePresenter.isConnected())
-            return
-        homePresenter.getEntityUpdates(supportedEntities.value)?.collect {
-            updateEntityStates(it)
+        if (!isFavoritesOnly) {
             updateEntityDomains()
         }
     }
 
-    suspend fun areaUpdates() {
-        if (!homePresenter.isConnected())
+    suspend fun entityUpdates() {
+        if (!homePresenter.isConnected()) {
             return
+        }
+        homePresenter.getEntityUpdates(supportedEntities.value)?.collect {
+            updateEntityStates(it)
+            if (!isFavoritesOnly) {
+                updateEntityDomains()
+            }
+        }
+    }
+
+    suspend fun areaUpdates() {
+        if (!homePresenter.isConnected() || isFavoritesOnly) {
+            return
+        }
         homePresenter.getAreaRegistryUpdates()?.collect {
             areaRegistry = homePresenter.getAreaRegistry()
             areas.clear()
@@ -215,8 +227,9 @@ class MainViewModel @Inject constructor(
     }
 
     suspend fun deviceUpdates() {
-        if (!homePresenter.isConnected())
+        if (!homePresenter.isConnected() || isFavoritesOnly) {
             return
+        }
         homePresenter.getDeviceRegistryUpdates()?.collect {
             deviceRegistry = homePresenter.getDeviceRegistry()
             updateEntityDomains()
@@ -224,8 +237,9 @@ class MainViewModel @Inject constructor(
     }
 
     suspend fun entityRegistryUpdates() {
-        if (!homePresenter.isConnected())
+        if (!homePresenter.isConnected()) {
             return
+        }
         homePresenter.getEntityRegistryUpdates()?.collect {
             entityRegistry = homePresenter.getEntityRegistry()
             _supportedEntities.value = getSupportedEntities()
@@ -311,10 +325,12 @@ class MainViewModel @Inject constructor(
                 .first { basicSensor -> basicSensor.id == sensorId }
             updateSensorEntity(sensorsDao, basicSensor, isEnabled)
 
-            if (isEnabled) try {
-                sensorManager.requestSensorUpdate(getApplication())
-            } catch (e: Exception) {
-                Log.e(TAG, "Exception while requesting update for sensor $sensorId", e)
+            if (isEnabled) {
+                try {
+                    sensorManager.requestSensorUpdate(getApplication())
+                } catch (e: Exception) {
+                    Log.e(TAG, "Exception while requesting update for sensor $sensorId", e)
+                }
             }
         }
     }
@@ -324,8 +340,10 @@ class MainViewModel @Inject constructor(
         basicSensor: SensorManager.BasicSensor,
         isEnabled: Boolean
     ) {
-        sensorDao.setSensorsEnabled(listOf(basicSensor.id), isEnabled)
-        SensorReceiver.updateAllSensors(getApplication())
+        homePresenter.getServerId()?.let { serverId ->
+            sensorDao.setSensorsEnabled(listOf(basicSensor.id), serverId, isEnabled)
+            SensorReceiver.updateAllSensors(getApplication())
+        }
     }
 
     fun updateAllSensors(sensorManager: SensorManager) {
@@ -342,7 +360,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             for (manager in SensorReceiver.MANAGERS) {
                 for (basicSensor in manager.getAvailableSensors(getApplication())) {
-                    manager.isEnabled(getApplication(), basicSensor.id)
+                    manager.isEnabled(getApplication(), basicSensor)
                 }
             }
         }
@@ -411,6 +429,13 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             homePresenter.setTemplateTileContent(content)
             templateTileContent.value = content
+        }
+    }
+
+    fun setWearFavoritesOnly(enabled: Boolean) {
+        viewModelScope.launch {
+            homePresenter.setWearFavoritesOnly(enabled)
+            isFavoritesOnly = enabled
         }
     }
 

@@ -12,6 +12,7 @@ enum class WebsocketSetting {
 class LocalNotificationSettingConverter {
     @TypeConverter
     fun toLocalNotificationSetting(setting: String): WebsocketSetting = WebsocketSetting.valueOf(setting)
+
     @TypeConverter
     fun fromLocalNotificationSetting(setting: WebsocketSetting): String = setting.name
 }

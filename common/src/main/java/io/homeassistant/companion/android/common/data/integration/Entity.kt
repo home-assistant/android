@@ -94,7 +94,9 @@ fun <T> Entity<T>.getCoverPosition(): EntityPosition? {
         if (
             domain != "cover" ||
             (attributes as Map<*, *>)["current_position"] == null
-        ) return null
+        ) {
+            return null
+        }
 
         val minValue = 0f
         val maxValue = 100f
@@ -258,45 +260,62 @@ fun <T> Entity<T>.getIcon(context: Context): IIcon? {
         when (domain) {
             "alert" -> CommunityMaterial.Icon.cmd_alert
             "air_quality" -> CommunityMaterial.Icon.cmd_air_filter
-            "automation" -> CommunityMaterial.Icon3.cmd_robot
+            "automation" -> if (compareState == "off") {
+                CommunityMaterial.Icon3.cmd_robot_off
+            } else {
+                CommunityMaterial.Icon3.cmd_robot
+            }
+            "binary_sensor" -> binarySensorIcon(compareState, this as Entity<Map<String, Any?>>)
             "button" -> when (attributes["device_class"]) {
                 "restart" -> CommunityMaterial.Icon3.cmd_restart
                 "update" -> CommunityMaterial.Icon3.cmd_package_up
                 else -> CommunityMaterial.Icon2.cmd_gesture_tap_button
             }
             "calendar" -> CommunityMaterial.Icon.cmd_calendar
-            "camera" -> CommunityMaterial.Icon3.cmd_video
+            "camera" -> if (compareState == "off") {
+                CommunityMaterial.Icon3.cmd_video_off
+            } else {
+                CommunityMaterial.Icon3.cmd_video
+            }
             "climate" -> CommunityMaterial.Icon3.cmd_thermostat
             "configurator" -> CommunityMaterial.Icon.cmd_cog
             "conversation" -> CommunityMaterial.Icon3.cmd_microphone_message
             "cover" -> coverIcon(compareState, this as Entity<Map<String, Any?>>)
             "counter" -> CommunityMaterial.Icon.cmd_counter
-            "fan" -> CommunityMaterial.Icon2.cmd_fan
+            "fan" -> if (compareState == "off") {
+                CommunityMaterial.Icon2.cmd_fan_off
+            } else {
+                CommunityMaterial.Icon2.cmd_fan
+            }
             "google_assistant" -> CommunityMaterial.Icon2.cmd_google_assistant
             "group" -> CommunityMaterial.Icon2.cmd_google_circles_communities
             "homeassistant" -> CommunityMaterial.Icon2.cmd_home_assistant
             "homekit" -> CommunityMaterial.Icon2.cmd_home_automation
-            "humidifier" -> if (compareState == "off")
+            "humidifier" -> if (compareState == "off") {
                 CommunityMaterial.Icon.cmd_air_humidifier_off
-            else
+            } else {
                 CommunityMaterial.Icon.cmd_air_humidifier
+            }
             "image_processing" -> CommunityMaterial.Icon2.cmd_image_filter_frames
             "input_boolean" -> if (!entityId.endsWith(".ha_android_placeholder")) {
-                if (compareState == "on")
+                if (compareState == "on") {
                     CommunityMaterial.Icon.cmd_check_circle_outline
-                else
+                } else {
                     CommunityMaterial.Icon.cmd_close_circle_outline
+                }
             } else { // For SimplifiedEntity without state, use a more generic icon
                 CommunityMaterial.Icon3.cmd_toggle_switch_outline
             }
             "input_button" -> CommunityMaterial.Icon2.cmd_gesture_tap_button
-            "input_datetime" -> if (attributes["has_date"] == false)
+            "input_datetime" -> if (attributes["has_date"] == false) {
                 CommunityMaterial.Icon.cmd_clock
-            else if (attributes["has_time"] == false)
+            } else if (attributes["has_time"] == false) {
                 CommunityMaterial.Icon.cmd_calendar
-            else
+            } else {
                 CommunityMaterial.Icon.cmd_calendar_clock
-            "input_select" -> CommunityMaterial.Icon2.cmd_form_dropdown
+            }
+            "input_number" -> CommunityMaterial.Icon3.cmd_ray_vertex
+            "input_select" -> CommunityMaterial.Icon2.cmd_format_list_bulleted
             "input_text" -> CommunityMaterial.Icon2.cmd_form_textbox
             "light" -> CommunityMaterial.Icon2.cmd_lightbulb
             "lock" -> when (compareState) {
@@ -332,44 +351,102 @@ fun <T> Entity<T>.getIcon(context: Context): IIcon? {
             "notify" -> CommunityMaterial.Icon.cmd_comment_alert
             "number" -> CommunityMaterial.Icon3.cmd_ray_vertex
             "persistent_notification" -> CommunityMaterial.Icon.cmd_bell
-            "person" -> CommunityMaterial.Icon.cmd_account
+            "person" -> if (compareState == "not_home") {
+                CommunityMaterial.Icon.cmd_account_arrow_right
+            } else {
+                CommunityMaterial.Icon.cmd_account
+            }
             "plant" -> CommunityMaterial.Icon2.cmd_flower
             "proximity" -> CommunityMaterial.Icon.cmd_apple_safari
             "remote" -> CommunityMaterial.Icon3.cmd_remote
             "scene" -> CommunityMaterial.Icon3.cmd_palette_outline // Different from frontend: outline version
+            "schedule" -> CommunityMaterial.Icon.cmd_calendar_clock
             "script" -> CommunityMaterial.Icon3.cmd_script_text_outline // Different from frontend: outline version
             "select" -> CommunityMaterial.Icon2.cmd_format_list_bulleted
-            "sensor" -> CommunityMaterial.Icon.cmd_eye
+            "sensor" -> sensorIcon(compareState, this as Entity<Map<String, Any?>>)
             "siren" -> CommunityMaterial.Icon.cmd_bullhorn
             "simple_alarm" -> CommunityMaterial.Icon.cmd_bell
-            "sun" -> if (compareState == "above_horizon")
+            "sun" -> if (compareState == "above_horizon") {
                 CommunityMaterial.Icon3.cmd_white_balance_sunny
-            else
+            } else {
                 CommunityMaterial.Icon3.cmd_weather_night
+            }
             "switch" -> if (!entityId.endsWith(".ha_android_placeholder")) {
                 when (attributes["device_class"]) {
                     "outlet" -> if (compareState == "on") CommunityMaterial.Icon3.cmd_power_plug else CommunityMaterial.Icon3.cmd_power_plug_off
-                    "switch" -> if (compareState == "on") CommunityMaterial.Icon3.cmd_toggle_switch else CommunityMaterial.Icon3.cmd_toggle_switch_off
+                    "switch" -> if (compareState == "on") CommunityMaterial.Icon3.cmd_toggle_switch_variant else CommunityMaterial.Icon3.cmd_toggle_switch_variant_off
                     else -> CommunityMaterial.Icon2.cmd_flash
                 }
             } else { // For SimplifiedEntity without state, use a more generic icon
                 CommunityMaterial.Icon2.cmd_light_switch
             }
+            "text" -> CommunityMaterial.Icon2.cmd_form_textbox
             "timer" -> CommunityMaterial.Icon3.cmd_timer_outline
+            "update" -> CommunityMaterial.Icon3.cmd_package
             "updater" -> CommunityMaterial.Icon.cmd_cloud_upload
             "vacuum" -> CommunityMaterial.Icon3.cmd_robot_vacuum
-            "water_heater" -> CommunityMaterial.Icon3.cmd_thermometer
-            "weather" -> CommunityMaterial.Icon3.cmd_weather_cloudy
+            "water_heater" -> if (compareState == "off") {
+                CommunityMaterial.Icon3.cmd_water_boiler_off
+            } else {
+                CommunityMaterial.Icon3.cmd_water_boiler
+            }
+            "weather" -> when (state) {
+                "clear-night" -> CommunityMaterial.Icon3.cmd_weather_night
+                "exceptional" -> CommunityMaterial.Icon.cmd_alert_circle_outline
+                "fog" -> CommunityMaterial.Icon3.cmd_weather_fog
+                "hail" -> CommunityMaterial.Icon3.cmd_weather_hail
+                "lightning" -> CommunityMaterial.Icon3.cmd_weather_lightning
+                "lightning-rainy" -> CommunityMaterial.Icon3.cmd_weather_lightning_rainy
+                "partlycloudy" -> CommunityMaterial.Icon3.cmd_weather_partly_cloudy
+                "pouring" -> CommunityMaterial.Icon3.cmd_weather_pouring
+                "rainy" -> CommunityMaterial.Icon3.cmd_weather_rainy
+                "snowy" -> CommunityMaterial.Icon3.cmd_weather_snowy
+                "snowy-rainy" -> CommunityMaterial.Icon3.cmd_weather_snowy_rainy
+                "sunny" -> CommunityMaterial.Icon3.cmd_weather_sunny
+                "windy" -> CommunityMaterial.Icon3.cmd_weather_windy
+                "windy-variant" -> CommunityMaterial.Icon3.cmd_weather_windy_variant
+                else -> CommunityMaterial.Icon3.cmd_weather_cloudy
+            }
             "zone" -> CommunityMaterial.Icon3.cmd_map_marker_radius
             else -> CommunityMaterial.Icon.cmd_bookmark
         }
     }
 }
 
+private fun binarySensorIcon(state: String?, entity: Entity<Map<String, Any?>>): IIcon {
+    val isOff = state == "off"
+
+    return when (entity.attributes["device_class"]) {
+        "battery" -> if (isOff) CommunityMaterial.Icon.cmd_battery else CommunityMaterial.Icon.cmd_battery_outline
+        "battery_charging" -> if (isOff) CommunityMaterial.Icon.cmd_battery else CommunityMaterial.Icon.cmd_battery_charging
+        "carbon_monoxide" -> if (isOff) CommunityMaterial.Icon3.cmd_smoke_detector else CommunityMaterial.Icon3.cmd_smoke_detector_alert
+        "cold" -> if (isOff) CommunityMaterial.Icon3.cmd_thermometer else CommunityMaterial.Icon3.cmd_snowflake
+        "connectivity" -> if (isOff) CommunityMaterial.Icon.cmd_close_network_outline else CommunityMaterial.Icon.cmd_check_network_outline
+        "door" -> if (isOff) CommunityMaterial.Icon.cmd_door_closed else CommunityMaterial.Icon.cmd_door_open
+        "garage_door" -> if (isOff) CommunityMaterial.Icon2.cmd_garage else CommunityMaterial.Icon2.cmd_garage_open
+        "gas", "problem", "safety", "tamper" -> if (isOff) CommunityMaterial.Icon.cmd_check_circle else CommunityMaterial.Icon.cmd_alert_circle
+        "heat" -> if (isOff) CommunityMaterial.Icon3.cmd_thermometer else CommunityMaterial.Icon2.cmd_fire
+        "light" -> if (isOff) CommunityMaterial.Icon.cmd_brightness_5 else CommunityMaterial.Icon.cmd_brightness_7
+        "lock" -> if (isOff) CommunityMaterial.Icon2.cmd_lock else CommunityMaterial.Icon2.cmd_lock_open
+        "moisture" -> if (isOff) CommunityMaterial.Icon3.cmd_water_off else CommunityMaterial.Icon3.cmd_water
+        "motion" -> if (isOff) CommunityMaterial.Icon3.cmd_motion_sensor_off else CommunityMaterial.Icon3.cmd_motion_sensor
+        "occupancy", "presence" -> if (isOff) CommunityMaterial.Icon2.cmd_home_outline else CommunityMaterial.Icon2.cmd_home
+        "opening" -> if (isOff) CommunityMaterial.Icon3.cmd_square else CommunityMaterial.Icon3.cmd_square_outline
+        "plug", "power" -> if (isOff) CommunityMaterial.Icon3.cmd_power_plug_off else CommunityMaterial.Icon3.cmd_power_plug
+        "running" -> if (isOff) CommunityMaterial.Icon3.cmd_stop else CommunityMaterial.Icon3.cmd_play
+        "smoke" -> if (isOff) CommunityMaterial.Icon3.cmd_smoke_detector_variant else CommunityMaterial.Icon3.cmd_smoke_detector_variant_alert
+        "sound" -> if (isOff) CommunityMaterial.Icon3.cmd_music_note_off else CommunityMaterial.Icon3.cmd_music_note
+        "update" -> if (isOff) CommunityMaterial.Icon3.cmd_package else CommunityMaterial.Icon3.cmd_package_up
+        "vibration" -> if (isOff) CommunityMaterial.Icon.cmd_crop_portrait else CommunityMaterial.Icon3.cmd_vibrate
+        "window" -> if (isOff) CommunityMaterial.Icon3.cmd_window_closed else CommunityMaterial.Icon3.cmd_window_open
+        else -> if (isOff) CommunityMaterial.Icon3.cmd_radiobox_blank else CommunityMaterial.Icon.cmd_checkbox_marked_circle
+    }
+}
+
 private fun coverIcon(state: String?, entity: Entity<Map<String, Any?>>): IIcon {
     val open = state !== "closed"
 
-    return when (entity.attributes?.get("device_class")) {
+    return when (entity.attributes["device_class"]) {
         "garage" -> when (state) {
             "opening" -> CommunityMaterial.Icon.cmd_arrow_up_box
             "closing" -> CommunityMaterial.Icon.cmd_arrow_down_box
@@ -408,6 +485,90 @@ private fun coverIcon(state: String?, entity: Entity<Map<String, Any?>>): IIcon 
             else -> CommunityMaterial.Icon3.cmd_window_open
         }
     }
+}
+
+private fun sensorIcon(state: String?, entity: Entity<Map<String, Any?>>): IIcon {
+    var icon: IIcon? = null
+
+    if (entity.attributes["device_class"] != null) {
+        icon = when (entity.attributes["device_class"]) {
+            "apparent_power", "power", "reactive_power" -> CommunityMaterial.Icon2.cmd_flash
+            "aqi" -> CommunityMaterial.Icon.cmd_air_filter
+            "atmospheric_pressure" -> CommunityMaterial.Icon3.cmd_thermometer_lines
+            "battery" -> {
+                val batteryValue = state?.toDoubleOrNull()
+                if (batteryValue == null) {
+                    when (state) {
+                        "off" -> CommunityMaterial.Icon.cmd_battery
+                        "on" -> CommunityMaterial.Icon.cmd_battery_alert
+                        else -> CommunityMaterial.Icon.cmd_battery_unknown
+                    }
+                } else if (batteryValue <= 5) {
+                    CommunityMaterial.Icon.cmd_battery_alert_variant_outline
+                } else {
+                    when (((batteryValue / 10) * 10).toInt()) {
+                        10 -> CommunityMaterial.Icon.cmd_battery_10
+                        20 -> CommunityMaterial.Icon.cmd_battery_20
+                        30 -> CommunityMaterial.Icon.cmd_battery_30
+                        40 -> CommunityMaterial.Icon.cmd_battery_40
+                        50 -> CommunityMaterial.Icon.cmd_battery_50
+                        60 -> CommunityMaterial.Icon.cmd_battery_60
+                        70 -> CommunityMaterial.Icon.cmd_battery_70
+                        80 -> CommunityMaterial.Icon.cmd_battery_80
+                        90 -> CommunityMaterial.Icon.cmd_battery_90
+                        else -> CommunityMaterial.Icon.cmd_battery
+                    }
+                }
+            }
+            "carbon_dioxide" -> CommunityMaterial.Icon3.cmd_molecule_co2
+            "carbon_monoxide" -> CommunityMaterial.Icon3.cmd_molecule_co
+            "current" -> CommunityMaterial.Icon.cmd_current_ac
+            "data_rate" -> CommunityMaterial.Icon3.cmd_transmission_tower
+            "data_size" -> CommunityMaterial.Icon.cmd_database
+            "date" -> CommunityMaterial.Icon.cmd_calendar
+            "distance" -> CommunityMaterial.Icon.cmd_arrow_left_right
+            "duration" -> CommunityMaterial.Icon3.cmd_progress_clock
+            "energy" -> CommunityMaterial.Icon2.cmd_lightning_bolt
+            "frequency", "voltage" -> CommunityMaterial.Icon3.cmd_sine_wave
+            "gas" -> CommunityMaterial.Icon3.cmd_meter_gas
+            "humidity", "moisture" -> CommunityMaterial.Icon3.cmd_water_percent
+            "illuminance" -> CommunityMaterial.Icon.cmd_brightness_5
+            "irradiance" -> CommunityMaterial.Icon3.cmd_sun_wireless
+            "monetary" -> CommunityMaterial.Icon.cmd_cash
+            "nitrogen_dioxide",
+            "nitrogen_monoxide",
+            "nitrous_oxide",
+            "ozone",
+            "pm1",
+            "pm10",
+            "pm25",
+            "sulphur_dioxide",
+            "volatile_organic_compounds" -> CommunityMaterial.Icon3.cmd_molecule
+            "power_factor" -> CommunityMaterial.Icon.cmd_angle_acute
+            "precipitation" -> CommunityMaterial.Icon3.cmd_weather_rainy
+            "precipitation_intensity" -> CommunityMaterial.Icon3.cmd_weather_pouring
+            "pressure" -> CommunityMaterial.Icon2.cmd_gauge
+            "signal_strength" -> CommunityMaterial.Icon3.cmd_wifi
+            "sound_pressure" -> CommunityMaterial.Icon.cmd_ear_hearing
+            "speed" -> CommunityMaterial.Icon3.cmd_speedometer
+            "temperature" -> CommunityMaterial.Icon3.cmd_thermometer
+            "timestamp" -> CommunityMaterial.Icon.cmd_clock
+            "volume" -> CommunityMaterial.Icon.cmd_car_coolant_level
+            "water" -> CommunityMaterial.Icon3.cmd_water
+            "weight" -> CommunityMaterial.Icon3.cmd_weight
+            "wind_speed" -> CommunityMaterial.Icon3.cmd_weather_windy
+            else -> null
+        }
+    }
+
+    if (icon == null) {
+        val unitOfMeasurement = entity.attributes["unit_of_measurement"]
+        if (unitOfMeasurement != null && unitOfMeasurement in listOf("°C", "°F")) {
+            icon = CommunityMaterial.Icon3.cmd_thermometer
+        }
+    }
+
+    return icon ?: CommunityMaterial.Icon.cmd_eye
 }
 
 suspend fun <T> Entity<T>.onPressed(

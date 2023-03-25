@@ -15,8 +15,8 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import com.mikepenz.iconics.utils.colorInt
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.getIcon
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.wear.EntityStateComplicationsDao
 import javax.inject.Inject
 
@@ -24,7 +24,8 @@ import javax.inject.Inject
 class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
+    lateinit var serverManager: ServerManager
+
     @Inject
     lateinit var entityStateComplicationsDao: EntityStateComplicationsDao
 
@@ -33,8 +34,9 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
     }
 
     override suspend fun onComplicationRequest(request: ComplicationRequest): ComplicationData? {
-        if (request.complicationType != ComplicationType.SHORT_TEXT)
+        if (request.complicationType != ComplicationType.SHORT_TEXT) {
             return null
+        }
 
         val id = request.complicationInstanceId
 
@@ -46,7 +48,7 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
             ).build()
 
         val entity = try {
-            integrationUseCase.getEntity(entityId)
+            serverManager.integrationRepository().getEntity(entityId)
                 ?: return ShortTextComplicationData.Builder(
                     text = PlainComplicationText.Builder(getText(R.string.state_unknown)).build(),
                     contentDescription = PlainComplicationText.Builder(getText(R.string.complication_entity_state_content_description))
@@ -82,9 +84,9 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
                 MonochromaticImage.Builder(
                     Icon.createWithResource(
                         this,
-                        io.homeassistant.companion.android.R.drawable.ic_lightbulb,
-                    ),
-                ).build(),
+                        io.homeassistant.companion.android.R.drawable.ic_lightbulb
+                    )
+                ).build()
             )
             .setTitle(PlainComplicationText.Builder(getText(R.string.entity)).build())
             .build()

@@ -24,7 +24,8 @@ interface HomePresenter {
     fun onInvalidAuthorization()
     fun onFinish()
 
-    suspend fun isConnected(): Boolean
+    fun isConnected(): Boolean
+    fun getServerId(): Int?
     fun getWebSocketState(): WebSocketState?
 
     suspend fun getEntities(): List<Entity<*>>?
@@ -50,4 +51,6 @@ interface HomePresenter {
     suspend fun setTemplateTileContent(content: String)
     suspend fun getTemplateTileRefreshInterval(): Int
     suspend fun setTemplateTileRefreshInterval(interval: Int)
+    suspend fun getWearFavoritesOnly(): Boolean
+    suspend fun setWearFavoritesOnly(enabled: Boolean)
 }

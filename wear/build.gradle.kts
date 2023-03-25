@@ -35,7 +35,7 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.3.2"
+        kotlinCompilerExtensionVersion = "1.4.3"
     }
 
     compileOptions {
@@ -88,12 +88,12 @@ play {
 dependencies {
     implementation(project(":common"))
 
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.20")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.8.10")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.6.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
 
-    implementation("com.google.android.material:material:1.7.0")
+    implementation("com.google.android.material:material:1.8.0")
 
     implementation("androidx.wear:wear:1.2.0")
     implementation("com.google.android.gms:play-services-wearable:18.0.0")
@@ -101,26 +101,26 @@ dependencies {
     implementation("androidx.wear:wear-remote-interactions:1.0.0")
     implementation("androidx.wear:wear-phone-interactions:1.0.1")
 
-    implementation("com.google.dagger:hilt-android:2.44.2")
-    kapt("com.google.dagger:hilt-android-compiler:2.44.2")
+    implementation("com.google.dagger:hilt-android:2.45")
+    kapt("com.google.dagger:hilt-android-compiler:2.45")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.5")
     implementation("com.squareup.okhttp3:okhttp:4.10.0")
 
     implementation("com.mikepenz:iconics-core:5.4.0")
-    implementation("androidx.appcompat:appcompat:1.5.1")
+    implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.mikepenz:community-material-typeface:7.0.96.0-kotlin@aar")
     implementation("com.mikepenz:iconics-compose:5.4.0")
 
     implementation("androidx.activity:activity-ktx:1.6.1")
     implementation("androidx.activity:activity-compose:1.6.1")
-    implementation("androidx.compose.compiler:compiler:1.3.2")
-    implementation(platform("androidx.compose:compose-bom:2022.10.00"))
+    implementation("androidx.compose.compiler:compiler:1.4.3")
+    implementation(platform("androidx.compose:compose-bom:2023.01.00"))
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.ui:ui-tooling")
-    implementation("androidx.wear.compose:compose-foundation:1.1.1")
-    implementation("androidx.wear.compose:compose-material:1.1.1")
-    implementation("androidx.wear.compose:compose-navigation:1.1.1")
+    implementation("androidx.wear.compose:compose-foundation:1.1.2")
+    implementation("androidx.wear.compose:compose-material:1.1.2")
+    implementation("androidx.wear.compose:compose-navigation:1.1.2")
 
     implementation("com.google.guava:guava:31.1-android")
     implementation("androidx.wear.tiles:tiles:1.1.0")
@@ -129,6 +129,6 @@ dependencies {
 
     implementation("androidx.health:health-services-client:1.0.0-beta02")
 
-    implementation(platform("com.google.firebase:firebase-bom:31.1.1"))
+    implementation(platform("com.google.firebase:firebase-bom:31.2.2"))
     implementation("com.google.firebase:firebase-messaging")
 }

@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@android:color/black"
     android:padding="@dimen/box_inset_layout_padding"
     tools:deviceIds="wear">
 
@@ -20,7 +21,7 @@
             android:layout_marginTop="8dp"
             android:ems="10"
             android:hint="@string/input_url_hint"
-            android:inputType="textPersonName"
+            android:inputType="textNoSuggestions"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textView"

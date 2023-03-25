@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.authenticator
 
 import android.content.Context
 import android.util.Log
+import androidx.biometric.BiometricManager.Authenticators
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
@@ -11,19 +12,23 @@ class Authenticator(context: Context, fragmentActivity: FragmentActivity, callba
         const val CANCELED = 2
         const val SUCCESS = 1
         const val ERROR = 0
+
+        const val AUTH_TYPES = Authenticators.DEVICE_CREDENTIAL or Authenticators.BIOMETRIC_WEAK
     }
 
     private val executor = ContextCompat.getMainExecutor(context)
     private val biometricPrompt = BiometricPrompt(
-        fragmentActivity, executor,
+        fragmentActivity,
+        executor,
         object : BiometricPrompt.AuthenticationCallback() {
             override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                 super.onAuthenticationError(errorCode, errString)
                 Log.d("Unlock", "onAuthenticationError -> $errorCode :: $errString")
-                if (errorCode == BiometricPrompt.ERROR_USER_CANCELED)
+                if (errorCode == BiometricPrompt.ERROR_USER_CANCELED) {
                     callback(CANCELED)
-                else
+                } else {
                     callback(ERROR)
+                }
             }
             override fun onAuthenticationFailed() {
                 super.onAuthenticationFailed()
@@ -42,7 +47,7 @@ class Authenticator(context: Context, fragmentActivity: FragmentActivity, callba
         val promptDialog = BiometricPrompt.PromptInfo.Builder()
             .setTitle(title)
             .setConfirmationRequired(false)
-            .setDeviceCredentialAllowed(true)
+            .setAllowedAuthenticators(AUTH_TYPES)
             .build()
 
         biometricPrompt.authenticate(promptDialog)

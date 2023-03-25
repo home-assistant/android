@@ -18,6 +18,7 @@
         <item name="android:navigationBarColor">@color/colorPrimaryDark</item>
         <item name="alertDialogTheme">@style/Theme.HomeAssistant.Dialog.Alert</item>
         <item name="actionBarPopupTheme">@style/ThemeOverlay.MaterialComponents.Dark</item>
+        <item name="bottomSheetDialogTheme">@style/ThemeOverlay.HomeAssistant.BottomSheetDialog</item>
     </style>
 
     <style name="Theme.HomeAssistant.Config" parent="Theme.HomeAssistant" />
@@ -53,6 +54,12 @@
         <item name="android:textColorPrimary">@color/colorOnPrimary</item>
         <item name="colorControlNormal">@color/colorOnPrimary</item>
         <item name="popupTheme">@style/Theme.HomeAssistant.PopupTheme</item>
+    </style>
+
+    <style name="ThemeOverlay.HomeAssistant.BottomSheetDialog" parent="ThemeOverlay.HomeAssistant.BottomSheetDialog.Base"/>
+
+    <style name="ThemeOverlay.HomeAssistant.BottomSheetDialog.Base" parent="ThemeOverlay.MaterialComponents.BottomSheetDialog">
+        <item name="android:backgroundTint">@android:color/transparent</item>
     </style>
 
     <style name="ThemeOverlay.HomeAssistant.ConfigActionBar" parent="ThemeOverlay.MaterialComponents.ActionBar">

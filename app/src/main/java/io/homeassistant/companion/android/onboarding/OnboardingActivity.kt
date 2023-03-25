@@ -39,7 +39,9 @@ class OnboardingActivity : AppCompatActivity() {
                     Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
                         NotificationManagerCompat.from(this).areNotificationsEnabled()
                     )
-        } else false
+        } else {
+            false
+        }
         viewModel.deviceIsWatch = input.isWatch
 
         if (savedInstanceState == null) {

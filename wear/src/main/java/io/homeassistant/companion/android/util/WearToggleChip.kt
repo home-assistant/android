@@ -208,7 +208,7 @@ object WearToggleChip {
             )
             disabledCheckedBackgroundColors = listOf(
                 checkedEndBackgroundColor.copy(alpha = ContentAlpha.disabled),
-                checkedStartBackgroundColor.copy(alpha = ContentAlpha.disabled),
+                checkedStartBackgroundColor.copy(alpha = ContentAlpha.disabled)
             )
         }
         val uncheckedBackgroundColors: List<Color>
@@ -229,7 +229,7 @@ object WearToggleChip {
             )
             disabledUncheckedBackgroundColors = listOf(
                 uncheckedEndBackgroundColor.copy(alpha = ContentAlpha.disabled),
-                uncheckedStartBackgroundColor.copy(alpha = ContentAlpha.disabled),
+                uncheckedStartBackgroundColor.copy(alpha = ContentAlpha.disabled)
             )
         }
 
@@ -290,7 +290,7 @@ class WearToggleChipColors(
     var disabledUncheckedBackgroundPainter: Painter,
     var disabledUncheckedContentColor: Color,
     var disabledUncheckedSecondaryContentColor: Color,
-    var disabledUncheckedIconColor: Color,
+    var disabledUncheckedIconColor: Color
 ) : ToggleChipColors {
 
     @Composable
@@ -299,8 +299,11 @@ class WearToggleChipColors(
             if (enabled) {
                 if (checked) checkedBackgroundPainter else uncheckedBackgroundPainter
             } else {
-                if (checked) disabledCheckedBackgroundPainter else
+                if (checked) {
+                    disabledCheckedBackgroundPainter
+                } else {
                     disabledUncheckedBackgroundPainter
+                }
             }
         )
     }
@@ -322,8 +325,11 @@ class WearToggleChipColors(
             if (enabled) {
                 if (checked) checkedSecondaryContentColor else uncheckedSecondaryContentColor
             } else {
-                if (checked) disabledCheckedSecondaryContentColor else
+                if (checked) {
+                    disabledCheckedSecondaryContentColor
+                } else {
                     disabledUncheckedSecondaryContentColor
+                }
             }
         )
     }
@@ -359,15 +365,21 @@ class WearToggleChipColors(
         if (disabledCheckedIconColor != other.disabledCheckedIconColor) return false
         if (disabledCheckedSecondaryContentColor !=
             other.disabledCheckedSecondaryContentColor
-        ) return false
+        ) {
+            return false
+        }
         if (disabledUncheckedBackgroundPainter !=
             other.disabledUncheckedBackgroundPainter
-        ) return false
+        ) {
+            return false
+        }
         if (disabledUncheckedContentColor != other.disabledUncheckedContentColor) return false
         if (disabledUncheckedIconColor != other.disabledUncheckedIconColor) return false
         if (disabledUncheckedSecondaryContentColor !=
             other.disabledUncheckedSecondaryContentColor
-        ) return false
+        ) {
+            return false
+        }
 
         return true
     }

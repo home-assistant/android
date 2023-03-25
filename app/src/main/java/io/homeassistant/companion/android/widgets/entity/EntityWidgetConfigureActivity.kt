@@ -13,6 +13,7 @@ import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.LinearLayout.VISIBLE
 import android.widget.MultiAutoCompleteTextView.CommaTokenizer
+import android.widget.Spinner
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
@@ -22,7 +23,6 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetStaticConfigureBinding
@@ -45,13 +45,10 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     }
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
-
-    @Inject
     lateinit var staticWidgetDao: StaticWidgetDao
     override val dao get() = staticWidgetDao
 
-    private var entities = LinkedHashMap<String, Entity<Any>>()
+    private var entities = mutableMapOf<Int, List<Entity<Any>>>()
 
     private var selectedEntity: Entity<Any>? = null
     private var appendAttributes: Boolean = false
@@ -59,7 +56,15 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
     private lateinit var binding: WidgetStaticConfigureBinding
 
+    override val serverSelect: View
+        get() = binding.serverSelect
+
+    override val serverSelectList: Spinner
+        get() = binding.serverSelectList
+
     private var requestLauncherSetup = false
+
+    private var entityAdapter: SingleItemArrayAdapter<Entity<Any>>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,7 +78,10 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
         binding.addButton.setOnClickListener {
             if (requestLauncherSetup) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                if (
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                    isValidServerId()
+                ) {
                     getSystemService<AppWidgetManager>()?.requestPinAppWidget(
                         ComponentName(this, EntityWidget::class.java),
                         null,
@@ -84,7 +92,9 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
                         )
                     )
-                } else showAddWidgetError() // this shouldn't be possible
+                } else {
+                    showAddWidgetError()
+                }
             } else {
                 onAddWidget()
             }
@@ -95,10 +105,12 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         val extras = intent.extras
         if (extras != null) {
             appWidgetId = extras.getInt(
-                AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID
+                AppWidgetManager.EXTRA_APPWIDGET_ID,
+                AppWidgetManager.INVALID_APPWIDGET_ID
             )
             requestLauncherSetup = extras.getBoolean(
-                ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, false
+                ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER,
+                false
             )
         }
 
@@ -114,8 +126,9 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             getString(commonR.string.widget_background_type_daynight),
             getString(commonR.string.widget_background_type_transparent)
         )
-        if (DynamicColors.isDynamicColorAvailable())
+        if (DynamicColors.isDynamicColorAvailable()) {
             backgroundTypeValues.add(0, getString(commonR.string.widget_background_type_dynamiccolor))
+        }
         binding.backgroundType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
 
         if (staticWidget != null) {
@@ -125,7 +138,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             binding.stateSeparator.setText(staticWidget.stateSeparator)
             val entity = runBlocking {
                 try {
-                    integrationUseCase.getEntity(staticWidget.entityId)
+                    serverManager.integrationRepository(staticWidget.serverId).getEntity(staticWidget.entityId)
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to get entity information", e)
                     Toast.makeText(applicationContext, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
@@ -169,7 +182,9 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         } else {
             binding.backgroundType.setSelection(0)
         }
-        val entityAdapter = SingleItemArrayAdapter<Entity<Any>>(this) { it?.entityId ?: "" }
+        entityAdapter = SingleItemArrayAdapter(this) { it?.entityId ?: "" }
+
+        setupServerSelect(staticWidget?.serverId)
 
         binding.widgetTextConfigEntityId.setAdapter(entityAdapter)
         binding.widgetTextConfigEntityId.onFocusChangeListener = dropDownOnFocus
@@ -188,8 +203,11 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         binding.backgroundType.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 binding.textColor.visibility =
-                    if (parent?.adapter?.getItem(position) == getString(commonR.string.widget_background_type_transparent)) View.VISIBLE
-                    else View.GONE
+                    if (parent?.adapter?.getItem(position) == getString(commonR.string.widget_background_type_transparent)) {
+                        View.VISIBLE
+                    } else {
+                        View.GONE
+                    }
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {
@@ -197,24 +215,36 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             }
         }
 
-        lifecycleScope.launch {
-            try {
-                // Fetch entities
-                val fetchedEntities = integrationUseCase.getEntities()
-                fetchedEntities?.forEach {
-                    entities[it.entityId] = it
+        serverManager.defaultServers.forEach { server ->
+            lifecycleScope.launch {
+                try {
+                    val fetchedEntities = serverManager.integrationRepository(server.id).getEntities().orEmpty()
+                    entities[server.id] = fetchedEntities
+                    if (server.id == selectedServerId) setAdapterEntities(server.id)
+                } catch (e: Exception) {
+                    // If entities fail to load, it's okay to pass
+                    // an empty map to the dynamicFieldAdapter
+                    Log.e(TAG, "Failed to query entities", e)
                 }
-                entityAdapter.addAll(entities.values)
-                entityAdapter.sort()
-
-                runOnUiThread {
-                    entityAdapter.notifyDataSetChanged()
-                }
-            } catch (e: Exception) {
-                // If entities fail to load, it's okay to pass
-                // an empty map to the dynamicFieldAdapter
-                Log.e(TAG, "Failed to query entities", e)
             }
+        }
+    }
+
+    override fun onServerSelected(serverId: Int) {
+        selectedEntity = null
+        binding.widgetTextConfigEntityId.setText("")
+        setupAttributes()
+        setAdapterEntities(serverId)
+    }
+
+    private fun setAdapterEntities(serverId: Int) {
+        entityAdapter?.let { adapter ->
+            adapter.clearAll()
+            if (entities[serverId] != null) {
+                adapter.addAll(entities[serverId].orEmpty().toMutableList())
+                adapter.sort()
+            }
+            runOnUiThread { adapter.notifyDataSetChanged() }
         }
     }
 
@@ -236,10 +266,10 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         }
 
     private fun setupAttributes() {
-        val fetchedAttributes = selectedEntity?.attributes as Map<String, String>
+        val fetchedAttributes = selectedEntity?.attributes as? Map<String, String>
         val attributesAdapter = ArrayAdapter<String>(this, android.R.layout.simple_dropdown_item_1line)
         binding.widgetTextConfigAttribute.setAdapter(attributesAdapter)
-        attributesAdapter.addAll(*fetchedAttributes.keys.toTypedArray())
+        attributesAdapter.addAll(*fetchedAttributes?.keys.orEmpty().toTypedArray())
         binding.widgetTextConfigAttribute.setTokenizer(CommaTokenizer())
         runOnUiThread {
             attributesAdapter.notifyDataSetChanged()
@@ -261,10 +291,20 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
             intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
 
-            val entity: String = if (selectedEntity == null)
+            intent.putExtra(
+                EntityWidget.EXTRA_SERVER_ID,
+                selectedServerId!!
+            )
+
+            val entity = if (selectedEntity == null) {
                 binding.widgetTextConfigEntityId.text.toString()
-            else
+            } else {
                 selectedEntity!!.entityId
+            }
+            if (entity !in entities[selectedServerId].orEmpty().map { it.entityId }) {
+                showAddWidgetError()
+                return
+            }
             intent.putExtra(
                 EntityWidget.EXTRA_ENTITY_ID,
                 entity
@@ -286,10 +326,11 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             )
 
             if (appendAttributes) {
-                val attributes = if (selectedAttributeIds.isNullOrEmpty())
+                val attributes = if (selectedAttributeIds.isNullOrEmpty()) {
                     binding.widgetTextConfigAttribute.text.toString()
-                else
+                } else {
                     selectedAttributeIds
+                }
                 intent.putExtra(
                     EntityWidget.EXTRA_ATTRIBUTE_IDS,
                     attributes
@@ -312,9 +353,11 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
             intent.putExtra(
                 EntityWidget.EXTRA_TEXT_COLOR,
-                if (binding.backgroundType.selectedItem as String? == getString(commonR.string.widget_background_type_transparent))
+                if (binding.backgroundType.selectedItem as String? == getString(commonR.string.widget_background_type_transparent)) {
                     getHexForColor(if (binding.textColorWhite.isChecked) android.R.color.white else commonR.color.colorWidgetButtonLabelBlack)
-                else null
+                } else {
+                    null
+                }
             )
 
             context.sendBroadcast(intent)
@@ -335,7 +378,8 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         super.onNewIntent(intent)
         if (intent != null && intent.extras != null && intent.hasExtra(PIN_WIDGET_CALLBACK)) {
             appWidgetId = intent.extras!!.getInt(
-                AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID
+                AppWidgetManager.EXTRA_APPWIDGET_ID,
+                AppWidgetManager.INVALID_APPWIDGET_ID
             )
             onAddWidget()
         }

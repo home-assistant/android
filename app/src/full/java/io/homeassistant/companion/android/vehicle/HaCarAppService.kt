@@ -13,13 +13,15 @@ import androidx.car.app.validation.HostValidator
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import kotlinx.coroutines.flow.Flow
+import io.homeassistant.companion.android.common.data.servers.ServerManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.launch
 import okhttp3.internal.toImmutableMap
 import javax.inject.Inject
 
@@ -32,10 +34,11 @@ class HaCarAppService : CarAppService() {
     }
 
     @Inject
-    lateinit var integrationRepository: IntegrationRepository
+    lateinit var serverManager: ServerManager
 
-    @Inject
-    lateinit var authenticationRepository: AuthenticationRepository
+    private val serverId = MutableStateFlow(0)
+    private val allEntities = MutableStateFlow<Map<String, Entity<*>>>(emptyMap())
+    private var allEntitiesJob: Job? = null
 
     override fun createHostValidator(): HostValidator {
         return if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) {
@@ -49,23 +52,14 @@ class HaCarAppService : CarAppService() {
 
     override fun onCreateSession(sessionInfo: SessionInfo): Session {
         return object : Session() {
-
-            private val allEntities: Flow<Map<String, Entity<*>>> = flow {
-                emit(emptyMap())
-                val entities: MutableMap<String, Entity<*>>? =
-                    integrationRepository.getEntities()
-                        ?.associate { it.entityId to it }
-                        ?.toMutableMap()
-                if (entities != null) {
-                    emit(entities.toImmutableMap())
-                    integrationRepository.getEntityUpdates()?.collect { entity ->
-                        entities[entity.entityId] = entity
-                        emit(entities.toImmutableMap())
-                    }
-                } else {
-                    Log.w(TAG, "No entities found?")
+            init {
+                serverManager.getServer()?.let {
+                    loadEntities(lifecycleScope, it.id)
                 }
-            }.shareIn(
+            }
+
+            val serverIdFlow = serverId.asStateFlow()
+            val entityFlow = allEntities.shareIn(
                 lifecycleScope,
                 SharingStarted.WhileSubscribed(10_000),
                 1
@@ -74,10 +68,36 @@ class HaCarAppService : CarAppService() {
             override fun onCreateScreen(intent: Intent): Screen {
                 return MainVehicleScreen(
                     carContext,
-                    integrationRepository,
-                    authenticationRepository,
-                    allEntities
-                )
+                    serverManager,
+                    serverIdFlow,
+                    entityFlow
+                ) { loadEntities(lifecycleScope, it) }
+            }
+        }
+    }
+
+    private fun loadEntities(scope: CoroutineScope, id: Int) {
+        allEntitiesJob?.cancel()
+        allEntitiesJob = scope.launch {
+            allEntities.emit(emptyMap())
+            serverId.value = id
+            val entities: MutableMap<String, Entity<*>>? =
+                if (serverManager.getServer(id) != null) {
+                    serverManager.integrationRepository(id).getEntities()
+                        ?.associate { it.entityId to it }
+                        ?.toMutableMap()
+                } else {
+                    null
+                }
+            if (entities != null) {
+                allEntities.emit(entities.toImmutableMap())
+                serverManager.integrationRepository(id).getEntityUpdates()?.collect { entity ->
+                    entities[entity.entityId] = entity
+                    allEntities.emit(entities.toImmutableMap())
+                }
+            } else {
+                Log.w(TAG, "No entities found?")
+                allEntities.emit(emptyMap())
             }
         }
     }

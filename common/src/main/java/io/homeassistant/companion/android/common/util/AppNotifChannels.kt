@@ -9,6 +9,7 @@ const val databaseChannel = "App Database"
 const val locationDisabledChannel = "Location disabled"
 const val downloadsChannel = "downloads"
 const val generalChannel = "general"
+const val beaconMonitorChannel = "beacon"
 
 val appCreatedChannels = listOf(
     sensorWorkerChannel,
@@ -19,5 +20,6 @@ val appCreatedChannels = listOf(
     databaseChannel,
     locationDisabledChannel,
     downloadsChannel,
-    generalChannel
+    generalChannel,
+    beaconMonitorChannel
 )

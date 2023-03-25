@@ -26,6 +26,7 @@ object NotificationData {
     const val TAG = "MessagingService"
     const val TITLE = "title"
     const val MESSAGE = "message"
+    const val WEBHOOK_ID = "webhook_id"
     const val GROUP_PREFIX = "group_"
     const val CHANNEL = "channel"
     const val IMPORTANCE = "importance"
@@ -44,6 +45,9 @@ object NotificationData {
     const val SYSTEM_STREAM = "system_stream"
     const val CALL_STREAM = "call_stream"
     const val DTMF_STREAM = "dtmf_stream"
+
+    const val MEDIA_STREAM = "media_stream"
+    val ALARM_STREAMS = listOf(ALARM_STREAM, ALARM_STREAM_MAX)
 }
 
 fun createChannelID(
@@ -77,8 +81,9 @@ fun handleChannel(
             handleImportance(data)
         )
 
-        if (channelName == NotificationData.ALARM_STREAM)
+        if (channelName == NotificationData.ALARM_STREAM) {
             handleChannelSound(context, channel)
+        }
 
         setChannelLedColor(context, data, channel)
         setChannelVibrationPattern(data, channel)
@@ -91,7 +96,6 @@ fun handleChannel(
 fun handleImportance(
     data: Map<String, String>
 ): Int {
-
     when (data[NotificationData.IMPORTANCE]) {
         "high" -> {
             return NotificationManager.IMPORTANCE_HIGH
@@ -206,12 +210,14 @@ fun handleSmallIcon(
         val iconName = notificationIcon.split(":")[1]
         val iconDrawable =
             IconicsDrawable(context, "cmd-$iconName")
-        if (iconDrawable.icon != null)
+        if (iconDrawable.icon != null) {
             builder.setSmallIcon(iconDrawable.toAndroidIconCompat())
-        else
+        } else {
             builder.setSmallIcon(R.drawable.ic_stat_ic_notification)
-    } else
+        }
+    } else {
         builder.setSmallIcon(R.drawable.ic_stat_ic_notification)
+    }
 }
 
 fun getGroupNotificationBuilder(
@@ -220,7 +226,6 @@ fun getGroupNotificationBuilder(
     group: String,
     data: Map<String, String>
 ): NotificationCompat.Builder {
-
     val groupNotificationBuilder = NotificationCompat.Builder(context, channelId)
         .setStyle(
             NotificationCompat.BigTextStyle()
@@ -231,8 +236,9 @@ fun getGroupNotificationBuilder(
         .setGroup(group)
         .setGroupSummary(true)
 
-    if (data[NotificationData.ALERT_ONCE].toBoolean())
+    if (data[NotificationData.ALERT_ONCE].toBoolean()) {
         groupNotificationBuilder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
+    }
     handleColor(context, groupNotificationBuilder, data)
     handleSmallIcon(context, groupNotificationBuilder, data)
     return groupNotificationBuilder

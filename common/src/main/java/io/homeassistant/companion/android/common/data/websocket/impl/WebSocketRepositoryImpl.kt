@@ -8,15 +8,16 @@ import com.fasterxml.jackson.module.kotlin.contains
 import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
 import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.data.HomeAssistantApis.Companion.USER_AGENT
 import io.homeassistant.companion.android.common.data.HomeAssistantApis.Companion.USER_AGENT_STRING
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
-import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.AuthorizationException
 import io.homeassistant.companion.android.common.data.integration.ServiceData
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
-import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRequest
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
@@ -24,6 +25,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ar
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ConversationResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.CurrentUserResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DomainResponse
@@ -35,7 +37,11 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ma
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TemplateUpdatedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetTlvResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TriggerEvent
+import io.homeassistant.companion.android.common.util.toHexString
+import io.homeassistant.companion.android.database.server.ServerUserInfo
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -64,13 +70,12 @@ import okio.ByteString
 import java.io.IOException
 import java.util.Collections
 import java.util.concurrent.atomic.AtomicLong
-import javax.inject.Inject
 import kotlin.coroutines.resumeWithException
 
-class WebSocketRepositoryImpl @Inject constructor(
+class WebSocketRepositoryImpl @AssistedInject constructor(
     private val okHttpClient: OkHttpClient,
-    private val urlRepository: UrlRepository,
-    private val authenticationRepository: AuthenticationRepository
+    private val serverManager: ServerManager,
+    @Assisted private val serverId: Int
 ) : WebSocketRepository, WebSocketListener() {
 
     companion object {
@@ -103,6 +108,8 @@ class WebSocketRepositoryImpl @Inject constructor(
     private var connected = CompletableDeferred<Boolean>()
     private val eventSubscriptionMutex = Mutex()
 
+    private val server get() = serverManager.getServer(serverId)
+
     override fun getConnectionState(): WebSocketState? = connectionState
 
     override suspend fun sendPing(): Boolean {
@@ -125,6 +132,18 @@ class WebSocketRepositoryImpl @Inject constructor(
         return mapResponse(socketResponse)
     }
 
+    override suspend fun getCurrentUser(): CurrentUserResponse? {
+        val socketResponse = sendMessage(
+            mapOf(
+                "type" to "auth/current_user"
+            )
+        )
+
+        val response: CurrentUserResponse? = mapResponse(socketResponse)
+        response?.let { updateServerWithUser(it) }
+        return response
+    }
+
     override suspend fun getStates(): List<EntityResponse<Any>>? {
         val socketResponse = sendMessage(
             mapOf(
@@ -136,7 +155,6 @@ class WebSocketRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getAreaRegistry(): List<AreaRegistryResponse>? {
-
         val socketResponse = sendMessage(
             mapOf(
                 "type" to "config/area_registry/list"
@@ -147,7 +165,6 @@ class WebSocketRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getDeviceRegistry(): List<DeviceRegistryResponse>? {
-
         val socketResponse = sendMessage(
             mapOf(
                 "type" to "config/device_registry/list"
@@ -158,7 +175,6 @@ class WebSocketRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getEntityRegistry(): List<EntityRegistryResponse>? {
-
         val socketResponse = sendMessage(
             mapOf(
                 "type" to "config/entity_registry/list"
@@ -312,24 +328,27 @@ class WebSocketRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getNotifications(): Flow<Map<String, Any>>? =
+    override suspend fun getNotifications(): Flow<Map<String, Any>>? = server?.let {
         subscribeTo(
             SUBSCRIBE_TYPE_PUSH_NOTIFICATION_CHANNEL,
             mapOf(
-                "webhook_id" to urlRepository.getWebhookId().toString(),
+                "webhook_id" to it.connection.webhookId!!,
                 "support_confirm" to true
             ),
             DISCONNECT_DELAY
         )
+    }
 
     override suspend fun ackNotification(confirmId: String): Boolean {
-        val response = sendMessage(
-            mapOf(
-                "type" to "mobile_app/push_notification_confirm",
-                "webhook_id" to urlRepository.getWebhookId(),
-                "confirm_id" to confirmId
+        val response = server?.let {
+            sendMessage(
+                mapOf(
+                    "type" to "mobile_app/push_notification_confirm",
+                    "webhook_id" to it.connection.webhookId!!,
+                    "confirm_id" to confirmId
+                )
             )
-        )
+        }
         return response?.success == true
     }
 
@@ -356,7 +375,9 @@ class WebSocketRepositoryImpl @Inject constructor(
                     response.error.get("code").let {
                         if (it.isNumber) it.asInt() else null
                     }
-                } else null
+                } else {
+                    null
+                }
             )
         }
     }
@@ -384,7 +405,76 @@ class WebSocketRepositoryImpl @Inject constructor(
                     response.error.get("code").let {
                         if (it.isNumber) it.asInt() else null
                     }
-                } else null
+                } else {
+                    null
+                }
+            )
+        }
+    }
+
+    /**
+     * Return a list of all Thread datasets known to the server.
+     * @return List with [ThreadDatasetResponse]s, or `null` if not an admin or no response.
+     */
+    override suspend fun getThreadDatasets(): List<ThreadDatasetResponse>? {
+        val response = sendMessage(
+            mapOf(
+                "type" to "thread/list_datasets"
+            )
+        )
+        return if (response?.success == true && response.result?.contains("datasets") == true) {
+            mapper.convertValue(response.result["datasets"]!!)
+        } else {
+            null
+        }
+    }
+
+    /**
+     * Return the TLV value for a dataset.
+     * @return [ThreadDatasetTlvResponse] for the Thread dataset, or `null` if not found, not an
+     * admin or no response.
+     */
+    override suspend fun getThreadDatasetTlv(datasetId: String): ThreadDatasetTlvResponse? {
+        val response = sendMessage(
+            mapOf(
+                "type" to "thread/get_dataset_tlv",
+                "dataset_id" to datasetId
+            )
+        )
+
+        return mapResponse(response)
+    }
+
+    /**
+     * Add a new set of Thread network credentials to the server.
+     * @return `true` if the server indicated success
+     */
+    override suspend fun addThreadDataset(tlv: ByteArray): Boolean {
+        val response = sendMessage(
+            mapOf(
+                "type" to "thread/add_dataset_tlv",
+                "source" to "Google",
+                "tlv" to tlv.toHexString()
+            )
+        )
+        return response?.success == true
+    }
+
+    /**
+     * Update this repository's [server] with information from a [CurrentUserResponse] like user
+     * name and admin status.
+     */
+    private fun updateServerWithUser(user: CurrentUserResponse) {
+        server?.let {
+            serverManager.updateServer(
+                it.copy(
+                    user = ServerUserInfo(
+                        id = user.id,
+                        name = user.name,
+                        isOwner = user.isOwner,
+                        isAdmin = user.isAdmin
+                    )
+                )
             )
         }
     }
@@ -395,7 +485,7 @@ class WebSocketRepositoryImpl @Inject constructor(
                 return !connected.isCancelled
             }
 
-            val url = urlRepository.getUrl()
+            val url = server?.connection?.getUrl()
             if (url == null) {
                 Log.w(TAG, "No url to connect websocket too.")
                 return false
@@ -417,7 +507,7 @@ class WebSocketRepositoryImpl @Inject constructor(
                         mapper.writeValueAsString(
                             mapOf(
                                 "type" to "auth",
-                                "access_token" to authenticationRepository.retrieveAccessToken()
+                                "access_token" to serverManager.authenticationRepository(serverId).retrieveAccessToken()
                             )
                         )
                     )
@@ -584,14 +674,19 @@ class WebSocketRepositoryImpl @Inject constructor(
         }
     }
 
+    override fun shutdown() {
+        connection?.close(1001, "Session removed from app.")
+    }
+
     private fun handleClosingSocket() {
         ioScope.launch {
             connectedMutex.withLock {
                 connected = CompletableDeferred()
                 connection = null
                 connectionHaVersion = null
-                if (connectionState != WebSocketState.CLOSED_AUTH)
+                if (connectionState != WebSocketState.CLOSED_AUTH) {
                     connectionState = WebSocketState.CLOSED_OTHER
+                }
                 synchronized(activeMessages) {
                     activeMessages
                         .filterValues { it.eventFlow == null }

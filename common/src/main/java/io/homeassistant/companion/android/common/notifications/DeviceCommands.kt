@@ -40,7 +40,10 @@ object DeviceCommandData {
     const val BLE_TRANSMIT = "ble_transmit"
 
     val BLE_COMMANDS = listOf(
-        BLE_SET_ADVERTISE_MODE, BLE_SET_TRANSMIT_POWER, BLE_SET_UUID, BLE_SET_MAJOR,
+        BLE_SET_ADVERTISE_MODE,
+        BLE_SET_TRANSMIT_POWER,
+        BLE_SET_UUID,
+        BLE_SET_MAJOR,
         BLE_SET_MINOR
     )
     val BLE_TRANSMIT_COMMANDS =
@@ -86,10 +89,12 @@ fun commandBeaconMonitor(
     }
     val command = data[NotificationData.COMMAND]
     Log.d(TAG, "Processing command: ${data[NotificationData.MESSAGE]}")
-    if (command == DeviceCommandData.TURN_OFF)
+    if (command == DeviceCommandData.TURN_OFF) {
         BluetoothSensorManager.enableDisableBeaconMonitor(context, false)
-    if (command == DeviceCommandData.TURN_ON)
+    }
+    if (command == DeviceCommandData.TURN_ON) {
         BluetoothSensorManager.enableDisableBeaconMonitor(context, true)
+    }
     return true
 }
 
@@ -108,10 +113,12 @@ fun commandBleTransmitter(
     }
     val command = data[NotificationData.COMMAND]
     Log.d(TAG, "Processing command: ${data[NotificationData.MESSAGE]}")
-    if (command == DeviceCommandData.TURN_OFF)
+    if (command == DeviceCommandData.TURN_OFF) {
         BluetoothSensorManager.enableDisableBLETransmitter(context, false)
-    if (command == DeviceCommandData.TURN_ON)
+    }
+    if (command == DeviceCommandData.TURN_ON) {
         BluetoothSensorManager.enableDisableBLETransmitter(context, true)
+    }
     if (command in DeviceCommandData.BLE_COMMANDS) {
         sensorDao.updateSettingValue(
             BluetoothSensorManager.bleTransmitter.id,
@@ -151,14 +158,14 @@ fun commandBleTransmitter(
 
         // Force the transmitter to restart and send updated attributes
         mainScope.launch {
-            sensorDao.updateLastSentStateAndIcon(
+            sensorDao.updateLastSentStatesAndIcons(
                 BluetoothSensorManager.bleTransmitter.id,
                 null,
                 null
             )
         }
-        BluetoothSensorManager().requestSensorUpdate(context)
-        SensorUpdateReceiver.updateSensors(context)
     }
+    BluetoothSensorManager().requestSensorUpdate(context)
+    SensorUpdateReceiver.updateSensors(context)
     return true
 }

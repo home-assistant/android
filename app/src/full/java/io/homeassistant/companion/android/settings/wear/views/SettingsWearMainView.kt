@@ -10,20 +10,15 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.wearable.Node
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.settings.wear.SettingsWearViewModel
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class SettingsWearMainView : AppCompatActivity() {
 
     private val settingsWearViewModel by viewModels<SettingsWearViewModel>()
-
-    @Inject
-    lateinit var integrationUseCase: IntegrationRepository
 
     private val registerActivityResult = registerForActivityResult(
         OnboardApp(),
@@ -84,7 +79,8 @@ class SettingsWearMainView : AppCompatActivity() {
         if (result != null) {
             val (url, authCode, deviceName, deviceTrackingEnabled, _) = result
             settingsWearViewModel.sendAuthToWear(url, authCode, deviceName, deviceTrackingEnabled, true)
-        } else
+        } else {
             Log.e(TAG, "onOnboardingComplete: Activity result returned null intent data")
+        }
     }
 }

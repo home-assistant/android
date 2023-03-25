@@ -25,8 +25,6 @@ class BedtimeModeSensorManager : SensorManager {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/wear-os/sensors"
     }
-    override val enabledByDefault: Boolean
-        get() = false
     override val name: Int
         get() = commonR.string.sensor_name_bedtime_mode
 
@@ -47,9 +45,9 @@ class BedtimeModeSensorManager : SensorManager {
     }
 
     private fun updateBedtimeMode(context: Context) {
-
-        if (!isEnabled(context, bedtimeMode.id))
+        if (!isEnabled(context, bedtimeMode)) {
             return
+        }
 
         val state = try {
             Settings.Global.getInt(context.contentResolver, if (Build.MANUFACTURER == "samsung") "setting_bedtime_mode_running_state" else "bedtime_mode") == 1

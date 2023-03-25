@@ -9,6 +9,7 @@ import android.view.MenuItem
 import android.view.ViewGroup
 import androidx.appcompat.widget.SearchView
 import androidx.biometric.BiometricManager
+import androidx.fragment.app.commit
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
@@ -19,10 +20,11 @@ import eightbitlab.com.blurview.RenderScriptBlur
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
 import io.homeassistant.companion.android.settings.sensor.SensorDetailFragment
+import io.homeassistant.companion.android.settings.server.ServerSettingsFragment
 import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
@@ -32,7 +34,7 @@ import io.homeassistant.companion.android.common.R as commonR
 class SettingsActivity : BaseActivity() {
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
+    lateinit var serverManager: ServerManager
 
     private lateinit var authenticator: Authenticator
     private lateinit var blurView: BlurView
@@ -81,12 +83,16 @@ class SettingsActivity : BaseActivity() {
 
         if (savedInstanceState == null) {
             val settingsNavigation = intent.getStringExtra("fragment")
-            supportFragmentManager
-                .beginTransaction()
-                .replace(
+            supportFragmentManager.commit {
+                replace(
                     R.id.content,
                     when {
-                        settingsNavigation == "websocket" -> WebsocketSettingFragment::class.java
+                        settingsNavigation == "websocket" ->
+                            if (serverManager.defaultServers.size == 1) {
+                                WebsocketSettingFragment::class.java
+                            } else {
+                                SettingsFragment::class.java
+                            }
                         settingsNavigation == "notification_history" -> NotificationHistoryFragment::class.java
                         settingsNavigation?.startsWith("sensors/") == true -> SensorDetailFragment::class.java
                         settingsNavigation?.startsWith("tiles/") == true -> ManageTilesFragment::class.java
@@ -98,48 +104,45 @@ class SettingsActivity : BaseActivity() {
                     } else if (settingsNavigation?.startsWith("tiles/") == true) {
                         val tileId = settingsNavigation.split("/")[1]
                         Bundle().apply { putString("id", tileId) }
-                    } else null
+                    } else if (settingsNavigation == "websocket") {
+                        val servers = serverManager.defaultServers
+                        if (servers.size == 1) {
+                            Bundle().apply { putInt(WebsocketSettingFragment.EXTRA_SERVER, servers[0].id) }
+                        } else {
+                            null
+                        }
+                    } else {
+                        null
+                    }
                 )
-                .commit()
+            }
         }
     }
 
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        runBlocking {
-            integrationUseCase.setAppActive(false)
-        }
+        setAppActive(false)
     }
 
     override fun onPause() {
         super.onPause()
-        runBlocking {
-            integrationUseCase.setAppActive(false)
-        }
+        setAppActive(false)
     }
 
     override fun onResume() {
         super.onResume()
-
-        val appLocked = runBlocking {
-            integrationUseCase.isAppLocked()
-        }
-
-        blurView.setBlurEnabled(appLocked)
+        blurView.setBlurEnabled(isAppLocked())
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
-        if (hasFocus) {
-            val appLocked = runBlocking {
-                integrationUseCase.isAppLocked()
-            }
-
-            if (appLocked) {
+        if (hasFocus && !isFinishing) {
+            if (isAppLocked()) {
                 authenticating = true
                 authenticator.authenticate(getString(commonR.string.biometric_title))
                 blurView.setBlurEnabled(true)
             } else {
+                setAppActive(true)
                 blurView.setBlurEnabled(false)
             }
         }
@@ -161,15 +164,53 @@ class SettingsActivity : BaseActivity() {
                 Authenticator.SUCCESS -> {
                     Log.d(TAG, "Authentication successful, unlocking app")
                     blurView.setBlurEnabled(false)
-                    runBlocking {
-                        integrationUseCase.setAppActive(true)
-                    }
+                    setAppActive(true)
                 }
                 Authenticator.CANCELED -> {
                     Log.d(TAG, "Authentication canceled by user, closing activity")
                     finishAffinity()
                 }
                 else -> Log.d(TAG, "Authentication failed, retry attempts allowed")
+            }
+        }
+    }
+
+    /**
+     * @return `true` if the app is locked for the active server or the currently visible server
+     */
+    private fun isAppLocked(): Boolean {
+        val serverFragment = supportFragmentManager.findFragmentByTag(ServerSettingsFragment.TAG)
+        val serverLocked = serverFragment?.let { isAppLocked((it as ServerSettingsFragment).getServerId()) } ?: false
+        return serverLocked || isAppLocked(ServerManager.SERVER_ID_ACTIVE)
+    }
+
+    fun isAppLocked(serverId: Int?): Boolean = runBlocking {
+        serverManager.getServer(serverId ?: ServerManager.SERVER_ID_ACTIVE)?.let {
+            try {
+                serverManager.integrationRepository(it.id).isAppLocked()
+            } catch (e: IllegalArgumentException) {
+                Log.w(TAG, "Cannot determine app locked state")
+                false
+            }
+        } ?: false
+    }
+
+    /**
+     * Set the app active for the currently active server, and the currently visible server if
+     * different
+     */
+    private fun setAppActive(active: Boolean) {
+        val serverFragment = supportFragmentManager.findFragmentByTag(ServerSettingsFragment.TAG)
+        serverFragment?.let { setAppActive((it as ServerSettingsFragment).getServerId(), active) }
+        setAppActive(ServerManager.SERVER_ID_ACTIVE, active)
+    }
+
+    fun setAppActive(serverId: Int?, active: Boolean) = runBlocking {
+        serverManager.getServer(serverId ?: ServerManager.SERVER_ID_ACTIVE)?.let {
+            try {
+                serverManager.integrationRepository(it.id).setAppActive(active)
+            } catch (e: IllegalArgumentException) {
+                Log.w(TAG, "Cannot set app active $active for server $serverId")
             }
         }
     }
@@ -189,7 +230,7 @@ class SettingsActivity : BaseActivity() {
     }
 
     fun requestAuthentication(title: String, callback: (Int) -> Boolean): Boolean {
-        return if (BiometricManager.from(this).canAuthenticate() != BiometricManager.BIOMETRIC_SUCCESS) {
+        return if (BiometricManager.from(this).canAuthenticate(Authenticator.AUTH_TYPES) != BiometricManager.BIOMETRIC_SUCCESS) {
             false
         } else {
             externalAuthCallback = callback

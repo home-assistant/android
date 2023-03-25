@@ -70,8 +70,9 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
                     var searchList: Array<NotificationItem> = emptyArray()
                     if (!query.isNullOrEmpty()) {
                         for (item in allNotifications) {
-                            if (item.message.contains(query, true))
+                            if (item.message.contains(query, true)) {
                                 searchList += item
+                            }
                         }
                         prefCategory?.title = getString(commonR.string.search_results)
                         reloadNotifications(searchList, prefCategory)
@@ -96,8 +97,9 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
             }
             item.isChecked = !item.isChecked
             filterNotifications(filterValue, notificationDao, prefCategory)
-        } else if (item.itemId == R.id.action_delete)
+        } else if (item.itemId == R.id.action_delete) {
             deleteAllConfirmation(notificationDao)
+        }
         return super.onOptionsItemSelected(item)
     }
 

@@ -78,11 +78,14 @@ class SensorSettingsViewModel @Inject constructor(
                             ) &&
                             (
                                 sensorFilter == SensorFilter.ALL ||
-                                    (sensorFilter == SensorFilter.ENABLED && manager.isEnabled(app.applicationContext, sensor.id)) ||
-                                    (sensorFilter == SensorFilter.DISABLED && !manager.isEnabled(app.applicationContext, sensor.id))
+                                    (sensorFilter == SensorFilter.ENABLED && manager.isEnabled(app.applicationContext, sensor)) ||
+                                    (sensorFilter == SensorFilter.DISABLED && !manager.isEnabled(app.applicationContext, sensor))
                                 )
                     }
-                    .mapNotNull { sensor -> sensorsList.firstOrNull { it.id == sensor.id } }
+                    .mapNotNull { sensor ->
+                        sensorsList.filter { it.id == sensor.id }
+                            .maxByOrNull { it.enabled } // If any server is enabled, show the value
+                    }
             }
             .associateBy { it.id }
 

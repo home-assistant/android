@@ -8,6 +8,11 @@ import android.os.Process.myPid
 import android.os.Process.myUid
 import androidx.core.content.getSystemService
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.components.SingletonComponent
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.SensorSetting
@@ -27,7 +32,6 @@ interface SensorManager {
     }
 
     val name: Int
-    val enabledByDefault: Boolean
 
     data class BasicSensor(
         val id: String,
@@ -40,7 +44,8 @@ interface SensorManager {
         val docsLink: String? = null,
         val stateClass: String? = null,
         val entityCategory: String? = null,
-        val updateType: UpdateType = UpdateType.WORKER
+        val updateType: UpdateType = UpdateType.WORKER,
+        val enabledByDefault: Boolean = false
     ) {
         enum class UpdateType {
             INTENT, WORKER, LOCATION, CUSTOM
@@ -61,9 +66,9 @@ interface SensorManager {
 
     fun checkPermission(context: Context, sensorId: String): Boolean {
         return requiredPermissions(sensorId).all {
-            if (sensorId != "last_used_app")
+            if (sensorId != "last_used_app") {
                 context.checkPermission(it, myPid(), myUid()) == PackageManager.PERMISSION_GRANTED
-            else {
+            } else {
                 checkUsageStatsPermission(context)
             }
         }
@@ -77,11 +82,35 @@ interface SensorManager {
         return mode == AppOpsManager.MODE_ALLOWED
     }
 
-    fun isEnabled(context: Context, sensorId: String): Boolean {
+    /** @return `true` if this sensor is enabled on any server */
+    fun isEnabled(context: Context, basicSensor: BasicSensor): Boolean {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
-        val permission = checkPermission(context, sensorId)
-        val sensor = sensorDao.getOrDefault(sensorId, permission, enabledByDefault)
-        return sensor.enabled
+        val permission = checkPermission(context, basicSensor.id)
+        return sensorDao.getAnyIsEnabled(
+            basicSensor.id,
+            serverManager(context).defaultServers.map { it.id },
+            permission,
+            basicSensor.enabledByDefault
+        )
+    }
+
+    /** @return `true` if this sensor is enabled for the specified server */
+    fun isEnabled(context: Context, basicSensor: BasicSensor, serverId: Int): Boolean {
+        val sensorDao = AppDatabase.getInstance(context).sensorDao()
+        val permission = checkPermission(context, basicSensor.id)
+        return sensorDao.getOrDefault(
+            basicSensor.id,
+            serverId,
+            permission,
+            basicSensor.enabledByDefault
+        )?.enabled == true
+    }
+
+    /** @return Set of server IDs for which this sensor is enabled */
+    fun getEnabledServers(context: Context, basicSensor: BasicSensor): Set<Int> {
+        val sensorDao = AppDatabase.getInstance(context).sensorDao()
+        val permission = checkPermission(context, basicSensor.id)
+        return sensorDao.get(basicSensor.id).filter { it.enabled && permission }.map { it.serverId }.toSet()
     }
 
     /**
@@ -169,15 +198,16 @@ interface SensorManager {
         settingType: SensorSettingType,
         default: String,
         enabled: Boolean = true,
-        entries: List<String> = arrayListOf(),
+        entries: List<String> = arrayListOf()
     ): String {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val setting = sensorDao
             .getSettings(sensor.id)
             .firstOrNull { it.name == settingName }
             ?.value
-        if (setting == null)
+        if (setting == null) {
             sensorDao.add(SensorSetting(sensor.id, settingName, default, settingType, enabled, entries = entries))
+        }
 
         return setting ?: default
     }
@@ -188,11 +218,14 @@ interface SensorManager {
         state: Any,
         mdiIcon: String,
         attributes: Map<String, Any?>,
-        forceUpdate: Boolean = false,
+        forceUpdate: Boolean = false
     ) {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
-        val sensor = sensorDao.get(basicSensor.id)?.let {
-            it.copy(
+        val sensors = sensorDao.get(basicSensor.id)
+        if (sensors.isEmpty()) return
+
+        sensors.forEach {
+            val sensor = it.copy(
                 state = state.toString(),
                 stateType = when (state) {
                     is Boolean -> "boolean"
@@ -209,11 +242,10 @@ interface SensorManager {
                 stateClass = basicSensor.stateClass,
                 entityCategory = basicSensor.entityCategory,
                 lastSentState = if (forceUpdate) null else it.lastSentState,
-                lastSentIcon = if (forceUpdate) null else it.lastSentIcon,
+                lastSentIcon = if (forceUpdate) null else it.lastSentIcon
             )
-        } ?: return
-
-        sensorDao.update(sensor)
+            sensorDao.update(sensor)
+        }
         sensorDao.replaceAllAttributes(
             basicSensor.id,
             attributes = attributes.map { item ->
@@ -252,6 +284,19 @@ interface SensorManager {
             }
         )
     }
+
+    @EntryPoint
+    @InstallIn(SingletonComponent::class)
+    interface SensorManagerEntryPoint {
+        fun serverManager(): ServerManager
+    }
+
+    fun serverManager(context: Context) =
+        EntryPointAccessors.fromApplication(
+            context.applicationContext,
+            SensorManagerEntryPoint::class.java
+        )
+            .serverManager()
 }
 
 fun SensorManager.id(): String {

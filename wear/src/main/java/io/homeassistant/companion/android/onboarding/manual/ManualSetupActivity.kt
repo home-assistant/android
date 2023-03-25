@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.onboarding.manual_setup
+package io.homeassistant.companion.android.onboarding.manual
 
 import android.content.Context
 import android.content.Intent
@@ -40,8 +40,8 @@ class ManualSetupActivity : AppCompatActivity(), ManualSetupView {
         }
     }
 
-    override fun startIntegration() {
-        startActivity(MobileAppIntegrationActivity.newInstance(this))
+    override fun startIntegration(serverId: Int) {
+        startActivity(MobileAppIntegrationActivity.newInstance(this, serverId))
     }
 
     override fun showLoading() {

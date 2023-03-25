@@ -48,8 +48,11 @@ fun SettingsRow(
                     .size(24.dp)
                     .alpha(if (enabled) ContentAlpha.high else ContentAlpha.disabled),
                 colorFilter = ColorFilter.tint(
-                    if (enabled) MaterialTheme.colors.primary
-                    else contentColorFor(backgroundColor = MaterialTheme.colors.background)
+                    if (enabled) {
+                        MaterialTheme.colors.primary
+                    } else {
+                        contentColorFor(backgroundColor = MaterialTheme.colors.background)
+                    }
                 )
             )
         } else {

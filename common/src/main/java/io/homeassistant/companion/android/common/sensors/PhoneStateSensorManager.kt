@@ -49,17 +49,17 @@ class PhoneStateSensorManager : SensorManager {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#cellular-provider-sensor"
     }
-    override val enabledByDefault: Boolean
-        get() = false
     override val name: Int
         get() = commonR.string.sensor_name_phone
     override fun hasSensor(context: Context): Boolean {
         return context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
     }
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1)
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
             listOf(phoneState, sim_1, sim_2)
-        else listOf(phoneState)
+        } else {
+            listOf(phoneState)
+        }
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
@@ -75,7 +75,7 @@ class PhoneStateSensorManager : SensorManager {
     }
 
     private fun checkPhoneState(context: Context) {
-        if (isEnabled(context, phoneState.id)) {
+        if (isEnabled(context, phoneState)) {
             var currentPhoneState = "unknown"
 
             if (checkPermission(context, phoneState.id)) {
@@ -96,8 +96,9 @@ class PhoneStateSensorManager : SensorManager {
 
     private fun updatePhoneStateSensor(context: Context, state: String) {
         var phoneIcon = "mdi:phone"
-        if (state == "ringing" || state == "offhook")
+        if (state == "ringing" || state == "offhook") {
             phoneIcon += "-in-talk"
+        }
 
         onSensorUpdated(
             context,
@@ -114,8 +115,9 @@ class PhoneStateSensorManager : SensorManager {
             1 -> sim_2
             else -> throw IllegalArgumentException("Invalid sim slot: $slotIndex")
         }
-        if (!isEnabled(context, basicSimSensor.id))
+        if (!isEnabled(context, basicSimSensor)) {
             return
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
             var displayName = "Unavailable"
             val attrs = mutableMapOf<String, Any>()
@@ -128,7 +130,7 @@ class PhoneStateSensorManager : SensorManager {
 
                 if (info != null) {
                     try {
-                        displayName = info.displayName?.toString() ?: displayName
+                        displayName = info.displayName?.toString() ?: info.carrierName.toString()
                         attrs["carrier name"] = info.carrierName
                         attrs["iso country code"] = info.countryIso
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {

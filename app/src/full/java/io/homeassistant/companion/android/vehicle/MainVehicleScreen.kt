@@ -22,15 +22,15 @@ import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import com.mikepenz.iconics.utils.sizeDp
 import com.mikepenz.iconics.utils.toAndroidIconCompat
-import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.getIcon
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.launch.LaunchActivity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -40,9 +40,10 @@ import io.homeassistant.companion.android.common.R as commonR
 @RequiresApi(Build.VERSION_CODES.O)
 class MainVehicleScreen(
     carContext: CarContext,
-    private val integrationRepository: IntegrationRepository,
-    private val authenticationRepository: AuthenticationRepository,
-    private val allEntities: Flow<Map<String, Entity<*>>>
+    val serverManager: ServerManager,
+    private val serverId: StateFlow<Int>,
+    private val allEntities: Flow<Map<String, Entity<*>>>,
+    private val onChangeServer: (Int) -> Unit
 ) : Screen(carContext) {
 
     companion object {
@@ -57,14 +58,15 @@ class MainVehicleScreen(
             "lock" to commonR.string.locks,
             "scene" to commonR.string.scenes,
             "script" to commonR.string.scripts,
-            "switch" to commonR.string.switches,
+            "switch" to commonR.string.switches
         )
         private val SUPPORTED_DOMAINS = SUPPORTED_DOMAINS_WITH_STRING.keys
 
         private val MAP_DOMAINS = listOf(
             "device_tracker",
             "person",
-            "zone",
+            "sensor",
+            "zone"
         )
     }
 
@@ -74,12 +76,13 @@ class MainVehicleScreen(
     init {
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                isLoggedIn = authenticationRepository.getSessionState() == SessionState.CONNECTED
+                isLoggedIn = serverManager.isRegistered() &&
+                    serverManager.authenticationRepository().getSessionState() == SessionState.CONNECTED
                 invalidate()
                 while (isLoggedIn != true) {
                     delay(1000)
-                    isLoggedIn =
-                        authenticationRepository.getSessionState() == SessionState.CONNECTED
+                    isLoggedIn = serverManager.isRegistered() &&
+                        serverManager.authenticationRepository().getSessionState() == SessionState.CONNECTED
                     invalidate()
                 }
                 allEntities.collect { entities ->
@@ -157,7 +160,7 @@ class MainVehicleScreen(
                         screenManager.push(
                             EntityGridVehicleScreen(
                                 carContext,
-                                integrationRepository,
+                                serverManager.integrationRepository(serverId.value),
                                 friendlyDomain,
                                 allEntities.map { it.values.filter { entity -> entity.domain == domain } }
                             )
@@ -187,13 +190,47 @@ class MainVehicleScreen(
                     screenManager.push(
                         MapVehicleScreen(
                             carContext,
-                            integrationRepository,
+                            serverManager.integrationRepository(serverId.value),
                             allEntities.map { it.values.filter { entity -> entity.domain in MAP_DOMAINS } }
                         )
                     )
                 }
                 .build()
         )
+
+        if (serverManager.defaultServers.size > 1) {
+            listBuilder.addItem(
+                Row.Builder()
+                    .setImage(
+                        CarIcon.Builder(
+                            IconicsDrawable(
+                                carContext,
+                                CommunityMaterial.Icon2.cmd_home_switch
+                            ).apply {
+                                sizeDp = 48
+                            }.toAndroidIconCompat()
+                        )
+                            .setTint(CarColor.DEFAULT)
+                            .build()
+                    )
+                    .setTitle(carContext.getString(commonR.string.aa_change_server))
+                    .setOnClickListener {
+                        Log.i(TAG, "Change server clicked")
+                        screenManager.pushForResult(
+                            ChangeServerScreen(
+                                carContext,
+                                serverManager,
+                                serverId
+                            )
+                        ) {
+                            it?.toString()?.toIntOrNull()?.let { serverId ->
+                                onChangeServer(serverId)
+                            }
+                        }
+                    }
+                    .build()
+            )
+        }
 
         return ListTemplate.Builder().apply {
             setTitle(carContext.getString(commonR.string.app_name))

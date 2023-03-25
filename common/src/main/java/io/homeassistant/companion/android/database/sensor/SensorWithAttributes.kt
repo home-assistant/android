@@ -1,7 +1,5 @@
 package io.homeassistant.companion.android.database.sensor
 
-import androidx.room.Embedded
-import androidx.room.Relation
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -9,12 +7,7 @@ import io.homeassistant.companion.android.common.data.integration.SensorRegistra
 import io.homeassistant.companion.android.common.sensors.SensorManager
 
 data class SensorWithAttributes(
-    @Embedded
     val sensor: Sensor,
-    @Relation(
-        parentColumn = "id",
-        entityColumn = "sensor_id"
-    )
     val attributes: List<Attribute>
 ) {
     fun toSensorRegistration(basicSensor: SensorManager.BasicSensor): SensorRegistration<Any> {
@@ -52,6 +45,7 @@ data class SensorWithAttributes(
         }
         return SensorRegistration(
             sensor.id,
+            sensor.serverId,
             state,
             sensor.type.ifBlank { basicSensor.type },
             sensor.icon.ifBlank { basicSensor.statelessIcon },
@@ -65,3 +59,9 @@ data class SensorWithAttributes(
         )
     }
 }
+
+fun Map<Sensor, List<Attribute>>.toSensorWithAttributes(): SensorWithAttributes? =
+    entries.map { SensorWithAttributes(it.key, it.value) }.firstOrNull()
+
+fun Map<Sensor, List<Attribute>>.toSensorsWithAttributes(): List<SensorWithAttributes> =
+    entries.map { SensorWithAttributes(it.key, it.value) }

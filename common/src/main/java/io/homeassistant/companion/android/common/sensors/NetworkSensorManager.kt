@@ -122,8 +122,6 @@ class NetworkSensorManager : SensorManager {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#connection-type-sensor"
     }
-    override val enabledByDefault: Boolean
-        get() = false
     override val name: Int
         get() = commonR.string.sensor_name_network
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
@@ -137,10 +135,11 @@ class NetworkSensorManager : SensorManager {
             wifiSignalStrength,
             publicIp
         )
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             list.plus(networkType)
-        else
+        } else {
             list
+        }
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
@@ -177,8 +176,9 @@ class NetworkSensorManager : SensorManager {
     }
 
     private fun updateWifiConnectionSensor(context: Context) {
-        if (!isEnabled(context, wifiConnection.id))
+        if (!isEnabled(context, wifiConnection)) {
             return
+        }
 
         var conInfo: WifiInfo? = null
         var ssid = "Unknown"
@@ -218,8 +218,9 @@ class NetworkSensorManager : SensorManager {
     }
 
     private fun updateBSSIDSensor(context: Context) {
-        if (!isEnabled(context, bssidState.id))
+        if (!isEnabled(context, bssidState)) {
             return
+        }
 
         var conInfo: WifiInfo? = null
 
@@ -242,10 +243,11 @@ class NetworkSensorManager : SensorManager {
                 sensorDao.add(SensorSetting(bssidState.id, settingName, bssid, SensorSettingType.STRING))
             }
         } else {
-            if (currentSetting != "")
+            if (currentSetting != "") {
                 bssid = currentSetting
-            else
+            } else {
                 sensorDao.removeSetting(bssidState.id, settingName)
+            }
 
             sensorDao.add(SensorSetting(bssidState.id, SETTING_GET_CURRENT_BSSID, "false", SensorSettingType.TOGGLE))
         }
@@ -261,8 +263,9 @@ class NetworkSensorManager : SensorManager {
     }
 
     private fun updateWifiIPSensor(context: Context) {
-        if (!isEnabled(context, wifiIp.id))
+        if (!isEnabled(context, wifiIp)) {
             return
+        }
 
         var deviceIp = "Unknown"
 
@@ -288,8 +291,9 @@ class NetworkSensorManager : SensorManager {
     }
 
     private fun updateWifiLinkSpeedSensor(context: Context) {
-        if (!isEnabled(context, wifiLinkSpeed.id))
+        if (!isEnabled(context, wifiLinkSpeed)) {
             return
+        }
 
         var linkSpeed = 0
         var rssi = -1
@@ -331,8 +335,9 @@ class NetworkSensorManager : SensorManager {
     }
 
     private fun updateWifiSensor(context: Context) {
-        if (!isEnabled(context, wifiState.id))
+        if (!isEnabled(context, wifiState)) {
             return
+        }
 
         var wifiEnabled = false
 
@@ -354,8 +359,9 @@ class NetworkSensorManager : SensorManager {
     }
 
     private fun updateWifiFrequencySensor(context: Context) {
-        if (!isEnabled(context, wifiFrequency.id))
+        if (!isEnabled(context, wifiFrequency)) {
             return
+        }
 
         var frequency = 0
 
@@ -381,8 +387,9 @@ class NetworkSensorManager : SensorManager {
     }
 
     private fun updateWifiSignalStrengthSensor(context: Context) {
-        if (!isEnabled(context, wifiSignalStrength.id))
+        if (!isEnabled(context, wifiSignalStrength)) {
             return
+        }
 
         var rssi = -1
 
@@ -424,8 +431,9 @@ class NetworkSensorManager : SensorManager {
     }
 
     private fun updatePublicIpSensor(context: Context) {
-        if (!isEnabled(context, publicIp.id))
+        if (!isEnabled(context, publicIp)) {
             return
+        }
 
         var ip = "unknown"
         val client = OkHttpClient()
@@ -459,8 +467,9 @@ class NetworkSensorManager : SensorManager {
     @SuppressLint("MissingPermission")
     @RequiresApi(Build.VERSION_CODES.M)
     private fun updateNetworkType(context: Context) {
-        if (!isEnabled(context, networkType.id))
+        if (!isEnabled(context, networkType)) {
             return
+        }
 
         val connectivityManager = context.getSystemService<ConnectivityManager>()
         val activeNetwork = connectivityManager?.activeNetwork

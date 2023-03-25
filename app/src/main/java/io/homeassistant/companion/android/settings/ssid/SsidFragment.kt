@@ -19,6 +19,10 @@ import io.homeassistant.companion.android.common.R as commonR
 @AndroidEntryPoint
 class SsidFragment : Fragment() {
 
+    companion object {
+        const val EXTRA_SERVER = "server"
+    }
+
     val viewModel: SsidViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {

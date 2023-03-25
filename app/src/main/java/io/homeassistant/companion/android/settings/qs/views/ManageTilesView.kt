@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.settings.qs.ManageTilesViewModel
+import io.homeassistant.companion.android.util.compose.ServerDropdownButton
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
@@ -118,21 +119,34 @@ fun ManageTilesView(
                     )
                 }
 
+                if (viewModel.servers.size > 1 || viewModel.servers.none { it.id == viewModel.selectedServerId }) {
+                    Text(
+                        text = stringResource(id = R.string.tile_server),
+                        fontSize = 15.sp
+                    )
+                    ServerDropdownButton(
+                        servers = viewModel.servers,
+                        current = viewModel.selectedServerId,
+                        onSelected = viewModel::selectServerId
+                    )
+                }
+
                 Text(
                     text = stringResource(id = R.string.tile_entity),
                     fontSize = 15.sp
                 )
-                OutlinedButton(onClick = { expandedEntity = true }) {
-                    Text(text = viewModel.selectedEntityId)
-                }
-
-                DropdownMenu(expanded = expandedEntity, onDismissRequest = { expandedEntity = false }) {
-                    for (item in viewModel.sortedEntities) {
-                        DropdownMenuItem(onClick = {
-                            viewModel.selectEntityId(item.entityId)
-                            expandedEntity = false
-                        }) {
-                            Text(text = item.entityId, fontSize = 15.sp)
+                Box {
+                    OutlinedButton(onClick = { expandedEntity = true }) {
+                        Text(text = viewModel.selectedEntityId)
+                    }
+                    DropdownMenu(expanded = expandedEntity, onDismissRequest = { expandedEntity = false }) {
+                        for (item in viewModel.sortedEntities) {
+                            DropdownMenuItem(onClick = {
+                                viewModel.selectEntityId(item.entityId)
+                                expandedEntity = false
+                            }) {
+                                Text(text = item.entityId, fontSize = 15.sp)
+                            }
                         }
                     }
                 }
@@ -194,7 +208,9 @@ fun ManageTilesView(
 
                 Button(
                     onClick = { viewModel.addTile() },
-                    enabled = viewModel.tileLabel.isNotBlank() && viewModel.selectedEntityId.isNotBlank()
+                    enabled = viewModel.tileLabel.isNotBlank() &&
+                        viewModel.selectedServerId in viewModel.servers.map { it.id } &&
+                        viewModel.selectedEntityId in viewModel.sortedEntities.map { it.entityId }
                 ) {
                     Text(stringResource(viewModel.submitButtonLabel))
                 }

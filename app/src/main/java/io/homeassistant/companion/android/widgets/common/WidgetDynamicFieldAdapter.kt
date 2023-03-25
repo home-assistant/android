@@ -14,8 +14,8 @@ import io.homeassistant.companion.android.databinding.WidgetButtonConfigureDynam
 import kotlin.Exception
 
 class WidgetDynamicFieldAdapter(
-    private val services: HashMap<String, Service>,
-    private val entities: HashMap<String, Entity<Any>>,
+    private var services: HashMap<String, Service>,
+    private var entities: HashMap<String, Entity<Any>>,
     private val serviceFieldList: ArrayList<ServiceFieldBinder>
 ) : RecyclerView.Adapter<WidgetDynamicFieldAdapter.ViewHolder>() {
 
@@ -54,8 +54,11 @@ class WidgetDynamicFieldAdapter(
         // Reformat text to "Capital Words" instead of "capital_words"
         binding.dynamicAutocompleteLabel.text =
             fieldKey.split("_").map {
-                if (it == "id") it.toUpperCase()
-                else it.capitalize()
+                if (it == "id") {
+                    it.toUpperCase()
+                } else {
+                    it.capitalize()
+                }
             }.joinToString(" ")
 
         // If the field has an example, use it as a hint
@@ -156,6 +159,11 @@ class WidgetDynamicFieldAdapter(
                 }
             }
         }
+    }
+
+    fun replaceValues(services: HashMap<String, Service>, entities: HashMap<String, Entity<Any>>) {
+        this.services = services
+        this.entities = entities
     }
 
     private fun String.toJsonType(): Any? {

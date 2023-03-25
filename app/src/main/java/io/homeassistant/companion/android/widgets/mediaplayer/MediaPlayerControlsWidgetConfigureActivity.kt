@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.widgets.media_player_controls
+package io.homeassistant.companion.android.widgets.mediaplayer
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
@@ -11,13 +11,13 @@ import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.MultiAutoCompleteTextView
+import android.widget.Spinner
 import android.widget.Toast
 import androidx.core.content.getSystemService
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -29,7 +29,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.util.LinkedList
 import javax.inject.Inject
-import kotlin.collections.LinkedHashMap
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
@@ -43,16 +42,21 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
     private var requestLauncherSetup = false
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
-
-    @Inject
     lateinit var mediaPlayerControlsWidgetDao: MediaPlayerControlsWidgetDao
     override val dao get() = mediaPlayerControlsWidgetDao
 
     private lateinit var binding: WidgetMediaControlsConfigureBinding
 
-    private var entities = LinkedHashMap<String, Entity<Any>>()
+    override val serverSelect: View
+        get() = binding.serverSelect
+
+    override val serverSelectList: Spinner
+        get() = binding.serverSelectList
+
+    private var entities = mutableMapOf<Int, List<Entity<Any>>>()
     private var selectedEntities: LinkedList<Entity<*>?> = LinkedList()
+
+    private var entityAdapter: SingleItemArrayAdapter<Entity<Any>>? = null
 
     public override fun onCreate(icicle: Bundle?) {
         super.onCreate(icicle)
@@ -68,7 +72,10 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
             if (requestLauncherSetup) {
                 if (
                     Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-                    binding.widgetTextConfigEntityId.text.split(",").any { entities[it.trim()] != null }
+                    isValidServerId() &&
+                    binding.widgetTextConfigEntityId.text.split(",").any {
+                        entities[selectedServerId!!].orEmpty().any { e -> e.entityId == it.trim() }
+                    }
                 ) {
                     getSystemService<AppWidgetManager>()?.requestPinAppWidget(
                         ComponentName(this, MediaPlayerControlsWidget::class.java),
@@ -80,7 +87,9 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
                         )
                     )
-                } else showAddWidgetError()
+                } else {
+                    showAddWidgetError()
+                }
             } else {
                 onAddWidget()
             }
@@ -91,10 +100,12 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
         val extras = intent.extras
         if (extras != null) {
             appWidgetId = extras.getInt(
-                AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID
+                AppWidgetManager.EXTRA_APPWIDGET_ID,
+                AppWidgetManager.INVALID_APPWIDGET_ID
             )
             requestLauncherSetup = extras.getBoolean(
-                ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, false
+                ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER,
+                false
             )
         }
 
@@ -127,7 +138,9 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
             binding.widgetShowMediaPlayerSource.isChecked = mediaPlayerWidget.showSource
             val entities = runBlocking {
                 try {
-                    mediaPlayerWidget.entityId.split(",").map { s -> integrationUseCase.getEntity(s.trim()) }
+                    mediaPlayerWidget.entityId.split(",").map { s ->
+                        serverManager.integrationRepository(mediaPlayerWidget.serverId).getEntity(s.trim())
+                    }
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to get entity information", e)
                     Toast.makeText(applicationContext, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
@@ -143,35 +156,31 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
                         backgroundTypeValues.indexOf(getString(commonR.string.widget_background_type_daynight))
                 }
             )
-            if (entities != null)
+            if (entities != null) {
                 selectedEntities.addAll(entities)
+            }
             binding.addButton.setText(commonR.string.update_widget)
         }
-        val entityAdapter = SingleItemArrayAdapter<Entity<Any>>(this) { it?.entityId ?: "" }
+        entityAdapter = SingleItemArrayAdapter(this) { it?.entityId ?: "" }
+
+        setupServerSelect(mediaPlayerWidget?.serverId)
 
         binding.widgetTextConfigEntityId.setAdapter(entityAdapter)
         binding.widgetTextConfigEntityId.setTokenizer(MultiAutoCompleteTextView.CommaTokenizer())
         binding.widgetTextConfigEntityId.onFocusChangeListener = dropDownOnFocus
 
-        lifecycleScope.launch {
-            try {
-                // Fetch entities
-                val fetchedEntities = integrationUseCase.getEntities()
-                fetchedEntities?.forEach {
-                    if (it.domain == "media_player") {
-                        entities[it.entityId] = it
-                    }
+        serverManager.defaultServers.forEach { server ->
+            lifecycleScope.launch {
+                try {
+                    val fetchedEntities = serverManager.integrationRepository(server.id).getEntities().orEmpty()
+                        .filter { it.domain == "media_player" }
+                    entities[server.id] = fetchedEntities
+                    if (server.id == selectedServerId) setAdapterEntities(server.id)
+                } catch (e: Exception) {
+                    // If entities fail to load, it's okay to pass
+                    // an empty map to the dynamicFieldAdapter
+                    Log.e(TAG, "Failed to query entities", e)
                 }
-                entityAdapter.addAll(entities.values)
-                entityAdapter.sort()
-
-                runOnUiThread {
-                    entityAdapter.notifyDataSetChanged()
-                }
-            } catch (e: Exception) {
-                // If entities fail to load, it's okay to pass
-                // an empty map to the dynamicFieldAdapter
-                Log.e(TAG, "Failed to query entities", e)
             }
         }
     }
@@ -179,6 +188,23 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
     private val dropDownOnFocus = View.OnFocusChangeListener { view, hasFocus ->
         if (hasFocus && view is AutoCompleteTextView) {
             view.showDropDown()
+        }
+    }
+
+    override fun onServerSelected(serverId: Int) {
+        selectedEntities.clear()
+        binding.widgetTextConfigEntityId.setText("")
+        setAdapterEntities(serverId)
+    }
+
+    private fun setAdapterEntities(serverId: Int) {
+        entityAdapter?.let { adapter ->
+            adapter.clearAll()
+            if (entities[serverId] != null) {
+                adapter.addAll(entities[serverId].orEmpty().toMutableList())
+                adapter.sort()
+            }
+            runOnUiThread { adapter.notifyDataSetChanged() }
         }
     }
 
@@ -197,13 +223,17 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
 
             intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
 
+            intent.putExtra(
+                MediaPlayerControlsWidget.EXTRA_SERVER_ID,
+                selectedServerId!!
+            )
+
             selectedEntities = LinkedList()
             val se = binding.widgetTextConfigEntityId.text.split(",")
             se.forEach {
-                val e = entities[it.trim()]
-                if (e != null) selectedEntities.add(e)
+                val entity = entities[selectedServerId]!!.firstOrNull { e -> e.entityId == it.trim() }
+                if (entity != null) selectedEntities.add(entity)
             }
-
             intent.putExtra(
                 MediaPlayerControlsWidget.EXTRA_ENTITY_ID,
                 selectedEntities.map { e -> e?.entityId }.reduce { a, b -> "$a,$b" }
@@ -254,7 +284,8 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
         super.onNewIntent(intent)
         if (intent != null && intent.extras != null && intent.hasExtra(PIN_WIDGET_CALLBACK)) {
             appWidgetId = intent.extras!!.getInt(
-                AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID
+                AppWidgetManager.EXTRA_APPWIDGET_ID,
+                AppWidgetManager.INVALID_APPWIDGET_ID
             )
             onAddWidget()
         }

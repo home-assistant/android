@@ -59,7 +59,7 @@ fun LoadHomePage(
                     },
                     onRetryLoadEntitiesClicked = mainViewModel::loadEntities,
                     onSettingsClicked = { swipeDismissableNavController.navigate(SCREEN_SETTINGS) },
-                    onTestClicked = { lists, order, filter ->
+                    onNavigationClicked = { lists, order, filter ->
                         mainViewModel.entityLists.clear()
                         mainViewModel.entityLists.putAll(lists)
                         mainViewModel.entityListsOrder.clear()
@@ -68,8 +68,7 @@ fun LoadHomePage(
                         swipeDismissableNavController.navigate(SCREEN_ENTITY_LIST)
                     },
                     isHapticEnabled = mainViewModel.isHapticEnabled.value,
-                    isToastEnabled = mainViewModel.isToastEnabled.value,
-                    deleteFavorite = { id -> mainViewModel.removeFavoriteEntity(id) }
+                    isToastEnabled = mainViewModel.isToastEnabled.value
                 )
             }
             composable("$SCREEN_ENTITY_DETAIL/{entityId}") {
@@ -141,8 +140,10 @@ fun LoadHomePage(
                     onClickLogout = { mainViewModel.logout() },
                     isHapticEnabled = mainViewModel.isHapticEnabled.value,
                     isToastEnabled = mainViewModel.isToastEnabled.value,
+                    isFavoritesOnly = mainViewModel.isFavoritesOnly,
                     onHapticEnabled = { mainViewModel.setHapticEnabled(it) },
-                    onToastEnabled = { mainViewModel.setToastEnabled(it) }
+                    onToastEnabled = { mainViewModel.setToastEnabled(it) },
+                    setFavoritesOnly = { mainViewModel.setWearFavoritesOnly(it) }
                 ) { swipeDismissableNavController.navigate(SCREEN_SET_TILE_TEMPLATE) }
             }
             composable(SCREEN_SET_FAVORITES) {
@@ -232,7 +233,7 @@ fun LoadHomePage(
                 SensorManagerUi(
                     allSensors = mainViewModel.sensors.value,
                     allAvailSensors = mainViewModel.availableSensors,
-                    sensorManager = sensorManager,
+                    sensorManager = sensorManager
                 ) { sensorId, isEnabled ->
                     mainViewModel.enableDisableSensor(sensorManager, sensorId, isEnabled)
                 }

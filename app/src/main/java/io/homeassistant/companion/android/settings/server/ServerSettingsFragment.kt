@@ -1,10 +1,13 @@
 package io.homeassistant.companion.android.settings.server
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.text.InputType
 import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
@@ -12,8 +15,10 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.commit
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
+import androidx.preference.Preference.OnPreferenceClickListener
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
@@ -22,10 +27,13 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.LocationPermissionInfoHandler
+import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.ssid.SsidFragment
 import io.homeassistant.companion.android.settings.url.ExternalUrlFragment
 import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
+import io.homeassistant.companion.android.webview.WebViewActivity
+import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
@@ -34,7 +42,9 @@ import io.homeassistant.companion.android.common.R as commonR
 class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
 
     companion object {
-        private const val TAG = "ServerSettingsFragment"
+        const val TAG = "ServerSettingsFragment"
+
+        const val EXTRA_SERVER = "server"
     }
 
     @Inject
@@ -44,8 +54,16 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         onPermissionsResult(it)
     }
 
+    private var serverId = -1
+
+    private var serverDeleteDialog: AlertDialog? = null
+    private var serverDeleteHandler = Handler(Looper.getMainLooper())
+
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        presenter.init(this)
+        arguments?.let {
+            serverId = it.getInt(EXTRA_SERVER, serverId)
+        }
+        presenter.init(this, serverId)
 
         preferenceManager.preferenceDataStore = presenter.getPreferenceDataStore()
 
@@ -55,12 +73,30 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
             val isValid = newValue.toString().isBlank() || newValue.toString().toHttpUrlOrNull() != null
             if (!isValid) {
                 AlertDialog.Builder(requireActivity())
-                    .setTitle(io.homeassistant.companion.android.common.R.string.url_invalid)
-                    .setMessage(io.homeassistant.companion.android.common.R.string.url_parse_error)
+                    .setTitle(commonR.string.url_invalid)
+                    .setMessage(commonR.string.url_parse_error)
                     .setPositiveButton(android.R.string.ok) { _, _ -> }
                     .show()
             }
             isValid
+        }
+
+        if (presenter.hasMultipleServers()) {
+            val activateClickListener = OnPreferenceClickListener {
+                val intent = WebViewActivity.newInstance(requireContext(), null, serverId).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                }
+                requireContext().startActivity(intent)
+                return@OnPreferenceClickListener true
+            }
+            findPreference<Preference>("activate_server")?.let {
+                it.isVisible = true
+                it.onPreferenceClickListener = activateClickListener
+            }
+            findPreference<Preference>("activate_server_hint")?.let {
+                it.isVisible = true
+                it.onPreferenceClickListener = activateClickListener
+            }
         }
 
         findPreference<SwitchPreference>("app_lock")?.setOnPreferenceChangeListener { _, newValue ->
@@ -71,13 +107,13 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
                 findPreference<EditTextPreference>("session_timeout")?.isVisible = false
             } else {
                 val settingsActivity = requireActivity() as SettingsActivity
-                val canAuth = settingsActivity.requestAuthentication(getString(io.homeassistant.companion.android.common.R.string.biometric_set_title), ::setLockAuthenticationResult)
+                val canAuth = settingsActivity.requestAuthentication(getString(commonR.string.biometric_set_title), ::setLockAuthenticationResult)
                 isValid = canAuth
 
                 if (!canAuth) {
                     AlertDialog.Builder(requireActivity())
-                        .setTitle(io.homeassistant.companion.android.common.R.string.set_lock_title)
-                        .setMessage(io.homeassistant.companion.android.common.R.string.set_lock_message)
+                        .setTitle(commonR.string.set_lock_title)
+                        .setMessage(commonR.string.set_lock_message)
                         .setPositiveButton(android.R.string.ok) { _, _ -> }
                         .show()
                 }
@@ -97,14 +133,21 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         }
 
         findPreference<EditTextPreference>("connection_internal")?.let {
+            it.setOnBindEditTextListener { edit ->
+                edit.inputType = InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+            }
             it.onPreferenceChangeListener =
                 onChangeUrlValidator
         }
 
         findPreference<Preference>("connection_external")?.setOnPreferenceClickListener {
             parentFragmentManager.commit {
-                replace(R.id.content, ExternalUrlFragment::class.java, null)
-                addToBackStack(getString(io.homeassistant.companion.android.common.R.string.input_url))
+                replace(
+                    R.id.content,
+                    ExternalUrlFragment::class.java,
+                    Bundle().apply { putInt(ExternalUrlFragment.EXTRA_SERVER, serverId) }
+                )
+                addToBackStack(getString(commonR.string.input_url))
             }
             return@setOnPreferenceClickListener true
         }
@@ -121,11 +164,43 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         findPreference<Preference>("websocket")?.let {
             it.setOnPreferenceClickListener {
                 parentFragmentManager.commit {
-                    replace(R.id.content, WebsocketSettingFragment::class.java, null)
-                    addToBackStack(getString(io.homeassistant.companion.android.common.R.string.notifications))
+                    replace(
+                        R.id.content,
+                        WebsocketSettingFragment::class.java,
+                        Bundle().apply { putInt(WebsocketSettingFragment.EXTRA_SERVER, serverId) }
+                    )
+                    addToBackStack(getString(commonR.string.websocket_setting_name))
                 }
                 return@setOnPreferenceClickListener true
             }
+        }
+
+        findPreference<Preference>("delete_server")?.let {
+            it.setOnPreferenceClickListener {
+                AlertDialog.Builder(requireContext())
+                    .setMessage(commonR.string.server_delete_confirm)
+                    .setPositiveButton(commonR.string.delete) { dialog, _ ->
+                        dialog.cancel()
+                        serverDeleteHandler.postDelayed({
+                            serverDeleteDialog = AlertDialog.Builder(requireContext())
+                                .setMessage(commonR.string.server_delete_working)
+                                .setCancelable(false)
+                                .create()
+                            serverDeleteDialog?.show()
+                        }, 2500L)
+                        lifecycleScope.launch { presenter.deleteServer() }
+                    }
+                    .setNegativeButton(commonR.string.cancel, null)
+                    .show()
+                return@setOnPreferenceClickListener true
+            }
+        }
+    }
+
+    override fun updateServerName(name: String) {
+        activity?.title = name.ifBlank { getString(commonR.string.server_settings) }
+        findPreference<EditTextPreference>("server_name")?.let {
+            it.summary = name
         }
     }
 
@@ -161,16 +236,22 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
     override fun updateExternalUrl(url: String, useCloud: Boolean) {
         findPreference<Preference>("connection_external")?.let {
             it.summary =
-                if (useCloud) getString(io.homeassistant.companion.android.common.R.string.input_cloud)
-                else url
+                if (useCloud) {
+                    getString(commonR.string.input_cloud)
+                } else {
+                    url
+                }
         }
     }
 
-    override fun updateSsids(ssids: Set<String>) {
+    override fun updateSsids(ssids: List<String>) {
         findPreference<Preference>("connection_internal_ssids")?.let {
             it.summary =
-                if (ssids.isEmpty()) getString(io.homeassistant.companion.android.common.R.string.pref_connection_ssids_empty)
-                else ssids.joinToString()
+                if (ssids.isEmpty()) {
+                    getString(commonR.string.pref_connection_ssids_empty)
+                } else {
+                    ssids.joinToString()
+                }
         }
     }
 
@@ -184,23 +265,25 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         if (DisabledLocationHandler.isLocationEnabled(requireContext())) {
             if (!checkPermission(permissionsToCheck)) {
                 LocationPermissionInfoHandler.showLocationPermInfoDialogIfNeeded(
-                    requireContext(), permissionsToCheck,
+                    requireContext(),
+                    permissionsToCheck,
                     continueYesCallback = {
                         requestLocationPermission()
                         // showSsidSettings() will be called if permission is granted
                     }
                 )
-            } else showSsidSettings()
+            } else {
+                showSsidSettings()
+            }
         } else {
             if (presenter.isSsidUsed()) {
                 DisabledLocationHandler.showLocationDisabledWarnDialog(
                     requireActivity(),
                     arrayOf(
-                        getString(
-                            io.homeassistant.companion.android.common.R.string.pref_connection_wifi
-                        )
+                        getString(commonR.string.pref_connection_wifi)
                     ),
-                    showAsNotification = false, withDisableOption = true
+                    showAsNotification = false,
+                    withDisableOption = true
                 ) {
                     presenter.clearSsids()
                 }
@@ -208,9 +291,7 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
                 DisabledLocationHandler.showLocationDisabledWarnDialog(
                     requireActivity(),
                     arrayOf(
-                        getString(
-                            io.homeassistant.companion.android.common.R.string.pref_connection_wifi
-                        )
+                        getString(commonR.string.pref_connection_wifi)
                     )
                 )
             }
@@ -219,8 +300,12 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
 
     private fun showSsidSettings() {
         parentFragmentManager.commit {
-            replace(R.id.content, SsidFragment::class.java, null)
-            addToBackStack(getString(io.homeassistant.companion.android.common.R.string.manage_ssids))
+            replace(
+                R.id.content,
+                SsidFragment::class.java,
+                Bundle().apply { putInt(SsidFragment.EXTRA_SERVER, serverId) }
+            )
+            addToBackStack(getString(commonR.string.manage_ssids))
         }
     }
 
@@ -230,7 +315,7 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         switchLock?.isChecked = success
 
         // Prevent requesting authentication after just enabling the app lock
-        presenter.setAppActive()
+        presenter.setAppActive(true)
 
         findPreference<SwitchPreference>("app_lock_home_bypass")?.isVisible = success
         findPreference<EditTextPreference>("session_timeout")?.isVisible = success
@@ -268,6 +353,19 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         return true
     }
 
+    override fun onRemovedServer(success: Boolean, hasAnyRemaining: Boolean) {
+        serverDeleteHandler.removeCallbacksAndMessages(null)
+        serverDeleteDialog?.cancel()
+        if (success && context != null) {
+            if (hasAnyRemaining) { // Return to the main settings screen
+                parentFragmentManager.popBackStack()
+            } else { // Relaunch app
+                startActivity(Intent(requireContext(), LaunchActivity::class.java))
+                requireActivity().finishAffinity()
+            }
+        }
+    }
+
     private fun onPermissionsResult(results: Map<String, Boolean>) {
         if (results.keys.contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
             results[Manifest.permission.ACCESS_FINE_LOCATION] == true &&
@@ -288,8 +386,8 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
 
     override fun onResume() {
         super.onResume()
-        activity?.title = getString(commonR.string.server_settings)
 
+        presenter.updateServerName()
         presenter.updateUrlStatus()
     }
 
@@ -297,4 +395,6 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         presenter.onFinish()
         super.onDestroy()
     }
+
+    fun getServerId(): Int = serverId
 }

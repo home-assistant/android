@@ -6,8 +6,6 @@ import io.homeassistant.companion.android.common.R as commonR
 
 class AndroidAutoSensorManager : SensorManager {
 
-    override val enabledByDefault: Boolean
-        get() = false
     override val name: Int
         get() = commonR.string.sensor_name_android_auto
 

@@ -16,12 +16,17 @@ import com.google.accompanist.themeadapter.material.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.settings.controls.views.ManageControlsView
+import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @AndroidEntryPoint
 class ManageControlsSettingsFragment : Fragment() {
+
+    @Inject
+    lateinit var serverManager: ServerManager
 
     val viewModel: ManageControlsViewModel by viewModels()
 
@@ -52,9 +57,11 @@ class ManageControlsSettingsFragment : Fragment() {
                         authRequiredList = viewModel.authRequiredList,
                         entitiesLoaded = viewModel.entitiesLoaded,
                         entitiesList = viewModel.entitiesList,
+                        serversList = serverManager.defaultServers,
+                        defaultServer = serverManager.getServer()?.id ?: 0,
                         onSelectAll = { viewModel.setAuthSetting(ControlsAuthRequiredSetting.NONE) },
                         onSelectNone = { viewModel.setAuthSetting(ControlsAuthRequiredSetting.ALL) },
-                        onSelectEntity = { viewModel.toggleAuthForEntity(it) }
+                        onSelectEntity = { entityId, serverId -> viewModel.toggleAuthForEntity(entityId, serverId) }
                     )
                 }
             }

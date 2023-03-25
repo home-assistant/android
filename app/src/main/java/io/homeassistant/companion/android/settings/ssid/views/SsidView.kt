@@ -51,7 +51,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.common.data.wifi.WifiHelper
 import io.homeassistant.companion.android.common.R as commonR
 
 @OptIn(
@@ -109,7 +109,9 @@ fun SsidView(
                                     contentDescription = stringResource(commonR.string.manage_ssids_input_exists)
                                 )
                             }
-                        } else null,
+                        } else {
+                            null
+                        },
                         modifier = Modifier.weight(1f)
                     )
                     Button(
@@ -155,7 +157,7 @@ fun SsidView(
                 usingWifi &&
                     (
                         it == activeSsid ||
-                            (it.startsWith(UrlRepository.BSSID_PREFIX) && it.removePrefix(UrlRepository.BSSID_PREFIX).equals(activeBssid, ignoreCase = true))
+                            (it.startsWith(WifiHelper.BSSID_PREFIX) && it.removePrefix(WifiHelper.BSSID_PREFIX).equals(activeBssid, ignoreCase = true))
                         )
             }
             Row(
@@ -169,16 +171,25 @@ fun SsidView(
                     imageVector = Icons.Default.Wifi,
                     contentDescription = null,
                     tint =
-                    if (connected) colorResource(commonR.color.colorAccent)
-                    else LocalContentColor.current.copy(alpha = LocalContentAlpha.current)
+                    if (connected) {
+                        colorResource(commonR.color.colorAccent)
+                    } else {
+                        LocalContentColor.current.copy(alpha = LocalContentAlpha.current)
+                    }
                 )
                 Text(
                     text =
-                    if (it.startsWith(UrlRepository.BSSID_PREFIX)) it.removePrefix(UrlRepository.BSSID_PREFIX)
-                    else it,
+                    if (it.startsWith(WifiHelper.BSSID_PREFIX)) {
+                        it.removePrefix(WifiHelper.BSSID_PREFIX)
+                    } else {
+                        it
+                    },
                     fontFamily =
-                    if (it.startsWith(UrlRepository.BSSID_PREFIX)) FontFamily.Monospace
-                    else null,
+                    if (it.startsWith(WifiHelper.BSSID_PREFIX)) {
+                        FontFamily.Monospace
+                    } else {
+                        null
+                    },
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .weight(1f)
@@ -215,8 +226,11 @@ fun SsidView(
                         CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
                             Text(
                                 text = stringResource(
-                                    if (prioritizeInternal) commonR.string.prioritize_internal_on
-                                    else commonR.string.prioritize_internal_off
+                                    if (prioritizeInternal) {
+                                        commonR.string.prioritize_internal_on
+                                    } else {
+                                        commonR.string.prioritize_internal_off
+                                    }
                                 ),
                                 style = MaterialTheme.typography.body2
                             )

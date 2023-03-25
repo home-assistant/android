@@ -23,6 +23,7 @@ import androidx.wear.compose.material.rememberScalingLazyListState
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.wearColorPalette
@@ -68,8 +69,10 @@ fun SettingsView(
     onClickLogout: () -> Unit,
     isHapticEnabled: Boolean,
     isToastEnabled: Boolean,
+    isFavoritesOnly: Boolean,
     onHapticEnabled: (Boolean) -> Unit,
     onToastEnabled: (Boolean) -> Unit,
+    setFavoritesOnly: (Boolean) -> Unit,
     onClickTemplateTile: () -> Unit
 ) {
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
@@ -77,8 +80,9 @@ fun SettingsView(
     WearAppTheme {
         Scaffold(
             positionIndicator = {
-                if (scalingLazyListState.isScrollInProgress)
+                if (scalingLazyListState.isScrollInProgress) {
                     PositionIndicator(scalingLazyListState = scalingLazyListState)
+                }
             },
             timeText = { TimeText(!scalingLazyListState.isScrollInProgress) }
         ) {
@@ -106,6 +110,31 @@ fun SettingsView(
                     )
                 }
                 item {
+                    ToggleChip(
+                        modifier = Modifier.fillMaxWidth(),
+                        checked = isFavoritesOnly,
+                        onCheckedChange = { setFavoritesOnly(it) },
+                        label = { Text(stringResource(commonR.string.only_favorites)) },
+                        enabled = favorites.isNotEmpty(),
+                        toggleControl = {
+                            Icon(
+                                imageVector = ToggleChipDefaults.switchIcon(isFavoritesOnly),
+                                contentDescription = if (isFavoritesOnly) {
+                                    stringResource(commonR.string.enabled)
+                                } else {
+                                    stringResource(commonR.string.disabled)
+                                }
+                            )
+                        },
+                        appIcon = {
+                            Image(
+                                asset = CommunityMaterial.Icon2.cmd_home_heart,
+                                colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                            )
+                        }
+                    )
+                }
+                item {
                     ListHeader(
                         id = commonR.string.feedback_settings
                     )
@@ -125,20 +154,22 @@ fun SettingsView(
                         appIcon = {
                             Image(
                                 asset =
-                                if (isHapticEnabled)
+                                if (isHapticEnabled) {
                                     CommunityMaterial.Icon3.cmd_watch_vibrate
-                                else
-                                    CommunityMaterial.Icon3.cmd_watch_vibrate_off,
+                                } else {
+                                    CommunityMaterial.Icon3.cmd_watch_vibrate_off
+                                },
                                 colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
                             )
                         },
                         toggleControl = {
                             Icon(
                                 imageVector = ToggleChipDefaults.checkboxIcon(isHapticEnabled),
-                                contentDescription = if (isHapticEnabled)
+                                contentDescription = if (isHapticEnabled) {
                                     stringResource(commonR.string.enabled)
-                                else
+                                } else {
                                     stringResource(commonR.string.disabled)
+                                }
                             )
                         }
                     )
@@ -154,20 +185,22 @@ fun SettingsView(
                         appIcon = {
                             Image(
                                 asset =
-                                if (isToastEnabled)
+                                if (isToastEnabled) {
                                     CommunityMaterial.Icon3.cmd_message
-                                else
-                                    CommunityMaterial.Icon3.cmd_message_off,
+                                } else {
+                                    CommunityMaterial.Icon3.cmd_message_off
+                                },
                                 colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
                             )
                         },
                         toggleControl = {
                             Icon(
                                 imageVector = ToggleChipDefaults.checkboxIcon(isToastEnabled),
-                                contentDescription = if (isHapticEnabled)
+                                contentDescription = if (isHapticEnabled) {
                                     stringResource(commonR.string.enabled)
-                                else
+                                } else {
                                     stringResource(commonR.string.disabled)
+                                }
                             )
                         }
                     )
@@ -227,6 +260,14 @@ fun SettingsView(
                         )
                     )
                 }
+                item {
+                    ListHeader(commonR.string.application_version)
+                }
+                item {
+                    Text(
+                        text = BuildConfig.VERSION_NAME
+                    )
+                }
             }
         }
     }
@@ -245,7 +286,9 @@ private fun PreviewSettingsView() {
         onClickLogout = {},
         isHapticEnabled = true,
         isToastEnabled = false,
+        isFavoritesOnly = false,
         onHapticEnabled = {},
-        onToastEnabled = {}
+        onToastEnabled = {},
+        setFavoritesOnly = {}
     ) {}
 }

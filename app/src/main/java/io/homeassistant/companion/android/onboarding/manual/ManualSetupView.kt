@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
@@ -39,7 +40,6 @@ fun ManualSetupView(
             .fillMaxWidth()
             .padding(16.dp)
     ) {
-
         OnboardingHeaderView(
             icon = CommunityMaterial.Icon3.cmd_web,
             title = stringResource(id = commonR.string.manual_title)
@@ -59,7 +59,7 @@ fun ManualSetupView(
             modifier = Modifier.align(Alignment.CenterHorizontally),
             label = { Text(stringResource(id = commonR.string.input_url)) },
             singleLine = true,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, autoCorrect = false, keyboardType = KeyboardType.Uri),
             keyboardActions = KeyboardActions(
                 onDone = {
                     keyboardController?.hide()

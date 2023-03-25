@@ -55,7 +55,6 @@
             android:name="com.google.android.wearable"
             android:required="true" />
 
-        <!-- The app can run without a connected phone -->
         <meta-data
             android:name="com.google.android.wearable.standalone"
             android:value="false" />
@@ -72,7 +71,8 @@
         </activity>
         <activity android:name=".onboarding.OnboardingActivity" />
         <activity android:name=".onboarding.integration.MobileAppIntegrationActivity" />
-        <activity android:name=".onboarding.manual_setup.ManualSetupActivity" />
+        <activity android:name=".onboarding.manual.ManualSetupActivity" />
+        <activity android:name=".onboarding.phoneinstall.PhoneInstallActivity" />
         <activity android:name=".complications.ComplicationConfigActivity"
             android:exported="true">
             <intent-filter>
@@ -112,7 +112,7 @@
         </service>
         <service
             android:name=".tiles.TemplateTile"
-            android:label="@string/template_tile"
+            android:label="@string/template"
             android:description="@string/template_tile_desc"
             android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER"
             android:exported="true">
@@ -162,6 +162,24 @@
                 android:name="android.support.wearable.complications.PROVIDER_CONFIG_ACTION"
                 android:value="io.homeassistant.companion.android.ENTITY_STATE_COMPLICATION_CONFIG" />
         </service>
+
+        <service android:name=".complications.AssistDataSourceService"
+            android:exported="true"
+            android:icon="@mipmap/ic_assist_launcher"
+            android:label="@string/assist"
+            android:permission="com.google.android.wearable.permission.BIND_COMPLICATION_PROVIDER">
+            <intent-filter>
+                <action android:name="android.support.wearable.complications.ACTION_COMPLICATION_UPDATE_REQUEST" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.support.wearable.complications.SUPPORTED_TYPES"
+                android:value="ICON" />
+            <meta-data
+                android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
+                android:value="0" />
+        </service>
+
         <receiver android:name=".complications.ComplicationReceiver" />
 
         <service android:name=".phone.PhoneSettingsListener" android:exported="true">

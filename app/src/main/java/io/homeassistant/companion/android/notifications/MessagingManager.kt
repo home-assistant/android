@@ -13,7 +13,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.MediaMetadataRetriever
 import android.media.RingtoneManager
@@ -26,8 +25,6 @@ import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
 import android.provider.Settings
-import android.speech.tts.TextToSpeech
-import android.speech.tts.UtteranceProgressListener
 import android.util.Log
 import android.view.KeyEvent
 import android.widget.RemoteViews
@@ -44,10 +41,9 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
-import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.notifications.DeviceCommandData
 import io.homeassistant.companion.android.common.notifications.NotificationData
 import io.homeassistant.companion.android.common.notifications.commandBeaconMonitor
@@ -61,9 +57,12 @@ import io.homeassistant.companion.android.common.notifications.handleText
 import io.homeassistant.companion.android.common.notifications.parseColor
 import io.homeassistant.companion.android.common.notifications.parseVibrationPattern
 import io.homeassistant.companion.android.common.notifications.prepareText
+import io.homeassistant.companion.android.common.util.TextToSpeechData
 import io.homeassistant.companion.android.common.util.cancel
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.getActiveNotification
+import io.homeassistant.companion.android.common.util.speakText
+import io.homeassistant.companion.android.common.util.stopTTS
 import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.database.sensor.SensorDao
@@ -98,9 +97,7 @@ import io.homeassistant.companion.android.common.R as commonR
 class MessagingManager @Inject constructor(
     @ApplicationContext val context: Context,
     private val okHttpClient: OkHttpClient,
-    private val integrationUseCase: IntegrationRepository,
-    private val urlUseCase: UrlRepository,
-    private val authenticationUseCase: AuthenticationRepository,
+    private val serverManager: ServerManager,
     private val prefsRepository: PrefsRepository,
     private val notificationDao: NotificationDao,
     private val sensorDao: SensorDao,
@@ -115,6 +112,7 @@ class MessagingManager @Inject constructor(
         const val MARKET_PREFIX = "https://play.google.com/store/apps/details?id="
         const val SETTINGS_PREFIX = "settings://"
         const val NOTIFICATION_HISTORY = "notification_history"
+        const val NO_ACTION = "noAction"
 
         const val SUBJECT = "subject"
         const val TIMEOUT = "timeout"
@@ -131,7 +129,6 @@ class MessagingManager @Inject constructor(
         const val REPLY = "REPLY"
         const val HIGH_ACCURACY_UPDATE_INTERVAL = "high_accuracy_update_interval"
         const val PACKAGE_NAME = "package_name"
-        const val TTS_TEXT = "tts_text"
         const val CONFIRMATION = "confirmation"
 
         // special intent constants
@@ -145,7 +142,6 @@ class MessagingManager @Inject constructor(
         const val REQUEST_LOCATION_UPDATE = "request_location_update"
         const val CLEAR_NOTIFICATION = "clear_notification"
         const val REMOVE_CHANNEL = "remove_channel"
-        const val TTS = "TTS"
         const val COMMAND_DND = "command_dnd"
         const val COMMAND_RINGER_MODE = "command_ringer_mode"
         const val COMMAND_BROADCAST_INTENT = "command_broadcast_intent"
@@ -161,7 +157,6 @@ class MessagingManager @Inject constructor(
         const val COMMAND_LAUNCH_APP = "command_launch_app"
         const val COMMAND_APP_LOCK = "command_app_lock"
         const val COMMAND_PERSISTENT_CONNECTION = "command_persistent_connection"
-        const val COMMAND_STOP_TTS = "command_stop_tts"
         const val COMMAND_AUTO_SCREEN_BRIGHTNESS = "command_auto_screen_brightness"
         const val COMMAND_SCREEN_BRIGHTNESS_LEVEL = "command_screen_brightness_level"
         const val COMMAND_SCREEN_OFF_TIMEOUT = "command_screen_off_timeout"
@@ -188,7 +183,6 @@ class MessagingManager @Inject constructor(
         const val MEDIA_STOP = "stop"
         const val MEDIA_PACKAGE_NAME = "media_package_name"
         const val MEDIA_COMMAND = "media_command"
-        const val MEDIA_STREAM = "media_stream"
 
         // App-lock command parameters:
         const val APP_LOCK_ENABLED = "app_lock_enabled"
@@ -218,7 +212,6 @@ class MessagingManager @Inject constructor(
             COMMAND_LAUNCH_APP,
             COMMAND_APP_LOCK,
             COMMAND_PERSISTENT_CONNECTION,
-            COMMAND_STOP_TTS,
             COMMAND_AUTO_SCREEN_BRIGHTNESS,
             COMMAND_SCREEN_BRIGHTNESS_LEVEL,
             COMMAND_SCREEN_OFF_TIMEOUT
@@ -236,8 +229,14 @@ class MessagingManager @Inject constructor(
         )
         val FORCE_COMMANDS = listOf(FORCE_OFF, FORCE_ON)
         val MEDIA_COMMANDS = listOf(
-            MEDIA_FAST_FORWARD, MEDIA_NEXT, MEDIA_PAUSE, MEDIA_PLAY,
-            MEDIA_PLAY_PAUSE, MEDIA_PREVIOUS, MEDIA_REWIND, MEDIA_STOP
+            MEDIA_FAST_FORWARD,
+            MEDIA_NEXT,
+            MEDIA_PAUSE,
+            MEDIA_PLAY,
+            MEDIA_PLAY_PAUSE,
+            MEDIA_PREVIOUS,
+            MEDIA_REWIND,
+            MEDIA_STOP
         )
 
         // Video Values
@@ -248,14 +247,14 @@ class MessagingManager @Inject constructor(
         // Values for a notification that has been replied to
         const val SOURCE_REPLY = "REPLY_"
         const val SOURCE_REPLY_HISTORY = "reply_history_"
+
+        // Values for temporarily added keys
+        const val THIS_SERVER_ID = "server_id"
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
-    private var textToSpeech: TextToSpeech? = null
-
     fun handleMessage(notificationData: Map<String, String>, source: String) {
-
         var now = System.currentTimeMillis()
         var jsonData = notificationData
         val notificationId: Long
@@ -270,15 +269,19 @@ class MessagingManager @Inject constructor(
             } ?: return
         } else {
             val jsonObject = JSONObject(jsonData)
+            val receivedServer = jsonData[NotificationData.WEBHOOK_ID]?.let {
+                serverManager.getServer(webhookId = it)?.id
+            }
             val notificationRow =
-                NotificationItem(0, now, jsonData[NotificationData.MESSAGE].toString(), jsonObject.toString(), source)
+                NotificationItem(0, now, jsonData[NotificationData.MESSAGE].toString(), jsonObject.toString(), source, receivedServer)
             notificationId = notificationDao.add(notificationRow)
 
             val confirmation = jsonData[CONFIRMATION]?.toBoolean() ?: false
             if (confirmation) {
                 mainScope.launch {
                     try {
-                        integrationUseCase.fireEvent("mobile_app_notification_received", jsonData)
+                        serverManager.integrationRepository(receivedServer ?: ServerManager.SERVER_ID_ACTIVE)
+                            .fireEvent("mobile_app_notification_received", jsonData)
                     } catch (e: Exception) {
                         Log.e(TAG, "Unable to send notification received event", e)
                     }
@@ -286,41 +289,45 @@ class MessagingManager @Inject constructor(
             }
         }
 
-        when {
-            jsonData[NotificationData.MESSAGE] == REQUEST_LOCATION_UPDATE -> {
-                Log.d(TAG, "Request location update")
-                requestAccurateLocationUpdate()
-            }
-            jsonData[NotificationData.MESSAGE] == CLEAR_NOTIFICATION && !jsonData["tag"].isNullOrBlank() -> {
-                Log.d(TAG, "Clearing notification with tag: ${jsonData["tag"]}")
-                clearNotification(jsonData["tag"]!!)
-            }
-            jsonData[NotificationData.MESSAGE] == REMOVE_CHANNEL && !jsonData[NotificationData.CHANNEL].isNullOrBlank() -> {
-                Log.d(TAG, "Removing Notification channel ${jsonData[NotificationData.CHANNEL]}")
-                removeNotificationChannel(jsonData[NotificationData.CHANNEL]!!)
-            }
-            jsonData[NotificationData.MESSAGE] == TTS -> {
-                Log.d(TAG, "Sending notification title to TTS")
-                speakNotification(jsonData)
-            }
-            jsonData[NotificationData.MESSAGE] in DEVICE_COMMANDS -> {
-                Log.d(TAG, "Processing device command")
-                when (jsonData[NotificationData.MESSAGE]) {
-                    COMMAND_DND -> {
-                        if (jsonData[NotificationData.COMMAND] in DND_COMMANDS) {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-                                handleDeviceCommands(jsonData)
-                            else {
-                                mainScope.launch {
+        val serverId = jsonData[NotificationData.WEBHOOK_ID]?.let { webhookId ->
+            serverManager.getServer(webhookId = webhookId)?.id
+        } ?: ServerManager.SERVER_ID_ACTIVE
+        jsonData = jsonData + mutableMapOf<String, String>().apply { put(THIS_SERVER_ID, serverId.toString()) }
+
+        mainScope.launch {
+            val allowCommands = serverManager.integrationRepository(serverId).isTrusted()
+            when {
+                jsonData[NotificationData.MESSAGE] == REQUEST_LOCATION_UPDATE && allowCommands -> {
+                    Log.d(TAG, "Request location update")
+                    requestAccurateLocationUpdate()
+                }
+                jsonData[NotificationData.MESSAGE] == CLEAR_NOTIFICATION && !jsonData["tag"].isNullOrBlank() -> {
+                    Log.d(TAG, "Clearing notification with tag: ${jsonData["tag"]}")
+                    clearNotification(jsonData["tag"]!!)
+                }
+                jsonData[NotificationData.MESSAGE] == REMOVE_CHANNEL && !jsonData[NotificationData.CHANNEL].isNullOrBlank() -> {
+                    Log.d(TAG, "Removing Notification channel ${jsonData[NotificationData.CHANNEL]}")
+                    removeNotificationChannel(jsonData[NotificationData.CHANNEL]!!)
+                }
+                jsonData[NotificationData.MESSAGE] == TextToSpeechData.TTS -> {
+                    speakText(context, jsonData)
+                }
+                jsonData[NotificationData.MESSAGE] == TextToSpeechData.COMMAND_STOP_TTS -> stopTTS()
+                jsonData[NotificationData.MESSAGE] in DEVICE_COMMANDS && allowCommands -> {
+                    Log.d(TAG, "Processing device command")
+                    when (jsonData[NotificationData.MESSAGE]) {
+                        COMMAND_DND -> {
+                            if (jsonData[NotificationData.COMMAND] in DND_COMMANDS) {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                    handleDeviceCommands(jsonData)
+                                } else {
                                     Log.d(
                                         TAG,
                                         "Posting notification to device as it does not support DND commands"
                                     )
                                     sendNotification(jsonData)
                                 }
-                            }
-                        } else {
-                            mainScope.launch {
+                            } else {
                                 Log.d(
                                     TAG,
                                     "Invalid DND command received, posting notification to device"
@@ -328,12 +335,10 @@ class MessagingManager @Inject constructor(
                                 sendNotification(jsonData)
                             }
                         }
-                    }
-                    COMMAND_RINGER_MODE -> {
-                        if (jsonData[NotificationData.COMMAND] in RM_COMMANDS) {
-                            handleDeviceCommands(jsonData)
-                        } else {
-                            mainScope.launch {
+                        COMMAND_RINGER_MODE -> {
+                            if (jsonData[NotificationData.COMMAND] in RM_COMMANDS) {
+                                handleDeviceCommands(jsonData)
+                            } else {
                                 Log.d(
                                     TAG,
                                     "Invalid ringer mode command received, posting notification to device"
@@ -341,12 +346,10 @@ class MessagingManager @Inject constructor(
                                 sendNotification(jsonData)
                             }
                         }
-                    }
-                    COMMAND_BROADCAST_INTENT -> {
-                        if (!jsonData[INTENT_ACTION].isNullOrEmpty() && !jsonData[INTENT_PACKAGE_NAME].isNullOrEmpty())
-                            handleDeviceCommands(jsonData)
-                        else {
-                            mainScope.launch {
+                        COMMAND_BROADCAST_INTENT -> {
+                            if (!jsonData[INTENT_ACTION].isNullOrEmpty() && !jsonData[INTENT_PACKAGE_NAME].isNullOrEmpty()) {
+                                handleDeviceCommands(jsonData)
+                            } else {
                                 Log.d(
                                     TAG,
                                     "Invalid broadcast command received, posting notification to device"
@@ -354,14 +357,12 @@ class MessagingManager @Inject constructor(
                                 sendNotification(jsonData)
                             }
                         }
-                    }
-                    COMMAND_VOLUME_LEVEL -> {
-                        if (!jsonData[MEDIA_STREAM].isNullOrEmpty() && jsonData[MEDIA_STREAM] in CHANNEL_VOLUME_STREAM &&
-                            !jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND]?.toIntOrNull() != null
-                        )
-                            handleDeviceCommands(jsonData)
-                        else {
-                            mainScope.launch {
+                        COMMAND_VOLUME_LEVEL -> {
+                            if (!jsonData[NotificationData.MEDIA_STREAM].isNullOrEmpty() && jsonData[NotificationData.MEDIA_STREAM] in CHANNEL_VOLUME_STREAM &&
+                                !jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND]?.toIntOrNull() != null
+                            ) {
+                                handleDeviceCommands(jsonData)
+                            } else {
                                 Log.d(
                                     TAG,
                                     "Invalid volume command received, posting notification to device"
@@ -369,16 +370,14 @@ class MessagingManager @Inject constructor(
                                 sendNotification(jsonData)
                             }
                         }
-                    }
-                    COMMAND_BLUETOOTH -> {
-                        if (
-                            !jsonData[NotificationData.COMMAND].isNullOrEmpty() &&
-                            jsonData[NotificationData.COMMAND] in DeviceCommandData.ENABLE_COMMANDS &&
-                            Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
-                        )
-                            handleDeviceCommands(jsonData)
-                        else {
-                            mainScope.launch {
+                        COMMAND_BLUETOOTH -> {
+                            if (
+                                !jsonData[NotificationData.COMMAND].isNullOrEmpty() &&
+                                jsonData[NotificationData.COMMAND] in DeviceCommandData.ENABLE_COMMANDS &&
+                                Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
+                            ) {
+                                handleDeviceCommands(jsonData)
+                            } else {
                                 Log.d(
                                     TAG,
                                     "Invalid bluetooth command received, posting notification to device"
@@ -386,32 +385,26 @@ class MessagingManager @Inject constructor(
                                 sendNotification(jsonData)
                             }
                         }
-                    }
-                    DeviceCommandData.COMMAND_BLE_TRANSMITTER -> {
-                        if (!commandBleTransmitter(context, jsonData, sensorDao, mainScope)) {
-                            mainScope.launch {
+                        DeviceCommandData.COMMAND_BLE_TRANSMITTER -> {
+                            if (!commandBleTransmitter(context, jsonData, sensorDao, mainScope)) {
                                 sendNotification(jsonData)
                             }
                         }
-                    }
-                    DeviceCommandData.COMMAND_BEACON_MONITOR -> {
-                        if (!commandBeaconMonitor(context, jsonData)) {
-                            mainScope.launch {
+                        DeviceCommandData.COMMAND_BEACON_MONITOR -> {
+                            if (!commandBeaconMonitor(context, jsonData)) {
                                 sendNotification(jsonData)
                             }
                         }
-                    }
-                    COMMAND_HIGH_ACCURACY_MODE -> {
-                        if ((!jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND] in DeviceCommandData.ENABLE_COMMANDS) ||
-                            (!jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND] in FORCE_COMMANDS) ||
-                            (
-                                !jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND] == HIGH_ACCURACY_SET_UPDATE_INTERVAL &&
-                                    jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toIntOrNull() != null && jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toInt()!! >= 5
-                                )
-                        )
-                            handleDeviceCommands(jsonData)
-                        else {
-                            mainScope.launch {
+                        COMMAND_HIGH_ACCURACY_MODE -> {
+                            if ((!jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND] in DeviceCommandData.ENABLE_COMMANDS) ||
+                                (!jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND] in FORCE_COMMANDS) ||
+                                (
+                                    !jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND] == HIGH_ACCURACY_SET_UPDATE_INTERVAL &&
+                                        jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toIntOrNull() != null && jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toInt()!! >= 5
+                                    )
+                            ) {
+                                handleDeviceCommands(jsonData)
+                            } else {
                                 Log.d(
                                     TAG,
                                     "Invalid high accuracy mode command received, posting notification to device"
@@ -419,12 +412,10 @@ class MessagingManager @Inject constructor(
                                 sendNotification(jsonData)
                             }
                         }
-                    }
-                    COMMAND_ACTIVITY -> {
-                        if (!jsonData[INTENT_ACTION].isNullOrEmpty())
-                            handleDeviceCommands(jsonData)
-                        else {
-                            mainScope.launch {
+                        COMMAND_ACTIVITY -> {
+                            if (!jsonData[INTENT_ACTION].isNullOrEmpty()) {
+                                handleDeviceCommands(jsonData)
+                            } else {
                                 Log.d(
                                     TAG,
                                     "Invalid activity command received, posting notification to device"
@@ -432,25 +423,23 @@ class MessagingManager @Inject constructor(
                                 sendNotification(jsonData)
                             }
                         }
-                    }
-                    COMMAND_APP_LOCK -> {
-                        val appLockEnablePresent = jsonData[APP_LOCK_ENABLED] != null
-                        val appLockTimeoutPresent = jsonData[APP_LOCK_TIMEOUT] != null
-                        val homeBypassEnablePresent = jsonData[HOME_BYPASS_ENABLED] != null
+                        COMMAND_APP_LOCK -> {
+                            val appLockEnablePresent = jsonData[APP_LOCK_ENABLED] != null
+                            val appLockTimeoutPresent = jsonData[APP_LOCK_TIMEOUT] != null
+                            val homeBypassEnablePresent = jsonData[HOME_BYPASS_ENABLED] != null
 
-                        val appLockEnableValue = jsonData[APP_LOCK_ENABLED]?.lowercase()?.toBooleanStrictOrNull()
-                        val appLockTimeoutValue = jsonData[APP_LOCK_TIMEOUT]?.toIntOrNull()
-                        val homeBypassEnableValue = jsonData[HOME_BYPASS_ENABLED]?.lowercase()?.toBooleanStrictOrNull()
+                            val appLockEnableValue = jsonData[APP_LOCK_ENABLED]?.lowercase()?.toBooleanStrictOrNull()
+                            val appLockTimeoutValue = jsonData[APP_LOCK_TIMEOUT]?.toIntOrNull()
+                            val homeBypassEnableValue = jsonData[HOME_BYPASS_ENABLED]?.lowercase()?.toBooleanStrictOrNull()
 
-                        val invalid = (!appLockEnablePresent && !appLockTimeoutPresent && !homeBypassEnablePresent) ||
-                            (appLockEnablePresent && appLockEnableValue == null) ||
-                            (appLockTimeoutPresent && (appLockTimeoutValue == null || appLockTimeoutValue < 0)) ||
-                            (homeBypassEnablePresent && homeBypassEnableValue == null)
+                            val invalid = (!appLockEnablePresent && !appLockTimeoutPresent && !homeBypassEnablePresent) ||
+                                (appLockEnablePresent && appLockEnableValue == null) ||
+                                (appLockTimeoutPresent && (appLockTimeoutValue == null || appLockTimeoutValue < 0)) ||
+                                (homeBypassEnablePresent && homeBypassEnableValue == null)
 
-                        if (!invalid)
-                            handleDeviceCommands(jsonData)
-                        else {
-                            mainScope.launch {
+                            if (!invalid) {
+                                handleDeviceCommands(jsonData)
+                            } else {
                                 Log.d(
                                     TAG,
                                     "Invalid app lock command received, posting notification to device"
@@ -458,28 +447,24 @@ class MessagingManager @Inject constructor(
                                 sendNotification(jsonData)
                             }
                         }
-                    }
-                    COMMAND_WEBVIEW -> {
-                        handleDeviceCommands(jsonData)
-                    }
-                    COMMAND_SCREEN_ON -> {
-                        handleDeviceCommands(jsonData)
-                    }
-                    COMMAND_MEDIA -> {
-                        if (!jsonData[MEDIA_COMMAND].isNullOrEmpty() && jsonData[MEDIA_COMMAND] in MEDIA_COMMANDS && !jsonData[MEDIA_PACKAGE_NAME].isNullOrEmpty()) {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-                                handleDeviceCommands(jsonData)
-                            } else {
-                                mainScope.launch {
+                        COMMAND_WEBVIEW -> {
+                            handleDeviceCommands(jsonData)
+                        }
+                        COMMAND_SCREEN_ON -> {
+                            handleDeviceCommands(jsonData)
+                        }
+                        COMMAND_MEDIA -> {
+                            if (!jsonData[MEDIA_COMMAND].isNullOrEmpty() && jsonData[MEDIA_COMMAND] in MEDIA_COMMANDS && !jsonData[MEDIA_PACKAGE_NAME].isNullOrEmpty()) {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                                    handleDeviceCommands(jsonData)
+                                } else {
                                     Log.d(
                                         TAG,
                                         "Posting notification to device as it does not support media commands"
                                     )
                                     sendNotification(jsonData)
                                 }
-                            }
-                        } else {
-                            mainScope.launch {
+                            } else {
                                 Log.d(
                                     TAG,
                                     "Invalid media command received, posting notification to device"
@@ -487,13 +472,11 @@ class MessagingManager @Inject constructor(
                                 sendNotification(jsonData)
                             }
                         }
-                    }
-                    COMMAND_UPDATE_SENSORS -> SensorReceiver.updateAllSensors(context)
-                    COMMAND_LAUNCH_APP -> {
-                        if (!jsonData[PACKAGE_NAME].isNullOrEmpty()) {
-                            handleDeviceCommands(jsonData)
-                        } else {
-                            mainScope.launch {
+                        COMMAND_UPDATE_SENSORS -> SensorReceiver.updateAllSensors(context)
+                        COMMAND_LAUNCH_APP -> {
+                            if (!jsonData[PACKAGE_NAME].isNullOrEmpty()) {
+                                handleDeviceCommands(jsonData)
+                            } else {
                                 Log.d(
                                     TAG,
                                     "Missing package name for app to launch, posting notification to device"
@@ -501,55 +484,48 @@ class MessagingManager @Inject constructor(
                                 sendNotification(jsonData)
                             }
                         }
-                    }
-                    COMMAND_PERSISTENT_CONNECTION -> {
-                        val validPersistentTypes = WebsocketSetting.values().map { setting -> setting.name }
+                        COMMAND_PERSISTENT_CONNECTION -> {
+                            val validPersistentTypes = WebsocketSetting.values().map { setting -> setting.name }
 
-                        when {
-                            jsonData[PERSISTENT].isNullOrEmpty() -> {
-                                mainScope.launch {
+                            when {
+                                jsonData[PERSISTENT].isNullOrEmpty() -> {
                                     Log.d(
                                         TAG,
                                         "Missing persistent modifier, posting notification to device"
                                     )
                                     sendNotification(jsonData)
                                 }
-                            }
-                            jsonData[PERSISTENT]!!.uppercase() !in validPersistentTypes -> {
-                                mainScope.launch {
+                                jsonData[PERSISTENT]!!.uppercase() !in validPersistentTypes -> {
                                     Log.d(
                                         TAG,
                                         "Persistent modifier is not one of $validPersistentTypes"
                                     )
                                     sendNotification(jsonData)
                                 }
+                                else -> handleDeviceCommands(jsonData)
                             }
-                            else -> handleDeviceCommands(jsonData)
                         }
-                    }
-                    COMMAND_STOP_TTS -> handleDeviceCommands(jsonData)
-                    COMMAND_AUTO_SCREEN_BRIGHTNESS -> {
-                        if (!jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND] in DeviceCommandData.ENABLE_COMMANDS)
-                            handleDeviceCommands(jsonData)
-                        else
-                            mainScope.launch {
+                        COMMAND_AUTO_SCREEN_BRIGHTNESS -> {
+                            if (!jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND] in DeviceCommandData.ENABLE_COMMANDS) {
+                                handleDeviceCommands(jsonData)
+                            } else {
                                 sendNotification(jsonData)
                             }
-                    }
-                    COMMAND_SCREEN_BRIGHTNESS_LEVEL, COMMAND_SCREEN_OFF_TIMEOUT -> {
-                        if (!jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND]?.toIntOrNull() != null)
-                            handleDeviceCommands(jsonData)
-                        else
-                            mainScope.launch {
+                        }
+                        COMMAND_SCREEN_BRIGHTNESS_LEVEL, COMMAND_SCREEN_OFF_TIMEOUT -> {
+                            if (!jsonData[NotificationData.COMMAND].isNullOrEmpty() && jsonData[NotificationData.COMMAND]?.toIntOrNull() != null) {
+                                handleDeviceCommands(jsonData)
+                            } else {
                                 sendNotification(jsonData)
                             }
+                        }
+                        else -> Log.d(TAG, "No command received")
                     }
-                    else -> Log.d(TAG, "No command received")
                 }
-            }
-            else -> mainScope.launch {
-                Log.d(TAG, "Creating notification with following data: $jsonData")
-                sendNotification(jsonData, notificationId, now)
+                else -> {
+                    Log.d(TAG, "Creating notification with following data: $jsonData")
+                    sendNotification(jsonData, notificationId, now)
+                }
             }
         }
     }
@@ -570,12 +546,6 @@ class MessagingManager @Inject constructor(
         notificationManagerCompat.cancel(tag, messageId, true)
     }
 
-    private fun stopTTS() {
-        Log.d(TAG, "Stopping TTS")
-        textToSpeech?.stop()
-        textToSpeech?.shutdown()
-    }
-
     private fun removeNotificationChannel(channelName: String) {
         val notificationManagerCompat = NotificationManagerCompat.from(context)
 
@@ -583,80 +553,6 @@ class MessagingManager @Inject constructor(
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && channelID != NotificationChannel.DEFAULT_CHANNEL_ID) {
             notificationManagerCompat.deleteNotificationChannel(channelID)
-        }
-    }
-
-    private fun speakNotification(data: Map<String, String>) {
-        var tts = data[TTS_TEXT]
-        val audioManager = context.getSystemService<AudioManager>()
-        val currentAlarmVolume = audioManager?.getStreamVolume(AudioManager.STREAM_ALARM)
-        val maxAlarmVolume = audioManager?.getStreamMaxVolume(AudioManager.STREAM_ALARM)
-        if (tts.isNullOrEmpty())
-            tts = context.getString(commonR.string.tts_no_text)
-        textToSpeech = TextToSpeech(
-            context
-        ) {
-            if (it == TextToSpeech.SUCCESS) {
-                val listener = object : UtteranceProgressListener() {
-                    override fun onStart(p0: String?) {
-                        if (data[MEDIA_STREAM] == NotificationData.ALARM_STREAM_MAX)
-                            audioManager?.setStreamVolume(
-                                AudioManager.STREAM_ALARM,
-                                maxAlarmVolume!!,
-                                0
-                            )
-                    }
-
-                    override fun onDone(p0: String?) {
-                        textToSpeech?.stop()
-                        textToSpeech?.shutdown()
-                        if (data[MEDIA_STREAM] == NotificationData.ALARM_STREAM_MAX)
-                            audioManager?.setStreamVolume(
-                                AudioManager.STREAM_ALARM,
-                                currentAlarmVolume!!,
-                                0
-                            )
-                    }
-
-                    override fun onError(p0: String?) {
-                        textToSpeech?.stop()
-                        textToSpeech?.shutdown()
-                        if (data[MEDIA_STREAM] == NotificationData.ALARM_STREAM_MAX)
-                            audioManager?.setStreamVolume(
-                                AudioManager.STREAM_ALARM,
-                                currentAlarmVolume!!,
-                                0
-                            )
-                    }
-
-                    override fun onStop(utteranceId: String?, interrupted: Boolean) {
-                        if (data[MEDIA_STREAM] == NotificationData.ALARM_STREAM_MAX)
-                            audioManager?.setStreamVolume(
-                                AudioManager.STREAM_ALARM,
-                                currentAlarmVolume!!,
-                                0
-                            )
-                    }
-                }
-                textToSpeech?.setOnUtteranceProgressListener(listener)
-                if (data[MEDIA_STREAM] == NotificationData.ALARM_STREAM || data[MEDIA_STREAM] == NotificationData.ALARM_STREAM_MAX) {
-                    val audioAttributes = AudioAttributes.Builder()
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                        .setUsage(AudioAttributes.USAGE_ALARM)
-                        .build()
-                    textToSpeech?.setAudioAttributes(audioAttributes)
-                }
-                textToSpeech?.speak(tts, TextToSpeech.QUEUE_ADD, null, "")
-                Log.d(TAG, "speaking notification")
-            } else {
-                Handler(Looper.getMainLooper()).post {
-                    Toast.makeText(
-                        context,
-                        context.getString(commonR.string.tts_error, tts),
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-            }
         }
     }
 
@@ -711,8 +607,9 @@ class MessagingManager @Inject constructor(
                         addExtrasToIntent(intent, extras)
                     }
                     intent.`package` = packageName
-                    if (!packageName.isNullOrEmpty() && !className.isNullOrEmpty())
+                    if (!packageName.isNullOrEmpty() && !className.isNullOrEmpty()) {
                         intent.setClassName(packageName, className)
+                    }
                     Log.d(TAG, "Sending broadcast intent")
                     context.sendBroadcast(intent)
                 } catch (e: Exception) {
@@ -736,14 +633,14 @@ class MessagingManager @Inject constructor(
                     } else {
                         processStreamVolume(
                             audioManager!!,
-                            data[MEDIA_STREAM].toString(),
+                            data[NotificationData.MEDIA_STREAM].toString(),
                             command!!.toInt()
                         )
                     }
                 } else {
                     processStreamVolume(
                         audioManager!!,
-                        data[MEDIA_STREAM].toString(),
+                        data[NotificationData.MEDIA_STREAM].toString(),
                         command!!.toInt()
                     )
                 }
@@ -762,10 +659,11 @@ class MessagingManager @Inject constructor(
                     }
                 }
                 @Suppress("DEPRECATION")
-                if (command == DeviceCommandData.TURN_OFF)
+                if (command == DeviceCommandData.TURN_OFF) {
                     bluetoothAdapter?.disable()
-                else if (command == DeviceCommandData.TURN_ON)
+                } else if (command == DeviceCommandData.TURN_ON) {
                     bluetoothAdapter?.enable()
+                }
             }
             COMMAND_HIGH_ACCURACY_MODE -> {
                 when (command) {
@@ -781,9 +679,9 @@ class MessagingManager @Inject constructor(
             }
             COMMAND_ACTIVITY -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    if (!Settings.canDrawOverlays(context))
+                    if (!Settings.canDrawOverlays(context)) {
                         notifyMissingPermission(message.toString())
-                    else if (ContextCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED && data["tag"] == Intent.ACTION_CALL) {
+                    } else if (ContextCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED && data["tag"] == Intent.ACTION_CALL) {
                         Handler(Looper.getMainLooper()).post {
                             Toast.makeText(
                                 context,
@@ -792,10 +690,12 @@ class MessagingManager @Inject constructor(
                             ).show()
                         }
                         navigateAppDetails()
-                    } else
+                    } else {
                         processActivityCommand(data)
-                } else
+                    }
+                } else {
                     processActivityCommand(data)
+                }
             }
             COMMAND_APP_LOCK -> {
                 mainScope.launch {
@@ -804,12 +704,14 @@ class MessagingManager @Inject constructor(
             }
             COMMAND_WEBVIEW -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    if (!Settings.canDrawOverlays(context))
+                    if (!Settings.canDrawOverlays(context)) {
                         notifyMissingPermission(message.toString())
-                    else
-                        openWebview(command)
-                } else
-                    openWebview(command)
+                    } else {
+                        openWebview(command, data)
+                    }
+                } else {
+                    openWebview(command, data)
+                }
             }
             COMMAND_SCREEN_ON -> {
                 if (!command.isNullOrEmpty()) {
@@ -834,37 +736,39 @@ class MessagingManager @Inject constructor(
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
                     if (!NotificationManagerCompat.getEnabledListenerPackages(context)
                         .contains(context.packageName)
-                    )
+                    ) {
                         notifyMissingPermission(message.toString())
-                    else {
+                    } else {
                         processMediaCommand(data)
                     }
                 }
             }
             COMMAND_LAUNCH_APP -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    if (!Settings.canDrawOverlays(context))
+                    if (!Settings.canDrawOverlays(context)) {
                         notifyMissingPermission(message.toString())
-                    else
+                    } else {
                         launchApp(data)
-                } else
+                    }
+                } else {
                     launchApp(data)
+                }
             }
             COMMAND_PERSISTENT_CONNECTION -> {
                 togglePersistentConnection(data[PERSISTENT].toString())
             }
-            COMMAND_STOP_TTS -> {
-                stopTTS()
-            }
             COMMAND_AUTO_SCREEN_BRIGHTNESS, COMMAND_SCREEN_BRIGHTNESS_LEVEL, COMMAND_SCREEN_OFF_TIMEOUT -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (Settings.System.canWrite(context)) {
-                        if (!processScreenCommands(data))
+                        if (!processScreenCommands(data)) {
                             mainScope.launch { sendNotification(data) }
-                    } else
+                        }
+                    } else {
                         notifyMissingPermission(message.toString())
-                } else if (!processScreenCommands(data))
+                    }
+                } else if (!processScreenCommands(data)) {
                     mainScope.launch { sendNotification(data) }
+                }
             }
             else -> Log.d(TAG, "No command received")
         }
@@ -910,12 +814,13 @@ class MessagingManager @Inject constructor(
                 }
             } else {
                 // Try to guess the correct type
-                if (value.isDigitsOnly())
+                if (value.isDigitsOnly()) {
                     intent.putExtra(chunks[0], value.toInt())
-                else if ((value.lowercase() == "true") || (value.lowercase() == "false"))
+                } else if ((value.lowercase() == "true") || (value.lowercase() == "false")) {
                     intent.putExtra(chunks[0], value.toBoolean())
-                else
+                } else {
                     intent.putExtra(chunks[0], value)
+                }
             }
         }
     }
@@ -939,7 +844,6 @@ class MessagingManager @Inject constructor(
             groupId = group.hashCode()
         } else {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-
                 val notification = notificationManagerCompat.getActiveNotification(tag, messageId)
                 if (notification != null && notification.isGroup) {
                     previousGroup = NotificationData.GROUP_PREFIX + notification.tag
@@ -972,6 +876,8 @@ class MessagingManager @Inject constructor(
 
         handleSubject(notificationBuilder, data)
 
+        handleServer(notificationBuilder, data)
+
         handleImage(notificationBuilder, data)
 
         handleVideo(notificationBuilder, data)
@@ -982,9 +888,9 @@ class MessagingManager @Inject constructor(
 
         handleReplyHistory(notificationBuilder, data)
 
-        handleDeleteIntent(notificationBuilder, data, messageId, group, groupId)
+        handleDeleteIntent(notificationBuilder, data, messageId, group, groupId, id)
 
-        handleContentIntent(notificationBuilder, messageId, group, groupId, data)
+        handleContentIntent(notificationBuilder, data)
 
         handleChronometer(notificationBuilder, data)
 
@@ -1037,13 +943,12 @@ class MessagingManager @Inject constructor(
 
     private fun handleContentIntent(
         builder: NotificationCompat.Builder,
-        messageId: Int,
-        group: String?,
-        groupId: Int,
         data: Map<String, String>
     ) {
         val actionUri = data["clickAction"] ?: "/"
-        builder.setContentIntent(createOpenUriPendingIntent(actionUri))
+        if (actionUri != NO_ACTION) {
+            builder.setContentIntent(createOpenUriPendingIntent(actionUri, data))
+        }
     }
 
     private fun handleDeleteIntent(
@@ -1051,14 +956,14 @@ class MessagingManager @Inject constructor(
         data: Map<String, String>,
         messageId: Int,
         group: String?,
-        groupId: Int
-
+        groupId: Int,
+        databaseId: Long?
     ) {
-
         val deleteIntent = Intent(context, NotificationDeleteReceiver::class.java).apply {
             putExtra(NotificationDeleteReceiver.EXTRA_DATA, HashMap(data))
             putExtra(NotificationDeleteReceiver.EXTRA_NOTIFICATION_GROUP, group)
             putExtra(NotificationDeleteReceiver.EXTRA_NOTIFICATION_GROUP_ID, groupId)
+            putExtra(NotificationDeleteReceiver.EXTRA_NOTIFICATION_DB, databaseId)
         }
         val deletePendingIntent = PendingIntent.getBroadcast(
             context,
@@ -1102,8 +1007,9 @@ class MessagingManager @Inject constructor(
         } else {
             builder.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
         }
-        if (data[NotificationData.ALERT_ONCE].toBoolean())
+        if (data[NotificationData.ALERT_ONCE].toBoolean()) {
             builder.setOnlyAlertOnce(true)
+        }
     }
 
     private fun handleLegacyLedColor(
@@ -1133,7 +1039,6 @@ class MessagingManager @Inject constructor(
         builder: NotificationCompat.Builder,
         data: Map<String, String>
     ) {
-
         // Use importance property for legacy priority support
         val priority = data[NotificationData.IMPORTANCE]
 
@@ -1171,8 +1076,9 @@ class MessagingManager @Inject constructor(
     ) {
         if (!group.isNullOrBlank()) {
             builder.setGroup(group)
-            if (alertOnce == true)
+            if (alertOnce == true) {
                 builder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
+            }
         }
     }
 
@@ -1193,13 +1099,27 @@ class MessagingManager @Inject constructor(
         }
     }
 
+    private fun handleServer(
+        builder: NotificationCompat.Builder,
+        data: Map<String, String>
+    ) {
+        data[NotificationData.WEBHOOK_ID]?.let { webhookId ->
+            if (serverManager.defaultServers.size > 1) {
+                serverManager.getServer(webhookId = webhookId)?.let {
+                    builder.setSubText(it.friendlyName)
+                }
+            }
+        }
+    }
+
     private suspend fun handleLargeIcon(
         builder: NotificationCompat.Builder,
         data: Map<String, String>
     ) {
         data[ICON_URL]?.let {
-            val url = UrlHandler.handle(urlUseCase.getUrl(), it)
-            val bitmap = getImageBitmap(url, !UrlHandler.isAbsoluteUrl(it))
+            val serverId = data[THIS_SERVER_ID]!!.toInt()
+            val url = UrlHandler.handle(serverManager.getServer(serverId)?.connection?.getUrl(), it)
+            val bitmap = getImageBitmap(serverId, url, !UrlHandler.isAbsoluteUrl(it))
             if (bitmap != null) {
                 builder.setLargeIcon(bitmap)
             }
@@ -1211,8 +1131,9 @@ class MessagingManager @Inject constructor(
         data: Map<String, String>
     ) {
         data[IMAGE_URL]?.let {
-            val url = UrlHandler.handle(urlUseCase.getUrl(), it)
-            val bitmap = getImageBitmap(url, !UrlHandler.isAbsoluteUrl(it))
+            val serverId = data[THIS_SERVER_ID]!!.toInt()
+            val url = UrlHandler.handle(serverManager.getServer(serverId)?.connection?.getUrl(), it)
+            val bitmap = getImageBitmap(serverId, url, !UrlHandler.isAbsoluteUrl(it))
             if (bitmap != null) {
                 builder
                     .setLargeIcon(bitmap)
@@ -1225,19 +1146,20 @@ class MessagingManager @Inject constructor(
         }
     }
 
-    private suspend fun getImageBitmap(url: URL?, requiresAuth: Boolean = false): Bitmap? =
+    private suspend fun getImageBitmap(serverId: Int, url: URL?, requiresAuth: Boolean = false): Bitmap? =
         withContext(
             Dispatchers.IO
         ) {
-            if (url == null)
+            if (url == null) {
                 return@withContext null
+            }
 
             var image: Bitmap? = null
             try {
                 val request = Request.Builder().apply {
                     url(url)
                     if (requiresAuth) {
-                        addHeader("Authorization", authenticationUseCase.buildBearerToken())
+                        addHeader("Authorization", serverManager.authenticationRepository(serverId).buildBearerToken())
                     }
                 }.build()
 
@@ -1255,8 +1177,9 @@ class MessagingManager @Inject constructor(
         data: Map<String, String>
     ) {
         data[VIDEO_URL]?.let {
-            val url = UrlHandler.handle(urlUseCase.getUrl(), it)
-            getVideoFrames(url, !UrlHandler.isAbsoluteUrl(it))?.let { frames ->
+            val serverId = data[THIS_SERVER_ID]!!.toInt()
+            val url = UrlHandler.handle(serverManager.getServer(serverId)?.connection?.getUrl(), it)
+            getVideoFrames(serverId, url, !UrlHandler.isAbsoluteUrl(it))?.let { frames ->
                 Log.d(TAG, "Found ${frames.size} frames for video notification")
                 RemoteViews(context.packageName, R.layout.view_image_flipper).let { remoteViewFlipper ->
                     if (frames.isNotEmpty()) {
@@ -1288,7 +1211,7 @@ class MessagingManager @Inject constructor(
         }
     }
 
-    private suspend fun getVideoFrames(url: URL?, requiresAuth: Boolean = false): List<Bitmap>? =
+    private suspend fun getVideoFrames(serverId: Int, url: URL?, requiresAuth: Boolean = false): List<Bitmap>? =
         withContext(
             Dispatchers.IO
         ) {
@@ -1303,7 +1226,7 @@ class MessagingManager @Inject constructor(
                     val request = Request.Builder().apply {
                         url(url)
                         if (requiresAuth) {
-                            addHeader("Authorization", authenticationUseCase.buildBearerToken())
+                            addHeader("Authorization", serverManager.authenticationRepository(serverId).buildBearerToken())
                         }
                     }.build()
                     val response = okHttpClient.newCall(request).execute()
@@ -1416,7 +1339,7 @@ class MessagingManager @Inject constructor(
                             builder.addAction(
                                 commonR.drawable.ic_globe,
                                 notificationAction.title,
-                                createOpenUriPendingIntent(notificationAction.uri)
+                                createOpenUriPendingIntent(notificationAction.uri, data)
                             )
                         }
                     }
@@ -1459,13 +1382,15 @@ class MessagingManager @Inject constructor(
     }
 
     private fun createOpenUriPendingIntent(
-        uri: String
+        uri: String,
+        data: Map<String, String>
     ): PendingIntent {
+        val serverId = data[THIS_SERVER_ID]!!.toInt()
         val needsPackage = uri.startsWith(APP_PREFIX) || uri.startsWith(INTENT_PREFIX)
         val otherApp = needsPackage || UrlHandler.isAbsoluteUrl(uri) || uri.startsWith(DEEP_LINK_PREFIX)
         val intent = when {
             uri.isBlank() -> {
-                WebViewActivity.newInstance(context)
+                WebViewActivity.newInstance(context, null, serverId)
             }
             uri.startsWith(APP_PREFIX) -> {
                 context.packageManager.getLaunchIntentForPackage(uri.substringAfter(APP_PREFIX))
@@ -1474,28 +1399,31 @@ class MessagingManager @Inject constructor(
                 Intent.parseUri(uri, Intent.URI_INTENT_SCHEME)
             }
             uri.startsWith(SETTINGS_PREFIX) -> {
-                if (uri.substringAfter(SETTINGS_PREFIX) == NOTIFICATION_HISTORY)
+                if (uri.substringAfter(SETTINGS_PREFIX) == NOTIFICATION_HISTORY) {
                     SettingsActivity.newInstance(context)
-                else
-                    WebViewActivity.newInstance(context)
+                } else {
+                    WebViewActivity.newInstance(context, null, serverId)
+                }
             }
             UrlHandler.isAbsoluteUrl(uri) || uri.startsWith(DEEP_LINK_PREFIX) -> {
                 Intent(Intent.ACTION_VIEW).apply {
                     this.data = Uri.parse(
-                        if (uri.startsWith(DEEP_LINK_PREFIX))
+                        if (uri.startsWith(DEEP_LINK_PREFIX)) {
                             uri.removePrefix(DEEP_LINK_PREFIX)
-                        else
+                        } else {
                             uri
+                        }
                     )
                 }
             }
             else -> {
-                WebViewActivity.newInstance(context, uri)
+                WebViewActivity.newInstance(context, uri, serverId)
             }
-        } ?: WebViewActivity.newInstance(context)
+        } ?: WebViewActivity.newInstance(context, null, serverId)
 
-        if (uri.startsWith(SETTINGS_PREFIX) && uri.substringAfter(SETTINGS_PREFIX) == NOTIFICATION_HISTORY)
+        if (uri.startsWith(SETTINGS_PREFIX) && uri.substringAfter(SETTINGS_PREFIX) == NOTIFICATION_HISTORY) {
             intent.putExtra("fragment", NOTIFICATION_HISTORY)
+        }
 
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         if (!otherApp) {
@@ -1516,10 +1444,12 @@ class MessagingManager @Inject constructor(
                     val marketIntent = Intent(Intent.ACTION_VIEW)
                     marketIntent.data = Uri.parse(MARKET_PREFIX + if (uri.startsWith(INTENT_PREFIX)) intent.`package`.toString() else uri.removePrefix(APP_PREFIX))
                     marketIntent
-                } else
+                } else {
                     intent
-            } else
-                intent,
+                }
+            } else {
+                intent
+            },
             PendingIntent.FLAG_IMMUTABLE
         )
     }
@@ -1670,10 +1600,11 @@ class MessagingManager @Inject constructor(
 
     private fun adjustVolumeStream(stream: Int, volume: Int, audioManager: AudioManager) {
         var volumeLevel = volume
-        if (volumeLevel > audioManager.getStreamMaxVolume(stream))
+        if (volumeLevel > audioManager.getStreamMaxVolume(stream)) {
             volumeLevel = audioManager.getStreamMaxVolume(stream)
-        else if (volumeLevel < 0)
+        } else if (volumeLevel < 0) {
             volumeLevel = 0
+        }
         audioManager.setStreamVolume(
             stream,
             volumeLevel,
@@ -1689,10 +1620,12 @@ class MessagingManager @Inject constructor(
             val intentUri = if (!data[INTENT_URI].isNullOrEmpty()) Uri.parse(data[INTENT_URI]) else null
             val intent = if (intentUri != null) Intent(action, intentUri) else Intent(action)
             val type = data[INTENT_TYPE]
-            if (!type.isNullOrEmpty())
+            if (!type.isNullOrEmpty()) {
                 intent.type = type
-            if (!className.isNullOrEmpty() && !packageName.isNullOrEmpty())
+            }
+            if (!className.isNullOrEmpty() && !packageName.isNullOrEmpty()) {
                 intent.setClassName(packageName, className)
+            }
             val extras = data[INTENT_EXTRAS]
             if (!extras.isNullOrEmpty()) {
                 addExtrasToIntent(intent, extras)
@@ -1701,9 +1634,9 @@ class MessagingManager @Inject constructor(
             if (!packageName.isNullOrEmpty()) {
                 intent.setPackage(packageName)
                 context.startActivity(intent)
-            } else if (intent.resolveActivity(context.packageManager) != null)
+            } else if (intent.resolveActivity(context.packageManager) != null) {
                 context.startActivity(intent)
-            else
+            } else {
                 mainScope.launch {
                     Log.d(
                         TAG,
@@ -1711,6 +1644,7 @@ class MessagingManager @Inject constructor(
                     )
                     sendNotification(data)
                 }
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Unable to send activity intent please check command format", e)
             Handler(Looper.getMainLooper()).post {
@@ -1723,12 +1657,17 @@ class MessagingManager @Inject constructor(
         }
     }
 
-    private fun openWebview(title: String?) {
+    private fun openWebview(
+        title: String?,
+        data: Map<String, String>
+    ) {
         try {
-            val intent = if (title.isNullOrEmpty())
-                WebViewActivity.newInstance(context)
-            else
-                WebViewActivity.newInstance(context, title)
+            val serverId = data[THIS_SERVER_ID]!!.toInt()
+            val intent = if (title.isNullOrEmpty()) {
+                WebViewActivity.newInstance(context, null, serverId)
+            } else {
+                WebViewActivity.newInstance(context, title, serverId)
+            }
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
             context.startActivity(intent)
@@ -1740,9 +1679,9 @@ class MessagingManager @Inject constructor(
     private fun launchApp(data: Map<String, String>) {
         try {
             val launchIntent = context.packageManager.getLaunchIntentForPackage(data[PACKAGE_NAME]!!)
-            if (launchIntent != null)
+            if (launchIntent != null) {
                 context.startActivity(launchIntent)
-            else {
+            } else {
                 Log.w(TAG, "No intent to launch app found, opening app store")
                 val marketIntent = Intent(Intent.ACTION_VIEW)
                 marketIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -1762,16 +1701,17 @@ class MessagingManager @Inject constructor(
         val appLockTimeoutValue = data[APP_LOCK_TIMEOUT]?.toIntOrNull()
         val homeBypassEnableValue = data[HOME_BYPASS_ENABLED]?.lowercase()?.toBooleanStrictOrNull()
 
-        val canAuth = (BiometricManager.from(context).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS)
+        val canAuth = (BiometricManager.from(context).canAuthenticate(Authenticator.AUTH_TYPES) == BiometricManager.BIOMETRIC_SUCCESS)
+        val serverId = data[THIS_SERVER_ID]!!.toInt()
         if (canAuth) {
             if (appLockEnableValue != null) {
-                authenticationUseCase.setLockEnabled(appLockEnableValue)
+                serverManager.authenticationRepository(serverId).setLockEnabled(appLockEnableValue)
             }
             if (appLockTimeoutValue != null) {
-                integrationUseCase.sessionTimeOut(appLockTimeoutValue)
+                serverManager.integrationRepository(serverId).sessionTimeOut(appLockTimeoutValue)
             }
             if (homeBypassEnableValue != null) {
-                authenticationUseCase.setLockHomeBypassEnabled(homeBypassEnableValue)
+                serverManager.authenticationRepository(serverId).setLockHomeBypassEnabled(homeBypassEnableValue)
             }
         } else {
             Log.w(TAG, "Not changing App-Lock settings. BiometricManager cannot Authenticate!")
@@ -1823,10 +1763,11 @@ class MessagingManager @Inject constructor(
             when (data[NotificationData.MESSAGE].toString()) {
                 COMMAND_SCREEN_BRIGHTNESS_LEVEL -> command!!.toInt().coerceIn(0, 255)
                 COMMAND_AUTO_SCREEN_BRIGHTNESS -> {
-                    if (command == DeviceCommandData.TURN_ON)
+                    if (command == DeviceCommandData.TURN_ON) {
                         Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
-                    else
+                    } else {
                         Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL
+                    }
                 }
                 else -> command!!.toInt()
             }

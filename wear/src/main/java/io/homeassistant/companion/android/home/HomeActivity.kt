@@ -12,7 +12,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.home.views.LoadHomePage
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
-import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationActivity
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
 import kotlinx.coroutines.Job
@@ -57,9 +56,11 @@ class HomeActivity : ComponentActivity(), HomeView {
                         entityUpdateJob = launch { mainViewModel.entityUpdates() }
                     }
                 }
-                launch { mainViewModel.areaUpdates() }
-                launch { mainViewModel.deviceUpdates() }
                 launch { mainViewModel.entityRegistryUpdates() }
+                if (!mainViewModel.isFavoritesOnly) {
+                    launch { mainViewModel.areaUpdates() }
+                    launch { mainViewModel.deviceUpdates() }
+                }
             }
         }
     }
@@ -71,8 +72,9 @@ class HomeActivity : ComponentActivity(), HomeView {
         mainViewModel.initAllSensors()
 
         lifecycleScope.launch {
-            if (mainViewModel.loadingState.value == MainViewModel.LoadingState.READY)
+            if (mainViewModel.loadingState.value == MainViewModel.LoadingState.READY) {
                 mainViewModel.updateUI()
+            }
         }
     }
 
@@ -88,12 +90,6 @@ class HomeActivity : ComponentActivity(), HomeView {
 
     override fun displayOnBoarding() {
         val intent = OnboardingActivity.newInstance(this)
-        startActivity(intent)
-        finish()
-    }
-
-    override fun displayMobileAppIntegration() {
-        val intent = MobileAppIntegrationActivity.newInstance(this)
         startActivity(intent)
         finish()
     }

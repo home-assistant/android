@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.onboarding.manual_setup
+package io.homeassistant.companion.android.onboarding.manual
 
 import android.content.Context
 

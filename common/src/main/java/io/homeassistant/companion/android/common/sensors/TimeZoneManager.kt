@@ -23,8 +23,6 @@ class TimeZoneManager : SensorManager {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#current-time-zone-sensor"
     }
-    override val enabledByDefault: Boolean
-        get() = false
     override val name: Int
         get() = commonR.string.sensor_name_time_zone
 
@@ -43,9 +41,9 @@ class TimeZoneManager : SensorManager {
     }
 
     private fun updateTimeZone(context: Context) {
-
-        if (!isEnabled(context, currentTimeZone.id))
+        if (!isEnabled(context, currentTimeZone)) {
             return
+        }
 
         val timeZone: TimeZone = TimeZone.getDefault()
         val currentlyInDst = timeZone.inDaylightTime(Date())

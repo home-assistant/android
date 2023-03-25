@@ -7,7 +7,8 @@ import android.content.Context
 import android.content.Intent
 import androidx.wear.watchface.complications.datasource.ComplicationDataSourceUpdateRequester
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.conversation.ConversationActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -17,7 +18,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class ComplicationReceiver : BroadcastReceiver() {
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
+    lateinit var serverManager: ServerManager
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
@@ -56,10 +57,8 @@ class ComplicationReceiver : BroadcastReceiver() {
     }
 
     private fun onScreenOn(context: Context) {
+        if (!serverManager.isRegistered()) return
         scope.launch {
-            if (!integrationUseCase.isRegistered()) {
-                return@launch
-            }
             updateAllComplications(context)
         }
     }
@@ -90,6 +89,15 @@ class ComplicationReceiver : BroadcastReceiver() {
                 complicationInstanceId,
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        }
+
+        fun getAssistIntent(context: Context): PendingIntent {
+            return PendingIntent.getActivity(
+                context,
+                0,
+                Intent(context, ConversationActivity::class.java),
+                PendingIntent.FLAG_IMMUTABLE
             )
         }
     }

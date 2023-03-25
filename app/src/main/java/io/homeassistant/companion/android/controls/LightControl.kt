@@ -30,7 +30,7 @@ object LightControl : HaControl {
     ): Control.StatefulBuilder {
         val position = entity.getLightBrightness()
         control.setControlTemplate(
-            if (entity.supportsLightBrightness())
+            if (entity.supportsLightBrightness()) {
                 ToggleRangeTemplate(
                     entity.entityId,
                     entity.state == "on",
@@ -44,7 +44,7 @@ object LightControl : HaControl {
                         "%.0f%%"
                     )
                 )
-            else
+            } else {
                 ToggleTemplate(
                     entity.entityId,
                     ControlButton(
@@ -52,6 +52,7 @@ object LightControl : HaControl {
                         "Description"
                     )
                 )
+            }
         )
         return control
     }

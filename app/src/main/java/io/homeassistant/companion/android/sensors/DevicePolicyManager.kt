@@ -25,8 +25,6 @@ class DevicePolicyManager : SensorManager {
 
     private var isManagedProfileAvailable: Boolean = false
 
-    override val enabledByDefault: Boolean
-        get() = false
     override val name: Int
         get() = R.string.sensor_name_device_policy
 
@@ -54,9 +52,9 @@ class DevicePolicyManager : SensorManager {
     }
 
     private fun updateWorkProfile(context: Context) {
-
-        if (!isEnabled(context, isWorkProfile.id))
+        if (!isEnabled(context, isWorkProfile)) {
             return
+        }
 
         onSensorUpdated(
             context,

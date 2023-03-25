@@ -27,16 +27,15 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
         )
     }
 
-    override val enabledByDefault: Boolean
-        get() = false
     override val name: Int
         get() = commonR.string.sensor_name_android_auto
 
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             listOf(androidAutoConnected)
-        else
+        } else {
             emptyList()
+        }
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
@@ -48,7 +47,7 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
 
     override fun requestSensorUpdate(context: Context) {
         this.context = context
-        if (!isEnabled(context, androidAutoConnected.id)) {
+        if (!isEnabled(context, androidAutoConnected)) {
             return
         }
         CoroutineScope(Dispatchers.Main + Job()).launch {
@@ -60,7 +59,7 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
     }
 
     override fun onChanged(type: Int?) {
-        if (!isEnabled(context, androidAutoConnected.id)) {
+        if (!isEnabled(context, androidAutoConnected)) {
             CoroutineScope(Dispatchers.Main + Job()).launch {
                 carConnection?.type?.removeObserver(this@AndroidAutoSensorManager)
             }
@@ -87,7 +86,7 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
             androidAutoConnected.statelessIcon,
             mapOf(
                 "connection_type" to typeString
-            ),
+            )
         )
     }
 }

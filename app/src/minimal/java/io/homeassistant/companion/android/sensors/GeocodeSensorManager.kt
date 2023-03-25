@@ -17,8 +17,6 @@ class GeocodeSensorManager : SensorManager {
         )
     }
 
-    override val enabledByDefault: Boolean
-        get() = false
     override val name: Int
         get() = commonR.string.sensor_name_geolocation
 

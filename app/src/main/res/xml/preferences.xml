@@ -7,6 +7,11 @@
         android:title="@string/servers_devices_category">
         <!-- Servers will be added at runtime -->
         <Preference
+            android:key="server_add"
+            android:icon="@drawable/ic_plus"
+            android:order="998"
+            android:title="@string/server_add" />
+        <Preference
             android:key="wear_settings"
             app:isPreferenceVisible="false"
             android:title="@string/wear_os_settings_title"
@@ -34,6 +39,14 @@
             android:icon="@drawable/ic_fullscreen"
             android:title="@string/fullscreen"
             android:summary="@string/fullscreen_def"/>
+        <ListPreference
+            android:key="screen_orientation"
+            android:defaultValue="@string/screen_orientation_option_value_system"
+            android:entries="@array/pref_screen_orientation_option_labels"
+            android:entryValues="@array/pref_screen_orientation_option_values"
+            android:icon="@drawable/ic_screen_orientation"
+            android:title="@string/screen_orientation_title_settings"
+            app:useSimpleSummaryProvider="true"/>
         <SwitchPreference
             android:key="keep_screen_on"
             android:icon="@drawable/ic_phone_check"

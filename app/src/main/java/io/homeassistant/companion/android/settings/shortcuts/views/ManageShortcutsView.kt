@@ -38,6 +38,7 @@ import com.maltaisn.icondialog.IconDialog
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSettingsFragment
 import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsViewModel
+import io.homeassistant.companion.android.util.compose.ServerDropdownButton
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
@@ -56,10 +57,11 @@ fun ManageShortcutsView(
             Divider()
         }
 
-        val shortcutCount = if (viewModel.canPinShortcuts)
+        val shortcutCount = if (viewModel.canPinShortcuts) {
             ManageShortcutsSettingsFragment.MAX_SHORTCUTS + 1
-        else
+        } else {
             ManageShortcutsSettingsFragment.MAX_SHORTCUTS
+        }
 
         items(shortcutCount) { i ->
             CreateShortcutView(
@@ -80,12 +82,17 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, icon
     var expandedPinnedShortcuts by remember { mutableStateOf(false) }
 
     val index = i + 1
+    val shortcut = viewModel.shortcuts[i]
     val shortcutId = ManageShortcutsSettingsFragment.SHORTCUT_PREFIX + "_" + index
 
     Text(
-        text = if (index < 6) stringResource(id = R.string.shortcut) + " $index" else stringResource(
-            id = R.string.shortcut_pinned
-        ),
+        text = if (index < 6) {
+            stringResource(id = R.string.shortcut) + " $index"
+        } else {
+            stringResource(
+                id = R.string.shortcut_pinned
+            )
+        },
         fontSize = 20.sp,
         color = colorResource(id = R.color.colorAccent),
         modifier = Modifier.padding(top = 20.dp)
@@ -167,10 +174,11 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, icon
         onValueChange = { viewModel.shortcuts[i].label.value = it },
         label = {
             Text(
-                if (index < 6)
+                if (index < 6) {
                     "${stringResource(id = R.string.shortcut)} $index ${stringResource(id = R.string.label)}"
-                else
+                } else {
                     stringResource(id = R.string.shortcut_pinned_label)
+                }
             )
         },
         modifier = Modifier.padding(top = 16.dp)
@@ -181,14 +189,30 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, icon
         onValueChange = { viewModel.shortcuts[i].desc.value = it },
         label = {
             Text(
-                if (index < 6)
+                if (index < 6) {
                     "${stringResource(id = R.string.shortcut)} $index ${stringResource(id = R.string.description)}"
-                else
+                } else {
                     stringResource(id = R.string.shortcut_pinned_desc)
+                }
             )
         },
         modifier = Modifier.padding(top = 16.dp, bottom = 16.dp)
     )
+
+    if (viewModel.servers.size > 1 || viewModel.servers.none { it.id == shortcut.serverId.value }) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = stringResource(id = R.string.server_select),
+                fontSize = 15.sp,
+                modifier = Modifier.padding(end = 10.dp)
+            )
+            ServerDropdownButton(
+                servers = viewModel.servers,
+                current = shortcut.serverId.value,
+                onSelected = { viewModel.shortcuts[i].serverId.value = it }
+            )
+        }
+    }
 
     Text(stringResource(id = R.string.shortcut_type))
 
@@ -216,13 +240,12 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, icon
         }
 
         DropdownMenu(expanded = expandedEntity, onDismissRequest = { expandedEntity = false }) {
-            val sortedEntities = viewModel.entities.values.sortedBy { it.entityId }
-            for (item in sortedEntities) {
+            viewModel.entities[shortcut.serverId.value]?.forEach {
                 DropdownMenuItem(onClick = {
-                    viewModel.shortcuts[i].path.value = "entityId:${item.entityId}"
+                    viewModel.shortcuts[i].path.value = "entityId:${it.entityId}"
                     expandedEntity = false
                 }) {
-                    Text(text = item.entityId, fontSize = 15.sp)
+                    Text(text = it.entityId, fontSize = 15.sp)
                 }
             }
         }
@@ -235,29 +258,39 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, icon
     Button(
         onClick = {
             if (index < 6) {
-                if (viewModel.shortcuts[i].delete.value)
+                if (viewModel.shortcuts[i].delete.value) {
                     Toast.makeText(context, R.string.shortcut_updated, Toast.LENGTH_SHORT).show()
+                }
                 viewModel.shortcuts[i].delete.value = true
             }
-            viewModel.createShortcut(if (index < 6) shortcutId else viewModel.shortcuts[i].id.value!!, viewModel.shortcuts[i].label.value, viewModel.shortcuts[i].desc.value, viewModel.shortcuts[i].path.value, viewModel.shortcuts[i].drawable.value?.toBitmap(), viewModel.shortcuts[i].selectedIcon.value)
+            viewModel.createShortcut(
+                if (index < 6) shortcutId else shortcut.id.value!!,
+                shortcut.serverId.value,
+                shortcut.label.value,
+                shortcut.desc.value,
+                shortcut.path.value,
+                shortcut.drawable.value?.toBitmap(),
+                shortcut.selectedIcon.value
+            )
         },
         enabled =
-        if (index < 6)
-            viewModel.shortcuts[i].label.value.isNotEmpty() && viewModel.shortcuts[i].desc.value.isNotEmpty() && viewModel.shortcuts[i].path.value.isNotEmpty()
-        else
-            !viewModel.shortcuts[i].id.value.isNullOrEmpty() && viewModel.shortcuts[i].label.value.isNotEmpty() && viewModel.shortcuts[i].desc.value.isNotEmpty() && viewModel.shortcuts[i].path.value.isNotEmpty()
+        (index < 6 || !shortcut.id.value.isNullOrEmpty()) &&
+            shortcut.label.value.isNotEmpty() &&
+            shortcut.desc.value.isNotEmpty() &&
+            shortcut.path.value.isNotEmpty() &&
+            viewModel.servers.any { it.id == shortcut.serverId.value }
     ) {
         Text(
             text = stringResource(
                 id =
                 if (
-                    if (index < 6)
+                    if (index < 6) {
                         viewModel.shortcuts[i].delete.value
-                    else {
+                    } else {
                         var isCurrentPinned = false
-                        if (viewModel.pinnedShortcuts.isEmpty())
+                        if (viewModel.pinnedShortcuts.isEmpty()) {
                             isCurrentPinned = false
-                        else {
+                        } else {
                             for (item in viewModel.pinnedShortcuts) {
                                 isCurrentPinned = when (item.id) {
                                     viewModel.shortcuts.last().id.value -> true
@@ -267,7 +300,11 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, icon
                         }
                         isCurrentPinned
                     }
-                ) R.string.update_shortcut else R.string.add_shortcut
+                ) {
+                    R.string.update_shortcut
+                } else {
+                    R.string.add_shortcut
+                }
             )
         )
     }

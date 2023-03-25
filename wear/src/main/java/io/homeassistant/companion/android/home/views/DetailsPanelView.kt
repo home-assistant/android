@@ -92,10 +92,11 @@ fun DetailsPanelView(
                         ) {
                             Icon(
                                 imageVector = ToggleChipDefaults.switchIcon(isChecked),
-                                contentDescription = if (isChecked)
+                                contentDescription = if (isChecked) {
                                     stringResource(R.string.enabled)
-                                else
+                                } else {
                                     stringResource(R.string.disabled)
+                                }
                             )
                         }
                     }
@@ -278,10 +279,12 @@ fun ColorTempSlider(
     val minValue = (attributes["min_mireds"] as? Number)?.toFloat() ?: 0f
     val maxValue = (attributes["max_mireds"] as? Number)?.toFloat() ?: 0f
     var currentValue = (attributes["color_temp"] as? Number)?.toFloat() ?: 0f
-    if (currentValue < minValue)
+    if (currentValue < minValue) {
         currentValue = minValue
-    if (currentValue > maxValue)
+    }
+    if (currentValue > maxValue) {
         currentValue = maxValue
+    }
 
     Column {
         Text(
@@ -336,8 +339,11 @@ private fun onSliderChangedFeedback(
     haptic: HapticFeedback
 ) {
     val fullMessage =
-        if (increase) context.getString(R.string.slider_increased, sliderName)
-        else context.getString(R.string.slider_decreased, sliderName)
+        if (increase) {
+            context.getString(R.string.slider_increased, sliderName)
+        } else {
+            context.getString(R.string.slider_decreased, sliderName)
+        }
     onEntityFeedback(
         isToastEnabled,
         isHapticEnabled,
@@ -353,7 +359,7 @@ private fun PreviewDetailsPaneView() {
     CompositionLocalProvider {
         DetailsPanelView(
             entity = previewEntity1,
-            onEntityToggled = { _, _, -> },
+            onEntityToggled = { _, _ -> },
             onFanSpeedChanged = {},
             onBrightnessChanged = {},
             onColorTempChanged = {},

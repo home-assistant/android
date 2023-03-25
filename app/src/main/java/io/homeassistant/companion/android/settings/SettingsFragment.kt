@@ -16,15 +16,21 @@ import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
 import androidx.fragment.app.commit
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
+import com.google.android.material.snackbar.Snackbar
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.authenticator.Authenticator
+import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
+import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.settings.controls.ManageControlsSettingsFragment
 import io.homeassistant.companion.android.settings.language.LanguagesProvider
 import io.homeassistant.companion.android.settings.log.LogFragment
@@ -38,18 +44,21 @@ import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSett
 import io.homeassistant.companion.android.settings.wear.SettingsWearActivity
 import io.homeassistant.companion.android.settings.wear.SettingsWearDetection
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
+import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import io.homeassistant.companion.android.common.R as commonR
 
-class SettingsFragment constructor(
+class SettingsFragment(
     val presenter: SettingsPresenter,
     val langProvider: LanguagesProvider
-) : PreferenceFragmentCompat() {
+) : SettingsView, PreferenceFragmentCompat() {
 
     companion object {
         private const val TAG = "SettingsFragment"
@@ -63,33 +72,19 @@ class SettingsFragment constructor(
         updateNotificationChannelPrefs()
     }
 
+    private val requestOnboardingResult = registerForActivityResult(OnboardApp(), this::onOnboardingComplete)
+
+    private var serverAuth: Int? = null
+    private val serverMutex = Mutex()
+
+    private var snackbar: Snackbar? = null
+
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        presenter.init(this)
+
         preferenceManager.preferenceDataStore = presenter.getPreferenceDataStore()
 
         setPreferencesFromResource(R.xml.preferences, rootKey)
-
-        // This should enumerate over all servers in the future
-        val serverPreference = Preference(requireContext())
-        presenter.getServerRegistrationName()?.let {
-            serverPreference.title = it
-            serverPreference.summary = presenter.getServerName()
-        } ?: run {
-            serverPreference.title = presenter.getServerName()
-        }
-        serverPreference.order = 1
-        try {
-            serverPreference.icon = AppCompatResources.getDrawable(requireContext(), commonR.drawable.ic_stat_ic_notification_blue)
-        } catch (e: Exception) {
-            Log.e(TAG, "Unable to set the server icon", e)
-        }
-        serverPreference.setOnPreferenceClickListener {
-            parentFragmentManager.commit {
-                replace(R.id.content, ServerSettingsFragment::class.java, null)
-                addToBackStack(getString(commonR.string.server_settings))
-            }
-            return@setOnPreferenceClickListener true
-        }
-        findPreference<PreferenceCategory>("servers_devices_category")?.addPreference(serverPreference)
 
         findPreference<Preference>("nfc_tags")?.let {
             val pm: PackageManager = requireContext().packageManager
@@ -103,6 +98,23 @@ class SettingsFragment constructor(
         removeSystemFromThemesIfNeeded()
 
         updateBackgroundAccessPref()
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                presenter.getServersFlow().collect {
+                    updateServers(it)
+                }
+            }
+        }
+
+        findPreference<Preference>("server_add")?.let {
+            it.setOnPreferenceClickListener {
+                requestOnboardingResult.launch(
+                    OnboardApp.Input(url = "") // Empty url skips the 'Welcome' screen
+                )
+                return@setOnPreferenceClickListener true
+            }
+        }
 
         findPreference<Preference>("sensors")?.setOnPreferenceClickListener {
             parentFragmentManager.commit {
@@ -209,7 +221,6 @@ class SettingsFragment constructor(
 
         if (BuildConfig.FLAVOR == "full") {
             findPreference<Preference>("notification_rate_limit")?.let {
-
                 lifecycleScope.launch(Dispatchers.Main) {
                     // Runs in IO Dispatcher
                     val rateLimits = presenter.getNotificationRateLimits()
@@ -251,9 +262,11 @@ class SettingsFragment constructor(
         }
 
         findPreference<Preference>("changelog_github")?.let {
-            val link = if (BuildConfig.VERSION_NAME.startsWith("LOCAL"))
+            val link = if (BuildConfig.VERSION_NAME.startsWith("LOCAL")) {
                 "https://github.com/home-assistant/android/releases"
-            else "https://github.com/home-assistant/android/releases/tag/${BuildConfig.VERSION_NAME.replace("-full", "").replace("-minimal", "")}"
+            } else {
+                "https://github.com/home-assistant/android/releases/tag/${BuildConfig.VERSION_NAME.replace("-full", "").replace("-minimal", "")}"
+            }
             it.summary = link
             it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
         }
@@ -326,6 +339,53 @@ class SettingsFragment constructor(
         }
     }
 
+    private suspend fun updateServers(servers: List<Server>) = serverMutex.withLock {
+        val category = findPreference<PreferenceCategory>("servers_devices_category")
+
+        val numPreferences = category?.preferenceCount ?: 0
+        val serverPreferences = mutableListOf<Preference>()
+        val serverKeys = servers.mapIndexed { index, server ->
+            "server_${index}_${server.id}_${server.friendlyName}_${server.deviceName}"
+        }
+        for (i in 0 until numPreferences) {
+            category?.getPreference(i)?.let {
+                if (it.key != "server_add" && it.key != "wear_settings") serverPreferences += it
+            }
+        }
+        serverPreferences.forEach {
+            if (it.key !in serverKeys) category?.removePreference(it)
+        }
+
+        servers.forEachIndexed { index, server ->
+            if (serverKeys[index] in serverPreferences.map { it.key }) return@forEachIndexed // Already exists!
+            val serverPreference = Preference(requireContext())
+            serverPreference.title = server.friendlyName
+            serverPreference.summary = server.deviceName
+            serverPreference.key = serverKeys[index]
+            serverPreference.order = index
+            try {
+                serverPreference.icon = AppCompatResources.getDrawable(requireContext(), commonR.drawable.ic_stat_ic_notification_blue)
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to set the server icon", e)
+            }
+            serverPreference.setOnPreferenceClickListener {
+                serverAuth = server.id
+                val settingsActivity = requireActivity() as SettingsActivity
+                val needsAuth = settingsActivity.isAppLocked(server.id)
+                if (!needsAuth) {
+                    onServerLockResult(Authenticator.SUCCESS)
+                } else {
+                    val canAuth = settingsActivity.requestAuthentication(getString(commonR.string.biometric_set_title), ::onServerLockResult)
+                    if (!canAuth) {
+                        onServerLockResult(Authenticator.SUCCESS)
+                    }
+                }
+                return@setOnPreferenceClickListener true
+            }
+            category?.addPreference(serverPreference)
+        }
+    }
+
     private fun updateNotificationChannelPrefs() {
         val notificationsEnabled =
             Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
@@ -340,6 +400,28 @@ class SettingsFragment constructor(
                 notificationsEnabled &&
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
                 uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION
+        }
+    }
+
+    private fun onServerLockResult(result: Int): Boolean {
+        if (result == Authenticator.SUCCESS && serverAuth != null) {
+            (activity as? SettingsActivity)?.setAppActive(serverAuth, true)
+            parentFragmentManager.commit {
+                replace(
+                    R.id.content,
+                    ServerSettingsFragment::class.java,
+                    Bundle().apply { putInt(ServerSettingsFragment.EXTRA_SERVER, serverAuth!!) },
+                    ServerSettingsFragment.TAG
+                )
+                addToBackStack(getString(commonR.string.server_settings))
+            }
+        }
+        return true
+    }
+
+    private fun onOnboardingComplete(result: OnboardApp.Output?) {
+        lifecycleScope.launch {
+            presenter.addServer(result)
         }
     }
 
@@ -370,6 +452,31 @@ class SettingsFragment constructor(
             context?.getSystemService<PowerManager>()
                 ?.isIgnoringBatteryOptimizations(requireActivity().packageName)
                 ?: false
+    }
+
+    override fun onAddServerResult(success: Boolean, serverId: Int?) {
+        view?.let {
+            snackbar = Snackbar.make(
+                it,
+                if (success) commonR.string.server_add_success else commonR.string.server_add_failed,
+                5_000
+            ).apply {
+                if (success && serverId != null) {
+                    setAction(commonR.string.activate) {
+                        val intent = WebViewActivity.newInstance(requireContext(), null, serverId).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                        }
+                        requireContext().startActivity(intent)
+                    }
+                }
+                show()
+            }
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        snackbar?.dismiss()
     }
 
     override fun onResume() {

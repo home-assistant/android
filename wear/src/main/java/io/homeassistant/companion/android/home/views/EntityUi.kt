@@ -90,10 +90,11 @@ fun EntityUi(
             toggleControl = {
                 Icon(
                     imageVector = ToggleChipDefaults.switchIcon(isChecked),
-                    contentDescription = if (isChecked)
+                    contentDescription = if (isChecked) {
                         stringResource(R.string.enabled)
-                    else
+                    } else {
                         stringResource(R.string.disabled)
+                    }
                 )
             },
             colors = WearToggleChip.entityToggleChipBackgroundColors(entity, isChecked)

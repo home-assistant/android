@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.common.data.integration
 
+import dagger.assisted.AssistedFactory
+import io.homeassistant.companion.android.common.data.integration.impl.IntegrationRepositoryImpl
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import kotlinx.coroutines.flow.Flow
@@ -9,8 +11,7 @@ interface IntegrationRepository {
     suspend fun registerDevice(deviceRegistration: DeviceRegistration)
     suspend fun updateRegistration(deviceRegistration: DeviceRegistration)
     suspend fun getRegistration(): DeviceRegistration
-
-    suspend fun isRegistered(): Boolean
+    suspend fun deletePreferences()
 
     suspend fun getNotificationRateLimits(): RateLimitResponse
 
@@ -49,7 +50,16 @@ interface IntegrationRepository {
     suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>)
     suspend fun updateSensors(sensors: Array<SensorRegistration<Any>>): Boolean
 
+    suspend fun isTrusted(): Boolean
+
+    suspend fun setTrusted(trusted: Boolean)
+
     suspend fun shouldNotifySecurityWarning(): Boolean
 
     suspend fun getConversation(speech: String): String?
+}
+
+@AssistedFactory
+interface IntegrationRepositoryFactory {
+    fun create(serverId: Int): IntegrationRepositoryImpl
 }

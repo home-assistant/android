@@ -2,13 +2,13 @@ package io.homeassistant.companion.android.database.sensor
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
-import androidx.room.PrimaryKey
 
-@Entity(tableName = "sensors")
+@Entity(tableName = "sensors", primaryKeys = ["id", "server_id"])
 data class Sensor(
-    @PrimaryKey
     @ColumnInfo(name = "id")
     val id: String,
+    @ColumnInfo(name = "server_id", defaultValue = "0")
+    val serverId: Int,
     @ColumnInfo(name = "enabled")
     var enabled: Boolean,
     @ColumnInfo(name = "registered", defaultValue = "NULL")

@@ -23,6 +23,12 @@ class SingleItemArrayAdapter<T>(
         filterItems.sortWith(comparator)
     }
 
+    fun clearAll() {
+        // This function exists because the filter calls super.clear() on every filter pass
+        super.clear()
+        filterItems.clear()
+    }
+
     override fun addAll(collection: MutableCollection<out T>) {
         super.addAll(collection)
         filterItems.addAll(collection)

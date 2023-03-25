@@ -33,8 +33,6 @@ class NextAlarmManager : SensorManager {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#next-alarm-sensor"
     }
-    override val enabledByDefault: Boolean
-        get() = false
     override val name: Int
         get() = commonR.string.sensor_name_alarm
 
@@ -53,9 +51,9 @@ class NextAlarmManager : SensorManager {
     }
 
     private fun updateNextAlarm(context: Context) {
-
-        if (!isEnabled(context, nextAlarm.id))
+        if (!isEnabled(context, nextAlarm)) {
             return
+        }
 
         var triggerTime = 0L
         var local = ""
@@ -94,8 +92,9 @@ class NextAlarmManager : SensorManager {
                 val sdf = SimpleDateFormat(dateFormat)
                 sdf.timeZone = TimeZone.getTimeZone("UTC")
                 utc = sdf.format(Date(triggerTime))
-            } else
+            } else {
                 Log.d(TAG, "No alarm is scheduled, sending unavailable")
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Error getting the next alarm info", e)
         }

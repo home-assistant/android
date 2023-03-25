@@ -3,8 +3,10 @@
     <string name="aa_app_not_logged_in">Not logged in</string>
     <string name="aa_navigation">Navigation</string>
     <string name="aa_no_entities_with_locations">No entities with locations found.</string>
+    <string name="aa_change_server">Change server</string>
     <string name="account">Account</string>
     <string name="action_reply">Reply</string>
+    <string name="activate">Activate</string>
     <string name="activity_intent_error">Unable to send activity intent, please check command format</string>
     <string name="add_device">Add device</string>
     <string name="add_service_data_field">Add Field</string>
@@ -12,6 +14,7 @@
     <string name="add_ssid">Add</string>
     <string name="add_ssid_name_suggestion">Add %1$s</string>
     <string name="add_widget">Add widget</string>
+    <string name="advanced">Advanced</string>
     <string name="all_entities">All entities</string>
     <string name="allow">Allow</string>
     <string name="always_show_first_view_on_app_start">Always show first view on app start</string>
@@ -148,6 +151,7 @@
     <string name="create_template">Create Template</string>
     <string name="database_event_failure">Unable to send migration failure event to Home Assistant</string>
     <string name="database_migration_failed">Database migration failed, all sensor and widget data has been reset. Please re-enable your sensors and recreate your widgets.</string>
+    <string name="delete">Delete</string>
     <string name="delete_all_notifications">Delete all notifications from history</string>
     <string name="delete_shortcut">Delete Shortcut</string>
     <string name="delete_this_notification">Delete this notification from history</string>
@@ -238,6 +242,13 @@
     <string name="firebase_error_title">Firebase Error</string>
     <string name="fullscreen_def">Put application in full screen</string>
     <string name="fullscreen">Fullscreen</string>
+    <string name="screen_orientation_title_settings">Screen orientation</string>
+    <string name="screen_orientation_option_label_system">Follow System Settings</string>
+    <string name="screen_orientation_option_label_portrait">Portrait</string>
+    <string name="screen_orientation_option_label_landscape">Landscape</string>
+    <string name="screen_orientation_option_value_system">system</string>
+    <string name="screen_orientation_option_value_portrait">portrait</string>
+    <string name="screen_orientation_option_value_landscape">landscape</string>
     <string name="get_help">Get Help</string>
     <string name="grant_permission">Grant Permission</string>
     <string name="help">Help</string>
@@ -253,7 +264,9 @@
     <string name="input_cloud">Use Home Assistant Cloud</string>
     <string name="input_url_hint">https://example.duckdns.org:8123</string>
     <string name="input_url">Home Assistant URL</string>
+    <string name="install">Install</string>
     <string name="install_app">Install App on Wear Device</string>
+    <string name="install_phone_to_continue">Install Home Assistant on your phone to continue</string>
     <plurals name="interval_hours">
         <item quantity="one">%d hour</item>
         <item quantity="other">%d hours</item>
@@ -348,6 +361,7 @@
     <string name="matter_commissioning_unavailable">Matter is currently unavailable</string>
     <string name="matter_shared_title">Add Matter device</string>
     <string name="matter_shared_status_not_registered">Please connect to your Home Assistant server before adding a Matter device.</string>
+    <string name="matter_shared_status_select_server">Which server would you like to use?</string>
     <string name="matter_shared_status_not_supported">To add a Matter device, please update your Home Assistant server and add Matter first.</string>
     <string name="matter_shared_status_confirmation_named">Do you want to add %1$s to Home Assistant?</string>
     <string name="matter_shared_status_confirmation">Do you want to add this Matter device to Home Assistant?</string>
@@ -359,9 +373,9 @@
     <string name="media_player">Media player</string>
     <string name="media_player_widget_desc">Control any media player and see current now playing image</string>
     <string name="message_checking">Checking Wear Devices with App</string>
-    <string name="message_missing_all">The Wear app is missing on your watch, click the button below to install the app.\n\nNote: Currently the Wear OS app requires you to be enrolled in the beta for the phone app. If the button does not work then please join the beta: https://play.google.com/apps/testing/io.homeassistant.companion.android</string>
+    <string name="message_missing_all">The Wear app is missing on your watch, click the button below to install the app.</string>
     <string name="message_no_connected_nodes">No connected Wear devices, please make sure Bluetooth is on and your watch is paired.</string>
-    <string name="message_some_installed">The Wear app is installed on some of your Wear devices: (%1$s)\n\nClick the button below to install the app on the other devices.\n\nNote: Currently the Wear OS app requires you to be enrolled in the beta for the phone app. If the button does not work then please join the beta: https://play.google.com/apps/testing/io.homeassistant.companion.android</string>
+    <string name="message_some_installed">The Wear app is installed on some of your Wear devices: (%1$s)\n\nClick the button below to install the app on the other devices.</string>
     <string name="missing_command_permission">Please open the Home Assistant app and send the command again in order to grant the proper permissions. You will be taken to a page to either grant the Home Assistant app the permission, or you will need to select Permissions from the details page and then grant the missing permission. For command_bluetooth the name of the permission is Nearby devices. If you are attempting to use command_activity to make a phone call you will also need to grant Phone permissions.</string>
     <string name="areas">Areas</string>
     <string name="more_entities">More entities</string>
@@ -491,7 +505,7 @@
     <string name="sensor_description_battery_state">The current charging state of the battery</string>
     <string name="sensor_description_battery_temperature">The current battery temperature</string>
     <string name="sensor_description_bluetooth_ble_emitter">Send BLE iBeacon with configured interval, used to track presence around house, e.g. together with roomassistant, esp32-mqtt-room or espresence projects.\n\nWarning: this can affect battery life, particularly if the \"Transmitter power\" setting is set to High or \"Advertise Mode\" is set to Low latency.\n\nSettings allow for specifying:\n- \"UUID\" (standard UUID format), \"Major\" and \"Minor\" (should be 0 - 65535), to tailor identifiers and groups\n- \"Transmitter Power\" and \"Advertise Mode\" to help to preserve battery life (use lowest values if possible)\n - \"Measured Power\" to specify power measured at 1m (initial default -59)\n\nNote:\nAdditionally a separate setting exists (\"Enable Transmitter\") to stop or start transmitting.</string>
-    <string name="sensor_description_bluetooth_ble_beacon_monitor">Scans for iBeacons and shows the IDs of nearby beacons and their distance in meters.\n\nWarning: this can affect battery life, especially with a short \"Scan Interval\".\n\nSettings allow for specifying:\n- \"Filter Iterations\" (should be 1 - 100, default: 10), higher values will result in more stable measurements but also less responsiveness.\n- \"Filter RSSI Multiplier\" (should be 1.0 - 2.0, default: 1.05), can be used to archive more stable measurements when beacons are farther away. This will also affect responsiveness.\n- \"Scan Interval\" (default: 500) milliseconds between scans. Shorter intervals will drain the battery more quickly.\n- \"Scan Period\" (default: 1100) milliseconds to scan for beacons. Most beacons will send a signal every second so this value should be at least 1100ms.\n- \"UUID Filter\" allows to restrict the reported beacons by including (or excluding) those with the selected UUIDs.\n- \"Exclude selected UUIDs\", if false (default) only the beacons with the selected UUIDs are reported. If true all beacons except the selected ones are reported. Not available when \"UUID Filter\" is empty.\n\nNote:\nAdditionally a separate setting exists (\"Enable Beacon Monitor\") to stop or start scanning.</string>
+    <string name="sensor_description_bluetooth_ble_beacon_monitor">Scans for iBeacons and shows the IDs of nearby beacons and their distance in meters. A notification will be shown on the device when scanning is actively running.\n\nWarning: this can affect battery life, especially with a short \"Scan Interval\".\n\nSettings allow for specifying:\n- \"Filter Iterations\" (should be 1 - 100, default: 10), higher values will result in more stable measurements but also less responsiveness.\n- \"Filter RSSI Multiplier\" (should be 1.0 - 2.0, default: 1.05), can be used to archive more stable measurements when beacons are farther away. This will also affect responsiveness.\n- \"Scan Interval\" (default: 500) milliseconds between scans. Shorter intervals will drain the battery more quickly.\n- \"Scan Period\" (default: 1100) milliseconds to scan for beacons. Most beacons will send a signal every second so this value should be at least 1100ms.\n- \"UUID Filter\" allows to restrict the reported beacons by including (or excluding) those with the selected UUIDs.\n- \"Exclude selected UUIDs\", if false (default) only the beacons with the selected UUIDs are reported. If true all beacons except the selected ones are reported. Not available when \"UUID Filter\" is empty.\n\nNote:\nAdditionally a separate setting exists (\"Enable Beacon Monitor\") to stop or start scanning.</string>
     <string name="sensor_description_bluetooth_connection">Information about currently connected Bluetooth devices</string>
     <string name="sensor_description_bluetooth_state">Whether Bluetooth is enabled on the device</string>
     <string name="sensor_description_charger_type">The type of charger plugged into the device currently</string>
@@ -642,11 +656,23 @@
     <string name="sensor_settings">Sensor Settings</string>
     <string name="sensor_summary">Use this to manage what sensors are enabled/disabled.</string>
     <string name="sensor_title">Manage Sensors</string>
+    <string name="sensor_unfold_less">Hide Server Settings</string>
+    <string name="sensor_unfold_more">Show Server Settings</string>
     <string name="sensor">Sensor</string>
     <string name="sensors_with_settings">The following sensors offer custom settings: %1$s</string>
     <string name="sensors">Sensors</string>
     <string name="server_settings">Server Settings</string>
     <string name="servers_devices_category">Servers &amp; Devices</string>
+    <string name="server_activate">Activate</string>
+    <string name="server_activate_swipe_hint">Tip: Quickly activate using a three-finger swipe left, right, or up when viewing a server.</string>
+    <string name="server_add">Add Server</string>
+    <string name="server_add_success">Server added</string>
+    <string name="server_add_failed">Couldn\'t add server</string>
+    <string name="server_select">Select server</string>
+    <string name="server_delete">Delete Server</string>
+    <string name="server_delete_confirm">Are you sure you want to delete this server from the app?</string>
+    <string name="server_delete_working">Deleting server…</string>
+    <string name="server_name">Server Name</string>
     <string name="service_call_failure">Unable to send service call</string>
     <string name="session_timeout_title">Session TimeOut (in seconds)</string>
     <string name="set_favorite">Set Favorites</string>
@@ -730,6 +756,7 @@
     <string name="sun">Sun</string>
     <string name="switches">Switches</string>
     <string name="tag_reader_title">Processing Tag</string>
+    <string name="template">Template</string>
     <string name="template_tile">Template tile</string>
     <string name="template_tile_set_on_watch">Set template to display on Wear OS tile</string>
     <string name="template_tile_change_message">Change template in phone settings</string>
@@ -800,11 +827,14 @@
     <string name="tile_missing_entity_title">Missing Valid Entity Domains</string>
     <string name="tile_not_setup">Requires setup</string>
     <string name="tile_save">Update Tile Data</string>
+    <string name="tile_server">Select a server (required)</string>
     <string name="tile_settings">Tile settings</string>
     <string name="tile_subtitle">Tile Subtitle</string>
     <string name="tile_updated">Tile Data updated</string>
     <string name="tiles">Tiles</string>
     <string name="toast_message">%1$s was selected</string>
+    <string name="trust_server_title">Remotely control app &amp; device</string>
+    <string name="trust_server_summary">Manage enabled sensors and use notification commands from this server</string>
     <string name="tts_error">Unable to process notification \"%1$s\" as text to speech.</string>
     <string name="tts_no_text">Please set the text for text to speech to process</string>
     <string name="unable_to_register">Unable to Register Application</string>
@@ -876,6 +906,7 @@
     <string name="widget_separator_input_hint">No separator</string>
     <string name="widget_separator_label">State and attribute separator:</string>
     <string name="widget_spinner_icon">Icon:</string>
+    <string name="widget_spinner_server">Server:</string>
     <string name="widget_state_separator_label">State and attribute separator:</string>
     <string name="widget_static_image_description">Entity State</string>
     <string name="widget_template_error">Unable to render the template</string>
@@ -1015,4 +1046,6 @@
     <string name="assist">Assist</string>
     <string name="not_registered">Please launch the Home Assistant app and login before you can use the assist feature.</string>
     <string name="ha_assist">HA: Assist</string>
+    <string name="only_favorites">Only Show Favorites</string>
+    <string name="beacon_scanning">Beacon Monitor Scanning</string>
 </resources>

@@ -113,7 +113,7 @@ class SensorReceiver : SensorReceiverBase() {
         AudioManager.RINGER_MODE_CHANGED_ACTION to AudioSensorManager.audioSensor.id,
         Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE to DevicePolicyManager.isWorkProfile.id,
         Intent.ACTION_MANAGED_PROFILE_AVAILABLE to DevicePolicyManager.isWorkProfile.id,
-        WifiManager.WIFI_STATE_CHANGED_ACTION to NetworkSensorManager.wifiState.id,
+        WifiManager.WIFI_STATE_CHANGED_ACTION to NetworkSensorManager.wifiState.id
     )
 
     override fun getSensorSettingsIntent(

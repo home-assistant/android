@@ -14,11 +14,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.common.LocalStorageImpl
-import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
-import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationRepositoryImpl
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.integration.impl.IntegrationRepositoryImpl
 import io.homeassistant.companion.android.common.data.integration.impl.IntegrationService
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepositoryImpl
@@ -26,13 +22,13 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepositoryImpl
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepositoryImpl
-import io.homeassistant.companion.android.common.data.url.UrlRepository
-import io.homeassistant.companion.android.common.data.url.UrlRepositoryImpl
-import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
-import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketRepositoryImpl
+import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.servers.ServerManagerImpl
 import io.homeassistant.companion.android.common.data.wifi.WifiHelper
 import io.homeassistant.companion.android.common.data.wifi.WifiHelperImpl
+import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
+import java.util.UUID
 import javax.inject.Named
 import javax.inject.Singleton
 
@@ -55,17 +51,6 @@ abstract class DataModule {
         @Singleton
         fun providesOkHttpClient(homeAssistantApis: HomeAssistantApis): OkHttpClient =
             homeAssistantApis.okHttpClient
-
-        @Provides
-        @Named("url")
-        @Singleton
-        fun provideUrlLocalStorage(@ApplicationContext appContext: Context): LocalStorage =
-            LocalStorageImpl(
-                appContext.getSharedPreferences(
-                    "url_0",
-                    Context.MODE_PRIVATE
-                )
-            )
 
         @Provides
         @Named("session")
@@ -136,6 +121,18 @@ abstract class DataModule {
         )
 
         @Provides
+        @Named("installId")
+        @Singleton
+        fun provideInstallId(@ApplicationContext appContext: Context) = runBlocking {
+            val storage = provideSessionLocalStorage(appContext)
+            storage.getString("install_id") ?: run {
+                val uuid = UUID.randomUUID().toString()
+                storage.putString("install_id", uuid)
+                uuid
+            }
+        }
+
+        @Provides
         @Singleton
         fun connectivityManager(@ApplicationContext appContext: Context) = appContext.getSystemService<ConnectivityManager>()!!
 
@@ -143,14 +140,6 @@ abstract class DataModule {
         @Singleton
         fun wifiManager(@ApplicationContext appContext: Context) = appContext.getSystemService<WifiManager>()!!
     }
-
-    @Binds
-    @Singleton
-    abstract fun bindAuthRepository(authenticationRepository: AuthenticationRepositoryImpl): AuthenticationRepository
-
-    @Binds
-    @Singleton
-    abstract fun bindIntegrationRepository(integrationRepository: IntegrationRepositoryImpl): IntegrationRepository
 
     @Binds
     @Singleton
@@ -162,17 +151,13 @@ abstract class DataModule {
 
     @Binds
     @Singleton
-    abstract fun bindUrlRepository(urlRepository: UrlRepositoryImpl): UrlRepository
-
-    @Binds
-    @Singleton
-    abstract fun bindWebSocketRepository(webSocketRepository: WebSocketRepositoryImpl): WebSocketRepository
-
-    @Binds
-    @Singleton
     abstract fun bindWifiRepository(wifiHelper: WifiHelperImpl): WifiHelper
 
     @Binds
     @Singleton
     abstract fun bindKeyChainRepository(keyChainRepository: KeyChainRepositoryImpl): KeyChainRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindServerManager(serverManager: ServerManagerImpl): ServerManager
 }
