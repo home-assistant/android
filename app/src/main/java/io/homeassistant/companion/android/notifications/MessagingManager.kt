@@ -794,60 +794,60 @@ class MessagingManager @Inject constructor(
                 when (chunks.last()) {
                     "urlencoded" -> intent.putExtra(chunks[0], URLDecoder.decode(value, "UTF-8"))
                     "int" -> intent.putExtra(chunks[0], value.toInt())
-                    "double" -> intent.putExtra(chunks[0], value.toDouble())
-                    "float" -> intent.putExtra(chunks[0], value.toFloat())
-                    "long" -> intent.putExtra(chunks[0], value.toLong())
-                    "short" -> intent.putExtra(chunks[0], value.toShort())
-                    "boolean" -> intent.putExtra(chunks[0], value.toBoolean())
-                    "char" -> intent.putExtra(chunks[0], value[0].toChar())
-                    "byte" -> intent.putExtra(chunks[0], value.toByte())
-                    "boolean[]" -> intent.putExtra(
-                        chunks[0],
-                        value.split(";").map { it.toBoolean() }.toBooleanArray()
-                    )
-                    "byte[]" -> intent.putExtra(
-                        chunks[0],
-                        value.split(";").map { it.toByte() }.toByteArray()
-                    )
-                    "short[]" -> intent.putExtra(
-                        chunks[0],
-                        value.split(";").map { it.toShort() }.toShortArray()
-                    )
-                    "char[]" -> intent.putExtra(
-                        chunks[0],
-                        value.split(";").map { it[0].toChar() }.toCharArray()
-                    )
                     "int[]" -> intent.putExtra(
                         chunks[0],
                         value.split(";").map { it.toInt() }.toIntArray()
-                    )
-                    "long[]" -> intent.putExtra(
-                        chunks[0],
-                        value.split(";").map { it.toLong() }.toLongArray()
-                    )
-                    "float[]" -> intent.putExtra(
-                        chunks[0],
-                        value.split(";").map { it.toFloat() }.toFloatArray()
-                    )
-                    "double[]" -> intent.putExtra(
-                        chunks[0],
-                        value.split(";").map { it.toDouble() }.toDoubleArray()
-                    )
-                    "String[]" -> intent.putExtra(
-                        chunks[0],
-                        value.split(";").toTypedArray()
-                    )
-                    "String[].urlencoded" -> intent.putExtra(
-                        chunks[0],
-                        value.split(";").map { URLDecoder.decode(value, "UTF-8") }.toTypedArray()
                     )
                     "ArrayList<Integer>" -> intent.putIntegerArrayListExtra(
                         chunks[0],
                         value.split(";").map { it.toInt() }.toCollection(ArrayList())
                     )
+                    "double" -> intent.putExtra(chunks[0], value.toDouble())
+                    "double[]" -> intent.putExtra(
+                        chunks[0],
+                        value.split(";").map { it.toDouble() }.toDoubleArray()
+                    )
+                    "float" -> intent.putExtra(chunks[0], value.toFloat())
+                    "float[]" -> intent.putExtra(
+                        chunks[0],
+                        value.split(";").map { it.toFloat() }.toFloatArray()
+                    )
+                    "long" -> intent.putExtra(chunks[0], value.toLong())
+                    "long[]" -> intent.putExtra(
+                        chunks[0],
+                        value.split(";").map { it.toLong() }.toLongArray()
+                    )
+                    "short" -> intent.putExtra(chunks[0], value.toShort())
+                    "short[]" -> intent.putExtra(
+                        chunks[0],
+                        value.split(";").map { it.toShort() }.toShortArray()
+                    )
+                    "byte" -> intent.putExtra(chunks[0], value.toByte())
+                    "byte[]" -> intent.putExtra(
+                        chunks[0],
+                        value.split(";").map { it.toByte() }.toByteArray()
+                    )
+                    "boolean" -> intent.putExtra(chunks[0], value.toBoolean())
+                    "boolean[]" -> intent.putExtra(
+                        chunks[0],
+                        value.split(";").map { it.toBoolean() }.toBooleanArray()
+                    )
+                    "char" -> intent.putExtra(chunks[0], value[0].toChar())
+                    "char[]" -> intent.putExtra(
+                        chunks[0],
+                        value.split(";").map { it[0].toChar() }.toCharArray()
+                    )
+                    "String[]" -> intent.putExtra(
+                        chunks[0],
+                        value.split(";").toTypedArray()
+                    )
                     "ArrayList<String>" -> intent.putStringArrayListExtra(
                         chunks[0],
                         value.split(";").toCollection(ArrayList())
+                    )
+                    "String[].urlencoded" -> intent.putExtra(
+                        chunks[0],
+                        value.split(";").map { URLDecoder.decode(value, "UTF-8") }.toTypedArray()
                     )
                     "ArrayList<String>.urlencoded" -> intent.putStringArrayListExtra(
                         chunks[0],
