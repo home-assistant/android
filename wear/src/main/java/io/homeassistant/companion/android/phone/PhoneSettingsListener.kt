@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.phone
 
 import android.content.Intent
 import android.util.Log
+import androidx.wear.tiles.TileService
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.google.android.gms.wearable.DataClient
@@ -29,6 +30,9 @@ import io.homeassistant.companion.android.database.wear.replaceAll
 import io.homeassistant.companion.android.home.HomeActivity
 import io.homeassistant.companion.android.home.HomePresenterImpl
 import io.homeassistant.companion.android.onboarding.getMessagingToken
+import io.homeassistant.companion.android.tiles.ConversationTile
+import io.homeassistant.companion.android.tiles.ShortcutsTile
+import io.homeassistant.companion.android.tiles.TemplateTile
 import io.homeassistant.companion.android.util.UrlUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -144,6 +148,7 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
                 )
             )
             serverManager.convertTemporaryServer(serverId)
+            updateTiles()
 
             val intent = HomeActivity.newInstance(applicationContext)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
@@ -177,5 +182,16 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
         val interval = dataMap.getInt(KEY_TEMPLATE_TILE_REFRESH_INTERVAL, 0)
         wearPrefsRepository.setTemplateTileContent(content)
         wearPrefsRepository.setTemplateTileRefreshInterval(interval)
+    }
+
+    private fun updateTiles() = mainScope.launch {
+        try {
+            val updater = TileService.getUpdater(applicationContext)
+            updater.requestUpdate(ConversationTile::class.java)
+            updater.requestUpdate(ShortcutsTile::class.java)
+            updater.requestUpdate(TemplateTile::class.java)
+        } catch (e: Exception) {
+            Log.w(TAG, "Unable to request tiles update")
+        }
     }
 }

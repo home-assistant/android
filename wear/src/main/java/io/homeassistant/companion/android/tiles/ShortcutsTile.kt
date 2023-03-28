@@ -13,7 +13,6 @@ import androidx.wear.tiles.LayoutElementBuilders
 import androidx.wear.tiles.LayoutElementBuilders.Box
 import androidx.wear.tiles.LayoutElementBuilders.Column
 import androidx.wear.tiles.LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER
-import androidx.wear.tiles.LayoutElementBuilders.Layout
 import androidx.wear.tiles.LayoutElementBuilders.LayoutElement
 import androidx.wear.tiles.LayoutElementBuilders.Row
 import androidx.wear.tiles.LayoutElementBuilders.Spacer
@@ -25,7 +24,6 @@ import androidx.wear.tiles.ResourceBuilders.Resources
 import androidx.wear.tiles.TileBuilders.Tile
 import androidx.wear.tiles.TileService
 import androidx.wear.tiles.TimelineBuilders.Timeline
-import androidx.wear.tiles.TimelineBuilders.TimelineEntry
 import com.google.common.util.concurrent.ListenableFuture
 import com.mikepenz.iconics.IconicsColor
 import com.mikepenz.iconics.IconicsDrawable
@@ -36,6 +34,7 @@ import com.mikepenz.iconics.utils.sizeDp
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.util.getIcon
 import kotlinx.coroutines.CoroutineScope
@@ -62,6 +61,9 @@ class ShortcutsTile : TileService() {
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
 
     @Inject
+    lateinit var serverManager: ServerManager
+
+    @Inject
     lateinit var wearPrefsRepository: WearPrefsRepository
 
     override fun onTileRequest(requestParams: TileRequest): ListenableFuture<Tile> =
@@ -77,18 +79,20 @@ class ShortcutsTile : TileService() {
             }
 
             val entities = getEntities()
-            val showLabels = wearPrefsRepository.getShowShortcutText()
 
             Tile.Builder()
                 .setResourcesVersion(entities.toString())
                 .setTimeline(
-                    Timeline.Builder().addTimelineEntry(
-                        TimelineEntry.Builder().setLayout(
-                            Layout.Builder().setRoot(
-                                layout(entities, showLabels)
-                            ).build()
-                        ).build()
-                    ).build()
+                    if (serverManager.isRegistered()) {
+                        timeline()
+                    } else {
+                        loggedOutTimeline(
+                            this@ShortcutsTile,
+                            requestParams,
+                            commonR.string.shortcuts,
+                            commonR.string.shortcuts_tile_log_in
+                        )
+                    }
                 ).build()
         }
 
@@ -147,6 +151,13 @@ class ShortcutsTile : TileService() {
 
     private suspend fun getEntities(): List<SimplifiedEntity> {
         return wearPrefsRepository.getTileShortcuts().map { SimplifiedEntity(it) }
+    }
+
+    private suspend fun timeline(): Timeline {
+        val entities = getEntities()
+        val showLabels = wearPrefsRepository.getShowShortcutText()
+
+        return Timeline.fromLayoutElement(layout(entities, showLabels))
     }
 
     fun layout(entities: List<SimplifiedEntity>, showLabels: Boolean): LayoutElement = Column.Builder().apply {
