@@ -21,7 +21,7 @@ runs:
       run: |
         COMMITS=`git rev-list --count HEAD`
         TAGS=`git tag | grep -v beta | wc -l`
-        VC=$(((COMMITS+TAGS) << 1))
+        VC=$((((COMMITS+TAGS) * 3) << 1))
         HASH=`git rev-parse --short HEAD`
         if [ "${{inputs.beta}}" = "true" ]; then
            VERSION=beta-$VC-$HASH

@@ -1,6 +1,6 @@
 import org.gradle.kotlin.dsl.support.serviceOf
 
-include(":common", ":app", ":wear")
+include(":common", ":app", ":wear", ":automotive")
 
 rootProject.name = "home-assistant-android"
 

@@ -71,6 +71,7 @@ jobs:
             ./app/build/outputs/apk/full/release/app-full-release.apk
             ./app/build/outputs/apk/minimal/release/app-minimal-release.apk
             ./wear/build/outputs/apk/release/wear-release.apk
+            ./app/build/outputs/apk/automotive/release/automotive-full-release.apk
 
       - name: Deploy to Firebase
         env:
