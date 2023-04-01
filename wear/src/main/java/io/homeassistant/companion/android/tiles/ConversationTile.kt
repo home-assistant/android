@@ -16,33 +16,41 @@ import androidx.wear.tiles.ResourceBuilders.Resources
 import androidx.wear.tiles.TileBuilders.Tile
 import androidx.wear.tiles.TileService
 import androidx.wear.tiles.TimelineBuilders.Timeline
-import androidx.wear.tiles.TimelineBuilders.TimelineEntry
 import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.conversation.ConversationActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.guava.future
+import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class ConversationTile : TileService() {
     private val serviceJob = Job()
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
 
+    @Inject
+    lateinit var serverManager: ServerManager
+
     override fun onTileRequest(requestParams: TileRequest): ListenableFuture<Tile> =
         serviceScope.future {
             Tile.Builder()
                 .setResourcesVersion("1")
                 .setTimeline(
-                    Timeline.Builder().addTimelineEntry(
-                        TimelineEntry.Builder().setLayout(
-                            LayoutElementBuilders.Layout.Builder().setRoot(
-                                boxLayout()
-                            ).build()
-                        ).build()
-                    ).build()
+                    if (serverManager.isRegistered()) {
+                        Timeline.fromLayoutElement(boxLayout())
+                    } else {
+                        loggedOutTimeline(
+                            this@ConversationTile,
+                            requestParams,
+                            commonR.string.assist,
+                            commonR.string.assist_log_in
+                        )
+                    }
                 ).build()
         }
 
