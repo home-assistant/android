@@ -332,7 +332,12 @@ class WebViewPresenterImpl @Inject constructor(
             _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.REQUESTED)
 
             mainScope.launch {
-                val deviceThreadIntent = threadUseCase.syncPreferredDataset(context, serverId, this)
+                val deviceThreadIntent = try {
+                    threadUseCase.syncPreferredDataset(context, serverId, this)
+                } catch (e: Exception) {
+                    Log.w(TAG, "Unable to sync preferred Thread dataset, continuing", e)
+                    null
+                }
                 if (deviceThreadIntent != null) {
                     matterCommissioningIntentSender = deviceThreadIntent
                     _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.THREAD_EXPORT_TO_SERVER)

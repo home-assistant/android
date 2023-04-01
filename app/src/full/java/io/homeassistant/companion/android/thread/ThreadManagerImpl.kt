@@ -6,6 +6,7 @@ import android.content.IntentSender
 import android.os.Build
 import android.util.Log
 import androidx.activity.result.ActivityResult
+import com.google.android.gms.threadnetwork.IsPreferredCredentialsResult
 import com.google.android.gms.threadnetwork.ThreadBorderAgent
 import com.google.android.gms.threadnetwork.ThreadNetwork
 import com.google.android.gms.threadnetwork.ThreadNetworkCredentials
@@ -40,6 +41,9 @@ class ThreadManagerImpl @Inject constructor(
             HomeAssistantVersion.fromString(config.version)?.isAtLeast(2023, 3, 0) == true
     }
 
+    private suspend fun getDatasetsFromServer(serverId: Int): List<ThreadDatasetResponse>? =
+        serverManager.webSocketRepository(serverId).getThreadDatasets()
+
     override suspend fun syncPreferredDataset(
         context: Context,
         serverId: Int,
@@ -48,9 +52,10 @@ class ThreadManagerImpl @Inject constructor(
         if (!appSupportsThread() || !coreSupportsThread(serverId)) return null
 
         val getDeviceDataset = scope.async { getPreferredDatasetFromDevice(context) }
-        val getCoreDataset = scope.async { getPreferredDatasetFromServer(serverId) }
+        val getCoreDatasets = scope.async { getDatasetsFromServer(serverId) }
         val deviceThreadIntent = getDeviceDataset.await()
-        val coreThreadDataset = getCoreDataset.await()
+        val coreThreadDatasets = getCoreDatasets.await()
+        val coreThreadDataset = coreThreadDatasets?.firstOrNull { it.preferred }
 
         if (deviceThreadIntent == null && coreThreadDataset != null) {
             try {
@@ -62,15 +67,23 @@ class ThreadManagerImpl @Inject constructor(
         } else if (deviceThreadIntent != null && coreThreadDataset == null) {
             Log.d(TAG, "Thread export is ready")
             return deviceThreadIntent
-        } // else if device and core both have or don't have datasets, continue
+        } else if (deviceThreadIntent != null && coreThreadDataset != null) {
+            try {
+                val coreIsDevicePreferred = isPreferredDatasetByDevice(context, coreThreadDataset.datasetId, serverId)
+                Log.d(TAG, "Thread: device ${if (coreIsDevicePreferred) "prefers" else "doesn't prefer" } core preferred dataset")
+                if (!coreIsDevicePreferred) {
+                    return deviceThreadIntent // Import the dataset to core
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Thread device/core preferred comparison failed", e)
+            }
+        } // else if device and core both don't have datasets, continue
 
         return null
     }
 
-    override suspend fun getPreferredDatasetFromServer(serverId: Int): ThreadDatasetResponse? {
-        val datasets = serverManager.webSocketRepository(serverId).getThreadDatasets()
-        return datasets?.firstOrNull { it.preferred }
-    }
+    override suspend fun getPreferredDatasetFromServer(serverId: Int): ThreadDatasetResponse? =
+        getDatasetsFromServer(serverId)?.firstOrNull { it.preferred }
 
     override suspend fun importDatasetFromServer(context: Context, datasetId: String, serverId: Int) {
         val tlv = serverManager.webSocketRepository(serverId).getThreadDatasetTlv(datasetId)?.tlvAsByteArray
@@ -94,6 +107,20 @@ class ThreadManagerImpl @Inject constructor(
         } else {
             cont.resumeWithException(IllegalStateException("Thread is not supported on SDK <27"))
         }
+    }
+
+    private suspend fun isPreferredDatasetByDevice(context: Context, datasetId: String, serverId: Int): Boolean {
+        val tlv = serverManager.webSocketRepository(serverId).getThreadDatasetTlv(datasetId)?.tlvAsByteArray
+        if (tlv != null) {
+            val threadNetworkCredentials = ThreadNetworkCredentials.fromActiveOperationalDataset(tlv)
+            return suspendCoroutine { cont ->
+                ThreadNetwork.getClient(context)
+                    .isPreferredCredentials(threadNetworkCredentials)
+                    .addOnSuccessListener { cont.resume(it == IsPreferredCredentialsResult.PREFERRED_CREDENTIALS_MATCHED) }
+                    .addOnFailureListener { cont.resumeWithException(it) }
+            }
+        }
+        return false
     }
 
     override suspend fun sendThreadDatasetExportResult(result: ActivityResult, serverId: Int) {

@@ -20,8 +20,8 @@ interface ThreadManager {
 
     /**
      * Try to sync the preferred Thread dataset with the device and server. If one has a preferred
-     * dataset while the other one doesn't, it will sync. If both have or don't have preferred
-     * datasets, skip syncing.
+     * dataset while the other one doesn't, it will sync. If both have preferred datasets, it will
+     * send updated data to the server if needed. If neither has a preferred dataset, skip syncing.
      * @return [IntentSender] if permission is required to import the device dataset, `null` if
      * syncing completed or there is nothing to sync
      */
