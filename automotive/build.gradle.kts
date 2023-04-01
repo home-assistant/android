@@ -139,10 +139,10 @@ android {
 
 play {
     serviceAccountCredentials.set(file("playStorePublishServiceCredentialsFile.json"))
-    track.set("internal")
+    track.set("automotive:internal")
     resolutionStrategy.set(ResolutionStrategy.IGNORE)
     // We will depend on the wear commit.
-    commit.set(false)
+    commit.set(true)
 }
 
 dependencies {
