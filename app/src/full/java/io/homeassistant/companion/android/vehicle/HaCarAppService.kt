@@ -5,7 +5,11 @@ import android.content.pm.ApplicationInfo
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
-import androidx.car.app.*
+import androidx.car.app.CarAppService
+import androidx.car.app.Screen
+import androidx.car.app.ScreenManager
+import androidx.car.app.Session
+import androidx.car.app.SessionInfo
 import androidx.car.app.hardware.CarHardwareManager
 import androidx.car.app.hardware.info.CarInfo
 import androidx.car.app.validation.HostValidator
@@ -23,7 +27,6 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import okhttp3.internal.toImmutableMap
 import javax.inject.Inject
-
 
 @RequiresApi(Build.VERSION_CODES.O)
 @AndroidEntryPoint

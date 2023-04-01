@@ -3,24 +3,20 @@ package io.homeassistant.companion.android.sensors
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
-import androidx.car.app.CarContext
 import androidx.car.app.connection.CarConnection
 import androidx.car.app.hardware.common.CarValue
 import androidx.car.app.hardware.common.OnCarDataAvailableListener
 import androidx.car.app.hardware.info.EnergyLevel
 import androidx.car.app.notification.CarAppExtender
-import androidx.car.app.notification.CarAppNotificationBroadcastReceiver
 import androidx.car.app.notification.CarNotificationManager
 import androidx.car.app.notification.CarPendingIntent
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.Observer
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.vehicle.HaCarAppService
@@ -30,8 +26,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import io.homeassistant.companion.android.common.R as commonR
 
-
-class AndroidAutoSensorManager : SensorManager, Observer<Int>,
+class AndroidAutoSensorManager :
+    SensorManager,
+    Observer<Int>,
     OnCarDataAvailableListener<EnergyLevel> {
 
     companion object {
@@ -92,7 +89,6 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int>,
     private lateinit var context: Context
     private var carConnection: CarConnection? = null
 
-
     @RequiresApi(Build.VERSION_CODES.O)
     override fun requestSensorUpdate(context: Context) {
         this.context = context
@@ -131,11 +127,11 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int>,
             }
         }
 
-        if(connected) {
+        if (connected) {
             startAppNotification()
         }
 
-        if(isEnabled(context, androidAutoConnected)) {
+        if (isEnabled(context, androidAutoConnected)) {
             onSensorUpdated(
                 context,
                 androidAutoConnected,
