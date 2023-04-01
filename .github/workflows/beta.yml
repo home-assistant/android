@@ -71,7 +71,7 @@ jobs:
             ./app/build/outputs/apk/full/release/app-full-release.apk
             ./app/build/outputs/apk/minimal/release/app-minimal-release.apk
             ./wear/build/outputs/apk/release/wear-release.apk
-            ./app/build/outputs/apk/automotive/release/automotive-full-release.apk
+            ./automotive/build/outputs/apk/full/release/automotive-full-release.apk
 
       - name: Deploy to Firebase
         env:
@@ -156,4 +156,6 @@ jobs:
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
           VERSION: ${{ steps.rel_number.outputs.version }}
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
-        run: ./gradlew publishReleaseBundle
+        run: |
+          ./gradlew :wear:publishReleaseBundle :app:publishReleaseBundle
+          ./gradlew :automotive:publishReleaseBundle || echo "Failed to publish Automotive!"
