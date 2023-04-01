@@ -50,6 +50,10 @@ interface IntegrationRepository {
     suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>)
     suspend fun updateSensors(sensors: Array<SensorRegistration<Any>>): Boolean
 
+    suspend fun isTrusted(): Boolean
+
+    suspend fun setTrusted(trusted: Boolean)
+
     suspend fun shouldNotifySecurityWarning(): Boolean
 
     suspend fun getConversation(speech: String): String?

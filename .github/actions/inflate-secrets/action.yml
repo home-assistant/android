@@ -29,6 +29,7 @@ runs:
       run: | 
         echo $KEYSTORE | base64 --decode > app/release_keystore.keystore
         echo $KEYSTORE | base64 --decode > wear/release_keystore.keystore
+        echo $KEYSTORE | base64 --decode > automotive/release_keystore.keystore
 
     - name: Inflate google-services.json
       shell: bash
@@ -37,6 +38,7 @@ runs:
       run: |
         echo $GOOGLE_SERVICES > app/google-services.json
         echo $GOOGLE_SERVICES > wear/google-services.json
+        echo $GOOGLE_SERVICES > automotive/google-services.json
 
     - name: Inflate firebaseAppDistributionServiceCredentialsFile.json
       shell: bash
@@ -52,3 +54,4 @@ runs:
       run: |
         echo $CREDS > app/playStorePublishServiceCredentialsFile.json
         echo $CREDS > wear/playStorePublishServiceCredentialsFile.json
+        echo $CREDS > automotive/playStorePublishServiceCredentialsFile.json

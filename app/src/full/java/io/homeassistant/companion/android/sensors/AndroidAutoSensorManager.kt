@@ -91,13 +91,13 @@ class AndroidAutoSensorManager :
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun requestSensorUpdate(context: Context) {
-        this.context = context
+        this.context = context.applicationContext
         if (!isEnabled(context, androidAutoConnected) && !isEnabled(context, fuelLevel) && !isEnabled(context, batteryLevel)) {
             return
         }
         CoroutineScope(Dispatchers.Main + Job()).launch {
             if (carConnection == null) {
-                carConnection = CarConnection(context)
+                carConnection = CarConnection(context.applicationContext)
             }
             carConnection?.type?.observeForever(this@AndroidAutoSensorManager)
         }
@@ -105,14 +105,14 @@ class AndroidAutoSensorManager :
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    override fun onChanged(type: Int?) {
+    override fun onChanged(type: Int) {
         if (!isEnabled(context, androidAutoConnected) && !isEnabled(context, fuelLevel) && !isEnabled(context, batteryLevel)) {
             CoroutineScope(Dispatchers.Main + Job()).launch {
                 carConnection?.type?.removeObserver(this@AndroidAutoSensorManager)
             }
             return
         }
-        val (connected, typeString) = when (type) {
+        val (connected, typeString) = when (value) {
             CarConnection.CONNECTION_TYPE_NOT_CONNECTED -> {
                 false to "Disconnected"
             }
@@ -123,7 +123,7 @@ class AndroidAutoSensorManager :
                 true to "Native"
             }
             else -> {
-                false to "Unknown($type)"
+                false to "Unknown($value)"
             }
         }
 

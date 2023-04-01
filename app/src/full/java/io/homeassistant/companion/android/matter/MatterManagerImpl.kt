@@ -23,7 +23,7 @@ class MatterManagerImpl @Inject constructor(
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1
 
     override suspend fun coreSupportsCommissioning(serverId: Int): Boolean {
-        if (!serverManager.isRegistered() || serverManager.getServer(serverId) == null) return false
+        if (!serverManager.isRegistered() || serverManager.getServer(serverId)?.user?.isAdmin != true) return false
         val config = serverManager.webSocketRepository(serverId).getConfig()
         return config != null && config.components.contains("matter")
     }

@@ -207,19 +207,22 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
     ): Boolean {
         val currentHAversion = serverManager.integrationRepository(server.id).getHomeAssistantVersion()
         val supportsDisabledSensors = serverManager.integrationRepository(server.id).isHomeAssistantVersionAtLeast(2022, 6, 0)
-        val coreSensorStatus: Map<String, Boolean>? = if (supportsDisabledSensors) {
-            try {
-                val config = serverManager.integrationRepository(server.id).getConfig().entities
-                config
-                    ?.filter { it.value["disabled"] != null }
-                    ?.mapValues { !(it.value["disabled"] as Boolean) } // Map to sensor id -> enabled
-            } catch (e: Exception) {
-                Log.e(tag, "Error while getting core config to sync sensor status", e)
+        val serverIsTrusted = serverManager.integrationRepository(server.id).isTrusted()
+        val coreSensorStatus: Map<String, Boolean>? =
+            if (supportsDisabledSensors && (serverIsTrusted || (sensorDao.getEnabledCount() ?: 0) > 0)) {
+                try {
+                    val config = serverManager.integrationRepository(server.id).getConfig().entities
+                    config
+                        ?.filter { it.value["disabled"] != null }
+                        ?.mapValues { !(it.value["disabled"] as Boolean) } // Map to sensor id -> enabled
+                } catch (e: Exception) {
+                    Log.e(tag, "Error while getting core config to sync sensor status", e)
+                    null
+                }
+            } else {
+                // Cannot sync disabled, or all sensors disabled and server changes aren't trusted
                 null
             }
-        } else {
-            null
-        }
 
         var serverIsReachable = true
         val enabledRegistrations = mutableListOf<SensorRegistration<Any>>()
@@ -268,9 +271,12 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                     sensorCoreEnabled != sensor.registered
                 ) {
                     // 2. Try updating the sensor enabled state to match core state when it's different from
-                    // the app, if the sensor can be registered and on core >= 2022.6
+                    // the app, if the sensor can be registered, on core >= 2022.6 and server trusted.
+                    // If the server isn't trusted, update registered state to match app.
                     try {
-                        if (sensorCoreEnabled) { // App disabled, should enable
+                        if (!serverIsTrusted) { // Core changed, but app doesn't trust server so 'override'
+                            registerSensor(context, serverManager, fullSensor, basicSensor)
+                        } else if (sensorCoreEnabled) { // App disabled, should enable
                             if (manager.checkPermission(context.applicationContext, basicSensor.id)) {
                                 sensor.enabled = true
                                 sensor.registered = true

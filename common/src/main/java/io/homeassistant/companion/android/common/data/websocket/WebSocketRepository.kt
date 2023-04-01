@@ -7,6 +7,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ar
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ConversationResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.CurrentUserResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DomainResponse
@@ -25,6 +26,7 @@ interface WebSocketRepository {
     fun getConnectionState(): WebSocketState?
     fun shutdown()
     suspend fun sendPing(): Boolean
+    suspend fun getCurrentUser(): CurrentUserResponse?
     suspend fun getConfig(): GetConfigResponse?
     suspend fun getStates(): List<EntityResponse<Any>>?
     suspend fun getAreaRegistry(): List<AreaRegistryResponse>?

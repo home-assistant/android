@@ -5,9 +5,10 @@
         <change>Multi-server support! Add additional servers in Companion App Settings.</change>
         <change>Android Auto: Add support to navigate to any sensor that has latitude and longitude attributes</change>
         <change>Change sensor enabled by default logic, new users will no longer have Battery Power, Battery Temperature or Is Charging sensors enabled by default</change>
-        <change>Add new setting to lock screen orientation when view dashboards</change>
+        <change>Add new setting to lock the screen orientation when viewing dashboards</change>
         <change>Camera Widget: Make background transparent, remove resizing so image is not stretched, allow widget to be smaller if required</change>
         <change>Beacon Monitor: Use a foreground service notification for reliable background scanning, you may adjust the appearance using the notification channel</change>
+        <change>Notification: Allow clickAction to be set to noAction to do nothing when a notification is clicked</change>
         <change>Set a lower minimum font size when viewing dashboards to improve low resolution devices</change>
         <change>Bug fixes, design improvements and dependency updates</change>
     </release>

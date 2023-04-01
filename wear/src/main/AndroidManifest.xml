@@ -112,7 +112,7 @@
         </service>
         <service
             android:name=".tiles.TemplateTile"
-            android:label="@string/template_tile"
+            android:label="@string/template"
             android:description="@string/template_tile_desc"
             android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER"
             android:exported="true">

@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.matter
 
 import android.app.Application
 import android.content.IntentSender
+import android.util.Log
 import androidx.activity.result.ActivityResult
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,6 +22,10 @@ class MatterCommissioningViewModel @Inject constructor(
     private val serverManager: ServerManager,
     application: Application
 ) : AndroidViewModel(application) {
+
+    companion object {
+        private const val TAG = "MatterCommissioningView"
+    }
 
     sealed class CommissioningFlowStep {
         object NotStarted : CommissioningFlowStep()
@@ -84,11 +89,16 @@ class MatterCommissioningViewModel @Inject constructor(
 
     suspend fun syncThreadIfNecessary(): IntentSender? {
         step = CommissioningFlowStep.Working
-        return threadManager.syncPreferredDataset(
-            getApplication<Application>().applicationContext,
-            serverId,
-            viewModelScope
-        )
+        return try {
+            threadManager.syncPreferredDataset(
+                getApplication<Application>().applicationContext,
+                serverId,
+                viewModelScope
+            )
+        } catch (e: Exception) {
+            Log.w(TAG, "Unable to sync preferred Thread dataset, continuing", e)
+            null
+        }
     }
 
     fun onThreadPermissionResult(result: ActivityResult, code: String) {

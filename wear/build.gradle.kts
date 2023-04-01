@@ -88,7 +88,7 @@ play {
 dependencies {
     implementation(project(":common"))
 
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.8.10")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.8.20")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.6.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
@@ -124,6 +124,7 @@ dependencies {
 
     implementation("com.google.guava:guava:31.1-android")
     implementation("androidx.wear.tiles:tiles:1.1.0")
+    implementation("androidx.wear.tiles:tiles-material:1.1.0")
 
     implementation("androidx.wear.watchface:watchface-complications-data-source-ktx:1.1.1")
 

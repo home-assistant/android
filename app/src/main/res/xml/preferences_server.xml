@@ -42,6 +42,12 @@
         android:key="security_category"
         android:title="@string/security">
         <SwitchPreference
+            android:key="trust_server"
+            android:defaultValue="true"
+            android:icon="@drawable/ic_settings_remote"
+            android:title="@string/trust_server_title"
+            android:summary="@string/trust_server_summary"/>
+        <SwitchPreference
             android:key="app_lock"
             android:icon="@drawable/ic_lock"
             android:title="@string/lock_title"

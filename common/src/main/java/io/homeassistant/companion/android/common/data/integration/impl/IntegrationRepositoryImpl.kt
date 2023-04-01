@@ -56,6 +56,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         private const val PREF_CHECK_SENSOR_REGISTRATION_NEXT = "sensor_reg_last"
         private const val PREF_SESSION_TIMEOUT = "session_timeout"
         private const val PREF_SESSION_EXPIRE = "session_expire"
+        private const val PREF_TRUSTED = "trusted"
         private const val PREF_SEC_WARNING_NEXT = "sec_warning_last"
         private const val TAG = "IntegrationRepository"
         private const val RATE_LIMIT_URL = BuildConfig.RATE_LIMIT_URL
@@ -102,6 +103,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 )
             )
             getConfig() // To get version, name, etc stored
+            webSocketRepository.getCurrentUser() // To get user info stored
         } catch (e: Exception) {
             Log.e(TAG, "Unable to save device registration", e)
         }
@@ -157,6 +159,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         localStorage.remove("${serverId}_$PREF_CHECK_SENSOR_REGISTRATION_NEXT")
         localStorage.remove("${serverId}_$PREF_SESSION_TIMEOUT")
         localStorage.remove("${serverId}_$PREF_SESSION_EXPIRE")
+        localStorage.remove("${serverId}_$PREF_TRUSTED")
         localStorage.remove("${serverId}_$PREF_SEC_WARNING_NEXT")
         // app version and push token is device-specific
     }
@@ -393,6 +396,12 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     private suspend fun getSessionExpireMillis(): Long =
         localStorage.getLong("${serverId}_$PREF_SESSION_EXPIRE") ?: 0
 
+    override suspend fun isTrusted(): Boolean =
+        localStorage.getBooleanOrNull("${serverId}_$PREF_TRUSTED") ?: true
+
+    override suspend fun setTrusted(trusted: Boolean) =
+        localStorage.putBoolean("${serverId}_$PREF_TRUSTED", trusted)
+
     override suspend fun getNotificationRateLimits(): RateLimitResponse {
         val pushToken = localStorage.getString(PREF_PUSH_TOKEN) ?: ""
         val requestBody = RateLimitRequest(pushToken)
@@ -575,18 +584,33 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     }
 
     override suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity<*>>? {
-        return webSocketRepository.getStateChanges(entityIds)
-            ?.filter { it.toState != null }
-            ?.map {
-                Entity(
-                    it.toState!!.entityId,
-                    it.toState.state,
-                    it.toState.attributes,
-                    it.toState.lastChanged,
-                    it.toState.lastUpdated,
-                    it.toState.context
-                )
-            }
+        return if (server.user.isAdmin == true) {
+            webSocketRepository.getStateChanges(entityIds)
+                ?.filter { it.toState != null }
+                ?.map {
+                    Entity(
+                        it.toState!!.entityId,
+                        it.toState.state,
+                        it.toState.attributes,
+                        it.toState.lastChanged,
+                        it.toState.lastUpdated,
+                        it.toState.context
+                    )
+                }
+        } else {
+            webSocketRepository.getStateChanges()
+                ?.filter { it.newState != null && entityIds.contains(it.entityId) }
+                ?.map {
+                    Entity(
+                        it.newState!!.entityId,
+                        it.newState.state,
+                        it.newState.attributes,
+                        it.newState.lastChanged,
+                        it.newState.lastUpdated,
+                        it.newState.context
+                    )
+                }
+        }
     }
 
     override suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>) {

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="aa_app_not_logged_in">Not logged in</string>
+    <string name="aa_launch_native">Native mode</string>
     <string name="aa_navigation">Navigation</string>
     <string name="aa_no_entities_with_locations">No entities with locations found.</string>
     <string name="aa_change_server">Change server</string>
@@ -711,6 +712,7 @@
     <string name="shortcuts_tile_description">Select up to 7 entities</string>
     <string name="shortcuts_tile_empty">Choose entities in settings</string>
     <string name="shortcuts_tile_text_setting">Show names on shortcuts tile</string>
+    <string name="shortcuts_tile_log_in">Log in to Home Assistant to add your first shortcut</string>
     <string name="shortcuts">Shortcuts</string>
     <string name="show">Show</string>
     <string name="show_share_logs_summary">Sharing logs with the Home Assistant team will help to solve issues. Please share the logs only if you have been asked to do so by a Home Assistant developer</string>
@@ -760,12 +762,14 @@
     <string name="sun">Sun</string>
     <string name="switches">Switches</string>
     <string name="tag_reader_title">Processing Tag</string>
+    <string name="template">Template</string>
     <string name="template_tile">Template tile</string>
     <string name="template_tile_set_on_watch">Set template to display on Wear OS tile</string>
     <string name="template_tile_change_message">Change template in phone settings</string>
     <string name="template_tile_content">Template tile content</string>
     <string name="template_tile_desc">Renders and displays a template</string>
     <string name="template_tile_empty">Set template in the phone settings</string>
+    <string name="template_tile_log_in">Log in to Home Assistant to set up a template</string>
     <string name="template_error">Error in template</string>
     <string name="template_render_error">Error rendering template</string>
     <string name="template_tile_help">Provide a template below that will be displayed on the Wear OS template tile. See help for markup options.</string>
@@ -836,6 +840,8 @@
     <string name="tile_updated">Tile Data updated</string>
     <string name="tiles">Tiles</string>
     <string name="toast_message">%1$s was selected</string>
+    <string name="trust_server_title">Remotely control app &amp; device</string>
+    <string name="trust_server_summary">Manage enabled sensors and use notification commands from this server</string>
     <string name="tts_error">Unable to process notification \"%1$s\" as text to speech.</string>
     <string name="tts_no_text">Please set the text for text to speech to process</string>
     <string name="unable_to_register">Unable to Register Application</string>
@@ -1045,7 +1051,8 @@
     <string name="no_conversation_support">You must be at least on Home Assistant 2023.1 and have the conversation integration enabled</string>
     <string name="conversation">Conversation</string>
     <string name="assist">Assist</string>
-    <string name="not_registered">Please launch the Home Assistant app and login before you can use the assist feature.</string>
+    <string name="assist_log_in">Log in to Home Assistant to start using Assist</string>
+    <string name="not_registered">Please launch the Home Assistant app and log in to start using Assist.</string>
     <string name="ha_assist">HA: Assist</string>
     <string name="only_favorites">Only Show Favorites</string>
     <string name="beacon_scanning">Beacon Monitor Scanning</string>

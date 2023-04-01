@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.settings.wear
 
+import android.annotation.SuppressLint
 import android.app.Application
 import android.util.Log
 import android.widget.Toast
@@ -23,6 +24,15 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.WearDataMessages
+import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.database.server.ServerConnectionInfo
+import io.homeassistant.companion.android.database.server.ServerSessionInfo
+import io.homeassistant.companion.android.database.server.ServerType
+import io.homeassistant.companion.android.database.server.ServerUserInfo
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -32,6 +42,7 @@ import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
 @HiltViewModel
+@SuppressLint("VisibleForTests") // https://issuetracker.google.com/issues/239451111
 class SettingsWearViewModel @Inject constructor(
     private val serverManager: ServerManager,
     application: Application
@@ -42,13 +53,6 @@ class SettingsWearViewModel @Inject constructor(
     companion object {
         private const val TAG = "SettingsWearViewModel"
         private const val CAPABILITY_WEAR_SENDS_CONFIG = "sends_config"
-
-        private const val KEY_UPDATE_TIME = "UpdateTime"
-        private const val KEY_IS_AUTHENTICATED = "isAuthenticated"
-        private const val KEY_SUPPORTED_DOMAINS = "supportedDomains"
-        private const val KEY_FAVORITES = "favorites"
-        private const val KEY_TEMPLATE_TILE = "templateTile"
-        private const val KEY_TEMPLATE_TILE_REFRESH_INTERVAL = "templateTileRefreshInterval"
     }
 
     private val objectMapper = jacksonObjectMapper()
@@ -57,6 +61,9 @@ class SettingsWearViewModel @Inject constructor(
     val hasData = _hasData.asStateFlow()
     private val _isAuthenticated = MutableStateFlow(false)
     val isAuthenticated = _isAuthenticated.asStateFlow()
+    private var serverId = 0
+    private var remoteServerId = 0
+
     var entities = mutableStateMapOf<String, Entity<*>>()
         private set
     var supportedDomains = mutableStateListOf<String>()
@@ -101,22 +108,34 @@ class SettingsWearViewModel @Inject constructor(
                 ).show()
             }
         }
-        viewModelScope.launch {
-            if (serverManager.isRegistered()) {
-                serverManager.integrationRepository().getEntities()?.forEach {
-                    entities[it.entityId] = it
-                }
-            }
-        }
     }
 
     override fun onCleared() {
         Wearable.getDataClient(getApplication<HomeAssistantApplication>()).removeListener(this)
+
+        if (serverId != 0) {
+            CoroutineScope(Dispatchers.Main + Job()).launch {
+                serverManager.removeServer(serverId)
+            }
+        }
+    }
+
+    private suspend fun loadEntities() {
+        if (serverId != 0) {
+            try {
+                serverManager.integrationRepository(serverId).getEntities()?.forEach {
+                    entities[it.entityId] = it
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to load entities for Wear server", e)
+                entities.clear()
+            }
+        }
     }
 
     fun setTemplateContent(template: String) {
         templateTileContent.value = template
-        if (template.isNotEmpty()) {
+        if (template.isNotEmpty() && serverId != 0) {
             viewModelScope.launch {
                 try {
                     templateTileContentRendered.value =
@@ -161,8 +180,8 @@ class SettingsWearViewModel @Inject constructor(
     fun sendHomeFavorites(favoritesList: List<String>) = viewModelScope.launch {
         val application = getApplication<HomeAssistantApplication>()
         val putDataRequest = PutDataMapRequest.create("/updateFavorites").run {
-            dataMap.putLong(KEY_UPDATE_TIME, System.nanoTime())
-            dataMap.putString(KEY_FAVORITES, objectMapper.writeValueAsString(favoritesList))
+            dataMap.putLong(WearDataMessages.KEY_UPDATE_TIME, System.nanoTime())
+            dataMap.putString(WearDataMessages.CONFIG_FAVORITES, objectMapper.writeValueAsString(favoritesList))
             setUrgent()
             asPutDataRequest()
         }
@@ -205,8 +224,8 @@ class SettingsWearViewModel @Inject constructor(
 
     fun sendTemplateTileInfo() {
         val putDataRequest = PutDataMapRequest.create("/updateTemplateTile").run {
-            dataMap.putString(KEY_TEMPLATE_TILE, templateTileContent.value)
-            dataMap.putInt(KEY_TEMPLATE_TILE_REFRESH_INTERVAL, templateTileRefreshInterval.value)
+            dataMap.putString(WearDataMessages.CONFIG_TEMPLATE_TILE, templateTileContent.value)
+            dataMap.putInt(WearDataMessages.CONFIG_TEMPLATE_TILE_REFRESH_INTERVAL, templateTileRefreshInterval.value)
             setUrgent()
             asPutDataRequest()
         }
@@ -233,20 +252,73 @@ class SettingsWearViewModel @Inject constructor(
         dataEvents.release()
     }
 
-    private fun onLoadConfigFromWear(data: DataMap) {
-        _isAuthenticated.value = data.getBoolean(KEY_IS_AUTHENTICATED, false)
+    private fun onLoadConfigFromWear(data: DataMap) = viewModelScope.launch {
+        val isAuthenticated = data.getBoolean(WearDataMessages.CONFIG_IS_AUTHENTICATED, false)
+        _isAuthenticated.value = isAuthenticated
+        if (isAuthenticated) {
+            updateServer(data)
+        }
+
         val supportedDomainsList: List<String> =
-            objectMapper.readValue(data.getString(KEY_SUPPORTED_DOMAINS, "[\"input_boolean\", \"light\", \"lock\", \"switch\", \"script\", \"scene\"]"))
+            objectMapper.readValue(data.getString(WearDataMessages.CONFIG_SUPPORTED_DOMAINS, "[\"input_boolean\", \"light\", \"lock\", \"switch\", \"script\", \"scene\"]"))
         supportedDomains.clear()
         supportedDomains.addAll(supportedDomainsList)
         val favoriteEntityIdList: List<String> =
-            objectMapper.readValue(data.getString(KEY_FAVORITES, "[]"))
+            objectMapper.readValue(data.getString(WearDataMessages.CONFIG_FAVORITES, "[]"))
         favoriteEntityIds.clear()
         favoriteEntityIdList.forEach { entityId ->
             favoriteEntityIds.add(entityId)
         }
-        setTemplateContent(data.getString(KEY_TEMPLATE_TILE, ""))
-        templateTileRefreshInterval.value = data.getInt(KEY_TEMPLATE_TILE_REFRESH_INTERVAL, 0)
+        setTemplateContent(data.getString(WearDataMessages.CONFIG_TEMPLATE_TILE, ""))
+        templateTileRefreshInterval.value = data.getInt(WearDataMessages.CONFIG_TEMPLATE_TILE_REFRESH_INTERVAL, 0)
+
         _hasData.value = true
+    }
+
+    private suspend fun updateServer(data: DataMap) {
+        val wearServerId = data.getInt(WearDataMessages.CONFIG_SERVER_ID, 0)
+        if (wearServerId == 0 || wearServerId == remoteServerId) return
+
+        if (remoteServerId != 0) { // First, remove the old server
+            serverManager.removeServer(serverId)
+            serverId = 0
+            remoteServerId = 0
+        }
+
+        val wearExternalUrl = data.getString(WearDataMessages.CONFIG_SERVER_EXTERNAL_URL) ?: return
+        val wearWebhookId = data.getString(WearDataMessages.CONFIG_SERVER_WEBHOOK_ID) ?: return
+        val wearCloudUrl = data.getString(WearDataMessages.CONFIG_SERVER_CLOUD_URL, "").ifBlank { null }
+        val wearCloudhookUrl = data.getString(WearDataMessages.CONFIG_SERVER_CLOUDHOOK_URL, "").ifBlank { null }
+        val wearUseCloud = data.getBoolean(WearDataMessages.CONFIG_SERVER_USE_CLOUD, false)
+        val wearRefreshToken = data.getString(WearDataMessages.CONFIG_SERVER_REFRESH_TOKEN, "")
+
+        try {
+            serverId = serverManager.addServer(
+                Server(
+                    _name = "",
+                    type = ServerType.TEMPORARY,
+                    connection = ServerConnectionInfo(
+                        externalUrl = wearExternalUrl,
+                        cloudUrl = wearCloudUrl,
+                        webhookId = wearWebhookId,
+                        cloudhookUrl = wearCloudhookUrl,
+                        useCloud = wearUseCloud
+                    ),
+                    session = ServerSessionInfo(),
+                    user = ServerUserInfo()
+                )
+            )
+            serverManager.authenticationRepository(serverId).registerRefreshToken(wearRefreshToken)
+            remoteServerId = wearServerId
+
+            viewModelScope.launch { loadEntities() }
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to add Wear server from data", e)
+            if (serverId != 0) {
+                serverManager.removeServer(serverId)
+                serverId = 0
+                remoteServerId = 0
+            }
+        }
     }
 }
