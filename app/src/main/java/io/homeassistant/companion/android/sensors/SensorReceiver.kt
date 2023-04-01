@@ -11,6 +11,7 @@ import android.net.wifi.WifiManager
 import android.os.PowerManager
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.common.sensors.AndroidOsSensorManager
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.sensors.BatterySensorManager
 import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
@@ -52,6 +53,7 @@ class SensorReceiver : SensorReceiverBase() {
         val MANAGERS = listOf(
             ActivitySensorManager(),
             AndroidAutoSensorManager(),
+            AndroidOsSensorManager(),
             AppSensorManager(),
             AudioSensorManager(),
             BatterySensorManager(),
