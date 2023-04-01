@@ -105,7 +105,7 @@ class AndroidAutoSensorManager :
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    override fun onChanged(type: Int) {
+    override fun onChanged(value: Int) {
         if (!isEnabled(context, androidAutoConnected) && !isEnabled(context, fuelLevel) && !isEnabled(context, batteryLevel)) {
             CoroutineScope(Dispatchers.Main + Job()).launch {
                 carConnection?.type?.removeObserver(this@AndroidAutoSensorManager)
