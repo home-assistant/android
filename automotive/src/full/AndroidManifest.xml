@@ -53,7 +53,7 @@
             android:name="androidx.car.app.minCarApiLevel"
             android:value="1"/>
         <meta-data
-            android:name="com.google.android.gms.car.application"
+            android:name="com.android.automotive"
             android:resource="@xml/automotive_app_desc"/>
         <service
             android:name=".vehicle.HaCarAppService"
@@ -63,17 +63,20 @@
                 <category android:name="androidx.car.app.category.IOT"/>
             </intent-filter>
         </service>
-        <service
-            android:name="com.google.android.gms.metadata.ModuleDependencies"
-            android:enabled="false"
-            android:exported="false">
+        <activity
+            android:name="androidx.car.app.activity.CarAppActivity"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:label="@string/app_name"
+            android:roundIcon="@mipmap/ic_launcher_round">
             <intent-filter>
-                <action android:name="com.google.android.gms.metadata.MODULE_DEPENDENCIES" />
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <meta-data
-                android:name="home:0:preferred"
-                android:value=""/>
-        </service>
+            <meta-data android:name="distractionOptimized" android:value="true"/>
+        </activity>
+
     </application>
 
 </manifest>

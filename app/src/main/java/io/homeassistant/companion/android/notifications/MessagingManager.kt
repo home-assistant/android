@@ -559,13 +559,14 @@ class MessagingManager @Inject constructor(
     private fun handleDeviceCommands(data: Map<String, String>) {
         val message = data[NotificationData.MESSAGE]
         val command = data[NotificationData.COMMAND]
+        val serverId = data[THIS_SERVER_ID]!!
         when (message) {
             COMMAND_DND -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     val notificationManager =
                         context.getSystemService<NotificationManager>()
                     if (notificationManager?.isNotificationPolicyAccessGranted == false) {
-                        notifyMissingPermission(message.toString())
+                        notifyMissingPermission(message.toString(), serverId)
                     } else {
                         when (command) {
                             DND_ALARMS_ONLY -> notificationManager?.setInterruptionFilter(
@@ -589,7 +590,7 @@ class MessagingManager @Inject constructor(
                     val notificationManager =
                         context.getSystemService<NotificationManager>()
                     if (notificationManager?.isNotificationPolicyAccessGranted == false) {
-                        notifyMissingPermission(message.toString())
+                        notifyMissingPermission(message.toString(), serverId)
                     } else {
                         processRingerMode(audioManager!!, command)
                     }
@@ -629,7 +630,7 @@ class MessagingManager @Inject constructor(
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     val notificationManager = context.getSystemService<NotificationManager>()
                     if (notificationManager?.isNotificationPolicyAccessGranted == false) {
-                        notifyMissingPermission(message.toString())
+                        notifyMissingPermission(message.toString(), serverId)
                     } else {
                         processStreamVolume(
                             audioManager!!,
@@ -654,7 +655,7 @@ class MessagingManager @Inject constructor(
                         }
                         else -> {
                             Log.e(TAG, "Missing Bluetooth permissions, notifying user to grant permissions")
-                            notifyMissingPermission(message.toString())
+                            notifyMissingPermission(message.toString(), serverId)
                         }
                     }
                 }
@@ -680,7 +681,7 @@ class MessagingManager @Inject constructor(
             COMMAND_ACTIVITY -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (!Settings.canDrawOverlays(context)) {
-                        notifyMissingPermission(message.toString())
+                        notifyMissingPermission(message.toString(), serverId)
                     } else if (ContextCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED && data["tag"] == Intent.ACTION_CALL) {
                         Handler(Looper.getMainLooper()).post {
                             Toast.makeText(
@@ -705,7 +706,7 @@ class MessagingManager @Inject constructor(
             COMMAND_WEBVIEW -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (!Settings.canDrawOverlays(context)) {
-                        notifyMissingPermission(message.toString())
+                        notifyMissingPermission(message.toString(), serverId)
                     } else {
                         openWebview(command, data)
                     }
@@ -737,7 +738,7 @@ class MessagingManager @Inject constructor(
                     if (!NotificationManagerCompat.getEnabledListenerPackages(context)
                         .contains(context.packageName)
                     ) {
-                        notifyMissingPermission(message.toString())
+                        notifyMissingPermission(message.toString(), serverId)
                     } else {
                         processMediaCommand(data)
                     }
@@ -746,7 +747,7 @@ class MessagingManager @Inject constructor(
             COMMAND_LAUNCH_APP -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (!Settings.canDrawOverlays(context)) {
-                        notifyMissingPermission(message.toString())
+                        notifyMissingPermission(message.toString(), serverId)
                     } else {
                         launchApp(data)
                     }
@@ -764,7 +765,7 @@ class MessagingManager @Inject constructor(
                             mainScope.launch { sendNotification(data) }
                         }
                     } else {
-                        notifyMissingPermission(message.toString())
+                        notifyMissingPermission(message.toString(), serverId)
                     }
                 } else if (!processScreenCommands(data)) {
                     mainScope.launch { sendNotification(data) }
@@ -1825,7 +1826,7 @@ class MessagingManager @Inject constructor(
         return success
     }
 
-    private fun notifyMissingPermission(type: String) {
+    private fun notifyMissingPermission(type: String, serverId: String) {
         val appManager =
             context.getSystemService<ActivityManager>()
         val currentProcess = appManager?.runningAppProcesses
@@ -1833,8 +1834,10 @@ class MessagingManager @Inject constructor(
             for (item in currentProcess) {
                 if (context.applicationInfo.processName == item.processName) {
                     if (item.importance != ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
-                        val data =
-                            mutableMapOf(NotificationData.MESSAGE to context.getString(commonR.string.missing_command_permission))
+                        val data = mutableMapOf(
+                            NotificationData.MESSAGE to context.getString(commonR.string.missing_command_permission),
+                            THIS_SERVER_ID to serverId
+                        )
                         runBlocking {
                             sendNotification(data)
                         }

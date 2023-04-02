@@ -6,7 +6,6 @@ plugins {
     id("kotlin-android")
     id("kotlin-kapt")
     id("kotlin-parcelize")
-    id("com.google.firebase.appdistribution")
     id("com.github.triplet.play")
     id("com.google.gms.google-services")
     kotlin("kapt")
@@ -24,11 +23,12 @@ android {
 
     defaultConfig {
         applicationId = "io.homeassistant.companion.android"
-        minSdk = 21
+        minSdk = 29
         targetSdk = 33
 
         versionName = System.getenv("VERSION") ?: "LOCAL"
-        versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
+        // We add 2 because the app, wear (+1) and automotive versions need to have different version codes.
+        versionCode = (System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1) + 3
 
         manifestPlaceholders["sentryRelease"] = "$applicationId@$versionName"
         manifestPlaceholders["sentryDsn"] = System.getenv("SENTRY_DSN") ?: ""
@@ -40,13 +40,25 @@ android {
         }
     }
 
+    sourceSets {
+        getByName("main") {
+            java {
+                srcDirs("../app/src/main/java", "../app/src/full/java")
+            }
+            res {
+                srcDirs("../app/src/main/res", "../app/src/full/res")
+            }
+            manifest.srcFile("src/main/AndroidManifest.xml")
+        }
+    }
+
     buildFeatures {
         viewBinding = true
         compose = true
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.4.3"
+        kotlinCompilerExtensionVersion = "1.4.2"
     }
 
     kotlinOptions {
@@ -56,12 +68,6 @@ android {
     compileOptions {
         sourceCompatibility(JavaVersion.VERSION_11)
         targetCompatibility(JavaVersion.VERSION_11)
-    }
-
-    firebaseAppDistribution {
-        serviceCredentialsFile = "firebaseAppDistributionServiceCredentialsFile.json"
-        releaseNotesFile = "./app/build/outputs/changelogBeta"
-        groups = "continuous-deployment"
     }
 
     signingConfigs {
@@ -132,7 +138,7 @@ android {
 
 play {
     serviceAccountCredentials.set(file("playStorePublishServiceCredentialsFile.json"))
-    track.set("internal")
+    track.set("automotive:internal")
     resolutionStrategy.set(ResolutionStrategy.IGNORE)
     // We will depend on the wear commit.
     commit.set(true)
@@ -168,31 +174,31 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.10.0")
     implementation("com.squareup.picasso:picasso:2.8")
 
-    "fullImplementation"("com.google.android.gms:play-services-location:21.0.1")
-    "fullImplementation"("com.google.android.gms:play-services-home:16.0.0")
-    "fullImplementation"("com.google.android.gms:play-services-threadnetwork:16.0.0")
-    "fullImplementation"(platform("com.google.firebase:firebase-bom:31.2.3"))
-    "fullImplementation"("com.google.firebase:firebase-messaging")
-    "fullImplementation"("io.sentry:sentry-android:6.17.0")
-    "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
-    "fullImplementation"("com.google.android.gms:play-services-wearable:18.0.0")
-    "fullImplementation"("androidx.wear:wear-remote-interactions:1.0.0")
+    implementation("com.google.android.gms:play-services-location:21.0.1")
+    implementation("com.google.android.gms:play-services-home:16.0.0")
+    implementation("com.google.android.gms:play-services-threadnetwork:16.0.0-beta02")
+    implementation(platform("com.google.firebase:firebase-bom:31.2.2"))
+    implementation("com.google.firebase:firebase-messaging")
+    implementation("io.sentry:sentry-android:6.17.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
+    implementation("com.google.android.gms:play-services-wearable:18.0.0")
+    implementation("androidx.wear:wear-remote-interactions:1.0.0")
 
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.webkit:webkit:1.6.0")
 
-    implementation("com.google.android.exoplayer:exoplayer-core:2.18.3")
-    implementation("com.google.android.exoplayer:exoplayer-hls:2.18.3")
-    implementation("com.google.android.exoplayer:exoplayer-ui:2.18.3")
-    "fullImplementation"("com.google.android.exoplayer:extension-cronet:2.18.3")
-    "minimalImplementation"("com.google.android.exoplayer:extension-cronet:2.18.3") {
+    implementation("com.google.android.exoplayer:exoplayer-core:2.18.2")
+    implementation("com.google.android.exoplayer:exoplayer-hls:2.18.2")
+    implementation("com.google.android.exoplayer:exoplayer-ui:2.18.2")
+    implementation("com.google.android.exoplayer:extension-cronet:2.18.2")
+    "minimalImplementation"("com.google.android.exoplayer:extension-cronet:2.18.2") {
         exclude(group = "com.google.android.gms", module = "play-services-cronet")
     }
     "minimalImplementation"("org.chromium.net:cronet-embedded:108.5359.79")
 
     implementation(platform("androidx.compose:compose-bom:2023.01.00"))
     implementation("androidx.compose.animation:animation")
-    implementation("androidx.compose.compiler:compiler:1.4.3")
+    implementation("androidx.compose.compiler:compiler:1.4.2")
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.material:material")
     implementation("androidx.compose.material:material-icons-core")
@@ -202,16 +208,17 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling")
     implementation("androidx.activity:activity-compose:1.6.1")
     implementation("androidx.navigation:navigation-compose:2.5.3")
-    implementation("com.google.accompanist:accompanist-themeadapter-material:0.30.0")
+    implementation("com.google.accompanist:accompanist-themeadapter-material:0.28.0")
 
     implementation("com.mikepenz:iconics-core:5.4.0")
     implementation("com.mikepenz:iconics-compose:5.4.0")
     implementation("com.mikepenz:community-material-typeface:7.0.96.0-kotlin@aar")
 
-    "fullImplementation"("org.burnoutcrew.composereorderable:reorderable:0.9.6")
+    implementation("org.burnoutcrew.composereorderable:reorderable:0.9.6")
     implementation("com.github.AppDevNext:ChangeLog:3.4")
 
-    "fullImplementation"("androidx.car.app:app:1.3.0-rc01")
+    implementation("androidx.car.app:app:1.3.0-rc01")
+    implementation("androidx.car.app:app-automotive:1.3.0-rc01")
 }
 
 // Disable to fix memory leak and be compatible with the configuration cache.

@@ -14,7 +14,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up JDK 11
-        uses: actions/setup-java@v3.10.0
+        uses: actions/setup-java@v3.11.0
         with:
           distribution: 'temurin'
           java-version: '11'
@@ -79,6 +79,7 @@ jobs:
             ./app/build/outputs/apk/full/release/app-full-release.apk
             ./app/build/outputs/apk/minimal/release/app-minimal-release.apk
             ./wear/build/outputs/apk/release/wear-release.apk
+            ./automotive/build/outputs/apk/full/release/automotive-full-release.apk
             ./app/build/outputs/version_code.txt
 
       - name: Deploy to Firebase
@@ -117,7 +118,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up JDK 11
-        uses: actions/setup-java@v3.10.0
+        uses: actions/setup-java@v3.11.0
         with:
           distribution: 'adopt'
           java-version: '11'
@@ -170,7 +171,7 @@ jobs:
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
           VERSION: ${{ steps.rel_number.outputs.version }}
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
-        run: ./gradlew publishReleaseBundle
+        run: ./gradlew :wear:publishReleaseBundle :app:publishReleaseBundle
 
       - name: Promote to Internal to Beta
         env:

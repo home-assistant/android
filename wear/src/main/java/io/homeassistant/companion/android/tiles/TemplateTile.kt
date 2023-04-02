@@ -22,7 +22,6 @@ import androidx.wear.tiles.DimensionBuilders.dp
 import androidx.wear.tiles.LayoutElementBuilders
 import androidx.wear.tiles.LayoutElementBuilders.Box
 import androidx.wear.tiles.LayoutElementBuilders.FONT_WEIGHT_BOLD
-import androidx.wear.tiles.LayoutElementBuilders.Layout
 import androidx.wear.tiles.LayoutElementBuilders.LayoutElement
 import androidx.wear.tiles.ModifiersBuilders
 import androidx.wear.tiles.RequestBuilders.ResourcesRequest
@@ -32,7 +31,6 @@ import androidx.wear.tiles.ResourceBuilders.Resources
 import androidx.wear.tiles.TileBuilders.Tile
 import androidx.wear.tiles.TileService
 import androidx.wear.tiles.TimelineBuilders.Timeline
-import androidx.wear.tiles.TimelineBuilders.TimelineEntry
 import com.fasterxml.jackson.databind.JsonMappingException
 import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
@@ -73,36 +71,22 @@ class TemplateTile : TileService() {
                 }
             }
 
-            val template = wearPrefsRepository.getTemplateTileContent()
-            val renderedText = try {
-                if (serverManager.isRegistered()) {
-                    serverManager.integrationRepository().renderTemplate(template, mapOf()).toString()
-                } else {
-                    ""
-                }
-            } catch (e: Exception) {
-                Log.e("TemplateTile", "Exception while rendering template", e)
-                // JsonMappingException suggests that template is not a String (= error)
-                if (e.cause is JsonMappingException) {
-                    getString(commonR.string.template_error)
-                } else {
-                    getString(commonR.string.template_render_error)
-                }
-            }
-
             Tile.Builder()
                 .setResourcesVersion("1")
                 .setFreshnessIntervalMillis(
                     wearPrefsRepository.getTemplateTileRefreshInterval().toLong() * 1000
                 )
                 .setTimeline(
-                    Timeline.Builder().addTimelineEntry(
-                        TimelineEntry.Builder().setLayout(
-                            Layout.Builder().setRoot(
-                                layout(renderedText)
-                            ).build()
-                        ).build()
-                    ).build()
+                    if (serverManager.isRegistered()) {
+                        timeline()
+                    } else {
+                        loggedOutTimeline(
+                            this@TemplateTile,
+                            requestParams,
+                            commonR.string.template,
+                            commonR.string.template_tile_log_in
+                        )
+                    }
                 ).build()
         }
 
@@ -126,6 +110,27 @@ class TemplateTile : TileService() {
         super.onDestroy()
         // Cleans up the coroutine
         serviceJob.cancel()
+    }
+
+    private suspend fun timeline(): Timeline {
+        val template = wearPrefsRepository.getTemplateTileContent()
+        val renderedText = try {
+            if (serverManager.isRegistered()) {
+                serverManager.integrationRepository().renderTemplate(template, mapOf()).toString()
+            } else {
+                ""
+            }
+        } catch (e: Exception) {
+            Log.e("TemplateTile", "Exception while rendering template", e)
+            // JsonMappingException suggests that template is not a String (= error)
+            if (e.cause is JsonMappingException) {
+                getString(commonR.string.template_error)
+            } else {
+                getString(commonR.string.template_render_error)
+            }
+        }
+
+        return Timeline.fromLayoutElement(layout(renderedText))
     }
 
     fun layout(renderedText: String): LayoutElement = Box.Builder().apply {

@@ -6,6 +6,7 @@ import io.homeassistant.companion.android.common.data.authentication.impl.Authen
 interface AuthenticationRepository {
 
     suspend fun registerAuthorizationCode(authorizationCode: String)
+    suspend fun registerRefreshToken(refreshToken: String)
 
     suspend fun retrieveExternalAuthentication(forceRefresh: Boolean): String
 
