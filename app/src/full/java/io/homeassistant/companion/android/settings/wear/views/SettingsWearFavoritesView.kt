@@ -19,8 +19,10 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
+import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -33,6 +35,9 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.settings.wear.SettingsWearViewModel
 import io.homeassistant.companion.android.util.compose.getEntityDomainString
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import org.burnoutcrew.reorderable.ReorderableItem
 import org.burnoutcrew.reorderable.ReorderableLazyListState
 import org.burnoutcrew.reorderable.detectReorderAfterLongPress
@@ -43,7 +48,8 @@ import io.homeassistant.companion.android.common.R as commonR
 @Composable
 fun LoadWearFavoritesSettings(
     settingsWearViewModel: SettingsWearViewModel,
-    onBackClicked: () -> Unit
+    onBackClicked: () -> Unit,
+    events: SharedFlow<String>
 ) {
     val reorderState = rememberReorderableLazyListState(
         onMove = { from, to -> settingsWearViewModel.onMove(from, to) },
@@ -55,7 +61,17 @@ fun LoadWearFavoritesSettings(
 
     val validEntities = settingsWearViewModel.entities.filter { it.key.split(".")[0] in settingsWearViewModel.supportedDomains }.values.sortedBy { it.entityId }.toList()
     val favoriteEntities = settingsWearViewModel.favoriteEntityIds
+
+    val scaffoldState = rememberScaffoldState()
+    LaunchedEffect("snackbar") {
+        events.onEach { message ->
+            scaffoldState.snackbarHostState.currentSnackbarData?.dismiss() // in case of rapid-fire events
+            scaffoldState.snackbarHostState.showSnackbar(message)
+        }.launchIn(this)
+    }
+
     Scaffold(
+        scaffoldState = scaffoldState,
         topBar = {
             SettingsWearTopAppBar(
                 title = { Text(stringResource(commonR.string.wear_favorite_entities)) },
