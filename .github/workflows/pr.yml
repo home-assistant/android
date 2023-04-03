@@ -53,15 +53,6 @@ jobs:
           lokalise-project: ${{ secrets.LOKALISE_PROJECT }}
           lokalise-token: ${{ secrets.LOKALISE_TOKEN }}
 
-      - name: Build Release
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
-          KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
-          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
-          VERSION: "TEST"
-          VERSION_CODE: "9826"
-        run: ./gradlew bundleRelease
-
       - name: Deploy to Playstore Internal
         env:
           KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
@@ -70,4 +61,4 @@ jobs:
           VERSION: "TEST"
           VERSION_CODE: "9826"
         run: |
-          ./gradlew :automotive:publishReleaseBundle --track "automotive:internal" || echo "Failed to publish Automotive!"
+          ./gradlew :automotive:publishReleaseBundle --stacktrace || echo "Failed to publish Automotive!"
