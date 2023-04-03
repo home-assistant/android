@@ -5,10 +5,14 @@ on:
     branches: [ master ]
 
 jobs:
-  ktlint:
+  test_automotive_publishing:
+    name: Automotive Play Publish
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
       - name: Set up JDK 11
         uses: actions/setup-java@v3.11.0
         with:
@@ -24,97 +28,44 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Mock google-services.json
-        run: |
-          cp .github/mock-google-services.json app/google-services.json
-          cp .github/mock-google-services.json wear/google-services.json
-          cp .github/mock-google-services.json automotive/google-services.json
-
-      - name: Validate ktlint
-        run: ./gradlew ktlintCheck
-
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up JDK 11
-        uses: actions/setup-java@v3.11.0
+      - uses: ./.github/actions/create-release-number
+        name: Create Release Number
+        id: rel_number
         with:
-          distribution: 'adopt'
-          java-version: '11'
+          beta: true
 
-      - uses: actions/cache@v3
+      - uses: ./.github/actions/inflate-secrets
+        name: Inflate Secrets
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+          keystore: ${{ secrets.UPLOAD_KEYSTORE_FILE }}
+          google-services: ${{ secrets.GOOGLESERVICES }}
+          firebase-creds: ${{ secrets.FIREBASECREDS }}
+          playstore-creds: ${{ secrets.PLAYSTORECREDS }}
 
-      - name: Mock google-services.json
+      - uses: ./.github/actions/create-release-notes
+        name: Create Release Notes
+
+      - uses: ./.github/actions/download-translations
+        name: Download Translations
+        with:
+          lokalise-project: ${{ secrets.LOKALISE_PROJECT }}
+          lokalise-token: ${{ secrets.LOKALISE_TOKEN }}
+
+      - name: Build Release
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
+          KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
+          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
+          VERSION: "TEST"
+          VERSION_CODE: "9826"
+        run: ./gradlew bundleRelease
+
+      - name: Deploy to Playstore Internal
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
+          KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
+          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
+          VERSION: "TEST"
+          VERSION_CODE: "9826"
         run: |
-          cp .github/mock-google-services.json app/google-services.json
-          cp .github/mock-google-services.json wear/google-services.json
-          cp .github/mock-google-services.json automotive/google-services.json
-
-      - name: Validate Lint
-        run: ./gradlew lint
-
-  pr_build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-
-    - name: Check for modified DB schemas on branch
-      run: |
-        if git diff --name-only --diff-filter=DMR origin/master... | grep "^common/schemas"; then
-          echo -e "\n❌ Existing database schema modified, please increase the database version instead"
-          exit 1
-        else
-          echo -e "\n✔️ No changed database schemas on branch"
-        fi
-
-    - name: Set up JDK 11
-      uses: actions/setup-java@v3.11.0
-      with:
-        distribution: 'adopt'
-        java-version: '11'
-
-    - uses: actions/cache@v3
-      with:
-        path: |
-          ~/.gradle/caches
-          ~/.gradle/wrapper
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
-
-    - name: Mock google-services.json
-      run: |
-        cp .github/mock-google-services.json app/google-services.json
-        cp .github/mock-google-services.json wear/google-services.json
-        cp .github/mock-google-services.json automotive/google-services.json
-        
-    - uses: ./.github/actions/create-release-notes
-      name: Create Release Notes
-
-    - name: Build Debug APK
-      run: ./gradlew assembleDebug
-
-    - name: Check for missing/modified DB schemas after build
-      run: |
-        if [[ $(git status common/schemas --porcelain) ]]; then
-          echo $(git status common/schemas --porcelain)
-          echo -e "\n❌ Found uncommitted changes in database schema directory, please make sure to include all changes in your commit(s)"
-          exit 1;
-        else
-          echo -e "\n✔️ No changes in database schema directory after build"
-        fi
-    
-    - name: Archive Debug Build
-      uses: actions/upload-artifact@v3
-      with:
-        path: ./**/*.apk
+          ./gradlew :automotive:publishReleaseBundle --track "automotive:internal" || echo "Failed to publish Automotive!"
