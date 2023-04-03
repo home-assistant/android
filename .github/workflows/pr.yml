@@ -1,6 +1,8 @@
 name: Pull Request
 
 on:
+  push:
+    branches: [ bugfix/automotivePublish ]
   pull_request:
     branches: [ master ]
 
