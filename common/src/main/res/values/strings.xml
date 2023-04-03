@@ -224,10 +224,12 @@
     <string name="failed_authentication">Could not authenticate</string>
     <string name="failed_connection">Could not connect</string>
     <string name="failed_phone_connection">Could not connect to phone</string>
+    <string name="failed_watch_connection">Could not connect to watch</string>
     <string name="failed_registration">Could not register</string>
+    <string name="failed_watch_registration">Could not register watch</string>
     <string name="failed_unsupported">Not supported</string>
     <string name="failed_scan">Scanning for Home Assistant failed.</string>
-    <string name="failure_send_favorites_wear">Failed to send favorites selection to Wear OS</string>
+    <string name="failure_send_favorites_wear">Failed to send favorites selection to watch</string>
     <string name="fans">Fans</string>
     <string name="favorite_settings">Favorite Settings</string>
     <string name="favorite">Set Favorite Entities</string>
@@ -334,6 +336,7 @@
     <string name="log_loader_crash">Recent crash</string>
     <string name="log">Log</string>
     <string name="logbook">Logbook</string>
+    <string name="logged_in">Logged in</string>
     <string name="login">Login</string>
     <string name="login_wear_os_device">Login Wear OS Device</string>
     <string name="logout">Logout</string>
@@ -926,7 +929,6 @@
     <string name="widget_text_color_white">White</string>
     <string name="widgets">Widgets</string>
     <string name="zone_event_failure">Unable to send zone event to Home Assistant</string>
-    <string name="failed_wear_config_request">Failed to send config request to wear device</string>
     <string name="companion_app">Companion App</string>
     <string name="basic_sensor_name_last_used_app">Last Used App</string>
     <string name="sensor_description_last_used_app">Application name or package name of the last used application on the device</string>
