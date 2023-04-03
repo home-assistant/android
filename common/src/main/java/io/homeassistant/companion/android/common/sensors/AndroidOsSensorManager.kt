@@ -33,15 +33,15 @@ class AndroidOsSensorManager : SensorManager {
         get() = commonR.string.sensor_name_android_os
 
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        return listOf(osVersion, osSecurityPatch)
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            listOf(osVersion, osSecurityPatch)
+        } else {
+            listOf(osVersion)
+        }
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return arrayOf()
-    }
-
-    override fun hasSensor(context: Context): Boolean {
-        return true
     }
 
     override fun requestSensorUpdate(
@@ -55,7 +55,7 @@ class AndroidOsSensorManager : SensorManager {
         context: Context,
         sensor: SensorManager.BasicSensor
     ) {
-        if (!isEnabled(context, sensor) || !hasSensor(context)) {
+        if (!isEnabled(context, sensor)) {
             return
         }
 
