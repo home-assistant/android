@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.webview
 import android.content.Context
 import android.content.IntentSender
 import androidx.activity.result.ActivityResult
+import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.matter.MatterFrontendCommissioningStatus
 import kotlinx.coroutines.flow.Flow
 
@@ -16,6 +17,8 @@ interface WebViewPresenter {
     fun switchActiveServer(id: Int)
     fun nextServer()
     fun previousServer()
+
+    fun getActiveServerVersion(): HomeAssistantVersion?
 
     fun onGetExternalAuth(context: Context, callback: String, force: Boolean)
 
