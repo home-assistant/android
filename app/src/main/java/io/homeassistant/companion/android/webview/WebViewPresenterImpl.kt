@@ -8,7 +8,6 @@ import android.net.Uri
 import android.util.Log
 import androidx.activity.result.ActivityResult
 import dagger.hilt.android.qualifiers.ActivityContext
-import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -143,9 +142,6 @@ class WebViewPresenterImpl @Inject constructor(
     override fun nextServer() = moveToServer(next = true)
 
     override fun previousServer() = moveToServer(next = false)
-    override fun getActiveServerVersion(): HomeAssistantVersion? {
-        return serverManager.getServer(getActiveServer())?.version
-    }
 
     private fun moveToServer(next: Boolean) {
         val servers = serverManager.defaultServers

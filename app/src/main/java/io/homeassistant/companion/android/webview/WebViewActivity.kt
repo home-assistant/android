@@ -1523,36 +1523,15 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             // /config/* as these are the settings of HA but NOT /config/dashboard. This is just the overview of the HA settings
             // /hassio/* as these are the addons section of HA settings.
             if (webView.url?.matches(".*://.*/(config/(?!\\bdashboard\\b)|hassio)/*.*".toRegex()) == false) {
-                val currentHomeAssistantVersion = presenter.getActiveServerVersion()
-
-                Log.d(TAG, "Show first view of default dashboard (Current Server Home Assistant version: ${currentHomeAssistantVersion?.year}.${currentHomeAssistantVersion?.month})")
-
-                var clickElement = """
-                                    document.querySelector('body > home-assistant')
-                                        .shadowRoot.querySelector('home-assistant-main')
-                                        .shadowRoot.querySelector('ha-drawer > ha-sidebar')
-                                        .shadowRoot.querySelector('paper-listbox > ' + anchor)
-                                   """
-
-                if (currentHomeAssistantVersion != null) {
-                    if (currentHomeAssistantVersion.month < 4 || currentHomeAssistantVersion.year < 2023) {
-                        // For HA < 2023.04 we nee a different selector
-                        clickElement = """
-                                        document.querySelector('body > home-assistant')
-                                                    .shadowRoot.querySelector('home-assistant-main')
-                                                    .shadowRoot.querySelector('#drawer > ha-sidebar')
-                                                    .shadowRoot.querySelector('paper-listbox > ' + anchor)
-                                       """
-                    }
-                }
-
+                Log.d(TAG, "Show first view of default dashboard.")
                 webView.evaluateJavascript(
                     """
                     var anchor = 'a:nth-child(1)';
                     var defaultPanel = window.localStorage.getItem('defaultPanel')?.replaceAll('"',"");
                     if(defaultPanel) anchor = 'a[href="/' + defaultPanel + '"]';
-                    var clickElement = $clickElement;
-                    clickElement.click();
+                    document.querySelector('body > home-assistant').shadowRoot.querySelector('home-assistant-main')
+                                                                   .shadowRoot.querySelector('#drawer > ha-sidebar')
+                                                                   .shadowRoot.querySelector('paper-listbox > ' + anchor).click();
                     window.scrollTo(0, 0);
                     """,
                     null
