@@ -25,6 +25,7 @@ import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.wear.FavoriteCaches
 import io.homeassistant.companion.android.database.wear.FavoriteCachesDao
 import io.homeassistant.companion.android.database.wear.FavoritesDao
+import io.homeassistant.companion.android.database.wear.getAll
 import io.homeassistant.companion.android.database.wear.getAllFlow
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.util.RegistriesDataHandler
@@ -381,6 +382,7 @@ class MainViewModel @Inject constructor(
     fun clearFavorites() {
         viewModelScope.launch {
             favoritesDao.deleteAll()
+            setWearFavoritesOnly(false)
         }
     }
 
@@ -457,6 +459,10 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             favoritesDao.delete(entityId)
             favoriteCachesDao.delete(entityId)
+
+            if (favoritesDao.getAll().isEmpty() && isFavoritesOnly) {
+                setWearFavoritesOnly(false)
+            }
         }
     }
 

@@ -206,6 +206,10 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
 
         mainScope.launch {
             favoritesDao.replaceAll(favoritesIds)
+
+            if (favoritesIds.isEmpty() && wearPrefsRepository.getWearFavoritesOnly()) {
+                wearPrefsRepository.setWearFavoritesOnly(false)
+            }
         }
     }
 
