@@ -785,6 +785,7 @@ class MessagingManager @Inject constructor(
         val items = extras.split(',')
         for (item in items) {
             val chunks = item.split(":")
+            val name = chunks[0]
             var value = chunks[1]
             val hasTypeInfo = chunks.size > 2
 
@@ -793,34 +794,83 @@ class MessagingManager @Inject constructor(
                 value = chunks.subList(1, chunks.lastIndex).joinToString(":")
 
                 when (chunks.last()) {
-                    "urlencoded" -> intent.putExtra(chunks[0], URLDecoder.decode(value, "UTF-8"))
-                    "int" -> intent.putExtra(chunks[0], value.toInt())
-                    "double" -> intent.putExtra(chunks[0], value.toDouble())
-                    "float" -> intent.putExtra(chunks[0], value.toFloat())
-                    "long" -> intent.putExtra(chunks[0], value.toLong())
-                    "short" -> intent.putExtra(chunks[0], value.toShort())
-                    "boolean" -> intent.putExtra(chunks[0], value.toBoolean())
-                    "char" -> intent.putExtra(chunks[0], value[0].toChar())
+                    "int" -> intent.putExtra(name, value.toInt())
+                    "int[]" -> intent.putExtra(
+                        name,
+                        value.split(";").map { it.toInt() }.toIntArray()
+                    )
                     "ArrayList<Integer>" -> intent.putIntegerArrayListExtra(
-                        chunks[0],
+                        name,
                         value.split(";").map { it.toInt() }.toCollection(ArrayList())
                     )
+                    "double" -> intent.putExtra(name, value.toDouble())
+                    "double[]" -> intent.putExtra(
+                        name,
+                        value.split(";").map { it.toDouble() }.toDoubleArray()
+                    )
+                    "float" -> intent.putExtra(name, value.toFloat())
+                    "float[]" -> intent.putExtra(
+                        name,
+                        value.split(";").map { it.toFloat() }.toFloatArray()
+                    )
+                    "long" -> intent.putExtra(name, value.toLong())
+                    "long[]" -> intent.putExtra(
+                        name,
+                        value.split(";").map { it.toLong() }.toLongArray()
+                    )
+                    "short" -> intent.putExtra(name, value.toShort())
+                    "short[]" -> intent.putExtra(
+                        name,
+                        value.split(";").map { it.toShort() }.toShortArray()
+                    )
+                    "byte" -> intent.putExtra(name, value.toByte())
+                    "byte[]" -> intent.putExtra(
+                        name,
+                        value.split(";").map { it.toByte() }.toByteArray()
+                    )
+                    "boolean" -> intent.putExtra(name, value.toBoolean())
+                    "boolean[]" -> intent.putExtra(
+                        name,
+                        value.split(";").map { it.toBoolean() }.toBooleanArray()
+                    )
+                    "char" -> intent.putExtra(name, value[0].toChar())
+                    "char[]" -> intent.putExtra(
+                        name,
+                        value.split(";").map { it[0].toChar() }.toCharArray()
+                    )
+                    "String" -> intent.putExtra(name, value)
+                    "String.urlencoded", "urlencoded" -> intent.putExtra(
+                        name,
+                        URLDecoder.decode(value, "UTF-8")
+                    )
+                    "String[]" -> intent.putExtra(
+                        name,
+                        value.split(";").toTypedArray()
+                    )
                     "ArrayList<String>" -> intent.putStringArrayListExtra(
-                        chunks[0],
+                        name,
                         value.split(";").toCollection(ArrayList())
                     )
+                    "String[].urlencoded" -> intent.putExtra(
+                        name,
+                        value.split(";").map { URLDecoder.decode(value, "UTF-8") }.toTypedArray()
+                    )
+                    "ArrayList<String>.urlencoded" -> intent.putStringArrayListExtra(
+                        name,
+                        value.split(";").map { URLDecoder.decode(value, "UTF-8") }.toCollection(ArrayList())
+                    )
                     else -> {
-                        intent.putExtra(chunks[0], value)
+                        intent.putExtra(name, value)
                     }
                 }
             } else {
                 // Try to guess the correct type
                 if (value.isDigitsOnly()) {
-                    intent.putExtra(chunks[0], value.toInt())
+                    intent.putExtra(name, value.toInt())
                 } else if ((value.lowercase() == "true") || (value.lowercase() == "false")) {
-                    intent.putExtra(chunks[0], value.toBoolean())
+                    intent.putExtra(name, value.toBoolean())
                 } else {
-                    intent.putExtra(chunks[0], value)
+                    intent.putExtra(name, value)
                 }
             }
         }
