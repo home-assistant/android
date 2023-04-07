@@ -112,10 +112,10 @@ dependencies {
     implementation("com.mikepenz:community-material-typeface:7.0.96.0-kotlin@aar")
     implementation("com.mikepenz:iconics-compose:5.4.0")
 
-    implementation("androidx.activity:activity-ktx:1.6.1")
-    implementation("androidx.activity:activity-compose:1.6.1")
-    implementation("androidx.compose.compiler:compiler:1.4.3")
-    implementation(platform("androidx.compose:compose-bom:2023.01.00"))
+    implementation("androidx.activity:activity-ktx:1.7.0")
+    implementation("androidx.activity:activity-compose:1.7.0")
+    implementation("androidx.compose.compiler:compiler:1.4.4")
+    implementation(platform("androidx.compose:compose-bom:2023.03.00"))
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.ui:ui-tooling")
     implementation("androidx.wear.compose:compose-foundation:1.1.2")
@@ -128,8 +128,8 @@ dependencies {
 
     implementation("androidx.wear.watchface:watchface-complications-data-source-ktx:1.1.1")
 
-    implementation("androidx.health:health-services-client:1.0.0-beta02")
+    implementation("androidx.health:health-services-client:1.0.0-beta03")
 
-    implementation(platform("com.google.firebase:firebase-bom:31.2.2"))
+    implementation(platform("com.google.firebase:firebase-bom:31.4.0"))
     implementation("com.google.firebase:firebase-messaging")
 }
