@@ -744,7 +744,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                     "provider" to geofencingEvent.triggeringLocation!!.provider,
                     "time" to geofencingEvent.triggeringLocation!!.time,
                     "vertical_accuracy" to if (Build.VERSION.SDK_INT >= 26) geofencingEvent.triggeringLocation!!.verticalAccuracyMeters.toInt() else 0,
-                    "zone" to zone
+                    "zone" to zone.substring(zone.indexOf("_") + 1)
                 )
                 ioScope.launch {
                     try {
