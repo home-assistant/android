@@ -6,6 +6,7 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.res.Resources
 import android.net.ConnectivityManager
 import android.os.Bundle
 import android.os.Handler
@@ -154,7 +155,7 @@ class CameraWidget : AppWidgetProvider() {
                         }
                         try {
                             picasso.invalidate(url)
-                            picasso.load(url).into(
+                            picasso.load(url).resize(getScreenWidth(), 0).onlyScaleDown().into(
                                 this,
                                 R.id.widgetCameraImage,
                                 intArrayOf(appWidgetId)
@@ -260,5 +261,9 @@ class CameraWidget : AppWidgetProvider() {
         val connectivityManager = context.getSystemService<ConnectivityManager>()
         val activeNetworkInfo = connectivityManager?.activeNetworkInfo
         return activeNetworkInfo?.isConnected ?: false
+    }
+
+    private fun getScreenWidth(): Int {
+        return Resources.getSystem().displayMetrics.widthPixels
     }
 }
