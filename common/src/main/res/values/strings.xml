@@ -125,7 +125,7 @@
     <string name="complication_entity_invalid">Invalid entity</string>
     <string name="complication_entity_state_content_description">Entity state</string>
     <string name="complication_entity_state_label">Entity state</string>
-    <string name="complication_entity_state_preview">preview</string>
+    <string name="complication_entity_state_preview">Preview</string>
     <string name="config">Configuration</string>
     <string name="configure_service_call">Configure Service Call</string>
     <string name="configure_widget_label">Widget Label</string>
