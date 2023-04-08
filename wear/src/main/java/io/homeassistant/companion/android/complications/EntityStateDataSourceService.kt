@@ -45,7 +45,8 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
         val id = request.complicationInstanceId
         val isShort = request.complicationType == ComplicationType.SHORT_TEXT
 
-        val entityId = entityStateComplicationsDao.get(id)?.entityId
+        val complicationSettings = entityStateComplicationsDao.get(id)
+        val entityId = complicationSettings?.entityId
             ?: return getErrorComplication(isShort, R.string.complication_entity_invalid)
 
         val entity = try {
@@ -61,7 +62,11 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
             colorInt = Color.WHITE
         }.toBitmap()
 
-        val title = PlainComplicationText.Builder(entity.friendlyName).build()
+        val title = if (complicationSettings.showTitle) {
+            PlainComplicationText.Builder(entity.friendlyName).build()
+        } else {
+            null
+        }
         val text = PlainComplicationText.Builder(entity.friendlyState(this)).build()
         val contentDescription = PlainComplicationText.Builder(getText(R.string.complication_entity_state_content_description)).build()
         val monochromaticImage = MonochromaticImage.Builder(Icon.createWithBitmap(iconBitmap)).build()

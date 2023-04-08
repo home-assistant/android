@@ -29,8 +29,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ComplicationConfigViewModel @Inject constructor(
     application: Application,
+    favoritesDao: FavoritesDao,
     private val serverManager: ServerManager,
-    private val favoritesDao: FavoritesDao,
     private val entityStateComplicationsDao: EntityStateComplicationsDao
 ) : AndroidViewModel(application) {
     companion object {
@@ -54,6 +54,8 @@ class ComplicationConfigViewModel @Inject constructor(
     var loadingState by mutableStateOf(LoadingState.LOADING)
         private set
     var selectedEntity: SimplifiedEntity? by mutableStateOf(null)
+        private set
+    var entityShowTitle by mutableStateOf(true)
         private set
 
     init {
@@ -115,9 +117,13 @@ class ComplicationConfigViewModel @Inject constructor(
         selectedEntity = entity
     }
 
+    fun setShowTitle(show: Boolean) {
+        entityShowTitle = show
+    }
+
     fun addEntityStateComplication(id: Int, entity: SimplifiedEntity) {
         viewModelScope.launch {
-            entityStateComplicationsDao.add(EntityStateComplications(id, entity.entityId))
+            entityStateComplicationsDao.add(EntityStateComplications(id, entity.entityId, entityShowTitle))
         }
     }
 
