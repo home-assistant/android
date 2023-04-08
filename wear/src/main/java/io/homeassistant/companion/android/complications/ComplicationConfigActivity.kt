@@ -37,6 +37,8 @@ class ComplicationConfigActivity : ComponentActivity() {
         val component = IntentCompat.getParcelableExtra(intent, EXTRA_CONFIG_DATA_SOURCE_COMPONENT, ComponentName::class.java)
         Log.i(TAG, "Config for id $id of type $type for component ${component?.className}")
 
+        complicationConfigViewModel.setDataFromIntent(id)
+
         setContent {
             LoadConfigView(
                 complicationConfigViewModel

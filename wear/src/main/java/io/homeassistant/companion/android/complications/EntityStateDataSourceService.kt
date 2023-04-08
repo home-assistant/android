@@ -22,6 +22,7 @@ import io.homeassistant.companion.android.common.data.integration.friendlyState
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.wear.EntityStateComplicationsDao
+import retrofit2.HttpException
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -42,19 +43,20 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
             return null
         }
 
-        val id = request.complicationInstanceId
-        val isShort = request.complicationType == ComplicationType.SHORT_TEXT
-
-        val complicationSettings = entityStateComplicationsDao.get(id)
-        val entityId = complicationSettings?.entityId
-            ?: return getErrorComplication(isShort, R.string.complication_entity_invalid)
+        val settings = entityStateComplicationsDao.get(request.complicationInstanceId)
+        val entityId = settings?.entityId
+            ?: return getErrorComplication(request, R.string.complication_entity_invalid, true)
 
         val entity = try {
             serverManager.integrationRepository().getEntity(entityId)
-                ?: return getErrorComplication(isShort, R.string.state_unknown)
+                ?: return getErrorComplication(request, R.string.state_unknown)
         } catch (t: Throwable) {
             Log.e(TAG, "Unable to get entity state for $entityId: ${t.message}")
-            return null
+            return if (t is HttpException && t.code() == 404) {
+                getErrorComplication(request, R.string.complication_entity_invalid)
+            } else {
+                null
+            }
         }
 
         val icon = entity.getIcon(applicationContext) ?: CommunityMaterial.Icon.cmd_bookmark
@@ -62,7 +64,7 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
             colorInt = Color.WHITE
         }.toBitmap()
 
-        val title = if (complicationSettings.showTitle) {
+        val title = if (settings.showTitle) {
             PlainComplicationText.Builder(entity.friendlyName).build()
         } else {
             null
@@ -134,21 +136,34 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
     }
 
     /**
-     * Get a simple complication for errors with [textRes] in the text slot
+     * Get a simple complication for errors with [textRes] in the text slot.
+     *
+     * @param setTapAction If tapping the complication should open configuration
      */
-    private fun getErrorComplication(isShort: Boolean, @StringRes textRes: Int): ComplicationData {
-        val text = PlainComplicationText.Builder(getText(textRes)).build()
+    private fun getErrorComplication(
+        request: ComplicationRequest,
+        @StringRes textRes: Int,
+        setTapAction: Boolean = false
+    ): ComplicationData {
+        val text = PlainComplicationText.Builder(
+            if (setTapAction) { "+" } else { getText(textRes) }
+        ).build()
         val contentDescription = PlainComplicationText.Builder(getText(R.string.complication_entity_state_content_description)).build()
-        return if (isShort) {
+        val tapAction = if (setTapAction) {
+            ComplicationReceiver.getComplicationConfigureIntent(this, request.complicationInstanceId)
+        } else {
+            null
+        }
+        return if (request.complicationType == ComplicationType.SHORT_TEXT) {
             ShortTextComplicationData.Builder(
                 text = text,
                 contentDescription = contentDescription
-            ).build()
+            ).setTapAction(tapAction).build()
         } else {
             LongTextComplicationData.Builder(
                 text = text,
                 contentDescription = contentDescription
-            ).build()
+            ).setTapAction(tapAction).build()
         }
     }
 }
