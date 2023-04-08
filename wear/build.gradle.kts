@@ -96,6 +96,7 @@ dependencies {
     implementation("com.google.android.material:material:1.8.0")
 
     implementation("androidx.wear:wear:1.2.0")
+    implementation("androidx.core:core-ktx:1.10.0")
     implementation("com.google.android.gms:play-services-wearable:18.0.0")
     implementation("androidx.wear:wear-input:1.2.0-alpha02")
     implementation("androidx.wear:wear-remote-interactions:1.0.0")
