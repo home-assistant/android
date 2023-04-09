@@ -91,6 +91,8 @@ class AndroidAutoSensorManager :
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
             deviceClass = "distance"
         )
+        private var alreadyConnected = false
+
         private val sensorsList = listOf(androidAutoConnected, batteryLevel, carName, carStatus, fuelLevel, odometerValue)
         private enum class Listener {
             ENERGY, MODEL, MILEAGE, STATUS,
@@ -177,8 +179,11 @@ class AndroidAutoSensorManager :
             }
         }
 
-        if (connected) {
+        if (connected && !alreadyConnected) {
             startAppNotification()
+            alreadyConnected = true
+        } else if (!connected && alreadyConnected) {
+            alreadyConnected = false
         }
 
         if (isEnabled(context, androidAutoConnected)) {
