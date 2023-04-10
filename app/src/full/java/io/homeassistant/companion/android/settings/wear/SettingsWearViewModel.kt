@@ -141,7 +141,7 @@ class SettingsWearViewModel @Inject constructor(
             viewModelScope.launch {
                 try {
                     templateTileContentRendered.value =
-                        serverManager.integrationRepository().renderTemplate(template, mapOf()).toString()
+                        serverManager.integrationRepository(serverId).renderTemplate(template, mapOf()).toString()
                 } catch (e: Exception) {
                     Log.e(TAG, "Exception while rendering template", e)
                     // JsonMappingException suggests that template is not a String (= error)
