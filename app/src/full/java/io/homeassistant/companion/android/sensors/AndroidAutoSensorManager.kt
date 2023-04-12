@@ -94,6 +94,15 @@ class AndroidAutoSensorManager :
         private var alreadyConnected = false
 
         private val sensorsList = listOf(androidAutoConnected, batteryLevel, carName, carStatus, fuelLevel, odometerValue)
+
+        private val connectList = mutableMapOf(
+            batteryLevel to false,
+            carName to false,
+            carStatus to false,
+            fuelLevel to false,
+            odometerValue to false
+        )
+
         private enum class Listener {
             ENERGY, MODEL, MILEAGE, STATUS,
         }
@@ -152,6 +161,21 @@ class AndroidAutoSensorManager :
             carConnection?.type?.observeForever(this@AndroidAutoSensorManager)
         }
         updateCarInfo()
+
+        if (!alreadyConnected) {
+            connectList.forEach { (k, v) ->
+                if (isEnabled(context, k) && !v) {
+                    onSensorUpdated(
+                        context,
+                        k,
+                        context.getString(commonR.string.android_auto_notification_message),
+                        k.statelessIcon,
+                        mapOf()
+                    )
+                    connectList[k] = true
+                }
+            }
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -182,6 +206,7 @@ class AndroidAutoSensorManager :
             alreadyConnected = true
         } else if (!connected && alreadyConnected) {
             alreadyConnected = false
+            connectList.forEach { i -> connectList[i.key] = false }
         }
 
         if (isEnabled(context, androidAutoConnected)) {
@@ -203,7 +228,7 @@ class AndroidAutoSensorManager :
 
         val channelID = "HA_AA_OPEN"
         val chan = NotificationChannelCompat.Builder(channelID, NotificationManagerCompat.IMPORTANCE_HIGH)
-            .setName(context.getString(io.homeassistant.companion.android.common.R.string.android_auto_notification_channel))
+            .setName(context.getString(commonR.string.android_auto_notification_channel))
             .build()
         manager.createNotificationChannel(chan)
 
@@ -211,8 +236,8 @@ class AndroidAutoSensorManager :
             .setComponent(ComponentName(context, HaCarAppService::class.java))
 
         val notification = NotificationCompat.Builder(context, channelID)
-            .setContentTitle(context.getString(io.homeassistant.companion.android.common.R.string.android_auto_notification_message))
-            .setSmallIcon(io.homeassistant.companion.android.common.R.drawable.ic_stat_ic_notification)
+            .setContentTitle(context.getString(commonR.string.android_auto_notification_message))
+            .setSmallIcon(commonR.drawable.ic_stat_ic_notification)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .extend(
