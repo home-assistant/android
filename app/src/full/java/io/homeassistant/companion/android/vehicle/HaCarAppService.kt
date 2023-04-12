@@ -70,7 +70,6 @@ class HaCarAppService : CarAppService() {
                 1
             )
 
-            @RequiresApi(Build.VERSION_CODES.P)
             override fun onCreateScreen(intent: Intent): Screen {
                 carInfo = carContext.getCarService(CarHardwareManager::class.java).carInfo
 

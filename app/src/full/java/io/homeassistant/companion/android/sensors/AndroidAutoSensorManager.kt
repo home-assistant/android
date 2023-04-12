@@ -49,8 +49,8 @@ class AndroidAutoSensorManager :
         private val fuelLevel = SensorManager.BasicSensor(
             "android_auto_fuel_level",
             "sensor",
-            io.homeassistant.companion.android.common.R.string.basic_sensor_name_android_auto_fuel_level,
-            io.homeassistant.companion.android.common.R.string.sensor_description_android_auto_fuel_level,
+            commonR.string.basic_sensor_name_android_auto_fuel_level,
+            commonR.string.sensor_description_android_auto_fuel_level,
             "mdi:barrel",
             unitOfMeasurement = "%",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
@@ -59,8 +59,8 @@ class AndroidAutoSensorManager :
         private val batteryLevel = SensorManager.BasicSensor(
             "android_auto_battery_level",
             "sensor",
-            io.homeassistant.companion.android.common.R.string.basic_sensor_name_android_auto_battery_level,
-            io.homeassistant.companion.android.common.R.string.sensor_description_android_auto_battery_level,
+            commonR.string.basic_sensor_name_android_auto_battery_level,
+            commonR.string.sensor_description_android_auto_battery_level,
             "mdi:car-battery",
             unitOfMeasurement = "%",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
@@ -69,23 +69,23 @@ class AndroidAutoSensorManager :
         private val carName = SensorManager.BasicSensor(
             "android_auto_car_name",
             "sensor",
-            io.homeassistant.companion.android.common.R.string.basic_sensor_name_android_auto_car_name,
-            io.homeassistant.companion.android.common.R.string.sensor_description_android_auto_car_name,
+            commonR.string.basic_sensor_name_android_auto_car_name,
+            commonR.string.sensor_description_android_auto_car_name,
             "mdi:car-info"
         )
         private val carStatus = SensorManager.BasicSensor(
             "android_auto_car_status",
             "sensor",
-            io.homeassistant.companion.android.common.R.string.basic_sensor_name_android_auto_car_status,
-            io.homeassistant.companion.android.common.R.string.sensor_description_android_auto_car_status,
+            commonR.string.basic_sensor_name_android_auto_car_status,
+            commonR.string.sensor_description_android_auto_car_status,
             "mdi:ev-station",
             deviceClass = "plug"
         )
         private val odometerValue = SensorManager.BasicSensor(
             "android_auto_odometer",
             "sensor",
-            io.homeassistant.companion.android.common.R.string.basic_sensor_name_android_auto_odometer,
-            io.homeassistant.companion.android.common.R.string.sensor_description_android_auto_odometer,
+            commonR.string.basic_sensor_name_android_auto_odometer,
+            commonR.string.sensor_description_android_auto_odometer,
             "mdi:map-marker-distance",
             unitOfMeasurement = "m",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
@@ -137,9 +137,7 @@ class AndroidAutoSensorManager :
     private lateinit var context: Context
     private var carConnection: CarConnection? = null
 
-    private fun allDisabled(): Boolean {
-        return !sensorsList.map { x -> isEnabled(context, x) }.contains(true)
-    }
+    private fun allDisabled(): Boolean = sensorsList.none { isEnabled(context, it) }
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun requestSensorUpdate(context: Context) {
@@ -279,7 +277,7 @@ class AndroidAutoSensorManager :
     @RequiresApi(Build.VERSION_CODES.O)
     private fun updateCarInfo() {
         for (l in listenerSensors) {
-            if (l.value.map { x -> isEnabled(context, x) }.contains(true)) {
+            if (l.value.any { isEnabled(context, it) }) {
                 if (listenerLastRegistered[l.key] != -1L && listenerLastRegistered[l.key]!! + SensorManager.SENSOR_LISTENER_TIMEOUT < System.currentTimeMillis()) {
                     Log.d(TAG, "Re-registering AA ${l.key} listener as it appears to be stuck")
                     setListener(l.key, false)
