@@ -38,11 +38,6 @@ android {
         kotlinCompilerExtensionVersion = "1.4.3"
     }
 
-    compileOptions {
-        sourceCompatibility(JavaVersion.VERSION_11)
-        targetCompatibility(JavaVersion.VERSION_11)
-    }
-
     signingConfigs {
         create("release") {
             storeFile = file(System.getenv("KEYSTORE_PATH") ?: "release_keystore.keystore")
@@ -67,6 +62,11 @@ android {
 
     kotlinOptions {
         jvmTarget = "11"
+    }
+
+    compileOptions {
+        sourceCompatibility(JavaVersion.VERSION_11)
+        targetCompatibility(JavaVersion.VERSION_11)
     }
 
     lint {
