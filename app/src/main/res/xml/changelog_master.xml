@@ -2,9 +2,13 @@
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
     <release version="2023.4 - Phone" versioncode="2">
-        <change>Bug fixes and dependency updates</change>
+        <change>Add 2 new Android version sensors</change>
+        <change>Add new intent extra types for notification commands</change>
+        <change>Bug fixes, design improvements and dependency updates</change>
     </release>
     <release version="2023.4 - Wear" versioncode="1">
-        <change>Bug fixes and dependency updates</change>
+        <change>Entity State Complication: Support long text type, add new option to show or hide friendly name</change>
+        <change>Add 2 new Android version sensors</change>
+        <change>Bug fixes, design improvements and dependency updates</change>
     </release>
 </changelog>
