@@ -91,10 +91,11 @@ fun LoadHomePage(
                                 brightness
                             )
                         },
-                        onColorTempChanged = { colorTemp ->
+                        onColorTempChanged = { colorTemp, isKelvin ->
                             mainViewModel.setColorTemp(
                                 entity.entityId,
-                                colorTemp
+                                colorTemp,
+                                isKelvin
                             )
                         },
                         isToastEnabled = mainViewModel.isToastEnabled.value,

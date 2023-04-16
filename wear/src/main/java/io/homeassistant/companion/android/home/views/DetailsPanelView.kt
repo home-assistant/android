@@ -54,7 +54,7 @@ fun DetailsPanelView(
     onEntityToggled: (String, String) -> Unit,
     onFanSpeedChanged: (Float) -> Unit,
     onBrightnessChanged: (Float) -> Unit,
-    onColorTempChanged: (Float) -> Unit,
+    onColorTempChanged: (Float, Boolean) -> Unit,
     isToastEnabled: Boolean,
     isHapticEnabled: Boolean
 ) {
@@ -269,16 +269,18 @@ fun BrightnessSlider(
 @Composable
 fun ColorTempSlider(
     attributes: Map<*, *>,
-    onColorTempChanged: (Float) -> Unit,
+    onColorTempChanged: (Float, Boolean) -> Unit,
     isToastEnabled: Boolean,
     isHapticEnabled: Boolean
 ) {
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
 
-    val minValue = (attributes["min_mireds"] as? Number)?.toFloat() ?: 0f
-    val maxValue = (attributes["max_mireds"] as? Number)?.toFloat() ?: 0f
-    var currentValue = (attributes["color_temp"] as? Number)?.toFloat() ?: 0f
+    val useKelvin = attributes.containsKey("color_temp_kelvin") // Added in 2022.11
+
+    val minValue = ((if (useKelvin) attributes["min_color_temp_kelvin"] else attributes["min_mireds"]) as? Number)?.toFloat() ?: 0f
+    val maxValue = ((if (useKelvin) attributes["max_color_temp_kelvin"] else attributes["max_mireds"]) as? Number)?.toFloat() ?: 0f
+    var currentValue = ((if (useKelvin) attributes["color_temp_kelvin"] else attributes["color_temp"]) as? Number)?.toFloat() ?: 0f
     if (currentValue < minValue) {
         currentValue = minValue
     }
@@ -288,7 +290,10 @@ fun ColorTempSlider(
 
     Column {
         Text(
-            stringResource(R.string.color_temp, currentValue.toInt()),
+            stringResource(
+                R.string.color_temp,
+                "${currentValue.toInt()}${if (useKelvin) " K" else ""}"
+            ),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp)
@@ -296,7 +301,7 @@ fun ColorTempSlider(
         InlineSlider(
             value = currentValue,
             onValueChange = {
-                onColorTempChanged(it)
+                onColorTempChanged(it, useKelvin)
                 onSliderChangedFeedback(
                     isToastEnabled,
                     isHapticEnabled,
@@ -322,7 +327,8 @@ fun ColorTempSlider(
             },
             colors = InlineSliderDefaults.colors(
                 selectedBarColor = getColorTemperature(
-                    (currentValue - minValue).toDouble() / (maxValue - minValue).toDouble()
+                    ratio = (currentValue - minValue).toDouble() / (maxValue - minValue).toDouble(),
+                    isKelvin = useKelvin
                 )
             ),
             modifier = Modifier.padding(bottom = 8.dp)
@@ -362,7 +368,7 @@ private fun PreviewDetailsPaneView() {
             onEntityToggled = { _, _ -> },
             onFanSpeedChanged = {},
             onBrightnessChanged = {},
-            onColorTempChanged = {},
+            onColorTempChanged = { _, _ -> },
             isToastEnabled = false,
             isHapticEnabled = false
         )
