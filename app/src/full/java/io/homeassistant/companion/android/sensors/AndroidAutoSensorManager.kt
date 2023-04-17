@@ -95,6 +95,7 @@ class AndroidAutoSensorManager :
 
         private val sensorsList = listOf(androidAutoConnected, batteryLevel, carName, carStatus, fuelLevel, odometerValue)
 
+        // track if we have already sent the "open app" message for each sensor
         private val connectList = mutableMapOf(
             batteryLevel to false,
             carName to false,
@@ -148,7 +149,6 @@ class AndroidAutoSensorManager :
 
     private fun allDisabled(): Boolean = sensorsList.none { isEnabled(context, it) }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun requestSensorUpdate(context: Context) {
         this.context = context.applicationContext
         if (allDisabled()) {
@@ -160,19 +160,22 @@ class AndroidAutoSensorManager :
             }
             carConnection?.type?.observeForever(this@AndroidAutoSensorManager)
         }
-        updateCarInfo()
 
-        if (!alreadyConnected) {
-            connectList.forEach { (k, v) ->
-                if (isEnabled(context, k) && !v) {
-                    onSensorUpdated(
-                        context,
-                        k,
-                        context.getString(commonR.string.android_auto_notification_message),
-                        k.statelessIcon,
-                        mapOf()
-                    )
-                    connectList[k] = true
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            updateCarInfo()
+
+            if (!alreadyConnected) {
+                connectList.forEach { (sensor, alreadySentMessage) ->
+                    if (isEnabled(context, sensor) && !alreadySentMessage) {
+                        onSensorUpdated(
+                            context,
+                            sensor,
+                            context.getString(commonR.string.android_auto_notification_message),
+                            sensor.statelessIcon,
+                            mapOf()
+                        )
+                        connectList[sensor] = true
+                    }
                 }
             }
         }
@@ -206,7 +209,7 @@ class AndroidAutoSensorManager :
             alreadyConnected = true
         } else if (!connected && alreadyConnected) {
             alreadyConnected = false
-            connectList.forEach { i -> connectList[i.key] = false }
+            connectList.forEach { connectList[it.key] = false }
         }
 
         if (isEnabled(context, androidAutoConnected)) {
