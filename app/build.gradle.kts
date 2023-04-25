@@ -164,7 +164,7 @@ dependencies {
     implementation("androidx.fragment:fragment-ktx:1.5.6")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.5")
-    implementation("com.squareup.okhttp3:okhttp:4.10.0")
+    implementation("com.squareup.okhttp3:okhttp:4.11.0")
     implementation("com.squareup.picasso:picasso:2.8")
 
     "fullImplementation"("com.google.android.gms:play-services-location:21.0.1")
