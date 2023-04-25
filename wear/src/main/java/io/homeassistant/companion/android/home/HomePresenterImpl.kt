@@ -141,14 +141,15 @@ class HomePresenterImpl @Inject constructor(
         }
     }
 
-    override suspend fun onColorTempChanged(entityId: String, colorTemp: Float) {
+    override suspend fun onColorTempChanged(entityId: String, colorTemp: Float, isKelvin: Boolean) {
         try {
+            val colorTempKey = if (isKelvin) "color_temp_kelvin" else "color_temp"
             serverManager.integrationRepository().callService(
                 entityId.split(".")[0],
                 "turn_on",
                 hashMapOf(
                     "entity_id" to entityId,
-                    "color_temp" to colorTemp.toInt()
+                    colorTempKey to colorTemp.toInt()
                 )
             )
         } catch (e: Exception) {

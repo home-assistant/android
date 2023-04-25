@@ -4,8 +4,8 @@ import androidx.compose.ui.graphics.Color
 import java.util.TreeMap
 import kotlin.math.abs
 
-fun getColorTemperature(ratio: Double): Color {
-    val colorMap = sortedMapOf<Double, Long>(
+fun getColorTemperature(ratio: Double, isKelvin: Boolean): Color {
+    val colorMap = sortedMapOf(
         0.00 to 0xffa6d1ff,
         0.05 to 0xffafd6ff,
         0.10 to 0xffb8dbff,
@@ -29,8 +29,9 @@ fun getColorTemperature(ratio: Double): Color {
         1.00 to 0xffffa000
     ) as TreeMap<Double, Long>
 
-    val previous = colorMap.floorEntry(ratio)
-    val next = colorMap.ceilingEntry(ratio)
+    val useRatio = if (isKelvin) (1 - ratio) else ratio
+    val previous = colorMap.floorEntry(useRatio)
+    val next = colorMap.ceilingEntry(useRatio)
     if (previous == null) return Color(next?.value ?: 0xffa6d1ff) // next and previous should never both be null
     if (next == null) return Color(previous.value)
     return if (abs(ratio - previous.key) < abs(ratio - next.key)) Color(previous.value) else Color(next.value)

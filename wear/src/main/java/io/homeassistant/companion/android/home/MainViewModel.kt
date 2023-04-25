@@ -314,9 +314,9 @@ class MainViewModel @Inject constructor(
             homePresenter.onBrightnessChanged(entityId, brightness)
         }
     }
-    fun setColorTemp(entityId: String, colorTemp: Float) {
+    fun setColorTemp(entityId: String, colorTemp: Float, isKelvin: Boolean) {
         viewModelScope.launch {
-            homePresenter.onColorTempChanged(entityId, colorTemp)
+            homePresenter.onColorTempChanged(entityId, colorTemp, isKelvin)
         }
     }
 
