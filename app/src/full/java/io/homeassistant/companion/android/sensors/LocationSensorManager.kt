@@ -768,7 +768,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
         val locationManager =
             context.getSystemService(LOCATION_SERVICE) as LocationManager
 
-        if (lastTime != 0L && System.currentTimeMillis() - lastTime < 10000) return
+        if (lastTime != 0L && System.currentTimeMillis() - lastTime < 60000) return
         lastTime = System.currentTimeMillis()
 
         locationManager.requestLocationUpdates(
