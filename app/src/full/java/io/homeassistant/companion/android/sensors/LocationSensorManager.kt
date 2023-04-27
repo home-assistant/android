@@ -52,6 +52,7 @@ import io.homeassistant.companion.android.common.R as commonR
 var lastTime = 0L
 var lastTime2 = 0L
 var lastTime3 = 0L
+
 @AndroidEntryPoint
 class LocationSensorManager : LocationSensorManagerBase() {
 
@@ -718,7 +719,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
     }
 
     private fun removeBackgroundUpdateRequests() {
-        mLocationClient!!.stopLocation()
+        mLocationClient?.stopLocation()
     }
 
     private fun requestLocationUpdates() {
@@ -767,7 +768,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
         val locationManager =
             context.getSystemService(LOCATION_SERVICE) as LocationManager
 
-        if (lastTime != 0L && System.currentTimeMillis() - lastTime < 180000) return
+        if (lastTime != 0L && System.currentTimeMillis() - lastTime < 10000) return
         lastTime = System.currentTimeMillis()
 
         locationManager.requestLocationUpdates(
@@ -786,7 +787,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                         }
                     }
 
-                    if (lastTime2 != 0L && System.currentTimeMillis() - lastTime2 < 180000) return
+                    if (lastTime2 != 0L && System.currentTimeMillis() - lastTime2 < 60000) return
                     lastTime2 = System.currentTimeMillis()
                     Log.e("onLocationChanged", "${it.latitude}:${it.longitude}")
 
@@ -815,10 +816,10 @@ class LocationSensorManager : LocationSensorManagerBase() {
                     }
                 }
 
-            }
+            }, Looper.getMainLooper()
         )
 
-        if (lastTime2 != 0L && System.currentTimeMillis() - lastTime2 > 250000) {
+        if (lastTime2 != 0L && System.currentTimeMillis() - lastTime2 > 100000) {
             locationManager.requestLocationUpdates(
                 LocationManager.NETWORK_PROVIDER,
                 180000,
@@ -863,7 +864,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                         }
                     }
 
-                }
+                }, Looper.getMainLooper()
             )
         }
 
@@ -890,7 +891,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
         Log.d(TAG, "Received location update.")
         lastLocationReceived = System.currentTimeMillis()
         if (mLocationClient != null) {
-            mLocationClient!!.startLocation()
+            mLocationClient?.startLocation()
         } else {
             requestLocationUpdates()
         }
@@ -913,7 +914,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
     private fun sendLocationUpdate(
         location: Location,
         serverId: Int,
-        geofenceUpdate: Boolean = false
+        geofenceUpdate: Boolean = false,
     ) {
         Log.d(
             TAG,
@@ -979,7 +980,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             return
         }
 
-        if (now - location.time < 300000) {
+        if (now - location.time < 600000) {
             Log.d(
                 TAG,
                 "Received location that is ${now - location.time} milliseconds old, ${location.time} compared to $now with source ${location.provider}"
@@ -1003,7 +1004,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 TAG,
                 "Skipping location update due to old timestamp ${location.time} compared to $now"
             )
-            //return
+            return
         }
         lastLocationSend = now
         lastUpdateLocation = updateLocationString
