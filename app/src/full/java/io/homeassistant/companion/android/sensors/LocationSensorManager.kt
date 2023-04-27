@@ -760,46 +760,51 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
     }
 
+    var lastTime = System.currentTimeMillis();
     private fun getLocation(context: Context) {
         val locationManager =
             context.getSystemService(LOCATION_SERVICE) as LocationManager
+
         locationManager.requestLocationUpdates(
             LocationManager.NETWORK_PROVIDER,
             180000,
             0f,
             object : LocationListener {
 
-                override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
-                    Log.e("onStatusChanged", "status$status")
-                    when (status) {
-                        LocationProvider.AVAILABLE -> {}
-                        LocationProvider.OUT_OF_SERVICE -> {
-                            runBlocking {
-                                getEnabledServers(
-                                    latestContext,
-                                    singleAccurateLocation
-                                ).forEach { serverId ->
-                                    locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-                                        ?.let { sendLocationUpdate(it, serverId) }
-                                }
-                            }
-                        }
-
-                        LocationProvider.TEMPORARILY_UNAVAILABLE -> {
-                            runBlocking {
-                                getEnabledServers(
-                                    latestContext,
-                                    singleAccurateLocation
-                                ).forEach { serverId ->
-                                    locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-                                        ?.let { sendLocationUpdate(it, serverId) }
-                                }
-                            }
-                        }
-                    }
-                }
+//                override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
+//                    if (System.currentTimeMillis() - lastTime < 180000) return
+//                    Log.e("onStatusChanged", "status$status")
+//                    when (status) {
+//                        LocationProvider.AVAILABLE -> {}
+//                        LocationProvider.OUT_OF_SERVICE -> {
+//                            runBlocking {
+//                                getEnabledServers(
+//                                    latestContext,
+//                                    singleAccurateLocation
+//                                ).forEach { serverId ->
+//                                    locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+//                                        ?.let { sendLocationUpdate(it, serverId) }
+//                                }
+//                            }
+//                        }
+//
+//                        LocationProvider.TEMPORARILY_UNAVAILABLE -> {
+//                            runBlocking {
+//                                getEnabledServers(
+//                                    latestContext,
+//                                    singleAccurateLocation
+//                                ).forEach { serverId ->
+//                                    locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+//                                        ?.let { sendLocationUpdate(it, serverId) }
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
 
                 override fun onLocationChanged(it: Location) {
+                    if (System.currentTimeMillis() - lastTime < 180000) return
+                    lastTime = System.currentTimeMillis()
                     Log.e("onLocationChanged", "${it.latitude}:${it.longitude}")
                     runBlocking {
                         getEnabledServers(
@@ -833,7 +838,6 @@ class LocationSensorManager : LocationSensorManagerBase() {
                         e.printStackTrace()
                     }
                 }
-
 
             }
         )
