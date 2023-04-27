@@ -49,7 +49,9 @@ import java.io.IOException
 import java.util.Locale
 import io.homeassistant.companion.android.common.R as commonR
 
-
+var lastTime = 0L
+var lastTime2 = 0L
+var lastTime3 = 0L
 @AndroidEntryPoint
 class LocationSensorManager : LocationSensorManagerBase() {
 
@@ -761,12 +763,6 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
     }
 
-    var lastTime = 0L
-    var lastTime2 = 0L
-    var lastTime3 = 0L
-
-    interface Inull
-
     private fun getLocation(context: Context) {
         val locationManager =
             context.getSystemService(LOCATION_SERVICE) as LocationManager
@@ -778,7 +774,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             LocationManager.GPS_PROVIDER,
             180000,
             0f,
-            object : LocationListener, Inull {
+            object : LocationListener {
                 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
                 override fun onLocationChanged(it: Location) {
                     if (lastTime2 != 0L && System.currentTimeMillis() - lastTime2 < 180000) return
@@ -827,10 +823,11 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 180000,
                 0f,
                 object : LocationListener {
+                    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
                     override fun onLocationChanged(it: Location) {
                         if (lastTime3 != 0L && System.currentTimeMillis() - lastTime3 < 180000) return
                         lastTime3 = System.currentTimeMillis()
-                        Log.e("onLocationChanged", "${it.latitude}:${it.longitude}")
+                        Log.e("onLocationChanged2", "${it.latitude}:${it.longitude}")
                         runBlocking {
                             getEnabledServers(
                                 latestContext,
