@@ -11,15 +11,16 @@ import android.location.Geocoder
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import android.location.LocationProvider
 import android.os.Build
+import android.os.Bundle
+import android.os.Looper
 import android.text.TextUtils
 import android.util.Log
 import com.amap.api.location.AMapLocation
 import com.amap.api.location.AMapLocationClient
 import com.amap.api.location.AMapLocationClientOption
 import com.amap.api.location.AMapLocationListener
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationResult
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.GCJ2WGS
 import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils
@@ -725,7 +726,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
         Log.d(TAG, "Registering for location updates.")
 
         if (true) {
-            getLocation(latestContext) ?: return
+            getLocation(latestContext)
         } else {
             AMapLocationClient.updatePrivacyShow(latestContext, true, true)
             AMapLocationClient.updatePrivacyAgree(latestContext, true)
@@ -761,39 +762,94 @@ class LocationSensorManager : LocationSensorManagerBase() {
     private fun getLocation(context: Context) {
         val locationManager =
             context.getSystemService(LOCATION_SERVICE) as LocationManager
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 60000, 0f
-        ) {
-            // 获取经纬度
-            val latitude: Double = it.latitude
-            val longitude: Double = it.longitude
-            // 地理编辑器  如果想获取地理位置 使用地理编辑器将经纬度转换为省市区
-            val geocoder = Geocoder(latestContext, Locale.getDefault())
-            try {
-                val fromLocation: List<Address>? = geocoder.getFromLocation(latitude, longitude, 1)
-                val address: Address = fromLocation!![0]
-                val mAddressLine: String = address.getAddressLine(0)
-                onSensorUpdated(
-                    latestContext,
-                    GeocodeSensorManager.geocodedLocation,
-                    mAddressLine,
-                    "mdi:map",
-                    mapOf(
-                        "Latitude" to address.latitude,
-                        "Longitude" to address.longitude,
-                    )
-                )
-            } catch (e: IOException) {
-                e.printStackTrace()
-            }
+        locationManager.requestLocationUpdates(
+            LocationManager.NETWORK_PROVIDER,
+            180000,
+            0f,
+            object : LocationListener {
 
-            runBlocking {
-                getEnabledServers(latestContext, singleAccurateLocation).forEach { serverId ->
-                    sendLocationUpdate(it, serverId)
+                override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
+                    Log.e("onStatusChanged", "status$status")
+                    when (status) {
+                        LocationProvider.AVAILABLE -> {}
+                        LocationProvider.OUT_OF_SERVICE -> {
+                            runBlocking {
+                                getEnabledServers(
+                                    latestContext,
+                                    singleAccurateLocation
+                                ).forEach { serverId ->
+                                    locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+                                        ?.let { sendLocationUpdate(it, serverId) }
+                                }
+                            }
+                        }
+
+                        LocationProvider.TEMPORARILY_UNAVAILABLE -> {
+                            runBlocking {
+                                getEnabledServers(
+                                    latestContext,
+                                    singleAccurateLocation
+                                ).forEach { serverId ->
+                                    locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+                                        ?.let { sendLocationUpdate(it, serverId) }
+                                }
+                            }
+                        }
+                    }
                 }
+
+                override fun onLocationChanged(it: Location) {
+                    Log.e("onLocationChanged", "${it.latitude}:${it.longitude}")
+                    runBlocking {
+                        getEnabledServers(
+                            latestContext,
+                            singleAccurateLocation
+                        ).forEach { serverId ->
+                            sendLocationUpdate(it, serverId)
+                        }
+                    }
+
+                    val latitude: Double = it.latitude
+                    val longitude: Double = it.longitude
+                    // 地理编辑器  如果想获取地理位置 使用地理编辑器将经纬度转换为省市区
+                    val geocoder = Geocoder(latestContext, Locale.getDefault())
+                    try {
+                        val fromLocation: List<Address>? =
+                            geocoder.getFromLocation(latitude, longitude, 1)
+                        val address: Address = fromLocation!![0]
+                        val mAddressLine: String = address.getAddressLine(0)
+                        onSensorUpdated(
+                            latestContext,
+                            GeocodeSensorManager.geocodedLocation,
+                            mAddressLine,
+                            "mdi:map",
+                            mapOf(
+                                "Latitude" to address.latitude,
+                                "Longitude" to address.longitude,
+                            )
+                        )
+                    } catch (e: IOException) {
+                        e.printStackTrace()
+                    }
+                }
+
+
+            }
+        )
+
+        runBlocking {
+            getEnabledServers(
+                latestContext,
+                singleAccurateLocation
+            ).forEach { serverId ->
+                locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+                    ?.let {
+                        Log.e("getLastKnownLocation", "${it.latitude}:${it.longitude}")
+                        sendLocationUpdate(it, serverId) }
             }
         }
         // gps
-       // return locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+        // return locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
         // 网络定位
         //return locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
     }
