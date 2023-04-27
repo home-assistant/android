@@ -731,7 +731,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
         } else {
             AMapLocationClient.updatePrivacyShow(latestContext, true, true)
             AMapLocationClient.updatePrivacyAgree(latestContext, true)
-            AMapLocationClient.setApiKey("")
+            AMapLocationClient.setApiKey(amapKey)
 
             mLocationClient = AMapLocationClient(latestContext)
 
