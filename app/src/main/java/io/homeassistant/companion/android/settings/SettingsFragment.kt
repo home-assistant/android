@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.settings
 
 import android.annotation.SuppressLint
 import android.app.UiModeManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -12,8 +13,10 @@ import android.os.PowerManager
 import android.provider.Settings
 import android.text.method.Touch
 import android.util.Log
+import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
@@ -46,6 +49,7 @@ import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSett
 import io.homeassistant.companion.android.settings.wear.SettingsWearActivity
 import io.homeassistant.companion.android.settings.wear.SettingsWearDetection
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
+import io.homeassistant.companion.android.update.UpdateActivity
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -129,7 +133,18 @@ class SettingsFragment(
             return@setOnPreferenceClickListener true
         }
         findPreference<Preference>("amapKey")?.setOnPreferenceClickListener {
-            Toast.makeText(context, "DOTO", Toast.LENGTH_SHORT).show()
+            //Toast.makeText(context, "DOTO", Toast.LENGTH_SHORT).show()
+            val editText = EditText(requireActivity())
+            val editDialog = AlertDialog.Builder(requireActivity())
+            editDialog.setTitle("你自己的高德地图Android Key").setView(editText)
+            editDialog.setPositiveButton(
+                "确定"
+            ) { _, _ ->
+                context?.getSharedPreferences("config", Context.MODE_PRIVATE)?.edit()!!
+                    .putString("amapKey", editText.text.toString()).apply()
+            }
+            editDialog.show()
+
 //            parentFragmentManager.commit {
 //                replace(R.id.content, SensorSettingsFragment::class.java, null)
 //                addToBackStack(getString(commonR.string.sensors))

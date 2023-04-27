@@ -724,8 +724,9 @@ class LocationSensorManager : LocationSensorManagerBase() {
             return
         }
         Log.d(TAG, "Registering for location updates.")
-
-        if (true) {
+        var amapKey = latestContext.getSharedPreferences("config", Context.MODE_PRIVATE)
+            .getString("amapKey", null)
+        if (amapKey.isNullOrEmpty()) {
             getLocation(latestContext)
         } else {
             AMapLocationClient.updatePrivacyShow(latestContext, true, true)
@@ -845,7 +846,8 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
                     ?.let {
                         Log.e("getLastKnownLocation", "${it.latitude}:${it.longitude}")
-                        sendLocationUpdate(it, serverId) }
+                        sendLocationUpdate(it, serverId)
+                    }
             }
         }
         // gps
