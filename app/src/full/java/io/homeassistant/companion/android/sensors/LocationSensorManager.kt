@@ -760,51 +760,24 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
     }
 
-    var lastTime = System.currentTimeMillis();
+    var lastTime = 0L
+    var lastTime2 = 0L
+    var lastTime3 = 0L
     private fun getLocation(context: Context) {
         val locationManager =
             context.getSystemService(LOCATION_SERVICE) as LocationManager
 
+        if (lastTime != 0L || System.currentTimeMillis() - lastTime < 180000) return
+        lastTime = System.currentTimeMillis()
+
         locationManager.requestLocationUpdates(
-            LocationManager.NETWORK_PROVIDER,
+            LocationManager.GPS_PROVIDER,
             180000,
             0f,
             object : LocationListener {
-
-//                override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
-//                    if (System.currentTimeMillis() - lastTime < 180000) return
-//                    Log.e("onStatusChanged", "status$status")
-//                    when (status) {
-//                        LocationProvider.AVAILABLE -> {}
-//                        LocationProvider.OUT_OF_SERVICE -> {
-//                            runBlocking {
-//                                getEnabledServers(
-//                                    latestContext,
-//                                    singleAccurateLocation
-//                                ).forEach { serverId ->
-//                                    locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-//                                        ?.let { sendLocationUpdate(it, serverId) }
-//                                }
-//                            }
-//                        }
-//
-//                        LocationProvider.TEMPORARILY_UNAVAILABLE -> {
-//                            runBlocking {
-//                                getEnabledServers(
-//                                    latestContext,
-//                                    singleAccurateLocation
-//                                ).forEach { serverId ->
-//                                    locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-//                                        ?.let { sendLocationUpdate(it, serverId) }
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-
                 override fun onLocationChanged(it: Location) {
-                    if (System.currentTimeMillis() - lastTime < 180000) return
-                    lastTime = System.currentTimeMillis()
+                    if (lastTime2 != 0L || System.currentTimeMillis() - lastTime2 < 180000) return
+                    lastTime2 = System.currentTimeMillis()
                     Log.e("onLocationChanged", "${it.latitude}:${it.longitude}")
                     runBlocking {
                         getEnabledServers(
@@ -841,6 +814,54 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
             }
         )
+
+        if (lastTime2 != 0L && System.currentTimeMillis() - lastTime2 > 250000) {
+            locationManager.requestLocationUpdates(
+                LocationManager.NETWORK_PROVIDER,
+                180000,
+                0f,
+                object : LocationListener {
+                    override fun onLocationChanged(it: Location) {
+                        if (lastTime3 != 0L || System.currentTimeMillis() - lastTime3 < 180000) return
+                        lastTime3 = System.currentTimeMillis()
+                        Log.e("onLocationChanged", "${it.latitude}:${it.longitude}")
+                        runBlocking {
+                            getEnabledServers(
+                                latestContext,
+                                singleAccurateLocation
+                            ).forEach { serverId ->
+                                sendLocationUpdate(it, serverId)
+                            }
+                        }
+
+                        val latitude: Double = it.latitude
+                        val longitude: Double = it.longitude
+                        // 地理编辑器  如果想获取地理位置 使用地理编辑器将经纬度转换为省市区
+                        val geocoder = Geocoder(latestContext, Locale.getDefault())
+                        try {
+                            val fromLocation: List<Address>? =
+                                geocoder.getFromLocation(latitude, longitude, 1)
+                            val address: Address = fromLocation!![0]
+                            val mAddressLine: String = address.getAddressLine(0)
+                            onSensorUpdated(
+                                latestContext,
+                                GeocodeSensorManager.geocodedLocation,
+                                mAddressLine,
+                                "mdi:map",
+                                mapOf(
+                                    "Latitude" to address.latitude,
+                                    "Longitude" to address.longitude,
+                                )
+                            )
+                        } catch (e: IOException) {
+                            e.printStackTrace()
+                        }
+                    }
+
+                }
+            )
+        }
+
 
         runBlocking {
             getEnabledServers(
