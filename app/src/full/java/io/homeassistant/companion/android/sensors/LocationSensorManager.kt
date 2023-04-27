@@ -777,9 +777,6 @@ class LocationSensorManager : LocationSensorManagerBase() {
             object : LocationListener {
                 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
                 override fun onLocationChanged(it: Location) {
-                    if (lastTime2 != 0L && System.currentTimeMillis() - lastTime2 < 180000) return
-                    lastTime2 = System.currentTimeMillis()
-                    Log.e("onLocationChanged", "${it.latitude}:${it.longitude}")
                     runBlocking {
                         getEnabledServers(
                             latestContext,
@@ -788,6 +785,10 @@ class LocationSensorManager : LocationSensorManagerBase() {
                             sendLocationUpdate(it, serverId)
                         }
                     }
+
+                    if (lastTime2 != 0L && System.currentTimeMillis() - lastTime2 < 180000) return
+                    lastTime2 = System.currentTimeMillis()
+                    Log.e("onLocationChanged", "${it.latitude}:${it.longitude}")
 
                     try {
                         val latitude: Double = it.latitude
