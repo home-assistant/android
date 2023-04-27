@@ -123,6 +123,13 @@ class SettingsFragment(
             }
             return@setOnPreferenceClickListener true
         }
+        findPreference<Preference>("高德key")?.setOnPreferenceClickListener {
+            parentFragmentManager.commit {
+                replace(R.id.content, SensorSettingsFragment::class.java, null)
+                addToBackStack(getString(commonR.string.sensors))
+            }
+            return@setOnPreferenceClickListener true
+        }
         findPreference<Preference>("sensor_update_frequency")?.let {
             it.setOnPreferenceClickListener {
                 parentFragmentManager.commit {
