@@ -826,9 +826,6 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 object : LocationListener {
                     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
                     override fun onLocationChanged(it: Location) {
-                        if (lastTime3 != 0L && System.currentTimeMillis() - lastTime3 < 180000) return
-                        lastTime3 = System.currentTimeMillis()
-                        Log.e("onLocationChanged2", "${it.latitude}:${it.longitude}")
                         runBlocking {
                             getEnabledServers(
                                 latestContext,
@@ -837,6 +834,9 @@ class LocationSensorManager : LocationSensorManagerBase() {
                                 sendLocationUpdate(it, serverId)
                             }
                         }
+                        if (lastTime3 != 0L && System.currentTimeMillis() - lastTime3 < 180000) return
+                        lastTime3 = System.currentTimeMillis()
+                        Log.e("onLocationChanged2", "${it.latitude}:${it.longitude}")
 
                         try {
                             val latitude: Double = it.latitude
@@ -962,14 +962,14 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
         val now = System.currentTimeMillis()
 
-        Log.d(TAG, "Begin evaluating if location update should be skipped")
-        if (now + 5000 < location.time && !highAccuracyModeEnabled) {
-            Log.d(
-                TAG,
-                "Skipping location update that came from the future. ${now + 5000} should always be greater than ${location.time}"
-            )
-            return
-        }
+//        Log.d(TAG, "Begin evaluating if location update should be skipped")
+//        if (now + 5000 < location.time && !highAccuracyModeEnabled) {
+//            Log.d(
+//                TAG,
+//                "Skipping location update that came from the future. ${now + 5000} should always be greater than ${location.time}"
+//            )
+//            return
+//        }
 
         if (location.time < lastLocationSend) {
             Log.d(
@@ -1003,7 +1003,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 TAG,
                 "Skipping location update due to old timestamp ${location.time} compared to $now"
             )
-            return
+            //return
         }
         lastLocationSend = now
         lastUpdateLocation = updateLocationString
