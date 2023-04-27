@@ -123,7 +123,7 @@ class SettingsFragment(
             }
             return@setOnPreferenceClickListener true
         }
-        findPreference<Preference>("高德key")?.setOnPreferenceClickListener {
+        findPreference<Preference>("amapKey")?.setOnPreferenceClickListener {
             parentFragmentManager.commit {
                 replace(R.id.content, SensorSettingsFragment::class.java, null)
                 addToBackStack(getString(commonR.string.sensors))
