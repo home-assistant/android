@@ -789,32 +789,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                     if (lastTime2 != 0L && System.currentTimeMillis() - lastTime2 < 60000) return
                     lastTime2 = System.currentTimeMillis()
                     Log.e("onLocationChanged", "${it.latitude}:${it.longitude}")
-
-                    try {
-                        val latitude: Double = it.latitude
-                        val longitude: Double = it.longitude
-                        // 地理编辑器  如果想获取地理位置 使用地理编辑器将经纬度转换为省市区
-                        val geocoder = Geocoder(latestContext, Locale.getDefault())
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                            geocoder.getFromLocation(latitude, longitude, 1) {
-                                val address: Address = it[0]
-                                val mAddressLine: String = address.getAddressLine(0)
-                                onSensorUpdated(
-                                    latestContext,
-                                    GeocodeSensorManager.geocodedLocation,
-                                    mAddressLine,
-                                    "mdi:map",
-                                    mapOf(
-                                        "Latitude" to address.latitude,
-                                        "Longitude" to address.longitude,
-                                    )
-                                )
-                            }
-                        }
-
-                    } catch (e: IOException) {
-                        e.printStackTrace()
-                    }
+                    getGeocodedLocation(it)
                 }
 
             }, Looper.getMainLooper()
@@ -838,31 +813,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                         if (lastTime3 != 0L && System.currentTimeMillis() - lastTime3 < 180000) return
                         lastTime3 = System.currentTimeMillis()
                         Log.e("onLocationChanged2", "${it.latitude}:${it.longitude}")
-
-                        try {
-                            val latitude: Double = it.latitude
-                            val longitude: Double = it.longitude
-                            // 地理编辑器  如果想获取地理位置 使用地理编辑器将经纬度转换为省市区
-                            val geocoder = Geocoder(latestContext, Locale.getDefault())
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                geocoder.getFromLocation(latitude, longitude, 1) {
-                                    val address: Address = it[0]
-                                    val mAddressLine: String = address.getAddressLine(0)
-                                    onSensorUpdated(
-                                        latestContext,
-                                        GeocodeSensorManager.geocodedLocation,
-                                        mAddressLine,
-                                        "mdi:map",
-                                        mapOf(
-                                            "Latitude" to address.latitude,
-                                            "Longitude" to address.longitude,
-                                        )
-                                    )
-                                }
-                            }
-                        } catch (e: IOException) {
-                            e.printStackTrace()
-                        }
+                        getGeocodedLocation(it)
                     }
 
                 }, Looper.getMainLooper()
@@ -886,6 +837,45 @@ class LocationSensorManager : LocationSensorManagerBase() {
         // return locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
         // 网络定位
         //return locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+    }
+
+    private fun getGeocodedLocation(it: Location) {
+        try {
+            val latitude: Double = it.latitude
+            val longitude: Double = it.longitude
+            // 地理编辑器  如果想获取地理位置 使用地理编辑器将经纬度转换为省市区
+            val geocoder = Geocoder(latestContext, Locale.getDefault())
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                geocoder.getFromLocation(latitude, longitude, 1) {
+                    val address: Address = it[0]
+                    sendGeocodedLocation(address)
+                }
+            } else {
+                runBlocking {
+                    val it = geocoder.getFromLocation(latitude, longitude, 1)
+                    if (!it.isNullOrEmpty()) {
+                        val address: Address = it[0]
+                        sendGeocodedLocation(address)
+                    }
+                }
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun sendGeocodedLocation(address: Address) {
+        val mAddressLine: String = address.getAddressLine(0)
+        onSensorUpdated(
+            latestContext,
+            GeocodeSensorManager.geocodedLocation,
+            mAddressLine,
+            "mdi:map",
+            mapOf(
+                "Latitude" to address.latitude,
+                "Longitude" to address.longitude,
+            )
+        )
     }
 
     private fun handleLocationUpdate(intent: Intent) {
