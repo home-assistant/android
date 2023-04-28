@@ -776,7 +776,6 @@ class LocationSensorManager : LocationSensorManagerBase() {
             180000,
             0f,
             object : LocationListener {
-                @RequiresApi(Build.VERSION_CODES.TIRAMISU)
                 override fun onLocationChanged(it: Location) {
                     runBlocking {
                         getEnabledServers(
@@ -796,19 +795,21 @@ class LocationSensorManager : LocationSensorManagerBase() {
                         val longitude: Double = it.longitude
                         // 地理编辑器  如果想获取地理位置 使用地理编辑器将经纬度转换为省市区
                         val geocoder = Geocoder(latestContext, Locale.getDefault())
-                        geocoder.getFromLocation(latitude, longitude, 1) {
-                            val address: Address = it[0]
-                            val mAddressLine: String = address.getAddressLine(0)
-                            onSensorUpdated(
-                                latestContext,
-                                GeocodeSensorManager.geocodedLocation,
-                                mAddressLine,
-                                "mdi:map",
-                                mapOf(
-                                    "Latitude" to address.latitude,
-                                    "Longitude" to address.longitude,
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            geocoder.getFromLocation(latitude, longitude, 1) {
+                                val address: Address = it[0]
+                                val mAddressLine: String = address.getAddressLine(0)
+                                onSensorUpdated(
+                                    latestContext,
+                                    GeocodeSensorManager.geocodedLocation,
+                                    mAddressLine,
+                                    "mdi:map",
+                                    mapOf(
+                                        "Latitude" to address.latitude,
+                                        "Longitude" to address.longitude,
+                                    )
                                 )
-                            )
+                            }
                         }
 
                     } catch (e: IOException) {
@@ -825,7 +826,6 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 180000,
                 0f,
                 object : LocationListener {
-                    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
                     override fun onLocationChanged(it: Location) {
                         runBlocking {
                             getEnabledServers(
@@ -844,21 +844,22 @@ class LocationSensorManager : LocationSensorManagerBase() {
                             val longitude: Double = it.longitude
                             // 地理编辑器  如果想获取地理位置 使用地理编辑器将经纬度转换为省市区
                             val geocoder = Geocoder(latestContext, Locale.getDefault())
-                            geocoder.getFromLocation(latitude, longitude, 1) {
-                                val address: Address = it[0]
-                                val mAddressLine: String = address.getAddressLine(0)
-                                onSensorUpdated(
-                                    latestContext,
-                                    GeocodeSensorManager.geocodedLocation,
-                                    mAddressLine,
-                                    "mdi:map",
-                                    mapOf(
-                                        "Latitude" to address.latitude,
-                                        "Longitude" to address.longitude,
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                geocoder.getFromLocation(latitude, longitude, 1) {
+                                    val address: Address = it[0]
+                                    val mAddressLine: String = address.getAddressLine(0)
+                                    onSensorUpdated(
+                                        latestContext,
+                                        GeocodeSensorManager.geocodedLocation,
+                                        mAddressLine,
+                                        "mdi:map",
+                                        mapOf(
+                                            "Latitude" to address.latitude,
+                                            "Longitude" to address.longitude,
+                                        )
                                     )
-                                )
+                                }
                             }
-
                         } catch (e: IOException) {
                             e.printStackTrace()
                         }
