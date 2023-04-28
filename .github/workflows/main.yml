@@ -33,5 +33,5 @@ jobs:
         with:
           url: https://www.pgyer.com/apiv2/app/upload
           method: POST
-          forms: '{"_api_key":"${{ secrets.PGY_API_KEY }}","buildInstallType":1,"buildUpdateDescription":"合并官方2023.3版本代码"}'
+          forms: '{"_api_key":"${{ secrets.PGY_API_KEY }}","buildInstallType":1,"buildUpdateDescription":"改用手机自带定位取代高德定位，增加配置自己的高德key功能"}'
           fileForms: '{"file":"app/build/outputs/apk/full/release/app-full-release.apk"}'

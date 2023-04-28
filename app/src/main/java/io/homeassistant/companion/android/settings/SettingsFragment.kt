@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.settings
 
 import android.annotation.SuppressLint
 import android.app.UiModeManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -10,8 +11,12 @@ import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
+import android.text.method.Touch
 import android.util.Log
+import android.widget.EditText
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
@@ -44,6 +49,7 @@ import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSett
 import io.homeassistant.companion.android.settings.wear.SettingsWearActivity
 import io.homeassistant.companion.android.settings.wear.SettingsWearDetection
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
+import io.homeassistant.companion.android.update.UpdateActivity
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -64,15 +70,18 @@ class SettingsFragment(
         private const val TAG = "SettingsFragment"
     }
 
-    private val requestBackgroundAccessResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        updateBackgroundAccessPref()
-    }
+    private val requestBackgroundAccessResult =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            updateBackgroundAccessPref()
+        }
 
-    private val requestNotificationPermissionResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        updateNotificationChannelPrefs()
-    }
+    private val requestNotificationPermissionResult =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            updateNotificationChannelPrefs()
+        }
 
-    private val requestOnboardingResult = registerForActivityResult(OnboardApp(), this::onOnboardingComplete)
+    private val requestOnboardingResult =
+        registerForActivityResult(OnboardApp(), this::onOnboardingComplete)
 
     private var serverAuth: Int? = null
     private val serverMutex = Mutex()
@@ -121,6 +130,26 @@ class SettingsFragment(
                 replace(R.id.content, SensorSettingsFragment::class.java, null)
                 addToBackStack(getString(commonR.string.sensors))
             }
+            return@setOnPreferenceClickListener true
+        }
+        findPreference<Preference>("amapKey")?.setOnPreferenceClickListener {
+            //Toast.makeText(context, "DOTO", Toast.LENGTH_SHORT).show()
+            val editText = EditText(requireActivity())
+            val editDialog = AlertDialog.Builder(requireActivity())
+            editDialog.setTitle("你自己的高德地图Android Key").setView(editText)
+            editDialog.setMessage("换回直接调用系统gps请清空后点击确定\n不保证可用，高德可能会封包名\n包名：io.homeassistant.companion.android\nHSA1: 52:7D:B7:46:44:F9:BB:AE:B5:7F:B1:07:78:AC:AE:58:B3:A4:30:56")
+            editDialog.setPositiveButton(
+                "确定"
+            ) { _, _ ->
+                context?.getSharedPreferences("config", Context.MODE_PRIVATE)?.edit()!!
+                    .putString("amapKey", editText.text.toString()).apply()
+            }
+            editDialog.show()
+
+//            parentFragmentManager.commit {
+//                replace(R.id.content, SensorSettingsFragment::class.java, null)
+//                addToBackStack(getString(commonR.string.sensors))
+//            }
             return@setOnPreferenceClickListener true
         }
         findPreference<Preference>("sensor_update_frequency")?.let {
@@ -230,15 +259,24 @@ class SettingsFragment(
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                             try {
                                 val utcDateTime = Instant.parse(rateLimits.resetsAt)
-                                formattedDate = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).format(utcDateTime.atZone(ZoneId.systemDefault()))
+                                formattedDate =
+                                    DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)
+                                        .format(utcDateTime.atZone(ZoneId.systemDefault()))
                             } catch (e: Exception) {
-                                Log.d(TAG, "Cannot parse notification rate limit date \"${rateLimits.resetsAt}\"", e)
+                                Log.d(
+                                    TAG,
+                                    "Cannot parse notification rate limit date \"${rateLimits.resetsAt}\"",
+                                    e
+                                )
                             }
                         }
                         it.isVisible = true
-                        it.summary = "\n${getString(commonR.string.successful)}: ${rateLimits.successful}       ${getString(commonR.string.errors)}: ${rateLimits.errors}" +
-                            "\n\n${getString(commonR.string.remaining)}/${getString(commonR.string.maximum)}: ${rateLimits.remaining}/${rateLimits.maximum}" +
-                            "\n\n${getString(commonR.string.resets_at)}: $formattedDate"
+                        it.summary =
+                            "\n${getString(commonR.string.successful)}: ${rateLimits.successful}       ${
+                                getString(commonR.string.errors)
+                            }: ${rateLimits.errors}" +
+                                    "\n\n${getString(commonR.string.remaining)}/${getString(commonR.string.maximum)}: ${rateLimits.remaining}/${rateLimits.maximum}" +
+                                    "\n\n${getString(commonR.string.resets_at)}: $formattedDate"
                     }
                 }
             }
@@ -265,7 +303,12 @@ class SettingsFragment(
             val link = if (BuildConfig.VERSION_NAME.startsWith("LOCAL")) {
                 "https://github.com/home-assistant/android/releases"
             } else {
-                "https://github.com/home-assistant/android/releases/tag/${BuildConfig.VERSION_NAME.replace("-full", "").replace("-minimal", "")}"
+                "https://github.com/home-assistant/android/releases/tag/${
+                    BuildConfig.VERSION_NAME.replace(
+                        "-full",
+                        ""
+                    ).replace("-minimal", "")
+                }"
             }
             it.summary = link
             it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
@@ -364,7 +407,10 @@ class SettingsFragment(
             serverPreference.key = serverKeys[index]
             serverPreference.order = index
             try {
-                serverPreference.icon = AppCompatResources.getDrawable(requireContext(), commonR.drawable.ic_stat_ic_notification_blue)
+                serverPreference.icon = AppCompatResources.getDrawable(
+                    requireContext(),
+                    commonR.drawable.ic_stat_ic_notification_blue
+                )
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to set the server icon", e)
             }
@@ -375,7 +421,10 @@ class SettingsFragment(
                 if (!needsAuth) {
                     onServerLockResult(Authenticator.SUCCESS)
                 } else {
-                    val canAuth = settingsActivity.requestAuthentication(getString(commonR.string.biometric_set_title), ::onServerLockResult)
+                    val canAuth = settingsActivity.requestAuthentication(
+                        getString(commonR.string.biometric_set_title),
+                        ::onServerLockResult
+                    )
                     if (!canAuth) {
                         onServerLockResult(Authenticator.SUCCESS)
                     }
@@ -389,7 +438,7 @@ class SettingsFragment(
     private fun updateNotificationChannelPrefs() {
         val notificationsEnabled =
             Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
-                NotificationManagerCompat.from(requireContext()).areNotificationsEnabled()
+                    NotificationManagerCompat.from(requireContext()).areNotificationsEnabled()
 
         findPreference<Preference>("notification_permission")?.let {
             it.isVisible = !notificationsEnabled
@@ -398,8 +447,8 @@ class SettingsFragment(
             val uiManager = requireContext().getSystemService<UiModeManager>()
             it.isVisible =
                 notificationsEnabled &&
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-                uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION
+                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                        uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION
         }
     }
 
@@ -449,8 +498,8 @@ class SettingsFragment(
 
     private fun isIgnoringBatteryOptimizations(): Boolean {
         return Build.VERSION.SDK_INT <= Build.VERSION_CODES.M ||
-            context?.getSystemService<PowerManager>()
-                ?.isIgnoringBatteryOptimizations(requireActivity().packageName)
+                context?.getSystemService<PowerManager>()
+                    ?.isIgnoringBatteryOptimizations(requireActivity().packageName)
                 ?: false
     }
 
@@ -463,9 +512,10 @@ class SettingsFragment(
             ).apply {
                 if (success && serverId != null) {
                     setAction(commonR.string.activate) {
-                        val intent = WebViewActivity.newInstance(requireContext(), null, serverId).apply {
-                            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                        }
+                        val intent =
+                            WebViewActivity.newInstance(requireContext(), null, serverId).apply {
+                                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                            }
                         requireContext().startActivity(intent)
                     }
                 }

@@ -4,15 +4,20 @@ import android.Manifest
 import android.app.PendingIntent
 import android.bluetooth.BluetoothAdapter
 import android.content.Context
+import android.content.Context.LOCATION_SERVICE
 import android.content.Intent
+import android.location.Address
+import android.location.Geocoder
 import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
+import android.location.LocationProvider
 import android.os.Build
+import android.os.Bundle
 import android.os.Looper
-import android.os.PowerManager
 import android.text.TextUtils
 import android.util.Log
-import android.widget.Toast
-import androidx.core.content.getSystemService
+import androidx.annotation.RequiresApi
 import com.amap.api.location.AMapLocation
 import com.amap.api.location.AMapLocationClient
 import com.amap.api.location.AMapLocationClientOption
@@ -40,8 +45,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import java.util.concurrent.TimeUnit
+import java.io.IOException
+import java.util.Locale
 import io.homeassistant.companion.android.common.R as commonR
+
+var lastTime = 0L
+var lastTime2 = 0L
+var lastTime3 = 0L
 
 @AndroidEntryPoint
 class LocationSensorManager : LocationSensorManagerBase() {
@@ -248,8 +258,10 @@ class LocationSensorManager : LocationSensorManagerBase() {
         when (intent.action) {
             Intent.ACTION_BOOT_COMPLETED,
             ACTION_REQUEST_LOCATION_UPDATES -> setupLocationTracking()
+
             ACTION_PROCESS_LOCATION,
             ACTION_PROCESS_HIGH_ACCURACY_LOCATION -> handleLocationUpdate(intent)
+
             ACTION_PROCESS_GEO -> handleLocationUpdate(intent)
             ACTION_REQUEST_ACCURATE_LOCATION_UPDATE -> requestSingleAccurateLocation()
             ACTION_FORCE_HIGH_ACCURACY -> {
@@ -286,6 +298,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                     }
                 }
             }
+
             else -> Log.w(TAG, "Unknown intent action: ${intent.action}!")
         }
     }
@@ -706,7 +719,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
     }
 
     private fun removeBackgroundUpdateRequests() {
-        mLocationClient!!.stopLocation()
+        mLocationClient?.stopLocation()
     }
 
     private fun requestLocationUpdates() {
@@ -715,38 +728,161 @@ class LocationSensorManager : LocationSensorManagerBase() {
             return
         }
         Log.d(TAG, "Registering for location updates.")
-
-        AMapLocationClient.updatePrivacyShow(latestContext, true, true)
-        AMapLocationClient.updatePrivacyAgree(latestContext, true)
-
-        mLocationClient = AMapLocationClient(latestContext)
-
-        mLocationClient!!.setLocationListener(mLocationListener)
-        val mLocationOption = AMapLocationClientOption()
-
-        if (lastHighAccuracyMode) {
-            mLocationOption.locationMode = AMapLocationClientOption.AMapLocationMode.Hight_Accuracy
+        var amapKey = latestContext.getSharedPreferences("config", Context.MODE_PRIVATE)
+            .getString("amapKey", null)
+        if (amapKey.isNullOrEmpty()) {
+            getLocation(latestContext)
         } else {
-            mLocationOption.locationMode = AMapLocationClientOption.AMapLocationMode.Battery_Saving
-        }
-        if (lastHighAccuracyUpdateInterval > 999999) {
-            mLocationOption.isOnceLocation = true
-            mLocationOption.isOnceLocationLatest = true
-        } else {
-            if (lastHighAccuracyUpdateInterval < 10) lastHighAccuracyUpdateInterval = 10
-            mLocationOption.interval = lastHighAccuracyUpdateInterval * 1000L
-            mLocationOption.isOnceLocation = false
+            AMapLocationClient.updatePrivacyShow(latestContext, true, true)
+            AMapLocationClient.updatePrivacyAgree(latestContext, true)
+            AMapLocationClient.setApiKey(amapKey)
 
+            mLocationClient = AMapLocationClient(latestContext)
+
+            mLocationClient!!.setLocationListener(mLocationListener)
+            val mLocationOption = AMapLocationClientOption()
+
+            if (lastHighAccuracyMode) {
+                mLocationOption.locationMode =
+                    AMapLocationClientOption.AMapLocationMode.Hight_Accuracy
+            } else {
+                mLocationOption.locationMode =
+                    AMapLocationClientOption.AMapLocationMode.Battery_Saving
+            }
+            if (lastHighAccuracyUpdateInterval > 999999) {
+                mLocationOption.isOnceLocation = true
+                mLocationOption.isOnceLocationLatest = true
+            } else {
+                if (lastHighAccuracyUpdateInterval < 10) lastHighAccuracyUpdateInterval = 10
+                mLocationOption.interval = lastHighAccuracyUpdateInterval * 1000L
+                mLocationOption.isOnceLocation = false
+
+            }
+            mLocationClient!!.setLocationOption(mLocationOption)
+            mLocationClient!!.startLocation()
         }
-        mLocationClient!!.setLocationOption(mLocationOption)
-        mLocationClient!!.startLocation()
+
+    }
+
+    private fun getLocation(context: Context) {
+        val locationManager =
+            context.getSystemService(LOCATION_SERVICE) as LocationManager
+
+        if (lastTime != 0L && System.currentTimeMillis() - lastTime < 60000) return
+        lastTime = System.currentTimeMillis()
+
+        locationManager.requestLocationUpdates(
+            LocationManager.GPS_PROVIDER,
+            180000,
+            0f,
+            object : LocationListener {
+                override fun onLocationChanged(it: Location) {
+                    runBlocking {
+                        getEnabledServers(
+                            latestContext,
+                            singleAccurateLocation
+                        ).forEach { serverId ->
+                            sendLocationUpdate(it, serverId)
+                        }
+                    }
+
+                    if (lastTime2 != 0L && System.currentTimeMillis() - lastTime2 < 60000) return
+                    lastTime2 = System.currentTimeMillis()
+                    Log.e("onLocationChanged", "${it.latitude}:${it.longitude}")
+                    getGeocodedLocation(it)
+                }
+
+            }, Looper.getMainLooper()
+        )
+
+        if (lastTime2 != 0L && System.currentTimeMillis() - lastTime2 > 100000) {
+            locationManager.requestLocationUpdates(
+                LocationManager.NETWORK_PROVIDER,
+                180000,
+                0f,
+                object : LocationListener {
+                    override fun onLocationChanged(it: Location) {
+                        runBlocking {
+                            getEnabledServers(
+                                latestContext,
+                                singleAccurateLocation
+                            ).forEach { serverId ->
+                                sendLocationUpdate(it, serverId)
+                            }
+                        }
+                        if (lastTime3 != 0L && System.currentTimeMillis() - lastTime3 < 180000) return
+                        lastTime3 = System.currentTimeMillis()
+                        Log.e("onLocationChanged2", "${it.latitude}:${it.longitude}")
+                        getGeocodedLocation(it)
+                    }
+
+                }, Looper.getMainLooper()
+            )
+        }
+
+
+        runBlocking {
+            getEnabledServers(
+                latestContext,
+                singleAccurateLocation
+            ).forEach { serverId ->
+                locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+                    ?.let {
+                        Log.e("getLastKnownLocation", "${it.latitude}:${it.longitude}")
+                        sendLocationUpdate(it, serverId)
+                    }
+            }
+        }
+        // gps
+        // return locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+        // 网络定位
+        //return locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+    }
+
+    private fun getGeocodedLocation(it: Location) {
+        try {
+            val latitude: Double = it.latitude
+            val longitude: Double = it.longitude
+            // 地理编辑器  如果想获取地理位置 使用地理编辑器将经纬度转换为省市区
+            val geocoder = Geocoder(latestContext, Locale.getDefault())
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                geocoder.getFromLocation(latitude, longitude, 1) {
+                    val address: Address = it[0]
+                    sendGeocodedLocation(address)
+                }
+            } else {
+                runBlocking {
+                    val it = geocoder.getFromLocation(latitude, longitude, 1)
+                    if (!it.isNullOrEmpty()) {
+                        val address: Address = it[0]
+                        sendGeocodedLocation(address)
+                    }
+                }
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun sendGeocodedLocation(address: Address) {
+        val mAddressLine: String = address.getAddressLine(0)
+        onSensorUpdated(
+            latestContext,
+            GeocodeSensorManager.geocodedLocation,
+            mAddressLine,
+            "mdi:map",
+            mapOf(
+                "Latitude" to address.latitude,
+                "Longitude" to address.longitude,
+            )
+        )
     }
 
     private fun handleLocationUpdate(intent: Intent) {
         Log.d(TAG, "Received location update.")
         lastLocationReceived = System.currentTimeMillis()
         if (mLocationClient != null) {
-            mLocationClient!!.startLocation()
+            mLocationClient?.startLocation()
         } else {
             requestLocationUpdates()
         }
@@ -769,7 +905,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
     private fun sendLocationUpdate(
         location: Location,
         serverId: Int,
-        geofenceUpdate: Boolean = false
+        geofenceUpdate: Boolean = false,
     ) {
         Log.d(
             TAG,
@@ -818,14 +954,14 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
         val now = System.currentTimeMillis()
 
-        Log.d(TAG, "Begin evaluating if location update should be skipped")
-        if (now + 5000 < location.time && !highAccuracyModeEnabled) {
-            Log.d(
-                TAG,
-                "Skipping location update that came from the future. ${now + 5000} should always be greater than ${location.time}"
-            )
-            return
-        }
+//        Log.d(TAG, "Begin evaluating if location update should be skipped")
+//        if (now + 5000 < location.time && !highAccuracyModeEnabled) {
+//            Log.d(
+//                TAG,
+//                "Skipping location update that came from the future. ${now + 5000} should always be greater than ${location.time}"
+//            )
+//            return
+//        }
 
         if (location.time < lastLocationSend) {
             Log.d(
@@ -835,7 +971,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             return
         }
 
-        if (now - location.time < 300000) {
+        if (now - location.time < 600000) {
             Log.d(
                 TAG,
                 "Received location that is ${now - location.time} milliseconds old, ${location.time} compared to $now with source ${location.provider}"
@@ -1031,6 +1167,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                     Manifest.permission.BLUETOOTH_CONNECT
                 )
             }
+
             (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) -> {
                 arrayOf(
                     Manifest.permission.ACCESS_FINE_LOCATION,
@@ -1039,6 +1176,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                     Manifest.permission.BLUETOOTH
                 )
             }
+
             else -> {
                 arrayOf(
                     Manifest.permission.ACCESS_FINE_LOCATION,

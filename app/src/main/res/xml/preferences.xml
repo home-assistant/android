@@ -27,6 +27,11 @@
             android:title="@string/sensor_title"
             android:summary="@string/sensor_summary"/>
         <Preference
+            android:key="amapKey"
+            android:icon="@drawable/leak"
+            android:title="高德Key"
+            android:summary="配置高德Key"/>
+        <Preference
             android:key="sensor_update_frequency"
             android:icon="@drawable/ic_clock_fast"
             android:title="@string/sensor_update_frequency"
