@@ -120,9 +120,9 @@ object UpdateUtil {
                         "https://github.com/nesror/Home-Assistant-Companion-for-Android/releases/download/$ver/app-full-release.apk"
                     Log.d("checkNew==>apkUrl:", apkUrl)
                     val updateInfo = UpdateInfo(
-                        ver, "由于使用人数已超过最大免费下载限制，建议关注公众号进行更新！\n" +
+                        ver, "如果无法直接更新，可以关注公众号进行更新！\n" +
                                 "公众号：UnknownExceptions 回复 最新版 获取新版本\n" +
-                                "同时有新奇好玩的智能家居玩法分享", apkUrl
+                                "也可回复HA获取全新Flutter版本", apkUrl
                     )
                     val intent = Intent(context, UpdateActivity::class.java)
                     intent.putExtra(UpdateActivity.UPDATE_INFO, updateInfo)

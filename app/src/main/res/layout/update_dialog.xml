@@ -34,7 +34,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="10dp"
-            android:text="使用人数已超过最大免费下载限制，建议关注公众号进行更新！\n公众号：UnknownExceptions\n扫码或点击复制公众号名称"
+            android:text="如果直接更新失败，可以关注公众号进行更新！\n公众号：UnknownExceptions\n扫码或点击复制公众号名称"
             android:gravity="center"
             android:textColor="#191919"
             android:textSize="16sp"/>
