@@ -31,74 +31,73 @@ import kotlinx.coroutines.launch
 
 @RequiresApi(Build.VERSION_CODES.O)
 class EntityGridVehicleScreen(
-  carContext: CarContext,
-  val integrationRepository: IntegrationRepository,
-  val title: String,
-  val entitiesFlow: Flow<List<Entity<*>>>,
+    carContext: CarContext,
+    val integrationRepository: IntegrationRepository,
+    val title: String,
+    val entitiesFlow: Flow<List<Entity<*>>>
 ) : Screen(carContext) {
 
-  companion object {
-    private const val TAG = "EntityGridVehicleScreen"
-  }
-
-  var loading = true
-  var entities: List<Entity<*>> = listOf()
-
-  init {
-    lifecycleScope.launch {
-      lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-        entitiesFlow.collect {
-          loading = false
-          entities = it
-          invalidate()
-        }
-      }
+    companion object {
+        private const val TAG = "EntityGridVehicleScreen"
     }
-  }
 
-  override fun onGetTemplate(): Template {
-    val listBuilder = ItemList.Builder()
-    entities.forEach { entity ->
-      val icon = entity.getIcon(carContext) ?: CommunityMaterial.Icon.cmd_cloud_question
-      val gridItem =
-        GridItem.Builder()
-          .setLoading(false)
-          .setTitle(entity.friendlyName)
-          .setText(entity.friendlyState(carContext))
+    var loading = true
+    var entities: List<Entity<*>> = listOf()
 
-
-      if (entity.isExecuting()) {
-        gridItem.setLoading(entity.isExecuting())
-      } else {
-        gridItem
-          .setOnClickListener {
-            Log.i(TAG, "${entity.entityId} clicked")
-            lifecycleScope.launch {
-              entity.onPressed(integrationRepository)
+    init {
+        lifecycleScope.launch {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                entitiesFlow.collect {
+                    loading = false
+                    entities = it
+                    invalidate()
+                }
             }
-          }
-          .setImage(
-            CarIcon.Builder(
-              IconicsDrawable(carContext, icon).apply {
-                sizeDp = 64
-              }.toAndroidIconCompat()
-            )
-              .setTint(CarColor.DEFAULT)
-              .build()
-          )
-      }
-      listBuilder.addItem(gridItem.build())
+        }
     }
 
-    return GridTemplate.Builder().apply {
-      setTitle(title)
-      setHeaderAction(Action.BACK)
-      if (loading) {
-        setLoading(true)
-      } else {
-        setLoading(false)
-        setSingleList(listBuilder.build())
-      }
-    }.build()
-  }
+    override fun onGetTemplate(): Template {
+        val listBuilder = ItemList.Builder()
+        entities.forEach { entity ->
+            val icon = entity.getIcon(carContext) ?: CommunityMaterial.Icon.cmd_cloud_question
+            val gridItem =
+                GridItem.Builder()
+                    .setLoading(false)
+                    .setTitle(entity.friendlyName)
+                    .setText(entity.friendlyState(carContext))
+
+            if (entity.isExecuting()) {
+                gridItem.setLoading(entity.isExecuting())
+            } else {
+                gridItem
+                    .setOnClickListener {
+                        Log.i(TAG, "${entity.entityId} clicked")
+                        lifecycleScope.launch {
+                            entity.onPressed(integrationRepository)
+                        }
+                    }
+                    .setImage(
+                        CarIcon.Builder(
+                            IconicsDrawable(carContext, icon).apply {
+                                sizeDp = 64
+                            }.toAndroidIconCompat()
+                        )
+                            .setTint(CarColor.DEFAULT)
+                            .build()
+                    )
+            }
+            listBuilder.addItem(gridItem.build())
+        }
+
+        return GridTemplate.Builder().apply {
+            setTitle(title)
+            setHeaderAction(Action.BACK)
+            if (loading) {
+                setLoading(true)
+            } else {
+                setLoading(false)
+                setSingleList(listBuilder.build())
+            }
+        }.build()
+    }
 }
