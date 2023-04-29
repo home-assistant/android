@@ -642,3 +642,5 @@ fun <T> Entity<T>.friendlyState(context: Context): String {
     }
     return friendlyState
 }
+
+fun <T> Entity<T>.isExecuting()=  state.endsWith("ing")
