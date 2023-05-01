@@ -179,7 +179,7 @@ dependencies {
     implementation("com.google.android.gms:play-services-threadnetwork:16.0.0-beta02")
     implementation(platform("com.google.firebase:firebase-bom:31.2.2"))
     implementation("com.google.firebase:firebase-messaging")
-    implementation("io.sentry:sentry-android:6.17.0")
+    implementation("io.sentry:sentry-android:6.18.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
     implementation("com.google.android.gms:play-services-wearable:18.0.0")
     implementation("androidx.wear:wear-remote-interactions:1.0.0")
