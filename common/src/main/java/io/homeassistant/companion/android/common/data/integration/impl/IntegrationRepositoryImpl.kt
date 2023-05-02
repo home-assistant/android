@@ -377,7 +377,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     }
 
     override suspend fun setAppActive(active: Boolean) {
-        if (!active) {
+        if (!active && appActive) {
             setSessionExpireMillis(System.currentTimeMillis() + (getSessionTimeOut() * 1000) + APPLOCK_TIMEOUT_GRACE_MS)
         }
         Log.d(TAG, "setAppActive(): $active")
