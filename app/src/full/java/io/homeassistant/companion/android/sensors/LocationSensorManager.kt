@@ -947,7 +947,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 val configuredZones = getZones(serverId, forceRefresh = true)
                 configuredZones.forEach {
                     addGeofenceToBuilder(geofencingRequestBuilder, serverId, it)
-                    if (highAccuracyTriggerRange > 0 && highAccuracyZones.contains(it.entityId)) {
+                    if (highAccuracyTriggerRange > 0 && highAccuracyZones.contains("${serverId}_${it.entityId}")) {
                         addGeofenceToBuilder(geofencingRequestBuilder, serverId, it, highAccuracyTriggerRange)
                     }
                 }
@@ -963,7 +963,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
         zone: Entity<ZoneAttributes>,
         triggerRange: Int = 0
     ) {
-        val postRequestId = if (triggerRange > 0)"_expanded" else ""
+        val postRequestId = if (triggerRange > 0) "_expanded" else ""
         geofencingRequestBuilder
             .addGeofence(
                 Geofence.Builder()
