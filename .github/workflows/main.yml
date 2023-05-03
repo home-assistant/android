@@ -33,5 +33,5 @@ jobs:
         with:
           url: https://www.pgyer.com/apiv2/app/upload
           method: POST
-          forms: '{"_api_key":"${{ secrets.PGY_API_KEY }}","buildInstallType":1,"buildUpdateDescription":"支持低版本手机直接获取地理位置信息（逆地理编码）"}'
+          forms: '{"_api_key":"${{ secrets.PGY_API_KEY }}","buildInstallType":1,"buildUpdateDescription":"排出定位精度低于15的数据"}'
           fileForms: '{"file":"app/build/outputs/apk/full/release/app-full-release.apk"}'
