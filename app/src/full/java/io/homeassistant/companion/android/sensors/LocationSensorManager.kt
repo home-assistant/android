@@ -795,31 +795,30 @@ class LocationSensorManager : LocationSensorManagerBase() {
             }, Looper.getMainLooper()
         )
 
-        if (lastTime2 != 0L && System.currentTimeMillis() - lastTime2 > 100000) {
-            locationManager.requestLocationUpdates(
-                LocationManager.NETWORK_PROVIDER,
-                180000,
-                0f,
-                object : LocationListener {
-                    override fun onLocationChanged(it: Location) {
-                        runBlocking {
-                            getEnabledServers(
-                                latestContext,
-                                singleAccurateLocation
-                            ).forEach { serverId ->
-                                sendLocationUpdate(it, serverId)
-                            }
-                        }
-                        if (lastTime3 != 0L && System.currentTimeMillis() - lastTime3 < 180000) return
-                        lastTime3 = System.currentTimeMillis()
-                        Log.e("onLocationChanged2", "${it.latitude}:${it.longitude}")
-                        getGeocodedLocation(it)
-                    }
-
-                }, Looper.getMainLooper()
-            )
-        }
-
+//        if (lastTime2 != 0L && System.currentTimeMillis() - lastTime2 > 100000) {
+//            locationManager.requestLocationUpdates(
+//                LocationManager.NETWORK_PROVIDER,
+//                180000,
+//                0f,
+//                object : LocationListener {
+//                    override fun onLocationChanged(it: Location) {
+//                        runBlocking {
+//                            getEnabledServers(
+//                                latestContext,
+//                                singleAccurateLocation
+//                            ).forEach { serverId ->
+//                                sendLocationUpdate(it, serverId)
+//                            }
+//                        }
+//                        if (lastTime3 != 0L && System.currentTimeMillis() - lastTime3 < 180000) return
+//                        lastTime3 = System.currentTimeMillis()
+//                        Log.e("onLocationChanged2", "${it.latitude}:${it.longitude}")
+//                        getGeocodedLocation(it)
+//                    }
+//
+//                }, Looper.getMainLooper()
+//            )
+//        }
 
         runBlocking {
             getEnabledServers(
@@ -917,6 +916,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
         var accuracy = 0
         if (location.accuracy.toInt() >= 0) {
             accuracy = location.accuracy.toInt()
+            if (accuracy > 15) return
         }
         val updateLocation: UpdateLocation
         val updateLocationAs: String
@@ -971,7 +971,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             return
         }
 
-        if (now - location.time < 600000) {
+        if (now - location.time < 300000) {
             Log.d(
                 TAG,
                 "Received location that is ${now - location.time} milliseconds old, ${location.time} compared to $now with source ${location.provider}"
