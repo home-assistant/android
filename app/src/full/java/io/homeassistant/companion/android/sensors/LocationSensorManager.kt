@@ -795,30 +795,30 @@ class LocationSensorManager : LocationSensorManagerBase() {
             }, Looper.getMainLooper()
         )
 
-//        if (lastTime2 != 0L && System.currentTimeMillis() - lastTime2 > 100000) {
-//            locationManager.requestLocationUpdates(
-//                LocationManager.NETWORK_PROVIDER,
-//                180000,
-//                0f,
-//                object : LocationListener {
-//                    override fun onLocationChanged(it: Location) {
-//                        runBlocking {
-//                            getEnabledServers(
-//                                latestContext,
-//                                singleAccurateLocation
-//                            ).forEach { serverId ->
-//                                sendLocationUpdate(it, serverId)
-//                            }
-//                        }
-//                        if (lastTime3 != 0L && System.currentTimeMillis() - lastTime3 < 180000) return
-//                        lastTime3 = System.currentTimeMillis()
-//                        Log.e("onLocationChanged2", "${it.latitude}:${it.longitude}")
-//                        getGeocodedLocation(it)
-//                    }
-//
-//                }, Looper.getMainLooper()
-//            )
-//        }
+        if (lastTime2 != 0L && System.currentTimeMillis() - lastTime2 > 120000) {
+            locationManager.requestLocationUpdates(
+                LocationManager.NETWORK_PROVIDER,
+                180000,
+                0f,
+                object : LocationListener {
+                    override fun onLocationChanged(it: Location) {
+                        runBlocking {
+                            getEnabledServers(
+                                latestContext,
+                                singleAccurateLocation
+                            ).forEach { serverId ->
+                                sendLocationUpdate(it, serverId)
+                            }
+                        }
+                        if (lastTime3 != 0L && System.currentTimeMillis() - lastTime3 < 180000) return
+                        lastTime3 = System.currentTimeMillis()
+                        Log.e("onLocationChanged2", "${it.latitude}:${it.longitude}")
+                        getGeocodedLocation(it)
+                    }
+
+                }, Looper.getMainLooper()
+            )
+        }
 
         runBlocking {
             getEnabledServers(
