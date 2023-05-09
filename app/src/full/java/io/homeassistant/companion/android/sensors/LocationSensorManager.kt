@@ -728,7 +728,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             return
         }
         Log.d(TAG, "Registering for location updates.")
-        var amapKey = latestContext.getSharedPreferences("config", Context.MODE_PRIVATE)
+        val amapKey = latestContext.getSharedPreferences("config", Context.MODE_PRIVATE)
             .getString("amapKey", null)
         if (amapKey.isNullOrEmpty()) {
             getLocation(latestContext)
@@ -916,7 +916,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
         var accuracy = 0
         if (location.accuracy.toInt() >= 0) {
             accuracy = location.accuracy.toInt()
-            if (accuracy > 15) return
+            if (accuracy > 20) return
         }
         val updateLocation: UpdateLocation
         val updateLocationAs: String
