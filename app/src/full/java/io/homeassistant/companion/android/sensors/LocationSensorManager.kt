@@ -801,6 +801,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 180000,
                 0f,
                 object : LocationListener {
+                    if (lastTime2 != 0L && System.currentTimeMillis() - lastTime2 < 100000) return
                     override fun onLocationChanged(it: Location) {
                         runBlocking {
                             getEnabledServers(
