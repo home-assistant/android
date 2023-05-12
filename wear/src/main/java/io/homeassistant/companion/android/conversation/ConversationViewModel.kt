@@ -25,7 +25,10 @@ class ConversationViewModel @Inject constructor(
     var conversationResult by mutableStateOf("")
         private set
 
-    var supportsConversation by mutableStateOf(false)
+    var supportsAssist by mutableStateOf(false)
+        private set
+
+    var useAssistPipeline by mutableStateOf(false)
         private set
 
     var isHapticEnabled = mutableStateOf(false)
@@ -41,20 +44,28 @@ class ConversationViewModel @Inject constructor(
         viewModelScope.launch {
             conversationResult =
                 if (serverManager.isRegistered()) {
-                    serverManager.integrationRepository().getConversation(speechResult) ?: ""
+                    serverManager.integrationRepository().getAssistResponse(speechResult) ?: ""
                 } else {
                     ""
                 }
         }
     }
 
-    suspend fun isSupportConversation() {
+    suspend fun checkAssistSupport() {
         checkSupportProgress = true
         isRegistered = serverManager.isRegistered()
-        supportsConversation =
-            serverManager.isRegistered() &&
-            serverManager.integrationRepository().isHomeAssistantVersionAtLeast(2023, 1, 0) &&
-            serverManager.webSocketRepository().getConfig()?.components?.contains("conversation") == true
+
+        if (serverManager.isRegistered()) {
+            val config = serverManager.webSocketRepository().getConfig()
+            val onConversationVersion = serverManager.integrationRepository().isHomeAssistantVersionAtLeast(2023, 1, 0)
+            val onPipelineVersion = serverManager.integrationRepository().isHomeAssistantVersionAtLeast(2023, 5, 0)
+
+            supportsAssist =
+                (onConversationVersion && !onPipelineVersion && config?.components?.contains("conversation") == true) ||
+                (onPipelineVersion && config?.components?.contains("assist_pipeline") == true)
+            useAssistPipeline = onPipelineVersion
+        }
+
         isHapticEnabled.value = wearPrefsRepository.getWearHapticFeedback()
         checkSupportProgress = false
     }

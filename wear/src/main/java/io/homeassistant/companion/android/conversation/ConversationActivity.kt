@@ -42,8 +42,8 @@ class ConversationActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         lifecycleScope.launch {
-            conversationViewModel.isSupportConversation()
-            if (conversationViewModel.supportsConversation) {
+            conversationViewModel.checkAssistSupport()
+            if (conversationViewModel.supportsAssist) {
                 val searchIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
                     putExtra(
                         RecognizerIntent.EXTRA_LANGUAGE_MODEL,

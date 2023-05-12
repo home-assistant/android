@@ -56,7 +56,7 @@ interface IntegrationRepository {
 
     suspend fun shouldNotifySecurityWarning(): Boolean
 
-    suspend fun getConversation(speech: String): String?
+    suspend fun getAssistResponse(speech: String): String?
 }
 
 @AssistedFactory

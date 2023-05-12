@@ -23,6 +23,11 @@ import io.homeassistant.companion.android.common.data.websocket.WebSocketRequest
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEventType
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineIntentEnd
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineIntentStart
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineRunStart
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ConversationResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CurrentUserResponse
@@ -81,6 +86,7 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
     companion object {
         private const val TAG = "WebSocketRepository"
 
+        private const val SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN = "assist_pipeline/run"
         private const val SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS = "subscribe_events"
         private const val SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES = "subscribe_entities"
         private const val SUBSCRIBE_TYPE_SUBSCRIBE_TRIGGER = "subscribe_trigger"
@@ -208,6 +214,18 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
 
         return mapResponse(socketResponse)
     }
+
+    override suspend fun runAssistPipeline(text: String): Flow<AssistPipelineEvent>? =
+        subscribeTo(
+            SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
+            mapOf(
+                "start_stage" to "intent",
+                "end_stage" to "intent",
+                "input" to mapOf(
+                    "text" to text
+                )
+            )
+        )
 
     override suspend fun getStateChanges(): Flow<StateChangedEvent>? =
         subscribeToEventsForType(EVENT_STATE_CHANGED)
@@ -627,6 +645,21 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
                         mapper.convertValue(trigger, TriggerEvent::class.java)
                     } else {
                         Log.w(TAG, "Received no trigger value for trigger subscription, skipping")
+                        return
+                    }
+                } else if (subscriptionType == SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN) {
+                    val eventType = response.event?.get("type")
+                    if (eventType?.isTextual == true) {
+                        val eventDataMap = response.event.get("data")
+                        val eventData = when (eventType.textValue()) {
+                            AssistPipelineEventType.RUN_START -> mapper.convertValue(eventDataMap, AssistPipelineRunStart::class.java)
+                            AssistPipelineEventType.INTENT_START -> mapper.convertValue(eventDataMap, AssistPipelineIntentStart::class.java)
+                            AssistPipelineEventType.INTENT_END -> mapper.convertValue(eventDataMap, AssistPipelineIntentEnd::class.java)
+                            else -> null
+                        }
+                        AssistPipelineEvent(eventType.textValue(), eventData)
+                    } else {
+                        Log.w(TAG, "Received Assist pipeline event without type, skipping")
                         return
                     }
                 } else if (eventResponseType != null && eventResponseType.isTextual) {

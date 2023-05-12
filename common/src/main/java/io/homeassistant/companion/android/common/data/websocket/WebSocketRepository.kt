@@ -5,6 +5,7 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketRepositoryImpl
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ConversationResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CurrentUserResponse
@@ -48,7 +49,18 @@ interface WebSocketRepository {
     suspend fun getThreadDatasets(): List<ThreadDatasetResponse>?
     suspend fun getThreadDatasetTlv(datasetId: String): ThreadDatasetTlvResponse?
     suspend fun addThreadDataset(tlv: ByteArray): Boolean
+
+    /**
+     * Get an Assist response for the given text input. For core >= 2023.5, use [runAssistPipeline]
+     * instead.
+     */
     suspend fun getConversation(speech: String): ConversationResponse?
+
+    /**
+     * Run the Assist pipeline for the given text input
+     * @return a Flow that will emit all events for the pipeline
+     */
+    suspend fun runAssistPipeline(text: String): Flow<AssistPipelineEvent>?
 }
 
 @AssistedFactory
