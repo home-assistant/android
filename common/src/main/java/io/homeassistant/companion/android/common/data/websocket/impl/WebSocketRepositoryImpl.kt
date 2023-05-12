@@ -737,17 +737,18 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
             listOf(mapper.readValue(text))
         }
 
-        messages.forEach { message ->
-            Log.d(TAG, "Message number ${message.id} received")
-
+        messages.groupBy { it.id }.values.forEach { messagesForId ->
             ioScope.launch {
-                when (message.type) {
-                    "auth_required" -> Log.d(TAG, "Auth Requested")
-                    "auth_ok" -> handleAuthComplete(true, message.haVersion)
-                    "auth_invalid" -> handleAuthComplete(false, message.haVersion)
-                    "pong", "result" -> handleMessage(message)
-                    "event" -> handleEvent(message)
-                    else -> Log.d(TAG, "Unknown message type: ${message.type}")
+                messagesForId.forEach { message ->
+                    Log.d(TAG, "Message number ${message.id} received")
+                    when (message.type) {
+                        "auth_required" -> Log.d(TAG, "Auth Requested")
+                        "auth_ok" -> handleAuthComplete(true, message.haVersion)
+                        "auth_invalid" -> handleAuthComplete(false, message.haVersion)
+                        "pong", "result" -> handleMessage(message)
+                        "event" -> handleEvent(message)
+                        else -> Log.d(TAG, "Unknown message type: ${message.type}")
+                    }
                 }
             }
         }
