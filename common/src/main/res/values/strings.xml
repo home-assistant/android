@@ -1052,7 +1052,9 @@
     <string name="tile_vibrate">Vibrate when clicked</string>
     <string name="tile_auth_required">Requires unlocked device</string>
     <string name="no_results">No results yet</string>
-    <string name="no_conversation_support">You must be at least on Home Assistant 2023.1 and have the conversation integration enabled</string>
+    <string name="no_assist_support">You must be at least on Home Assistant %1$s and have the %2$s integration enabled</string>
+    <string name="no_assist_support_conversation">conversation</string>
+    <string name="no_assist_support_assist_pipeline">Assist pipeline</string>
     <string name="conversation">Conversation</string>
     <string name="assist">Assist</string>
     <string name="assist_log_in">Log in to Home Assistant to start using Assist</string>

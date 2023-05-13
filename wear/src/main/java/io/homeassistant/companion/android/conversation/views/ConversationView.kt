@@ -56,8 +56,13 @@ fun ConversationResultView(
                         SpeechBubble(
                             text = conversationViewModel.speechResult.ifEmpty {
                                 when {
-                                    (conversationViewModel.supportsConversation) -> stringResource(R.string.no_results)
-                                    (!conversationViewModel.supportsConversation && !conversationViewModel.checkSupportProgress) -> stringResource(R.string.no_conversation_support)
+                                    conversationViewModel.supportsAssist -> stringResource(R.string.no_results)
+                                    (!conversationViewModel.supportsAssist && !conversationViewModel.checkSupportProgress) ->
+                                        if (conversationViewModel.useAssistPipeline) {
+                                            stringResource(R.string.no_assist_support, "2023.5", stringResource(R.string.no_assist_support_assist_pipeline))
+                                        } else {
+                                            stringResource(R.string.no_assist_support, "2023.1", stringResource(R.string.no_assist_support_conversation))
+                                        }
                                     (!conversationViewModel.isRegistered) -> stringResource(R.string.not_registered)
                                     else -> "..."
                                 }
