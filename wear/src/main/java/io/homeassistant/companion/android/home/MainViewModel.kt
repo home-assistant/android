@@ -29,6 +29,7 @@ import io.homeassistant.companion.android.database.wear.getAll
 import io.homeassistant.companion.android.database.wear.getAllFlow
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.util.RegistriesDataHandler
+import io.homeassistant.companion.android.util.throttleLatest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
@@ -217,7 +218,7 @@ class MainViewModel @Inject constructor(
         if (!homePresenter.isConnected() || isFavoritesOnly) {
             return
         }
-        homePresenter.getAreaRegistryUpdates()?.collect {
+        homePresenter.getAreaRegistryUpdates()?.throttleLatest(1000)?.collect {
             areaRegistry = homePresenter.getAreaRegistry()
             areas.clear()
             areaRegistry?.let {
@@ -231,7 +232,7 @@ class MainViewModel @Inject constructor(
         if (!homePresenter.isConnected() || isFavoritesOnly) {
             return
         }
-        homePresenter.getDeviceRegistryUpdates()?.collect {
+        homePresenter.getDeviceRegistryUpdates()?.throttleLatest(1000)?.collect {
             deviceRegistry = homePresenter.getDeviceRegistry()
             updateEntityDomains()
         }
@@ -241,7 +242,7 @@ class MainViewModel @Inject constructor(
         if (!homePresenter.isConnected()) {
             return
         }
-        homePresenter.getEntityRegistryUpdates()?.collect {
+        homePresenter.getEntityRegistryUpdates()?.throttleLatest(1000)?.collect {
             entityRegistry = homePresenter.getEntityRegistry()
             _supportedEntities.value = getSupportedEntities()
             updateEntityDomains()
