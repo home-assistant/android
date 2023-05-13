@@ -27,6 +27,7 @@ import androidx.core.graphics.toColorInt
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.google.android.material.color.DynamicColors
 import com.maltaisn.icondialog.IconDialog
 import com.maltaisn.icondialog.IconDialogSettings
@@ -134,8 +135,24 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
                     val fieldKeys = fields.keys
                     Log.d(TAG, "Fields applicable to this service: $fields")
 
-                    if (target !== false) {
-                        dynamicFields.add(0, ServiceFieldBinder(serviceText, "entity_id"))
+                    val existingServiceData = mutableMapOf<String, Any?>()
+                    buttonWidgetDao.get(appWidgetId)?.let { buttonWidget ->
+                        if (
+                            buttonWidget.serverId != selectedServerId ||
+                            "${buttonWidget.domain}.${buttonWidget.service}" != serviceText
+                        ) {
+                            return@let
+                        }
+
+                        val dbMap: HashMap<String, Any?> = jacksonObjectMapper().readValue(buttonWidget.serviceData)
+                        for (item in dbMap) {
+                            val value = item.value.toString().replace("[", "").replace("]", "") + if (item.key == "entity_id") ", " else ""
+                            existingServiceData[item.key] = value.ifEmpty { null }
+                        }
+                    }
+
+                    if (target != false) {
+                        dynamicFields.add(0, ServiceFieldBinder(serviceText, "entity_id", existingServiceData["entity_id"]))
                     }
 
                     fieldKeys.sorted().forEach { fieldKey ->
@@ -145,9 +162,9 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
                         // IDs get priority and go at the top, since the other fields
                         // are usually optional but the ID is required
                         if (fieldKey.contains("_id")) {
-                            dynamicFields.add(0, ServiceFieldBinder(serviceText, fieldKey))
+                            dynamicFields.add(0, ServiceFieldBinder(serviceText, fieldKey, existingServiceData[fieldKey]))
                         } else {
-                            dynamicFields.add(ServiceFieldBinder(serviceText, fieldKey))
+                            dynamicFields.add(ServiceFieldBinder(serviceText, fieldKey, existingServiceData[fieldKey]))
                         }
                     }
 
