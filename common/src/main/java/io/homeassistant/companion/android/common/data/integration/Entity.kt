@@ -650,5 +650,6 @@ fun <T> Entity<T>.isExecuting() = when (state) {
     "unlocking" -> true
     "buffering" -> true
     "disarming" -> true
+    "arming" -> true
     else -> false
 }
