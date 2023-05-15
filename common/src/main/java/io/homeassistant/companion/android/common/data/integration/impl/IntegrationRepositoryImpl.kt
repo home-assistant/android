@@ -25,13 +25,21 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.integration.impl.entities.Template
 import io.homeassistant.companion.android.common.data.integration.impl.entities.UpdateLocationRequest
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEventType
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineIntentEnd
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.util.concurrent.TimeUnit
 import javax.inject.Named
+import kotlin.coroutines.resume
 
 class IntegrationRepositoryImpl @AssistedInject constructor(
     private val integrationService: IntegrationService,
@@ -63,6 +71,8 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
         private const val APPLOCK_TIMEOUT_GRACE_MS = 1000
     }
+
+    private val ioScope = CoroutineScope(Dispatchers.IO + Job())
 
     private val server get() = serverManager.getServer(serverId)!!
 
@@ -377,7 +387,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     }
 
     override suspend fun setAppActive(active: Boolean) {
-        if (!active) {
+        if (!active && appActive) {
             setSessionExpireMillis(System.currentTimeMillis() + (getSessionTimeOut() * 1000) + APPLOCK_TIMEOUT_GRACE_MS)
         }
         Log.d(TAG, "setAppActive(): $active")
@@ -523,11 +533,29 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         }?.toList()
     }
 
-    override suspend fun getConversation(speech: String): String? {
-        // TODO: Also send back conversation ID for dialogue
-        val response = webSocketRepository.getConversation(speech)
-
-        return response?.response?.speech?.plain?.get("speech")
+    override suspend fun getAssistResponse(speech: String): String? {
+        return if (server.version?.isAtLeast(2023, 5, 0) == true) {
+            var job: Job? = null
+            val response = suspendCancellableCoroutine { cont ->
+                job = ioScope.launch {
+                    webSocketRepository.runAssistPipeline(speech)?.collect {
+                        if (!cont.isActive) return@collect
+                        when (it.type) {
+                            AssistPipelineEventType.INTENT_END ->
+                                cont.resume((it.data as AssistPipelineIntentEnd).intentOutput.response.speech.plain["speech"])
+                            AssistPipelineEventType.ERROR,
+                            AssistPipelineEventType.RUN_END -> cont.resume(null)
+                            else -> { /* Do nothing */ }
+                        }
+                    } ?: cont.resume(null)
+                }
+            }
+            job?.cancel()
+            response
+        } else {
+            val response = webSocketRepository.getConversation(speech)
+            response?.response?.speech?.plain?.get("speech")
+        }
     }
 
     override suspend fun getEntities(): List<Entity<Any>>? {
