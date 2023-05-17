@@ -235,6 +235,13 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         }
     }
 
+    override fun disableAdditionalHttpHeaders(useCloud: Boolean) {
+        findPreference<PreferenceCategory>("http_headers")?.let {
+            it.isEnabled = !useCloud
+            it.isVisible = !useCloud
+        }
+    }
+
     override fun updateExternalUrl(url: String, useCloud: Boolean) {
         findPreference<Preference>("connection_external")?.let {
             it.summary =

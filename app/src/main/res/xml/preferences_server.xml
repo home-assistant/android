@@ -65,6 +65,36 @@
             app:useSimpleSummaryProvider="true"/>
     </PreferenceCategory>
     <PreferenceCategory
+        android:title="@string/http_header_settings"
+        android:key="http_headers">
+        <Preference
+            android:selectable="false"
+            android:enabled="true"
+            android:key="http_header_settings_summary"
+            android:title=""
+            android:summary="@string/http_header_settings_summary" />
+        <EditTextPreference
+            android:key="header_name_1"
+            android:icon="@drawable/ic_edit"
+            android:title="@string/header_name_1"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:key="header_value_1"
+            android:icon="@drawable/ic_edit"
+            android:title="@string/header_value_1"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:key="header_name_2"
+            android:icon="@drawable/ic_edit"
+            android:title="@string/header_name_2"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:key="header_value_2"
+            android:icon="@drawable/ic_edit"
+            android:title="@string/header_value_2"
+            app:useSimpleSummaryProvider="true"/>
+    </PreferenceCategory>
+    <PreferenceCategory
         android:title="@string/other_settings">
         <Preference
             android:key="websocket"

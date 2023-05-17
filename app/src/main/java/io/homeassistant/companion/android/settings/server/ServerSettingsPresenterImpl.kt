@@ -58,6 +58,10 @@ class ServerSettingsPresenterImpl @Inject constructor(
             "registration_name" -> serverManager.getServer(serverId)?.deviceName
             "connection_internal" -> (serverManager.getServer(serverId)?.connection?.getUrl(isInternal = true, force = true) ?: "").toString()
             "session_timeout" -> serverManager.integrationRepository(serverId).getSessionTimeOut().toString()
+            "header_name_1" -> serverManager.integrationRepository(serverId).getHeaderName1()
+            "header_name_2" -> serverManager.integrationRepository(serverId).getHeaderName2()
+            "header_value_1" -> serverManager.integrationRepository(serverId).getHeaderValue1()
+            "header_value_2" -> serverManager.integrationRepository(serverId).getHeaderValue2()
             else -> throw IllegalArgumentException("No string found by this key: $key")
         }
     }
@@ -102,6 +106,10 @@ class ServerSettingsPresenterImpl @Inject constructor(
                         Log.e(TAG, "Issue saving session timeout value", e)
                     }
                 }
+                "header_name_1" -> serverManager.integrationRepository(serverId).saveHeaderName1(value?.ifBlank { null })
+                "header_name_2" -> serverManager.integrationRepository(serverId).saveHeaderName2(value?.ifBlank { null })
+                "header_value_1" -> serverManager.integrationRepository(serverId).saveHeaderValue1(value?.ifBlank { null })
+                "header_value_2" -> serverManager.integrationRepository(serverId).saveHeaderValue2(value?.ifBlank { null })
                 else -> throw IllegalArgumentException("No string found by this key: $key")
             }
         }
@@ -142,6 +150,9 @@ class ServerSettingsPresenterImpl @Inject constructor(
             serverManager.getServer(serverId)?.let {
                 view.updateExternalUrl(
                     it.connection.getUrl(false)?.toString() ?: "",
+                    it.connection.useCloud && it.connection.canUseCloud()
+                )
+                view.disableAdditionalHttpHeaders(
                     it.connection.useCloud && it.connection.canUseCloud()
                 )
             }

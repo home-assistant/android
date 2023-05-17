@@ -288,6 +288,10 @@
     <string name="screen_orientation_option_value_landscape">landscape</string>
     <string name="get_help">Get help</string>
     <string name="grant_permission">Grant permission</string>
+    <string name="header_name_1">Name of the 1. header</string>
+    <string name="header_name_2">Name of the 2. header</string>
+    <string name="header_value_1">Value of the 1. header</string>
+    <string name="header_value_2">Value of the 2. header</string>
     <string name="help">Help</string>
     <string name="hide">Hide</string>
     <string name="high_accuracy_mode_channel_name">High accuracy location</string>
@@ -295,6 +299,8 @@
     <string name="history">History</string>
     <string name="hold_to_reorder">Tap and hold to reorder</string>
     <string name="home_assistant_not_discover">Unable to find your\nHome Assistant instance</string>
+    <string name="http_header_settings">Custom Http Headers</string>
+    <string name="http_header_settings_summary">Enter HTTP headers with names and values. These headers will be added to all API calls to the Home Assistant server. These headers can be used (for example) to authenticate against Cloudflare Zero Trust policies.</string>
     <string name="icon">Icon</string>
     <string name="input_booleans">Input booleans</string>
     <string name="input_buttons">Input buttons</string>
