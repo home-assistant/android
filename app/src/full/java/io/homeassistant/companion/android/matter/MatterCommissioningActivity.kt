@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.matter
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.compose.setContent
@@ -36,6 +37,7 @@ class MatterCommissioningActivity : AppCompatActivity() {
     private var deviceCode: String? = null
     private var deviceName by mutableStateOf<String?>(null)
     private var servers by mutableStateOf<List<Server>>(emptyList())
+    private var newMatterDevice = false
 
     private val threadPermissionLauncher = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
         deviceCode?.let { viewModel.onThreadPermissionResult(result, it) }
@@ -77,15 +79,22 @@ class MatterCommissioningActivity : AppCompatActivity() {
 
                 deviceName = data.deviceName
                 deviceCode = data.manualPairingCode
-                viewModel.checkSetup()
+                viewModel.checkSetup(newMatterDevice)
+                newMatterDevice = false
             } catch (e: SharedDeviceData.InvalidSharedDeviceDataException) {
                 Log.e(TAG, "Received incomplete Matter commissioning data, launching webview")
-                continueToApp(true)
+                if (!newMatterDevice) continueToApp(true)
             }
         } else {
             Log.d(TAG, "No Matter commissioning data, launching webview")
-            continueToApp(true)
+            if (!newMatterDevice) continueToApp(true)
         }
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        this.intent = intent // Data is handled by check in onResume()
+        newMatterDevice = true
     }
 
     private fun startCommissioning() {

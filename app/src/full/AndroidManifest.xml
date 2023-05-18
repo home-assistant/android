@@ -14,7 +14,8 @@
             android:name=".matter.MatterCommissioningActivity"
             android:configChanges="orientation|screenSize"
             android:exported="true"
-            android:theme="@style/Theme.HomeAssistant.Config">
+            android:theme="@style/Theme.HomeAssistant.Config"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="com.google.android.gms.home.matter.ACTION_COMMISSION_DEVICE"/>
                 <category android:name="android.intent.category.DEFAULT"/>
