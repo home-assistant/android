@@ -642,3 +642,14 @@ fun <T> Entity<T>.friendlyState(context: Context): String {
     }
     return friendlyState
 }
+
+fun <T> Entity<T>.isExecuting() = when (state) {
+    "closing" -> true
+    "locking" -> true
+    "opening" -> true
+    "unlocking" -> true
+    "buffering" -> true
+    "disarming" -> true
+    "arming" -> true
+    else -> false
+}
