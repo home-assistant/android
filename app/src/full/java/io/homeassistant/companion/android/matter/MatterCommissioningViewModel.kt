@@ -45,9 +45,13 @@ class MatterCommissioningViewModel @Inject constructor(
     var serverId by mutableStateOf(0)
         private set
 
-    fun checkSetup() {
+    fun checkSetup(isNewDevice: Boolean) {
         viewModelScope.launch {
-            if (step != CommissioningFlowStep.NotStarted) return@launch
+            if (!isNewDevice && step != CommissioningFlowStep.NotStarted) {
+                return@launch
+            } else {
+                step = CommissioningFlowStep.NotStarted
+            }
 
             if (!serverManager.isRegistered()) {
                 step = CommissioningFlowStep.NotRegistered
