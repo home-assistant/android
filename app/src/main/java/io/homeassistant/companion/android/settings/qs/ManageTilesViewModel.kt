@@ -244,10 +244,10 @@ class ManageTilesViewModel @Inject constructor(
     }
 
     fun selectServerId(serverId: Int) {
-        val resetEntity = serverId != selectedServerId
+        val resetEntity = serverId != selectedServerId && entities[serverId]?.none { it.entityId == selectedEntityId } == true
         selectedServerId = serverId
         loadEntities(serverId)
-        if (resetEntity) selectEntityId("")
+        selectEntityId(if (resetEntity) "" else selectedEntityId)
     }
 
     private fun loadEntities(serverId: Int) {
