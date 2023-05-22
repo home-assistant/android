@@ -154,7 +154,7 @@ dependencies {
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.8.21")
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.8.10")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
     "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
 
