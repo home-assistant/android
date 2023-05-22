@@ -15,7 +15,7 @@ buildscript {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.10")
         classpath("com.google.gms:google-services:4.3.15")
         classpath("com.google.firebase:firebase-appdistribution-gradle:4.0.0")
-        classpath("de.mannodermaus.gradle.plugins:android-junit5:1.8.2.1")
+        classpath("de.mannodermaus.gradle.plugins:android-junit5:1.9.3.0")
         classpath("com.github.triplet.gradle:play-publisher:3.8.3")
         classpath("com.google.dagger:hilt-android-gradle-plugin:2.45")
     }
