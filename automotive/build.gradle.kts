@@ -156,7 +156,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.8.10")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
-    "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
+    "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.1")
 
     implementation("com.google.dagger:hilt-android:2.45")
     kapt("com.google.dagger:hilt-android-compiler:2.46.1")
@@ -180,7 +180,7 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:31.2.2"))
     implementation("com.google.firebase:firebase-messaging")
     implementation("io.sentry:sentry-android:6.19.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.1")
     implementation("com.google.android.gms:play-services-wearable:18.0.0")
     implementation("androidx.wear:wear-remote-interactions:1.0.0")
 
