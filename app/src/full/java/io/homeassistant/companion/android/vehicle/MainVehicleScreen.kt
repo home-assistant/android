@@ -47,249 +47,249 @@ class MainVehicleScreen(
     val serverManager: ServerManager,
     private val serverId: StateFlow<Int>,
     private val allEntities: Flow<Map<String, Entity<*>>>,
-    private val onChangeServer: (Int) -> Unit,
+    private val onChangeServer: (Int) -> Unit
 ) : Screen(carContext) {
 
-  companion object {
-    private const val TAG = "MainVehicleScreen"
+    companion object {
+        private const val TAG = "MainVehicleScreen"
 
-    private val SUPPORTED_DOMAINS_WITH_STRING = mapOf(
-      "button" to commonR.string.buttons,
-      "cover" to commonR.string.covers,
-      "input_boolean" to commonR.string.input_booleans,
-      "input_button" to commonR.string.input_buttons,
-      "light" to commonR.string.lights,
-      "lock" to commonR.string.locks,
-      "scene" to commonR.string.scenes,
-      "script" to commonR.string.scripts,
-      "switch" to commonR.string.switches
-    )
-    private val SUPPORTED_DOMAINS = SUPPORTED_DOMAINS_WITH_STRING.keys
+        private val SUPPORTED_DOMAINS_WITH_STRING = mapOf(
+            "button" to commonR.string.buttons,
+            "cover" to commonR.string.covers,
+            "input_boolean" to commonR.string.input_booleans,
+            "input_button" to commonR.string.input_buttons,
+            "light" to commonR.string.lights,
+            "lock" to commonR.string.locks,
+            "scene" to commonR.string.scenes,
+            "script" to commonR.string.scripts,
+            "switch" to commonR.string.switches
+        )
+        private val SUPPORTED_DOMAINS = SUPPORTED_DOMAINS_WITH_STRING.keys
 
-    private val MAP_DOMAINS = listOf(
-      "device_tracker",
-      "person",
-      "sensor",
-      "zone"
-    )
-  }
-
-  private var isLoggedIn: Boolean? = null
-  private val domains = mutableSetOf<String>()
-  private var car: Car? = null
-  private var carRestrictionManager: CarUxRestrictionsManager? = null
-  private val iDrivingOptimized
-    get() = car?.let {
-      (
-        it.getCarManager(Car.CAR_UX_RESTRICTION_SERVICE) as CarUxRestrictionsManager
-        ).getCurrentCarUxRestrictions().isRequiresDistractionOptimization()
-    } ?: false
-
-  private val isAutomotive get() = carContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
-
-  init {
-    lifecycleScope.launch {
-      lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-        isLoggedIn = serverManager.isRegistered() &&
-          serverManager.authenticationRepository()
-            .getSessionState() == SessionState.CONNECTED
-        invalidate()
-        while (isLoggedIn != true) {
-          delay(1000)
-          isLoggedIn = serverManager.isRegistered() &&
-            serverManager.authenticationRepository()
-              .getSessionState() == SessionState.CONNECTED
-          invalidate()
-        }
-        allEntities.collect { entities ->
-          domains.clear()
-          entities.values.forEach {
-            if (it.domain in SUPPORTED_DOMAINS) {
-              domains.add(it.domain)
-            }
-          }
-          invalidate()
-        }
-      }
+        private val MAP_DOMAINS = listOf(
+            "device_tracker",
+            "person",
+            "sensor",
+            "zone"
+        )
     }
 
-    lifecycle.addObserver(object : DefaultLifecycleObserver {
+    private var isLoggedIn: Boolean? = null
+    private val domains = mutableSetOf<String>()
+    private var car: Car? = null
+    private var carRestrictionManager: CarUxRestrictionsManager? = null
+    private val iDrivingOptimized
+        get() = car?.let {
+            (
+                it.getCarManager(Car.CAR_UX_RESTRICTION_SERVICE) as CarUxRestrictionsManager
+                ).getCurrentCarUxRestrictions().isRequiresDistractionOptimization()
+        } ?: false
 
-      override fun onResume(owner: LifecycleOwner) {
-        registerAutomotiveRestrictionListener()
-      }
+    private val isAutomotive get() = carContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
 
-      override fun onPause(owner: LifecycleOwner) {
-        carRestrictionManager?.unregisterListener()
-        car?.disconnect()
-        car = null
-      }
-    })
-  }
-
-  override fun onGetTemplate(): Template {
-    val listBuilder = ItemList.Builder()
-    domains.forEach { domain ->
-      val friendlyDomain =
-        SUPPORTED_DOMAINS_WITH_STRING[domain]?.let { carContext.getString(it) }
-          ?: domain.split("_").joinToString(" ") { word ->
-            word.replaceFirstChar {
-              if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+    init {
+        lifecycleScope.launch {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                isLoggedIn = serverManager.isRegistered() &&
+                    serverManager.authenticationRepository()
+                    .getSessionState() == SessionState.CONNECTED
+                invalidate()
+                while (isLoggedIn != true) {
+                    delay(1000)
+                    isLoggedIn = serverManager.isRegistered() &&
+                        serverManager.authenticationRepository()
+                        .getSessionState() == SessionState.CONNECTED
+                    invalidate()
+                }
+                allEntities.collect { entities ->
+                    domains.clear()
+                    entities.values.forEach {
+                        if (it.domain in SUPPORTED_DOMAINS) {
+                            domains.add(it.domain)
+                        }
+                    }
+                    invalidate()
+                }
             }
-          }
-      val icon = Entity(
-        "$domain.ha_android_placeholder",
-        "",
-        mapOf<Any, Any>(),
-        Calendar.getInstance(),
-        Calendar.getInstance(),
-        null
-      ).getIcon(carContext)
+        }
 
-      listBuilder.addItem(
-        Row.Builder().apply {
-          if (icon != null) {
-            setImage(
-              CarIcon.Builder(
-                IconicsDrawable(carContext, icon)
-                  .apply {
-                    sizeDp = 48
-                  }.toAndroidIconCompat()
-              )
-                .setTint(CarColor.DEFAULT)
+        lifecycle.addObserver(object : DefaultLifecycleObserver {
+
+            override fun onResume(owner: LifecycleOwner) {
+                registerAutomotiveRestrictionListener()
+            }
+
+            override fun onPause(owner: LifecycleOwner) {
+                carRestrictionManager?.unregisterListener()
+                car?.disconnect()
+                car = null
+            }
+        })
+    }
+
+    override fun onGetTemplate(): Template {
+        val listBuilder = ItemList.Builder()
+        domains.forEach { domain ->
+            val friendlyDomain =
+                SUPPORTED_DOMAINS_WITH_STRING[domain]?.let { carContext.getString(it) }
+                    ?: domain.split("_").joinToString(" ") { word ->
+                        word.replaceFirstChar {
+                            if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+                        }
+                    }
+            val icon = Entity(
+                "$domain.ha_android_placeholder",
+                "",
+                mapOf<Any, Any>(),
+                Calendar.getInstance(),
+                Calendar.getInstance(),
+                null
+            ).getIcon(carContext)
+
+            listBuilder.addItem(
+                Row.Builder().apply {
+                    if (icon != null) {
+                        setImage(
+                            CarIcon.Builder(
+                                IconicsDrawable(carContext, icon)
+                                    .apply {
+                                        sizeDp = 48
+                                    }.toAndroidIconCompat()
+                            )
+                                .setTint(CarColor.DEFAULT)
+                                .build()
+                        )
+                    }
+                }
+                    .setTitle(friendlyDomain)
+                    .setOnClickListener {
+                        Log.i(TAG, "Domain:$domain clicked")
+                        screenManager.push(
+                            EntityGridVehicleScreen(
+                                carContext,
+                                serverManager.integrationRepository(serverId.value),
+                                friendlyDomain,
+                                allEntities.map { it.values.filter { entity -> entity.domain == domain } }
+                            )
+                        )
+                    }
+                    .build()
+            )
+        }
+
+        listBuilder.addItem(
+            Row.Builder()
+                .setImage(
+                    CarIcon.Builder(
+                        IconicsDrawable(
+                            carContext,
+                            CommunityMaterial.Icon3.cmd_map_outline
+                        ).apply {
+                            sizeDp = 48
+                        }.toAndroidIconCompat()
+                    )
+                        .setTint(CarColor.DEFAULT)
+                        .build()
+                )
+                .setTitle(carContext.getString(commonR.string.aa_navigation))
+                .setOnClickListener {
+                    Log.i(TAG, "Navigation clicked")
+                    screenManager.push(
+                        MapVehicleScreen(
+                            carContext,
+                            serverManager.integrationRepository(serverId.value),
+                            allEntities.map { it.values.filter { entity -> entity.domain in MAP_DOMAINS } }
+                        )
+                    )
+                }
                 .build()
-            )
-          }
-        }
-          .setTitle(friendlyDomain)
-          .setOnClickListener {
-            Log.i(TAG, "Domain:$domain clicked")
-            screenManager.push(
-              EntityGridVehicleScreen(
-                carContext,
-                serverManager.integrationRepository(serverId.value),
-                friendlyDomain,
-                allEntities.map { it.values.filter { entity -> entity.domain == domain } }
-              )
-            )
-          }
-          .build()
-      )
-    }
-
-    listBuilder.addItem(
-      Row.Builder()
-        .setImage(
-          CarIcon.Builder(
-            IconicsDrawable(
-              carContext,
-              CommunityMaterial.Icon3.cmd_map_outline
-            ).apply {
-              sizeDp = 48
-            }.toAndroidIconCompat()
-          )
-            .setTint(CarColor.DEFAULT)
-            .build()
         )
-        .setTitle(carContext.getString(commonR.string.aa_navigation))
-        .setOnClickListener {
-          Log.i(TAG, "Navigation clicked")
-          screenManager.push(
-            MapVehicleScreen(
-              carContext,
-              serverManager.integrationRepository(serverId.value),
-              allEntities.map { it.values.filter { entity -> entity.domain in MAP_DOMAINS } }
-            )
-          )
-        }
-        .build()
-    )
 
-    if (serverManager.defaultServers.size > 1) {
-      listBuilder.addItem(
-        Row.Builder()
-          .setImage(
-            CarIcon.Builder(
-              IconicsDrawable(
-                carContext,
-                CommunityMaterial.Icon2.cmd_home_switch
-              ).apply {
-                sizeDp = 48
-              }.toAndroidIconCompat()
+        if (serverManager.defaultServers.size > 1) {
+            listBuilder.addItem(
+                Row.Builder()
+                    .setImage(
+                        CarIcon.Builder(
+                            IconicsDrawable(
+                                carContext,
+                                CommunityMaterial.Icon2.cmd_home_switch
+                            ).apply {
+                                sizeDp = 48
+                            }.toAndroidIconCompat()
+                        )
+                            .setTint(CarColor.DEFAULT)
+                            .build()
+                    )
+                    .setTitle(carContext.getString(commonR.string.aa_change_server))
+                    .setOnClickListener {
+                        Log.i(TAG, "Change server clicked")
+                        screenManager.pushForResult(
+                            ChangeServerScreen(
+                                carContext,
+                                serverManager,
+                                serverId
+                            )
+                        ) {
+                            it?.toString()?.toIntOrNull()?.let { serverId ->
+                                onChangeServer(serverId)
+                            }
+                        }
+                    }
+                    .build()
             )
-              .setTint(CarColor.DEFAULT)
-              .build()
-          )
-          .setTitle(carContext.getString(commonR.string.aa_change_server))
-          .setOnClickListener {
-            Log.i(TAG, "Change server clicked")
-            screenManager.pushForResult(
-              ChangeServerScreen(
-                carContext,
-                serverManager,
-                serverId
-              )
-            ) {
-              it?.toString()?.toIntOrNull()?.let { serverId ->
-                onChangeServer(serverId)
-              }
+        }
+
+        return ListTemplate.Builder().apply {
+            setTitle(carContext.getString(commonR.string.app_name))
+            setHeaderAction(Action.APP_ICON)
+            if (isAutomotive && !iDrivingOptimized) {
+                setActionStrip(
+                    ActionStrip.Builder().addAction(
+                        Action.Builder()
+                            .setTitle(carContext.getString(commonR.string.aa_launch_native))
+                            .setOnClickListener {
+                                startNativeActivity()
+                            }.build()
+                    ).build()
+                )
             }
-          }
-          .build()
-      )
+            if (domains.isEmpty()) {
+                setLoading(true)
+            } else {
+                setLoading(false)
+                setSingleList(listBuilder.build())
+            }
+        }.build()
     }
 
-    return ListTemplate.Builder().apply {
-      setTitle(carContext.getString(commonR.string.app_name))
-      setHeaderAction(Action.APP_ICON)
-      if (isAutomotive && !iDrivingOptimized) {
-        setActionStrip(
-          ActionStrip.Builder().addAction(
-            Action.Builder()
-              .setTitle(carContext.getString(commonR.string.aa_launch_native))
-              .setOnClickListener {
-                startNativeActivity()
-              }.build()
-          ).build()
-        )
-      }
-      if (domains.isEmpty()) {
-        setLoading(true)
-      } else {
-        setLoading(false)
-        setSingleList(listBuilder.build())
-      }
-    }.build()
-  }
-
-  private fun registerAutomotiveRestrictionListener() {
-    if (carContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
-      Log.i(TAG, "Register for Automotive Restrictions")
-      car = Car.createCar(carContext)
-      carRestrictionManager =
-        car?.getCarManager(Car.CAR_UX_RESTRICTION_SERVICE) as CarUxRestrictionsManager
-      val listener =
-        CarUxRestrictionsManager.OnUxRestrictionsChangedListener { restrictions ->
-          invalidate()
+    private fun registerAutomotiveRestrictionListener() {
+        if (carContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            Log.i(TAG, "Register for Automotive Restrictions")
+            car = Car.createCar(carContext)
+            carRestrictionManager =
+                car?.getCarManager(Car.CAR_UX_RESTRICTION_SERVICE) as CarUxRestrictionsManager
+            val listener =
+                CarUxRestrictionsManager.OnUxRestrictionsChangedListener { restrictions ->
+                    invalidate()
+                }
+            carRestrictionManager?.registerListener(listener)
         }
-      carRestrictionManager?.registerListener(listener)
     }
-  }
 
-  private fun startNativeActivity() {
-    Log.i(TAG, "Starting login activity")
-    with(carContext) {
-      startActivity(
-        Intent(
-          carContext,
-          LaunchActivity::class.java
-        ).apply {
-          flags = Intent.FLAG_ACTIVITY_NEW_TASK
+    private fun startNativeActivity() {
+        Log.i(TAG, "Starting login activity")
+        with(carContext) {
+            startActivity(
+                Intent(
+                    carContext,
+                    LaunchActivity::class.java
+                ).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+            )
+            if (isAutomotive) {
+                finishCarApp()
+            }
         }
-      )
-      if (isAutomotive) {
-        finishCarApp()
-      }
     }
-  }
 }
