@@ -11,22 +11,22 @@ import io.homeassistant.companion.android.common.R
 
 class SwitchToDrivingOptimizedScreen(carContext: CarContext) : Screen(carContext) {
 
-  override fun onGetTemplate(): Template {
-    Log.i(TAG, "onGetTemplate")
-    return MessageTemplate.Builder(carContext.getString(R.string.aa_driving_optimized_change))
-      .setIcon(CarIcon.APP_ICON)
-      .addAction(
-        Action.Builder()
-          .setFlags(Action.FLAG_DEFAULT)
-          .setTitle(carContext.getString(R.string.continue_connect))
-          .setOnClickListener {
-            screenManager.pop()
-          }
-          .build()
-      ).build()
-  }
+    override fun onGetTemplate(): Template {
+        Log.i(TAG, "onGetTemplate")
+        return MessageTemplate.Builder(carContext.getString(R.string.aa_driving_optimized_change))
+            .setIcon(CarIcon.APP_ICON)
+            .addAction(
+                Action.Builder()
+                    .setFlags(Action.FLAG_DEFAULT)
+                    .setTitle(carContext.getString(R.string.continue_connect))
+                    .setOnClickListener {
+                        screenManager.pop()
+                    }
+                    .build()
+            ).build()
+    }
 
-  companion object {
-    private const val TAG = "DrvOptScreen"
-  }
+    companion object {
+        private const val TAG = "DrvOptScreen"
+    }
 }
