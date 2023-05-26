@@ -152,7 +152,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
     "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
 
-    implementation("com.google.dagger:hilt-android:2.45")
+    implementation("com.google.dagger:hilt-android:2.46.1")
     kapt("com.google.dagger:hilt-android-compiler:2.46.1")
 
     implementation("androidx.appcompat:appcompat:1.6.1")
