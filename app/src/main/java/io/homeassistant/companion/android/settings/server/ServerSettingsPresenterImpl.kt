@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.settings.server
 import android.util.Log
 import androidx.preference.PreferenceDataStore
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.wifi.WifiHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -12,7 +13,8 @@ import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 class ServerSettingsPresenterImpl @Inject constructor(
-    private val serverManager: ServerManager
+    private val serverManager: ServerManager,
+    private val wifiHelper: WifiHelper
 ) : ServerSettingsPresenter, PreferenceDataStore() {
 
     companion object {
@@ -162,6 +164,8 @@ class ServerSettingsPresenterImpl @Inject constructor(
             view.updateSsids(ssids)
         }
     }
+
+    override fun hasWifi(): Boolean = wifiHelper.hasWifi()
 
     override fun isSsidUsed(): Boolean = runBlocking {
         serverManager.getServer(serverId)?.connection?.internalSsids?.isNotEmpty() == true
