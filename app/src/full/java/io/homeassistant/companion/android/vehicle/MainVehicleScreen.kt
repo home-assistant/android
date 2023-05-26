@@ -15,8 +15,6 @@ import androidx.car.app.model.CarColor
 import androidx.car.app.model.CarIcon
 import androidx.car.app.model.ItemList
 import androidx.car.app.model.ListTemplate
-import androidx.car.app.model.MessageTemplate
-import androidx.car.app.model.ParkedOnlyOnClickListener
 import androidx.car.app.model.Row
 import androidx.car.app.model.Template
 import androidx.lifecycle.DefaultLifecycleObserver
@@ -130,23 +128,6 @@ class MainVehicleScreen(
     }
 
     override fun onGetTemplate(): Template {
-        if (isLoggedIn == false) {
-            return MessageTemplate.Builder(carContext.getString(commonR.string.aa_app_not_logged_in))
-                .setTitle(carContext.getString(commonR.string.app_name))
-                .setHeaderAction(Action.APP_ICON)
-                .addAction(
-                    Action.Builder()
-                        .setTitle(carContext.getString(commonR.string.login))
-                        .setOnClickListener(
-                            ParkedOnlyOnClickListener.create {
-                                startNativeActivity()
-                            }
-                        )
-                        .build()
-                )
-                .build()
-        }
-
         val listBuilder = ItemList.Builder()
         domains.forEach { domain ->
             val friendlyDomain =
@@ -287,13 +268,14 @@ class MainVehicleScreen(
             car = Car.createCar(carContext)
             carRestrictionManager =
                 car?.getCarManager(Car.CAR_UX_RESTRICTION_SERVICE) as CarUxRestrictionsManager
-            var listener =
+            val listener =
                 CarUxRestrictionsManager.OnUxRestrictionsChangedListener { restrictions ->
                     invalidate()
                 }
             carRestrictionManager?.registerListener(listener)
         }
     }
+
     private fun startNativeActivity() {
         Log.i(TAG, "Starting login activity")
         with(carContext) {

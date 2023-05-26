@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.car.app.CarAppService
 import androidx.car.app.Screen
+import androidx.car.app.ScreenManager
 import androidx.car.app.Session
 import androidx.car.app.SessionInfo
 import androidx.car.app.validation.HostValidator
@@ -66,12 +67,43 @@ class HaCarAppService : CarAppService() {
             )
 
             override fun onCreateScreen(intent: Intent): Screen {
-                return MainVehicleScreen(
-                    carContext,
-                    serverManager,
-                    serverIdFlow,
-                    entityFlow
-                ) { loadEntities(lifecycleScope, it) }
+                if (intent.getBooleanExtra("TRANSITION_LAUNCH", false)) {
+                    carContext
+                        .getCarService(ScreenManager::class.java).run {
+                            push(
+                                MainVehicleScreen(
+                                    carContext,
+                                    serverManager,
+                                    serverIdFlow,
+                                    entityFlow
+                                ) { loadEntities(lifecycleScope, it) }
+                            )
+
+                            push(
+                                LoginScreen(
+                                    carContext,
+                                    serverManager
+                                )
+                            )
+                        }
+                    return SwitchToDrivingOptimizedScreen(carContext)
+                } else {
+                    carContext
+                        .getCarService(ScreenManager::class.java).run {
+                            push(
+                                MainVehicleScreen(
+                                    carContext,
+                                    serverManager,
+                                    serverIdFlow,
+                                    entityFlow
+                                ) { loadEntities(lifecycleScope, it) }
+                            )
+                        }
+                    return LoginScreen(
+                        carContext,
+                        serverManager
+                    )
+                }
             }
         }
     }
