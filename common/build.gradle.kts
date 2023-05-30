@@ -56,7 +56,7 @@ android {
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.8.21")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.8.10")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.8.21")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
 
     implementation("com.google.dagger:hilt-android:2.46.1")
