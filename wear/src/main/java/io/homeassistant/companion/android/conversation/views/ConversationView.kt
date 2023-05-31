@@ -44,7 +44,7 @@ fun ConversationResultView(
                     PositionIndicator(scalingLazyListState = scrollState)
                 }
             },
-            timeText = { TimeText(visible = !scrollState.isScrollInProgress) }
+            timeText = { TimeText(scalingLazyListState = scrollState) }
         ) {
             ScalingLazyColumn(
                 state = scrollState,

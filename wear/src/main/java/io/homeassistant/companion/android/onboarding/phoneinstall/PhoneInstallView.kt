@@ -39,7 +39,7 @@ fun PhoneInstallView(
                 PositionIndicator(scalingLazyListState = scrollState)
             }
         },
-        timeText = { TimeText(visible = !scrollState.isScrollInProgress) }
+        timeText = { TimeText(scalingLazyListState = scrollState) }
     ) {
         Box(modifier = Modifier.background(MaterialTheme.colors.background)) {
             ThemeLazyColumn(state = scrollState) {
