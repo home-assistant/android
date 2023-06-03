@@ -36,7 +36,7 @@ fun SensorsView(
                     PositionIndicator(scalingLazyListState = scalingLazyListState)
                 }
             },
-            timeText = { TimeText(!scalingLazyListState.isScrollInProgress) }
+            timeText = { TimeText(scalingLazyListState = scalingLazyListState) }
         ) {
             val sensorManagers = getSensorManagers()
             ThemeLazyColumn(
