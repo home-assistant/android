@@ -80,6 +80,7 @@ jobs:
             ./app/build/outputs/apk/minimal/release/app-minimal-release.apk
             ./wear/build/outputs/apk/release/wear-release.apk
             ./automotive/build/outputs/apk/full/release/automotive-full-release.apk
+            ./automotive/build/outputs/apk/minimal/release/automotive-minimal-release.apk
             ./app/build/outputs/version_code.txt
 
       - name: Deploy to Firebase

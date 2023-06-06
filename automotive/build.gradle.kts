@@ -43,12 +43,32 @@ android {
     sourceSets {
         getByName("main") {
             java {
-                srcDirs("../app/src/main/java", "../app/src/full/java")
+                srcDirs("../app/src/main/java")
             }
             res {
-                srcDirs("../app/src/main/res", "../app/src/full/res")
+                srcDirs("../app/src/main/res")
             }
-            manifest.srcFile("src/main/AndroidManifest.xml")
+        }
+        create("full") {
+            java {
+                srcDirs("../app/src/full/java")
+            }
+            res {
+                srcDirs("../app/src/full/res")
+            }
+        }
+        create("minimal") {
+            java {
+                srcDirs("../app/src/minimal/java")
+            }
+            res {
+                srcDirs("../app/src/minimal/res")
+            }
+        }
+        getByName("debug") {
+            res {
+                srcDirs("../app/src/debug/res")
+            }
         }
     }
 
@@ -169,20 +189,19 @@ dependencies {
     implementation("com.google.android.material:material:1.9.0")
     implementation("androidx.fragment:fragment-ktx:1.5.7")
 
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.5")
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
     implementation("com.squareup.picasso:picasso:2.8")
 
-    implementation("com.google.android.gms:play-services-location:21.0.1")
-    implementation("com.google.android.gms:play-services-home:16.0.0")
-    implementation("com.google.android.gms:play-services-threadnetwork:16.0.0")
-    implementation(platform("com.google.firebase:firebase-bom:32.1.0"))
-    implementation("com.google.firebase:firebase-messaging")
-    implementation("io.sentry:sentry-android:6.21.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.1")
-    implementation("com.google.android.gms:play-services-wearable:18.0.0")
-    implementation("androidx.wear:wear-remote-interactions:1.0.0")
+    "fullImplementation"("com.google.android.gms:play-services-location:21.0.1")
+    "fullImplementation"("com.google.android.gms:play-services-home:16.0.0")
+    "fullImplementation"("com.google.android.gms:play-services-threadnetwork:16.0.0")
+    "fullImplementation"(platform("com.google.firebase:firebase-bom:32.1.0"))
+    "fullImplementation"("com.google.firebase:firebase-messaging")
+    "fullImplementation"("io.sentry:sentry-android:6.21.0")
+    "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.1")
+    "fullImplementation"("com.google.android.gms:play-services-wearable:18.0.0")
+    "fullImplementation"("androidx.wear:wear-remote-interactions:1.0.0")
 
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.webkit:webkit:1.7.0")
