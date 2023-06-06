@@ -208,7 +208,7 @@ dependencies {
     implementation("com.google.android.exoplayer:exoplayer-core:2.18.7")
     implementation("com.google.android.exoplayer:exoplayer-hls:2.18.7")
     implementation("com.google.android.exoplayer:exoplayer-ui:2.18.7")
-    implementation("com.google.android.exoplayer:extension-cronet:2.18.7")
+    "fullImplementation"("com.google.android.exoplayer:extension-cronet:2.18.7")
     "minimalImplementation"("com.google.android.exoplayer:extension-cronet:2.18.7") {
         exclude(group = "com.google.android.gms", module = "play-services-cronet")
     }
