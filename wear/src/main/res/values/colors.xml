@@ -3,7 +3,7 @@
     <color name="colorDialogBackground">#111111</color>
     <color name="colorDialogMessage">@android:color/white</color>
     <color name="colorDialogTitle">@android:color/white</color>
-    <color name="colorActivityBackground">#1c1c1c</color>
+    <color name="colorActivityBackground">@android:color/black</color>
     <color name="colorPrimary">#03A9F4</color>
     <color name="colorPrimaryDark">#111111</color>
     <color name="colorAccent">#03A9F4</color>
