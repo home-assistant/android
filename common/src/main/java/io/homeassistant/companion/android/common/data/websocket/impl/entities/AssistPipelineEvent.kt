@@ -39,3 +39,9 @@ data class AssistPipelineIntentStart(
 data class AssistPipelineIntentEnd(
     val intentOutput: ConversationResponse
 ) : AssistPipelineEventData
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class AssistPipelineError(
+    val code: String?,
+    val message: String?
+) : AssistPipelineEventData

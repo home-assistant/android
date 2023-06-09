@@ -6,6 +6,8 @@ import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketRe
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineListResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ConversationResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CurrentUserResponse
@@ -51,16 +53,45 @@ interface WebSocketRepository {
     suspend fun addThreadDataset(tlv: ByteArray): Boolean
 
     /**
-     * Get an Assist response for the given text input. For core >= 2023.5, use [runAssistPipeline]
+     * Get an Assist response for the given text input. For core >= 2023.5, use [runAssistPipelineForText]
      * instead.
      */
     suspend fun getConversation(speech: String): ConversationResponse?
 
     /**
+     * Get information about an Assist pipeline.
+     * @param pipelineId the ID of the pipeline to get details for, if not specified the preferred
+     * pipeline will be returned
+     * @return [AssistPipelineResponse] detailing the Assist pipeline, or `null` if not found or no
+     * response.
+     */
+    suspend fun getAssistPipeline(pipelineId: String? = null): AssistPipelineResponse?
+
+    /**
+     * @return [AssistPipelineListResponse] listing all Assist pipelines and which one is preferred.
+     */
+    suspend fun getAssistPipelines(): AssistPipelineListResponse?
+
+    /**
      * Run the Assist pipeline for the given text input
      * @return a Flow that will emit all events for the pipeline
      */
-    suspend fun runAssistPipeline(text: String): Flow<AssistPipelineEvent>?
+    suspend fun runAssistPipelineForText(
+        text: String,
+        pipelineId: String? = null,
+        conversationId: String? = null
+    ): Flow<AssistPipelineEvent>?
+
+    /**
+     * Run the Assist pipeline for voice input
+     * @return a Flow that will emit all events for the pipeline
+     */
+    suspend fun runAssistPipelineForVoice(
+        sampleRate: Int,
+        outputTts: Boolean,
+        pipelineId: String? = null,
+        conversationId: String? = null
+    ): Flow<AssistPipelineEvent>?
 }
 
 @AssistedFactory

@@ -1058,6 +1058,9 @@
     <string name="no_assist_support_assist_pipeline">Assist pipeline</string>
     <string name="conversation">Conversation</string>
     <string name="assist">Assist</string>
+    <string name="assist_enter_a_request">Enter a request</string>
+    <string name="assist_error">Oops, an error has occurred</string>
+    <string name="assist_how_can_i_assist">How can I assist?</string>
     <string name="assist_log_in">Log in to Home Assistant to start using Assist</string>
     <string name="not_registered">Please launch the Home Assistant app and log in to start using Assist.</string>
     <string name="ha_assist">HA: Assist</string>

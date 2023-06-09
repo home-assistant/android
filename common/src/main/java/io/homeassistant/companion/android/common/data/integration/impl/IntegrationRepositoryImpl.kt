@@ -538,7 +538,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             var job: Job? = null
             val response = suspendCancellableCoroutine { cont ->
                 job = ioScope.launch {
-                    webSocketRepository.runAssistPipeline(speech)?.collect {
+                    webSocketRepository.runAssistPipelineForText(speech)?.collect {
                         if (!cont.isActive) return@collect
                         when (it.type) {
                             AssistPipelineEventType.INTENT_END ->

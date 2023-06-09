@@ -75,6 +75,7 @@ import eightbitlab.com.blurview.RenderScriptBlur
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.assist.AssistActivity
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
@@ -630,7 +631,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                                 "hasSettingsScreen" to true,
                                                 "canWriteTag" to hasNfc,
                                                 "hasExoPlayer" to true,
-                                                "canCommissionMatter" to canCommissionMatter
+                                                "canCommissionMatter" to canCommissionMatter,
+                                                "hasAssist" to true
                                             )
                                         )
                                     ) {
@@ -648,6 +650,17 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                             "window.externalApp.onHomeAssistantSetTheme();" +
                                             "});",
                                         null
+                                    )
+                                }
+                                "assist/show" -> {
+                                    val payload = if (json.has("payload")) json.getJSONObject("payload") else null
+                                    startActivity(
+                                        AssistActivity.newInstance(
+                                            this@WebViewActivity,
+                                            serverId = presenter.getActiveServer(),
+                                            pipelineId = if (payload?.has("pipeline_id") == true) payload.getString("pipeline_id") else null,
+                                            startListening = if (payload?.has("start_listening") == true) payload.getBoolean("start_listening") else true
+                                        )
                                     )
                                 }
                                 "config_screen/show" ->

@@ -23,10 +23,13 @@ import io.homeassistant.companion.android.common.data.websocket.WebSocketRequest
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineError
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEventType
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineIntentEnd
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineIntentStart
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineListResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineRunStart
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ConversationResponse
@@ -215,17 +218,67 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
         return mapResponse(socketResponse)
     }
 
-    override suspend fun runAssistPipeline(text: String): Flow<AssistPipelineEvent>? =
-        subscribeTo(
-            SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
+    override suspend fun getAssistPipeline(pipelineId: String?): AssistPipelineResponse? {
+        val data = mapOf(
+            "type" to "assist_pipeline/pipeline/get"
+        )
+        val socketResponse = sendMessage(
+            if (pipelineId != null) data.plus("pipeline_id" to pipelineId) else data
+        )
+
+        return mapResponse(socketResponse)
+    }
+
+    override suspend fun getAssistPipelines(): AssistPipelineListResponse? {
+        val socketResponse = sendMessage(
             mapOf(
-                "start_stage" to "intent",
-                "end_stage" to "intent",
-                "input" to mapOf(
-                    "text" to text
-                )
+                "type" to "assist_pipeline/pipeline/list"
             )
         )
+
+        return mapResponse(socketResponse)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override suspend fun runAssistPipelineForText(
+        text: String,
+        pipelineId: String?,
+        conversationId: String?
+    ): Flow<AssistPipelineEvent>? {
+        val data = mapOf(
+            "start_stage" to "intent",
+            "end_stage" to "intent",
+            "input" to mapOf(
+                "text" to text
+            ),
+            "conversation_id" to conversationId
+        )
+        return subscribeTo(
+            SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
+            (pipelineId?.let { data.plus("pipeline" to it) } ?: data) as Map<Any, Any>
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override suspend fun runAssistPipelineForVoice(
+        sampleRate: Int,
+        outputTts: Boolean,
+        pipelineId: String?,
+        conversationId: String?
+    ): Flow<AssistPipelineEvent>? {
+        val data = mapOf(
+            "start_stage" to "stt",
+            "end_stage" to (if (outputTts) "tts" else "intent"),
+            "input" to mapOf(
+                "sample_rate" to sampleRate
+            ),
+            "conversation_id" to conversationId
+        )
+        return subscribeTo(
+            SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
+            (pipelineId?.let { data.plus("pipeline" to it) } ?: data) as Map<Any, Any>
+        )
+    }
 
     override suspend fun getStateChanges(): Flow<StateChangedEvent>? =
         subscribeToEventsForType(EVENT_STATE_CHANGED)
@@ -655,6 +708,7 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
                             AssistPipelineEventType.RUN_START -> mapper.convertValue(eventDataMap, AssistPipelineRunStart::class.java)
                             AssistPipelineEventType.INTENT_START -> mapper.convertValue(eventDataMap, AssistPipelineIntentStart::class.java)
                             AssistPipelineEventType.INTENT_END -> mapper.convertValue(eventDataMap, AssistPipelineIntentEnd::class.java)
+                            AssistPipelineEventType.ERROR -> mapper.convertValue(eventDataMap, AssistPipelineError::class.java)
                             else -> null
                         }
                         AssistPipelineEvent(eventType.textValue(), eventData)
