@@ -52,9 +52,10 @@ class AssistActivity : BaseActivity() {
             window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER)
         }
 
-        viewModel.onCreate()
-
-        // TODO intent extras
+        if (savedInstanceState == null) {
+            viewModel.onCreate()
+            // TODO intent extras
+        }
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {

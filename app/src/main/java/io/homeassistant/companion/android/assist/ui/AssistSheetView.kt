@@ -15,7 +15,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
@@ -24,19 +27,26 @@ import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.mikepenz.iconics.compose.Image
@@ -116,6 +126,13 @@ fun AssistSheetControls(
         return
     }
 
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(inputMode) {
+        if (inputMode == AssistViewModel.AssistInputMode.TEXT || inputMode == AssistViewModel.AssistInputMode.TEXT_ONLY) {
+            focusRequester.requestFocus()
+        }
+    }
+
     IconButton({ /*TODO*/ }) {
         Image(
             asset = CommunityMaterial.Icon.cmd_comment_processing_outline,
@@ -134,6 +151,15 @@ fun AssistSheetControls(
             modifier = Modifier
                 .padding(horizontal = 4.dp)
                 .weight(1f)
+                .focusRequester(focusRequester),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+            keyboardActions = KeyboardActions(onSend = {
+                if (text.text.isNotBlank()) {
+                    onTextInput(text.text)
+                    text = TextFieldValue("")
+                }
+            })
         )
         IconButton(
             onClick = {
@@ -168,10 +194,10 @@ fun AssistSheetControls(
         }
         Spacer(Modifier.weight(0.5f))
         IconButton({ onChangeInput() }) {
-            Image(
-                asset = CommunityMaterial.Icon2.cmd_keyboard,
-                colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface),
-                modifier = Modifier.size(24.dp)
+            Icon(
+                imageVector = Icons.Outlined.Keyboard,
+                contentDescription = null,
+                tint = MaterialTheme.colors.onSurface
             )
         }
     }
