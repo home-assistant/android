@@ -92,6 +92,12 @@ interface WebSocketRepository {
         pipelineId: String? = null,
         conversationId: String? = null
     ): Flow<AssistPipelineEvent>?
+
+    /**
+     * Send voice data for an active Assist pipeline
+     * @return `true`/`false` indicating if it was enqueued, or `null` on unexpected failures
+     */
+    suspend fun sendVoiceData(binaryHandlerId: Int, data: ByteArray): Boolean?
 }
 
 @AssistedFactory

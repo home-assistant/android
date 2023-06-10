@@ -1,16 +1,20 @@
 package io.homeassistant.companion.android.assist
 
+import android.Manifest
 import android.app.KeyguardManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
+import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.core.view.WindowCompat
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
@@ -40,6 +44,11 @@ class AssistActivity : BaseActivity() {
         }
     }
 
+    private val requestPermission = registerForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+        { viewModel.onPermissionResult(it) }
+    )
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -51,6 +60,10 @@ class AssistActivity : BaseActivity() {
         if (isLocked) {
             window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER)
         }
+
+        viewModel.setPermissionInfo(
+            ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+        ) { requestPermission.launch(Manifest.permission.RECORD_AUDIO) }
 
         if (savedInstanceState == null) {
             viewModel.onCreate()
@@ -77,5 +90,10 @@ class AssistActivity : BaseActivity() {
                 )
             }
         }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        viewModel.onStop()
     }
 }

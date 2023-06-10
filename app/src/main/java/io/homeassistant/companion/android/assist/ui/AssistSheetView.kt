@@ -188,7 +188,13 @@ fun AssistSheetControls(
         OutlinedButton({ onMicrophoneInput() }) {
             Image(
                 asset = CommunityMaterial.Icon3.cmd_microphone,
-                colorFilter = ColorFilter.tint(LocalContentColor.current),
+                colorFilter = ColorFilter.tint(
+                    if (inputMode == AssistViewModel.AssistInputMode.VOICE_ACTIVE) {
+                        LocalContentColor.current
+                    } else {
+                        MaterialTheme.colors.onSurface
+                    }
+                ),
                 modifier = Modifier.size(32.dp)
             )
         }

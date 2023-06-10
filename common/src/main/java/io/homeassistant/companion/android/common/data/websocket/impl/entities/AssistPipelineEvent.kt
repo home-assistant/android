@@ -29,6 +29,11 @@ data class AssistPipelineRunStart(
 ) : AssistPipelineEventData
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+data class AssistPipelineSttEnd(
+    val sttOutput: Map<String, Any?>
+) : AssistPipelineEventData
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class AssistPipelineIntentStart(
     val engine: String,
     val language: String,
