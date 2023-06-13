@@ -151,15 +151,14 @@ class AssistViewModel @Inject constructor(
         }
 
         if (recording) {
-            inputMode = AssistInputMode.VOICE_ACTIVE
             recorderQueue = mutableListOf()
-
             recorderJob = viewModelScope.launch {
                 audioRecorder.audioBytes.collect {
                     recorderQueue?.add(it) ?: sendVoiceData(it)
                 }
             }
 
+            inputMode = AssistInputMode.VOICE_ACTIVE
             runAssistPipeline(null)
         } else {
             _conversation.add(AssistMessage(app.getString(commonR.string.assist_error), isInput = false, isError = true))
@@ -246,9 +245,12 @@ class AssistViewModel @Inject constructor(
         }
     }
 
-    private suspend fun sendVoiceData(data: ByteArray) {
+    private fun sendVoiceData(data: ByteArray) {
         binaryHandlerId?.let {
-            serverManager.webSocketRepository(selectedServerId).sendVoiceData(it, data)
+            viewModelScope.launch {
+                // Launch to prevent blocking the output flow if the network is slow
+                serverManager.webSocketRepository(selectedServerId).sendVoiceData(it, data)
+            }
         }
     }
 
@@ -276,6 +278,7 @@ class AssistViewModel @Inject constructor(
     }
 
     private fun stopRecording() {
+        audioRecorder.stopRecording()
         recorderJob?.cancel()
         recorderJob = null
         if (binaryHandlerId != null) {
@@ -284,8 +287,7 @@ class AssistViewModel @Inject constructor(
                     sendVoiceData(it)
                 }
                 recorderQueue = null
-                sendVoiceData(ByteArray(2)) // Empty message to indicate end of recording
-
+                sendVoiceData(byteArrayOf()) // Empty message to indicate end of recording
                 binaryHandlerId = null
             }
         } else {
@@ -294,6 +296,5 @@ class AssistViewModel @Inject constructor(
         if (inputMode == AssistInputMode.VOICE_ACTIVE) {
             inputMode = AssistInputMode.VOICE_INACTIVE
         }
-        audioRecorder.stopRecording()
     }
 }

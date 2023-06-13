@@ -7,8 +7,10 @@ import android.media.MediaRecorder.AudioSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /**
@@ -32,7 +34,10 @@ class AudioRecorder {
     private var recorder: AudioRecord? = null
     private var recorderJob: Job? = null
 
-    private val _audioBytes = MutableSharedFlow<ByteArray>()
+    private val _audioBytes = MutableSharedFlow<ByteArray>(
+        extraBufferCapacity = 10,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
 
     /** Flow emitting audio recording bytes as they come in */
     val audioBytes = _audioBytes.asSharedFlow()
@@ -53,7 +58,7 @@ class AudioRecorder {
             recorder?.startRecording()
             recorderJob = ioScope.launch {
                 val dataSize = minBufferSize()
-                while (true) {
+                while (isActive) {
                     // We're recording in 16-bit as that is guaranteed to be supported but bytes are
                     // 8-bit. So first read as shorts, then manually split them into two bytes, and
                     // finally send all pairs of two as one array to the flow.
