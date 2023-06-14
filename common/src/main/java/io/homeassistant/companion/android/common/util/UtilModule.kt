@@ -13,4 +13,8 @@ object UtilModule {
     @Provides
     @Singleton
     fun provideAudioRecorder(): AudioRecorder = AudioRecorder()
+
+    @Provides
+    @Singleton
+    fun provideAudioUrlPlayer(): AudioUrlPlayer = AudioUrlPlayer()
 }

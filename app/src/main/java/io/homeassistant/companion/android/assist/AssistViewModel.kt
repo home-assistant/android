@@ -17,7 +17,10 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.As
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineRunStart
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineSttEnd
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineTtsEnd
 import io.homeassistant.companion.android.common.util.AudioRecorder
+import io.homeassistant.companion.android.common.util.AudioUrlPlayer
+import io.homeassistant.companion.android.util.UrlHandler
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -26,7 +29,8 @@ import io.homeassistant.companion.android.common.R as commonR
 @HiltViewModel
 class AssistViewModel @Inject constructor(
     val serverManager: ServerManager,
-    val audioRecorder: AudioRecorder,
+    private val audioRecorder: AudioRecorder,
+    private val audioUrlPlayer: AudioUrlPlayer,
     application: Application
 ) : AndroidViewModel(application) {
 
@@ -215,13 +219,19 @@ class AssistViewModel @Inject constructor(
                         _conversation.add(haMessage)
                         message = haMessage
                     }
-                    // TODO TTS
                     AssistPipelineEventType.INTENT_END -> {
                         val data = (it.data as? AssistPipelineIntentEnd)?.intentOutput ?: return@collect
                         conversationId = data.conversationId
                         data.response.speech.plain["speech"]?.let { response ->
                             val index = _conversation.indexOf(message)
                             _conversation[index] = message.copy(message = response)
+                        }
+                    }
+                    AssistPipelineEventType.TTS_END -> {
+                        if (!isVoice) return@collect
+                        val audioPath = (it.data as? AssistPipelineTtsEnd)?.ttsOutput?.url
+                        if (!audioPath.isNullOrBlank()) {
+                            playAudio(audioPath)
                         }
                     }
                     AssistPipelineEventType.RUN_END -> {
@@ -254,6 +264,14 @@ class AssistViewModel @Inject constructor(
         }
     }
 
+    private fun playAudio(path: String) {
+        UrlHandler.handle(serverManager.getServer(selectedServerId)?.connection?.getUrl(), path)?.let {
+            viewModelScope.launch {
+                audioUrlPlayer.playAudio(it.toString())
+            }
+        }
+    }
+
     fun setPermissionInfo(hasPermission: Boolean, callback: () -> Unit) {
         this.hasPermission = hasPermission
         requestPermission = callback
@@ -272,9 +290,10 @@ class AssistViewModel @Inject constructor(
         requestSilently = false
     }
 
-    fun onStop() {
+    fun onPause() {
         requestPermission = null
         stopRecording()
+        stopPlayback()
     }
 
     private fun stopRecording() {
@@ -297,4 +316,6 @@ class AssistViewModel @Inject constructor(
             inputMode = AssistInputMode.VOICE_INACTIVE
         }
     }
+
+    private fun stopPlayback() = audioUrlPlayer.stop()
 }

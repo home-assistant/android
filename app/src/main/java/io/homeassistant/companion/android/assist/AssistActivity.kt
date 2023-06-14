@@ -61,10 +61,6 @@ class AssistActivity : BaseActivity() {
             window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER)
         }
 
-        viewModel.setPermissionInfo(
-            ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
-        ) { requestPermission.launch(Manifest.permission.RECORD_AUDIO) }
-
         if (savedInstanceState == null) {
             viewModel.onCreate()
             // TODO intent extras
@@ -92,8 +88,15 @@ class AssistActivity : BaseActivity() {
         }
     }
 
-    override fun onStop() {
-        super.onStop()
-        viewModel.onStop()
+    override fun onResume() {
+        super.onResume()
+        viewModel.setPermissionInfo(
+            ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+        ) { requestPermission.launch(Manifest.permission.RECORD_AUDIO) }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        viewModel.onPause()
     }
 }

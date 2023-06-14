@@ -45,6 +45,11 @@ data class AssistPipelineIntentEnd(
     val intentOutput: ConversationResponse
 ) : AssistPipelineEventData
 
+@JsonIgnoreProperties
+data class AssistPipelineTtsEnd(
+    val ttsOutput: TtsOutputResponse
+) : AssistPipelineEventData
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class AssistPipelineError(
     val code: String?,
