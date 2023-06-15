@@ -9,6 +9,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.As
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineListResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.ConversationAgentInfoResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ConversationResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CurrentUserResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
@@ -57,6 +58,12 @@ interface WebSocketRepository {
      * instead.
      */
     suspend fun getConversation(speech: String): ConversationResponse?
+
+    /**
+     * Get information about the conversation agent.
+     * @param agentId Should be an [AssistPipelineResponse.conversationEngine]
+     */
+    suspend fun getConversationAgentInfo(agentId: String): ConversationAgentInfoResponse?
 
     /**
      * Get information about an Assist pipeline.

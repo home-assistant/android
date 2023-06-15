@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.assist.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,11 +47,13 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
@@ -64,7 +67,7 @@ fun AssistSheetView(
     conversation: List<AssistMessage>,
     pipelines: List<AssistUiPipeline>,
     inputMode: AssistViewModel.AssistInputMode?,
-    currentPipeline: Pair<Int, String>?,
+    currentPipeline: AssistUiCurrentPipeline?,
     onSelectPipeline: (Int, String) -> Unit,
     onChangeInput: () -> Unit,
     onTextInput: (String) -> Unit,
@@ -101,6 +104,12 @@ fun AssistSheetView(
                         SpeechBubble(text = it.message, isResponse = !it.isInput)
                     }
                     Spacer(Modifier.height(24.dp))
+                    if (currentPipeline?.attributionName != null) {
+                        AssistSheetAttribution(
+                            name = currentPipeline.attributionName,
+                            url = currentPipeline.attributionUrl
+                        )
+                    }
                     AssistSheetControls(
                         pipelines,
                         inputMode,
@@ -119,10 +128,28 @@ fun AssistSheetView(
 }
 
 @Composable
+fun AssistSheetAttribution(
+    name: String,
+    url: String?
+) {
+    val uriHandler = LocalUriHandler.current
+    val baseModifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+    val modifier = url?.let {
+        Modifier.clickable { uriHandler.openUri(it) }.then(baseModifier)
+    } ?: baseModifier
+    Text(
+        text = name,
+        style = MaterialTheme.typography.caption,
+        textAlign = TextAlign.Center,
+        modifier = modifier
+    )
+}
+
+@Composable
 fun AssistSheetControls(
     pipelines: List<AssistUiPipeline>,
     inputMode: AssistViewModel.AssistInputMode?,
-    currentPipeline: Pair<Int, String>?,
+    currentPipeline: AssistUiCurrentPipeline?,
     onSelectPipeline: (Int, String) -> Unit,
     onChangeInput: () -> Unit,
     onTextInput: (String) -> Unit,
@@ -155,7 +182,7 @@ fun AssistSheetControls(
         }
         DropdownMenu(expanded = pipelineShowList, onDismissRequest = { pipelineShowList = false }) {
             pipelines.forEach {
-                val isSelected = it.serverId == currentPipeline?.first && it.id == currentPipeline.second
+                val isSelected = it.serverId == currentPipeline?.serverId && it.id == currentPipeline.id
                 DropdownMenuItem(onClick = {
                     onSelectPipeline(it.serverId, it.id)
                     pipelineShowList = false
