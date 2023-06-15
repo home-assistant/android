@@ -22,6 +22,7 @@ import com.google.accompanist.themeadapter.material.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.assist.ui.AssistSheetView
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 
 @AndroidEntryPoint
 class AssistActivity : BaseActivity() {
@@ -62,8 +63,23 @@ class AssistActivity : BaseActivity() {
         }
 
         if (savedInstanceState == null) {
-            viewModel.onCreate()
-            // TODO intent extras
+            viewModel.onCreate(
+                serverId = if (intent.hasExtra(EXTRA_SERVER)) {
+                    intent.getIntExtra(EXTRA_SERVER, ServerManager.SERVER_ID_ACTIVE)
+                } else {
+                    null
+                },
+                pipelineId = if (intent.hasExtra(EXTRA_PIPELINE)) {
+                    intent.getStringExtra(EXTRA_PIPELINE)
+                } else {
+                    null
+                },
+                startListening = if (intent.hasExtra(EXTRA_START_LISTENING)) {
+                    intent.getBooleanExtra(EXTRA_START_LISTENING, true)
+                } else {
+                    null
+                }
+            )
         }
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -77,7 +93,9 @@ class AssistActivity : BaseActivity() {
 
                 AssistSheetView(
                     conversation = viewModel.conversation,
+                    pipelines = viewModel.pipelines,
                     inputMode = viewModel.inputMode,
+                    currentPipeline = viewModel.currentPipeline,
                     onSelectPipeline = viewModel::changePipeline,
                     onChangeInput = viewModel::onChangeInput,
                     onTextInput = viewModel::onTextInput,

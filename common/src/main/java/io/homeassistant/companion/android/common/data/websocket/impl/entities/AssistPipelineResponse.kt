@@ -10,7 +10,7 @@ data class AssistPipelineResponse(
     val conversationEngine: String,
     val conversationLanguage: String,
     val sttEngine: String?,
-    val sttLanguage: String,
+    val sttLanguage: String?,
     val ttsEngine: String?,
     val ttsLanguage: String?,
     val ttsVoice: String?

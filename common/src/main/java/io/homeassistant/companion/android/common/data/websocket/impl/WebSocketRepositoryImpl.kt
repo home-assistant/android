@@ -662,9 +662,7 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
                 try {
                     connection?.let {
                         synchronized(it) {
-                            val result = it.send(data.toByteString())
-                            Log.d(TAG, "Bytes sent ${data.toByteString()}") // TODO remove
-                            result
+                            it.send(data.toByteString())
                         }
                     }
                 } catch (e: Exception) {

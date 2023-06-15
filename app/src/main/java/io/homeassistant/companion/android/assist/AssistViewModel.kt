@@ -10,6 +10,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.assist.ui.AssistMessage
+import io.homeassistant.companion.android.assist.ui.AssistUiPipeline
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineError
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEventType
@@ -47,11 +48,14 @@ class AssistViewModel @Inject constructor(
 
     private val app = application
 
+    private var filteredServerId: Int? = null
     private var selectedServerId = ServerManager.SERVER_ID_ACTIVE
+    private val allPipelines = mutableMapOf<Int, List<AssistPipelineResponse>>()
     private var selectedPipeline: AssistPipelineResponse? = null
 
     private var recorderJob: Job? = null
     private var recorderQueue: MutableList<ByteArray>? = null
+    private var recorderAutoStart = true
     private var hasPermission = false
     private var requestPermission: (() -> Unit)? = null
     private var requestSilently = true
@@ -63,15 +67,27 @@ class AssistViewModel @Inject constructor(
     private val _conversation = mutableStateListOf(startMessage)
     val conversation: List<AssistMessage> = _conversation
 
+    private val _pipelines = mutableStateListOf<AssistUiPipeline>()
+    val pipelines: List<AssistUiPipeline> = _pipelines
+
+    var currentPipeline by mutableStateOf<Pair<Int, String>?>(null)
+        private set
+
     var inputMode by mutableStateOf<AssistInputMode?>(null)
         private set
 
-    fun onCreate() {
-        // TODO pass arguments
+    fun onCreate(serverId: Int?, pipelineId: String?, startListening: Boolean?) {
         viewModelScope.launch {
+            serverId?.let {
+                filteredServerId = serverId
+                selectedServerId = serverId
+            }
+            startListening?.let { recorderAutoStart = it }
+
             val supported = checkSupport()
+            // TODO no microphone, offline
             if (supported) {
-                setPipeline(null)
+                setPipeline(pipelineId?.ifBlank { null })
             } else {
                 _conversation.clear()
                 _conversation.add(
@@ -80,6 +96,10 @@ class AssistViewModel @Inject constructor(
                         isInput = false
                     )
                 )
+            }
+
+            viewModelScope.launch {
+                loadPipelines()
             }
         }
     }
@@ -90,20 +110,48 @@ class AssistViewModel @Inject constructor(
             serverManager.webSocketRepository().getConfig()?.components?.contains("assist_pipeline") == true
     }
 
+    private suspend fun loadPipelines() {
+        val serverIds = filteredServerId?.let { listOf(it) } ?: serverManager.defaultServers.map { it.id }
+        serverIds.forEach { serverId ->
+            viewModelScope.launch {
+                val server = serverManager.getServer(serverId)
+                val serverPipelines = serverManager.webSocketRepository(serverId).getAssistPipelines()
+                allPipelines[serverId] = serverPipelines?.pipelines ?: emptyList()
+                _pipelines.addAll(
+                    serverPipelines?.pipelines.orEmpty().map {
+                        AssistUiPipeline(
+                            serverId = serverId,
+                            serverName = server?.friendlyName ?: "",
+                            id = it.id,
+                            name = it.name
+                        )
+                    }
+                )
+            }
+        }
+    }
+
     fun changePipeline(serverId: Int, id: String) = viewModelScope.launch {
+        if (serverId == selectedServerId && id == selectedPipeline?.id) return@launch
+
+        stopRecording()
+        stopPlayback()
+
         selectedServerId = serverId
         setPipeline(id)
     }
 
     private suspend fun setPipeline(id: String?) {
-        selectedPipeline = serverManager.webSocketRepository(selectedServerId).getAssistPipeline(id)
+        selectedPipeline =
+            allPipelines[selectedServerId]?.firstOrNull { it.id == id } ?: serverManager.webSocketRepository(selectedServerId).getAssistPipeline(id)
         selectedPipeline?.let {
             _conversation.clear()
             _conversation.add(startMessage)
             binaryHandlerId = null
             conversationId = null
+            currentPipeline = Pair(selectedServerId, it.id)
             if (it.sttEngine != null) {
-                if (hasPermission || requestSilently) {
+                if (recorderAutoStart && (hasPermission || requestSilently)) {
                     inputMode = AssistInputMode.VOICE_INACTIVE
                     onMicrophoneInput()
                 } else { // already requested permission once and was denied

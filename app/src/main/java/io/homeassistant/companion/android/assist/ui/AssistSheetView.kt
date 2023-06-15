@@ -17,6 +17,8 @@ import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
@@ -46,6 +48,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -59,7 +62,9 @@ import io.homeassistant.companion.android.common.R as commonR
 @Composable
 fun AssistSheetView(
     conversation: List<AssistMessage>,
+    pipelines: List<AssistUiPipeline>,
     inputMode: AssistViewModel.AssistInputMode?,
+    currentPipeline: Pair<Int, String>?,
     onSelectPipeline: (Int, String) -> Unit,
     onChangeInput: () -> Unit,
     onTextInput: (String) -> Unit,
@@ -97,7 +102,9 @@ fun AssistSheetView(
                     }
                     Spacer(Modifier.height(24.dp))
                     AssistSheetControls(
+                        pipelines,
                         inputMode,
+                        currentPipeline,
                         onSelectPipeline,
                         onChangeInput,
                         onTextInput,
@@ -113,14 +120,14 @@ fun AssistSheetView(
 
 @Composable
 fun AssistSheetControls(
+    pipelines: List<AssistUiPipeline>,
     inputMode: AssistViewModel.AssistInputMode?,
+    currentPipeline: Pair<Int, String>?,
     onSelectPipeline: (Int, String) -> Unit,
     onChangeInput: () -> Unit,
     onTextInput: (String) -> Unit,
     onMicrophoneInput: () -> Unit
 ) = Row(verticalAlignment = Alignment.CenterVertically) {
-    // TODO i18n
-
     if (inputMode == null) { // Pipeline info has not yet loaded, empty space for now
         Spacer(modifier = Modifier.height(64.dp))
         return
@@ -133,13 +140,35 @@ fun AssistSheetControls(
         }
     }
 
-    IconButton({ /*TODO*/ }) {
-        Image(
-            asset = CommunityMaterial.Icon.cmd_comment_processing_outline,
-            colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface),
-            modifier = Modifier.size(24.dp)
-        )
+    var pipelineShowList by remember { mutableStateOf(false) }
+    val pipelineShowServer by rememberSaveable(pipelines.size) {
+        mutableStateOf(pipelines.distinctBy { it.serverId }.size > 1)
     }
+    Box {
+        IconButton({ pipelineShowList = !pipelineShowList }) {
+            Image(
+                asset = CommunityMaterial.Icon.cmd_comment_processing_outline,
+                contentDescription = stringResource(commonR.string.assist_change_pipeline),
+                colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface),
+                modifier = Modifier.size(24.dp)
+            )
+        }
+        DropdownMenu(expanded = pipelineShowList, onDismissRequest = { pipelineShowList = false }) {
+            pipelines.forEach {
+                val isSelected = it.serverId == currentPipeline?.first && it.id == currentPipeline.second
+                DropdownMenuItem(onClick = {
+                    onSelectPipeline(it.serverId, it.id)
+                    pipelineShowList = false
+                }) {
+                    Text(
+                        text = if (pipelineShowServer) "${it.serverName}: ${it.name}" else it.name,
+                        fontWeight = if (isSelected) FontWeight.SemiBold else null
+                    )
+                }
+            }
+        }
+    }
+
     if (inputMode == AssistViewModel.AssistInputMode.TEXT || inputMode == AssistViewModel.AssistInputMode.TEXT_ONLY) {
         var text by rememberSaveable(stateSaver = TextFieldValue.Saver) {
             mutableStateOf(TextFieldValue())
@@ -172,13 +201,12 @@ fun AssistSheetControls(
             },
             enabled = (inputMode != AssistViewModel.AssistInputMode.TEXT_ONLY || text.text.isNotBlank())
         ) {
+            val inputIsSend = text.text.isNotBlank() || inputMode == AssistViewModel.AssistInputMode.TEXT_ONLY
             Image(
-                asset =
-                if (text.text.isNotBlank() || inputMode == AssistViewModel.AssistInputMode.TEXT_ONLY) {
-                    CommunityMaterial.Icon3.cmd_send
-                } else {
-                    CommunityMaterial.Icon3.cmd_microphone
-                },
+                asset = if (inputIsSend) CommunityMaterial.Icon3.cmd_send else CommunityMaterial.Icon3.cmd_microphone,
+                contentDescription = stringResource(
+                    if (inputIsSend) commonR.string.assist_send_text else commonR.string.assist_start_listening
+                ),
                 colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface),
                 modifier = Modifier.size(24.dp)
             )
@@ -186,10 +214,14 @@ fun AssistSheetControls(
     } else {
         Spacer(Modifier.weight(0.5f))
         OutlinedButton({ onMicrophoneInput() }) {
+            val inputIsActive = inputMode == AssistViewModel.AssistInputMode.VOICE_ACTIVE
             Image(
                 asset = CommunityMaterial.Icon3.cmd_microphone,
+                contentDescription = stringResource(
+                    if (inputIsActive) commonR.string.assist_stop_listening else commonR.string.assist_start_listening
+                ),
                 colorFilter = ColorFilter.tint(
-                    if (inputMode == AssistViewModel.AssistInputMode.VOICE_ACTIVE) {
+                    if (inputIsActive) {
                         LocalContentColor.current
                     } else {
                         MaterialTheme.colors.onSurface
@@ -202,7 +234,7 @@ fun AssistSheetControls(
         IconButton({ onChangeInput() }) {
             Icon(
                 imageVector = Icons.Outlined.Keyboard,
-                contentDescription = null,
+                contentDescription = stringResource(commonR.string.assist_enter_text),
                 tint = MaterialTheme.colors.onSurface
             )
         }
