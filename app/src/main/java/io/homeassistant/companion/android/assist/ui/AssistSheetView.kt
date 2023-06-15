@@ -7,13 +7,20 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -47,6 +54,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
@@ -85,6 +93,7 @@ fun AssistSheetView(
             true
         }
     )
+    val configuration = LocalConfiguration.current
 
     ModalBottomSheetLayout(
         sheetState = state,
@@ -99,9 +108,24 @@ fun AssistSheetView(
                     .padding(16.dp)
             ) {
                 Column {
+                    val lazyListState = rememberLazyListState()
+                    LaunchedEffect(conversation.size) {
+                        lazyListState.animateScrollToItem(conversation.size)
+                    }
+
                     Spacer(Modifier.height(8.dp))
-                    conversation.forEach {
-                        SpeechBubble(text = it.message, isResponse = !it.isInput)
+                    LazyColumn(
+                        state = lazyListState,
+                        modifier = Modifier.heightIn(
+                            max = configuration.screenHeightDp.dp -
+                                WindowInsets.safeContent.asPaddingValues().calculateBottomPadding() -
+                                WindowInsets.safeContent.asPaddingValues().calculateTopPadding() -
+                                96.dp
+                        )
+                    ) {
+                        items(conversation) {
+                            SpeechBubble(text = it.message, isResponse = !it.isInput)
+                        }
                     }
                     Spacer(Modifier.height(24.dp))
                     if (currentPipeline?.attributionName != null) {
@@ -133,9 +157,13 @@ fun AssistSheetAttribution(
     url: String?
 ) {
     val uriHandler = LocalUriHandler.current
-    val baseModifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+    val baseModifier = Modifier
+        .fillMaxWidth()
+        .padding(vertical = 8.dp)
     val modifier = url?.let {
-        Modifier.clickable { uriHandler.openUri(it) }.then(baseModifier)
+        Modifier
+            .clickable { uriHandler.openUri(it) }
+            .then(baseModifier)
     } ?: baseModifier
     Text(
         text = name,
