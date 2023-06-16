@@ -10,7 +10,6 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.assist.ui.AssistMessage
-import io.homeassistant.companion.android.assist.ui.AssistUiCurrentPipeline
 import io.homeassistant.companion.android.assist.ui.AssistUiPipeline
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineError
@@ -71,7 +70,7 @@ class AssistViewModel @Inject constructor(
     private val _pipelines = mutableStateListOf<AssistUiPipeline>()
     val pipelines: List<AssistUiPipeline> = _pipelines
 
-    var currentPipeline by mutableStateOf<AssistUiCurrentPipeline?>(null)
+    var currentPipeline by mutableStateOf<AssistUiPipeline?>(null)
         private set
 
     var inputMode by mutableStateOf<AssistInputMode?>(null)
@@ -147,9 +146,11 @@ class AssistViewModel @Inject constructor(
             allPipelines[selectedServerId]?.firstOrNull { it.id == id } ?: serverManager.webSocketRepository(selectedServerId).getAssistPipeline(id)
         selectedPipeline?.let {
             val attribution = serverManager.webSocketRepository(selectedServerId).getConversationAgentInfo(it.conversationEngine)?.attribution
-            currentPipeline = AssistUiCurrentPipeline(
+            currentPipeline = AssistUiPipeline(
                 serverId = selectedServerId,
+                serverName = serverManager.getServer(selectedServerId)?.friendlyName ?: "",
                 id = it.id,
+                name = it.name,
                 attributionName = attribution?.name,
                 attributionUrl = attribution?.url
             )

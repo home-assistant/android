@@ -22,8 +22,8 @@ class AudioUrlPlayer {
     private var player: MediaPlayer? = null
 
     /**
-     * Stream and play audio from the provided [url]. This function will suspend until playback has
-     * started.
+     * Stream and play audio from the provided [url]. Any currently playing audio will be stopped.
+     * This function will suspend until playback has started.
      * @param isAssistant whether the usage/stream should be set to Assistant on supported versions
      * @return `true` if the audio playback started, or `false` if not
      */

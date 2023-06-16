@@ -38,6 +38,7 @@ import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -57,14 +58,16 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.assist.AssistViewModel
 import kotlinx.coroutines.launch
 import io.homeassistant.companion.android.common.R as commonR
@@ -75,7 +78,7 @@ fun AssistSheetView(
     conversation: List<AssistMessage>,
     pipelines: List<AssistUiPipeline>,
     inputMode: AssistViewModel.AssistInputMode?,
-    currentPipeline: AssistUiCurrentPipeline?,
+    currentPipeline: AssistUiPipeline?,
     onSelectPipeline: (Int, String) -> Unit,
     onChangeInput: () -> Unit,
     onTextInput: (String) -> Unit,
@@ -95,9 +98,11 @@ fun AssistSheetView(
     )
     val configuration = LocalConfiguration.current
 
+    val sheetCornerRadius = dimensionResource(R.dimen.bottom_sheet_corner_radius)
+
     ModalBottomSheetLayout(
         sheetState = state,
-        sheetShape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+        sheetShape = RoundedCornerShape(topStart = sheetCornerRadius, topEnd = sheetCornerRadius),
         scrimColor = Color.Transparent,
         modifier = Modifier.fillMaxSize(),
         sheetContent = {
@@ -113,32 +118,28 @@ fun AssistSheetView(
                         lazyListState.animateScrollToItem(conversation.size)
                     }
 
-                    Spacer(Modifier.height(8.dp))
+                    AssistSheetHeader(
+                        pipelines = pipelines,
+                        currentPipeline = currentPipeline,
+                        onSelectPipeline = onSelectPipeline
+                    )
                     LazyColumn(
                         state = lazyListState,
-                        modifier = Modifier.heightIn(
-                            max = configuration.screenHeightDp.dp -
-                                WindowInsets.safeContent.asPaddingValues().calculateBottomPadding() -
-                                WindowInsets.safeContent.asPaddingValues().calculateTopPadding() -
-                                96.dp
-                        )
+                        modifier = Modifier
+                            .padding(vertical = 16.dp)
+                            .heightIn(
+                                max = configuration.screenHeightDp.dp -
+                                    WindowInsets.safeContent.asPaddingValues().calculateBottomPadding() -
+                                    WindowInsets.safeContent.asPaddingValues().calculateTopPadding() -
+                                    80.dp
+                            )
                     ) {
                         items(conversation) {
                             SpeechBubble(text = it.message, isResponse = !it.isInput)
                         }
                     }
-                    Spacer(Modifier.height(24.dp))
-                    if (currentPipeline?.attributionName != null) {
-                        AssistSheetAttribution(
-                            name = currentPipeline.attributionName,
-                            url = currentPipeline.attributionUrl
-                        )
-                    }
                     AssistSheetControls(
-                        pipelines,
                         inputMode,
-                        currentPipeline,
-                        onSelectPipeline,
                         onChangeInput,
                         onTextInput,
                         onMicrophoneInput
@@ -152,33 +153,82 @@ fun AssistSheetView(
 }
 
 @Composable
-fun AssistSheetAttribution(
-    name: String,
-    url: String?
+fun AssistSheetHeader(
+    pipelines: List<AssistUiPipeline>,
+    currentPipeline: AssistUiPipeline?,
+    onSelectPipeline: (Int, String) -> Unit
 ) {
-    val uriHandler = LocalUriHandler.current
-    val baseModifier = Modifier
-        .fillMaxWidth()
-        .padding(vertical = 8.dp)
-    val modifier = url?.let {
-        Modifier
-            .clickable { uriHandler.openUri(it) }
-            .then(baseModifier)
-    } ?: baseModifier
-    Text(
-        text = name,
-        style = MaterialTheme.typography.caption,
-        textAlign = TextAlign.Center,
-        modifier = modifier
-    )
+    if (currentPipeline == null) return
+    val color = colorResource(commonR.color.colorOnSurfaceVariant)
+    val weight = if (currentPipeline.attributionName != null) 0.5f else 1f
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Box(Modifier.weight(weight, fill = false)) {
+            var pipelineShowList by remember { mutableStateOf(false) }
+            val pipelineShowServer by rememberSaveable(pipelines.size) {
+                mutableStateOf(pipelines.distinctBy { it.serverId }.size > 1)
+            }
+            Row(
+                modifier = Modifier.clickable { pipelineShowList = !pipelineShowList }
+            ) {
+                Text(
+                    text = if (pipelineShowServer) "${currentPipeline.serverName}: ${currentPipeline.name}" else currentPipeline.name,
+                    color = color,
+                    style = MaterialTheme.typography.caption
+                )
+                Icon(
+                    imageVector = Icons.Default.ExpandMore,
+                    contentDescription = stringResource(commonR.string.assist_change_pipeline),
+                    modifier = Modifier
+                        .height(16.dp)
+                        .padding(start = 4.dp),
+                    tint = color
+                )
+            }
+            DropdownMenu(
+                expanded = pipelineShowList,
+                onDismissRequest = { pipelineShowList = false }
+            ) {
+                pipelines.forEach {
+                    val isSelected =
+                        it.serverId == currentPipeline.serverId && it.id == currentPipeline.id
+                    DropdownMenuItem(onClick = {
+                        onSelectPipeline(it.serverId, it.id)
+                        pipelineShowList = false
+                    }) {
+                        Text(
+                            text = if (pipelineShowServer) "${it.serverName}: ${it.name}" else it.name,
+                            fontWeight = if (isSelected) FontWeight.SemiBold else null
+                        )
+                    }
+                }
+            }
+        }
+        if (currentPipeline.attributionName != null) {
+            val uriHandler = LocalUriHandler.current
+            val baseModifier = Modifier.weight(weight, fill = false).padding(start = 8.dp)
+            val modifier = currentPipeline.attributionUrl?.let {
+                Modifier
+                    .clickable { uriHandler.openUri(it) }
+                    .then(baseModifier)
+            } ?: baseModifier
+            Text(
+                text = currentPipeline.attributionName,
+                textDecoration = if (currentPipeline.attributionUrl != null) TextDecoration.Underline else null,
+                color = color,
+                style = MaterialTheme.typography.caption,
+                modifier = modifier
+            )
+        }
+    }
 }
 
 @Composable
 fun AssistSheetControls(
-    pipelines: List<AssistUiPipeline>,
     inputMode: AssistViewModel.AssistInputMode?,
-    currentPipeline: AssistUiCurrentPipeline?,
-    onSelectPipeline: (Int, String) -> Unit,
     onChangeInput: () -> Unit,
     onTextInput: (String) -> Unit,
     onMicrophoneInput: () -> Unit
@@ -192,35 +242,6 @@ fun AssistSheetControls(
     LaunchedEffect(inputMode) {
         if (inputMode == AssistViewModel.AssistInputMode.TEXT || inputMode == AssistViewModel.AssistInputMode.TEXT_ONLY) {
             focusRequester.requestFocus()
-        }
-    }
-
-    var pipelineShowList by remember { mutableStateOf(false) }
-    val pipelineShowServer by rememberSaveable(pipelines.size) {
-        mutableStateOf(pipelines.distinctBy { it.serverId }.size > 1)
-    }
-    Box {
-        IconButton({ pipelineShowList = !pipelineShowList }) {
-            Image(
-                asset = CommunityMaterial.Icon.cmd_comment_processing_outline,
-                contentDescription = stringResource(commonR.string.assist_change_pipeline),
-                colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface),
-                modifier = Modifier.size(24.dp)
-            )
-        }
-        DropdownMenu(expanded = pipelineShowList, onDismissRequest = { pipelineShowList = false }) {
-            pipelines.forEach {
-                val isSelected = it.serverId == currentPipeline?.serverId && it.id == currentPipeline.id
-                DropdownMenuItem(onClick = {
-                    onSelectPipeline(it.serverId, it.id)
-                    pipelineShowList = false
-                }) {
-                    Text(
-                        text = if (pipelineShowServer) "${it.serverName}: ${it.name}" else it.name,
-                        fontWeight = if (isSelected) FontWeight.SemiBold else null
-                    )
-                }
-            }
         }
     }
 
@@ -267,6 +288,7 @@ fun AssistSheetControls(
             )
         }
     } else {
+        Spacer(Modifier.size(48.dp))
         Spacer(Modifier.weight(0.5f))
         OutlinedButton({ onMicrophoneInput() }) {
             val inputIsActive = inputMode == AssistViewModel.AssistInputMode.VOICE_ACTIVE

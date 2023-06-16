@@ -34,5 +34,6 @@
     <color name="colorDeviceControlsThermostatHeat">#FF8B66</color>
     <color name="colorDeviceControlsCamera">#F1F3F4</color>
     <color name="colorSpeechText">#B3E5FC</color>
+    <color name="colorOnSurfaceVariant">#49454E</color> <!-- M3 On Surface Variant -->
     <color name="colorBottomSheetHandle">#6649454E</color> <!-- M3 On Surface Variant 40% opacity -->
 </resources>
