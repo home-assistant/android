@@ -340,10 +340,10 @@ fun SpeechBubble(text: String, isResponse: Boolean) {
                         colorResource(commonR.color.colorSpeechText)
                     },
                     AbsoluteRoundedCornerShape(
-                        topLeftPercent = 30,
-                        topRightPercent = 30,
-                        bottomLeftPercent = if (isResponse) 0 else 30,
-                        bottomRightPercent = if (isResponse) 30 else 0
+                        topLeft = 12.dp,
+                        topRight = 12.dp,
+                        bottomLeft = if (isResponse) 0.dp else 12.dp,
+                        bottomRight = if (isResponse) 12.dp else 0.dp
                     )
                 )
                 .padding(4.dp)
