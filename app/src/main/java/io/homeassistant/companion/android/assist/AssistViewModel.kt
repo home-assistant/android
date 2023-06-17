@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.assist
 
 import android.app.Application
+import android.content.pm.PackageManager
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -43,7 +44,8 @@ class AssistViewModel @Inject constructor(
         TEXT,
         TEXT_ONLY,
         VOICE_INACTIVE,
-        VOICE_ACTIVE
+        VOICE_ACTIVE,
+        BLOCKED
     }
 
     private val app = application
@@ -56,6 +58,7 @@ class AssistViewModel @Inject constructor(
     private var recorderJob: Job? = null
     private var recorderQueue: MutableList<ByteArray>? = null
     private var recorderAutoStart = true
+    private var hasMicrophone = true
     private var hasPermission = false
     private var requestPermission: (() -> Unit)? = null
     private var requestSilently = true
@@ -76,6 +79,10 @@ class AssistViewModel @Inject constructor(
     var inputMode by mutableStateOf<AssistInputMode?>(null)
         private set
 
+    init {
+        hasMicrophone = app.packageManager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE)
+    }
+
     fun onCreate(serverId: Int?, pipelineId: String?, startListening: Boolean?) {
         viewModelScope.launch {
             serverId?.let {
@@ -85,10 +92,20 @@ class AssistViewModel @Inject constructor(
             startListening?.let { recorderAutoStart = it }
 
             val supported = checkSupport()
-            // TODO no microphone, offline
-            if (supported) {
-                setPipeline(pipelineId?.ifBlank { null })
-            } else {
+            if (!serverManager.isRegistered()) {
+                inputMode = AssistInputMode.BLOCKED
+                _conversation.clear()
+                _conversation.add(
+                    AssistMessage(app.getString(commonR.string.not_registered), isInput = false)
+                )
+            } else if (supported == null) { // Couldn't get config
+                inputMode = AssistInputMode.BLOCKED
+                _conversation.clear()
+                _conversation.add(
+                    AssistMessage(app.getString(commonR.string.assist_connnect), isInput = false)
+                )
+            } else if (!supported) { // Core too old or doesn't include assist pipeline
+                inputMode = AssistInputMode.BLOCKED
                 _conversation.clear()
                 _conversation.add(
                     AssistMessage(
@@ -96,18 +113,22 @@ class AssistViewModel @Inject constructor(
                         isInput = false
                     )
                 )
+            } else {
+                setPipeline(pipelineId?.ifBlank { null })
             }
 
-            viewModelScope.launch {
-                loadPipelines()
+            if (serverManager.isRegistered()) {
+                viewModelScope.launch {
+                    loadPipelines()
+                }
             }
         }
     }
 
-    private suspend fun checkSupport(): Boolean {
+    private suspend fun checkSupport(): Boolean? {
         if (!serverManager.isRegistered()) return false
-        return serverManager.integrationRepository().isHomeAssistantVersionAtLeast(2023, 5, 0) &&
-            serverManager.webSocketRepository().getConfig()?.components?.contains("assist_pipeline") == true
+        if (!serverManager.integrationRepository(selectedServerId).isHomeAssistantVersionAtLeast(2023, 5, 0)) return false
+        return serverManager.webSocketRepository(selectedServerId).getConfig()?.components?.contains("assist_pipeline")
     }
 
     private suspend fun loadPipelines() {
@@ -159,7 +180,7 @@ class AssistViewModel @Inject constructor(
             _conversation.add(startMessage)
             binaryHandlerId = null
             conversationId = null
-            if (it.sttEngine != null) {
+            if (hasMicrophone && it.sttEngine != null) {
                 if (recorderAutoStart && (hasPermission || requestSilently)) {
                     inputMode = AssistInputMode.VOICE_INACTIVE
                     onMicrophoneInput()
@@ -169,12 +190,23 @@ class AssistViewModel @Inject constructor(
             } else {
                 inputMode = AssistInputMode.TEXT_ONLY
             }
-        } // TODO else Assist isn't ready
+        } ?: run {
+            if (!id.isNullOrBlank()) {
+                setPipeline(null) // Try falling back to default pipeline
+            } else {
+                Log.w(TAG, "Server $selectedServerId does not have any pipelines")
+                inputMode = AssistInputMode.BLOCKED
+                _conversation.clear()
+                _conversation.add(
+                    AssistMessage(app.getString(commonR.string.assist_error), isInput = false)
+                )
+            }
+        }
     }
 
     fun onChangeInput() {
         when (inputMode) {
-            null, AssistInputMode.TEXT_ONLY -> { /* Do nothing */ }
+            null, AssistInputMode.BLOCKED, AssistInputMode.TEXT_ONLY -> { /* Do nothing */ }
             AssistInputMode.TEXT -> {
                 inputMode = AssistInputMode.VOICE_INACTIVE
                 if (hasPermission || requestSilently) {
@@ -270,8 +302,9 @@ class AssistViewModel @Inject constructor(
                     AssistPipelineEventType.STT_END -> {
                         stopRecording()
                         (it.data as? AssistPipelineSttEnd)?.sttOutput?.let { response ->
-                            val index = _conversation.indexOf(message)
-                            _conversation[index] = message.copy(message = response["text"] as String)
+                            _conversation.indexOf(message).takeIf { pos -> pos >= 0 }?.let { index ->
+                                _conversation[index] = message.copy(message = response["text"] as String)
+                            }
                         }
                         _conversation.add(haMessage)
                         message = haMessage
@@ -280,8 +313,9 @@ class AssistViewModel @Inject constructor(
                         val data = (it.data as? AssistPipelineIntentEnd)?.intentOutput ?: return@collect
                         conversationId = data.conversationId
                         data.response.speech.plain["speech"]?.let { response ->
-                            val index = _conversation.indexOf(message)
-                            _conversation[index] = message.copy(message = response)
+                            _conversation.indexOf(message).takeIf { pos -> pos >= 0 }?.let { index ->
+                                _conversation[index] = message.copy(message = response)
+                            }
                         }
                     }
                     AssistPipelineEventType.TTS_END -> {
@@ -297,16 +331,18 @@ class AssistViewModel @Inject constructor(
                     }
                     AssistPipelineEventType.ERROR -> {
                         val errorMessage = (it.data as? AssistPipelineError)?.message ?: return@collect
-                        val index = _conversation.indexOf(message)
-                        _conversation[index] = message.copy(message = errorMessage, isError = true)
+                        _conversation.indexOf(message).takeIf { pos -> pos >= 0 }?.let { index ->
+                            _conversation[index] = message.copy(message = errorMessage, isError = true)
+                        }
                         stopRecording()
                         job?.cancel()
                     }
                     else -> { /* Do nothing */ }
                 }
             } ?: run {
-                val messageIndex = _conversation.indexOf(message)
-                _conversation[messageIndex] = message.copy(message = app.getString(commonR.string.assist_error), isError = true)
+                _conversation.indexOf(message).takeIf { pos -> pos >= 0 }?.let { index ->
+                    _conversation[index] = message.copy(message = app.getString(commonR.string.assist_error), isError = true)
+                }
                 stopRecording()
             }
         }

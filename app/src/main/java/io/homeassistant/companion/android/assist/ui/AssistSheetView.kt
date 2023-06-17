@@ -238,6 +238,10 @@ fun AssistSheetControls(
         return
     }
 
+    if (inputMode == AssistViewModel.AssistInputMode.BLOCKED) { // No info and not recoverable, no space
+        return
+    }
+
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(inputMode) {
         if (inputMode == AssistViewModel.AssistInputMode.TEXT || inputMode == AssistViewModel.AssistInputMode.TEXT_ONLY) {
