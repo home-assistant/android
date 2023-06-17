@@ -29,6 +29,11 @@
             android:icon="@drawable/ic_globe"
             android:title="@string/pref_connection_url"/>
         <Preference
+            android:icon="@drawable/leak"
+            android:key="connection_headers"
+            android:summary="@string/pref_headers_summary"
+            android:title="@string/pref_headers" />
+        <Preference
             android:key="connection_internal_ssids"
             android:icon="@drawable/ic_wifi"
             android:title="@string/pref_connection_wifi"

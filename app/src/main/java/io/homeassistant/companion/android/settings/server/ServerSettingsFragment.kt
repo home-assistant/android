@@ -31,6 +31,7 @@ import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.ssid.SsidFragment
 import io.homeassistant.companion.android.settings.url.ExternalUrlFragment
+import io.homeassistant.companion.android.settings.url.HeadersFragment
 import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.launch
@@ -149,6 +150,18 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
                     Bundle().apply { putInt(ExternalUrlFragment.EXTRA_SERVER, serverId) }
                 )
                 addToBackStack(getString(commonR.string.input_url))
+            }
+            return@setOnPreferenceClickListener true
+        }
+
+        findPreference<Preference>("connection_headers")?.setOnPreferenceClickListener {
+            parentFragmentManager.commit {
+                replace(
+                    R.id.content,
+                    HeadersFragment::class.java,
+                    Bundle().apply { putInt(HeadersFragment.EXTRA_SERVER, serverId) }
+                )
+                addToBackStack(getString(commonR.string.pref_headers))
             }
             return@setOnPreferenceClickListener true
         }

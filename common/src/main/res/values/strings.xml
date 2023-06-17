@@ -1063,4 +1063,11 @@
     <string name="ha_assist">HA: Assist</string>
     <string name="only_favorites">Only Show Favorites</string>
     <string name="beacon_scanning">Beacon Monitor Scanning</string>
+    <string name="pref_headers">Headers</string>
+    <string name="pref_headers_name_label">Name</string>
+    <string name="pref_headers_value_label">Value</string>
+    <string name="pref_headers_remove_header">Remove header</string>
+    <string name="pref_headers_add_header">Add header</string>
+    <string name="pref_headers_heading">Header %d</string>
+    <string name="pref_headers_summary">Configure HTTP headers to send when communicating with this server</string>
 </resources>

@@ -515,8 +515,13 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
                 .plus("api/websocket")
 
             try {
+                val requestBuilder =
+                    Request.Builder().url(urlString).header(USER_AGENT, USER_AGENT_STRING)
+                server?.connection?.headers?.forEach {
+                    requestBuilder.header(it.key, it.value)
+                }
                 connection = okHttpClient.newWebSocket(
-                    Request.Builder().url(urlString).header(USER_AGENT, USER_AGENT_STRING).build(),
+                    requestBuilder.build(),
                     this
                 ).also {
                     // Preemptively send auth
@@ -525,7 +530,8 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
                         mapper.writeValueAsString(
                             mapOf(
                                 "type" to "auth",
-                                "access_token" to serverManager.authenticationRepository(serverId).retrieveAccessToken()
+                                "access_token" to serverManager.authenticationRepository(serverId)
+                                    .retrieveAccessToken()
                             )
                         )
                     )

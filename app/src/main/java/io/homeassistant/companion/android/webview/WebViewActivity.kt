@@ -1442,6 +1442,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                         URLUtil.guessFileName(url, contentDisposition, mimetype)
                     )
                 val server = serverManager.getServer(presenter.getActiveServer())
+                server?.connection?.headers?.forEach {
+                    request.addRequestHeader(it.key, it.value)
+                }
                 if (url.startsWith(server?.connection?.getUrl(true).toString()) ||
                     url.startsWith(server?.connection?.getUrl(false).toString())
                 ) {

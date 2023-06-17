@@ -14,6 +14,7 @@ import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.HeaderMap
 import retrofit2.http.POST
 import retrofit2.http.Url
 
@@ -23,48 +24,56 @@ interface IntegrationService {
     suspend fun registerDevice(
         @Url url: HttpUrl,
         @Header("Authorization") auth: String,
-        @Body request: RegisterDeviceRequest
+        @Body request: RegisterDeviceRequest,
+        @HeaderMap headers: Map<String, String>
     ): RegisterDeviceResponse
 
     @GET
     suspend fun getState(
         @Url url: HttpUrl,
-        @Header("Authorization") auth: String
+        @Header("Authorization") auth: String,
+        @HeaderMap headers: Map<String, String>
     ): EntityResponse<Map<String, Any>>
 
     @POST
     suspend fun callWebhook(
         @Url url: HttpUrl,
-        @Body request: IntegrationRequest
+        @Body request: IntegrationRequest,
+        @HeaderMap headers: Map<String, String>
     ): Response<ResponseBody>
 
     @POST
     suspend fun getTemplate(
         @Url url: HttpUrl,
-        @Body request: IntegrationRequest
+        @Body request: IntegrationRequest,
+        @HeaderMap headers: Map<String, String>
     ): Map<String, String>
 
     @POST
     suspend fun getZones(
         @Url url: HttpUrl,
-        @Body request: IntegrationRequest
+        @Body request: IntegrationRequest,
+        @HeaderMap headers: Map<String, String>
     ): Array<EntityResponse<ZoneAttributes>>
 
     @POST
     suspend fun getConfig(
         @Url url: HttpUrl,
-        @Body request: IntegrationRequest
+        @Body request: IntegrationRequest,
+        @HeaderMap headers: Map<String, String>
     ): GetConfigResponse
 
     @POST
     suspend fun getRateLimit(
         @Url url: String,
-        @Body request: RateLimitRequest
+        @Body request: RateLimitRequest,
+        @HeaderMap headers: Map<String, String>
     ): CheckRateLimits
 
     @POST
     suspend fun updateSensors(
         @Url url: HttpUrl,
-        @Body request: IntegrationRequest
+        @Body request: IntegrationRequest,
+        @HeaderMap headers: Map<String, String>
     ): Map<String, Map<String, Any>>
 }

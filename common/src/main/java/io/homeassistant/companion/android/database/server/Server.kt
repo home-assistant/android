@@ -9,7 +9,7 @@ import androidx.room.TypeConverters
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 
 @Entity(tableName = "servers")
-@TypeConverters(InternalSsidTypeConverter::class)
+@TypeConverters(InternalSsidTypeConverter::class, HeadersTypeConverter::class)
 data class Server(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,

@@ -15,6 +15,8 @@ import java.net.URL
 data class ServerConnectionInfo(
     @ColumnInfo(name = "external_url")
     val externalUrl: String,
+    @ColumnInfo(name = "headers")
+    val headers: Map<String, String> = emptyMap(),
     @ColumnInfo(name = "internal_url")
     val internalUrl: String? = null,
     @ColumnInfo(name = "cloud_url")
@@ -121,6 +123,34 @@ class InternalSsidTypeConverter {
     fun fromListToString(value: List<String>): String {
         return if (value.isEmpty()) {
             "[]"
+        } else {
+            try {
+                jacksonObjectMapper().writeValueAsString(value)
+            } catch (e: JsonProcessingException) {
+                ""
+            }
+        }
+    }
+}
+
+class HeadersTypeConverter {
+    @TypeConverter
+    fun fromStringToMap(value: String): Map<String, String> {
+        return if (value == "{}" || value.isBlank()) {
+            emptyMap()
+        } else {
+            try {
+                jacksonObjectMapper().readValue(value)
+            } catch (e: JsonProcessingException) {
+                emptyMap()
+            }
+        }
+    }
+
+    @TypeConverter
+    fun fromMapToString(value: Map<String, String>): String {
+        return if (value.isEmpty()) {
+            "{}"
         } else {
             try {
                 jacksonObjectMapper().writeValueAsString(value)

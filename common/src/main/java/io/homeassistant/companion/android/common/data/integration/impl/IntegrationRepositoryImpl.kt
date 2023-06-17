@@ -97,7 +97,8 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             integrationService.registerDevice(
                 url.newBuilder().addPathSegments("api/mobile_app/registrations").build(),
                 serverManager.authenticationRepository(serverId).buildBearerToken(),
-                request
+                request,
+                server.connection.headers
             )
         try {
             persistDeviceRegistration(deviceRegistration)
@@ -128,7 +129,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         var causeException: Exception? = null
         for (it in server.connection.getApiUrls()) {
             try {
-                if (integrationService.callWebhook(it.toHttpUrlOrNull()!!, request).isSuccessful) {
+                if (integrationService.callWebhook(it.toHttpUrlOrNull()!!, request, server.connection.headers).isSuccessful) {
                     persistDeviceRegistration(deviceRegistration)
                     return
                 }
@@ -187,7 +188,8 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                     IntegrationRequest(
                         "render_template",
                         mapOf("template" to Template(template, variables))
-                    )
+                    ),
+                    server.connection.headers
                 )["template"]
             } catch (e: Exception) {
                 if (causeException == null) causeException = e
@@ -219,7 +221,8 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 wasSuccess =
                     integrationService.callWebhook(
                         it.toHttpUrlOrNull()!!,
-                        updateLocationRequest
+                        updateLocationRequest,
+                        server.connection.headers
                     ).isSuccessful
             } catch (e: Exception) {
                 if (causeException == null) causeException = e
@@ -261,7 +264,8 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                         IntegrationRequest(
                             "call_service",
                             serviceCallRequest
-                        )
+                        ),
+                        server.connection.headers
                     ).isSuccessful
             } catch (e: Exception) {
                 if (causeException == null) causeException = e
@@ -292,7 +296,8 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                         IntegrationRequest(
                             "scan_tag",
                             data
-                        )
+                        ),
+                        server.connection.headers
                     ).isSuccessful
             } catch (e: Exception) {
                 if (causeException == null) causeException = e
@@ -328,7 +333,8 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                         IntegrationRequest(
                             "fire_event",
                             fireEventRequest
-                        )
+                        ),
+                        server.connection.headers
                     ).isSuccessful
             } catch (e: Exception) {
                 if (causeException == null) causeException = e
@@ -357,7 +363,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         var zones: Array<EntityResponse<ZoneAttributes>>? = null
         for (it in server.connection.getApiUrls()) {
             try {
-                zones = integrationService.getZones(it.toHttpUrlOrNull()!!, getZonesRequest)
+                zones = integrationService.getZones(it.toHttpUrlOrNull()!!, getZonesRequest, server.connection.headers)
             } catch (e: Exception) {
                 if (causeException == null) causeException = e
                 // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
@@ -421,7 +427,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
         try {
             checkRateLimits =
-                integrationService.getRateLimit(RATE_LIMIT_URL, requestBody).rateLimits
+                integrationService.getRateLimit(RATE_LIMIT_URL, requestBody, server.connection.headers).rateLimits
         } catch (e: Exception) {
             causeException = e
             Log.e(TAG, "Unable to get notification rate limits", e)
@@ -482,7 +488,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
         for (it in server.connection.getApiUrls()) {
             try {
-                response = integrationService.getConfig(it.toHttpUrlOrNull()!!, getConfigRequest)
+                response = integrationService.getConfig(it.toHttpUrlOrNull()!!, getConfigRequest, server.connection.headers)
             } catch (e: Exception) {
                 if (causeException == null) causeException = e
                 // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
@@ -584,7 +590,8 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
         val response = integrationService.getState(
             url.newBuilder().addPathSegments("api/states/$entityId").build(),
-            serverManager.authenticationRepository(serverId).buildBearerToken()
+            serverManager.authenticationRepository(serverId).buildBearerToken(),
+            server.connection.headers
         )
         return Entity(
             response.entityId,
@@ -677,7 +684,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         var causeException: Exception? = null
         for (it in server.connection.getApiUrls()) {
             try {
-                integrationService.callWebhook(it.toHttpUrlOrNull()!!, integrationRequest).let {
+                integrationService.callWebhook(it.toHttpUrlOrNull()!!, integrationRequest, server.connection.headers).let {
                     // If we created sensor or it already exists
                     if (it.isSuccessful || it.code() == 409) {
                         return
@@ -712,7 +719,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         var causeException: Exception? = null
         for (it in server.connection.getApiUrls()) {
             try {
-                integrationService.updateSensors(it.toHttpUrlOrNull()!!, integrationRequest).let {
+                integrationService.updateSensors(it.toHttpUrlOrNull()!!, integrationRequest, server.connection.headers).let {
                     it.forEach { (_, response) ->
                         if (response["success"] == false) {
                             return false
