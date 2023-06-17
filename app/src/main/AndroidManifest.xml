@@ -387,6 +387,8 @@
             android:exported="true"
             android:windowSoftInputMode="adjustResize"
             android:launchMode="singleTask"
+            android:taskAffinity="io.homeassistant.companion.android.assist"
+            android:autoRemoveFromRecents="true"
             android:showWhenLocked="true"
             android:theme="@style/Theme.HomeAssistant.Assist">
             <intent-filter>
