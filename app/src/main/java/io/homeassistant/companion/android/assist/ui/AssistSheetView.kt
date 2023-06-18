@@ -65,6 +65,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.R
@@ -79,6 +80,7 @@ fun AssistSheetView(
     pipelines: List<AssistUiPipeline>,
     inputMode: AssistViewModel.AssistInputMode?,
     currentPipeline: AssistUiPipeline?,
+    fromFrontend: Boolean,
     onSelectPipeline: (Int, String) -> Unit,
     onChangeInput: () -> Unit,
     onTextInput: (String) -> Unit,
@@ -121,6 +123,7 @@ fun AssistSheetView(
                     AssistSheetHeader(
                         pipelines = pipelines,
                         currentPipeline = currentPipeline,
+                        fromFrontend = fromFrontend,
                         onSelectPipeline = onSelectPipeline
                     )
                     LazyColumn(
@@ -156,72 +159,79 @@ fun AssistSheetView(
 fun AssistSheetHeader(
     pipelines: List<AssistUiPipeline>,
     currentPipeline: AssistUiPipeline?,
+    fromFrontend: Boolean,
     onSelectPipeline: (Int, String) -> Unit
-) {
-    if (currentPipeline == null) return
-    val color = colorResource(commonR.color.colorOnSurfaceVariant)
-    val weight = if (currentPipeline.attributionName != null) 0.5f else 1f
+) = Column(verticalArrangement = Arrangement.Center) {
+    Text(
+        text = stringResource(if (fromFrontend) commonR.string.assist else commonR.string.app_name),
+        fontSize = 20.sp,
+        letterSpacing = 0.25.sp
+    )
+    if (currentPipeline != null) {
+        val color = colorResource(commonR.color.colorOnSurfaceVariant)
+        val weight = if (currentPipeline.attributionName != null) 0.5f else 1f
 
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Box(Modifier.weight(weight, fill = false)) {
-            var pipelineShowList by remember { mutableStateOf(false) }
-            val pipelineShowServer by rememberSaveable(pipelines.size) {
-                mutableStateOf(pipelines.distinctBy { it.serverId }.size > 1)
-            }
-            Row(
-                modifier = Modifier.clickable { pipelineShowList = !pipelineShowList }
-            ) {
-                Text(
-                    text = if (pipelineShowServer) "${currentPipeline.serverName}: ${currentPipeline.name}" else currentPipeline.name,
-                    color = color,
-                    style = MaterialTheme.typography.caption
-                )
-                Icon(
-                    imageVector = Icons.Default.ExpandMore,
-                    contentDescription = stringResource(commonR.string.assist_change_pipeline),
-                    modifier = Modifier
-                        .height(16.dp)
-                        .padding(start = 4.dp),
-                    tint = color
-                )
-            }
-            DropdownMenu(
-                expanded = pipelineShowList,
-                onDismissRequest = { pipelineShowList = false }
-            ) {
-                pipelines.forEach {
-                    val isSelected =
-                        it.serverId == currentPipeline.serverId && it.id == currentPipeline.id
-                    DropdownMenuItem(onClick = {
-                        onSelectPipeline(it.serverId, it.id)
-                        pipelineShowList = false
-                    }) {
-                        Text(
-                            text = if (pipelineShowServer) "${it.serverName}: ${it.name}" else it.name,
-                            fontWeight = if (isSelected) FontWeight.SemiBold else null
-                        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Box(Modifier.weight(weight, fill = false)) {
+                var pipelineShowList by remember { mutableStateOf(false) }
+                val pipelineShowServer by rememberSaveable(pipelines.size) {
+                    mutableStateOf(pipelines.distinctBy { it.serverId }.size > 1)
+                }
+                Row(
+                    modifier = Modifier.clickable { pipelineShowList = !pipelineShowList }
+                ) {
+                    Text(
+                        text = if (pipelineShowServer) "${currentPipeline.serverName}: ${currentPipeline.name}" else currentPipeline.name,
+                        color = color,
+                        style = MaterialTheme.typography.caption
+                    )
+                    Icon(
+                        imageVector = Icons.Default.ExpandMore,
+                        contentDescription = stringResource(commonR.string.assist_change_pipeline),
+                        modifier = Modifier
+                            .height(16.dp)
+                            .padding(start = 4.dp),
+                        tint = color
+                    )
+                }
+                DropdownMenu(
+                    expanded = pipelineShowList,
+                    onDismissRequest = { pipelineShowList = false }
+                ) {
+                    pipelines.forEach {
+                        val isSelected =
+                            it.serverId == currentPipeline.serverId && it.id == currentPipeline.id
+                        DropdownMenuItem(onClick = {
+                            onSelectPipeline(it.serverId, it.id)
+                            pipelineShowList = false
+                        }) {
+                            Text(
+                                text = if (pipelineShowServer) "${it.serverName}: ${it.name}" else it.name,
+                                fontWeight = if (isSelected) FontWeight.SemiBold else null
+                            )
+                        }
                     }
                 }
             }
-        }
-        if (currentPipeline.attributionName != null) {
-            val uriHandler = LocalUriHandler.current
-            val baseModifier = Modifier.weight(weight, fill = false).padding(start = 8.dp)
-            val modifier = currentPipeline.attributionUrl?.let {
-                Modifier
-                    .clickable { uriHandler.openUri(it) }
-                    .then(baseModifier)
-            } ?: baseModifier
-            Text(
-                text = currentPipeline.attributionName,
-                textDecoration = if (currentPipeline.attributionUrl != null) TextDecoration.Underline else null,
-                color = color,
-                style = MaterialTheme.typography.caption,
-                modifier = modifier
-            )
+            if (currentPipeline.attributionName != null) {
+                val uriHandler = LocalUriHandler.current
+                val baseModifier = Modifier.weight(weight, fill = false).padding(start = 8.dp)
+                val modifier = currentPipeline.attributionUrl?.let {
+                    Modifier
+                        .clickable { uriHandler.openUri(it) }
+                        .then(baseModifier)
+                } ?: baseModifier
+                Text(
+                    text = currentPipeline.attributionName,
+                    textDecoration = if (currentPipeline.attributionUrl != null) TextDecoration.Underline else null,
+                    color = color,
+                    style = MaterialTheme.typography.caption,
+                    modifier = modifier
+                )
+            }
         }
     }
 }
@@ -258,7 +268,6 @@ fun AssistSheetControls(
             onValueChange = { text = it },
             label = { Text(stringResource(commonR.string.assist_enter_a_request)) },
             modifier = Modifier
-                .padding(horizontal = 4.dp)
                 .weight(1f)
                 .focusRequester(focusRequester),
             singleLine = true,

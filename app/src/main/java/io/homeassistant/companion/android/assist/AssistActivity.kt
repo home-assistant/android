@@ -35,12 +35,20 @@ class AssistActivity : BaseActivity() {
         private const val EXTRA_SERVER = "server"
         private const val EXTRA_PIPELINE = "pipeline"
         private const val EXTRA_START_LISTENING = "start_listening"
+        private const val EXTRA_FROM_FRONTEND = "from_frontend"
 
-        fun newInstance(context: Context, serverId: Int = -1, pipelineId: String? = null, startListening: Boolean = true): Intent {
+        fun newInstance(
+            context: Context,
+            serverId: Int = -1,
+            pipelineId: String? = null,
+            startListening: Boolean = true,
+            fromFrontend: Boolean = true
+        ): Intent {
             return Intent(context, AssistActivity::class.java).apply {
                 putExtra(EXTRA_SERVER, serverId)
                 putExtra(EXTRA_PIPELINE, pipelineId)
                 putExtra(EXTRA_START_LISTENING, startListening)
+                putExtra(EXTRA_FROM_FRONTEND, fromFrontend)
             }
         }
     }
@@ -95,6 +103,7 @@ class AssistActivity : BaseActivity() {
                     conversation = viewModel.conversation,
                     pipelines = viewModel.pipelines,
                     inputMode = viewModel.inputMode,
+                    fromFrontend = intent.getBooleanExtra(EXTRA_FROM_FRONTEND, false),
                     currentPipeline = viewModel.currentPipeline,
                     onSelectPipeline = viewModel::changePipeline,
                     onChangeInput = viewModel::onChangeInput,
