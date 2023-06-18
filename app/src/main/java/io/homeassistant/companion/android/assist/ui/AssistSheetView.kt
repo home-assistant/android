@@ -134,7 +134,7 @@ fun AssistSheetView(
                                 max = configuration.screenHeightDp.dp -
                                     WindowInsets.safeContent.asPaddingValues().calculateBottomPadding() -
                                     WindowInsets.safeContent.asPaddingValues().calculateTopPadding() -
-                                    80.dp
+                                    96.dp
                             )
                     ) {
                         items(conversation) {
