@@ -23,12 +23,18 @@ import io.homeassistant.companion.android.common.data.websocket.WebSocketRequest
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineError
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEventType
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineIntentEnd
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineIntentStart
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineListResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineRunStart
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineSttEnd
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineTtsEnd
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.ConversationAgentInfoResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ConversationResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CurrentUserResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
@@ -72,6 +78,7 @@ import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okio.ByteString
+import okio.ByteString.Companion.toByteString
 import java.io.IOException
 import java.util.Collections
 import java.util.concurrent.atomic.AtomicLong
@@ -215,17 +222,81 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
         return mapResponse(socketResponse)
     }
 
-    override suspend fun runAssistPipeline(text: String): Flow<AssistPipelineEvent>? =
-        subscribeTo(
-            SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
+    override suspend fun getConversationAgentInfo(agentId: String): ConversationAgentInfoResponse? {
+        val socketResponse = sendMessage(
             mapOf(
-                "start_stage" to "intent",
-                "end_stage" to "intent",
-                "input" to mapOf(
-                    "text" to text
-                )
+                "type" to "conversation/agent/info",
+                "agent_id" to agentId
             )
         )
+
+        return mapResponse(socketResponse)
+    }
+
+    override suspend fun getAssistPipeline(pipelineId: String?): AssistPipelineResponse? {
+        val data = mapOf(
+            "type" to "assist_pipeline/pipeline/get"
+        )
+        val socketResponse = sendMessage(
+            if (pipelineId != null) data.plus("pipeline_id" to pipelineId) else data
+        )
+
+        return mapResponse(socketResponse)
+    }
+
+    override suspend fun getAssistPipelines(): AssistPipelineListResponse? {
+        val socketResponse = sendMessage(
+            mapOf(
+                "type" to "assist_pipeline/pipeline/list"
+            )
+        )
+
+        return mapResponse(socketResponse)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override suspend fun runAssistPipelineForText(
+        text: String,
+        pipelineId: String?,
+        conversationId: String?
+    ): Flow<AssistPipelineEvent>? {
+        val data = mapOf(
+            "start_stage" to "intent",
+            "end_stage" to "intent",
+            "input" to mapOf(
+                "text" to text
+            ),
+            "conversation_id" to conversationId
+        )
+        return subscribeTo(
+            SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
+            (pipelineId?.let { data.plus("pipeline" to it) } ?: data) as Map<Any, Any>
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override suspend fun runAssistPipelineForVoice(
+        sampleRate: Int,
+        outputTts: Boolean,
+        pipelineId: String?,
+        conversationId: String?
+    ): Flow<AssistPipelineEvent>? {
+        val data = mapOf(
+            "start_stage" to "stt",
+            "end_stage" to (if (outputTts) "tts" else "intent"),
+            "input" to mapOf(
+                "sample_rate" to sampleRate
+            ),
+            "conversation_id" to conversationId
+        )
+        return subscribeTo(
+            SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
+            (pipelineId?.let { data.plus("pipeline" to it) } ?: data) as Map<Any, Any>
+        )
+    }
+
+    override suspend fun sendVoiceData(binaryHandlerId: Int, data: ByteArray): Boolean? =
+        sendBytes(byteArrayOf(binaryHandlerId.toByte()) + data)
 
     override suspend fun getStateChanges(): Flow<StateChangedEvent>? =
         subscribeToEventsForType(EVENT_STATE_CHANGED)
@@ -569,7 +640,27 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
                 }
             }
         } else {
-            Log.e(TAG, "Unable to send message $request")
+            Log.w(TAG, "Unable to send message, not connected: $request")
+            null
+        }
+    }
+
+    private suspend fun sendBytes(data: ByteArray): Boolean? {
+        return if (connect()) {
+            withTimeoutOrNull(30_000) {
+                try {
+                    connection?.let {
+                        synchronized(it) {
+                            it.send(data.toByteString())
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Exception while sending bytes", e)
+                    null
+                }
+            }
+        } else {
+            Log.w(TAG, "Unable to send bytes, not connected")
             null
         }
     }
@@ -630,8 +721,11 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
                         val eventDataMap = response.event.get("data")
                         val eventData = when (eventType.textValue()) {
                             AssistPipelineEventType.RUN_START -> mapper.convertValue(eventDataMap, AssistPipelineRunStart::class.java)
+                            AssistPipelineEventType.STT_END -> mapper.convertValue(eventDataMap, AssistPipelineSttEnd::class.java)
                             AssistPipelineEventType.INTENT_START -> mapper.convertValue(eventDataMap, AssistPipelineIntentStart::class.java)
                             AssistPipelineEventType.INTENT_END -> mapper.convertValue(eventDataMap, AssistPipelineIntentEnd::class.java)
+                            AssistPipelineEventType.TTS_END -> mapper.convertValue(eventDataMap, AssistPipelineTtsEnd::class.java)
+                            AssistPipelineEventType.ERROR -> mapper.convertValue(eventDataMap, AssistPipelineError::class.java)
                             else -> null
                         }
                         AssistPipelineEvent(eventType.textValue(), eventData)

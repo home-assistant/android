@@ -200,6 +200,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling")
     implementation("androidx.activity:activity-compose:1.7.1")
     implementation("androidx.navigation:navigation-compose:2.5.3")
+    implementation("com.google.accompanist:accompanist-systemuicontroller:0.30.1")
     implementation("com.google.accompanist:accompanist-themeadapter-material:0.30.1")
 
     implementation("com.mikepenz:iconics-core:5.4.0")

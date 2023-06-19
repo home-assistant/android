@@ -407,6 +407,20 @@
             <meta-data android:name="distractionOptimized" android:value="true"/>
         </activity>
 
+        <activity android:name=".assist.AssistActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize"
+            android:launchMode="singleTask"
+            android:taskAffinity="io.homeassistant.companion.android.assist"
+            android:autoRemoveFromRecents="true"
+            android:showWhenLocked="true"
+            android:theme="@style/Theme.HomeAssistant.Assist">
+            <intent-filter>
+                <action android:name="android.intent.action.ASSIST" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
