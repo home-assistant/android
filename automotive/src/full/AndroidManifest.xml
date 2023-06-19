@@ -4,6 +4,13 @@
 
     <uses-sdk tools:overrideLibrary="com.google.android.gms.threadnetwork" />
 
+    <queries>
+        <!-- For GMS Core/Play service -->
+        <package android:name="com.google.android.gms" />
+        <package android:name="com.android.vending" />
+        <!-- End of GMS Core/Play service-->
+    </queries>
+
     <application
         android:name="io.homeassistant.companion.android.HomeAssistantApplication" >
         <meta-data android:name="io.sentry.auto-init" android:value="false" />
