@@ -26,7 +26,7 @@ android {
         minSdk = 29
         targetSdk = 33
 
-        versionName = System.getenv("VERSION") ?: "LOCAL"
+        versionName = project.version.toString()
         // We add 2 because the app, wear (+1) and automotive versions need to have different version codes.
         versionCode = (System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1) + 3
 

@@ -27,7 +27,7 @@ android {
         minSdk = 21
         targetSdk = 33
 
-        versionName = System.getenv("VERSION") ?: "LOCAL"
+        versionName = project.version.toString()
         versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
 
         manifestPlaceholders["sentryRelease"] = "$applicationId@$versionName"
