@@ -441,11 +441,6 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
         return response?.success == true
     }
 
-    /**
-     * Request the server to add a Matter device to the network and commission it
-     * @return [MatterCommissionResponse] detailing the server's response, or `null` if the server
-     * did not return a response
-     */
     override suspend fun commissionMatterDevice(code: String): MatterCommissionResponse? {
         val response = sendMessage(
             WebSocketRequest(
@@ -471,11 +466,6 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
         }
     }
 
-    /**
-     * Request the server to commission a Matter device that is already on the network
-     * @return [MatterCommissionResponse] detailing the server's response, or `null` if the server
-     * did not return a response
-     */
     override suspend fun commissionMatterDeviceOnNetwork(pin: Long): MatterCommissionResponse? {
         val response = sendMessage(
             WebSocketRequest(
@@ -501,10 +491,6 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
         }
     }
 
-    /**
-     * Return a list of all Thread datasets known to the server.
-     * @return List with [ThreadDatasetResponse]s, or `null` if not an admin or no response.
-     */
     override suspend fun getThreadDatasets(): List<ThreadDatasetResponse>? {
         val response = sendMessage(
             mapOf(
@@ -518,11 +504,6 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
         }
     }
 
-    /**
-     * Return the TLV value for a dataset.
-     * @return [ThreadDatasetTlvResponse] for the Thread dataset, or `null` if not found, not an
-     * admin or no response.
-     */
     override suspend fun getThreadDatasetTlv(datasetId: String): ThreadDatasetTlvResponse? {
         val response = sendMessage(
             mapOf(
@@ -534,10 +515,6 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
         return mapResponse(response)
     }
 
-    /**
-     * Add a new set of Thread network credentials to the server.
-     * @return `true` if the server indicated success
-     */
     override suspend fun addThreadDataset(tlv: ByteArray): Boolean {
         val response = sendMessage(
             mapOf(

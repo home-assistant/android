@@ -47,10 +47,38 @@ interface WebSocketRepository {
     suspend fun getTemplateUpdates(template: String): Flow<TemplateUpdatedEvent>?
     suspend fun getNotifications(): Flow<Map<String, Any>>?
     suspend fun ackNotification(confirmId: String): Boolean
+
+    /**
+     * Request the server to add a Matter device to the network and commission it.
+     * @return [MatterCommissionResponse] detailing the server's response, or `null` if the server
+     * did not return a response.
+     */
     suspend fun commissionMatterDevice(code: String): MatterCommissionResponse?
+
+    /**
+     * Request the server to commission a Matter device that is already on the network.
+     * @return [MatterCommissionResponse] detailing the server's response, or `null` if the server
+     * did not return a response.
+     */
     suspend fun commissionMatterDeviceOnNetwork(pin: Long): MatterCommissionResponse?
+
+    /**
+     * Return a list of all Thread datasets known to the server.
+     * @return List with [ThreadDatasetResponse]s, or `null` if not an admin or no response.
+     */
     suspend fun getThreadDatasets(): List<ThreadDatasetResponse>?
+
+    /**
+     * Return the TLV value for a dataset.
+     * @return [ThreadDatasetTlvResponse] for the Thread dataset, or `null` if not found, not an
+     * admin or no response.
+     */
     suspend fun getThreadDatasetTlv(datasetId: String): ThreadDatasetTlvResponse?
+
+    /**
+     * Add a new set of Thread network credentials to the server.
+     * @return `true` if the server indicated success
+     */
     suspend fun addThreadDataset(tlv: ByteArray): Boolean
 
     /**

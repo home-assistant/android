@@ -1,8 +1,6 @@
 package io.homeassistant.companion.android.onboarding.phoneinstall
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -41,50 +39,48 @@ fun PhoneInstallView(
         },
         timeText = { TimeText(scalingLazyListState = scrollState) }
     ) {
-        Box(modifier = Modifier.background(MaterialTheme.colors.background)) {
-            ThemeLazyColumn(state = scrollState) {
-                item {
-                    Image(
-                        painter = painterResource(R.drawable.app_icon),
-                        contentDescription = null,
-                        modifier = Modifier.size(48.dp)
-                    )
+        ThemeLazyColumn(state = scrollState) {
+            item {
+                Image(
+                    painter = painterResource(R.drawable.app_icon),
+                    contentDescription = null,
+                    modifier = Modifier.size(48.dp)
+                )
+            }
+            item {
+                Text(
+                    text = stringResource(commonR.string.install_phone_to_continue),
+                    style = MaterialTheme.typography.title3,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
+                )
+            }
+            item {
+                Button(
+                    onClick = onInstall,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(commonR.string.install))
                 }
-                item {
-                    Text(
-                        text = stringResource(commonR.string.install_phone_to_continue),
-                        style = MaterialTheme.typography.title3,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
-                    )
+            }
+            item {
+                Button(
+                    onClick = onRefresh,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.secondaryButtonColors()
+                ) {
+                    Text(stringResource(commonR.string.refresh))
                 }
-                item {
-                    Button(
-                        onClick = onInstall,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(stringResource(commonR.string.install))
-                    }
-                }
-                item {
-                    Button(
-                        onClick = onRefresh,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.secondaryButtonColors()
-                    ) {
-                        Text(stringResource(commonR.string.refresh))
-                    }
-                }
-                item {
-                    Button(
-                        onClick = onAdvanced,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 16.dp),
-                        colors = ButtonDefaults.secondaryButtonColors()
-                    ) {
-                        Text(stringResource(commonR.string.advanced))
-                    }
+            }
+            item {
+                Button(
+                    onClick = onAdvanced,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp),
+                    colors = ButtonDefaults.secondaryButtonColors()
+                ) {
+                    Text(stringResource(commonR.string.advanced))
                 }
             }
         }
