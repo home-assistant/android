@@ -6,9 +6,6 @@ inputs:
     required: true
     default: false
 outputs:
-  version:
-    description: 'The current app version'
-    value: ${{ steps.version-generator.outputs.version }}
   version-code:
     description: 'The numeric app version'
     value: ${{ steps.version-generator.outputs.version-code }}
@@ -22,15 +19,7 @@ runs:
         COMMITS=`git rev-list --count HEAD`
         TAGS=`git tag | grep -v beta | wc -l`
         VC=$((((COMMITS+TAGS) * 3) << 1))
-        HASH=`git rev-parse --short HEAD`
-        if [ "${{inputs.beta}}" = "true" ]; then
-           VERSION=beta-$VC-$HASH
-        else
-           VERSION=`git describe --tags`
-        fi
         echo Number Commits $COMMITS
         echo Number Tags $TAGS
-        echo Version $VERSION
         echo Version Code $VC
-        echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "version-code=$VC" >> $GITHUB_OUTPUT

@@ -113,7 +113,7 @@ jobs:
         else
           echo -e "\n✔️ No changes in database schema directory after build"
         fi
-    
+
     - name: Archive Debug Build
       uses: actions/upload-artifact@v3
       with:

@@ -8,3 +8,9 @@ google-services.json
 .gradle/
 build/
 *.keystore
+
+# Make sure our transaltion downloads don't make our repo dirty when building.
+strings.zip
+common/src/main/res/*/strings.xml
+common/src/main/res/xml/locales_config.xml
+!common/src/main/res/values/strings.xml

@@ -1,8 +1,11 @@
-name: Beta Deploy
+name: On Push
 
 on:
   push:
-    branches: [ master ]
+    branches:
+      - master
+    tags:
+      - [0-9]+.[0-9]+.[0-9]+
 
 jobs:
   app_build:
@@ -31,8 +34,6 @@ jobs:
       - uses: ./.github/actions/create-release-number
         name: Create Release Number
         id: rel_number
-        with:
-          beta: true
 
       - uses: ./.github/actions/inflate-secrets
         name: Inflate Secrets
@@ -56,42 +57,21 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_FILE_PASSWORD }}
           KEYSTORE_ALIAS: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS }}
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS_PASSWORD }}
-          VERSION: ${{ steps.rel_number.outputs.version }}
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
         run: ./gradlew assembleRelease
 
-      - name: Create Github Pre-Release
-        uses: softprops/action-gh-release@v0.1.15
+      - name: Archive Build
+        uses: actions/upload-artifact@v3
         with:
-          tag_name: ${{ steps.rel_number.outputs.version }}
-          body_path: ./app/build/outputs/changelogGithub
-          draft: false
-          prerelease: true
-          files: |
-            ./app/build/outputs/apk/full/release/app-full-release.apk
-            ./app/build/outputs/apk/minimal/release/app-minimal-release.apk
-            ./wear/build/outputs/apk/release/wear-release.apk
-            ./automotive/build/outputs/apk/full/release/automotive-full-release.apk
-            ./automotive/build/outputs/apk/minimal/release/automotive-minimal-release.apk
+          path: ./**/*.apk
 
       - name: Deploy to Firebase
         env:
           KEYSTORE_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_FILE_PASSWORD }}
           KEYSTORE_ALIAS: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS }}
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS_PASSWORD }}
-          VERSION: ${{ steps.rel_number.outputs.version }}
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
         run: ./gradlew appDistributionUploadFullRelease
-
-      - name: Create a Sentry.io release
-        uses: getsentry/action-release@v1
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
-        with:
-          version: io.homeassistant.companion.android@${{ steps.rel_number.outputs.version }}
-          environment: Beta
 
   play_publish:
     name: Play Publish
@@ -121,8 +101,6 @@ jobs:
       - uses: ./.github/actions/create-release-number
         name: Create Release Number
         id: rel_number
-        with:
-          beta: true
 
       - uses: ./.github/actions/inflate-secrets
         name: Inflate Secrets
@@ -146,7 +124,6 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
           KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
-          VERSION: ${{ steps.rel_number.outputs.version }}
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
         run: ./gradlew bundleRelease
 
@@ -155,8 +132,18 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
           KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
-          VERSION: ${{ steps.rel_number.outputs.version }}
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
         run: |
           ./gradlew :wear:publishReleaseBundle :app:publishReleaseBundle
           ./gradlew :automotive:publishReleaseBundle || echo "Failed to publish Automotive!"
+
+      - name: Promote Internal to Beta
+        if: startsWith(github.event.ref, 'refs/tags/')
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
+          KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
+          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
+          VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
+        run: |
+          ./gradlew :wear:promoteReleaseBundle :app:promoteReleaseBundle
+          ./gradlew :automotive:promoteReleaseBundle || echo "Failed to promote Automotive!"
