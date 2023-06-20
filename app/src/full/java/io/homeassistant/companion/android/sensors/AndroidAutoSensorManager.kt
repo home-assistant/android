@@ -22,6 +22,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Observer
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.util.androidAutoChannel
 import io.homeassistant.companion.android.vehicle.HaCarAppService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -229,8 +230,7 @@ class AndroidAutoSensorManager :
     private fun startAppNotification() {
         val manager = CarNotificationManager.from(context)
 
-        val channelID = "HA_AA_OPEN"
-        val chan = NotificationChannelCompat.Builder(channelID, NotificationManagerCompat.IMPORTANCE_HIGH)
+        val chan = NotificationChannelCompat.Builder(androidAutoChannel, NotificationManagerCompat.IMPORTANCE_HIGH)
             .setName(context.getString(commonR.string.android_auto_notification_channel))
             .build()
         manager.createNotificationChannel(chan)
@@ -238,7 +238,7 @@ class AndroidAutoSensorManager :
         val intent = Intent(Intent.ACTION_VIEW)
             .setComponent(ComponentName(context, HaCarAppService::class.java))
 
-        val notification = NotificationCompat.Builder(context, channelID)
+        val notification = NotificationCompat.Builder(context, androidAutoChannel)
             .setContentTitle(context.getString(commonR.string.android_auto_notification_message))
             .setSmallIcon(commonR.drawable.ic_stat_ic_notification)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
