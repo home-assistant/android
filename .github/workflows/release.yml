@@ -5,8 +5,8 @@ on:
     types: [ released ]
 
 jobs:
-  play_promote:
-    name: Play Publish
+  play_promote_production:
+    name: Play Publish Production
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

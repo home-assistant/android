@@ -65,6 +65,22 @@ jobs:
         with:
           path: ./**/*.apk
 
+      - name: Create Github Pre-Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v0.1.15
+        with:
+          tag_name: ${{ steps.rel_number.outputs.version }}
+          body_path: ./app/build/outputs/changelogGithub
+          draft: false
+          prerelease: true
+          files: |
+            ./app/build/outputs/apk/full/release/app-full-release.apk
+            ./app/build/outputs/apk/minimal/release/app-minimal-release.apk
+            ./wear/build/outputs/apk/release/wear-release.apk
+            ./automotive/build/outputs/apk/full/release/automotive-full-release.apk
+            ./automotive/build/outputs/apk/minimal/release/automotive-minimal-release.apk
+            ./version.txt
+
       - name: Deploy to Firebase
         env:
           KEYSTORE_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_FILE_PASSWORD }}

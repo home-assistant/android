@@ -77,7 +77,7 @@ The project currently uses [lokalise](https://lokalise.com/public/145814835dd655
 
 
 ## Generating a release to production
-* Create a new release with the name and tag in the `{MAJOR}.{MINOR}.{PATCH}` format
-* Steal the release notes from the latest beta build
-* This will cause a tag to be added to the project and the `Production Deploy` Workflow will handle the rest
-* Note: Only the first 500 characters of the release notes get set in the Google Play release
+* Go to the latest Pre-Release and edit it
+* Delete the body of the release, select the last full release tag and auto generate the release notes
+* Uncheck the Pre-Release box and click update release
+* This should cause the `Play Publish Production` Workflow to execute and should handle the rest

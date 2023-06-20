@@ -1,14 +1,12 @@
 name: 'Create Release Numbers'
 description: 'Creates the current release number based on checked out code'
-inputs:
-  beta:
-    description: 'If this is a beta build'
-    required: true
-    default: false
 outputs:
   version-code:
     description: 'The numeric app version'
     value: ${{ steps.version-generator.outputs.version-code }}
+  version:
+    description: 'The app version'
+    value: ${{ steps.version-generator.outputs.version }}
 runs:
   using: 'composite'
   steps:
@@ -16,6 +14,7 @@ runs:
       id: version-generator
       shell: bash
       run: |
+        ./gradlew versionFile
         COMMITS=`git rev-list --count HEAD`
         TAGS=`git tag | grep -v beta | wc -l`
         VC=$((((COMMITS+TAGS) * 3) << 1))
@@ -23,3 +22,6 @@ runs:
         echo Number Tags $TAGS
         echo Version Code $VC
         echo "version-code=$VC" >> $GITHUB_OUTPUT
+        VERSION=`cat version.txt`
+        echo Version $VERSION
+        echo "version=$VERSION" >> $GITHUB_OUTPUT

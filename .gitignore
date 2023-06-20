@@ -9,6 +9,8 @@ google-services.json
 build/
 *.keystore
 
+version.txt
+
 # Make sure our transaltion downloads don't make our repo dirty when building.
 strings.zip
 common/src/main/res/*/strings.xml
