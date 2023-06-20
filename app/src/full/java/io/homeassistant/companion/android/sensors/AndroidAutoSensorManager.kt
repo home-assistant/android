@@ -66,7 +66,7 @@ class AndroidAutoSensorManager :
             unitOfMeasurement = "%",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             deviceClass = "battery",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         private val carName = SensorManager.BasicSensor(
             "android_auto_car_name",
