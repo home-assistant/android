@@ -80,10 +80,6 @@ class HaCarAppService : CarAppService() {
                     entityFlow
                 ) { loadEntities(lifecycleScope, it) }
             }
-
-            override fun onNewIntent(intent: Intent) {
-                carContext.getCarService(ScreenManager::class.java).popToRoot()
-            }
         }
     }
 
