@@ -1,18 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2023.6 - Phone" versioncode="3">
-        <change>Add 2 new Android version sensors</change>
-        <change>Add new intent extra types for notification commands</change>
-        <change>Matter improvements and fixes</change>
-        <change>Bug fixes, design improvements and dependency updates</change>
+    <release version="2023.7 - Phone" versioncode="3">
+        <change>Add support for native Assist</change>
+        <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2023.6 - Wear" versioncode="2">
-        <change>Entity State Complication: Support long text type, add new option to show or hide friendly name</change>
-        <change>Add 2 new Android version sensors</change>
-        <change>Bug fixes, design improvements and dependency updates</change>
+    <release version="2023.7 - Wear" versioncode="2">
+        <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2023.6 - Automotive" versioncode="1">
-        <change>Initial Release</change>
+    <release version="2023.7 - Automotive" versioncode="1">
+        <change>Add Minimal Version - No Dependencies on Google Automotive Services</change>
     </release>
 </changelog>
