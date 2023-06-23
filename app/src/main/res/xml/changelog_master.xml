@@ -2,7 +2,7 @@
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
     <release version="2023.7 - Phone" versioncode="3">
-        <change>Add support for native Assist</change>
+        <change>Assist: Access from any screen as the default digital assistant app, allow voice input over HTTP connections</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2023.7 - Wear" versioncode="2">
