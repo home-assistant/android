@@ -25,6 +25,7 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.integration.impl.entities.Template
 import io.homeassistant.companion.android.common.data.integration.impl.entities.UpdateLocationRequest
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEventType
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineIntentEnd
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
@@ -33,13 +34,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.util.concurrent.TimeUnit
 import javax.inject.Named
-import kotlin.coroutines.resume
 
 class IntegrationRepositoryImpl @AssistedInject constructor(
     private val integrationService: IntegrationService,
@@ -533,28 +532,26 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         }?.toList()
     }
 
-    override suspend fun getAssistResponse(speech: String): String? {
+    override suspend fun getAssistResponse(text: String, pipelineId: String?, conversationId: String?): Flow<AssistPipelineEvent>? {
         return if (server.version?.isAtLeast(2023, 5, 0) == true) {
-            var job: Job? = null
-            val response = suspendCancellableCoroutine { cont ->
-                job = ioScope.launch {
-                    webSocketRepository.runAssistPipelineForText(speech)?.collect {
-                        if (!cont.isActive) return@collect
-                        when (it.type) {
-                            AssistPipelineEventType.INTENT_END ->
-                                cont.resume((it.data as AssistPipelineIntentEnd).intentOutput.response.speech.plain["speech"])
-                            AssistPipelineEventType.ERROR,
-                            AssistPipelineEventType.RUN_END -> cont.resume(null)
-                            else -> { /* Do nothing */ }
-                        }
-                    } ?: cont.resume(null)
-                }
-            }
-            job?.cancel()
-            response
+            webSocketRepository.runAssistPipelineForText(text, pipelineId, conversationId)
         } else {
-            val response = webSocketRepository.getConversation(speech)
-            response?.response?.speech?.plain?.get("speech")
+            flow {
+                emit(AssistPipelineEvent(type = AssistPipelineEventType.RUN_START, data = null))
+                emit(AssistPipelineEvent(type = AssistPipelineEventType.INTENT_START, data = null))
+                val response = webSocketRepository.getConversation(text)
+                if (response != null) {
+                    emit(
+                        AssistPipelineEvent(
+                            type = AssistPipelineEventType.INTENT_END,
+                            data = AssistPipelineIntentEnd(response)
+                        )
+                    )
+                } else {
+                    emit(AssistPipelineEvent(type = AssistPipelineEventType.ERROR, data = null))
+                }
+                emit(AssistPipelineEvent(type = AssistPipelineEventType.RUN_END, data = null))
+            }
         }
     }
 

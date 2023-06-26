@@ -12,7 +12,7 @@ import androidx.activity.viewModels
 import androidx.core.content.getSystemService
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.conversation.views.ConversationResultView
+import io.homeassistant.companion.android.conversation.views.LoadAssistView
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -34,7 +34,6 @@ class ConversationActivity : ComponentActivity() {
                     it?.get(0) ?: ""
                 }
             )
-            conversationViewModel.getConversation()
         }
     }
 
@@ -42,28 +41,35 @@ class ConversationActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         lifecycleScope.launch {
-            conversationViewModel.checkAssistSupport()
-            if (conversationViewModel.supportsAssist) {
-                val searchIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                    putExtra(
-                        RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                        RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
-                    )
-                }
-                searchResults.launch(searchIntent)
+            val launchIntent = conversationViewModel.onCreate()
+            if (launchIntent) {
+                launchVoiceInputIntent()
             }
         }
 
         setContent {
-            ConversationResultView(conversationViewModel)
+            LoadAssistView(
+                conversationViewModel = conversationViewModel,
+                onMicrophoneInput = this::launchVoiceInputIntent
+            )
         }
     }
 
     override fun onPause() {
         super.onPause()
         val pm = applicationContext.getSystemService<PowerManager>()
-        if (pm?.isInteractive == false && conversationViewModel.conversationResult.isNotEmpty()) {
+        if (pm?.isInteractive == false && conversationViewModel.conversation.size >= 3) {
             finish()
         }
+    }
+
+    private fun launchVoiceInputIntent() {
+        val searchIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(
+                RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+            )
+        }
+        searchResults.launch(searchIntent)
     }
 }
