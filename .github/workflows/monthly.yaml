@@ -6,7 +6,7 @@ on:
     - cron: '30 3 1 * *'
 jobs:
   tag:
-    name: Tag Weekly Release
+    name: Tag Monthly Release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
