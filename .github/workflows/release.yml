@@ -5,113 +5,8 @@ on:
     types: [ released ]
 
 jobs:
-  app_build:
-    name: Github, Firebase, Amazon, and Sentry Releases
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3.11.0
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - uses: ./.github/actions/create-release-number
-        name: Create Release Number
-        id: rel_number
-        with:
-          beta: false
-
-      - uses: ./.github/actions/inflate-secrets
-        name: Inflate Secrets
-        with:
-          keystore: ${{ secrets.ORIGINAL_KEYSTORE_FILE }}
-          google-services: ${{ secrets.GOOGLESERVICES }}
-          firebase-creds: ${{ secrets.FIREBASECREDS }}
-          playstore-creds: ${{ secrets.PLAYSTORECREDS }}
-
-      - uses: ./.github/actions/create-release-notes
-        name: Create Release Notes
-
-      - name: Swap release notes
-        run: |
-          rm ./app/build/outputs/changelogBeta
-          cp ./app/build/outputs/changelogGithub ./app/build/outputs/changelogBeta
-
-      - uses: ./.github/actions/download-translations
-        name: Download Translations
-        with:
-          lokalise-project: ${{ secrets.LOKALISE_PROJECT }}
-          lokalise-token: ${{ secrets.LOKALISE_TOKEN }}
-
-      - name: Build Release
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_FILE_PASSWORD }}
-          KEYSTORE_ALIAS: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS }}
-          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS_PASSWORD }}
-          VERSION: ${{ steps.rel_number.outputs.version }}
-          VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
-        run: ./gradlew assembleRelease
-
-      - name: Create Version File
-        shell: bash
-        env:
-          VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
-        run: |
-          echo $VERSION_CODE > ./app/build/outputs/version_code.txt
-
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            ./app/build/outputs/apk/full/release/app-full-release.apk
-            ./app/build/outputs/apk/minimal/release/app-minimal-release.apk
-            ./wear/build/outputs/apk/release/wear-release.apk
-            ./automotive/build/outputs/apk/full/release/automotive-full-release.apk
-            ./automotive/build/outputs/apk/minimal/release/automotive-minimal-release.apk
-            ./app/build/outputs/version_code.txt
-
-      - name: Deploy to Firebase
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_FILE_PASSWORD }}
-          KEYSTORE_ALIAS: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS }}
-          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS_PASSWORD }}
-          VERSION: ${{ steps.rel_number.outputs.version }}
-          VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
-        run: ./gradlew appDistributionUploadFullRelease
-
-      - name: Deploy to Amazon
-        uses: ALJAZEERAPLUS/amazon-appstore-action@v1.1.1
-        with:
-          client-id: ${{ secrets.AMAZON_APPSTORE_CLIENT_ID }}
-          client-secret: ${{ secrets.AMAZON_APPSTORE_CLIENT_SECRET }}
-          app-id: ${{ secrets.AMAZON_APPSTORE_APP_ID }}
-          apk-file: ./app/build/outputs/apk/minimal/release/app-minimal-release.apk
-
-      - name: Create a Sentry.io release
-        uses: getsentry/action-release@v1
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
-        with:
-          version: io.homeassistant.companion.android@${{ steps.rel_number.outputs.version }}
-          environment: Production
-
-  play_publish:
-    name: Play Publish
+  play_promote_production:
+    name: Play Publish Production
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -133,62 +28,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - uses: ./.github/actions/create-release-number
-        name: Create Release Number
-        id: rel_number
-        with:
-          beta: false
-
-      - uses: ./.github/actions/inflate-secrets
-        name: Inflate Secrets
-        with:
-          keystore: ${{ secrets.UPLOAD_KEYSTORE_FILE }}
-          google-services: ${{ secrets.GOOGLESERVICES }}
-          firebase-creds: ${{ secrets.FIREBASECREDS }}
-          playstore-creds: ${{ secrets.PLAYSTORECREDS }}
-
-      - uses: ./.github/actions/create-release-notes
-        name: Create Release Notes
-
-      - uses: ./.github/actions/download-translations
-        name: Download Translations
-        with:
-          lokalise-project: ${{ secrets.LOKALISE_PROJECT }}
-          lokalise-token: ${{ secrets.LOKALISE_TOKEN }}
-
-      - name: Build Release
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
-          KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
-          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
-          VERSION: ${{ steps.rel_number.outputs.version }}
-          VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
-        run: ./gradlew bundleRelease
-
-      - name: Deploy to Playstore Internal
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
-          KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
-          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
-          VERSION: ${{ steps.rel_number.outputs.version }}
-          VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
-        run: ./gradlew :wear:publishReleaseBundle :app:publishReleaseBundle
-
-      - name: Promote to Internal to Beta
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
-          KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
-          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
-          VERSION: ${{ steps.rel_number.outputs.version }}
-          VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
-        run: ./gradlew promoteArtifact --from-track internal --promote-track beta
-
       - name: Promote to Beta to Production
         env:
           KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
           KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
-          VERSION: ${{ steps.rel_number.outputs.version }}
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
         run: ./gradlew promoteArtifact --from-track beta --promote-track production
 
@@ -197,6 +41,5 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
           KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
-          VERSION: ${{ steps.rel_number.outputs.version }}
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
         run: ./gradlew publishListing

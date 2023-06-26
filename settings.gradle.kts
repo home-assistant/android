@@ -6,6 +6,7 @@ rootProject.name = "home-assistant-android"
 
 plugins {
     id("com.gradle.enterprise").version("3.7")
+    id("org.ajoberstar.reckon.settings").version("0.18.0")
 }
 
 // It should be easier to read an environment variable here once github.com/gradle/configuration-cache/issues/211 is resolved.
@@ -21,6 +22,14 @@ gradleEnterprise {
         publishAlwaysIf(isCI)
         isUploadInBackground = !isCI
     }
+}
+
+extensions.configure<org.ajoberstar.reckon.gradle.ReckonExtension> {
+    setDefaultInferredScope("patch")
+    stages("beta", "final")
+    setScopeCalc { java.util.Optional.of(org.ajoberstar.reckon.core.Scope.PATCH) }
+    setStageCalc(calcStageFromProp())
+    setTagWriter { it.toString() }
 }
 
 dependencyResolutionManagement {

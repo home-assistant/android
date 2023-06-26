@@ -92,6 +92,10 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-gradle-
 
+    - uses: ./.github/actions/create-release-number
+      name: Create Release Number
+      id: rel_number
+
     - name: Mock google-services.json
       run: |
         cp .github/mock-google-services.json app/google-services.json
@@ -113,7 +117,7 @@ jobs:
         else
           echo -e "\n✔️ No changes in database schema directory after build"
         fi
-    
+
     - name: Archive Debug Build
       uses: actions/upload-artifact@v3
       with:

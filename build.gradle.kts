@@ -44,3 +44,10 @@ tasks.register("clean").configure {
 ktlint {
     android.set(true)
 }
+
+tasks.register("versionFile").configure {
+    group = "publishing"
+    doLast {
+        File(projectDir, "version.txt").writeText(project.version.toString())
+    }
+}

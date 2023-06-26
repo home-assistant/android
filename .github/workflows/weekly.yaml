@@ -1,12 +1,12 @@
-name: Weekly Playstore Beta
+name: Tag Weekly Release
 
 on:
   workflow_dispatch:
   schedule:
     - cron: '0 4 * * 0'
 jobs:
-  play_promote:
-    name: Playstore Promote
+  tag:
+    name: Tag Weekly Release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -19,34 +19,5 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - uses: ./.github/actions/create-release-number
-        name: Create Release Number
-        id: rel_number
-        with:
-          beta: true
-
-      - uses: ./.github/actions/inflate-secrets
-        name: Inflate Secrets
-        with:
-          keystore: ${{ secrets.UPLOAD_KEYSTORE_FILE }}
-          google-services: ${{ secrets.GOOGLESERVICES }}
-          firebase-creds: ${{ secrets.FIREBASECREDS }}
-          playstore-creds: ${{ secrets.PLAYSTORECREDS }}
-
-      - name: Build Release
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
-          KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
-          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
-          VERSION: ${{ steps.rel_number.outputs.version }}
-          VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
-        run: ./gradlew promoteArtifact --from-track internal --promote-track beta
+      - name: Tag Weekly Release
+        run: ./gradlew :reckonTagPush -Preckon.stage=final
