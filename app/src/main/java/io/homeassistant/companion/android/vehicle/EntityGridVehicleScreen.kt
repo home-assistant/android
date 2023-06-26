@@ -63,7 +63,7 @@ class EntityGridVehicleScreen(
             val gridItem =
                 GridItem.Builder()
                     .setLoading(false)
-                    .setTitle(entity.friendlyName)
+                    .setTitle(entity.friendlyName.ifEmpty { entity.entityId })
                     .setText(entity.friendlyState(carContext))
 
             if (entity.isExecuting()) {
