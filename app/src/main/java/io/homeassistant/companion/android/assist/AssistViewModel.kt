@@ -166,14 +166,11 @@ class AssistViewModel @Inject constructor(
         selectedPipeline =
             allPipelines[selectedServerId]?.firstOrNull { it.id == id } ?: serverManager.webSocketRepository(selectedServerId).getAssistPipeline(id)
         selectedPipeline?.let {
-            val attribution = serverManager.webSocketRepository(selectedServerId).getConversationAgentInfo(it.conversationEngine)?.attribution
             currentPipeline = AssistUiPipeline(
                 serverId = selectedServerId,
                 serverName = serverManager.getServer(selectedServerId)?.friendlyName ?: "",
                 id = it.id,
-                name = it.name,
-                attributionName = attribution?.name,
-                attributionUrl = attribution?.url
+                name = it.name
             )
 
             _conversation.clear()
