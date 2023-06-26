@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.conversation
 
 import android.app.Application
+import android.content.pm.PackageManager
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -15,7 +17,13 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.As
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEventType
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineIntentEnd
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineRunStart
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineSttEnd
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineTtsEnd
+import io.homeassistant.companion.android.common.util.AudioRecorder
+import io.homeassistant.companion.android.common.util.AudioUrlPlayer
 import io.homeassistant.companion.android.conversation.views.AssistMessage
+import io.homeassistant.companion.android.util.UrlUtil
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -24,17 +32,33 @@ import javax.inject.Inject
 class ConversationViewModel @Inject constructor(
     application: Application,
     private val serverManager: ServerManager,
+    private val audioRecorder: AudioRecorder,
+    private val audioUrlPlayer: AudioUrlPlayer,
     private val wearPrefsRepository: WearPrefsRepository
 ) : AndroidViewModel(application) {
 
+    companion object {
+        private const val TAG = "ConvViewModel"
+    }
+
+    enum class AssistInputMode {
+        VOICE_ACTIVE,
+        VOICE_INACTIVE,
+        TEXT,
+        NONE
+    }
+
     private val app = application
 
+    private var useAssistPipeline = false
+
+    private var binaryHandlerId: Int? = null
     private var conversationId: String? = null
 
-    var useAssistPipeline by mutableStateOf(false)
+    var pipelineHandlesInput by mutableStateOf(false)
         private set
 
-    var allowInput by mutableStateOf(false)
+    var inputMode by mutableStateOf(AssistInputMode.NONE)
         private set
 
     var isHapticEnabled by mutableStateOf(false)
@@ -42,6 +66,13 @@ class ConversationViewModel @Inject constructor(
 
     var currentPipeline by mutableStateOf<AssistPipelineResponse?>(null)
         private set
+
+    private var recorderJob: Job? = null
+    private var recorderQueue: MutableList<ByteArray>? = null
+    private val hasMicrophone = app.packageManager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE)
+    private var hasPermission = false
+    private var requestPermission: (() -> Unit)? = null
+    private var requestSilently = true
 
     private val _pipelines = mutableStateListOf<AssistPipelineResponse>()
     val pipelines: List<AssistPipelineResponse> = _pipelines
@@ -113,6 +144,10 @@ class ConversationViewModel @Inject constructor(
 
     fun changePipeline(id: String) = viewModelScope.launch {
         if (id == currentPipeline?.id) return@launch
+
+        stopRecording()
+        stopPlayback()
+
         setPipeline(id)
     }
 
@@ -123,71 +158,227 @@ class ConversationViewModel @Inject constructor(
             null
         }
 
+        pipelineHandlesInput = false
         if (pipeline != null || !useAssistPipeline) {
             currentPipeline = pipeline
 
             _conversation.clear()
             _conversation.add(startMessage)
+            binaryHandlerId = null
             conversationId = null
 
-            allowInput = true
+            if (pipeline != null && hasMicrophone && pipeline.sttEngine != null) {
+                if (hasPermission || requestSilently) {
+                    inputMode = AssistInputMode.VOICE_INACTIVE
+                    pipelineHandlesInput = true
+                    onMicrophoneInput()
+                } else {
+                    inputMode = AssistInputMode.TEXT
+                }
+            } else {
+                inputMode = AssistInputMode.TEXT
+            }
         } else {
-            allowInput = false
+            inputMode = AssistInputMode.NONE
             _conversation.clear()
             _conversation.add(
                 AssistMessage(app.getString(R.string.assist_error), isInput = false)
             )
         }
 
-        return allowInput // Currently, always launch voice input when setting the pipeline
+        return inputMode == AssistInputMode.TEXT
     }
 
     fun updateSpeechResult(result: String) = runAssistPipeline(result)
 
+    fun onMicrophoneInput() {
+        if (!hasPermission) {
+            requestPermission?.let { it() }
+            return
+        }
+
+        if (inputMode == AssistInputMode.VOICE_ACTIVE) {
+            stopRecording()
+            return
+        }
+
+        val recording = try {
+            audioRecorder.startRecording()
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception while starting recording", e)
+            false
+        }
+
+        if (recording) {
+            recorderQueue = mutableListOf()
+            recorderJob = viewModelScope.launch {
+                audioRecorder.audioBytes.collect {
+                    recorderQueue?.add(it) ?: sendVoiceData(it)
+                }
+            }
+
+            inputMode = AssistInputMode.VOICE_ACTIVE
+            runAssistPipeline(null)
+        } else {
+            _conversation.add(AssistMessage(app.getString(R.string.assist_error), isInput = false, isError = true))
+        }
+    }
+
     private fun runAssistPipeline(text: String?) {
-        if (text.isNullOrBlank()) return // Voice support is not ready yet
+        val isVoice = text == null
 
         val userMessage = AssistMessage(text ?: "…", isInput = true)
         _conversation.add(userMessage)
         val haMessage = AssistMessage("…", isInput = false)
-        _conversation.add(haMessage)
+        if (!isVoice) _conversation.add(haMessage)
+        var message = if (isVoice) userMessage else haMessage
 
         var job: Job? = null
         job = viewModelScope.launch {
-            val flow = serverManager.integrationRepository().getAssistResponse(
-                text = text,
-                pipelineId = currentPipeline?.id,
-                conversationId = conversationId
-            )
+            val flow = if (isVoice) {
+                serverManager.webSocketRepository().runAssistPipelineForVoice(
+                    sampleRate = AudioRecorder.SAMPLE_RATE,
+                    outputTts = currentPipeline?.ttsEngine?.isNotBlank() == true,
+                    pipelineId = currentPipeline?.id,
+                    conversationId = conversationId
+                )
+            } else {
+                serverManager.integrationRepository().getAssistResponse(
+                    text = text!!,
+                    pipelineId = currentPipeline?.id,
+                    conversationId = conversationId
+                )
+            }
 
             flow?.collect {
                 when (it.type) {
+                    AssistPipelineEventType.RUN_START -> {
+                        if (!isVoice) return@collect
+                        val data = (it.data as? AssistPipelineRunStart)?.runnerData
+                        binaryHandlerId = data?.get("stt_binary_handler_id") as? Int
+                    }
+                    AssistPipelineEventType.STT_START -> {
+                        viewModelScope.launch {
+                            recorderQueue?.forEach { item ->
+                                sendVoiceData(item)
+                            }
+                            recorderQueue = null
+                        }
+                    }
+                    AssistPipelineEventType.STT_END -> {
+                        stopRecording()
+                        (it.data as? AssistPipelineSttEnd)?.sttOutput?.let { response ->
+                            _conversation.indexOf(message).takeIf { pos -> pos >= 0 }?.let { index ->
+                                _conversation[index] = message.copy(message = response["text"] as String)
+                            }
+                        }
+                        _conversation.add(haMessage)
+                        message = haMessage
+                    }
                     AssistPipelineEventType.INTENT_END -> {
                         val data = (it.data as? AssistPipelineIntentEnd)?.intentOutput ?: return@collect
                         conversationId = data.conversationId
                         data.response.speech.plain["speech"]?.let { response ->
-                            _conversation.indexOf(haMessage).takeIf { pos -> pos >= 0 }?.let { index ->
-                                _conversation[index] = haMessage.copy(message = response)
+                            _conversation.indexOf(message).takeIf { pos -> pos >= 0 }?.let { index ->
+                                _conversation[index] = message.copy(message = response)
                             }
                         }
                     }
+                    AssistPipelineEventType.TTS_END -> {
+                        if (!isVoice) return@collect
+                        val audioPath = (it.data as? AssistPipelineTtsEnd)?.ttsOutput?.url
+                        if (!audioPath.isNullOrBlank()) {
+                            playAudio(audioPath)
+                        }
+                    }
                     AssistPipelineEventType.RUN_END -> {
+                        stopRecording()
                         job?.cancel()
                     }
                     AssistPipelineEventType.ERROR -> {
                         val errorMessage = (it.data as? AssistPipelineError)?.message ?: return@collect
-                        _conversation.indexOf(haMessage).takeIf { pos -> pos >= 0 }?.let { index ->
-                            _conversation[index] = haMessage.copy(message = errorMessage, isError = true)
+                        _conversation.indexOf(message).takeIf { pos -> pos >= 0 }?.let { index ->
+                            _conversation[index] = message.copy(message = errorMessage, isError = true)
                         }
+                        stopRecording()
                         job?.cancel()
                     }
                     else -> { /* Do nothing */ }
                 }
             } ?: run {
-                _conversation.indexOf(haMessage).takeIf { pos -> pos >= 0 }?.let { index ->
-                    _conversation[index] = haMessage.copy(message = app.getString(R.string.assist_error), isError = true)
+                _conversation.indexOf(message).takeIf { pos -> pos >= 0 }?.let { index ->
+                    _conversation[index] = message.copy(message = app.getString(R.string.assist_error), isError = true)
                 }
             }
         }
     }
+
+    private fun sendVoiceData(data: ByteArray) {
+        binaryHandlerId?.let {
+            viewModelScope.launch {
+                // Launch to prevent blocking the output flow if the network is slow
+                serverManager.webSocketRepository().sendVoiceData(it, data)
+            }
+        }
+    }
+
+    private fun playAudio(path: String) {
+        UrlUtil.handle(serverManager.getServer()?.connection?.getUrl(), path)?.let {
+            viewModelScope.launch {
+                audioUrlPlayer.playAudio(it.toString())
+            }
+        }
+    }
+
+    fun setPermissionInfo(hasPermission: Boolean, callback: () -> Unit) {
+        this.hasPermission = hasPermission
+        requestPermission = callback
+    }
+
+    fun onPermissionResult(granted: Boolean, voiceInputIntent: (() -> Unit)) {
+        hasPermission = granted
+        pipelineHandlesInput = currentPipeline?.sttEngine != null && granted
+        if (granted) {
+            inputMode = AssistInputMode.VOICE_INACTIVE
+            onMicrophoneInput()
+        } else if (requestSilently) { // Don't notify the user if they haven't explicitly requested
+            inputMode = AssistInputMode.TEXT
+            voiceInputIntent()
+        }
+        requestSilently = false
+    }
+
+    fun onConversationScreenHidden() {
+        stopRecording()
+        stopPlayback()
+    }
+
+    fun onPause() {
+        requestPermission = null
+        stopRecording()
+        stopPlayback()
+    }
+
+    private fun stopRecording() {
+        audioRecorder.stopRecording()
+        recorderJob?.cancel()
+        recorderJob = null
+        if (binaryHandlerId != null) {
+            viewModelScope.launch {
+                recorderQueue?.forEach {
+                    sendVoiceData(it)
+                }
+                recorderQueue = null
+                sendVoiceData(byteArrayOf()) // Empty message to indicate end of recording
+                binaryHandlerId = null
+            }
+        } else {
+            recorderQueue = null
+        }
+        if (inputMode == AssistInputMode.VOICE_ACTIVE) {
+            inputMode = AssistInputMode.VOICE_INACTIVE
+        }
+    }
+
+    private fun stopPlayback() = audioUrlPlayer.stop()
 }

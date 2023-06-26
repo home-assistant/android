@@ -22,7 +22,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.As
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineTtsEnd
 import io.homeassistant.companion.android.common.util.AudioRecorder
 import io.homeassistant.companion.android.common.util.AudioUrlPlayer
-import io.homeassistant.companion.android.util.UrlHandler
+import io.homeassistant.companion.android.util.UrlUtil
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -355,7 +355,7 @@ class AssistViewModel @Inject constructor(
     }
 
     private fun playAudio(path: String) {
-        UrlHandler.handle(serverManager.getServer(selectedServerId)?.connection?.getUrl(), path)?.let {
+        UrlUtil.handle(serverManager.getServer(selectedServerId)?.connection?.getUrl(), path)?.let {
             viewModelScope.launch {
                 audioUrlPlayer.playAudio(it.toString())
             }
