@@ -1,5 +1,8 @@
 package io.homeassistant.companion.android.launch
 
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.compose.setContent
@@ -81,7 +84,20 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
     override fun displayWebview() {
         presenter.setSessionExpireMillis(0)
 
-        startActivity(WebViewActivity.newInstance(this, intent.data?.path))
+        val isAutomotive = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            this.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+        } else {
+            false
+        }
+        if (isAutomotive && BuildConfig.FLAVOR == "full") {
+            val carIntent = Intent(
+                this,
+                Class.forName("androidx.car.app.activity.CarAppActivity")
+            ).putExtra("TRANSITION_LAUNCH", true).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(carIntent)
+        } else {
+            startActivity(WebViewActivity.newInstance(this, intent.data?.path))
+        }
         finish()
         overridePendingTransition(0, 0) // Disable activity start/stop animation
     }
