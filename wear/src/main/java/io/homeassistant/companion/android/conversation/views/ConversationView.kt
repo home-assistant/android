@@ -52,6 +52,7 @@ import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
 import io.homeassistant.companion.android.conversation.ConversationViewModel
 import io.homeassistant.companion.android.home.views.TimeText
@@ -84,7 +85,7 @@ fun LoadAssistView(
                         swipeDismissableNavController.navigate(SCREEN_PIPELINES)
                     },
                     onMicrophoneInput = {
-                        if (conversationViewModel.pipelineHandlesInput) {
+                        if (conversationViewModel.usePipelineStt()) {
                             conversationViewModel.onMicrophoneInput()
                         } else {
                             onVoiceInputIntent()
@@ -108,7 +109,7 @@ fun LoadAssistView(
 @Composable
 fun ConversationResultView(
     conversation: List<AssistMessage>,
-    inputMode: ConversationViewModel.AssistInputMode,
+    inputMode: AssistViewModelBase.AssistInputMode,
     currentPipeline: AssistPipelineResponse?,
     hapticFeedback: Boolean,
     onChangePipeline: () -> Unit,
@@ -126,7 +127,7 @@ fun ConversationResultView(
     ) {
         LaunchedEffect(conversation.size) {
             scrollState.scrollToItem(
-                if (inputMode != ConversationViewModel.AssistInputMode.NONE) conversation.size else (conversation.size - 1)
+                if (inputMode != AssistViewModelBase.AssistInputMode.BLOCKED) conversation.size else (conversation.size - 1)
             )
         }
         if (hapticFeedback) {
@@ -171,13 +172,13 @@ fun ConversationResultView(
             items(conversation) {
                 SpeechBubble(text = it.message, isResponse = !it.isInput)
             }
-            if (inputMode != ConversationViewModel.AssistInputMode.NONE) {
+            if (inputMode != AssistViewModelBase.AssistInputMode.BLOCKED) {
                 item {
                     Box(
                         modifier = Modifier.size(64.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        val inputIsActive = inputMode == ConversationViewModel.AssistInputMode.VOICE_ACTIVE
+                        val inputIsActive = inputMode == AssistViewModelBase.AssistInputMode.VOICE_ACTIVE
                         if (inputIsActive) {
                             val transition = rememberInfiniteTransition()
                             val scale by transition.animateFloat(

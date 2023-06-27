@@ -1,29 +1,20 @@
 package io.homeassistant.companion.android.assist
 
 import android.app.Application
-import android.content.pm.PackageManager
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.assist.ui.AssistMessage
 import io.homeassistant.companion.android.assist.ui.AssistUiPipeline
+import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineError
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEventType
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineIntentEnd
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineRunStart
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineSttEnd
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineTtsEnd
 import io.homeassistant.companion.android.common.util.AudioRecorder
 import io.homeassistant.companion.android.common.util.AudioUrlPlayer
-import io.homeassistant.companion.android.util.UrlUtil
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
@@ -32,39 +23,21 @@ import io.homeassistant.companion.android.common.R as commonR
 class AssistViewModel @Inject constructor(
     val serverManager: ServerManager,
     private val audioRecorder: AudioRecorder,
-    private val audioUrlPlayer: AudioUrlPlayer,
+    audioUrlPlayer: AudioUrlPlayer,
     application: Application
-) : AndroidViewModel(application) {
+) : AssistViewModelBase(serverManager, audioRecorder, audioUrlPlayer, application) {
 
     companion object {
         const val TAG = "AssistViewModel"
     }
 
-    enum class AssistInputMode {
-        TEXT,
-        TEXT_ONLY,
-        VOICE_INACTIVE,
-        VOICE_ACTIVE,
-        BLOCKED
-    }
-
-    private val app = application
-
     private var filteredServerId: Int? = null
-    private var selectedServerId = ServerManager.SERVER_ID_ACTIVE
     private val allPipelines = mutableMapOf<Int, List<AssistPipelineResponse>>()
     private var selectedPipeline: AssistPipelineResponse? = null
 
-    private var recorderJob: Job? = null
-    private var recorderQueue: MutableList<ByteArray>? = null
     private var recorderAutoStart = true
-    private var hasMicrophone = true
-    private var hasPermission = false
     private var requestPermission: (() -> Unit)? = null
     private var requestSilently = true
-
-    private var binaryHandlerId: Int? = null
-    private var conversationId: String? = null
 
     private val startMessage = AssistMessage(application.getString(commonR.string.assist_how_can_i_assist), isInput = false)
     private val _conversation = mutableStateListOf(startMessage)
@@ -78,10 +51,6 @@ class AssistViewModel @Inject constructor(
 
     var inputMode by mutableStateOf<AssistInputMode?>(null)
         private set
-
-    init {
-        hasMicrophone = app.packageManager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE)
-    }
 
     fun onCreate(serverId: Int?, pipelineId: String?, startListening: Boolean?) {
         viewModelScope.launch {
@@ -123,6 +92,12 @@ class AssistViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    override fun getInput(): AssistInputMode? = inputMode
+
+    override fun setInput(inputMode: AssistInputMode) {
+        this.inputMode = inputMode
     }
 
     private suspend fun checkSupport(): Boolean? {
@@ -175,8 +150,7 @@ class AssistViewModel @Inject constructor(
 
             _conversation.clear()
             _conversation.add(startMessage)
-            binaryHandlerId = null
-            conversationId = null
+            clearPipelineData()
             if (hasMicrophone && it.sttEngine != null) {
                 if (recorderAutoStart && (hasPermission || requestSilently)) {
                     inputMode = AssistInputMode.VOICE_INACTIVE
@@ -241,13 +215,7 @@ class AssistViewModel @Inject constructor(
         }
 
         if (recording) {
-            recorderQueue = mutableListOf()
-            recorderJob = viewModelScope.launch {
-                audioRecorder.audioBytes.collect {
-                    recorderQueue?.add(it) ?: sendVoiceData(it)
-                }
-            }
-
+            setupRecorderQueue()
             inputMode = AssistInputMode.VOICE_ACTIVE
             runAssistPipeline(null)
         } else {
@@ -264,100 +232,20 @@ class AssistViewModel @Inject constructor(
         if (!isVoice) _conversation.add(haMessage)
         var message = if (isVoice) userMessage else haMessage
 
-        var job: Job? = null
-        job = viewModelScope.launch {
-            val flow = if (isVoice) {
-                serverManager.webSocketRepository(selectedServerId).runAssistPipelineForVoice(
-                    sampleRate = AudioRecorder.SAMPLE_RATE,
-                    outputTts = selectedPipeline?.ttsEngine?.isNotBlank() == true,
-                    pipelineId = selectedPipeline?.id,
-                    conversationId = conversationId
+        runAssistPipelineInternal(
+            text,
+            selectedPipeline
+        ) { newMessage, isInput, isError ->
+            _conversation.indexOf(message).takeIf { pos -> pos >= 0 }?.let { index ->
+                _conversation[index] = message.copy(
+                    message = newMessage,
+                    isInput = isInput ?: message.isInput,
+                    isError = isError
                 )
-            } else {
-                serverManager.webSocketRepository(selectedServerId).runAssistPipelineForText(
-                    text = text!!,
-                    pipelineId = selectedPipeline?.id,
-                    conversationId = conversationId
-                )
-            }
-
-            flow?.collect {
-                when (it.type) {
-                    AssistPipelineEventType.RUN_START -> {
-                        if (!isVoice) return@collect
-                        val data = (it.data as? AssistPipelineRunStart)?.runnerData
-                        binaryHandlerId = data?.get("stt_binary_handler_id") as? Int
-                    }
-                    AssistPipelineEventType.STT_START -> {
-                        viewModelScope.launch {
-                            recorderQueue?.forEach { item ->
-                                sendVoiceData(item)
-                            }
-                            recorderQueue = null
-                        }
-                    }
-                    AssistPipelineEventType.STT_END -> {
-                        stopRecording()
-                        (it.data as? AssistPipelineSttEnd)?.sttOutput?.let { response ->
-                            _conversation.indexOf(message).takeIf { pos -> pos >= 0 }?.let { index ->
-                                _conversation[index] = message.copy(message = response["text"] as String)
-                            }
-                        }
-                        _conversation.add(haMessage)
-                        message = haMessage
-                    }
-                    AssistPipelineEventType.INTENT_END -> {
-                        val data = (it.data as? AssistPipelineIntentEnd)?.intentOutput ?: return@collect
-                        conversationId = data.conversationId
-                        data.response.speech.plain["speech"]?.let { response ->
-                            _conversation.indexOf(message).takeIf { pos -> pos >= 0 }?.let { index ->
-                                _conversation[index] = message.copy(message = response)
-                            }
-                        }
-                    }
-                    AssistPipelineEventType.TTS_END -> {
-                        if (!isVoice) return@collect
-                        val audioPath = (it.data as? AssistPipelineTtsEnd)?.ttsOutput?.url
-                        if (!audioPath.isNullOrBlank()) {
-                            playAudio(audioPath)
-                        }
-                    }
-                    AssistPipelineEventType.RUN_END -> {
-                        stopRecording()
-                        job?.cancel()
-                    }
-                    AssistPipelineEventType.ERROR -> {
-                        val errorMessage = (it.data as? AssistPipelineError)?.message ?: return@collect
-                        _conversation.indexOf(message).takeIf { pos -> pos >= 0 }?.let { index ->
-                            _conversation[index] = message.copy(message = errorMessage, isError = true)
-                        }
-                        stopRecording()
-                        job?.cancel()
-                    }
-                    else -> { /* Do nothing */ }
+                if (isInput == true) {
+                    _conversation.add(haMessage)
+                    message = haMessage
                 }
-            } ?: run {
-                _conversation.indexOf(message).takeIf { pos -> pos >= 0 }?.let { index ->
-                    _conversation[index] = message.copy(message = app.getString(commonR.string.assist_error), isError = true)
-                }
-                stopRecording()
-            }
-        }
-    }
-
-    private fun sendVoiceData(data: ByteArray) {
-        binaryHandlerId?.let {
-            viewModelScope.launch {
-                // Launch to prevent blocking the output flow if the network is slow
-                serverManager.webSocketRepository(selectedServerId).sendVoiceData(it, data)
-            }
-        }
-    }
-
-    private fun playAudio(path: String) {
-        UrlUtil.handle(serverManager.getServer(selectedServerId)?.connection?.getUrl(), path)?.let {
-            viewModelScope.launch {
-                audioUrlPlayer.playAudio(it.toString())
             }
         }
     }
@@ -385,27 +273,4 @@ class AssistViewModel @Inject constructor(
         stopRecording()
         stopPlayback()
     }
-
-    private fun stopRecording() {
-        audioRecorder.stopRecording()
-        recorderJob?.cancel()
-        recorderJob = null
-        if (binaryHandlerId != null) {
-            viewModelScope.launch {
-                recorderQueue?.forEach {
-                    sendVoiceData(it)
-                }
-                recorderQueue = null
-                sendVoiceData(byteArrayOf()) // Empty message to indicate end of recording
-                binaryHandlerId = null
-            }
-        } else {
-            recorderQueue = null
-        }
-        if (inputMode == AssistInputMode.VOICE_ACTIVE) {
-            inputMode = AssistInputMode.VOICE_INACTIVE
-        }
-    }
-
-    private fun stopPlayback() = audioUrlPlayer.stop()
 }
