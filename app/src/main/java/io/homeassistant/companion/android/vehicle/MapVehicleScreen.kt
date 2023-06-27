@@ -24,6 +24,7 @@ import com.mikepenz.iconics.utils.toAndroidIconCompat
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import kotlinx.coroutines.flow.Flow
@@ -61,6 +62,9 @@ class MapVehicleScreen(
         entities
             .mapNotNull {
                 val attrs = it.attributes as? Map<*, *>
+                if (it.domain == "device_tracker" && it.state == "home") {
+                    return@mapNotNull null
+                }
                 if (attrs != null) {
                     val lat = attrs["latitude"] as? Double
                     val lon = attrs["longitude"] as? Double
