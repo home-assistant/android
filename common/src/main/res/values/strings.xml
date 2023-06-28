@@ -782,6 +782,8 @@
     <string name="template_widget_default">Enter Template Here</string>
     <string name="template_widget_desc">Render any template with HTML formatting</string>
     <string name="template_widget">Template Widget</string>
+    <string name="troubleshooting">Troubleshooting</string>
+    <string name="troubleshooting_summary">Logs and other tools to diagnose issues</string>
     <string name="themes_option_label_dark">Dark</string>
     <string name="themes_option_label_light">Light</string>
     <string name="themes_option_label_system">Follow System Settings</string>
@@ -1050,6 +1052,17 @@
     <string name="sensor_description_daily_calories">The total number of calories over a day (including both BMR and active calories), where the previous day ends and a new day begins at 12:00 AM local time.</string>
     <string name="sensor_name_daily_steps">Daily Steps</string>
     <string name="sensor_description_daily_steps">The total step count over a day, where the previous day ends and a new day begins at 12:00 AM local time.</string>
+    <string name="thread_debug">Sync Thread credentials</string>
+    <string name="thread_debug_active">Syncing…</string>
+    <string name="thread_debug_result_error">An unexpected error occurred while syncing</string>
+    <string name="thread_debug_result_exported">Added credentials from this device to Home Assistant</string>
+    <string name="thread_debug_result_imported">Added Home Assistant credentials to this device</string>
+    <string name="thread_debug_result_match">Home Assistant and this device use the same credentials</string>
+    <string name="thread_debug_result_mismatch">Home Assistant and this device may use different credentials</string>
+    <string name="thread_debug_result_mismatch_detail">(device prefers credentials for: %1$s)</string>
+    <string name="thread_debug_result_none">No credentials to sync</string>
+    <string name="thread_debug_result_unsupported_server">The connected Home Assistant server does not support Thread</string>
+    <string name="thread_debug_summary">Manually update device and server Thread credentials and verify results</string>
     <string name="tile_vibrate">Vibrate when clicked</string>
     <string name="tile_auth_required">Requires unlocked device</string>
     <string name="no_results">No results yet</string>

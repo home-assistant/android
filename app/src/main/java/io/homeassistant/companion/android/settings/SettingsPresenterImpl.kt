@@ -61,7 +61,6 @@ class SettingsPresenterImpl @Inject constructor(
             "crash_reporting" -> prefsRepository.isCrashReporting()
             "autoplay_video" -> prefsRepository.isAutoPlayVideoEnabled()
             "always_show_first_view_on_app_start" -> prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled()
-            "webview_debug" -> prefsRepository.isWebViewDebugEnabled()
             else -> throw IllegalArgumentException("No boolean found by this key: $key")
         }
     }
@@ -75,7 +74,6 @@ class SettingsPresenterImpl @Inject constructor(
                 "crash_reporting" -> prefsRepository.setCrashReporting(value)
                 "autoplay_video" -> prefsRepository.setAutoPlayVideo(value)
                 "always_show_first_view_on_app_start" -> prefsRepository.setAlwaysShowFirstViewOnAppStart(value)
-                "webview_debug" -> prefsRepository.setWebViewDebugEnabled(value)
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }

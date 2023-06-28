@@ -67,11 +67,6 @@
             android:icon="@drawable/ic_home_variant_outline"
             android:title="@string/always_show_first_view_on_app_start"
             android:summary="@string/always_show_first_view_on_app_start_summary" />
-        <SwitchPreference
-            android:key="webview_debug"
-            android:icon="@drawable/ic_android_debug_bridge"
-            android:title="@string/remote_debugging"
-            android:summary="@string/remote_debugging_summary" />
         <Preference
             android:key="nfc_tags"
             android:icon="@drawable/ic_nfc"
@@ -176,10 +171,10 @@
                 android:data="https://companion.home-assistant.io" />
         </Preference>
         <Preference
-            android:key="show_share_logs"
-            android:icon="@drawable/ic_notes"
-            android:title="@string/show_share_logs"
-            android:summary="@string/show_share_logs_summary" />
+            android:key="developer"
+            android:icon="@drawable/ic_bug_report"
+            android:title="@string/troubleshooting"
+            android:summary="@string/troubleshooting_summary"/>
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/app_version_info">

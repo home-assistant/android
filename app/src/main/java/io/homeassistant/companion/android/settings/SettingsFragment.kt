@@ -32,8 +32,8 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.settings.controls.ManageControlsSettingsFragment
+import io.homeassistant.companion.android.settings.developer.DeveloperSettingsFragment
 import io.homeassistant.companion.android.settings.language.LanguagesProvider
-import io.homeassistant.companion.android.settings.log.LogFragment
 import io.homeassistant.companion.android.settings.notification.NotificationChannelFragment
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
@@ -292,10 +292,10 @@ class SettingsFragment(
             it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(it.summary.toString()))
         }
 
-        findPreference<Preference>("show_share_logs")?.setOnPreferenceClickListener {
+        findPreference<Preference>("developer")?.setOnPreferenceClickListener {
             parentFragmentManager.commit {
-                replace(R.id.content, LogFragment::class.java, null)
-                addToBackStack(getString(commonR.string.log))
+                replace(R.id.content, DeveloperSettingsFragment::class.java, null)
+                addToBackStack(getString(commonR.string.troubleshooting))
             }
             return@setOnPreferenceClickListener true
         }
