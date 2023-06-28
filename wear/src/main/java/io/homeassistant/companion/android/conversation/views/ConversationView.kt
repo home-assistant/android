@@ -57,6 +57,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.As
 import io.homeassistant.companion.android.conversation.ConversationViewModel
 import io.homeassistant.companion.android.home.views.TimeText
 import io.homeassistant.companion.android.theme.WearAppTheme
+import io.homeassistant.companion.android.util.KeepScreenOn
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
 
@@ -180,6 +181,7 @@ fun ConversationResultView(
                     ) {
                         val inputIsActive = inputMode == AssistViewModelBase.AssistInputMode.VOICE_ACTIVE
                         if (inputIsActive) {
+                            KeepScreenOn()
                             val transition = rememberInfiniteTransition()
                             val scale by transition.animateFloat(
                                 initialValue = 1f,
