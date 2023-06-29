@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.launch
 
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.compose.setContent
@@ -84,12 +83,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
     override fun displayWebview() {
         presenter.setSessionExpireMillis(0)
 
-        val isAutomotive = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            this.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
-        } else {
-            false
-        }
-        if (isAutomotive && BuildConfig.FLAVOR == "full") {
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) && BuildConfig.FLAVOR == "full") {
             val carIntent = Intent(
                 this,
                 Class.forName("androidx.car.app.activity.CarAppActivity")
