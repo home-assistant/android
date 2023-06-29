@@ -20,7 +20,7 @@ import io.homeassistant.companion.android.common.R as commonR
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun ServerExposedDropdownMenu(servers: List<Server>, current: Int?, onSelected: (Int) -> Unit, modifier: Modifier = Modifier) {
+fun ExposedDropdownMenu(label: String, keys: List<String>, currentIndex: Int?, onSelected: (Int) -> Unit, modifier: Modifier = Modifier) {
     var expanded by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
     ExposedDropdownMenuBox(
@@ -30,23 +30,37 @@ fun ServerExposedDropdownMenu(servers: List<Server>, current: Int?, onSelected: 
     ) {
         OutlinedTextField(
             readOnly = true,
-            value = servers.firstOrNull { it.id == current }?.friendlyName ?: "",
+            value = currentIndex?.let { keys[it] } ?: "",
             onValueChange = { },
-            label = { Text(stringResource(commonR.string.server_select)) },
+            label = { Text(label) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
             modifier = Modifier.fillMaxWidth()
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            servers.forEach { server ->
+            keys.forEachIndexed { index, key ->
                 DropdownMenuItem(onClick = {
-                    onSelected(server.id)
+                    onSelected(index)
                     expanded = false
                     focusManager.clearFocus()
                 }) {
-                    Text(server.friendlyName)
+                    Text(key)
                 }
             }
         }
     }
+}
+
+@Composable
+fun ServerExposedDropdownMenu(servers: List<Server>, current: Int?, onSelected: (Int) -> Unit, modifier: Modifier = Modifier) {
+    val keys = servers.map { it.friendlyName }
+    val ids = servers.map { it.id }
+    val currentIndex = servers.indexOfFirst { it.id == current }.takeUnless { it == -1 }
+    ExposedDropdownMenu(
+        label = stringResource(commonR.string.server_select),
+        keys = keys,
+        currentIndex = currentIndex,
+        onSelected = { onSelected(ids[it]) },
+        modifier = modifier
+    )
 }

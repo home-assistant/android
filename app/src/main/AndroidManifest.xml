@@ -397,6 +397,17 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".widgets.assist.AssistShortcutActivity"
+            android:label="@string/assist_shortcut"
+            android:icon="@mipmap/ic_assist_launcher"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:theme="@style/Theme.HomeAssistant.Config">
+            <intent-filter>
+                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
+            </intent-filter>
+        </activity>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"

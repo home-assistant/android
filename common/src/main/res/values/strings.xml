@@ -1066,7 +1066,10 @@
     <string name="assist_how_can_i_assist">How can I assist?</string>
     <string name="assist_log_in">Log in to Home Assistant to start using Assist</string>
     <string name="assist_permission">To use Assist with your voice, allow Home Assistant to access the microphone</string>
+    <string name="assist_pipeline">Assistant</string>
+    <string name="assist_preferred_pipeline">Preferred assistant (%1$s)</string>
     <string name="assist_send_text">Send text</string>
+    <string name="assist_shortcut">Assist shortcut</string>
     <string name="assist_start_listening">Start listening</string>
     <string name="assist_stop_listening">Stop listening</string>
     <string name="not_registered">Please open the Home Assistant app and log in to start using Assist</string>
