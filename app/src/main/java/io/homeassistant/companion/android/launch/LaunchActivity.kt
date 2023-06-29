@@ -93,7 +93,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
             val carIntent = Intent(
                 this,
                 Class.forName("androidx.car.app.activity.CarAppActivity")
-            ).putExtra("TRANSITION_LAUNCH", true).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             startActivity(carIntent)
         } else {
             startActivity(WebViewActivity.newInstance(this, intent.data?.path))
