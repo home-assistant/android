@@ -333,7 +333,11 @@ class WebViewPresenterImpl @Inject constructor(
 
             mainScope.launch {
                 val deviceThreadIntent = try {
-                    threadUseCase.syncPreferredDataset(context, serverId, this)
+                    when (val result = threadUseCase.syncPreferredDataset(context, serverId, this)) {
+                        is ThreadManager.SyncResult.OnlyOnDevice -> result.exportIntent
+                        is ThreadManager.SyncResult.AllHaveCredentials -> result.exportIntent
+                        else -> null
+                    }
                 } catch (e: Exception) {
                     Log.w(TAG, "Unable to sync preferred Thread dataset, continuing", e)
                     null
