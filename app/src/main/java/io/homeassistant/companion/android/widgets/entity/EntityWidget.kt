@@ -168,12 +168,10 @@ class EntityWidget : BaseWidgetProvider() {
             return ResolvedText(staticWidgetDao.get(appWidgetId)?.lastUpdate, entityCaughtException)
         }
 
-        var fetchedAttributes: Map<*, *>
-        var attributeValues: List<String?>
         try {
-            fetchedAttributes = entity?.attributes as? Map<*, *> ?: mapOf<String, String>()
-            attributeValues =
-                attributeIds.split(",").map { id -> fetchedAttributes.get(id)?.toString() }
+            val fetchedAttributes = entity?.attributes as? Map<*, *> ?: mapOf<String, String>()
+            val attributeValues =
+                attributeIds.split(",").map { id -> fetchedAttributes[id]?.toString() }
             val lastUpdate =
                 entity?.friendlyState(context, entityOptions).plus(if (attributeValues.isNotEmpty()) stateSeparator else "")
                     .plus(attributeValues.joinToString(attributeSeparator))
