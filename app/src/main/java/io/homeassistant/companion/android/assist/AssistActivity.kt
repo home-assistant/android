@@ -23,6 +23,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.assist.ui.AssistSheetView
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.webview.WebViewActivity
 
 @AndroidEntryPoint
 class AssistActivity : BaseActivity() {
@@ -90,6 +91,8 @@ class AssistActivity : BaseActivity() {
             )
         }
 
+        val fromFrontend = intent.getBooleanExtra(EXTRA_FROM_FRONTEND, false)
+
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             MdcTheme {
@@ -103,9 +106,25 @@ class AssistActivity : BaseActivity() {
                     conversation = viewModel.conversation,
                     pipelines = viewModel.pipelines,
                     inputMode = viewModel.inputMode,
-                    fromFrontend = intent.getBooleanExtra(EXTRA_FROM_FRONTEND, false),
+                    fromFrontend = fromFrontend,
                     currentPipeline = viewModel.currentPipeline,
                     onSelectPipeline = viewModel::changePipeline,
+                    onManagePipelines =
+                    if (fromFrontend && viewModel.userCanManagePipelines()) {
+                        {
+                            startActivity(
+                                WebViewActivity.newInstance(
+                                    this,
+                                    "config/voice-assistants/assistants"
+                                ).apply {
+                                    flags += Intent.FLAG_ACTIVITY_NEW_TASK // Delivers data in onNewIntent
+                                }
+                            )
+                            finish()
+                        }
+                    } else {
+                        null
+                    },
                     onChangeInput = viewModel::onChangeInput,
                     onTextInput = viewModel::onTextInput,
                     onMicrophoneInput = viewModel::onMicrophoneInput,

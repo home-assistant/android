@@ -34,6 +34,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.Divider
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.ExperimentalMaterialApi
@@ -91,6 +92,7 @@ fun AssistSheetView(
     currentPipeline: AssistUiPipeline?,
     fromFrontend: Boolean,
     onSelectPipeline: (Int, String) -> Unit,
+    onManagePipelines: (() -> Unit)?,
     onChangeInput: () -> Unit,
     onTextInput: (String) -> Unit,
     onMicrophoneInput: () -> Unit,
@@ -133,7 +135,8 @@ fun AssistSheetView(
                         pipelines = pipelines,
                         currentPipeline = currentPipeline,
                         fromFrontend = fromFrontend,
-                        onSelectPipeline = onSelectPipeline
+                        onSelectPipeline = onSelectPipeline,
+                        onManagePipelines = onManagePipelines
                     )
                     LazyColumn(
                         state = lazyListState,
@@ -169,7 +172,8 @@ fun AssistSheetHeader(
     pipelines: List<AssistUiPipeline>,
     currentPipeline: AssistUiPipeline?,
     fromFrontend: Boolean,
-    onSelectPipeline: (Int, String) -> Unit
+    onSelectPipeline: (Int, String) -> Unit,
+    onManagePipelines: (() -> Unit)?
 ) = Column(verticalArrangement = Arrangement.Center) {
     Text(
         text = stringResource(if (fromFrontend) commonR.string.assist else commonR.string.app_name),
@@ -217,6 +221,12 @@ fun AssistSheetHeader(
                                 text = if (pipelineShowServer) "${it.serverName}: ${it.name}" else it.name,
                                 fontWeight = if (isSelected) FontWeight.SemiBold else null
                             )
+                        }
+                    }
+                    if (onManagePipelines != null) {
+                        Divider()
+                        DropdownMenuItem(onClick = { onManagePipelines() }) {
+                            Text(stringResource(commonR.string.assist_manage_pipelines))
                         }
                     }
                 }

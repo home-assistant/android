@@ -127,6 +127,8 @@ class AssistViewModel @Inject constructor(
         }
     }
 
+    fun userCanManagePipelines(): Boolean = serverManager.getServer()?.user?.isAdmin == true
+
     fun changePipeline(serverId: Int, id: String) = viewModelScope.launch {
         if (serverId == selectedServerId && id == selectedPipeline?.id) return@launch
 

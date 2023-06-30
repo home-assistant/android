@@ -1078,6 +1078,7 @@
     <string name="assist_error">Oops, an error has occurred</string>
     <string name="assist_how_can_i_assist">How can I assist?</string>
     <string name="assist_log_in">Log in to Home Assistant to start using Assist</string>
+    <string name="assist_manage_pipelines">Manage assistants</string>
     <string name="assist_permission">To use Assist with your voice, allow Home Assistant to access the microphone</string>
     <string name="assist_pipeline">Assistant</string>
     <string name="assist_preferred_pipeline">Preferred assistant (%1$s)</string>
