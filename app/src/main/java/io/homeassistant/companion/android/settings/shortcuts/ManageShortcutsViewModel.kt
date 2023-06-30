@@ -31,6 +31,7 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.webview.WebViewActivity
+import io.homeassistant.companion.android.widgets.assist.AssistShortcutActivity
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -46,7 +47,9 @@ class ManageShortcutsViewModel @Inject constructor(
     private lateinit var iconPack: IconPack
     private var shortcutManager = application.applicationContext.getSystemService<ShortcutManager>()!!
     val canPinShortcuts = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && shortcutManager.isRequestPinShortcutSupported
-    var pinnedShortcuts: MutableList<ShortcutInfo> = shortcutManager.pinnedShortcuts
+    var pinnedShortcuts = shortcutManager.pinnedShortcuts
+        .filter { !it.id.startsWith(AssistShortcutActivity.SHORTCUT_PREFIX) }
+        .toMutableList()
         private set
     var dynamicShortcuts: MutableList<ShortcutInfo> = shortcutManager.dynamicShortcuts
         private set
@@ -227,6 +230,10 @@ class ManageShortcutsViewModel @Inject constructor(
     }
 
     fun updatePinnedShortcuts() {
-        pinnedShortcuts = shortcutManager.pinnedShortcuts
+        pinnedShortcuts.clear()
+        pinnedShortcuts.addAll(
+            shortcutManager.pinnedShortcuts
+                .filter { !it.id.startsWith(AssistShortcutActivity.SHORTCUT_PREFIX) }
+        )
     }
 }
