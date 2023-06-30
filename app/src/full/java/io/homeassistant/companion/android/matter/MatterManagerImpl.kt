@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.matter
 import android.content.ComponentName
 import android.content.Context
 import android.content.IntentSender
+import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
 import com.google.android.gms.home.matter.Matter
@@ -12,7 +13,8 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ma
 import javax.inject.Inject
 
 class MatterManagerImpl @Inject constructor(
-    private val serverManager: ServerManager
+    private val serverManager: ServerManager,
+    private val packageManager: PackageManager
 ) : MatterManager {
 
     companion object {
@@ -20,7 +22,7 @@ class MatterManagerImpl @Inject constructor(
     }
 
     override fun appSupportsCommissioning(): Boolean =
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1 && !packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
 
     override suspend fun coreSupportsCommissioning(serverId: Int): Boolean {
         if (!serverManager.isRegistered() || serverManager.getServer(serverId)?.user?.isAdmin != true) return false

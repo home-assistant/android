@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.thread
 import android.app.Activity
 import android.content.Context
 import android.content.IntentSender
+import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
 import androidx.activity.result.ActivityResult
@@ -21,7 +22,8 @@ import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
 class ThreadManagerImpl @Inject constructor(
-    private val serverManager: ServerManager
+    private val serverManager: ServerManager,
+    private val packageManager: PackageManager
 ) : ThreadManager {
     companion object {
         private const val TAG = "ThreadManagerImpl"
@@ -31,7 +33,7 @@ class ThreadManagerImpl @Inject constructor(
     }
 
     override fun appSupportsThread(): Boolean =
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1 && !packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
 
     override suspend fun coreSupportsThread(serverId: Int): Boolean {
         if (!serverManager.isRegistered() || serverManager.getServer(serverId)?.user?.isAdmin != true) return false
