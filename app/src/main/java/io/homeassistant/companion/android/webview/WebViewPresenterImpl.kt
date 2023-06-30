@@ -15,7 +15,7 @@ import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.matter.MatterFrontendCommissioningStatus
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
-import io.homeassistant.companion.android.util.UrlHandler
+import io.homeassistant.companion.android.util.UrlUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -89,7 +89,7 @@ class WebViewPresenterImpl @Inject constructor(
             urlForServer = server?.id
 
             if (path != null && !path.startsWith("entityId:")) {
-                url = UrlHandler.handle(url, path)
+                url = UrlUtil.handle(url, path)
             }
 
             /*

@@ -72,7 +72,7 @@ import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.NotificationSensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.SettingsActivity
-import io.homeassistant.companion.android.util.UrlHandler
+import io.homeassistant.companion.android.util.UrlUtil
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.CoroutineScope
@@ -1169,8 +1169,8 @@ class MessagingManager @Inject constructor(
     ) {
         data[ICON_URL]?.let {
             val serverId = data[THIS_SERVER_ID]!!.toInt()
-            val url = UrlHandler.handle(serverManager.getServer(serverId)?.connection?.getUrl(), it)
-            val bitmap = getImageBitmap(serverId, url, !UrlHandler.isAbsoluteUrl(it))
+            val url = UrlUtil.handle(serverManager.getServer(serverId)?.connection?.getUrl(), it)
+            val bitmap = getImageBitmap(serverId, url, !UrlUtil.isAbsoluteUrl(it))
             if (bitmap != null) {
                 builder.setLargeIcon(bitmap)
             }
@@ -1183,8 +1183,8 @@ class MessagingManager @Inject constructor(
     ) {
         data[IMAGE_URL]?.let {
             val serverId = data[THIS_SERVER_ID]!!.toInt()
-            val url = UrlHandler.handle(serverManager.getServer(serverId)?.connection?.getUrl(), it)
-            val bitmap = getImageBitmap(serverId, url, !UrlHandler.isAbsoluteUrl(it))
+            val url = UrlUtil.handle(serverManager.getServer(serverId)?.connection?.getUrl(), it)
+            val bitmap = getImageBitmap(serverId, url, !UrlUtil.isAbsoluteUrl(it))
             if (bitmap != null) {
                 builder
                     .setLargeIcon(bitmap)
@@ -1229,8 +1229,8 @@ class MessagingManager @Inject constructor(
     ) {
         data[VIDEO_URL]?.let {
             val serverId = data[THIS_SERVER_ID]!!.toInt()
-            val url = UrlHandler.handle(serverManager.getServer(serverId)?.connection?.getUrl(), it)
-            getVideoFrames(serverId, url, !UrlHandler.isAbsoluteUrl(it))?.let { frames ->
+            val url = UrlUtil.handle(serverManager.getServer(serverId)?.connection?.getUrl(), it)
+            getVideoFrames(serverId, url, !UrlUtil.isAbsoluteUrl(it))?.let { frames ->
                 Log.d(TAG, "Found ${frames.size} frames for video notification")
                 RemoteViews(context.packageName, R.layout.view_image_flipper).let { remoteViewFlipper ->
                     if (frames.isNotEmpty()) {
@@ -1438,7 +1438,7 @@ class MessagingManager @Inject constructor(
     ): PendingIntent {
         val serverId = data[THIS_SERVER_ID]!!.toInt()
         val needsPackage = uri.startsWith(APP_PREFIX) || uri.startsWith(INTENT_PREFIX)
-        val otherApp = needsPackage || UrlHandler.isAbsoluteUrl(uri) || uri.startsWith(DEEP_LINK_PREFIX)
+        val otherApp = needsPackage || UrlUtil.isAbsoluteUrl(uri) || uri.startsWith(DEEP_LINK_PREFIX)
         val intent = when {
             uri.isBlank() -> {
                 WebViewActivity.newInstance(context, null, serverId)
@@ -1456,7 +1456,7 @@ class MessagingManager @Inject constructor(
                     WebViewActivity.newInstance(context, null, serverId)
                 }
             }
-            UrlHandler.isAbsoluteUrl(uri) || uri.startsWith(DEEP_LINK_PREFIX) -> {
+            UrlUtil.isAbsoluteUrl(uri) || uri.startsWith(DEEP_LINK_PREFIX) -> {
                 Intent(Intent.ACTION_VIEW).apply {
                     this.data = Uri.parse(
                         if (uri.startsWith(DEEP_LINK_PREFIX)) {

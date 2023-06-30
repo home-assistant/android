@@ -1,5 +1,11 @@
 package io.homeassistant.companion.android.conversation.views
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -11,10 +17,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -42,10 +52,12 @@ import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
 import io.homeassistant.companion.android.conversation.ConversationViewModel
 import io.homeassistant.companion.android.home.views.TimeText
 import io.homeassistant.companion.android.theme.WearAppTheme
+import io.homeassistant.companion.android.util.KeepScreenOn
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
 
@@ -55,7 +67,7 @@ private const val SCREEN_PIPELINES = "pipelines"
 @Composable
 fun LoadAssistView(
     conversationViewModel: ConversationViewModel,
-    onMicrophoneInput: () -> Unit
+    onVoiceInputIntent: () -> Unit
 ) {
     WearAppTheme {
         val swipeDismissableNavController = rememberSwipeDismissableNavController()
@@ -66,13 +78,20 @@ fun LoadAssistView(
             composable(SCREEN_CONVERSATION) {
                 ConversationResultView(
                     conversation = conversationViewModel.conversation,
-                    allowInput = conversationViewModel.allowInput,
+                    inputMode = conversationViewModel.inputMode,
                     currentPipeline = conversationViewModel.currentPipeline,
                     hapticFeedback = conversationViewModel.isHapticEnabled,
                     onChangePipeline = {
+                        conversationViewModel.onConversationScreenHidden()
                         swipeDismissableNavController.navigate(SCREEN_PIPELINES)
                     },
-                    onMicrophoneInput = onMicrophoneInput
+                    onMicrophoneInput = {
+                        if (conversationViewModel.usePipelineStt()) {
+                            conversationViewModel.onMicrophoneInput()
+                        } else {
+                            onVoiceInputIntent()
+                        }
+                    }
                 )
             }
             composable(SCREEN_PIPELINES) {
@@ -91,7 +110,7 @@ fun LoadAssistView(
 @Composable
 fun ConversationResultView(
     conversation: List<AssistMessage>,
-    allowInput: Boolean,
+    inputMode: AssistViewModelBase.AssistInputMode,
     currentPipeline: AssistPipelineResponse?,
     hapticFeedback: Boolean,
     onChangePipeline: () -> Unit,
@@ -108,7 +127,9 @@ fun ConversationResultView(
         timeText = { TimeText(scalingLazyListState = scrollState) }
     ) {
         LaunchedEffect(conversation.size) {
-            scrollState.scrollToItem(if (allowInput) conversation.size else (conversation.size - 1))
+            scrollState.scrollToItem(
+                if (inputMode != AssistViewModelBase.AssistInputMode.BLOCKED) conversation.size else (conversation.size - 1)
+            )
         }
         if (hapticFeedback) {
             val haptic = LocalHapticFeedback.current
@@ -152,18 +173,47 @@ fun ConversationResultView(
             items(conversation) {
                 SpeechBubble(text = it.message, isResponse = !it.isInput)
             }
-            if (allowInput) {
+            if (inputMode != AssistViewModelBase.AssistInputMode.BLOCKED) {
                 item {
-                    Button(
-                        modifier = Modifier.padding(top = 16.dp),
-                        onClick = { onMicrophoneInput() },
-                        colors = ButtonDefaults.secondaryButtonColors()
+                    Box(
+                        modifier = Modifier.size(64.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Image(
-                            asset = CommunityMaterial.Icon3.cmd_microphone,
-                            contentDescription = stringResource(R.string.assist_start_listening),
-                            colorFilter = ColorFilter.tint(LocalContentColor.current)
-                        )
+                        val inputIsActive = inputMode == AssistViewModelBase.AssistInputMode.VOICE_ACTIVE
+                        if (inputIsActive) {
+                            KeepScreenOn()
+                            val transition = rememberInfiniteTransition()
+                            val scale by transition.animateFloat(
+                                initialValue = 1f,
+                                targetValue = 1.2f,
+                                animationSpec = infiniteRepeatable(
+                                    animation = tween(600, easing = LinearEasing),
+                                    repeatMode = RepeatMode.Reverse
+                                )
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .scale(scale)
+                                    .background(color = colorResource(R.color.colorSpeechText), shape = CircleShape)
+                                    .clip(CircleShape)
+                            )
+                        }
+                        Button(
+                            onClick = { onMicrophoneInput() },
+                            colors =
+                            if (inputIsActive) {
+                                ButtonDefaults.secondaryButtonColors(backgroundColor = Color.Transparent, contentColor = Color.Black)
+                            } else {
+                                ButtonDefaults.secondaryButtonColors()
+                            }
+                        ) {
+                            Image(
+                                asset = CommunityMaterial.Icon3.cmd_microphone,
+                                contentDescription = stringResource(R.string.assist_start_listening),
+                                colorFilter = ColorFilter.tint(LocalContentColor.current)
+                            )
+                        }
                     }
                 }
             }
