@@ -123,7 +123,7 @@ dependencies {
     implementation("androidx.wear.compose:compose-material:1.1.2")
     implementation("androidx.wear.compose:compose-navigation:1.1.2")
 
-    implementation("com.google.guava:guava:32.0.1-android")
+    implementation("com.google.guava:guava:32.1.0-android")
     implementation("androidx.wear.tiles:tiles:1.1.0")
     implementation("androidx.wear.tiles:tiles-material:1.1.0")
 
