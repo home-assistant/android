@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.settings.wear
 
 import android.content.Context
+import android.content.pm.PackageManager
 import android.util.Log
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.CommonStatusCodes
@@ -16,6 +17,7 @@ object SettingsWearDetection {
      * if they have the Home Assistant app installed.
      */
     suspend fun hasAnyNodes(context: Context): Boolean {
+        if (context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) return false
         return try {
             val nodeClient = Wearable.getNodeClient(context)
             nodeClient.connectedNodes.await().any()
