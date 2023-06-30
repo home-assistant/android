@@ -35,6 +35,7 @@ interface WebSocketRepository {
     suspend fun getAreaRegistry(): List<AreaRegistryResponse>?
     suspend fun getDeviceRegistry(): List<DeviceRegistryResponse>?
     suspend fun getEntityRegistry(): List<EntityRegistryResponse>?
+    suspend fun getEntityRegistryFor(entityId: String): EntityRegistryResponse?
     suspend fun getServices(): List<DomainResponse>?
     suspend fun getStateChanges(): Flow<StateChangedEvent>?
     suspend fun getStateChanges(entityIds: List<String>): Flow<TriggerEvent>?

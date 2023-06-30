@@ -17,6 +17,7 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import com.mikepenz.iconics.utils.colorInt
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.data.integration.canSupportPrecision
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.friendlyState
 import io.homeassistant.companion.android.common.data.integration.getIcon
@@ -59,6 +60,15 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
             }
         }
 
+        val entityOptions = if (
+            entity.canSupportPrecision() &&
+            serverManager.getServer()?.version?.isAtLeast(2023, 3) == true
+        ) {
+            serverManager.webSocketRepository().getEntityRegistryFor(entityId)?.options
+        } else {
+            null
+        }
+
         val icon = entity.getIcon(applicationContext) ?: CommunityMaterial.Icon.cmd_bookmark
         val iconBitmap = IconicsDrawable(this, icon).apply {
             colorInt = Color.WHITE
@@ -69,7 +79,7 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
         } else {
             null
         }
-        val text = PlainComplicationText.Builder(entity.friendlyState(this)).build()
+        val text = PlainComplicationText.Builder(entity.friendlyState(this, entityOptions)).build()
         val contentDescription = PlainComplicationText.Builder(getText(R.string.complication_entity_state_content_description)).build()
         val monochromaticImage = MonochromaticImage.Builder(Icon.createWithBitmap(iconBitmap)).build()
         val tapAction = ComplicationReceiver.getComplicationToggleIntent(this, request.complicationInstanceId)
