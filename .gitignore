@@ -14,7 +14,8 @@ version.txt
 # Make sure our translation downloads don't make our repo dirty when building.
 strings.zip
 common/src/main/res/*/strings.xml
-common/src/main/res/xml/locales_config.xml
+app/src/main/res/xml/locales_config.xml
+wear/src/main/res/xml/locales_config.xml
 !common/src/main/res/values/strings.xml
 
 firebaseAppDistributionServiceCredentialsFile.json
