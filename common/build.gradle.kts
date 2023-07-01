@@ -56,7 +56,7 @@ android {
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.8.22")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.8.21")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.8.22")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
 
     implementation("com.google.dagger:hilt-android:2.46.1")
@@ -65,9 +65,9 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
 
-    api("androidx.room:room-runtime:2.5.1")
-    api("androidx.room:room-ktx:2.5.1")
-    kapt("androidx.room:room-compiler:2.5.1")
+    api("androidx.room:room-runtime:2.5.2")
+    api("androidx.room:room-ktx:2.5.2")
+    kapt("androidx.room:room-compiler:2.5.2")
 
     api("androidx.work:work-runtime-ktx:2.8.1")
 
