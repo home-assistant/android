@@ -35,7 +35,7 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.4.7"
+        kotlinCompilerExtensionVersion = "1.4.8"
     }
 
     signingConfigs {
@@ -89,9 +89,9 @@ dependencies {
     implementation(project(":common"))
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.8.22")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.7.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.7.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.2")
 
     implementation("com.google.android.material:material:1.9.0")
 
@@ -113,10 +113,10 @@ dependencies {
     implementation("com.mikepenz:community-material-typeface:7.0.96.0-kotlin@aar")
     implementation("com.mikepenz:iconics-compose:5.4.0")
 
-    implementation("androidx.activity:activity-ktx:1.7.1")
-    implementation("androidx.activity:activity-compose:1.7.1")
-    implementation("androidx.compose.compiler:compiler:1.4.7")
-    implementation(platform("androidx.compose:compose-bom:2023.05.01"))
+    implementation("androidx.activity:activity-ktx:1.7.2")
+    implementation("androidx.activity:activity-compose:1.7.2")
+    implementation("androidx.compose.compiler:compiler:1.4.8")
+    implementation(platform("androidx.compose:compose-bom:2023.06.01"))
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.ui:ui-tooling")
     implementation("androidx.wear.compose:compose-foundation:1.1.2")
