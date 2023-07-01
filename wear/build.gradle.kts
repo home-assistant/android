@@ -89,9 +89,9 @@ dependencies {
     implementation(project(":common"))
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.8.22")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.7.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.7.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.2")
 
     implementation("com.google.android.material:material:1.9.0")
 
@@ -123,7 +123,7 @@ dependencies {
     implementation("androidx.wear.compose:compose-material:1.1.2")
     implementation("androidx.wear.compose:compose-navigation:1.1.2")
 
-    implementation("com.google.guava:guava:32.0.1-android")
+    implementation("com.google.guava:guava:32.1.0-android")
     implementation("androidx.wear.tiles:tiles:1.1.0")
     implementation("androidx.wear.tiles:tiles-material:1.1.0")
 
