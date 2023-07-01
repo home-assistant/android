@@ -196,6 +196,17 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
         return mapResponse(socketResponse)
     }
 
+    override suspend fun getEntityRegistryFor(entityId: String): EntityRegistryResponse? {
+        val socketResponse = sendMessage(
+            mapOf(
+                "type" to "config/entity_registry/get",
+                "entity_id" to entityId
+            )
+        )
+
+        return mapResponse(socketResponse)
+    }
+
     override suspend fun getServices(): List<DomainResponse>? {
         val socketResponse = sendMessage(
             mapOf(

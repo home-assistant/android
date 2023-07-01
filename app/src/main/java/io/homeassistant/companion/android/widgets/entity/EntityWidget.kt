@@ -17,6 +17,8 @@ import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.canSupportPrecision
+import io.homeassistant.companion.android.common.data.integration.friendlyState
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -81,6 +83,7 @@ class EntityWidget : BaseWidgetProvider() {
 
                 // Content
                 val resolvedText = resolveTextToShow(
+                    context,
                     serverId,
                     entityId,
                     suggestedEntity,
@@ -128,6 +131,7 @@ class EntityWidget : BaseWidgetProvider() {
         staticWidgetDao.getAll().associate { it.id to (it.serverId to listOf(it.entityId)) }
 
     private suspend fun resolveTextToShow(
+        context: Context,
         serverId: Int,
         entityId: String?,
         suggestedEntity: Entity<Map<String, Any>>?,
@@ -148,22 +152,28 @@ class EntityWidget : BaseWidgetProvider() {
             Log.e(TAG, "Unable to fetch entity", e)
             entityCaughtException = true
         }
+        val entityOptions = if (
+            entity?.canSupportPrecision() == true &&
+            serverManager.getServer(serverId)?.version?.isAtLeast(2023, 3) == true
+        ) {
+            serverManager.webSocketRepository(serverId).getEntityRegistryFor(entity.entityId)?.options
+        } else {
+            null
+        }
         if (attributeIds == null) {
             staticWidgetDao.updateWidgetLastUpdate(
                 appWidgetId,
-                entity?.state ?: staticWidgetDao.get(appWidgetId)?.lastUpdate ?: ""
+                entity?.friendlyState(context, entityOptions) ?: staticWidgetDao.get(appWidgetId)?.lastUpdate ?: ""
             )
             return ResolvedText(staticWidgetDao.get(appWidgetId)?.lastUpdate, entityCaughtException)
         }
 
-        var fetchedAttributes: Map<*, *>
-        var attributeValues: List<String?>
         try {
-            fetchedAttributes = entity?.attributes as? Map<*, *> ?: mapOf<String, String>()
-            attributeValues =
-                attributeIds.split(",").map { id -> fetchedAttributes.get(id)?.toString() }
+            val fetchedAttributes = entity?.attributes as? Map<*, *> ?: mapOf<String, String>()
+            val attributeValues =
+                attributeIds.split(",").map { id -> fetchedAttributes[id]?.toString() }
             val lastUpdate =
-                entity?.state.plus(if (attributeValues.isNotEmpty()) stateSeparator else "")
+                entity?.friendlyState(context, entityOptions).plus(if (attributeValues.isNotEmpty()) stateSeparator else "")
                     .plus(attributeValues.joinToString(attributeSeparator))
             staticWidgetDao.updateWidgetLastUpdate(appWidgetId, lastUpdate)
             return ResolvedText(lastUpdate)
