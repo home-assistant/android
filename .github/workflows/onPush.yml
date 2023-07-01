@@ -164,8 +164,7 @@ jobs:
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
         run: |
-          ./gradlew :wear:promoteReleaseBundle :app:promoteReleaseBundle
-          ./gradlew :automotive:promoteReleaseBundle || echo "Failed to promote Automotive!"
+          ./gradlew promoteArtifact --from-track internal --promote-track beta
 
       - name: Print `git status`
         run: git status
