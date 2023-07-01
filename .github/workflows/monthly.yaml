@@ -18,4 +18,4 @@ jobs:
       - name: Bump Calendar Version
         uses: rickstaa/action-create-tag@v1.6.2
         with:
-          tag: ${{ steps.current-time.outputs.month }}.${{ steps.current-time.outputs.month }}.0
+          tag: ${{ steps.current-time.outputs.year }}.${{ steps.current-time.outputs.month }}.0
