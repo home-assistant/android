@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Button
 import androidx.compose.material.Divider
@@ -166,6 +167,7 @@ private fun CreateShortcutView(
             Image(
                 painter = painter,
                 contentDescription = stringResource(id = R.string.shortcut_icon),
+                modifier = Modifier.size(24.dp),
                 colorFilter = ColorFilter.tint(colorResource(R.color.colorAccent))
             )
         }

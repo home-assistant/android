@@ -21,10 +21,10 @@ import android.widget.AutoCompleteTextView
 import android.widget.EditText
 import android.widget.Spinner
 import androidx.appcompat.app.AlertDialog
-import androidx.compose.ui.platform.ComposeView
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.core.graphics.toColorInt
+import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -42,7 +42,7 @@ import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetButtonConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.util.getHexForColor
-import io.homeassistant.companion.android.util.icondialog.IconDialogContent
+import io.homeassistant.companion.android.util.icondialog.IconDialogFragment
 import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import io.homeassistant.companion.android.util.icondialog.mdiName
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
@@ -346,24 +346,19 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         runOnUiThread {
             // Create an icon pack and load all drawables.
             val iconName = buttonWidget?.iconName ?: "mdi:flash"
-            val icon = CommunityMaterial.getIconByMdiName(iconName)
+            val icon = CommunityMaterial.getIconByMdiName(iconName) ?: CommunityMaterial.Icon2.cmd_flash
             onIconDialogIconsSelected(icon)
             binding.widgetConfigIconSelector.setOnClickListener {
-                var alertDialog: AlertDialog? = null
+                var alertDialog: DialogFragment? = null
 
-                val view = layoutInflater.inflate(R.layout.dialog_icon, binding.root, false) as ComposeView
-                view.setContent {
-                    IconDialogContent(
-                        onSelect = {
-                            onIconDialogIconsSelected(it)
-                            alertDialog?.hide()
-                        }
-                    )
-                }
+                alertDialog = IconDialogFragment(
+                    callback = {
+                        onIconDialogIconsSelected(it)
+                        alertDialog?.dismiss()
+                    }
+                )
 
-                alertDialog = AlertDialog.Builder(this)
-                    .setView(view)
-                    .show()
+                alertDialog.show(supportFragmentManager, IconDialogFragment.TAG)
             }
         }
     }

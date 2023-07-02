@@ -110,7 +110,7 @@ abstract class TileExtensions : TileService() {
                     serverManager.integrationRepository(tileData.serverId).getEntityUpdates(listOf(tileData.entityId))?.collect {
                         tile.state =
                             if (it.state in validActiveStates) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
-                        getTileIcon(tileData.iconId, it, applicationContext)?.let { icon ->
+                        getTileIcon(tileData.iconName, it, applicationContext)?.let { icon ->
                             tile.icon = Icon.createWithBitmap(icon)
                         }
                         tile.updateTile()
@@ -144,7 +144,7 @@ abstract class TileExtensions : TileService() {
                 val state: Entity<*>? =
                     if (
                         tileData.entityId.split(".")[0] in toggleDomainsWithLock ||
-                        tileData.iconId == null
+                        tileData.iconName == null
                     ) {
                         withContext(Dispatchers.IO) {
                             try {
@@ -324,16 +324,14 @@ abstract class TileExtensions : TileService() {
     private fun getTileIcon(tileIconName: String?, entity: Entity<*>?, context: Context): Bitmap? {
         // Create an icon pack and load all drawables.
         if (!tileIconName.isNullOrBlank()) {
-            val icon = CommunityMaterial.getIconByMdiName(tileIconName)
+            val icon = CommunityMaterial.getIconByMdiName(tileIconName) ?: return null
             val iconDrawable = IconicsDrawable(context, icon)
             return iconDrawable.toBitmap()
         } else {
             entity?.getIcon(context)?.let {
-                return DrawableCompat.wrap(
-                    IconicsDrawable(context, it).apply {
-                        sizeDp = 48
-                    }
-                ).toBitmap()
+                return IconicsDrawable(context, it).apply {
+                    sizeDp = 48
+                }.toBitmap()
             }
         }
 

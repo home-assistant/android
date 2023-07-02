@@ -20,7 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.google.android.material.composethemeadapter.MdcTheme
+import com.google.accompanist.themeadapter.material.MdcTheme
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.ITypeface
@@ -49,7 +49,7 @@ fun IconDialogGrid(
                     asset = icon,
                     colorFilter = ColorFilter.tint(tint),
                     // https://material.io/design/iconography/system-icons.html#color
-                    alpha = 0.54f,
+                    alpha = 0.54f
                 )
             }
         }

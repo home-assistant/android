@@ -69,7 +69,6 @@ import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundTypeConverter
 import kotlinx.coroutines.runBlocking
 import java.util.UUID
-import kotlin.collections.ArrayList
 import io.homeassistant.companion.android.common.R as commonR
 
 @Database(
@@ -189,9 +188,9 @@ abstract class AppDatabase : RoomDatabase() {
         private fun <T> Cursor.map(transform: (Cursor) -> T): List<T> {
             return if (moveToFirst()) {
                 val results = mutableListOf<T>()
-                while (moveToNext()) {
+                do {
                     results.add(transform(this))
-                }
+                } while (moveToNext())
                 results
             } else {
                 emptyList()
@@ -820,26 +819,27 @@ abstract class AppDatabase : RoomDatabase() {
 
             private fun Cursor.getIconName(columnIndex: Int): String {
                 val iconId = getInt(columnIndex)
-                return iconIdToName.getValue(iconId)
+                return "mdi:${iconIdToName.getValue(iconId)}"
             }
 
             @SuppressLint("Range")
             override fun migrate(database: SupportSQLiteDatabase) {
                 var migrationFailed = false
                 val widgets = try {
-                    database.query("SELECT * FROM button_widgets").use { cursor ->
+                    database.query("SELECT * FROM `button_widgets`").use { cursor ->
                         cursor.map {
                             ContentValues().apply {
                                 put("id", cursor.getString(cursor.getColumnIndex("id")))
+                                put("server_id", cursor.getInt(cursor.getColumnIndex("server_id")))
                                 put("domain", cursor.getString(cursor.getColumnIndex("domain")))
                                 put("service", cursor.getString(cursor.getColumnIndex("service")))
                                 put("service_data", cursor.getString(cursor.getColumnIndex("service_data")))
                                 put("label", cursor.getStringOrNull(cursor.getColumnIndex("label")))
                                 put("background_type", cursor.getString(cursor.getColumnIndex("background_type")))
-                                put("textColor", cursor.getStringOrNull(cursor.getColumnIndex("textColor")))
-                                put("textColor", cursor.getInt(cursor.getColumnIndex("requireAuthentication")))
+                                put("text_color", cursor.getStringOrNull(cursor.getColumnIndex("text_color")))
+                                put("require_authentication", cursor.getInt(cursor.getColumnIndex("require_authentication")))
 
-                                put("iconName", cursor.getIconName(cursor.getColumnIndex("icon_id")))
+                                put("icon_name", cursor.getIconName(cursor.getColumnIndex("icon_id")))
                             }
                         }
                     }
@@ -849,25 +849,29 @@ abstract class AppDatabase : RoomDatabase() {
                     null
                 }
                 database.execSQL("DROP TABLE IF EXISTS `button_widgets`")
-                database.execSQL("CREATE TABLE IF NOT EXISTS `button_widgets` (`id` INTEGER NOT NULL, `iconName` TEXT NOT NULL, `domain` TEXT NOT NULL, `service` TEXT NOT NULL, `service_data` TEXT NOT NULL, `label` TEXT, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, `require_authentication` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`id`))")
+                database.execSQL("CREATE TABLE IF NOT EXISTS `button_widgets` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `icon_name` TEXT NOT NULL, `domain` TEXT NOT NULL, `service` TEXT NOT NULL, `service_data` TEXT NOT NULL, `label` TEXT, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, `require_authentication` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`id`))")
                 widgets?.forEach {
                     database.insert("button_widgets", OnConflictStrategy.REPLACE, it)
                 }
+                Log.d(TAG, "Migrated ${widgets?.size ?: "no"} button widgets to MDI icon names")
 
                 val tiles = try {
-                    database.query("SELECT * FROM qs_tiles").use { cursor ->
+                    database.query("SELECT * FROM `qs_tiles`").use { cursor ->
                         cursor.map {
                             ContentValues().apply {
                                 put("id", cursor.getString(cursor.getColumnIndex("id")))
-                                put("tileId", cursor.getString(cursor.getColumnIndex("tileId")))
+                                put("tile_id", cursor.getString(cursor.getColumnIndex("tile_id")))
                                 put("added", cursor.getInt(cursor.getColumnIndex("added")))
-                                put("entityId", cursor.getString(cursor.getColumnIndex("entityId")))
+                                put("server_id", cursor.getInt(cursor.getColumnIndex("server_id")))
+                                put("entity_id", cursor.getString(cursor.getColumnIndex("entity_id")))
                                 put("label", cursor.getString(cursor.getColumnIndex("label")))
                                 put("subtitle", cursor.getStringOrNull(cursor.getColumnIndex("subtitle")))
+                                put("should_vibrate", cursor.getInt(cursor.getColumnIndex("should_vibrate")))
+                                put("auth_required", cursor.getInt(cursor.getColumnIndex("auth_required")))
 
                                 val oldIconColumn = cursor.getColumnIndex("icon_id")
                                 if (!cursor.isNull(oldIconColumn)) {
-                                    put("iconName", cursor.getIconName(oldIconColumn))
+                                    put("icon_name", cursor.getIconName(oldIconColumn))
                                 }
                             }
                         }
@@ -878,13 +882,15 @@ abstract class AppDatabase : RoomDatabase() {
                     null
                 }
                 database.execSQL("DROP TABLE IF EXISTS `qs_tiles`")
-                database.execSQL("CREATE TABLE IF NOT EXISTS `qs_tiles` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `tileId` TEXT NOT NULL, `added` INTEGER NOT NULL DEFAULT 1, `iconName` TEXT, `entityId` TEXT NOT NULL, `label` TEXT NOT NULL, `subtitle` TEXT)")
+                database.execSQL("CREATE TABLE IF NOT EXISTS `qs_tiles` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `tile_id` TEXT NOT NULL, `added` INTEGER NOT NULL DEFAULT 1, `server_id` INTEGER NOT NULL DEFAULT 0, `icon_name` TEXT, `entity_id` TEXT NOT NULL, `label` TEXT NOT NULL, `subtitle` TEXT, `should_vibrate` INTEGER NOT NULL DEFAULT 0, `auth_required` INTEGER NOT NULL DEFAULT 0)")
                 tiles?.forEach {
                     database.insert("qs_tiles", OnConflictStrategy.REPLACE, it)
                 }
+                Log.d(TAG, "Migrated ${tiles?.size ?: "no"} QS tiles to MDI icon names")
 
-                if (migrationFailed)
+                if (migrationFailed) {
                     notifyMigrationFailed()
+                }
             }
         }
 

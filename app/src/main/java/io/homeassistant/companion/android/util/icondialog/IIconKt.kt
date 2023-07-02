@@ -13,7 +13,12 @@ const val MDI_PREFIX = "mdi:"
 val IIcon.mdiName: String
     get() = name.replace("${CommunityMaterial.mappingPrefix}_", MDI_PREFIX).replace('_', '-')
 
-fun CommunityMaterial.getIconByMdiName(mdiName: String): IIcon {
+fun CommunityMaterial.getIconByMdiName(mdiName: String): IIcon? {
     val name = mdiName.replace(MDI_PREFIX, "${mappingPrefix}_").replace('-', '_')
-    return getIcon(name)
+    return try {
+        getIcon(name)
+    } catch (e: IllegalArgumentException) {
+        // Icon doesn't exist (anymore)
+        null
+    }
 }

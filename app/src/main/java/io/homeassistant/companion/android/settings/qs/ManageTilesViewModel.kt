@@ -17,7 +17,6 @@ import androidx.lifecycle.viewModelScope
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import com.mikepenz.iconics.utils.sizeDp
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
@@ -76,6 +75,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.concurrent.Executors
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
@@ -148,6 +148,8 @@ class ManageTilesViewModel @Inject constructor(
     var sortedEntities by mutableStateOf<List<Entity<*>>>(emptyList())
         private set
     var selectedServerId by mutableStateOf(ServerManager.SERVER_ID_ACTIVE)
+        private set
+    var selectedIconId by mutableStateOf<String?>(null)
         private set
     var selectedEntityId by mutableStateOf("")
     var tileLabel by mutableStateOf("")
@@ -239,11 +241,12 @@ class ManageTilesViewModel @Inject constructor(
 
     fun selectEntityId(entityId: String) {
         selectedEntityId = entityId
-        if (selectedIcon == null) selectIcon(null) // trigger drawable update
+        if (selectedIconId == null) selectIcon(null) // trigger drawable update
     }
 
     fun selectIcon(icon: IIcon?) {
-        selectedIcon = icon
+        selectedIconId = icon?.mdiName
+        selectedIcon = icon ?: sortedEntities.firstOrNull { it.entityId == selectedEntityId }?.getIcon(app)
     }
 
     private fun updateExistingTileFields(currentTile: TileEntity) {
@@ -264,7 +267,7 @@ class ManageTilesViewModel @Inject constructor(
                 tileId = selectedTile.id,
                 serverId = selectedServerId,
                 added = selectedTileAdded,
-                iconName = selectedIcon?.mdiName,
+                iconName = selectedIconId,
                 entityId = selectedEntityId,
                 label = tileLabel,
                 subtitle = tileSubtitle,

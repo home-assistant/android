@@ -25,6 +25,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import io.homeassistant.companion.android.util.icondialog.mdiName
 import io.homeassistant.companion.android.webview.WebViewActivity
 import io.homeassistant.companion.android.widgets.assist.AssistShortcutActivity
@@ -101,7 +102,6 @@ class ManageShortcutsViewModel @Inject constructor(
                     mutableStateOf(""),
                     mutableStateOf(""),
                     mutableStateOf("lovelace"),
-                    // mutableStateOf(AppCompatResources.getDrawable(application, R.drawable.ic_stat_ic_notification_blue)),
                     mutableStateOf(false)
                 )
             )
@@ -192,7 +192,7 @@ class ManageShortcutsViewModel @Inject constructor(
         label.value = item.shortLabel.toString()
         desc.value = item.longLabel.toString()
         path.value = item.intent?.action.toString()
-        selectedIcon.value = item.intent?.extras?.getString("iconName")?.let { CommunityMaterial.getIcon(it) }
+        selectedIcon.value = item.intent?.extras?.getString("iconName")?.let { CommunityMaterial.getIconByMdiName(it) }
         if (path.value.startsWith("entityId:")) {
             type.value = "entityId"
         } else {
