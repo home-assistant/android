@@ -20,4 +20,6 @@ jobs:
           java-version: '17'
 
       - name: Tag Weekly Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.TAG_PUSH_TOKEN }}
         run: ./gradlew :reckonTagPush -Preckon.stage=final
