@@ -45,6 +45,9 @@ android {
             java {
                 srcDirs("../app/src/main/java")
             }
+            assets {
+                srcDirs("../app/src/main/assets")
+            }
             res {
                 srcDirs("../app/src/main/res")
             }

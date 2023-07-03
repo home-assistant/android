@@ -22,8 +22,10 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.google.android.material.color.DynamicColors
 import com.mikepenz.iconics.IconicsDrawable
+import com.mikepenz.iconics.IconicsSize
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import com.mikepenz.iconics.utils.actionBar
+import com.mikepenz.iconics.utils.padding
+import com.mikepenz.iconics.utils.size
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -192,7 +194,10 @@ class ButtonWidget : AppWidgetProvider() {
             val iconData = widget?.iconName?.let { CommunityMaterial.getIconByMdiName(it) }
                 ?: CommunityMaterial.Icon2.cmd_flash // Lightning bolt
 
-            val iconDrawable = IconicsDrawable(context, iconData).actionBar()
+            val iconDrawable = IconicsDrawable(context, iconData).apply {
+                padding = IconicsSize.dp(2)
+                size = IconicsSize.dp(24)
+            }
             val icon = DrawableCompat.wrap(iconDrawable)
             if (widget?.backgroundType == WidgetBackgroundType.TRANSPARENT) {
                 setInt(R.id.widgetImageButton, "setColorFilter", textColor)

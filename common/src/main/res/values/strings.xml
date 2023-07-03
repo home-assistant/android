@@ -488,6 +488,7 @@
     <string name="scenes">Scenes</string>
     <string name="scripts">Scripts</string>
     <string name="search_icons">Search icons</string>
+    <string name="search_icons_in_english">Search icons (in English)</string>
     <string name="search_notifications">Search notifications</string>
     <string name="search_results">Search Results</string>
     <string name="search_sensors">Search sensors</string>
