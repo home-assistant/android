@@ -171,7 +171,6 @@ dependencies {
     implementation(project(":common"))
 
     implementation("com.github.Dimezis:BlurView:version-1.6.6")
-    implementation("org.altbeacon:android-beacon-library:2.19.6")
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.8.22")
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.8.22")
