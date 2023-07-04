@@ -13,12 +13,8 @@ import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
-import androidx.core.graphics.drawable.DrawableCompat
-import androidx.core.graphics.drawable.toBitmap
-import com.maltaisn.icondialog.pack.IconPack
-import com.maltaisn.icondialog.pack.IconPackLoader
-import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import com.mikepenz.iconics.IconicsDrawable
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import com.mikepenz.iconics.utils.sizeDp
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
@@ -35,6 +31,7 @@ import io.homeassistant.companion.android.database.qs.isSetup
 import io.homeassistant.companion.android.database.qs.numberedId
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.qs.updateActiveTileServices
+import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
@@ -113,7 +110,7 @@ abstract class TileExtensions : TileService() {
                     serverManager.integrationRepository(tileData.serverId).getEntityUpdates(listOf(tileData.entityId))?.collect {
                         tile.state =
                             if (it.state in validActiveStates) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
-                        getTileIcon(tileData.iconId, it, applicationContext)?.let { icon ->
+                        getTileIcon(tileData.iconName, it, applicationContext)?.let { icon ->
                             tile.icon = Icon.createWithBitmap(icon)
                         }
                         tile.updateTile()
@@ -147,7 +144,7 @@ abstract class TileExtensions : TileService() {
                 val state: Entity<*>? =
                     if (
                         tileData.entityId.split(".")[0] in toggleDomainsWithLock ||
-                        tileData.iconId == null
+                        tileData.iconName == null
                     ) {
                         withContext(Dispatchers.IO) {
                             try {
@@ -170,7 +167,7 @@ abstract class TileExtensions : TileService() {
                     tile.state = Tile.STATE_INACTIVE
                 }
 
-                getTileIcon(tileData.iconId, state, context)?.let { icon ->
+                getTileIcon(tileData.iconName, state, context)?.let { icon ->
                     tile.icon = Icon.createWithBitmap(icon)
                 }
                 Log.d(TAG, "Tile data set for tile ID: $tileId")
@@ -308,7 +305,7 @@ abstract class TileExtensions : TileService() {
                         tileId = tileId,
                         added = true,
                         serverId = 0,
-                        iconId = null,
+                        iconName = null,
                         entityId = "",
                         label = "",
                         subtitle = null,
@@ -324,26 +321,17 @@ abstract class TileExtensions : TileService() {
         updateActiveTileServices(highestInUse, applicationContext)
     }
 
-    private fun getTileIcon(tileIconId: Int?, entity: Entity<*>?, context: Context): Bitmap? {
+    private fun getTileIcon(tileIconName: String?, entity: Entity<*>?, context: Context): Bitmap? {
         // Create an icon pack and load all drawables.
-        if (tileIconId != null) {
-            if (iconPack == null) {
-                val loader = IconPackLoader(context)
-                iconPack = createMaterialDesignIconPack(loader)
-                iconPack!!.loadDrawables(loader.drawableLoader)
-            }
-
-            val iconDrawable = iconPack?.icons?.get(tileIconId)?.drawable
-            if (iconDrawable != null) {
-                return DrawableCompat.wrap(iconDrawable).toBitmap()
-            }
+        if (!tileIconName.isNullOrBlank()) {
+            val icon = CommunityMaterial.getIconByMdiName(tileIconName) ?: return null
+            val iconDrawable = IconicsDrawable(context, icon)
+            return iconDrawable.toBitmap()
         } else {
             entity?.getIcon(context)?.let {
-                return DrawableCompat.wrap(
-                    IconicsDrawable(context, it).apply {
-                        sizeDp = 48
-                    }
-                ).toBitmap()
+                return IconicsDrawable(context, it).apply {
+                    sizeDp = 48
+                }.toBitmap()
             }
         }
 
@@ -352,7 +340,6 @@ abstract class TileExtensions : TileService() {
 
     companion object {
         private const val TAG = "TileExtensions"
-        private var iconPack: IconPack? = null
         private val toggleDomains = listOf(
             "automation", "cover", "fan", "humidifier", "input_boolean", "light",
             "media_player", "remote", "siren", "switch"

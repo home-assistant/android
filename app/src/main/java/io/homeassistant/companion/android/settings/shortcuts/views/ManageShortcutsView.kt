@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Button
 import androidx.compose.material.Divider
@@ -25,16 +26,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.graphics.drawable.DrawableCompat
-import androidx.core.graphics.drawable.toBitmap
-import androidx.fragment.app.FragmentManager
-import com.maltaisn.icondialog.IconDialog
+import com.mikepenz.iconics.compose.IconicsPainter
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSettingsFragment
 import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsViewModel
@@ -44,8 +42,7 @@ import io.homeassistant.companion.android.util.compose.ServerDropdownButton
 @Composable
 fun ManageShortcutsView(
     viewModel: ManageShortcutsViewModel,
-    iconDialog: IconDialog,
-    childFragment: FragmentManager
+    showIconDialog: (tag: String) -> Unit
 ) {
     LazyColumn(contentPadding = PaddingValues(16.dp)) {
         item {
@@ -67,8 +64,7 @@ fun ManageShortcutsView(
             CreateShortcutView(
                 i = i,
                 viewModel = viewModel,
-                iconDialog = iconDialog,
-                childFragment = childFragment
+                showIconDialog = showIconDialog
             )
         }
     }
@@ -76,7 +72,11 @@ fun ManageShortcutsView(
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
-private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, iconDialog: IconDialog, childFragment: FragmentManager) {
+private fun CreateShortcutView(
+    i: Int,
+    viewModel: ManageShortcutsViewModel,
+    showIconDialog: (tag: String) -> Unit
+) {
     val context = LocalContext.current
     var expandedEntity by remember { mutableStateOf(false) }
     var expandedPinnedShortcuts by remember { mutableStateOf(false) }
@@ -155,17 +155,21 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, icon
             modifier = Modifier.padding(end = 10.dp)
         )
         OutlinedButton(onClick = {
-            iconDialog.show(childFragment, shortcutId)
+            showIconDialog(shortcutId)
         }) {
-            val icon = viewModel.shortcuts[i].drawable.value?.let { DrawableCompat.wrap(it) }
-            icon?.toBitmap()?.asImageBitmap()
-                ?.let {
-                    Image(
-                        it,
-                        contentDescription = stringResource(id = R.string.shortcut_icon),
-                        colorFilter = ColorFilter.tint(colorResource(R.color.colorAccent))
-                    )
-                }
+            val icon = viewModel.shortcuts[i].selectedIcon.value
+            val painter = if (icon != null) {
+                remember(icon) { IconicsPainter(icon) }
+            } else {
+                painterResource(R.drawable.ic_stat_ic_notification_blue)
+            }
+
+            Image(
+                painter = painter,
+                contentDescription = stringResource(id = R.string.shortcut_icon),
+                modifier = Modifier.size(24.dp),
+                colorFilter = ColorFilter.tint(colorResource(R.color.colorAccent))
+            )
         }
     }
 
@@ -269,7 +273,6 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, icon
                 shortcut.label.value,
                 shortcut.desc.value,
                 shortcut.path.value,
-                shortcut.drawable.value?.toBitmap(),
                 shortcut.selectedIcon.value
             )
         },

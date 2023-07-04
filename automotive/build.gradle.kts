@@ -45,6 +45,9 @@ android {
             java {
                 srcDirs("../app/src/main/java")
             }
+            assets {
+                srcDirs("../app/src/main/assets")
+            }
             res {
                 srcDirs("../app/src/main/res")
             }
@@ -169,8 +172,6 @@ dependencies {
 
     implementation("com.github.Dimezis:BlurView:version-1.6.6")
     implementation("org.altbeacon:android-beacon-library:2.19.5")
-    implementation("com.maltaisn:icondialog:3.3.0")
-    implementation("com.maltaisn:iconpack-community-material:5.3.45")
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.8.22")
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.8.22")
