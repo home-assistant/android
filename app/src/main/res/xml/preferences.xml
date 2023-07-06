@@ -2,6 +2,9 @@
 <androidx.preference.PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+    <io.homeassistant.companion.android.settings.SettingsSuggestionPreference
+        android:key="settings_suggestion"
+        app:isPreferenceVisible="false" />
     <PreferenceCategory
         android:key="servers_devices_category"
         android:title="@string/servers_devices_category">

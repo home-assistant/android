@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.settings
 
 import android.annotation.SuppressLint
 import android.app.UiModeManager
+import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -103,6 +104,29 @@ class SettingsFragment(
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 presenter.getServersFlow().collect {
                     updateServers(it)
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                presenter.getSuggestionFlow().collect { suggestion ->
+                    findPreference<SettingsSuggestionPreference>("settings_suggestion")?.let {
+                        if (suggestion != null) {
+                            it.setTitle(suggestion.title)
+                            it.setSummary(suggestion.summary)
+                            it.setIcon(suggestion.icon)
+                            it.setOnPreferenceClickListener {
+                                when (suggestion.id) {
+                                    SettingsPresenter.SUGGESTION_ASSISTANT_APP -> updateAssistantApp()
+                                    SettingsPresenter.SUGGESTION_NOTIFICATION_PERMISSION -> openNotificationSettings()
+                                }
+                                return@setOnPreferenceClickListener true
+                            }
+                            it.setOnPreferenceCancelListener { presenter.cancelSuggestion(requireContext(), suggestion.id) }
+                        }
+                        it.isVisible = suggestion != null
+                    }
                 }
             }
         }
@@ -320,6 +344,14 @@ class SettingsFragment(
         }
     }
 
+    private fun updateAssistantApp() {
+        // On Android Q+, this is a workaround as Android doesn't allow requesting the assistant role
+        val openIntent = Intent(Intent.ACTION_MAIN)
+        openIntent.component = ComponentName("com.android.settings", "com.android.settings.Settings\$ManageAssistActivity")
+        openIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        startActivity(openIntent)
+    }
+
     private fun updateBackgroundAccessPref() {
         findPreference<Preference>("background")?.let {
             if (isIgnoringBatteryOptimizations()) {
@@ -482,6 +514,7 @@ class SettingsFragment(
     override fun onResume() {
         super.onResume()
         activity?.title = getString(commonR.string.companion_app)
+        context?.let { presenter.updateSuggestions(it) }
     }
 
     override fun onDestroy() {

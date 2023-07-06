@@ -1,9 +1,15 @@
 package io.homeassistant.companion.android.settings
 
+import android.app.role.RoleManager
 import android.content.Context
+import android.os.Build
+import android.provider.Settings
 import android.util.Log
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.getSystemService
 import androidx.preference.PreferenceDataStore
 import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
@@ -29,11 +35,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 class SettingsPresenterImpl @Inject constructor(
     private val serverManager: ServerManager,
@@ -52,6 +60,8 @@ class SettingsPresenterImpl @Inject constructor(
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     private lateinit var view: SettingsView
+
+    private var suggestionFlow = MutableStateFlow<SettingsHomeSuggestion?>(null)
 
     override fun getBoolean(key: String, defValue: Boolean): Boolean = runBlocking {
         return@runBlocking when (key) {
@@ -110,6 +120,8 @@ class SettingsPresenterImpl @Inject constructor(
     override fun onFinish() {
         mainScope.cancel()
     }
+
+    override fun getSuggestionFlow(): StateFlow<SettingsHomeSuggestion?> = suggestionFlow
 
     override fun getServersFlow(): StateFlow<List<Server>> = serverManager.defaultServersFlow
 
@@ -204,6 +216,60 @@ class SettingsPresenterImpl @Inject constructor(
                     SensorUpdateFrequencySetting.NORMAL
                 )
             )
+        }
+    }
+
+    override fun updateSuggestions(context: Context) {
+        mainScope.launch { getSuggestions(context, false) }
+    }
+
+    override fun cancelSuggestion(context: Context, id: String) {
+        mainScope.launch {
+            val ignored = prefsRepository.getIgnoredSuggestions()
+            if (!ignored.contains(id)) {
+                prefsRepository.setIgnoredSuggestions(ignored + id)
+            }
+            getSuggestions(context, true)
+        }
+    }
+
+    private suspend fun getSuggestions(context: Context, overwrite: Boolean) {
+        val suggestions = mutableListOf<SettingsHomeSuggestion>()
+
+        // Assist
+        var assistantSuggestion = serverManager.defaultServers.any { it.version?.isAtLeast(2023, 5) == true }
+        if (assistantSuggestion && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val roleManager = context.getSystemService<RoleManager>()
+            assistantSuggestion = roleManager?.isRoleAvailable(RoleManager.ROLE_ASSISTANT) == true && !roleManager.isRoleHeld(RoleManager.ROLE_ASSISTANT)
+        } else if (assistantSuggestion && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            val defaultApp: String? = Settings.Secure.getString(context.contentResolver, "assistant")
+            assistantSuggestion = defaultApp?.contains(BuildConfig.APPLICATION_ID) == false
+        }
+        if (assistantSuggestion) {
+            suggestions += SettingsHomeSuggestion(
+                SettingsPresenter.SUGGESTION_ASSISTANT_APP,
+                commonR.string.suggestion_assist_title,
+                commonR.string.suggestion_assist_summary,
+                R.drawable.ic_comment_processing_outline
+            )
+        }
+
+        // Notifications
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !NotificationManagerCompat.from(context).areNotificationsEnabled()) {
+            suggestions += SettingsHomeSuggestion(
+                SettingsPresenter.SUGGESTION_NOTIFICATION_PERMISSION,
+                commonR.string.suggestion_notifications_title,
+                commonR.string.suggestion_notifications_summary,
+                commonR.drawable.ic_notifications
+            )
+        }
+
+        val ignored = prefsRepository.getIgnoredSuggestions()
+        val filteredSuggestions = suggestions.filter { !ignored.contains(it.id) }
+        if (overwrite || suggestionFlow.value == null) {
+            suggestionFlow.emit(filteredSuggestions.randomOrNull())
+        } else if (filteredSuggestions.none { it.id == suggestionFlow.value?.id }) {
+            suggestionFlow.emit(null)
         }
     }
 }
