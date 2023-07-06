@@ -49,8 +49,9 @@ class EntityGridVehicleScreen(
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 entitiesFlow.collect {
                     loading = false
+                    val hasChanged = entities.size != it.size || entities.toSet() != it.toSet()
                     entities = it
-                    invalidate()
+                    if (hasChanged) invalidate()
                 }
             }
         }
