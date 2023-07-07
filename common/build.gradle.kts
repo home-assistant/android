@@ -62,6 +62,7 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.46.1")
     kapt("com.google.dagger:hilt-android-compiler:2.46.1")
 
+    implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
 
@@ -76,7 +77,7 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.5")
-    implementation("org.altbeacon:android-beacon-library:2.19.5")
+    implementation("org.altbeacon:android-beacon-library:2.19.6")
 
     implementation("com.mikepenz:iconics-core:5.4.0")
     implementation("com.mikepenz:community-material-typeface:7.0.96.0-kotlin@aar")
