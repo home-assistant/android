@@ -123,7 +123,7 @@ dependencies {
     implementation("androidx.wear.compose:compose-material:1.1.2")
     implementation("androidx.wear.compose:compose-navigation:1.1.2")
 
-    implementation("com.google.guava:guava:32.0.1-android")
+    implementation("com.google.guava:guava:32.1.1-android")
     implementation("androidx.wear.tiles:tiles:1.1.0")
     implementation("androidx.wear.tiles:tiles-material:1.1.0")
 
@@ -133,4 +133,11 @@ dependencies {
 
     implementation(platform("com.google.firebase:firebase-bom:32.1.0"))
     implementation("com.google.firebase:firebase-messaging")
+}
+
+// https://github.com/google/guava/releases/tag/v32.1.0: Reporting dependencies that overlap with Guava
+configurations.all {
+    resolutionStrategy.capabilitiesResolution.withCapability("com.google.guava:listenablefuture") {
+        select("com.google.guava:guava:0")
+    }
 }
