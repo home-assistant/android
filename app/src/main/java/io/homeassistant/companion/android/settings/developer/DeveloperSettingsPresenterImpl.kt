@@ -10,6 +10,7 @@ import io.homeassistant.companion.android.thread.ThreadManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -62,7 +63,7 @@ class DeveloperSettingsPresenterImpl @Inject constructor(
     override fun runThreadDebug(context: Context, serverId: Int) {
         mainScope.launch {
             try {
-                when (val syncResult = threadManager.syncPreferredDataset(context, serverId, this)) {
+                when (val syncResult = threadManager.syncPreferredDataset(context, serverId, CoroutineScope(coroutineContext + SupervisorJob()))) {
                     is ThreadManager.SyncResult.ServerUnsupported ->
                         view.onThreadDebugResult(context.getString(commonR.string.thread_debug_result_unsupported_server), false)
                     is ThreadManager.SyncResult.OnlyOnServer -> {

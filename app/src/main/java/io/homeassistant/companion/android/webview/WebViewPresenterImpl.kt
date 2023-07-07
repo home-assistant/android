@@ -19,6 +19,7 @@ import io.homeassistant.companion.android.util.UrlUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -333,7 +334,7 @@ class WebViewPresenterImpl @Inject constructor(
 
             mainScope.launch {
                 val deviceThreadIntent = try {
-                    when (val result = threadUseCase.syncPreferredDataset(context, serverId, this)) {
+                    when (val result = threadUseCase.syncPreferredDataset(context, serverId, CoroutineScope(coroutineContext + SupervisorJob()))) {
                         is ThreadManager.SyncResult.OnlyOnDevice -> result.exportIntent
                         is ThreadManager.SyncResult.AllHaveCredentials -> result.exportIntent
                         else -> null
