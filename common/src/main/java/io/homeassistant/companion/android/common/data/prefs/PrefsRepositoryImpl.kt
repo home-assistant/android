@@ -30,6 +30,7 @@ class PrefsRepositoryImpl @Inject constructor(
         private const val PREF_WEBVIEW_DEBUG_ENABLED = "webview_debug_enabled"
         private const val PREF_KEY_ALIAS = "key-alias"
         private const val PREF_CRASH_REPORTING_DISABLED = "crash_reporting"
+        private const val PREF_IGNORED_SUGGESTIONS = "ignored_suggestions"
     }
 
     init {
@@ -187,5 +188,13 @@ class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun getKeyAlias(): String? {
         return localStorage.getString(PREF_KEY_ALIAS)
+    }
+
+    override suspend fun getIgnoredSuggestions(): List<String> {
+        return localStorage.getStringSet(PREF_IGNORED_SUGGESTIONS)?.toList() ?: emptyList()
+    }
+
+    override suspend fun setIgnoredSuggestions(ignored: List<String>) {
+        localStorage.putStringSet(PREF_IGNORED_SUGGESTIONS, ignored.toSet())
     }
 }

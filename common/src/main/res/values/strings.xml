@@ -768,6 +768,10 @@
     <string name="store_request_successful">Request to install app on wear device sent successfully</string>
     <string name="store_request_unsuccessful">Play Store Request Failed. Wear device(s) may not support Play Store, that is, the Wear device may be version 1.0.</string>
     <string name="successful">Successful</string>
+    <string name="suggestion_assist_title">Use Assist from anywhere</string>
+    <string name="suggestion_assist_summary">Set Home Assistant as your assistant app</string>
+    <string name="suggestion_notifications_title">Enable notifications</string>
+    <string name="suggestion_notifications_summary">Allow Home Assistant to send notifications</string>
     <string name="sun">Sun</string>
     <string name="switches">Switches</string>
     <string name="tag_reader_title">Processing Tag</string>
