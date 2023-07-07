@@ -103,13 +103,16 @@ class MainVehicleScreen(
                     invalidate()
                 }
                 allEntities.collect { entities ->
-                    domains.clear()
-                    entities.values.forEach {
-                        if (it.domain in SUPPORTED_DOMAINS) {
-                            domains.add(it.domain)
-                        }
+                    val newDomains = entities.values
+                        .map { it.domain }
+                        .distinct()
+                        .filter { it in SUPPORTED_DOMAINS }
+                        .toSet()
+                    if (newDomains.size != domains.size || newDomains != domains) {
+                        domains.clear()
+                        domains.addAll(newDomains)
+                        invalidate()
                     }
-                    invalidate()
                 }
             }
         }
