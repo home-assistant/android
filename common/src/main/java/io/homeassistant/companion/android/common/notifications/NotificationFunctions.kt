@@ -4,6 +4,8 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.graphics.Color
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.RingtoneManager
@@ -16,6 +18,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.text.HtmlCompat
 import com.mikepenz.iconics.IconicsDrawable
+import com.mikepenz.iconics.utils.colorFilter
 import com.mikepenz.iconics.utils.toAndroidIconCompat
 import com.vdurmont.emoji.EmojiParser
 import io.homeassistant.companion.android.common.R
@@ -211,7 +214,7 @@ fun handleSmallIcon(
         val iconDrawable =
             IconicsDrawable(context, "cmd-$iconName")
         if (iconDrawable.icon != null) {
-            builder.setSmallIcon(iconDrawable.toAndroidIconCompat())
+            builder.setSmallIcon(iconDrawable.colorFilter { PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN) }.toAndroidIconCompat())
         } else {
             builder.setSmallIcon(R.drawable.ic_stat_ic_notification)
         }
