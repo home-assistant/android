@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
 import androidx.car.app.model.Action
+import androidx.car.app.model.CarIcon
 import androidx.car.app.model.MessageTemplate
 import androidx.car.app.model.ParkedOnlyOnClickListener
 import androidx.car.app.model.Template
@@ -42,17 +43,17 @@ class LoginScreen(context: CarContext, val serverManager: ServerManager) : Scree
     }
 
     override fun onGetTemplate(): Template {
-        return MessageTemplate.Builder(carContext.getString(R.string.aa_app_not_logged_in))
-            .setTitle(carContext.getString(R.string.app_name))
-            .setHeaderAction(Action.APP_ICON)
+        return MessageTemplate.Builder(carContext.getString(R.string.welcome_hass))
+            .setIcon(CarIcon.APP_ICON)
             .addAction(
                 Action.Builder()
-                    .setTitle(carContext.getString(R.string.login))
+                    .setTitle(carContext.getString(if (isAutomotive) R.string.login else R.string.login_on_phone))
                     .setOnClickListener(
                         ParkedOnlyOnClickListener.create {
                             startNativeActivity()
                         }
                     )
+                    .setFlags(Action.FLAG_PRIMARY)
                     .build()
             )
             .build()

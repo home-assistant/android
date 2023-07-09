@@ -342,6 +342,7 @@
     <string name="logbook">Logbook</string>
     <string name="logged_in">Logged in</string>
     <string name="login">Login</string>
+    <string name="login_on_phone">Login on your phone</string>
     <string name="login_wear_os_device">Login Wear OS Device</string>
     <string name="logout">Logout</string>
     <string name="lovelace_view_dashboard">Dashboard View or Dashboard</string>
