@@ -1,6 +1,7 @@
 name: Production Deploy
 
 on:
+  workflow_dispatch:
   release:
     types: [ released ]
 

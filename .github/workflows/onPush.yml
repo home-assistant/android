@@ -1,11 +1,10 @@
 name: On Push
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - master
-    tags:
-      - "[0-9]+.[0-9]+.[0-9]+"
 
 jobs:
   app_build:
@@ -157,7 +156,7 @@ jobs:
           ./gradlew :automotive:publishReleaseBundle || echo "Failed to publish Automotive!"
 
       - name: Promote Internal to Beta
-        if: startsWith(github.event.ref, 'refs/tags/')
+        if: github.event_name == 'workflow_dispatch'
         env:
           KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
           KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
