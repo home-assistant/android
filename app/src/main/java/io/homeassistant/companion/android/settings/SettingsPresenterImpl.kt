@@ -241,9 +241,11 @@ class SettingsPresenterImpl @Inject constructor(
         if (assistantSuggestion && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val roleManager = context.getSystemService<RoleManager>()
             assistantSuggestion = roleManager?.isRoleAvailable(RoleManager.ROLE_ASSISTANT) == true && !roleManager.isRoleHeld(RoleManager.ROLE_ASSISTANT)
-        } else if (assistantSuggestion && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        } else if (assistantSuggestion && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val defaultApp: String? = Settings.Secure.getString(context.contentResolver, "assistant")
             assistantSuggestion = defaultApp?.contains(BuildConfig.APPLICATION_ID) == false
+        } else {
+            assistantSuggestion = false
         }
         if (assistantSuggestion) {
             suggestions += SettingsHomeSuggestion(
