@@ -19,6 +19,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.En
 import io.homeassistant.companion.android.util.RegistriesDataHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
@@ -80,7 +81,7 @@ class HaControlsProviderService : ControlsProviderService() {
     @Inject
     lateinit var prefsRepository: PrefsRepository
 
-    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
     private var areaRegistry = mutableMapOf<Int, List<AreaRegistryResponse>?>()
     private var deviceRegistry = mutableMapOf<Int, List<DeviceRegistryResponse>?>()
@@ -94,6 +95,7 @@ class HaControlsProviderService : ControlsProviderService() {
                     return@launch
                 }
 
+                var numberControls = 0
                 try {
                     val entities = mutableMapOf<Int, List<Entity<Any>>?>()
                     val areaForEntity = mutableMapOf<Int, Map<String, AreaRegistryResponse?>>()
@@ -144,11 +146,19 @@ class HaControlsProviderService : ControlsProviderService() {
                                     serverName = serverNames[serverId],
                                     area = getAreaForEntity(entity.entityId, serverId)
                                 ) // No auth for preview, no base url to prevent downloading images
-                                domainToHaControl[entity.domain]?.createControl(
+
+                                val statefulControl = domainToHaControl[entity.domain]?.createControl(
                                     applicationContext,
                                     entity as Entity<Map<String, Any>>,
                                     info
                                 )
+                                return@mapNotNull if (statefulControl != null) {
+                                    // Making this stateless to remove the warning that is shown
+                                    Control.StatelessBuilder(statefulControl).build()
+                                } else {
+                                    Log.v(TAG, "No control for ${entity.entityId} entity, skipping")
+                                    null
+                                }
                             } catch (e: Exception) {
                                 Log.e(TAG, "Unable to create control for ${entity.domain} entity, skipping", e)
                                 null
@@ -156,10 +166,12 @@ class HaControlsProviderService : ControlsProviderService() {
                         }
                         .forEach {
                             subscriber.onNext(it)
+                            numberControls++
                         }
                 } catch (e: Exception) {
                     Log.e(TAG, "Error getting list of entities", e)
                 }
+                Log.i(TAG, "Done loading all ($numberControls) controls")
                 subscriber.onComplete()
             }
         }
