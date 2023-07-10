@@ -487,9 +487,11 @@
     <string name="scene">Scene</string>
     <string name="scenes">Scenes</string>
     <string name="scripts">Scripts</string>
+    <string name="search_clear_selection">Clear selection</string>
     <string name="search_icons">Search icons</string>
     <string name="search_icons_in_english">Search icons (in English)</string>
     <string name="search_notifications">Search notifications</string>
+    <string name="search_refine_for_more">Refine your search to view more…</string>
     <string name="search_results">Search Results</string>
     <string name="search_sensors">Search sensors</string>
     <string name="security_vulnerably_message">Your version of Home Assistant does not protect for recently discovered security vulnerabilities in custom components. Please view the details via the bulletin and update as soon as possible.</string>
