@@ -64,16 +64,21 @@ fun SingleEntityPicker(
     var listTooLarge by remember { mutableStateOf(false) }
     LaunchedEffect(entities.size, inputValue) {
         list = withContext(Dispatchers.IO) {
+            val query = inputValue.trim()
             val items = if (inputValue.isBlank() || inputValue == (entities.firstOrNull { it.entityId == currentEntity }?.friendlyName ?: currentEntity)) {
                 entities
             } else {
-                entities.filter { it.friendlyName.contains(inputValue, ignoreCase = true) }
+                entities.filter {
+                    it.friendlyName.contains(query, ignoreCase = true) ||
+                        it.entityId.contains(query.replace(" ", "_"), ignoreCase = true)
+                }
             }
             // The amount of items is limited because Compose ExposedDropdownMenu isn't lazy
             listTooLarge = items.size > 150
             items.sortedWith(
                 compareBy(
-                    { !it.friendlyName.lowercase().startsWith(inputValue) },
+                    { !it.friendlyName.startsWith(query, ignoreCase = true) },
+                    { !it.entityId.split(".")[1].startsWith(query.replace(" ", "_"), ignoreCase = true) },
                     { it.friendlyName.lowercase() }
                 )
             ).take(150)
