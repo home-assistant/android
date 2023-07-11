@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.settings
 
 import android.annotation.SuppressLint
 import android.app.UiModeManager
+import android.content.ActivityNotFoundException
 import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -344,12 +345,23 @@ class SettingsFragment(
         }
     }
 
+    @SuppressLint("InlinedApi")
     private fun updateAssistantApp() {
         // On Android Q+, this is a workaround as Android doesn't allow requesting the assistant role
-        val openIntent = Intent(Intent.ACTION_MAIN)
-        openIntent.component = ComponentName("com.android.settings", "com.android.settings.Settings\$ManageAssistActivity")
-        openIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        startActivity(openIntent)
+        try {
+            val openIntent = Intent(Intent.ACTION_MAIN)
+            openIntent.component = ComponentName("com.android.settings", "com.android.settings.Settings\$ManageAssistActivity")
+            openIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            startActivity(openIntent)
+        } catch (e: ActivityNotFoundException) {
+            // The exact activity/package doesn't exist on this device, use the official intent
+            // which sends the user to the 'Default apps' screen (one more tap required to change)
+            startActivity(
+                Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+            )
+        }
     }
 
     private fun updateBackgroundAccessPref() {
