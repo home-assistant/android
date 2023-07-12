@@ -9,6 +9,8 @@ runs:
   steps:
     - name: Generate Release Notes
       id: version-generator
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       shell: bash
       run: |
         mkdir -p ./app/build/outputs/
