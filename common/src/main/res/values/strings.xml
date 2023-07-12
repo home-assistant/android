@@ -1109,5 +1109,5 @@
     <string name="ha_assist">HA: Assist</string>
     <string name="only_favorites">Only Show Favorites</string>
     <string name="beacon_scanning">Beacon Monitor Scanning</string>
-    <string name="car_data_unavailable">Open Home Assistant app to enable CarInfo sensors</string>
+    <string name="car_data_unavailable">Open Home Assistant app to activate the sensor</string>
 </resources>
