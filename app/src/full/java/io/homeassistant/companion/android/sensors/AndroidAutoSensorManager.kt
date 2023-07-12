@@ -39,20 +39,20 @@ class AndroidAutoSensorManager :
             updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         private val fuelLevel = SensorManager.BasicSensor(
-            "android_auto_fuel_level",
+            "car_fuel_level",
             "sensor",
-            commonR.string.basic_sensor_name_android_auto_fuel_level,
-            commonR.string.sensor_description_android_auto_fuel_level,
+            commonR.string.basic_sensor_name_car_fuel_level,
+            commonR.string.sensor_description_car_fuel_level,
             "mdi:barrel",
             unitOfMeasurement = "%",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             deviceClass = "battery"
         )
         private val batteryLevel = SensorManager.BasicSensor(
-            "android_auto_battery_level",
+            "car_battery_level",
             "sensor",
-            commonR.string.basic_sensor_name_android_auto_battery_level,
-            commonR.string.sensor_description_android_auto_battery_level,
+            commonR.string.basic_sensor_name_car_battery_level,
+            commonR.string.sensor_description_car_battery_level,
             "mdi:car-battery",
             unitOfMeasurement = "%",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
@@ -60,25 +60,25 @@ class AndroidAutoSensorManager :
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         private val carName = SensorManager.BasicSensor(
-            "android_auto_car_name",
+            "car_name",
             "sensor",
-            commonR.string.basic_sensor_name_android_auto_car_name,
-            commonR.string.sensor_description_android_auto_car_name,
+            commonR.string.basic_sensor_name_car_name,
+            commonR.string.sensor_description_car_name,
             "mdi:car-info"
         )
         private val carStatus = SensorManager.BasicSensor(
-            "android_auto_car_status",
+            "car_charging_status",
             "sensor",
-            commonR.string.basic_sensor_name_android_auto_car_status,
-            commonR.string.sensor_description_android_auto_car_status,
+            commonR.string.basic_sensor_name_car_charging_status,
+            commonR.string.sensor_description_car_charging_status,
             "mdi:ev-station",
             deviceClass = "plug"
         )
         private val odometerValue = SensorManager.BasicSensor(
-            "android_auto_odometer",
+            "car_odometer",
             "sensor",
-            commonR.string.basic_sensor_name_android_auto_odometer,
-            commonR.string.sensor_description_android_auto_odometer,
+            commonR.string.basic_sensor_name_car_odometer,
+            commonR.string.sensor_description_car_odometer,
             "mdi:map-marker-distance",
             unitOfMeasurement = "m",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
@@ -316,8 +316,8 @@ class AndroidAutoSensorManager :
                 data.name.value!!,
                 carName.statelessIcon,
                 mapOf(
-                    "android_auto_car_manufacturer" to data.manufacturer.value,
-                    "android_auto_car_manufactured_year" to data.year.value
+                    "car_manufacturer" to data.manufacturer.value,
+                    "car_manufactured_year" to data.year.value
                 )
             )
         }
@@ -334,7 +334,7 @@ class AndroidAutoSensorManager :
                 data.evChargePortConnected.value == true,
                 carStatus.statelessIcon,
                 mapOf(
-                    "android_auto_status_charge_port_open" to (data.evChargePortOpen.value == true)
+                    "car_charge_port_open" to (data.evChargePortOpen.value == true)
                 )
             )
         }
