@@ -59,7 +59,7 @@
     <string name="basic_sensor_name_bluetooth_ble_beacon_monitor">Beacon Monitor</string>
     <string name="basic_sensor_name_bluetooth_state">Bluetooth State</string>
     <string name="basic_sensor_name_bluetooth">Bluetooth Connection</string>
-    <string name="basic_sensor_name_car_battery_level">Battery Level</string>
+    <string name="basic_sensor_name_car_battery_level">Car Battery Level</string>
     <string name="basic_sensor_name_car_name">Car Name</string>
     <string name="basic_sensor_name_car_charging_status">Charging Status</string>
     <string name="basic_sensor_name_car_fuel_level">Fuel Level</string>
@@ -602,6 +602,7 @@
     <string name="sensor_name_audio">Audio Sensors</string>
     <string name="sensor_name_battery">Battery Sensors</string>
     <string name="sensor_name_bluetooth">Bluetooth Sensors</string>
+    <string name="sensor_name_car">Car Sensors</string>
     <string name="sensor_name_device_policy">Device Policy</string>
     <string name="sensor_name_dnd">Do Not Disturb Sensor</string>
     <string name="sensor_name_geolocation">Geolocation Sensors</string>

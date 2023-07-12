@@ -10,6 +10,8 @@ import androidx.car.app.Screen
 import androidx.car.app.ScreenManager
 import androidx.car.app.Session
 import androidx.car.app.SessionInfo
+import androidx.car.app.hardware.CarHardwareManager
+import androidx.car.app.hardware.info.CarInfo
 import androidx.car.app.validation.HostValidator
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
@@ -32,6 +34,8 @@ class HaCarAppService : CarAppService() {
 
     companion object {
         private const val TAG = "HaCarAppService"
+        var carInfo: CarInfo? = null
+            private set
     }
 
     @Inject
@@ -67,6 +71,8 @@ class HaCarAppService : CarAppService() {
             )
 
             override fun onCreateScreen(intent: Intent): Screen {
+                carInfo = carContext.getCarService(CarHardwareManager::class.java).carInfo
+
                 if (intent.getBooleanExtra("TRANSITION_LAUNCH", false)) {
                     carContext
                         .getCarService(ScreenManager::class.java).run {
