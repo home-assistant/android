@@ -104,6 +104,8 @@ jobs:
         
     - uses: ./.github/actions/create-release-notes
       name: Create Release Notes
+      with:
+        tag-name: ${{ steps.rel_number.outputs.version }}
 
     - name: Build Debug APK
       run: ./gradlew assembleDebug
