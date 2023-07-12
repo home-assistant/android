@@ -18,7 +18,7 @@ android {
         minSdk = 26
         targetSdk = 32
 
-        versionName = System.getenv("VERSION") ?: "LOCAL"
+        versionName = project.version.toString()
         // We add 1 because the app and wear versions need to have different version codes.
         versionCode = (System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1) + 1
 
@@ -35,12 +35,7 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.4.3"
-    }
-
-    compileOptions {
-        sourceCompatibility(JavaVersion.VERSION_11)
-        targetCompatibility(JavaVersion.VERSION_11)
+        kotlinCompilerExtensionVersion = "1.4.8"
     }
 
     signingConfigs {
@@ -69,6 +64,11 @@ android {
         jvmTarget = "11"
     }
 
+    compileOptions {
+        sourceCompatibility(JavaVersion.VERSION_11)
+        targetCompatibility(JavaVersion.VERSION_11)
+    }
+
     lint {
         disable += "MissingTranslation"
     }
@@ -88,48 +88,56 @@ play {
 dependencies {
     implementation(project(":common"))
 
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.8.20")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.6.4")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.8.22")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.7.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.2")
 
-    implementation("com.google.android.material:material:1.8.0")
+    implementation("com.google.android.material:material:1.9.0")
 
     implementation("androidx.wear:wear:1.2.0")
+    implementation("androidx.core:core-ktx:1.10.1")
     implementation("com.google.android.gms:play-services-wearable:18.0.0")
     implementation("androidx.wear:wear-input:1.2.0-alpha02")
     implementation("androidx.wear:wear-remote-interactions:1.0.0")
     implementation("androidx.wear:wear-phone-interactions:1.0.1")
 
-    implementation("com.google.dagger:hilt-android:2.45")
-    kapt("com.google.dagger:hilt-android-compiler:2.45")
+    implementation("com.google.dagger:hilt-android:2.46.1")
+    kapt("com.google.dagger:hilt-android-compiler:2.46.1")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.5")
-    implementation("com.squareup.okhttp3:okhttp:4.10.0")
+    implementation("com.squareup.okhttp3:okhttp:4.11.0")
 
     implementation("com.mikepenz:iconics-core:5.4.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.mikepenz:community-material-typeface:7.0.96.0-kotlin@aar")
     implementation("com.mikepenz:iconics-compose:5.4.0")
 
-    implementation("androidx.activity:activity-ktx:1.6.1")
-    implementation("androidx.activity:activity-compose:1.6.1")
-    implementation("androidx.compose.compiler:compiler:1.4.3")
-    implementation(platform("androidx.compose:compose-bom:2023.01.00"))
+    implementation("androidx.activity:activity-ktx:1.7.2")
+    implementation("androidx.activity:activity-compose:1.7.2")
+    implementation("androidx.compose.compiler:compiler:1.4.8")
+    implementation(platform("androidx.compose:compose-bom:2023.06.01"))
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.ui:ui-tooling")
     implementation("androidx.wear.compose:compose-foundation:1.1.2")
     implementation("androidx.wear.compose:compose-material:1.1.2")
     implementation("androidx.wear.compose:compose-navigation:1.1.2")
 
-    implementation("com.google.guava:guava:31.1-android")
+    implementation("com.google.guava:guava:32.1.1-android")
     implementation("androidx.wear.tiles:tiles:1.1.0")
     implementation("androidx.wear.tiles:tiles-material:1.1.0")
 
     implementation("androidx.wear.watchface:watchface-complications-data-source-ktx:1.1.1")
 
-    implementation("androidx.health:health-services-client:1.0.0-beta02")
+    implementation("androidx.health:health-services-client:1.0.0-beta03")
 
-    implementation(platform("com.google.firebase:firebase-bom:31.2.2"))
+    implementation(platform("com.google.firebase:firebase-bom:32.1.0"))
     implementation("com.google.firebase:firebase-messaging")
+}
+
+// https://github.com/google/guava/releases/tag/v32.1.0: Reporting dependencies that overlap with Guava
+configurations.all {
+    resolutionStrategy.capabilitiesResolution.withCapability("com.google.guava:listenablefuture") {
+        select("com.google.guava:guava:0")
+    }
 }

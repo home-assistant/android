@@ -43,7 +43,7 @@ open class BaseActivity : AppCompatActivity() {
             Intent(
                 this,
                 Class.forName("androidx.car.app.activity.CarAppActivity")
-            ).addFlags(FLAG_ACTIVITY_NEW_TASK)
+            ).putExtra("TRANSITION_LAUNCH", true).addFlags(FLAG_ACTIVITY_NEW_TASK)
         )
         overridePendingTransition(
             androidx.appcompat.R.anim.abc_slide_in_bottom,

@@ -35,7 +35,8 @@ fun LoadSettingsHomeView(
             composable(SettingsWearMainView.FAVORITES) {
                 LoadWearFavoritesSettings(
                     settingsWearViewModel = settingsWearViewModel,
-                    onBackClicked = { navController.navigateUp() }
+                    onBackClicked = { navController.navigateUp() },
+                    events = settingsWearViewModel.resultSnackbar
                 )
             }
             composable(SettingsWearMainView.LANDING) {
@@ -49,7 +50,8 @@ fun LoadSettingsHomeView(
                     navigateFavorites = { navController.navigate(SettingsWearMainView.FAVORITES) },
                     navigateTemplateTile = { navController.navigate(SettingsWearMainView.TEMPLATE) },
                     loginWearOs = loginWearOs,
-                    onBackClicked = onStartBackClicked
+                    onBackClicked = onStartBackClicked,
+                    events = settingsWearViewModel.resultSnackbar
                 )
             }
             composable(SettingsWearMainView.TEMPLATE) {

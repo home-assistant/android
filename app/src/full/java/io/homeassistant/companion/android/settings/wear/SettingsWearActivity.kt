@@ -49,7 +49,7 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
         menu?.findItem(R.id.get_help)?.let {
             it.isVisible = true
-            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://companion.home-assistant.io/docs/wear-os/wear-os"))
+            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://companion.home-assistant.io/docs/wear-os"))
         }
         return true
     }

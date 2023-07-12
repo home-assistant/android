@@ -2,6 +2,8 @@ package io.homeassistant.companion.android.settings
 
 import android.annotation.SuppressLint
 import android.app.UiModeManager
+import android.content.ActivityNotFoundException
+import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -32,8 +34,8 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.settings.controls.ManageControlsSettingsFragment
+import io.homeassistant.companion.android.settings.developer.DeveloperSettingsFragment
 import io.homeassistant.companion.android.settings.language.LanguagesProvider
-import io.homeassistant.companion.android.settings.log.LogFragment
 import io.homeassistant.companion.android.settings.notification.NotificationChannelFragment
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
@@ -103,6 +105,29 @@ class SettingsFragment(
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 presenter.getServersFlow().collect {
                     updateServers(it)
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                presenter.getSuggestionFlow().collect { suggestion ->
+                    findPreference<SettingsSuggestionPreference>("settings_suggestion")?.let {
+                        if (suggestion != null) {
+                            it.setTitle(suggestion.title)
+                            it.setSummary(suggestion.summary)
+                            it.setIcon(suggestion.icon)
+                            it.setOnPreferenceClickListener {
+                                when (suggestion.id) {
+                                    SettingsPresenter.SUGGESTION_ASSISTANT_APP -> updateAssistantApp()
+                                    SettingsPresenter.SUGGESTION_NOTIFICATION_PERMISSION -> openNotificationSettings()
+                                }
+                                return@setOnPreferenceClickListener true
+                            }
+                            it.setOnPreferenceCancelListener { presenter.cancelSuggestion(requireContext(), suggestion.id) }
+                        }
+                        it.isVisible = suggestion != null
+                    }
                 }
             }
         }
@@ -292,10 +317,10 @@ class SettingsFragment(
             it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(it.summary.toString()))
         }
 
-        findPreference<Preference>("show_share_logs")?.setOnPreferenceClickListener {
+        findPreference<Preference>("developer")?.setOnPreferenceClickListener {
             parentFragmentManager.commit {
-                replace(R.id.content, LogFragment::class.java, null)
-                addToBackStack(getString(commonR.string.log))
+                replace(R.id.content, DeveloperSettingsFragment::class.java, null)
+                addToBackStack(getString(commonR.string.troubleshooting))
             }
             return@setOnPreferenceClickListener true
         }
@@ -317,6 +342,25 @@ class SettingsFragment(
                     }
                 }
             }
+        }
+    }
+
+    @SuppressLint("InlinedApi")
+    private fun updateAssistantApp() {
+        // On Android Q+, this is a workaround as Android doesn't allow requesting the assistant role
+        try {
+            val openIntent = Intent(Intent.ACTION_MAIN)
+            openIntent.component = ComponentName("com.android.settings", "com.android.settings.Settings\$ManageAssistActivity")
+            openIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            startActivity(openIntent)
+        } catch (e: ActivityNotFoundException) {
+            // The exact activity/package doesn't exist on this device, use the official intent
+            // which sends the user to the 'Default apps' screen (one more tap required to change)
+            startActivity(
+                Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+            )
         }
     }
 
@@ -482,6 +526,7 @@ class SettingsFragment(
     override fun onResume() {
         super.onResume()
         activity?.title = getString(commonR.string.companion_app)
+        context?.let { presenter.updateSuggestions(it) }
     }
 
     override fun onDestroy() {

@@ -40,7 +40,7 @@ fun SensorManagerUi(
                     PositionIndicator(scalingLazyListState = scalingLazyListState)
                 }
             },
-            timeText = { TimeText(!scalingLazyListState.isScrollInProgress) }
+            timeText = { TimeText(scalingLazyListState = scalingLazyListState) }
         ) {
             ThemeLazyColumn(
                 state = scalingLazyListState

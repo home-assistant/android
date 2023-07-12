@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.settings.wear
 import android.annotation.SuppressLint
 import android.app.Application
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -33,11 +32,14 @@ import io.homeassistant.companion.android.database.server.ServerUserInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import org.burnoutcrew.reorderable.ItemPosition
+import java.util.UUID
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -61,6 +63,7 @@ class SettingsWearViewModel @Inject constructor(
     val hasData = _hasData.asStateFlow()
     private val _isAuthenticated = MutableStateFlow(false)
     val isAuthenticated = _isAuthenticated.asStateFlow()
+    private var authenticateId: String? = null
     private var serverId = 0
     private var remoteServerId = 0
 
@@ -76,6 +79,9 @@ class SettingsWearViewModel @Inject constructor(
         private set
     var templateTileRefreshInterval = mutableStateOf(0)
         private set
+
+    private val _resultSnackbar = MutableSharedFlow<String>()
+    val resultSnackbar = _resultSnackbar.asSharedFlow()
 
     init {
         Wearable.getDataClient(application).addListener(this)
@@ -101,11 +107,7 @@ class SettingsWearViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to send config request to wear", e)
-                Toast.makeText(
-                    application,
-                    application.getString(commonR.string.failed_wear_config_request),
-                    Toast.LENGTH_LONG
-                ).show()
+                _resultSnackbar.emit(application.getString(commonR.string.failed_watch_connection))
             }
         }
     }
@@ -139,7 +141,7 @@ class SettingsWearViewModel @Inject constructor(
             viewModelScope.launch {
                 try {
                     templateTileContentRendered.value =
-                        serverManager.integrationRepository().renderTemplate(template, mapOf()).toString()
+                        serverManager.integrationRepository(serverId).renderTemplate(template, mapOf()).toString()
                 } catch (e: Exception) {
                     Log.e(TAG, "Exception while rendering template", e)
                     // JsonMappingException suggests that template is not a String (= error)
@@ -191,11 +193,7 @@ class SettingsWearViewModel @Inject constructor(
             Log.d(TAG, "Successfully sent favorites to wear")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to send favorites to wear", e)
-            Toast.makeText(
-                application,
-                application.getString(commonR.string.failure_send_favorites_wear),
-                Toast.LENGTH_SHORT
-            ).show()
+            _resultSnackbar.emit(application.getString(commonR.string.failure_send_favorites_wear))
         }
     }
 
@@ -206,7 +204,10 @@ class SettingsWearViewModel @Inject constructor(
         deviceTrackingEnabled: Boolean,
         notificationsEnabled: Boolean
     ) {
+        _hasData.value = false // Show loading indicator
         val putDataRequest = PutDataMapRequest.create("/authenticate").run {
+            authenticateId = UUID.randomUUID().toString()
+            dataMap.putString("AuthId", authenticateId!!)
             dataMap.putString("URL", url)
             dataMap.putString("AuthCode", authCode)
             dataMap.putString("DeviceName", deviceName)
@@ -216,9 +217,16 @@ class SettingsWearViewModel @Inject constructor(
             asPutDataRequest()
         }
 
-        Wearable.getDataClient(getApplication<HomeAssistantApplication>()).putDataItem(putDataRequest).apply {
+        val app = getApplication<HomeAssistantApplication>()
+        Wearable.getDataClient(app).putDataItem(putDataRequest).apply {
             addOnSuccessListener { Log.d(TAG, "Successfully sent auth to wear") }
-            addOnFailureListener { e -> Log.e(TAG, "Failed to send auth to wear", e) }
+            addOnFailureListener { e ->
+                Log.e(TAG, "Failed to send auth to wear", e)
+                _hasData.value = true
+                viewModelScope.launch {
+                    _resultSnackbar.emit(app.getString(commonR.string.failed_watch_connection))
+                }
+            }
         }
     }
 
@@ -244,6 +252,9 @@ class SettingsWearViewModel @Inject constructor(
                     when (item.uri.path) {
                         "/config" -> {
                             onLoadConfigFromWear(DataMapItem.fromDataItem(item).dataMap)
+                        }
+                        WearDataMessages.PATH_LOGIN_RESULT -> {
+                            onAuthenticateResult(DataMapItem.fromDataItem(item).dataMap)
                         }
                     }
                 }
@@ -320,5 +331,21 @@ class SettingsWearViewModel @Inject constructor(
                 remoteServerId = 0
             }
         }
+    }
+    private fun onAuthenticateResult(data: DataMap) = viewModelScope.launch {
+        val id = data.getString(WearDataMessages.KEY_ID, "")
+        if (id != authenticateId) return@launch
+
+        val success = data.getBoolean(WearDataMessages.KEY_SUCCESS, false)
+        val application = getApplication<HomeAssistantApplication>()
+        if (success) {
+            _resultSnackbar.emit(application.getString(commonR.string.logged_in))
+        } else {
+            val e = data.getString(WearDataMessages.LOGIN_RESULT_EXCEPTION, "")
+            Log.e(TAG, "Watch was unable to register: $e")
+            _resultSnackbar.emit(application.getString(commonR.string.failed_watch_registration))
+        }
+
+        authenticateId = null
     }
 }

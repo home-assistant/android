@@ -282,7 +282,8 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             mediaSession,
             primaryPlaybackState,
             mediaSession.statelessIcon,
-            attr
+            attr,
+            forceUpdate = primaryPlaybackState == "Playing"
         )
     }
 

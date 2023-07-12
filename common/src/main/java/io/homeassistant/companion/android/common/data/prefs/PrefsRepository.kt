@@ -62,4 +62,8 @@ interface PrefsRepository {
     suspend fun saveKeyAlias(alias: String)
 
     suspend fun getKeyAlias(): String?
+
+    suspend fun getIgnoredSuggestions(): List<String>
+
+    suspend fun setIgnoredSuggestions(ignored: List<String>)
 }

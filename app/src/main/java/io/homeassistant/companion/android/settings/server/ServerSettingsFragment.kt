@@ -122,7 +122,7 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         }
 
         findPreference<SwitchPreference>("app_lock_home_bypass")?.let {
-            it.isVisible = findPreference<SwitchPreference>("app_lock")?.isChecked == true
+            it.isVisible = findPreference<SwitchPreference>("app_lock")?.isChecked == true && presenter.hasWifi()
         }
 
         findPreference<EditTextPreference>("session_timeout")?.let { pref ->
@@ -138,6 +138,7 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
             }
             it.onPreferenceChangeListener =
                 onChangeUrlValidator
+            it.isVisible = presenter.hasWifi()
         }
 
         findPreference<Preference>("connection_external")?.setOnPreferenceClickListener {
@@ -157,6 +158,7 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
                 onDisplaySsidScreen()
                 return@setOnPreferenceClickListener true
             }
+            it.isVisible = presenter.hasWifi()
         }
 
         findPreference<PreferenceCategory>("security_category")?.isVisible = Build.MODEL != "Quest"
@@ -317,7 +319,7 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         // Prevent requesting authentication after just enabling the app lock
         presenter.setAppActive(true)
 
-        findPreference<SwitchPreference>("app_lock_home_bypass")?.isVisible = success
+        findPreference<SwitchPreference>("app_lock_home_bypass")?.isVisible = success && presenter.hasWifi()
         findPreference<EditTextPreference>("session_timeout")?.isVisible = success
         return (result == Authenticator.SUCCESS || result == Authenticator.CANCELED)
     }

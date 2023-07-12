@@ -9,6 +9,7 @@ import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateDiff
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryOptions
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
@@ -603,7 +604,7 @@ suspend fun <T> Entity<T>.onPressed(
 val <T> Entity<T>.friendlyName: String
     get() = (attributes as? Map<*, *>)?.get("friendly_name")?.toString() ?: entityId
 
-fun <T> Entity<T>.friendlyState(context: Context): String {
+fun <T> Entity<T>.friendlyState(context: Context, options: EntityRegistryOptions? = null): String {
     var friendlyState = when (state) {
         "closed" -> context.getString(commonR.string.state_closed)
         "closing" -> context.getString(commonR.string.state_closing)
@@ -633,7 +634,15 @@ fun <T> Entity<T>.friendlyState(context: Context): String {
             ).toString()
         } catch (e: DateTimeParseException) { /* Not a timestamp */ }
     }
-    if (friendlyState == state) {
+    if (
+        friendlyState == state &&
+        canSupportPrecision() &&
+        (options?.sensor?.displayPrecision != null || options?.sensor?.suggestedDisplayPrecision != null)
+    ) {
+        val number = friendlyState.toDouble()
+        val precision = options.sensor.displayPrecision ?: options.sensor.suggestedDisplayPrecision!!
+        friendlyState = String.format(Locale.getDefault(), "%.${precision}f", number)
+    } else if (friendlyState == state) {
         friendlyState = state.split("_").joinToString(" ") { word ->
             word.replaceFirstChar {
                 if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
@@ -641,4 +650,17 @@ fun <T> Entity<T>.friendlyState(context: Context): String {
         }
     }
     return friendlyState
+}
+
+fun <T> Entity<T>.canSupportPrecision() = domain == "sensor" && state.toDoubleOrNull() != null
+
+fun <T> Entity<T>.isExecuting() = when (state) {
+    "closing" -> true
+    "locking" -> true
+    "opening" -> true
+    "unlocking" -> true
+    "buffering" -> true
+    "disarming" -> true
+    "arming" -> true
+    else -> false
 }

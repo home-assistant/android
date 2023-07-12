@@ -22,10 +22,13 @@ import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.InlineSlider
 import androidx.wear.compose.material.InlineSliderDefaults
+import androidx.wear.compose.material.PositionIndicator
+import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleButton
 import androidx.wear.compose.material.ToggleButtonDefaults
 import androidx.wear.compose.material.ToggleChipDefaults
+import androidx.wear.compose.material.rememberScalingLazyListState
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
@@ -54,112 +57,122 @@ fun DetailsPanelView(
     onEntityToggled: (String, String) -> Unit,
     onFanSpeedChanged: (Float) -> Unit,
     onBrightnessChanged: (Float) -> Unit,
-    onColorTempChanged: (Float) -> Unit,
+    onColorTempChanged: (Float, Boolean) -> Unit,
     isToastEnabled: Boolean,
     isHapticEnabled: Boolean
 ) {
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
+    val scalingLazyListState = rememberScalingLazyListState()
 
     WearAppTheme {
-        ThemeLazyColumn {
-            val attributes = entity.attributes as Map<*, *>
+        Scaffold(
+            positionIndicator = {
+                if (scalingLazyListState.isScrollInProgress) {
+                    PositionIndicator(scalingLazyListState = scalingLazyListState)
+                }
+            },
+            timeText = { TimeText(scalingLazyListState = scalingLazyListState) }
+        ) {
+            ThemeLazyColumn(state = scalingLazyListState) {
+                val attributes = entity.attributes as Map<*, *>
 
-            item {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    val friendlyName = attributes["friendly_name"].toString()
-                    Text(friendlyName)
+                item {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val friendlyName = attributes["friendly_name"].toString()
+                        Text(friendlyName)
 
-                    if (entity.domain in HomePresenterImpl.toggleDomains) {
-                        val isChecked = entity.state in listOf("on", "locked", "open", "opening")
-                        ToggleButton(
-                            checked = isChecked,
-                            onCheckedChange = {
-                                onEntityToggled(entity.entityId, entity.state)
-                                onEntityClickedFeedback(
-                                    isToastEnabled,
-                                    isHapticEnabled,
-                                    context,
-                                    friendlyName,
-                                    haptic
+                        if (entity.domain in HomePresenterImpl.toggleDomains) {
+                            val isChecked = entity.state in listOf("on", "locked", "open", "opening")
+                            ToggleButton(
+                                checked = isChecked,
+                                onCheckedChange = {
+                                    onEntityToggled(entity.entityId, entity.state)
+                                    onEntityClickedFeedback(
+                                        isToastEnabled,
+                                        isHapticEnabled,
+                                        context,
+                                        friendlyName,
+                                        haptic
+                                    )
+                                },
+                                modifier = Modifier
+                                    .padding(start = 16.dp)
+                                    .size(ToggleButtonDefaults.SmallToggleButtonSize)
+                            ) {
+                                Icon(
+                                    imageVector = ToggleChipDefaults.switchIcon(isChecked),
+                                    contentDescription = if (isChecked) {
+                                        stringResource(R.string.enabled)
+                                    } else {
+                                        stringResource(R.string.disabled)
+                                    }
                                 )
-                            },
-                            modifier = Modifier
-                                .padding(start = 16.dp)
-                                .size(ToggleButtonDefaults.SmallToggleButtonSize)
-                        ) {
-                            Icon(
-                                imageVector = ToggleChipDefaults.switchIcon(isChecked),
-                                contentDescription = if (isChecked) {
-                                    stringResource(R.string.enabled)
-                                } else {
-                                    stringResource(R.string.disabled)
-                                }
-                            )
+                            }
                         }
                     }
                 }
-            }
 
-            if (entity.domain == "fan") {
-                if (entity.supportsFanSetSpeed()) {
-                    item {
-                        FanSpeedSlider(entity, onFanSpeedChanged, isToastEnabled, isHapticEnabled)
+                if (entity.domain == "fan") {
+                    if (entity.supportsFanSetSpeed()) {
+                        item {
+                            FanSpeedSlider(entity, onFanSpeedChanged, isToastEnabled, isHapticEnabled)
+                        }
                     }
                 }
-            }
-            if (entity.domain == "light") {
-                if (entity.supportsLightBrightness()) {
-                    item {
-                        BrightnessSlider(entity, onBrightnessChanged, isToastEnabled, isHapticEnabled)
+                if (entity.domain == "light") {
+                    if (entity.supportsLightBrightness()) {
+                        item {
+                            BrightnessSlider(entity, onBrightnessChanged, isToastEnabled, isHapticEnabled)
+                        }
+                    }
+
+                    if (entity.supportsLightColorTemperature() && attributes["color_mode"] == EntityExt.LIGHT_MODE_COLOR_TEMP) {
+                        item {
+                            ColorTempSlider(attributes, onColorTempChanged, isToastEnabled, isHapticEnabled)
+                        }
                     }
                 }
 
-                if (entity.supportsLightColorTemperature() && attributes["color_mode"] == EntityExt.LIGHT_MODE_COLOR_TEMP) {
-                    item {
-                        ColorTempSlider(attributes, onColorTempChanged, isToastEnabled, isHapticEnabled)
-                    }
+                item {
+                    ListHeader(R.string.details)
                 }
-            }
-
-            item {
-                ListHeader(R.string.details)
-            }
-            item {
-                Text(
-                    stringResource(R.string.state_name, entity.state),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp)
-                )
-            }
-            item {
-                val lastChanged = DateFormat.getDateTimeInstance().format(entity.lastChanged.time)
-                Text(
-                    stringResource(R.string.last_changed, lastChanged),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp)
-                )
-            }
-            item {
-                val lastUpdated = DateFormat.getDateTimeInstance().format(entity.lastUpdated.time)
-                Text(
-                    stringResource(R.string.last_updated, lastUpdated),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp)
-                )
-            }
-            item {
-                Text(
-                    stringResource(R.string.entity_id_name, entity.entityId),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp)
-                )
+                item {
+                    Text(
+                        stringResource(R.string.state_name, entity.state),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp)
+                    )
+                }
+                item {
+                    val lastChanged = DateFormat.getDateTimeInstance().format(entity.lastChanged.time)
+                    Text(
+                        stringResource(R.string.last_changed, lastChanged),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp)
+                    )
+                }
+                item {
+                    val lastUpdated = DateFormat.getDateTimeInstance().format(entity.lastUpdated.time)
+                    Text(
+                        stringResource(R.string.last_updated, lastUpdated),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp)
+                    )
+                }
+                item {
+                    Text(
+                        stringResource(R.string.entity_id_name, entity.entityId),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp)
+                    )
+                }
             }
         }
     }
@@ -269,16 +282,18 @@ fun BrightnessSlider(
 @Composable
 fun ColorTempSlider(
     attributes: Map<*, *>,
-    onColorTempChanged: (Float) -> Unit,
+    onColorTempChanged: (Float, Boolean) -> Unit,
     isToastEnabled: Boolean,
     isHapticEnabled: Boolean
 ) {
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
 
-    val minValue = (attributes["min_mireds"] as? Number)?.toFloat() ?: 0f
-    val maxValue = (attributes["max_mireds"] as? Number)?.toFloat() ?: 0f
-    var currentValue = (attributes["color_temp"] as? Number)?.toFloat() ?: 0f
+    val useKelvin = attributes.containsKey("color_temp_kelvin") // Added in 2022.11
+
+    val minValue = ((if (useKelvin) attributes["min_color_temp_kelvin"] else attributes["min_mireds"]) as? Number)?.toFloat() ?: 0f
+    val maxValue = ((if (useKelvin) attributes["max_color_temp_kelvin"] else attributes["max_mireds"]) as? Number)?.toFloat() ?: 0f
+    var currentValue = ((if (useKelvin) attributes["color_temp_kelvin"] else attributes["color_temp"]) as? Number)?.toFloat() ?: 0f
     if (currentValue < minValue) {
         currentValue = minValue
     }
@@ -288,7 +303,10 @@ fun ColorTempSlider(
 
     Column {
         Text(
-            stringResource(R.string.color_temp, currentValue.toInt()),
+            stringResource(
+                R.string.color_temp,
+                "${currentValue.toInt()}${if (useKelvin) " K" else ""}"
+            ),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp)
@@ -296,7 +314,7 @@ fun ColorTempSlider(
         InlineSlider(
             value = currentValue,
             onValueChange = {
-                onColorTempChanged(it)
+                onColorTempChanged(it, useKelvin)
                 onSliderChangedFeedback(
                     isToastEnabled,
                     isHapticEnabled,
@@ -322,7 +340,8 @@ fun ColorTempSlider(
             },
             colors = InlineSliderDefaults.colors(
                 selectedBarColor = getColorTemperature(
-                    (currentValue - minValue).toDouble() / (maxValue - minValue).toDouble()
+                    ratio = (currentValue - minValue).toDouble() / (maxValue - minValue).toDouble(),
+                    isKelvin = useKelvin
                 )
             ),
             modifier = Modifier.padding(bottom = 8.dp)
@@ -362,7 +381,7 @@ private fun PreviewDetailsPaneView() {
             onEntityToggled = { _, _ -> },
             onFanSpeedChanged = {},
             onBrightnessChanged = {},
-            onColorTempChanged = {},
+            onColorTempChanged = { _, _ -> },
             isToastEnabled = false,
             isHapticEnabled = false
         )

@@ -45,9 +45,13 @@ class MatterCommissioningViewModel @Inject constructor(
     var serverId by mutableStateOf(0)
         private set
 
-    fun checkSetup() {
+    fun checkSetup(isNewDevice: Boolean) {
         viewModelScope.launch {
-            if (step != CommissioningFlowStep.NotStarted) return@launch
+            if (!isNewDevice && step != CommissioningFlowStep.NotStarted) {
+                return@launch
+            } else {
+                step = CommissioningFlowStep.NotStarted
+            }
 
             if (!serverManager.isRegistered()) {
                 step = CommissioningFlowStep.NotRegistered
@@ -90,11 +94,16 @@ class MatterCommissioningViewModel @Inject constructor(
     suspend fun syncThreadIfNecessary(): IntentSender? {
         step = CommissioningFlowStep.Working
         return try {
-            threadManager.syncPreferredDataset(
+            val result = threadManager.syncPreferredDataset(
                 getApplication<Application>().applicationContext,
                 serverId,
                 viewModelScope
             )
+            when (result) {
+                is ThreadManager.SyncResult.OnlyOnDevice -> result.exportIntent
+                is ThreadManager.SyncResult.AllHaveCredentials -> result.exportIntent
+                else -> null
+            }
         } catch (e: Exception) {
             Log.w(TAG, "Unable to sync preferred Thread dataset, continuing", e)
             null

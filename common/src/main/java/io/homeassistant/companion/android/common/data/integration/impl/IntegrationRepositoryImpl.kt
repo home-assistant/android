@@ -25,9 +25,16 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.integration.impl.entities.Template
 import io.homeassistant.companion.android.common.data.integration.impl.entities.UpdateLocationRequest
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEventType
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineIntentEnd
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.util.concurrent.TimeUnit
@@ -63,6 +70,8 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
         private const val APPLOCK_TIMEOUT_GRACE_MS = 1000
     }
+
+    private val ioScope = CoroutineScope(Dispatchers.IO + Job())
 
     private val server get() = serverManager.getServer(serverId)!!
 
@@ -377,7 +386,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     }
 
     override suspend fun setAppActive(active: Boolean) {
-        if (!active) {
+        if (!active && appActive) {
             setSessionExpireMillis(System.currentTimeMillis() + (getSessionTimeOut() * 1000) + APPLOCK_TIMEOUT_GRACE_MS)
         }
         Log.d(TAG, "setAppActive(): $active")
@@ -523,11 +532,27 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         }?.toList()
     }
 
-    override suspend fun getConversation(speech: String): String? {
-        // TODO: Also send back conversation ID for dialogue
-        val response = webSocketRepository.getConversation(speech)
-
-        return response?.response?.speech?.plain?.get("speech")
+    override suspend fun getAssistResponse(text: String, pipelineId: String?, conversationId: String?): Flow<AssistPipelineEvent>? {
+        return if (server.version?.isAtLeast(2023, 5, 0) == true) {
+            webSocketRepository.runAssistPipelineForText(text, pipelineId, conversationId)
+        } else {
+            flow {
+                emit(AssistPipelineEvent(type = AssistPipelineEventType.RUN_START, data = null))
+                emit(AssistPipelineEvent(type = AssistPipelineEventType.INTENT_START, data = null))
+                val response = webSocketRepository.getConversation(text)
+                if (response != null) {
+                    emit(
+                        AssistPipelineEvent(
+                            type = AssistPipelineEventType.INTENT_END,
+                            data = AssistPipelineIntentEnd(response)
+                        )
+                    )
+                } else {
+                    emit(AssistPipelineEvent(type = AssistPipelineEventType.ERROR, data = null))
+                }
+                emit(AssistPipelineEvent(type = AssistPipelineEventType.RUN_END, data = null))
+            }
+        }
     }
 
     override suspend fun getEntities(): List<Entity<Any>>? {

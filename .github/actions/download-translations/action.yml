@@ -47,6 +47,7 @@ runs:
           if [ "$CODE" == "values" ]; then CODE="en"; fi
           XML_LOCALES="$XML_LOCALES    <locale android:name=\"$CODE\"/>\n"
         done
-        printf "$XML_START$XML_LOCALES$XML_END" > common/src/main/res/xml/locales_config.xml
+        printf "$XML_START$XML_LOCALES$XML_END" > app/src/main/res/xml/locales_config.xml
+        printf "$XML_START$XML_LOCALES$XML_END" > wear/src/main/res/xml/locales_config.xml
         
         echo "Complete"

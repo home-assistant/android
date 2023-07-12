@@ -125,16 +125,20 @@ class NetworkSensorManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_network
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        val list = listOf(
+        val wifiSensors = listOf(
             wifiConnection,
             bssidState,
             wifiIp,
             wifiLinkSpeed,
             wifiState,
             wifiFrequency,
-            wifiSignalStrength,
-            publicIp
+            wifiSignalStrength
         )
+        val list = if (hasWifi(context)) {
+            wifiSensors.plus(publicIp)
+        } else {
+            listOf(publicIp)
+        }
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             list.plus(networkType)
         } else {
@@ -175,8 +179,11 @@ class NetworkSensorManager : SensorManager {
         }
     }
 
+    private fun hasWifi(context: Context): Boolean =
+        context.applicationContext.getSystemService<WifiManager>() != null
+
     private fun updateWifiConnectionSensor(context: Context) {
-        if (!isEnabled(context, wifiConnection)) {
+        if (!isEnabled(context, wifiConnection) || !hasWifi(context)) {
             return
         }
 
@@ -218,7 +225,7 @@ class NetworkSensorManager : SensorManager {
     }
 
     private fun updateBSSIDSensor(context: Context) {
-        if (!isEnabled(context, bssidState)) {
+        if (!isEnabled(context, bssidState) || !hasWifi(context)) {
             return
         }
 
@@ -263,7 +270,7 @@ class NetworkSensorManager : SensorManager {
     }
 
     private fun updateWifiIPSensor(context: Context) {
-        if (!isEnabled(context, wifiIp)) {
+        if (!isEnabled(context, wifiIp) || !hasWifi(context)) {
             return
         }
 
@@ -291,7 +298,7 @@ class NetworkSensorManager : SensorManager {
     }
 
     private fun updateWifiLinkSpeedSensor(context: Context) {
-        if (!isEnabled(context, wifiLinkSpeed)) {
+        if (!isEnabled(context, wifiLinkSpeed) || !hasWifi(context)) {
             return
         }
 
@@ -335,7 +342,7 @@ class NetworkSensorManager : SensorManager {
     }
 
     private fun updateWifiSensor(context: Context) {
-        if (!isEnabled(context, wifiState)) {
+        if (!isEnabled(context, wifiState) || !hasWifi(context)) {
             return
         }
 
@@ -359,7 +366,7 @@ class NetworkSensorManager : SensorManager {
     }
 
     private fun updateWifiFrequencySensor(context: Context) {
-        if (!isEnabled(context, wifiFrequency)) {
+        if (!isEnabled(context, wifiFrequency) || !hasWifi(context)) {
             return
         }
 
@@ -387,7 +394,7 @@ class NetworkSensorManager : SensorManager {
     }
 
     private fun updateWifiSignalStrengthSensor(context: Context) {
-        if (!isEnabled(context, wifiSignalStrength)) {
+        if (!isEnabled(context, wifiSignalStrength) || !hasWifi(context)) {
             return
         }
 

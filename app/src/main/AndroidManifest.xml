@@ -383,6 +383,31 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".assist.AssistActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize"
+            android:launchMode="singleTask"
+            android:taskAffinity="io.homeassistant.companion.android.assist"
+            android:autoRemoveFromRecents="true"
+            android:showWhenLocked="true"
+            android:theme="@style/Theme.HomeAssistant.Assist">
+            <intent-filter>
+                <action android:name="android.intent.action.ASSIST" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".widgets.assist.AssistShortcutActivity"
+            android:label="@string/assist_shortcut"
+            android:icon="@mipmap/ic_assist_launcher"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:theme="@style/Theme.HomeAssistant.Config">
+            <intent-filter>
+                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
+            </intent-filter>
+        </activity>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"

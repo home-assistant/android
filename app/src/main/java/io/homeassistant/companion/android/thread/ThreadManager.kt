@@ -8,6 +8,15 @@ import kotlinx.coroutines.CoroutineScope
 
 interface ThreadManager {
 
+    sealed class SyncResult {
+        object AppUnsupported : SyncResult()
+        object ServerUnsupported : SyncResult()
+        class OnlyOnServer(val imported: Boolean) : SyncResult()
+        class OnlyOnDevice(val exportIntent: IntentSender?) : SyncResult()
+        class AllHaveCredentials(val matches: Boolean?, val exportIntent: IntentSender?) : SyncResult()
+        object NoneHaveCredentials : SyncResult()
+    }
+
     /**
      * Indicates if the app on this device supports Thread credential management.
      */
@@ -22,14 +31,14 @@ interface ThreadManager {
      * Try to sync the preferred Thread dataset with the device and server. If one has a preferred
      * dataset while the other one doesn't, it will sync. If both have preferred datasets, it will
      * send updated data to the server if needed. If neither has a preferred dataset, skip syncing.
-     * @return [IntentSender] if permission is required to import the device dataset, `null` if
-     * syncing completed or there is nothing to sync
+     * @return [SyncResult] with details of the sync operation, which may include an [IntentSender]
+     * if permission is required to import the device dataset
      */
     suspend fun syncPreferredDataset(
         context: Context,
         serverId: Int,
         scope: CoroutineScope
-    ): IntentSender?
+    ): SyncResult
 
     /**
      * Get the preferred Thread dataset from the server.
@@ -55,6 +64,7 @@ interface ThreadManager {
     /**
      * Process the result from [syncPreferredDataset] or [getPreferredDatasetFromDevice]'s intent
      * and add the Thread dataset, if any, to the server.
+     * @return Network name that was sent and accepted, or `null` if not sent or accepted
      */
-    suspend fun sendThreadDatasetExportResult(result: ActivityResult, serverId: Int)
+    suspend fun sendThreadDatasetExportResult(result: ActivityResult, serverId: Int): String?
 }

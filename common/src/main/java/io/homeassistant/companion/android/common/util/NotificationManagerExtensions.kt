@@ -25,11 +25,24 @@ fun NotificationManagerCompat.getActiveNotification(tag: String?, id: Int): Stat
     }
 }
 
-fun NotificationManagerCompat.cancelGroupIfNeeded(tag: String?, id: Int): Boolean {
+fun NotificationManagerCompat.cancelGroupIfNeeded(tag: String?, id: Int): Boolean =
+    cancelNotificationGroupIfNeeded(
+        this.getNotificationManager(),
+        tag,
+        id,
+        this::cancel
+    )
+
+fun cancelNotificationGroupIfNeeded(
+    notificationManager: NotificationManager,
+    tag: String?,
+    id: Int,
+    cancel: (String, Int) -> Unit
+): Boolean {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
         Log.d(TAG, "Cancel notification with tag \"$tag\" and id \"$id\"")
 
-        val currentActiveNotifications = this.getNotificationManager().activeNotifications
+        val currentActiveNotifications = notificationManager.activeNotifications
 
         Log.d(TAG, "Check if the notification is in a group...")
         // Get group key from the current notification
@@ -82,7 +95,7 @@ fun NotificationManagerCompat.cancelGroupIfNeeded(tag: String?, id: Int): Boolea
                     return if (group != null) {
                         val groupId = group.hashCode()
                         Log.d(TAG, "Cancel group notification with tag \"$group\"  and id \"$groupId\"")
-                        this.cancel(group, groupId)
+                        cancel(group, groupId)
                         true
                     } else {
                         Log.d(TAG, "Cannot cancel group notification, because group tag is empty. Anyway cancel notification.")

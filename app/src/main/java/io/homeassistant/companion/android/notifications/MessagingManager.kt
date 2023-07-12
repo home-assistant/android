@@ -31,6 +31,9 @@ import android.widget.RemoteViews
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.biometric.BiometricManager
+import androidx.car.app.notification.CarAppExtender
+import androidx.car.app.notification.CarNotificationManager
+import androidx.car.app.notification.CarPendingIntent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
@@ -72,7 +75,9 @@ import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.NotificationSensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.SettingsActivity
-import io.homeassistant.companion.android.util.UrlHandler
+import io.homeassistant.companion.android.util.UrlUtil
+import io.homeassistant.companion.android.util.cancelGroupIfNeeded
+import io.homeassistant.companion.android.vehicle.HaCarAppService
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.CoroutineScope
@@ -123,6 +128,7 @@ class MessagingManager @Inject constructor(
         const val PERSISTENT = "persistent"
         const val CHRONOMETER = "chronometer"
         const val WHEN = "when"
+        const val CAR_UI = "car_ui"
         const val KEY_TEXT_REPLY = "key_text_reply"
         const val INTENT_CLASS_NAME = "intent_class_name"
         const val URI = "URI"
@@ -785,6 +791,7 @@ class MessagingManager @Inject constructor(
         val items = extras.split(',')
         for (item in items) {
             val chunks = item.split(":")
+            val name = chunks[0]
             var value = chunks[1]
             val hasTypeInfo = chunks.size > 2
 
@@ -793,34 +800,83 @@ class MessagingManager @Inject constructor(
                 value = chunks.subList(1, chunks.lastIndex).joinToString(":")
 
                 when (chunks.last()) {
-                    "urlencoded" -> intent.putExtra(chunks[0], URLDecoder.decode(value, "UTF-8"))
-                    "int" -> intent.putExtra(chunks[0], value.toInt())
-                    "double" -> intent.putExtra(chunks[0], value.toDouble())
-                    "float" -> intent.putExtra(chunks[0], value.toFloat())
-                    "long" -> intent.putExtra(chunks[0], value.toLong())
-                    "short" -> intent.putExtra(chunks[0], value.toShort())
-                    "boolean" -> intent.putExtra(chunks[0], value.toBoolean())
-                    "char" -> intent.putExtra(chunks[0], value[0].toChar())
+                    "int" -> intent.putExtra(name, value.toInt())
+                    "int[]" -> intent.putExtra(
+                        name,
+                        value.split(";").map { it.toInt() }.toIntArray()
+                    )
                     "ArrayList<Integer>" -> intent.putIntegerArrayListExtra(
-                        chunks[0],
+                        name,
                         value.split(";").map { it.toInt() }.toCollection(ArrayList())
                     )
+                    "double" -> intent.putExtra(name, value.toDouble())
+                    "double[]" -> intent.putExtra(
+                        name,
+                        value.split(";").map { it.toDouble() }.toDoubleArray()
+                    )
+                    "float" -> intent.putExtra(name, value.toFloat())
+                    "float[]" -> intent.putExtra(
+                        name,
+                        value.split(";").map { it.toFloat() }.toFloatArray()
+                    )
+                    "long" -> intent.putExtra(name, value.toLong())
+                    "long[]" -> intent.putExtra(
+                        name,
+                        value.split(";").map { it.toLong() }.toLongArray()
+                    )
+                    "short" -> intent.putExtra(name, value.toShort())
+                    "short[]" -> intent.putExtra(
+                        name,
+                        value.split(";").map { it.toShort() }.toShortArray()
+                    )
+                    "byte" -> intent.putExtra(name, value.toByte())
+                    "byte[]" -> intent.putExtra(
+                        name,
+                        value.split(";").map { it.toByte() }.toByteArray()
+                    )
+                    "boolean" -> intent.putExtra(name, value.toBoolean())
+                    "boolean[]" -> intent.putExtra(
+                        name,
+                        value.split(";").map { it.toBoolean() }.toBooleanArray()
+                    )
+                    "char" -> intent.putExtra(name, value[0].toChar())
+                    "char[]" -> intent.putExtra(
+                        name,
+                        value.split(";").map { it[0].toChar() }.toCharArray()
+                    )
+                    "String" -> intent.putExtra(name, value)
+                    "String.urlencoded", "urlencoded" -> intent.putExtra(
+                        name,
+                        URLDecoder.decode(value, "UTF-8")
+                    )
+                    "String[]" -> intent.putExtra(
+                        name,
+                        value.split(";").toTypedArray()
+                    )
                     "ArrayList<String>" -> intent.putStringArrayListExtra(
-                        chunks[0],
+                        name,
                         value.split(";").toCollection(ArrayList())
                     )
+                    "String[].urlencoded" -> intent.putExtra(
+                        name,
+                        value.split(";").map { URLDecoder.decode(value, "UTF-8") }.toTypedArray()
+                    )
+                    "ArrayList<String>.urlencoded" -> intent.putStringArrayListExtra(
+                        name,
+                        value.split(";").map { URLDecoder.decode(value, "UTF-8") }.toCollection(ArrayList())
+                    )
                     else -> {
-                        intent.putExtra(chunks[0], value)
+                        intent.putExtra(name, value)
                     }
                 }
             } else {
                 // Try to guess the correct type
                 if (value.isDigitsOnly()) {
-                    intent.putExtra(chunks[0], value.toInt())
+                    intent.putExtra(name, value.toInt())
                 } else if ((value.lowercase() == "true") || (value.lowercase() == "false")) {
-                    intent.putExtra(chunks[0], value.toBoolean())
+                    intent.putExtra(name, value.toBoolean())
                 } else {
-                    intent.putExtra(chunks[0], value)
+                    intent.putExtra(name, value)
                 }
             }
         }
@@ -895,25 +951,42 @@ class MessagingManager @Inject constructor(
 
         handleChronometer(notificationBuilder, data)
 
+        val useCarNotification = handleCarUiVisible(context, notificationBuilder, data)
+
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             handleLegacyPriority(notificationBuilder, data)
             handleLegacyLedColor(notificationBuilder, data)
             handleLegacyVibrationPattern(notificationBuilder, data)
         }
 
-        notificationManagerCompat.apply {
-            Log.d(TAG, "Show notification with tag \"$tag\" and id \"$messageId\"")
-            notify(tag, messageId, notificationBuilder.build())
-            if (!group.isNullOrBlank()) {
-                Log.d(TAG, "Show group notification with tag \"$group\" and id \"$groupId\"")
-                notify(group, groupId, getGroupNotificationBuilder(context, channelId, group, data).build())
-            } else {
-                if (!previousGroup.isBlank()) {
+        Log.d(TAG, "Show notification with tag \"$tag\" and id \"$messageId\"")
+        if (useCarNotification) {
+            CarNotificationManager.from(context).apply {
+                notify(tag, messageId, notificationBuilder)
+                if (!group.isNullOrBlank()) {
+                    Log.d(TAG, "Show group notification with tag \"$group\" and id \"$groupId\"")
+                    notify(group, groupId, getGroupNotificationBuilder(context, channelId, group, data))
+                } else if (previousGroup.isNotBlank()) {
+                    val systemManager = context.getSystemService<NotificationManager>() ?: return@apply
                     Log.d(
                         TAG,
                         "Remove group notification with tag \"$previousGroup\" and id \"$previousGroupId\""
                     )
-                    notificationManagerCompat.cancelGroupIfNeeded(previousGroup, previousGroupId)
+                    cancelGroupIfNeeded(systemManager, previousGroup, previousGroupId)
+                }
+            }
+        } else {
+            notificationManagerCompat.apply {
+                notify(tag, messageId, notificationBuilder.build())
+                if (!group.isNullOrBlank()) {
+                    Log.d(TAG, "Show group notification with tag \"$group\" and id \"$groupId\"")
+                    notify(group, groupId, getGroupNotificationBuilder(context, channelId, group, data).build())
+                } else if (previousGroup.isNotBlank()) {
+                    Log.d(
+                        TAG,
+                        "Remove group notification with tag \"$previousGroup\" and id \"$previousGroupId\""
+                    )
+                    cancelGroupIfNeeded(previousGroup, previousGroupId)
                 }
             }
         }
@@ -940,6 +1013,32 @@ class MessagingManager @Inject constructor(
         } catch (e: Exception) {
             Log.e(TAG, "Error while handling chronometer notification", e)
         }
+    }
+
+    private fun handleCarUiVisible(
+        context: Context,
+        builder: NotificationCompat.Builder,
+        data: Map<String, String>
+    ): Boolean {
+        if (data[CAR_UI]?.toBoolean() == true && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val carIntent = Intent(Intent.ACTION_VIEW).apply {
+                component = ComponentName(context, HaCarAppService::class.java)
+            }
+            builder.extend(
+                CarAppExtender.Builder()
+                    .setContentIntent(
+                        CarPendingIntent.getCarApp(
+                            context,
+                            carIntent.hashCode(),
+                            carIntent,
+                            PendingIntent.FLAG_IMMUTABLE
+                        )
+                    )
+                    .build()
+            )
+            return true
+        }
+        return false
     }
 
     private fun handleContentIntent(
@@ -1119,8 +1218,8 @@ class MessagingManager @Inject constructor(
     ) {
         data[ICON_URL]?.let {
             val serverId = data[THIS_SERVER_ID]!!.toInt()
-            val url = UrlHandler.handle(serverManager.getServer(serverId)?.connection?.getUrl(), it)
-            val bitmap = getImageBitmap(serverId, url, !UrlHandler.isAbsoluteUrl(it))
+            val url = UrlUtil.handle(serverManager.getServer(serverId)?.connection?.getUrl(), it)
+            val bitmap = getImageBitmap(serverId, url, !UrlUtil.isAbsoluteUrl(it))
             if (bitmap != null) {
                 builder.setLargeIcon(bitmap)
             }
@@ -1133,15 +1232,15 @@ class MessagingManager @Inject constructor(
     ) {
         data[IMAGE_URL]?.let {
             val serverId = data[THIS_SERVER_ID]!!.toInt()
-            val url = UrlHandler.handle(serverManager.getServer(serverId)?.connection?.getUrl(), it)
-            val bitmap = getImageBitmap(serverId, url, !UrlHandler.isAbsoluteUrl(it))
+            val url = UrlUtil.handle(serverManager.getServer(serverId)?.connection?.getUrl(), it)
+            val bitmap = getImageBitmap(serverId, url, !UrlUtil.isAbsoluteUrl(it))
             if (bitmap != null) {
                 builder
                     .setLargeIcon(bitmap)
                     .setStyle(
                         NotificationCompat.BigPictureStyle()
                             .bigPicture(bitmap)
-                            .bigLargeIcon(null)
+                            .bigLargeIcon(null as Bitmap?)
                     )
             }
         }
@@ -1179,8 +1278,8 @@ class MessagingManager @Inject constructor(
     ) {
         data[VIDEO_URL]?.let {
             val serverId = data[THIS_SERVER_ID]!!.toInt()
-            val url = UrlHandler.handle(serverManager.getServer(serverId)?.connection?.getUrl(), it)
-            getVideoFrames(serverId, url, !UrlHandler.isAbsoluteUrl(it))?.let { frames ->
+            val url = UrlUtil.handle(serverManager.getServer(serverId)?.connection?.getUrl(), it)
+            getVideoFrames(serverId, url, !UrlUtil.isAbsoluteUrl(it))?.let { frames ->
                 Log.d(TAG, "Found ${frames.size} frames for video notification")
                 RemoteViews(context.packageName, R.layout.view_image_flipper).let { remoteViewFlipper ->
                     if (frames.isNotEmpty()) {
@@ -1388,7 +1487,7 @@ class MessagingManager @Inject constructor(
     ): PendingIntent {
         val serverId = data[THIS_SERVER_ID]!!.toInt()
         val needsPackage = uri.startsWith(APP_PREFIX) || uri.startsWith(INTENT_PREFIX)
-        val otherApp = needsPackage || UrlHandler.isAbsoluteUrl(uri) || uri.startsWith(DEEP_LINK_PREFIX)
+        val otherApp = needsPackage || UrlUtil.isAbsoluteUrl(uri) || uri.startsWith(DEEP_LINK_PREFIX)
         val intent = when {
             uri.isBlank() -> {
                 WebViewActivity.newInstance(context, null, serverId)
@@ -1406,7 +1505,7 @@ class MessagingManager @Inject constructor(
                     WebViewActivity.newInstance(context, null, serverId)
                 }
             }
-            UrlHandler.isAbsoluteUrl(uri) || uri.startsWith(DEEP_LINK_PREFIX) -> {
+            UrlUtil.isAbsoluteUrl(uri) || uri.startsWith(DEEP_LINK_PREFIX) -> {
                 Intent(Intent.ACTION_VIEW).apply {
                     this.data = Uri.parse(
                         if (uri.startsWith(DEEP_LINK_PREFIX)) {

@@ -6,6 +6,13 @@
     <uses-permission android:name="com.google.android.gms.permission.CAR_FUEL" />
     <uses-permission android:name="com.google.android.gms.permission.CAR_MILEAGE" />
 
+    <queries>
+        <!-- For GMS Core/Play service -->
+        <package android:name="com.google.android.gms" />
+        <package android:name="com.android.vending" />
+        <!-- End of GMS Core/Play service-->
+    </queries>
+
     <application
         android:name="io.homeassistant.companion.android.HomeAssistantApplication" >
         <meta-data android:name="io.sentry.auto-init" android:value="false" />
@@ -16,7 +23,8 @@
             android:name=".matter.MatterCommissioningActivity"
             android:configChanges="orientation|screenSize"
             android:exported="true"
-            android:theme="@style/Theme.HomeAssistant.Config">
+            android:theme="@style/Theme.HomeAssistant.Config"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="com.google.android.gms.home.matter.ACTION_COMMISSION_DEVICE"/>
                 <category android:name="android.intent.category.DEFAULT"/>

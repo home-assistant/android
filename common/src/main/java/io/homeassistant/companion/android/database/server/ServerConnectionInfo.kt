@@ -106,19 +106,27 @@ data class ServerConnectionInfo(
 class InternalSsidTypeConverter {
     @TypeConverter
     fun fromStringToList(value: String): List<String> {
-        return try {
-            jacksonObjectMapper().readValue(value)
-        } catch (e: JsonProcessingException) {
+        return if (value == "[]" || value.isBlank()) {
             emptyList()
+        } else {
+            try {
+                jacksonObjectMapper().readValue(value)
+            } catch (e: JsonProcessingException) {
+                emptyList()
+            }
         }
     }
 
     @TypeConverter
     fun fromListToString(value: List<String>): String {
-        return try {
-            jacksonObjectMapper().writeValueAsString(value)
-        } catch (e: JsonProcessingException) {
-            ""
+        return if (value.isEmpty()) {
+            "[]"
+        } else {
+            try {
+                jacksonObjectMapper().writeValueAsString(value)
+            } catch (e: JsonProcessingException) {
+                ""
+            }
         }
     }
 }

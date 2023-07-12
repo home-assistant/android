@@ -125,13 +125,15 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
     }
 
     private fun login(dataMap: DataMap) = mainScope.launch {
+        var authId = ""
         var serverId: Int? = null
         try {
+            authId = dataMap.getString("AuthId", "")
             val url = dataMap.getString("URL", "")
             val authCode = dataMap.getString("AuthCode", "")
             val deviceName = dataMap.getString("DeviceName")
             val deviceTrackingEnabled = dataMap.getBoolean("LocationTracking")
-            val notificationsEnabled = dataMap.getString("Notifications")
+            val notificationsEnabled = dataMap.getBoolean("Notifications")
 
             val formattedUrl = UrlUtil.formattedUrlString(url)
             val server = Server(
@@ -154,7 +156,10 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
                 )
             )
             serverManager.convertTemporaryServer(serverId)
-            updateTiles()
+            launch {
+                sendLoginResult(authId, true, null)
+                updateTiles()
+            }
 
             val intent = HomeActivity.newInstance(applicationContext)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
@@ -169,9 +174,30 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
             } catch (e: Exception) {
                 Log.e(TAG, "Can't revoke session", e)
             }
+            launch {
+                sendLoginResult(authId, false, e.stackTraceToString())
+            }
         }
 
         sendPhoneData()
+    }
+
+    private suspend fun sendLoginResult(id: String?, success: Boolean, exception: String?) {
+        try {
+            val putDataRequest = PutDataMapRequest.create(WearDataMessages.PATH_LOGIN_RESULT).run {
+                dataMap.putString(WearDataMessages.KEY_ID, id ?: "")
+                dataMap.putBoolean(WearDataMessages.KEY_SUCCESS, success)
+                if (exception != null) {
+                    dataMap.putString(WearDataMessages.LOGIN_RESULT_EXCEPTION, exception)
+                }
+                setUrgent()
+                asPutDataRequest()
+            }
+            Wearable.getDataClient(this@PhoneSettingsListener).putDataItem(putDataRequest).await()
+            Log.d(TAG, "Successfully sent ${WearDataMessages.PATH_LOGIN_RESULT} to device")
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to send ${WearDataMessages.PATH_LOGIN_RESULT} to device", e)
+        }
     }
 
     private fun saveFavorites(dataMap: DataMap) {
@@ -180,6 +206,10 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
 
         mainScope.launch {
             favoritesDao.replaceAll(favoritesIds)
+
+            if (favoritesIds.isEmpty() && wearPrefsRepository.getWearFavoritesOnly()) {
+                wearPrefsRepository.setWearFavoritesOnly(false)
+            }
         }
     }
 

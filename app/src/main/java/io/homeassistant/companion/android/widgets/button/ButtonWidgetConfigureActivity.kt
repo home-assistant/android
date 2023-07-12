@@ -5,6 +5,8 @@ import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Intent
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
 import android.os.Build
 import android.os.Bundle
 import android.text.Editable
@@ -21,20 +23,18 @@ import android.widget.Spinner
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
-import androidx.core.graphics.drawable.DrawableCompat
-import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.toColorInt
+import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.google.android.material.color.DynamicColors
-import com.maltaisn.icondialog.IconDialog
-import com.maltaisn.icondialog.IconDialogSettings
-import com.maltaisn.icondialog.data.Icon
-import com.maltaisn.icondialog.pack.IconPack
-import com.maltaisn.icondialog.pack.IconPackLoader
-import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
+import com.mikepenz.iconics.IconicsDrawable
+import com.mikepenz.iconics.typeface.IIcon
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.Service
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
@@ -42,6 +42,9 @@ import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetButtonConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.util.getHexForColor
+import io.homeassistant.companion.android.util.icondialog.IconDialogFragment
+import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
+import io.homeassistant.companion.android.util.icondialog.mdiName
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.common.ServiceFieldBinder
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
@@ -51,18 +54,15 @@ import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
-class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.Callback {
+class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     companion object {
         private const val TAG: String = "ButtonWidgetConfigAct"
-        private const val ICON_DIALOG_TAG = "icon-dialog"
         private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.button.ButtonWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
     }
 
     @Inject
     lateinit var buttonWidgetDao: ButtonWidgetDao
     override val dao get() = buttonWidgetDao
-
-    private lateinit var iconPack: IconPack
 
     private var services = mutableMapOf<Int, HashMap<String, Service>>()
     private var entities = mutableMapOf<Int, HashMap<String, Entity<Any>>>()
@@ -134,8 +134,24 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
                     val fieldKeys = fields.keys
                     Log.d(TAG, "Fields applicable to this service: $fields")
 
-                    if (target !== false) {
-                        dynamicFields.add(0, ServiceFieldBinder(serviceText, "entity_id"))
+                    val existingServiceData = mutableMapOf<String, Any?>()
+                    buttonWidgetDao.get(appWidgetId)?.let { buttonWidget ->
+                        if (
+                            buttonWidget.serverId != selectedServerId ||
+                            "${buttonWidget.domain}.${buttonWidget.service}" != serviceText
+                        ) {
+                            return@let
+                        }
+
+                        val dbMap: HashMap<String, Any?> = jacksonObjectMapper().readValue(buttonWidget.serviceData)
+                        for (item in dbMap) {
+                            val value = item.value.toString().replace("[", "").replace("]", "") + if (item.key == "entity_id") ", " else ""
+                            existingServiceData[item.key] = value.ifEmpty { null }
+                        }
+                    }
+
+                    if (target != false) {
+                        dynamicFields.add(0, ServiceFieldBinder(serviceText, "entity_id", existingServiceData["entity_id"]))
                     }
 
                     fieldKeys.sorted().forEach { fieldKey ->
@@ -145,9 +161,9 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
                         // IDs get priority and go at the top, since the other fields
                         // are usually optional but the ID is required
                         if (fieldKey.contains("_id")) {
-                            dynamicFields.add(0, ServiceFieldBinder(serviceText, fieldKey))
+                            dynamicFields.add(0, ServiceFieldBinder(serviceText, fieldKey, existingServiceData[fieldKey]))
                         } else {
-                            dynamicFields.add(ServiceFieldBinder(serviceText, fieldKey))
+                            dynamicFields.add(ServiceFieldBinder(serviceText, fieldKey, existingServiceData[fieldKey]))
                         }
                     }
 
@@ -241,9 +257,6 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
 
         setupServerSelect(buttonWidget?.serverId)
 
-        // Create an icon pack loader with application context.
-        val loader = IconPackLoader(this)
-
         serviceAdapter = SingleItemArrayAdapter<Service>(this) {
             if (it != null) getServiceString(it) else ""
         }
@@ -332,16 +345,20 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
         // Do this off the main thread, takes a second or two...
         runOnUiThread {
             // Create an icon pack and load all drawables.
-            iconPack = createMaterialDesignIconPack(loader)
-            iconPack.loadDrawables(loader.drawableLoader)
-            val settings = IconDialogSettings {
-                searchVisibility = IconDialog.SearchVisibility.ALWAYS
-            }
-            val iconDialog = IconDialog.newInstance(settings)
-            val iconId = buttonWidget?.iconId ?: 62017
-            onIconDialogIconsSelected(iconDialog, listOf(iconPack.icons[iconId]!!))
+            val iconName = buttonWidget?.iconName ?: "mdi:flash"
+            val icon = CommunityMaterial.getIconByMdiName(iconName) ?: CommunityMaterial.Icon2.cmd_flash
+            onIconDialogIconsSelected(icon)
             binding.widgetConfigIconSelector.setOnClickListener {
-                iconDialog.show(supportFragmentManager, ICON_DIALOG_TAG)
+                var alertDialog: DialogFragment? = null
+
+                alertDialog = IconDialogFragment(
+                    callback = {
+                        onIconDialogIconsSelected(it)
+                        alertDialog?.dismiss()
+                    }
+                )
+
+                alertDialog.show(supportFragmentManager, IconDialogFragment.TAG)
             }
         }
     }
@@ -383,23 +400,12 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
         }
     }
 
-    override val iconDialogIconPack: IconPack?
-        get() = iconPack
+    private fun onIconDialogIconsSelected(selectedIcon: IIcon) {
+        binding.widgetConfigIconSelector.tag = selectedIcon.mdiName
+        val iconDrawable = IconicsDrawable(this, selectedIcon)
+        iconDrawable.colorFilter = PorterDuffColorFilter(ContextCompat.getColor(this, commonR.color.colorIcon), PorterDuff.Mode.SRC_IN)
 
-    override fun onIconDialogIconsSelected(dialog: IconDialog, icons: List<Icon>) {
-        Log.d(TAG, "Selected icon: ${icons.firstOrNull()}")
-        val selectedIcon = icons.firstOrNull()
-        if (selectedIcon != null) {
-            binding.widgetConfigIconSelector.tag = selectedIcon.id
-            val iconDrawable = selectedIcon.drawable
-            if (iconDrawable != null) {
-                val icon = DrawableCompat.wrap(iconDrawable)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    DrawableCompat.setTint(icon, resources.getColor(commonR.color.colorIcon, theme))
-                }
-                binding.widgetConfigIconSelector.setImageBitmap(icon.toBitmap())
-            }
-        }
+        binding.widgetConfigIconSelector.setImageBitmap(iconDrawable.toBitmap())
     }
 
     private fun onAddWidget() {
@@ -442,8 +448,8 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity(), IconDialog.
                 binding.label.text.toString()
             )
             intent.putExtra(
-                ButtonWidget.EXTRA_ICON,
-                binding.widgetConfigIconSelector.tag as Int
+                ButtonWidget.EXTRA_ICON_NAME,
+                binding.widgetConfigIconSelector.tag as String
             )
 
             // Analyze and send service data

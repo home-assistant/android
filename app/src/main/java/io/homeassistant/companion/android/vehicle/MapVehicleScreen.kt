@@ -24,6 +24,7 @@ import com.mikepenz.iconics.utils.toAndroidIconCompat
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import kotlinx.coroutines.flow.Flow
@@ -42,15 +43,30 @@ class MapVehicleScreen(
     }
 
     var loading = true
-    var entities: List<Entity<*>> = listOf()
+    var entities: Set<Entity<*>> = setOf()
 
     init {
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 entitiesFlow.collect {
                     loading = false
-                    entities = it
-                    invalidate()
+                    val newSet = it
+                        .filter { entity ->
+                            if (entity.domain == "device_tracker" && entity.state == "home") {
+                                return@filter false
+                            }
+                            val attrs = entity.attributes as? Map<*, *>
+                            if (attrs != null) {
+                                val lat = attrs["latitude"] as? Double
+                                val lon = attrs["longitude"] as? Double
+                                return@filter lat != null && lon != null
+                            }
+                            return@filter false
+                        }
+                        .toSet()
+                    val hasChanged = entities.size != newSet.size || entities != newSet
+                    entities = newSet
+                    if (hasChanged) invalidate()
                 }
             }
         }
@@ -59,16 +75,11 @@ class MapVehicleScreen(
     override fun onGetTemplate(): Template {
         val listBuilder = ItemList.Builder()
         entities
-            .mapNotNull {
-                val attrs = it.attributes as? Map<*, *>
-                if (attrs != null) {
-                    val lat = attrs["latitude"] as? Double
-                    val lon = attrs["longitude"] as? Double
-                    if (lat != null && lon != null) {
-                        return@mapNotNull Pair(it, listOf(lat, lon))
-                    }
-                }
-                return@mapNotNull null
+            .map { // Null checks handled during collection
+                val attrs = it.attributes as Map<*, *>
+                val lat = attrs["latitude"] as Double
+                val lon = attrs["longitude"] as Double
+                Pair(it, listOf(lat, lon))
             }
             .sortedBy { it.first.friendlyName }
             .forEach { (entity, location) ->

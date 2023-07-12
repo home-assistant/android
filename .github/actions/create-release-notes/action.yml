@@ -21,6 +21,3 @@ runs:
         echo "Beta Changelog"
         git log --format="* %s" HEAD^..HEAD
         git log --format="* %s" HEAD^..HEAD > ./app/build/outputs/changelogBeta
-
-        mkdir -p app/src/main/play/release-notes/en-US/
-        echo "Full release change log: https://github.com/home-assistant/android/releases/latest" > app/src/main/play/release-notes/en-US/default.txt

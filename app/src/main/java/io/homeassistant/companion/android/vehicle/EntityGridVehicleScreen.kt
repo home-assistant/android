@@ -24,6 +24,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.friendlyState
 import io.homeassistant.companion.android.common.data.integration.getIcon
+import io.homeassistant.companion.android.common.data.integration.isExecuting
 import io.homeassistant.companion.android.common.data.integration.onPressed
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
@@ -48,8 +49,9 @@ class EntityGridVehicleScreen(
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 entitiesFlow.collect {
                     loading = false
+                    val hasChanged = entities.size != it.size || entities.toSet() != it.toSet()
                     entities = it
-                    invalidate()
+                    if (hasChanged) invalidate()
                 }
             }
         }
@@ -59,11 +61,22 @@ class EntityGridVehicleScreen(
         val listBuilder = ItemList.Builder()
         entities.forEach { entity ->
             val icon = entity.getIcon(carContext) ?: CommunityMaterial.Icon.cmd_cloud_question
-            listBuilder.addItem(
+            val gridItem =
                 GridItem.Builder()
                     .setLoading(false)
-                    .setTitle(entity.friendlyName)
+                    .setTitle(entity.friendlyName.ifEmpty { entity.entityId })
                     .setText(entity.friendlyState(carContext))
+
+            if (entity.isExecuting()) {
+                gridItem.setLoading(entity.isExecuting())
+            } else {
+                gridItem
+                    .setOnClickListener {
+                        Log.i(TAG, "${entity.entityId} clicked")
+                        lifecycleScope.launch {
+                            entity.onPressed(integrationRepository)
+                        }
+                    }
                     .setImage(
                         CarIcon.Builder(
                             IconicsDrawable(carContext, icon).apply {
@@ -73,14 +86,8 @@ class EntityGridVehicleScreen(
                             .setTint(CarColor.DEFAULT)
                             .build()
                     )
-                    .setOnClickListener {
-                        Log.i(TAG, "${entity.entityId} clicked")
-                        lifecycleScope.launch {
-                            entity.onPressed(integrationRepository)
-                        }
-                    }
-                    .build()
-            )
+            }
+            listBuilder.addItem(gridItem.build())
         }
 
         return GridTemplate.Builder().apply {

@@ -394,7 +394,7 @@ class SensorDetailViewModel @Inject constructor(
                     .filter { entries == null || entries.contains(it) }
                     .map {
                         val server = servers.first { s -> s.id == it.split("_")[0].toInt() }
-                        val zone = it.split("_")[1]
+                        val zone = it.split("_", limit = 2)[1]
                         if (servers.size > 1) "${server.friendlyName}: $zone" else zone
                     }
                 val entriesNotInZones = entries

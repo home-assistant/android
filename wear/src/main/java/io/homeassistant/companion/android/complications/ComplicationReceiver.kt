@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import androidx.wear.watchface.complications.datasource.ComplicationDataSourceService.Companion.EXTRA_CONFIG_COMPLICATION_ID
 import androidx.wear.watchface.complications.datasource.ComplicationDataSourceUpdateRequester
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -89,6 +90,20 @@ class ComplicationReceiver : BroadcastReceiver() {
                 complicationInstanceId,
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        }
+
+        fun getComplicationConfigureIntent(
+            context: Context,
+            complicationInstanceId: Int
+        ): PendingIntent {
+            return PendingIntent.getActivity(
+                context,
+                complicationInstanceId,
+                Intent(context, ComplicationConfigActivity::class.java).apply {
+                    putExtra(EXTRA_CONFIG_COMPLICATION_ID, complicationInstanceId)
+                },
+                PendingIntent.FLAG_IMMUTABLE
             )
         }
 
