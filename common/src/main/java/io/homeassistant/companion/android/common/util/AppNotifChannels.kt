@@ -10,7 +10,6 @@ const val locationDisabledChannel = "Location disabled"
 const val downloadsChannel = "downloads"
 const val generalChannel = "general"
 const val beaconMonitorChannel = "beacon"
-const val androidAutoChannel = "Android Auto"
 
 val appCreatedChannels = listOf(
     sensorWorkerChannel,
@@ -22,6 +21,5 @@ val appCreatedChannels = listOf(
     locationDisabledChannel,
     downloadsChannel,
     generalChannel,
-    beaconMonitorChannel,
-    androidAutoChannel
+    beaconMonitorChannel
 )

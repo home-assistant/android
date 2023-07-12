@@ -1062,6 +1062,5 @@
     <string name="ha_assist">HA: Assist</string>
     <string name="only_favorites">Only Show Favorites</string>
     <string name="beacon_scanning">Beacon Monitor Scanning</string>
-    <string name="android_auto_notification_channel">Open Android Auto App</string>
-    <string name="android_auto_notification_message">Open Home Assistant app to enable CarInfo sensors</string>
+    <string name="car_data_unavailable">Open Home Assistant app to enable CarInfo sensors</string>
 </resources>

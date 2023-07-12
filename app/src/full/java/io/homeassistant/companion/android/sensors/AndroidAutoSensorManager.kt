@@ -1,8 +1,6 @@
 package io.homeassistant.companion.android.sensors
 
-import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -12,17 +10,10 @@ import androidx.car.app.hardware.info.EnergyLevel
 import androidx.car.app.hardware.info.EvStatus
 import androidx.car.app.hardware.info.Mileage
 import androidx.car.app.hardware.info.Model
-import androidx.car.app.notification.CarAppExtender
-import androidx.car.app.notification.CarNotificationManager
-import androidx.car.app.notification.CarPendingIntent
-import androidx.core.app.NotificationChannelCompat
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Observer
 import io.homeassistant.companion.android.common.sensors.SensorManager
-import io.homeassistant.companion.android.common.util.androidAutoChannel
 import io.homeassistant.companion.android.vehicle.HaCarAppService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -172,7 +163,7 @@ class AndroidAutoSensorManager :
                         onSensorUpdated(
                             context,
                             sensor,
-                            context.getString(commonR.string.android_auto_notification_message),
+                            context.getString(commonR.string.car_data_unavailable),
                             sensor.statelessIcon,
                             mapOf()
                         )
@@ -207,7 +198,6 @@ class AndroidAutoSensorManager :
         }
 
         if (connected && !alreadyConnected) {
-            startAppNotification()
             alreadyConnected = true
         } else if (!connected && alreadyConnected) {
             alreadyConnected = false
@@ -225,31 +215,6 @@ class AndroidAutoSensorManager :
                 )
             )
         }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun startAppNotification() {
-        val manager = CarNotificationManager.from(context)
-
-        val chan = NotificationChannelCompat.Builder(androidAutoChannel, NotificationManagerCompat.IMPORTANCE_HIGH)
-            .setName(context.getString(commonR.string.android_auto_notification_channel))
-            .build()
-        manager.createNotificationChannel(chan)
-
-        val intent = Intent(Intent.ACTION_VIEW)
-            .setComponent(ComponentName(context, HaCarAppService::class.java))
-
-        val notification = NotificationCompat.Builder(context, androidAutoChannel)
-            .setContentTitle(context.getString(commonR.string.android_auto_notification_message))
-            .setSmallIcon(commonR.drawable.ic_stat_ic_notification)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
-            .extend(
-                CarAppExtender.Builder()
-                    .setContentIntent(CarPendingIntent.getCarApp(context, intent.hashCode(), intent, 0))
-                    .build()
-            )
-        manager.notify(-1, notification)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
