@@ -15,6 +15,8 @@ jobs:
   app_build:
     name: Github, Firebase, and Sentry Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v3
         with:
@@ -54,6 +56,9 @@ jobs:
 
       - uses: ./.github/actions/create-release-notes
         name: Create Release Notes
+        with:
+          tag-name: ${{ steps.rel_number.outputs.version }}
+          gh-token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: ./.github/actions/download-translations
         name: Download Translations
@@ -118,6 +123,8 @@ jobs:
     runs-on: ubuntu-latest
     concurrency:
       group: playstore_deploy
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v3
         with:
@@ -157,6 +164,9 @@ jobs:
 
       - uses: ./.github/actions/create-release-notes
         name: Create Release Notes
+        with:
+          tag-name: ${{ steps.rel_number.outputs.version }}
+          gh-token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: ./.github/actions/download-translations
         name: Download Translations

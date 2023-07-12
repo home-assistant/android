@@ -63,6 +63,8 @@ jobs:
 
   pr_build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
     - uses: actions/checkout@v3
       with:
@@ -104,6 +106,9 @@ jobs:
         
     - uses: ./.github/actions/create-release-notes
       name: Create Release Notes
+      with:
+        tag-name: ${{ steps.rel_number.outputs.version }}
+        gh-token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Build Debug APK
       run: ./gradlew assembleDebug
