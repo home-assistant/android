@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.sensors
 
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -108,7 +109,13 @@ class CarSensorManager :
         get() = R.string.sensor_name_car
 
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        // TODO: show sensors for automotive (except odometer) once
+        //  we can ask for special automotive permissions in requiredPermissions
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            !context.packageManager.hasSystemFeature(
+                    PackageManager.FEATURE_AUTOMOTIVE
+                )
+        ) {
             sensorsList
         } else {
             emptyList()
