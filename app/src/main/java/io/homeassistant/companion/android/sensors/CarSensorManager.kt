@@ -115,6 +115,10 @@ class CarSensorManager :
         }
     }
 
+    override fun hasSensor(context: Context): Boolean {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+    }
+
     override fun requiredPermissions(sensorId: String): Array<String> {
         return when {
             (sensorId == fuelLevel.id || sensorId == batteryLevel.id) -> {
