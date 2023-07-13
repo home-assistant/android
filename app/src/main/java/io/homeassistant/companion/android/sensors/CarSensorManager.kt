@@ -12,6 +12,7 @@ import androidx.car.app.hardware.info.Mileage
 import androidx.car.app.hardware.info.Model
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.DefaultLifecycleObserver
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.vehicle.HaCarAppService
@@ -109,13 +110,7 @@ class CarSensorManager :
         get() = R.string.sensor_name_car
 
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        // TODO: show sensors for automotive (except odometer) once
-        //  we can ask for special automotive permissions in requiredPermissions
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-            !context.packageManager.hasSystemFeature(
-                    PackageManager.FEATURE_AUTOMOTIVE
-                )
-        ) {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             sensorsList
         } else {
             emptyList()
@@ -123,7 +118,11 @@ class CarSensorManager :
     }
 
     override fun hasSensor(context: Context): Boolean {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+        // TODO: show sensors for automotive (except odometer) once
+        //  we can ask for special automotive permissions in requiredPermissions
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            !context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) &&
+            BuildConfig.FLAVOR == "full"
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
