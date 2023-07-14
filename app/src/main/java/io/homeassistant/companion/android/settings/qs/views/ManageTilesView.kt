@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.settings.qs.ManageTilesViewModel
 import io.homeassistant.companion.android.util.compose.ServerDropdownButton
+import io.homeassistant.companion.android.util.compose.SingleEntityPicker
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
@@ -128,25 +129,16 @@ fun ManageTilesView(
                     )
                 }
 
-                Text(
-                    text = stringResource(id = R.string.tile_entity),
-                    fontSize = 15.sp
+                SingleEntityPicker(
+                    entities = viewModel.sortedEntities,
+                    currentEntity = viewModel.selectedEntityId,
+                    onEntityCleared = { viewModel.selectEntityId("") },
+                    onEntitySelected = viewModel::selectEntityId,
+                    modifier = Modifier
+                        .padding(10.dp)
+                        .fillMaxWidth(),
+                    label = { Text(stringResource(R.string.tile_entity)) }
                 )
-                Box {
-                    OutlinedButton(onClick = { expandedEntity = true }) {
-                        Text(text = viewModel.selectedEntityId)
-                    }
-                    DropdownMenu(expanded = expandedEntity, onDismissRequest = { expandedEntity = false }) {
-                        for (item in viewModel.sortedEntities) {
-                            DropdownMenuItem(onClick = {
-                                viewModel.selectEntityId(item.entityId)
-                                expandedEntity = false
-                            }) {
-                                Text(text = item.entityId, fontSize = 15.sp)
-                            }
-                        }
-                    }
-                }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
