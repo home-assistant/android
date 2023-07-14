@@ -1,24 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2023.7 - Phone" versioncode="3">
-        <change>Assist: Access from any screen as the default digital assistant app, allow voice input over HTTP connections, add new shortcut, allow managing assistants</change>
-        <change>Android Auto: Hide devices that are home from navigation</change>
-        <change>Notifications: Add new parameter to show notifications in Android Auto</change>
-        <change>Add Troubleshooting section to Companion App Settings: Moves WebView Remote Debugging and Logs to new section, adds Thread credential sync</change>
-        <change>Add support for sensor display precision</change>
-        <change>Add suggestions to Settings screen to inform user of certain changes</change>
-        <change>Support more MDI icons in icon dialog</change>
-        <change>Bug fixes, design improvements and dependency updates</change>
+    <release version="2023.7.6 - Main" versioncode="3">
+        <change>Tiles: Replace entity drop down selection with search based text field to easily find entities</change>
+        <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2023.7 - Wear" versioncode="2">
-        <change>Assist: Add support for continued conversations and pipelines, support button intents, add STT &amp; TTS</change>
-        <change>Add support for sensor display precision</change>
-        <change>Bug fixes, design improvements and dependency updates</change>
+    <release version="2023.7.6 - Wear" versioncode="2">
+        <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2023.7 - Automotive" versioncode="1">
-        <change>Add Minimal Version - No Dependencies on Google Automotive Services</change>
-        <change>Hide native mode from full flavor</change>
-        <change>Bug fixes</change>
+    <release version="2023.7.6 - Automotive" versioncode="1">
+        <change>Bug fixes and dependency updates</change>
     </release>
 </changelog>
