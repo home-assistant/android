@@ -38,6 +38,10 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
         }
     }
 
+    override fun hasSensor(context: Context): Boolean {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+    }
+
     override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }
