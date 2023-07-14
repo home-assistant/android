@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.settings.notification
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
@@ -34,11 +35,17 @@ class NotificationDetailFragment : Fragment() {
     private lateinit var notification: NotificationItem
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        notification = arguments?.get(ARG_NOTIF) as NotificationItem
+        notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            arguments?.getSerializable(ARG_NOTIF, NotificationItem::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            arguments?.get(ARG_NOTIF) as? NotificationItem
+        } ?: return
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onPrepareOptionsMenu(menu: Menu) {
         super.onPrepareOptionsMenu(menu)
         menu.setGroupVisible(R.id.notification_toolbar_group, true)
@@ -51,6 +58,7 @@ class NotificationDetailFragment : Fragment() {
         }
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == R.id.action_delete) {
             deleteConfirmation()

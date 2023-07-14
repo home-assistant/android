@@ -5,7 +5,7 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.net.ConnectivityManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -13,7 +13,6 @@ import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
 import android.widget.Toast
-import androidx.core.content.getSystemService
 import com.google.android.material.color.DynamicColors
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
@@ -25,6 +24,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
+import io.homeassistant.companion.android.util.hasActiveConnection
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import kotlinx.coroutines.launch
 import java.util.LinkedList
@@ -92,7 +92,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         appWidgetId: Int,
         appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context)
     ) {
-        if (!isConnectionActive(context)) {
+        if (!context.hasActiveConnection()) {
             Log.d(TAG, "Skipping widget update since network connection is not active")
             return
         }
@@ -473,7 +473,12 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         val showSeek: Boolean? = extras.getBoolean(EXTRA_SHOW_SEEK)
         val showVolume: Boolean? = extras.getBoolean(EXTRA_SHOW_VOLUME)
         val showSource: Boolean? = extras.getBoolean(EXTRA_SHOW_SOURCE)
-        val backgroundType: WidgetBackgroundType = extras.getSerializable(EXTRA_BACKGROUND_TYPE) as WidgetBackgroundType
+        val backgroundType: WidgetBackgroundType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            extras.getSerializable(EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            extras.getSerializable(EXTRA_BACKGROUND_TYPE) as? WidgetBackgroundType
+        } ?: WidgetBackgroundType.DAYNIGHT
 
         if (serverId == null || entitySelection == null || showSkip == null || showSeek == null || showVolume == null || showSource == null) {
             Log.e(TAG, "Did not receive complete configuration data")
@@ -772,11 +777,5 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
             mediaPlayCtrlWidgetDao.deleteAll(appWidgetIds)
             appWidgetIds.forEach { removeSubscription(it) }
         }
-    }
-
-    private fun isConnectionActive(context: Context): Boolean {
-        val connectivityManager = context.getSystemService<ConnectivityManager>()
-        val activeNetworkInfo = connectivityManager?.activeNetworkInfo
-        return activeNetworkInfo?.isConnected ?: false
     }
 }

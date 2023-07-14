@@ -839,10 +839,10 @@ class MessagingManager @Inject constructor(
                         name,
                         value.split(";").map { it.toBoolean() }.toBooleanArray()
                     )
-                    "char" -> intent.putExtra(name, value[0].toChar())
+                    "char" -> intent.putExtra(name, value[0])
                     "char[]" -> intent.putExtra(
                         name,
-                        value.split(";").map { it[0].toChar() }.toCharArray()
+                        value.split(";").map { it[0] }.toCharArray()
                     )
                     "String" -> intent.putExtra(name, value)
                     "String.urlencoded", "urlencoded" -> intent.putExtra(

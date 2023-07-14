@@ -211,6 +211,7 @@ abstract class TileExtensions : TileService() {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     vm?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
                 } else {
+                    @Suppress("DEPRECATION")
                     vm?.vibrate(500)
                 }
             }
@@ -282,6 +283,7 @@ abstract class TileExtensions : TileService() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 vm?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK))
             } else {
+                @Suppress("DEPRECATION")
                 vm?.vibrate(1000)
             }
         }

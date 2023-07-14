@@ -56,6 +56,7 @@ class WebsocketSettingFragment : Fragment() {
         }
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onPrepareOptionsMenu(menu: Menu) {
         super.onPrepareOptionsMenu(menu)
 

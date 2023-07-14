@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.onboarding
 
+import android.annotation.SuppressLint
 import android.util.Log
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.PutDataMapRequest
@@ -12,6 +13,7 @@ import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 @AndroidEntryPoint
+@SuppressLint("VisibleForTests") // https://issuetracker.google.com/issues/239451111
 class WearOnboardingListener : WearableListenerService() {
 
     @Inject
@@ -34,7 +36,7 @@ class WearOnboardingListener : WearableListenerService() {
         if (url != null) {
             // Put as DataMap in data layer
             val putDataReq: PutDataRequest = PutDataMapRequest.create("/home_assistant_instance").run {
-                dataMap.putString("name", url?.host.toString())
+                dataMap.putString("name", url.host.toString())
                 dataMap.putString("url", url.toString())
                 setUrgent()
                 asPutDataRequest()

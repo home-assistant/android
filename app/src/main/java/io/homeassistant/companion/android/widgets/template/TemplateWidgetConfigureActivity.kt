@@ -6,7 +6,6 @@ import android.content.ComponentName
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.text.Html.fromHtml
 import android.util.Log
 import android.view.View
 import android.widget.AdapterView
@@ -15,6 +14,7 @@ import android.widget.Spinner
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.core.graphics.toColorInt
+import androidx.core.text.HtmlCompat
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
@@ -247,7 +247,7 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                     enabled = false
                 }
             }
-            binding.renderedTemplate.text = fromHtml(templateText)
+            binding.renderedTemplate.text = templateText?.let { HtmlCompat.fromHtml(it, HtmlCompat.FROM_HTML_MODE_LEGACY) }
             binding.addButton.isEnabled = enabled && isValidServerId()
         }
     }

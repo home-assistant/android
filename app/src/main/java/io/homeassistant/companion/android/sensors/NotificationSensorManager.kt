@@ -313,6 +313,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
     private fun mappedBundle(bundle: Bundle, keySuffix: String = ""): Map<String, Any?>? {
         return try {
             bundle.keySet().associate { key ->
+                @Suppress("DEPRECATION")
                 val keyValue = when (val value = bundle.get(key)) {
                     is Array<*> -> {
                         if (value.all { it is Bundle }) {

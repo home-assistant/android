@@ -32,6 +32,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.capitalize
 import io.homeassistant.companion.android.launch.LaunchActivity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -137,9 +138,7 @@ class MainVehicleScreen(
             val friendlyDomain =
                 SUPPORTED_DOMAINS_WITH_STRING[domain]?.let { carContext.getString(it) }
                     ?: domain.split("_").joinToString(" ") { word ->
-                        word.replaceFirstChar {
-                            if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
-                        }
+                        word.capitalize(Locale.getDefault())
                     }
             val icon = Entity(
                 "$domain.ha_android_placeholder",

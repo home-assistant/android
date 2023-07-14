@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.util
 
 import okhttp3.internal.and
+import java.util.Locale
 
 private val HEX_ARRAY = "0123456789ABCDEF".toCharArray()
 
@@ -13,3 +14,6 @@ fun ByteArray.toHexString(): String { // From https://stackoverflow.com/a/985533
     }
     return String(hexChars)
 }
+
+fun String.capitalize(locale: Locale) =
+    replaceFirstChar { if (it.isLowerCase()) it.titlecase(locale) else it.toString() }

@@ -7,14 +7,12 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
-import android.net.ConnectivityManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
-import androidx.core.content.getSystemService
 import com.squareup.picasso.Picasso
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
@@ -22,6 +20,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
+import io.homeassistant.companion.android.util.hasActiveConnection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -71,7 +70,7 @@ class CameraWidget : AppWidgetProvider() {
         appWidgetId: Int,
         appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context)
     ) {
-        if (!isConnectionActive(context)) {
+        if (!context.hasActiveConnection()) {
             Log.d(TAG, "Skipping widget update since network connection is not active")
             return
         }
@@ -255,12 +254,6 @@ class CameraWidget : AppWidgetProvider() {
 
     override fun onDisabled(context: Context) {
         // Enter relevant functionality for when the last widget is disabled
-    }
-
-    private fun isConnectionActive(context: Context): Boolean {
-        val connectivityManager = context.getSystemService<ConnectivityManager>()
-        val activeNetworkInfo = connectivityManager?.activeNetworkInfo
-        return activeNetworkInfo?.isConnected ?: false
     }
 
     private fun getScreenWidth(): Int {

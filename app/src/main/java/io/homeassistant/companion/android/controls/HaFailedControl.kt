@@ -11,6 +11,8 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
+import io.homeassistant.companion.android.common.util.capitalize
+import java.util.Locale
 
 @RequiresApi(Build.VERSION_CODES.R)
 object HaFailedControl : HaControl {
@@ -35,7 +37,7 @@ object HaFailedControl : HaControl {
         DeviceTypes.TYPE_UNKNOWN
 
     override fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String =
-        entity.domain.replaceFirstChar { it.titlecase() }
+        entity.domain.capitalize(Locale.getDefault())
 
     override suspend fun performAction(
         integrationRepository: IntegrationRepository,

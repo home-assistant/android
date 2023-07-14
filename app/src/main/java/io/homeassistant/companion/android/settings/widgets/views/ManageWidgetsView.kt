@@ -80,7 +80,7 @@ fun ManageWidgetsView(
                 onClick = { expandedAddWidget = true }
             )
         }
-    }) {
+    }) { contentPadding ->
         if (expandedAddWidget) {
             val availableWidgets = listOf(
                 stringResource(R.string.widget_button_image_description) to WidgetType.BUTTON,
@@ -108,7 +108,7 @@ fun ManageWidgetsView(
         }
         LazyColumn(
             contentPadding = PaddingValues(all = 16.dp),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.padding(contentPadding).fillMaxWidth()
         ) {
             if (viewModel.buttonWidgetList.value.isEmpty() && viewModel.staticWidgetList.value.isEmpty() &&
                 viewModel.mediaWidgetList.value.isEmpty() && viewModel.templateWidgetList.value.isEmpty() &&

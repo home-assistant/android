@@ -162,6 +162,7 @@ class GeocodeSensorManager : SensorManager {
                 )
             }
         } else {
+            @Suppress("DEPRECATION")
             getFromLocation(latitude, longitude, maxResults).orEmpty()
         }
     }

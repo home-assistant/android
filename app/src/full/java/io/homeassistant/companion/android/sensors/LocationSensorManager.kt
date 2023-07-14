@@ -194,10 +194,9 @@ class LocationSensorManager : LocationSensorManagerBase() {
             ACTION_PROCESS_GEO -> handleGeoUpdate(intent)
             ACTION_REQUEST_ACCURATE_LOCATION_UPDATE -> requestSingleAccurateLocation()
             ACTION_FORCE_HIGH_ACCURACY -> {
-                var command = intent.extras?.get("command")?.toString()
-                when (command) {
+                when (val command = intent.extras?.getString("command")) {
                     DeviceCommandData.TURN_ON, DeviceCommandData.TURN_OFF, MessagingManager.FORCE_ON -> {
-                        var turnOn = command != DeviceCommandData.TURN_OFF
+                        val turnOn = command != DeviceCommandData.TURN_OFF
                         if (turnOn) {
                             Log.d(TAG, "Forcing of high accuracy mode enabled")
                         } else {
