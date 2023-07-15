@@ -79,15 +79,6 @@ class CarSensorManager :
             odometerValue
         )
 
-        // track if we have already sent the "open app" message for each sensor
-        private val connectList = mutableMapOf(
-            batteryLevel to false,
-            carName to false,
-            carStatus to false,
-            fuelLevel to false,
-            odometerValue to false
-        )
-
         private enum class Listener {
             ENERGY, MODEL, MILEAGE, STATUS,
         }
@@ -154,16 +145,15 @@ class CarSensorManager :
             if (connected()) {
                 updateCarInfo()
             } else {
-                connectList.forEach { (sensor, alreadySentMessage) ->
-                    if (isEnabled(context, sensor) && !alreadySentMessage) {
+                sensorsList.forEach {
+                    if (isEnabled(context, it)) {
                         onSensorUpdated(
                             context,
-                            sensor,
+                            it,
                             context.getString(R.string.car_data_unavailable),
-                            sensor.statelessIcon,
+                            it.statelessIcon,
                             mapOf()
                         )
-                        connectList[sensor] = true
                     }
                 }
             }
