@@ -25,20 +25,20 @@ class CarSensorManager :
         internal const val TAG = "CarSM"
 
         private val fuelLevel = SensorManager.BasicSensor(
-            "car_fuel_level",
+            "car_fuel",
             "sensor",
-            R.string.basic_sensor_name_car_fuel_level,
-            R.string.sensor_description_car_fuel_level,
+            R.string.basic_sensor_name_car_fuel,
+            R.string.sensor_description_car_fuel,
             "mdi:barrel",
             unitOfMeasurement = "%",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             deviceClass = "battery"
         )
         private val batteryLevel = SensorManager.BasicSensor(
-            "car_battery_level",
+            "car_battery",
             "sensor",
-            R.string.basic_sensor_name_car_battery_level,
-            R.string.sensor_description_car_battery_level,
+            R.string.basic_sensor_name_car_battery,
+            R.string.sensor_description_car_battery,
             "mdi:car-battery",
             unitOfMeasurement = "%",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
