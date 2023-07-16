@@ -142,10 +142,13 @@ fun LoadHomePage(
                     isHapticEnabled = mainViewModel.isHapticEnabled.value,
                     isToastEnabled = mainViewModel.isToastEnabled.value,
                     isFavoritesOnly = mainViewModel.isFavoritesOnly,
+                    isAssistantAppAllowed = mainViewModel.isAssistantAppAllowed,
                     onHapticEnabled = { mainViewModel.setHapticEnabled(it) },
                     onToastEnabled = { mainViewModel.setToastEnabled(it) },
-                    setFavoritesOnly = { mainViewModel.setWearFavoritesOnly(it) }
-                ) { swipeDismissableNavController.navigate(SCREEN_SET_TILE_TEMPLATE) }
+                    setFavoritesOnly = { mainViewModel.setWearFavoritesOnly(it) },
+                    onClickTemplateTile = { swipeDismissableNavController.navigate(SCREEN_SET_TILE_TEMPLATE) },
+                    onAssistantAppAllowed = mainViewModel::setAssistantApp
+                )
             }
             composable(SCREEN_SET_FAVORITES) {
                 SetFavoritesView(
