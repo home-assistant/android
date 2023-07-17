@@ -58,6 +58,7 @@ class SensorReceiver : SensorReceiverBase() {
             AudioSensorManager(),
             BatterySensorManager(),
             BluetoothSensorManager(),
+            CarSensorManager(),
             DisplaySensorManager(),
             DNDSensorManager(),
             DynamicColorSensorManager(),

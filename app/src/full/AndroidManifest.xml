@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-sdk tools:overrideLibrary="com.google.android.gms.threadnetwork" />
+    <uses-permission android:name="com.google.android.gms.permission.CAR_FUEL" />
+    <uses-permission android:name="com.google.android.gms.permission.CAR_MILEAGE" />
 
     <queries>
         <!-- For GMS Core/Play service -->
