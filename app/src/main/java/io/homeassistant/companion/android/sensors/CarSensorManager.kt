@@ -224,6 +224,7 @@ class CarSensorManager :
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun onEnergyAvailable(data: EnergyLevel) {
+        Log.d(TAG, "Received Energy level: $data")
         if (data.fuelPercent.status == CarValue.STATUS_SUCCESS && isEnabled(context, fuelLevel)) {
             onSensorUpdated(
                 context,
@@ -247,6 +248,7 @@ class CarSensorManager :
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun onModelAvailable(data: Model) {
+        Log.d(TAG, "Received model information: $data")
         if (data.name.status == CarValue.STATUS_SUCCESS && isEnabled(context, carName)) {
             onSensorUpdated(
                 context,
@@ -265,6 +267,7 @@ class CarSensorManager :
     @RequiresApi(Build.VERSION_CODES.O)
     @androidx.annotation.OptIn(androidx.car.app.annotations.ExperimentalCarApi::class)
     fun onStatusAvailable(data: EvStatus) {
+        Log.d(TAG, "Received status available: $data")
         if (data.evChargePortConnected.status == CarValue.STATUS_SUCCESS && isEnabled(context, carStatus)) {
             onSensorUpdated(
                 context,
@@ -282,6 +285,7 @@ class CarSensorManager :
     @RequiresApi(Build.VERSION_CODES.O)
     @androidx.annotation.OptIn(androidx.car.app.annotations.ExperimentalCarApi::class)
     fun onMileageAvailable(data: Mileage) {
+        Log.d(TAG, "Received mileage: $data")
         if (data.odometerMeters.status == CarValue.STATUS_SUCCESS && isEnabled(context, odometerValue)) {
             onSensorUpdated(
                 context,
