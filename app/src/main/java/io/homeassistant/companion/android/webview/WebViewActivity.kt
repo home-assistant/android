@@ -276,7 +276,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         onBackPressedDispatcher.addCallback(this, onBackPressed)
 
         webView.apply {
-            setOnTouchListener(object : OnSwipeListener() {
+            setOnTouchListener(object : OnSwipeListener(this@WebViewActivity) {
                 override fun onSwipe(
                     e1: MotionEvent,
                     e2: MotionEvent,
@@ -318,6 +318,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             settings.mediaPlaybackRequiresUserGesture = !presenter.isAutoPlayVideoEnabled()
             settings.userAgentString = settings.userAgentString + " ${HomeAssistantApis.USER_AGENT_STRING}"
             webViewClient = object : TLSWebViewClient(keyChainRepository) {
+                @Deprecated("Deprecated in Java for SDK >= 23")
                 override fun onReceivedError(
                     view: WebView?,
                     errorCode: Int,
@@ -998,6 +999,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     webView.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
                 } else {
+                    @Suppress("DEPRECATION")
                     vm?.vibrate(500)
                 }
             }
@@ -1005,6 +1007,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     vm?.vibrate(VibrationEffect.createOneShot(400, VibrationEffect.EFFECT_HEAVY_CLICK))
                 } else {
+                    @Suppress("DEPRECATION")
                     vm?.vibrate(1500)
                 }
             }
@@ -1012,6 +1015,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     webView.performHapticFeedback(HapticFeedbackConstants.REJECT)
                 } else {
+                    @Suppress("DEPRECATION")
                     vm?.vibrate(1000)
                 }
             }
@@ -1028,6 +1032,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     webView.performHapticFeedback(HapticFeedbackConstants.GESTURE_START)
                 } else {
+                    @Suppress("DEPRECATION")
                     vm?.vibrate(50)
                 }
             }

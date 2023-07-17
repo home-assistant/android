@@ -4,10 +4,10 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.text.Html.fromHtml
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.widget.SearchView
+import androidx.core.text.HtmlCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
@@ -37,6 +37,7 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
         setHasOptionsMenu(true)
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onPrepareOptionsMenu(menu: Menu) {
         super.onPrepareOptionsMenu(menu)
         menu.setGroupVisible(R.id.notification_toolbar_group, true)
@@ -86,6 +87,7 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
         }
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val prefCategory = findPreference<PreferenceCategory>("list_notifications")
         if (item.itemId in listOf(R.id.last25, R.id.last50, R.id.last100)) {
@@ -162,7 +164,7 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
                 cal.timeInMillis = item.received
                 pref.key = item.id.toString()
                 pref.title = "${cal.time} - ${item.source}"
-                pref.summary = fromHtml(item.message)
+                pref.summary = HtmlCompat.fromHtml(item.message, HtmlCompat.FROM_HTML_MODE_LEGACY)
                 pref.isIconSpaceReserved = false
 
                 pref.setOnPreferenceClickListener {

@@ -64,7 +64,12 @@ class LastAppSensorManager : SensorManager {
 
         try {
             val pm = context.packageManager
-            val appInfo = pm.getApplicationInfo(lastApp, PackageManager.GET_META_DATA)
+            val appInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                pm.getApplicationInfo(lastApp, PackageManager.ApplicationInfoFlags.of(PackageManager.GET_META_DATA.toLong()))
+            } else {
+                @Suppress("DEPRECATION")
+                pm.getApplicationInfo(lastApp, PackageManager.GET_META_DATA)
+            }
             appLabel = pm.getApplicationLabel(appInfo).toString()
         } catch (e: Exception) {
             Log.e(TAG, "Unable to get package label for: $lastApp", e)

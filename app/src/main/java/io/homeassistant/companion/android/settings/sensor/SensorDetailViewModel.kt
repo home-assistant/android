@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.settings.sensor
 import android.Manifest
 import android.app.Application
 import android.content.pm.PackageManager
+import android.os.Build
 import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.runtime.State
@@ -375,11 +376,20 @@ class SensorDetailViewModel @Inject constructor(
             SensorSettingType.LIST ->
                 getSettingTranslatedEntries(setting.name, entries ?: setting.entries)
             SensorSettingType.LIST_APPS ->
-                entries ?: getApplication<Application>().packageManager
-                    ?.getInstalledApplications(PackageManager.GET_META_DATA)
-                    ?.map { packageItem -> packageItem.packageName }
-                    ?.sorted()
-                    .orEmpty()
+                entries ?: run {
+                    val apps = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        getApplication<Application>().packageManager
+                            ?.getInstalledApplications(PackageManager.ApplicationInfoFlags.of(PackageManager.GET_META_DATA.toLong()))
+                    } else {
+                        @Suppress("DEPRECATION")
+                        getApplication<Application>().packageManager
+                            ?.getInstalledApplications(PackageManager.GET_META_DATA)
+                    }
+                    apps
+                        ?.map { packageItem -> packageItem.packageName }
+                        ?.sorted()
+                        .orEmpty()
+                }
             SensorSettingType.LIST_BLUETOOTH -> {
                 val devices = BluetoothUtils.getBluetoothDevices(getApplication())
                     .filter { entries == null || entries.contains(it.address) }
@@ -431,7 +441,7 @@ class SensorDetailViewModel @Inject constructor(
         // This is only called when we requested permissions to enable a sensor, so check if we
         // need to do another request, or if we have all permissions and should enable the sensor.
         if (results.keys.contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
-            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
         ) {
             permissionRequests.value = PermissionsDialog(serverId, arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION))
             return

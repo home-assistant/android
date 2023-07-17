@@ -9,10 +9,13 @@ import android.service.controls.actions.ControlAction
 import android.service.controls.templates.ControlButton
 import android.service.controls.templates.ToggleTemplate
 import androidx.annotation.RequiresApi
+import androidx.compose.ui.text.capitalize
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
+import io.homeassistant.companion.android.common.util.capitalize
+import java.util.Locale
 import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.R)
@@ -47,7 +50,7 @@ object DefaultSwitchControl : HaControl {
             "automation" -> context.getString(commonR.string.domain_automation)
             "input_boolean" -> context.getString(commonR.string.domain_input_boolean)
             "switch" -> context.getString(commonR.string.domain_switch)
-            else -> entity.domain.replaceFirstChar { it.titlecase() }
+            else -> entity.domain.capitalize(Locale.getDefault())
         }
 
     override suspend fun performAction(

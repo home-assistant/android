@@ -62,6 +62,7 @@ class SensorDetailFragment : Fragment() {
         }
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onPrepareOptionsMenu(menu: Menu) {
         super.onPrepareOptionsMenu(menu)
         menu.setGroupVisible(R.id.senor_detail_toolbar_group, true)

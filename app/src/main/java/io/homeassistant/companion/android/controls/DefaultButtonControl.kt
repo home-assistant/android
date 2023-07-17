@@ -11,6 +11,8 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
+import io.homeassistant.companion.android.common.util.capitalize
+import java.util.Locale
 import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.R)
@@ -43,7 +45,7 @@ object DefaultButtonControl : HaControl {
             "input_button" -> context.getString(commonR.string.domain_input_button)
             "scene" -> context.getString(commonR.string.domain_scene)
             "script" -> context.getString(commonR.string.domain_script)
-            else -> entity.domain.replaceFirstChar { it.titlecase() }
+            else -> entity.domain.capitalize(Locale.getDefault())
         }
 
     override suspend fun performAction(
