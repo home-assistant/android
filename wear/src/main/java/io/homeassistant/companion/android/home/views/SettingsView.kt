@@ -70,10 +70,12 @@ fun SettingsView(
     isHapticEnabled: Boolean,
     isToastEnabled: Boolean,
     isFavoritesOnly: Boolean,
+    isAssistantAppAllowed: Boolean,
     onHapticEnabled: (Boolean) -> Unit,
     onToastEnabled: (Boolean) -> Unit,
     setFavoritesOnly: (Boolean) -> Unit,
-    onClickTemplateTile: () -> Unit
+    onClickTemplateTile: () -> Unit,
+    onAssistantAppAllowed: (Boolean) -> Unit
 ) {
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
 
@@ -239,6 +241,37 @@ fun SettingsView(
                 }
                 item {
                     ListHeader(
+                        id = commonR.string.assist
+                    )
+                }
+                item {
+                    ToggleChip(
+                        modifier = Modifier.fillMaxWidth(),
+                        checked = isAssistantAppAllowed,
+                        onCheckedChange = onAssistantAppAllowed,
+                        label = {
+                            Text(stringResource(commonR.string.available_as_assistant_app))
+                        },
+                        appIcon = {
+                            Image(
+                                asset = CommunityMaterial.Icon.cmd_comment_processing_outline,
+                                colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                            )
+                        },
+                        toggleControl = {
+                            Icon(
+                                imageVector = ToggleChipDefaults.switchIcon(isAssistantAppAllowed),
+                                contentDescription = if (isFavoritesOnly) {
+                                    stringResource(commonR.string.enabled)
+                                } else {
+                                    stringResource(commonR.string.disabled)
+                                }
+                            )
+                        }
+                    )
+                }
+                item {
+                    ListHeader(
                         id = commonR.string.account
                     )
                 }
@@ -287,8 +320,11 @@ private fun PreviewSettingsView() {
         isHapticEnabled = true,
         isToastEnabled = false,
         isFavoritesOnly = false,
+        isAssistantAppAllowed = true,
         onHapticEnabled = {},
         onToastEnabled = {},
-        setFavoritesOnly = {}
-    ) {}
+        setFavoritesOnly = {},
+        onClickTemplateTile = {},
+        onAssistantAppAllowed = {}
+    )
 }

@@ -64,7 +64,6 @@
         <activity android:name=".home.HomeActivity" />
         <activity android:name=".splash.SplashActivity"
             android:theme="@style/SplashTheme"
-            android:label="@string/app_name"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -96,12 +95,18 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity-alias
+            android:name=".conversation.AssistantActivity"
+            android:targetActivity=".conversation.ConversationActivity"
+            android:label="@string/ha_assist"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.ASSIST" />
                 <action android:name="android.intent.action.VOICE_ASSIST"/>
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
-        </activity>
+        </activity-alias>
 
         <!-- Tiles -->
         <service

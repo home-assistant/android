@@ -36,6 +36,7 @@
     <string name="automation">Automation</string>
     <string name="autoplay_video_summary">Autoplay Videos when dashboard is active. Enabling this setting may increase data usage unexpectedly, proceed with caution.</string>
     <string name="autoplay_video">Autoplay Videos</string>
+    <string name="available_as_assistant_app">Available as assistant app</string>
     <string name="background_access_disabled">Home Assistant does not have access to run in the background. Without this permission the app will not be able to reliably send data back to your server. Click here to request permissions.</string>
     <string name="background_access_enabled">Home Assistant has access to run in the background.</string>
     <string name="background_access_title">Background Access</string>

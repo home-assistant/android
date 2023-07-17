@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.home
 
 import android.app.Application
+import android.content.ComponentName
+import android.content.pm.PackageManager
 import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
@@ -12,6 +14,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
@@ -54,6 +57,8 @@ class MainViewModel @Inject constructor(
     enum class LoadingState {
         LOADING, READY, ERROR
     }
+
+    private val app = application
 
     private lateinit var homePresenter: HomePresenter
     private var areaRegistry: List<AreaRegistryResponse>? = null
@@ -114,6 +119,8 @@ class MainViewModel @Inject constructor(
         private set
     var isFavoritesOnly by mutableStateOf(false)
         private set
+    var isAssistantAppAllowed by mutableStateOf(true)
+        private set
 
     fun supportedDomains(): List<String> = HomePresenterImpl.supportedDomains
 
@@ -136,6 +143,13 @@ class MainViewModel @Inject constructor(
             templateTileContent.value = homePresenter.getTemplateTileContent()
             templateTileRefreshInterval.value = homePresenter.getTemplateTileRefreshInterval()
             isFavoritesOnly = homePresenter.getWearFavoritesOnly()
+
+            val assistantAppComponent = ComponentName(
+                BuildConfig.APPLICATION_ID,
+                "io.homeassistant.companion.android.conversation.AssistantActivity"
+            )
+            isAssistantAppAllowed =
+                app.packageManager.getComponentEnabledSetting(assistantAppComponent) != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
         }
     }
 
@@ -478,6 +492,19 @@ class MainViewModel @Inject constructor(
             val name = attributes["friendly_name"]?.toString() ?: entityId
             favoriteCachesDao.add(FavoriteCaches(entityId, name, icon))
         }
+    }
+
+    fun setAssistantApp(allowed: Boolean) {
+        val assistantAppComponent = ComponentName(
+            BuildConfig.APPLICATION_ID,
+            "io.homeassistant.companion.android.conversation.AssistantActivity"
+        )
+        app.packageManager.setComponentEnabledSetting(
+            assistantAppComponent,
+            if (allowed) PackageManager.COMPONENT_ENABLED_STATE_DEFAULT else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+            PackageManager.DONT_KILL_APP
+        )
+        isAssistantAppAllowed = allowed
     }
 
     fun logout() {
