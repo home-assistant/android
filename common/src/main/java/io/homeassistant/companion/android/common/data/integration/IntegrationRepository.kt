@@ -62,6 +62,10 @@ interface IntegrationRepository {
         pipelineId: String? = null,
         conversationId: String? = null
     ): Flow<AssistPipelineEvent>?
+
+    suspend fun getLastUsedPipeline(): String?
+
+    suspend fun setLastUsedPipeline(pipelineId: String)
 }
 
 @AssistedFactory

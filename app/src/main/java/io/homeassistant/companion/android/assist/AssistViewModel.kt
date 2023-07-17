@@ -83,7 +83,14 @@ class AssistViewModel @Inject constructor(
                     )
                 )
             } else {
-                setPipeline(pipelineId?.ifBlank { null })
+                setPipeline(
+                    when {
+                        pipelineId == PIPELINE_LAST_USED -> serverManager.integrationRepository(selectedServerId).getLastUsedPipeline()
+                        pipelineId == PIPELINE_PREFERRED -> null
+                        pipelineId?.isNotBlank() == true -> pipelineId
+                        else -> null
+                    }
+                )
             }
 
             if (serverManager.isRegistered()) {
@@ -149,6 +156,7 @@ class AssistViewModel @Inject constructor(
                 id = it.id,
                 name = it.name
             )
+            serverManager.integrationRepository(selectedServerId).setLastUsedPipeline(it.id)
 
             _conversation.clear()
             _conversation.add(startMessage)

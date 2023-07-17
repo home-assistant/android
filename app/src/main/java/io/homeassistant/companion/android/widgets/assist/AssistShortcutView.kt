@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineListResponse
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.util.compose.ExposedDropdownMenu
@@ -79,16 +80,25 @@ fun AssistShortcutView(
                         ExposedDropdownMenu(
                             label = stringResource(commonR.string.assist_pipeline),
                             keys = listOf(
+                                stringResource(commonR.string.assist_last_used_pipeline),
                                 stringResource(
                                     commonR.string.assist_preferred_pipeline,
                                     pipelines.pipelines.first { it.id == pipelines.preferredPipeline }.name
                                 )
                             ) +
                                 pipelines.pipelines.map { it.name },
-                            currentIndex = pipelineId?.let { pid -> 1 + pipelines.pipelines.indexOfFirst { it.id == pid } }
-                                ?: 0,
+                            currentIndex = when {
+                                pipelineId == AssistViewModelBase.PIPELINE_LAST_USED -> 0
+                                pipelineId == AssistViewModelBase.PIPELINE_PREFERRED -> 1
+                                pipelineId != null -> 2 + pipelines.pipelines.indexOfFirst { it.id == pipelineId }
+                                else -> 0
+                            },
                             onSelected = {
-                                pipelineId = if (it == 0) null else pipelines.pipelines[it - 1].id
+                                pipelineId = when (it) {
+                                    0 -> AssistViewModelBase.PIPELINE_LAST_USED
+                                    1 -> AssistViewModelBase.PIPELINE_PREFERRED
+                                    else -> pipelines.pipelines[it - 2].id
+                                }
                             }
                         )
                         Spacer(modifier = Modifier.height(16.dp))
