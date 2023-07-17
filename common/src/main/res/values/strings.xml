@@ -11,6 +11,7 @@
     <string name="activate">Activate</string>
     <string name="activity_intent_error">Unable to send activity intent, please check command format</string>
     <string name="add_device">Add device</string>
+    <string name="add_favorite">Add favorite</string>
     <string name="add_service_data_field">Add Field</string>
     <string name="add_shortcut">Add Shortcut</string>
     <string name="add_ssid">Add</string>

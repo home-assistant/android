@@ -43,7 +43,7 @@ fun SingleEntityPicker(
     entities: List<Entity<*>>,
     currentEntity: String?,
     onEntityCleared: () -> Unit,
-    onEntitySelected: (String) -> Unit,
+    onEntitySelected: (String) -> Boolean,
     modifier: Modifier = Modifier,
     label: @Composable (() -> Unit) = { Text(stringResource(commonR.string.select_entity_to_display)) }
 ) {
@@ -74,14 +74,14 @@ fun SingleEntityPicker(
                 }
             }
             // The amount of items is limited because Compose ExposedDropdownMenu isn't lazy
-            listTooLarge = items.size > 150
+            listTooLarge = items.size > 75
             items.sortedWith(
                 compareBy(
                     { !it.friendlyName.startsWith(query, ignoreCase = true) },
                     { !it.entityId.split(".")[1].startsWith(query.replace(" ", "_"), ignoreCase = true) },
                     { it.friendlyName.lowercase() }
                 )
-            ).take(150)
+            ).take(75)
         }
     }
 
@@ -120,10 +120,10 @@ fun SingleEntityPicker(
                 list.forEach {
                     DropdownMenuItem(
                         onClick = {
-                            onEntitySelected(it.entityId)
-                            inputValue = it.friendlyName
-                            focusManager.clearFocus()
+                            val setInput = onEntitySelected(it.entityId)
+                            inputValue = if (setInput) it.friendlyName else ""
                             expanded = false
+                            focusManager.clearFocus()
                         },
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
                     ) {

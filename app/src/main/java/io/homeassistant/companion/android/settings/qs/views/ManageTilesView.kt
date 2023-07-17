@@ -133,7 +133,10 @@ fun ManageTilesView(
                     entities = viewModel.sortedEntities,
                     currentEntity = viewModel.selectedEntityId,
                     onEntityCleared = { viewModel.selectEntityId("") },
-                    onEntitySelected = viewModel::selectEntityId,
+                    onEntitySelected = {
+                        viewModel.selectEntityId(it)
+                        return@SingleEntityPicker true
+                    },
                     modifier = Modifier
                         .padding(10.dp)
                         .fillMaxWidth(),
