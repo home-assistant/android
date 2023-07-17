@@ -230,7 +230,7 @@ dependencies {
     implementation("com.google.accompanist:accompanist-themeadapter-material:0.30.1")
 
     implementation("com.mikepenz:iconics-core:5.4.0")
-    implementation("com.mikepenz:iconics-compose:5.4.0")
+    implementation("com.mikepenz:iconics-compose:5.5.0-compose01")
     implementation("com.mikepenz:community-material-typeface:7.0.96.0-kotlin@aar")
 
     implementation("org.burnoutcrew.composereorderable:reorderable:0.9.6")
