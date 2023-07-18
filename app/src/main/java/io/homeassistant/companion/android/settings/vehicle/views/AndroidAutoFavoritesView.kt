@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.settings.vehicle.views
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -90,7 +89,6 @@ fun AndroidAutoFavoritesSettings(
             items(favoriteEntities.size, { favoriteEntities[it] }) { index ->
                 val favoriteEntityID =
                     favoriteEntities[index].replace("[", "").replace("]", "").split("-")[1]
-                Log.d("AAVM", "$favoriteEntityID is found")
                 androidAutoViewModel.sortedEntities.filter { it.entityId == favoriteEntityID }.let {
                     ReorderableItem(
                         reorderableState = reorderState,

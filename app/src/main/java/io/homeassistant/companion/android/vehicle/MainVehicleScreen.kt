@@ -150,14 +150,14 @@ class MainVehicleScreen(
                             .setTint(CarColor.DEFAULT)
                             .build()
                     )
-                    setTitle("Favorites")
+                    setTitle(carContext.getString(commonR.string.favorites))
                     setOnClickListener {
                         Log.i(TAG, "Favorites clicked: $favoritesList, current server: ${serverId.value}")
                         screenManager.push(
                             EntityGridVehicleScreen(
                                 carContext,
                                 serverManager.integrationRepository(serverId.value),
-                                "Favorites",
+                                carContext.getString(commonR.string.favorites),
                                 allEntities.map { it.values.filter { entity -> favoritesList.contains("${serverId.value}-${entity.entityId}") } }
                             )
                         )
