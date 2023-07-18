@@ -1084,7 +1084,9 @@
     <string name="thread_debug_result_mismatch">Home Assistant and this device prefer different networks</string>
     <string name="thread_debug_result_mismatch_detail">(device prefers: %1$s)</string>
     <string name="thread_debug_result_none">No credentials to sync</string>
+    <string name="thread_debug_result_removed">Removed old network from Home Assistant on this device</string>
     <string name="thread_debug_result_unsupported_server">The Home Assistant server does not support Thread</string>
+    <string name="thread_debug_result_updated">Updated network from Home Assistant on this device</string>
     <string name="thread_debug_summary">Manually update device and server Thread credentials and verify results</string>
     <string name="tile_vibrate">Vibrate when clicked</string>
     <string name="tile_auth_required">Requires unlocked device</string>
