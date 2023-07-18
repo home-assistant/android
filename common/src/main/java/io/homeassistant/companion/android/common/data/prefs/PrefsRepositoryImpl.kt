@@ -31,6 +31,7 @@ class PrefsRepositoryImpl @Inject constructor(
         private const val PREF_KEY_ALIAS = "key-alias"
         private const val PREF_CRASH_REPORTING_DISABLED = "crash_reporting"
         private const val PREF_IGNORED_SUGGESTIONS = "ignored_suggestions"
+        private const val PREF_AUTO_FAVORITES = "auto_favorites"
     }
 
     init {
@@ -196,5 +197,13 @@ class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setIgnoredSuggestions(ignored: List<String>) {
         localStorage.putStringSet(PREF_IGNORED_SUGGESTIONS, ignored.toSet())
+    }
+
+    override suspend fun getAutoFavorites(): List<String> {
+        return localStorage.getStringSet(PREF_AUTO_FAVORITES)?.toList() ?: emptyList()
+    }
+
+    override suspend fun setAutoFavorites(favorites: List<String>) {
+        localStorage.putStringSet(PREF_AUTO_FAVORITES, favorites.toSet())
     }
 }

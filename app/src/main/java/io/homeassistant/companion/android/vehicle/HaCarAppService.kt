@@ -17,6 +17,7 @@ import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -40,6 +41,9 @@ class HaCarAppService : CarAppService() {
 
     @Inject
     lateinit var serverManager: ServerManager
+
+    @Inject
+    lateinit var prefsRepository: PrefsRepository
 
     private val serverId = MutableStateFlow(0)
     private val allEntities = MutableStateFlow<Map<String, Entity<*>>>(emptyMap())
@@ -81,7 +85,8 @@ class HaCarAppService : CarAppService() {
                                     carContext,
                                     serverManager,
                                     serverIdFlow,
-                                    entityFlow
+                                    entityFlow,
+                                    prefsRepository
                                 ) { loadEntities(lifecycleScope, it) }
                             )
 
@@ -101,7 +106,8 @@ class HaCarAppService : CarAppService() {
                                     carContext,
                                     serverManager,
                                     serverIdFlow,
-                                    entityFlow
+                                    entityFlow,
+                                    prefsRepository
                                 ) { loadEntities(lifecycleScope, it) }
                             )
                         }

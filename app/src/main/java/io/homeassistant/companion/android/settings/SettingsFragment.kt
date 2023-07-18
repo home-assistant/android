@@ -43,6 +43,7 @@ import io.homeassistant.companion.android.settings.sensor.SensorSettingsFragment
 import io.homeassistant.companion.android.settings.sensor.SensorUpdateFrequencyFragment
 import io.homeassistant.companion.android.settings.server.ServerSettingsFragment
 import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSettingsFragment
+import io.homeassistant.companion.android.settings.vehicle.ManageAndroidAutoSettingsFragment
 import io.homeassistant.companion.android.settings.wear.SettingsWearActivity
 import io.homeassistant.companion.android.settings.wear.SettingsWearDetection
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
@@ -321,6 +322,18 @@ class SettingsFragment(
             parentFragmentManager.commit {
                 replace(R.id.content, DeveloperSettingsFragment::class.java, null)
                 addToBackStack(getString(commonR.string.troubleshooting))
+            }
+            return@setOnPreferenceClickListener true
+        }
+
+        findPreference<PreferenceCategory>("android_auto")?.let {
+            it.isVisible = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+        }
+
+        findPreference<Preference>("auto_favorites")?.setOnPreferenceClickListener {
+            parentFragmentManager.commit {
+                replace(R.id.content, ManageAndroidAutoSettingsFragment::class.java, null)
+                addToBackStack(getString(commonR.string.basic_sensor_name_android_auto))
             }
             return@setOnPreferenceClickListener true
         }

@@ -36,6 +36,15 @@
             android:summary="@string/sensor_update_frequency_summary" />
     </PreferenceCategory>
     <PreferenceCategory
+        android:title="@string/basic_sensor_name_android_auto"
+        android:key="android_auto">
+        <Preference
+            android:key="auto_favorites"
+            android:icon="@drawable/ic_car"
+            android:title="@string/aa_favorites"
+            android:summary="@string/aa_favorites_summary" />
+    </PreferenceCategory>
+    <PreferenceCategory
         android:title="@string/other_settings">
         <SwitchPreference
             android:key="fullscreen"
