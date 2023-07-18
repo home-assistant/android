@@ -87,7 +87,13 @@ class ConversationViewModel @Inject constructor(
                 }
             }
 
-            return setPipeline(null)
+            return setPipeline(
+                if (useAssistPipeline) {
+                    serverManager.integrationRepository().getLastUsedPipeline()
+                } else {
+                    null
+                }
+            )
         }
 
         return false
@@ -142,6 +148,9 @@ class ConversationViewModel @Inject constructor(
         useAssistPipelineStt = false
         if (pipeline != null || !useAssistPipeline) {
             currentPipeline = pipeline
+            currentPipeline?.let {
+                serverManager.integrationRepository().setLastUsedPipeline(it.id)
+            }
 
             _conversation.clear()
             _conversation.add(startMessage)

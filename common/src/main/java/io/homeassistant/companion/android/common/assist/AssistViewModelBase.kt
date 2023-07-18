@@ -26,6 +26,11 @@ abstract class AssistViewModelBase(
     application: Application
 ) : AndroidViewModel(application) {
 
+    companion object {
+        const val PIPELINE_PREFERRED = "preferred"
+        const val PIPELINE_LAST_USED = "last_used"
+    }
+
     enum class AssistInputMode {
         TEXT,
         TEXT_ONLY,
