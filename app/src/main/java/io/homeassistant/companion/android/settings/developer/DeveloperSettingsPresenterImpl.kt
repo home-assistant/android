@@ -83,6 +83,10 @@ class DeveloperSettingsPresenterImpl @Inject constructor(
                             view.onThreadPermissionRequest(syncResult.exportIntent, serverId, false)
                         } else if (syncResult.matches == true) {
                             view.onThreadDebugResult(context.getString(commonR.string.thread_debug_result_match), true)
+                        } else if (syncResult.fromApp == true && syncResult.updated == true) {
+                            view.onThreadDebugResult(context.getString(commonR.string.thread_debug_result_updated), true)
+                        } else if (syncResult.fromApp == true && syncResult.updated == false) {
+                            view.onThreadDebugResult(context.getString(commonR.string.thread_debug_result_removed), true)
                         } else {
                             view.onThreadDebugResult(context.getString(commonR.string.thread_debug_result_error), false)
                         }
