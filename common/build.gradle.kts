@@ -79,7 +79,7 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.5")
     implementation("org.altbeacon:android-beacon-library:2.19.6")
 
-    implementation("com.mikepenz:iconics-core:5.4.0")
+    implementation("com.mikepenz:iconics-core:5.5.0-compose01")
     implementation("com.mikepenz:community-material-typeface:7.0.96.0-kotlin@aar")
 
     implementation("com.vdurmont:emoji-java:5.1.1") {

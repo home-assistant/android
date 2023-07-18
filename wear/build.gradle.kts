@@ -108,7 +108,7 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.5")
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
 
-    implementation("com.mikepenz:iconics-core:5.4.0")
+    implementation("com.mikepenz:iconics-core:5.5.0-compose01")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.mikepenz:community-material-typeface:7.0.96.0-kotlin@aar")
     implementation("com.mikepenz:iconics-compose:5.4.0")
