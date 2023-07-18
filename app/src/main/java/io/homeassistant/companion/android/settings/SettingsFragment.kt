@@ -326,16 +326,26 @@ class SettingsFragment(
             return@setOnPreferenceClickListener true
         }
 
+        val isAutomotive = requireContext().packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
         findPreference<PreferenceCategory>("android_auto")?.let {
-            it.isVisible = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && BuildConfig.FLAVOR == "full"
+            it.isVisible =
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && (BuildConfig.FLAVOR == "full" || isAutomotive)
+            if (isAutomotive) {
+                it.title = getString(commonR.string.android_automotive)
+            }
         }
 
-        findPreference<Preference>("auto_favorites")?.setOnPreferenceClickListener {
-            parentFragmentManager.commit {
-                replace(R.id.content, ManageAndroidAutoSettingsFragment::class.java, null)
-                addToBackStack(getString(commonR.string.basic_sensor_name_android_auto))
+        findPreference<Preference>("auto_favorites")?.let { pref ->
+            if (isAutomotive) {
+                pref.title = getString(commonR.string.android_automotive_favorites)
             }
-            return@setOnPreferenceClickListener true
+            pref.setOnPreferenceClickListener {
+                parentFragmentManager.commit {
+                    replace(R.id.content, ManageAndroidAutoSettingsFragment::class.java, null)
+                    addToBackStack(getString(commonR.string.basic_sensor_name_android_auto))
+                }
+                return@setOnPreferenceClickListener true
+            }
         }
     }
 

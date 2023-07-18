@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.settings.vehicle
 
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -64,6 +65,11 @@ class ManageAndroidAutoSettingsFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        activity?.title = getString(commonR.string.aa_favorites)
+        activity?.title =
+            if (requireContext().packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+                getString(commonR.string.android_automotive_favorites)
+            } else {
+                getString(commonR.string.aa_favorites)
+            }
     }
 }
