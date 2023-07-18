@@ -32,8 +32,10 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.util.capitalize
 import io.homeassistant.companion.android.launch.LaunchActivity
+import io.homeassistant.companion.android.util.RegistriesDataHandler
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -88,6 +90,7 @@ class MainVehicleScreen(
         } ?: false
 
     private val isAutomotive get() = carContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    private var entityRegistry: List<EntityRegistryResponse>? = null
 
     init {
         lifecycleScope.launch {
@@ -103,6 +106,7 @@ class MainVehicleScreen(
                         .getSessionState() == SessionState.CONNECTED
                     invalidate()
                 }
+                entityRegistry = serverManager.webSocketRepository(serverId.value).getEntityRegistry()
                 allEntities.collect { entities ->
                     val newDomains = entities.values
                         .map { it.domain }
@@ -172,7 +176,7 @@ class MainVehicleScreen(
                                 carContext,
                                 serverManager.integrationRepository(serverId.value),
                                 friendlyDomain,
-                                allEntities.map { it.values.filter { entity -> entity.domain == domain } }
+                                allEntities.map { it.values.filter { entity -> entity.domain == domain && RegistriesDataHandler.getHiddenByForEntity(entity.entityId, entityRegistry) == null } }
                             )
                         )
                     }
