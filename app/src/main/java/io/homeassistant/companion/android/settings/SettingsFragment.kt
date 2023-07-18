@@ -327,7 +327,7 @@ class SettingsFragment(
         }
 
         findPreference<PreferenceCategory>("android_auto")?.let {
-            it.isVisible = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+            it.isVisible = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && BuildConfig.FLAVOR == "full"
         }
 
         findPreference<Preference>("auto_favorites")?.setOnPreferenceClickListener {
