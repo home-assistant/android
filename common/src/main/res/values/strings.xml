@@ -63,9 +63,9 @@
     <string name="basic_sensor_name_bluetooth">Bluetooth Connection</string>
     <string name="basic_sensor_name_car_battery">Car Battery</string>
     <string name="basic_sensor_name_car_name">Car Name</string>
-    <string name="basic_sensor_name_car_charging_status">Charging Status</string>
-    <string name="basic_sensor_name_car_fuel">Fuel</string>
-    <string name="basic_sensor_name_car_odometer">Odometer</string>
+    <string name="basic_sensor_name_car_charging_status">Car Charging Status</string>
+    <string name="basic_sensor_name_car_fuel">Car Fuel</string>
+    <string name="basic_sensor_name_car_odometer">Car Odometer</string>
     <string name="basic_sensor_name_charger_type">Charger Type</string>
     <string name="basic_sensor_name_charging">Is Charging</string>
     <string name="basic_sensor_name_current_time_zone">Current Time Zone</string>
