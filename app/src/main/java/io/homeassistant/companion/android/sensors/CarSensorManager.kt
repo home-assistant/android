@@ -227,11 +227,7 @@ class CarSensorManager :
             onSensorUpdated(
                 context,
                 fuelLevel,
-                if (fuelStatus == "success") {
-                    data.fuelPercent.value!!
-                } else {
-                    fuelStatus
-                },
+                fuelStatus ?: data.fuelPercent.value!!,
                 fuelLevel.statelessIcon,
                 mapOf()
             )
@@ -241,11 +237,7 @@ class CarSensorManager :
             onSensorUpdated(
                 context,
                 batteryLevel,
-                if (batteryStatus == "success") {
-                    data.batteryPercent.value!!
-                } else {
-                    batteryStatus
-                },
+                batteryStatus ?: data.batteryPercent.value!!,
                 batteryLevel.statelessIcon,
                 mapOf()
             )
@@ -260,11 +252,7 @@ class CarSensorManager :
             onSensorUpdated(
                 context,
                 carName,
-                if (status == "success") {
-                    data.name.value!!
-                } else {
-                    status
-                },
+                status ?: data.name.value!!,
                 carName.statelessIcon,
                 mapOf(
                     "car_manufacturer" to data.manufacturer.value,
@@ -283,11 +271,7 @@ class CarSensorManager :
             onSensorUpdated(
                 context,
                 carStatus,
-                if (status == "success") {
-                    data.evChargePortConnected.value == true
-                } else {
-                    status
-                },
+                status ?: (data.evChargePortConnected.value == true),
                 carStatus.statelessIcon,
                 mapOf(
                     "car_charge_port_open" to (data.evChargePortOpen.value == true)
@@ -305,11 +289,7 @@ class CarSensorManager :
             onSensorUpdated(
                 context,
                 odometerValue,
-                if (status == "success") {
-                    data.odometerMeters.value!!
-                } else {
-                    status
-                },
+                status ?: data.odometerMeters.value!!,
                 odometerValue.statelessIcon,
                 mapOf()
             )
@@ -317,13 +297,13 @@ class CarSensorManager :
         setListener(Listener.MILEAGE, false)
     }
 
-    private fun carValueStatus(value: Int): String {
+    private fun carValueStatus(value: Int): String? {
         return when (value) {
-            CarValue.STATUS_SUCCESS -> "success"
+            CarValue.STATUS_SUCCESS -> null
             CarValue.STATUS_UNAVAILABLE -> "unavailable"
             CarValue.STATUS_UNKNOWN -> "unknown"
             CarValue.STATUS_UNIMPLEMENTED -> "unimplemented"
-            else -> "unavailable"
+            else -> null
         }
     }
 }
