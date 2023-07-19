@@ -153,35 +153,51 @@ class MainVehicleScreen(
                 null
             ).getIcon(carContext)
 
-            listBuilder.addItem(
-                Row.Builder().apply {
-                    if (icon != null) {
-                        setImage(
-                            CarIcon.Builder(
-                                IconicsDrawable(carContext, icon)
-                                    .apply {
-                                        sizeDp = 48
-                                    }.toAndroidIconCompat()
-                            )
-                                .setTint(CarColor.DEFAULT)
-                                .build()
-                        )
-                    }
+            val entityList = allEntities.map {
+                it.values.filter { entity ->
+                    entity.domain == domain && RegistriesDataHandler.getHiddenByForEntity(
+                        entity.entityId,
+                        entityRegistry
+                    ) == null
                 }
-                    .setTitle(friendlyDomain)
-                    .setOnClickListener {
-                        Log.i(TAG, "Domain:$domain clicked")
-                        screenManager.push(
-                            EntityGridVehicleScreen(
-                                carContext,
-                                serverManager.integrationRepository(serverId.value),
-                                friendlyDomain,
-                                allEntities.map { it.values.filter { entity -> entity.domain == domain && RegistriesDataHandler.getHiddenByForEntity(entity.entityId, entityRegistry) == null } }
+            }
+            var domainIsEmpty = false
+            lifecycleScope.launch {
+                entityList.collect {
+                    domainIsEmpty = it.isEmpty()
+                }
+            }
+            if (!domainIsEmpty) {
+                listBuilder.addItem(
+                    Row.Builder().apply {
+                        if (icon != null) {
+                            setImage(
+                                CarIcon.Builder(
+                                    IconicsDrawable(carContext, icon)
+                                        .apply {
+                                            sizeDp = 48
+                                        }.toAndroidIconCompat()
+                                )
+                                    .setTint(CarColor.DEFAULT)
+                                    .build()
                             )
-                        )
+                        }
                     }
-                    .build()
-            )
+                        .setTitle(friendlyDomain)
+                        .setOnClickListener {
+                            Log.i(TAG, "Domain:$domain clicked")
+                            screenManager.push(
+                                EntityGridVehicleScreen(
+                                    carContext,
+                                    serverManager.integrationRepository(serverId.value),
+                                    friendlyDomain,
+                                    entityList
+                                )
+                            )
+                        }
+                        .build()
+                )
+            }
         }
 
         listBuilder.addItem(
