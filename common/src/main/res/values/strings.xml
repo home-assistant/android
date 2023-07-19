@@ -1125,5 +1125,5 @@
     <string name="aa_favorites">Android Auto Favorites</string>
     <string name="aa_favorites_summary">Select your favorite entities to be shown in the app while viewing the driving optimized screen</string>
     <string name="android_automotive">Android Automotive</string>
-    <string name="android_automotive_favorites">Android Automotive Driving Favorites</string>
+    <string name="android_automotive_favorites">Driving Favorites</string>
 </resources>

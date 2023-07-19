@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -16,12 +17,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.settings.vehicle.ManageAndroidAutoViewModel
 import io.homeassistant.companion.android.util.compose.FavoriteEntityRow
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.SingleEntityPicker
+import io.homeassistant.companion.android.vehicle.MainVehicleScreen
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.burnoutcrew.reorderable.ReorderableItem
 import org.burnoutcrew.reorderable.rememberReorderableLazyListState
 import org.burnoutcrew.reorderable.reorderable
@@ -43,12 +48,22 @@ fun AndroidAutoFavoritesSettings(
     var selectedServer by remember { mutableStateOf(defaultServer) }
 
     val favoriteEntities = androidAutoViewModel.favoritesList
+    var validEntities by remember { mutableStateOf<List<Entity<*>>>(emptyList()) }
+    LaunchedEffect(favoriteEntities.size, androidAutoViewModel.sortedEntities.size) {
+        validEntities = withContext(Dispatchers.IO) {
+            androidAutoViewModel.sortedEntities
+                .filter {
+                    !favoriteEntities.contains("$selectedServer-${it.entityId}") &&
+                        (it.entityId.split(".")[0] in MainVehicleScreen.SUPPORTED_DOMAINS)
+                }
+                .toList()
+        }
+    }
 
     LazyColumn(
         state = reorderState.listState,
         contentPadding = PaddingValues(vertical = 16.dp),
         modifier = Modifier
-            .padding(16.dp)
             .reorderable(reorderState)
     ) {
         item {
@@ -68,13 +83,13 @@ fun AndroidAutoFavoritesSettings(
                         androidAutoViewModel.loadEntities(it)
                         selectedServer = it
                     },
-                    modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+                    modifier = Modifier.fillMaxWidth().padding(all = 16.dp)
                 )
             }
         }
         item {
             SingleEntityPicker(
-                entities = androidAutoViewModel.sortedEntities,
+                entities = validEntities,
                 currentEntity = null,
                 onEntityCleared = { /* Nothing */ },
                 onEntitySelected = {
@@ -87,24 +102,24 @@ fun AndroidAutoFavoritesSettings(
         }
         if (favoriteEntities.isNotEmpty() && androidAutoViewModel.sortedEntities.isNotEmpty()) {
             items(favoriteEntities.size, { favoriteEntities[it] }) { index ->
-                val favoriteEntityID =
-                    favoriteEntities[index].replace("[", "").replace("]", "").split("-")[1]
-                androidAutoViewModel.sortedEntities.filter { it.entityId == favoriteEntityID }.let {
+                val favoriteEntity =
+                    favoriteEntities[index].replace("[", "").replace("]", "").split("-")
+                androidAutoViewModel.sortedEntities.firstOrNull { it.entityId == favoriteEntity[1] && favoriteEntity[0].toInt() == selectedServer }?.let {
                     ReorderableItem(
                         reorderableState = reorderState,
                         key = favoriteEntities[index]
                     ) { isDragging ->
                         FavoriteEntityRow(
-                            entityName = it.first().friendlyName,
-                            entityId = it.first().entityId,
+                            entityName = it.friendlyName,
+                            entityId = it.entityId,
                             onClick = {
                                 androidAutoViewModel.onEntitySelected(
                                     false,
-                                    it.first().entityId,
+                                    it.entityId,
                                     selectedServer
                                 )
                             },
-                            checked = favoriteEntities.contains(favoriteEntities[index]),
+                            checked = true,
                             draggable = true,
                             isDragging = isDragging,
                             reorderableState = reorderState

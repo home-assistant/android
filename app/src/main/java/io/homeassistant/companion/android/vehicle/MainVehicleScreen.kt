@@ -158,7 +158,7 @@ class MainVehicleScreen(
                                 carContext,
                                 serverManager.integrationRepository(serverId.value),
                                 carContext.getString(commonR.string.favorites),
-                                allEntities.map { it.values.filter { entity -> favoritesList.contains("${serverId.value}-${entity.entityId}") } }
+                                allEntities.map { it.values.filter { entity -> favoritesList.contains("${serverId.value}-${entity.entityId}") }.sortedBy { entity -> favoritesList.indexOf("${serverId.value}-${entity.entityId}") } }
                             )
                         )
                     }
