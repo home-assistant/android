@@ -303,7 +303,7 @@ class CarSensorManager :
             CarValue.STATUS_UNAVAILABLE -> "unavailable"
             CarValue.STATUS_UNKNOWN -> "unknown"
             CarValue.STATUS_UNIMPLEMENTED -> "unimplemented"
-            else -> null
+            else -> "unavailable"
         }
     }
 }
