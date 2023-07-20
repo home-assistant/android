@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
+import androidx.car.app.constraints.ConstraintManager
 import androidx.car.app.model.Action
 import androidx.car.app.model.CarColor
 import androidx.car.app.model.CarIcon
@@ -58,8 +59,15 @@ class EntityGridVehicleScreen(
     }
 
     override fun onGetTemplate(): Template {
+        val manager = carContext.getCarService(ConstraintManager::class.java)
+        val gridLimit = manager.getContentLimit(ConstraintManager.CONTENT_LIMIT_TYPE_GRID)
+
         val listBuilder = ItemList.Builder()
-        entities.forEach { entity ->
+        entities.forEachIndexed { index, entity ->
+            if (index >= gridLimit) {
+                Log.i(TAG, "Grid limit ($gridLimit) reached, not adding more entities (${entities.size}) for $title ")
+                return@forEachIndexed
+            }
             val icon = entity.getIcon(carContext) ?: CommunityMaterial.Icon.cmd_cloud_question
             val gridItem =
                 GridItem.Builder()

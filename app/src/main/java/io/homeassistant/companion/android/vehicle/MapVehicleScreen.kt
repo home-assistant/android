@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
+import androidx.car.app.constraints.ConstraintManager
 import androidx.car.app.model.Action
 import androidx.car.app.model.CarColor
 import androidx.car.app.model.CarIcon
@@ -73,6 +74,8 @@ class MapVehicleScreen(
     }
 
     override fun onGetTemplate(): Template {
+        val manager = carContext.getCarService(ConstraintManager::class.java)
+        val listLimit = manager.getContentLimit(ConstraintManager.CONTENT_LIMIT_TYPE_LIST)
         val listBuilder = ItemList.Builder()
         entities
             .map { // Null checks handled during collection
@@ -82,11 +85,15 @@ class MapVehicleScreen(
                 Pair(it, listOf(lat, lon))
             }
             .sortedBy { it.first.friendlyName }
-            .forEach { (entity, location) ->
-                val icon = entity.getIcon(carContext) ?: CommunityMaterial.Icon.cmd_account
+            .forEachIndexed { index, pair ->
+                if (index >= listLimit) {
+                    Log.i(TAG, "List limit ($listLimit) reached, not adding any more navigation entities (${entities.size})")
+                    return@forEachIndexed
+                }
+                val icon = pair.first.getIcon(carContext) ?: CommunityMaterial.Icon.cmd_account
                 listBuilder.addItem(
                     Row.Builder()
-                        .setTitle(entity.friendlyName)
+                        .setTitle(pair.first.friendlyName)
                         .setImage(
                             CarIcon.Builder(
                                 IconicsDrawable(carContext, icon)
@@ -98,10 +105,10 @@ class MapVehicleScreen(
                                 .build()
                         )
                         .setOnClickListener {
-                            Log.i(TAG, "${entity.entityId} clicked")
+                            Log.i(TAG, "${pair.first.entityId} clicked")
                             val intent = Intent(
                                 CarContext.ACTION_NAVIGATE,
-                                Uri.parse("geo:${location[0]},${location[1]}")
+                                Uri.parse("geo:${pair.second[0]},${pair.second[1]}")
                             )
                             carContext.startCarApp(intent)
                         }
