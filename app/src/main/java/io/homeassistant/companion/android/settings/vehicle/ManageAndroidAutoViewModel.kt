@@ -42,7 +42,7 @@ class ManageAndroidAutoViewModel @Inject constructor(
     val entities = mutableMapOf<Int, List<Entity<*>>>()
     init {
         viewModelScope.launch {
-            favoritesList.addAll(if (prefsRepository.getAutoFavorites().isNotEmpty()) prefsRepository.getAutoFavorites().split(", ") else emptyList())
+            favoritesList.addAll(prefsRepository.getAutoFavorites().ifEmpty { emptyList() })
             entitiesLoaded = true
             serverManager.defaultServers.map {
                 async {

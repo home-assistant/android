@@ -95,7 +95,7 @@ class MainVehicleScreen(
     init {
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                favoritesList = prefsRepository.getAutoFavorites().removeSurrounding("[", "]").split(", ")
+                favoritesList = prefsRepository.getAutoFavorites()
                 isLoggedIn = serverManager.isRegistered() &&
                     serverManager.authenticationRepository()
                     .getSessionState() == SessionState.CONNECTED
