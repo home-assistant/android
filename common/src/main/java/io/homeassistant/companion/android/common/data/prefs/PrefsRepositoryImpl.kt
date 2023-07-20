@@ -199,11 +199,11 @@ class PrefsRepositoryImpl @Inject constructor(
         localStorage.putStringSet(PREF_IGNORED_SUGGESTIONS, ignored.toSet())
     }
 
-    override suspend fun getAutoFavorites(): List<String> {
-        return localStorage.getStringSet(PREF_AUTO_FAVORITES)?.toList() ?: emptyList()
+    override suspend fun getAutoFavorites(): String {
+        return localStorage.getString(PREF_AUTO_FAVORITES) ?: ""
     }
 
     override suspend fun setAutoFavorites(favorites: List<String>) {
-        localStorage.putStringSet(PREF_AUTO_FAVORITES, favorites.toSet())
+        localStorage.putString(PREF_AUTO_FAVORITES, favorites.toString())
     }
 }

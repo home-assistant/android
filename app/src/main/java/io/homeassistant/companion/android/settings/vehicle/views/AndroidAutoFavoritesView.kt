@@ -47,7 +47,7 @@ fun AndroidAutoFavoritesSettings(
 
     var selectedServer by remember { mutableStateOf(defaultServer) }
 
-    val favoriteEntities = androidAutoViewModel.favoritesList
+    val favoriteEntities = androidAutoViewModel.favoritesList.toList()
     var validEntities by remember { mutableStateOf<List<Entity<*>>>(emptyList()) }
     LaunchedEffect(favoriteEntities.size, androidAutoViewModel.sortedEntities.size) {
         validEntities = withContext(Dispatchers.IO) {

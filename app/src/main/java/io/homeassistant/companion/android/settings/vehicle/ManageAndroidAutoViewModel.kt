@@ -42,7 +42,7 @@ class ManageAndroidAutoViewModel @Inject constructor(
     val entities = mutableMapOf<Int, List<Entity<*>>>()
     init {
         viewModelScope.launch {
-            favoritesList.addAll(prefsRepository.getAutoFavorites())
+            favoritesList.addAll(if (prefsRepository.getAutoFavorites().isNotEmpty()) prefsRepository.getAutoFavorites().split(", ") else emptyList())
             entitiesLoaded = true
             serverManager.defaultServers.map {
                 async {
@@ -72,7 +72,7 @@ class ManageAndroidAutoViewModel @Inject constructor(
 
     fun saveFavorites() {
         viewModelScope.launch {
-            prefsRepository.setAutoFavorites(favoritesList)
+            prefsRepository.setAutoFavorites(favoritesList.toList())
         }
     }
 
@@ -86,6 +86,6 @@ class ManageAndroidAutoViewModel @Inject constructor(
         } else {
             favoritesList.remove("$serverId-$entityId")
         }
-        viewModelScope.launch { prefsRepository.setAutoFavorites(favoritesList) }
+        viewModelScope.launch { prefsRepository.setAutoFavorites(favoritesList.toList()) }
     }
 }
