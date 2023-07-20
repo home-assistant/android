@@ -100,7 +100,7 @@ fun SensorRow(
             if (dbSensor.state.isBlank()) {
                 stringResource(commonR.string.enabled)
             } else {
-                if (basicSensor.unitOfMeasurement.isNullOrBlank()) {
+                if (basicSensor.unitOfMeasurement.isNullOrBlank() || (dbSensor.state.toDoubleOrNull() == null)) {
                     dbSensor.state
                 } else {
                     "${dbSensor.state} ${basicSensor.unitOfMeasurement}"
