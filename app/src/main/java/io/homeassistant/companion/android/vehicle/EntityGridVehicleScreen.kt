@@ -20,30 +20,42 @@ import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import com.mikepenz.iconics.utils.sizeDp
 import com.mikepenz.iconics.utils.toAndroidIconCompat
+import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.friendlyState
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.integration.isExecuting
 import io.homeassistant.companion.android.common.data.integration.onPressed
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 @RequiresApi(Build.VERSION_CODES.O)
 class EntityGridVehicleScreen(
     carContext: CarContext,
+    val serverManager: ServerManager,
+    val serverId: StateFlow<Int>,
+    val prefsRepository: PrefsRepository,
     val integrationRepository: IntegrationRepository,
     val title: String,
-    val entitiesFlow: Flow<List<Entity<*>>>
+    private val entitiesFlow: Flow<List<Entity<*>>>,
+    private val allEntities: Flow<Map<String, Entity<*>>>,
+    private val onChangeServer: (Int) -> Unit
 ) : Screen(carContext) {
 
     companion object {
         private const val TAG = "EntityGridVehicleScreen"
     }
 
-    var loading = true
+    private var loading = true
     var entities: List<Entity<*>> = listOf()
+    private val isFavorites = title == carContext.getString(R.string.favorites)
 
     init {
         lifecycleScope.launch {
@@ -58,7 +70,7 @@ class EntityGridVehicleScreen(
         }
     }
 
-    override fun onGetTemplate(): Template {
+    fun getEntityGridItems(entities: List<Entity<*>>): ItemList.Builder {
         val manager = carContext.getCarService(ConstraintManager::class.java)
         val gridLimit = manager.getContentLimit(ConstraintManager.CONTENT_LIMIT_TYPE_GRID)
 
@@ -98,6 +110,101 @@ class EntityGridVehicleScreen(
             listBuilder.addItem(gridItem.build())
         }
 
+        if (isFavorites) {
+            val navGridItem = GridItem.Builder().apply {
+                setTitle(carContext.getString(R.string.aa_navigation))
+                setImage(
+                    CarIcon.Builder(
+                        IconicsDrawable(
+                            carContext,
+                            CommunityMaterial.Icon3.cmd_map_outline
+                        ).apply {
+                            sizeDp = 48
+                        }.toAndroidIconCompat()
+                    )
+                        .setTint(CarColor.DEFAULT)
+                        .build()
+                )
+                setOnClickListener {
+                    Log.i(TAG, "Navigation clicked")
+                    screenManager.push(
+                        MapVehicleScreen(
+                            carContext,
+                            integrationRepository,
+                            allEntities.map { it.values.filter { entity -> entity.domain in MainVehicleScreen.MAP_DOMAINS } }
+                        )
+                    )
+                }
+            }
+            listBuilder.addItem(navGridItem.build())
+            val categoryItem = GridItem.Builder().apply {
+                setTitle(carContext.getString(R.string.all_entities))
+                setImage(
+                    CarIcon.Builder(
+                        IconicsDrawable(
+                            carContext,
+                            CommunityMaterial.Icon3.cmd_view_list
+                        ).apply {
+                            sizeDp = 48
+                        }.toAndroidIconCompat()
+                    )
+                        .setTint(CarColor.DEFAULT)
+                        .build()
+                )
+                setOnClickListener {
+                    Log.i(TAG, "Categories clicked")
+                    screenManager.push(
+                        DomainListScreen(
+                            carContext,
+                            serverManager,
+                            integrationRepository,
+                            serverId,
+                            allEntities,
+                            prefsRepository
+                        )
+                    )
+                }
+            }
+            listBuilder.addItem(categoryItem.build())
+            if (serverManager.defaultServers.size > 1) {
+                val changeServerItem = GridItem.Builder().apply {
+                    setTitle(carContext.getString(R.string.aa_change_server))
+                    setImage(
+                        CarIcon.Builder(
+                            IconicsDrawable(
+                                carContext,
+                                CommunityMaterial.Icon2.cmd_home_switch
+                            ).apply {
+                                sizeDp = 48
+                            }.toAndroidIconCompat()
+                        )
+                            .setTint(CarColor.DEFAULT)
+                            .build()
+                    )
+                    setOnClickListener {
+                        Log.i(TAG, "Change server clicked")
+                        screenManager.pushForResult(
+                            ChangeServerScreen(
+                                carContext,
+                                serverManager,
+                                serverId
+                            )
+                        ) {
+                            it?.toString()?.toIntOrNull()?.let { serverId ->
+                                onChangeServer(serverId)
+                            }
+                        }
+                    }
+                }
+                listBuilder.addItem(changeServerItem.build())
+            }
+        }
+        return listBuilder
+    }
+
+    override fun onGetTemplate(): Template {
+        val entityGrid = getEntityGridItems(entities)
+
         return GridTemplate.Builder().apply {
             setTitle(title)
             setHeaderAction(Action.BACK)
@@ -105,7 +212,7 @@ class EntityGridVehicleScreen(
                 setLoading(true)
             } else {
                 setLoading(false)
-                setSingleList(listBuilder.build())
+                setSingleList(entityGrid.build())
             }
         }.build()
     }

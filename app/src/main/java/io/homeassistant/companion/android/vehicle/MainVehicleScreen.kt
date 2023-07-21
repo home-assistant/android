@@ -13,6 +13,7 @@ import androidx.car.app.model.Action
 import androidx.car.app.model.ActionStrip
 import androidx.car.app.model.CarColor
 import androidx.car.app.model.CarIcon
+import androidx.car.app.model.GridTemplate
 import androidx.car.app.model.ItemList
 import androidx.car.app.model.ListTemplate
 import androidx.car.app.model.Row
@@ -38,6 +39,7 @@ import io.homeassistant.companion.android.launch.LaunchActivity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -70,7 +72,7 @@ class MainVehicleScreen(
         )
         val SUPPORTED_DOMAINS = SUPPORTED_DOMAINS_WITH_STRING.keys
 
-        private val MAP_DOMAINS = listOf(
+        val MAP_DOMAINS = listOf(
             "device_tracker",
             "person",
             "sensor",
@@ -78,19 +80,22 @@ class MainVehicleScreen(
         )
     }
 
+    private var favoriteEntites: Flow<List<Entity<*>>> = flowOf()
+    private var entities: List<Entity<*>> = listOf()
+    private var loading = true
     private var favoritesList = emptyList<String>()
     private var isLoggedIn: Boolean? = null
     private val domains = mutableSetOf<String>()
     private var car: Car? = null
     private var carRestrictionManager: CarUxRestrictionsManager? = null
-    private val iDrivingOptimized
+    val iDrivingOptimized
         get() = car?.let {
             (
                 it.getCarManager(Car.CAR_UX_RESTRICTION_SERVICE) as CarUxRestrictionsManager
                 ).getCurrentCarUxRestrictions().isRequiresDistractionOptimization()
         } ?: false
 
-    private val isAutomotive get() = carContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    val isAutomotive get() = carContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
 
     init {
         lifecycleScope.launch {
@@ -121,6 +126,18 @@ class MainVehicleScreen(
                 }
             }
         }
+        lifecycleScope.launch {
+            favoriteEntites = allEntities.map {
+                it.values.filter { entity -> favoritesList.contains("${serverId.value}-${entity.entityId}") }
+                    .sortedBy { entity -> favoritesList.indexOf("${serverId.value}-${entity.entityId}") }
+            }
+            favoriteEntites.collect {
+                loading = false
+                val hasChanged = entities.size != it.size || entities.toSet() != it.toSet()
+                entities = it
+                if (hasChanged) invalidate()
+            }
+        }
 
         lifecycle.addObserver(object : DefaultLifecycleObserver {
 
@@ -137,78 +154,26 @@ class MainVehicleScreen(
     }
 
     override fun onGetTemplate(): Template {
-        val listBuilder = ItemList.Builder()
+        var listBuilder = ItemList.Builder()
+        var favoritesGrid: ItemList.Builder? = null
         if (favoritesList.isNotEmpty()) {
-            listBuilder.addItem(
-                Row.Builder().apply {
-                    setImage(
-                        CarIcon.Builder(
-                            IconicsDrawable(carContext, CommunityMaterial.Icon3.cmd_star).apply {
-                                sizeDp = 48
-                            }.toAndroidIconCompat()
-                        )
-                            .setTint(CarColor.DEFAULT)
-                            .build()
-                    )
-                    setTitle(carContext.getString(commonR.string.favorites))
-                    setOnClickListener {
-                        Log.i(TAG, "Favorites clicked: $favoritesList, current server: ${serverId.value}")
-                        screenManager.push(
-                            EntityGridVehicleScreen(
-                                carContext,
-                                serverManager.integrationRepository(serverId.value),
-                                carContext.getString(commonR.string.favorites),
-                                allEntities.map { it.values.filter { entity -> favoritesList.contains("${serverId.value}-${entity.entityId}") }.sortedBy { entity -> favoritesList.indexOf("${serverId.value}-${entity.entityId}") } }
-                            )
-                        )
-                    }
-                }.build()
-            )
+            val favoriteEntities = allEntities.map {
+                it.values.filter { entity -> favoritesList.contains("${serverId.value}-${entity.entityId}") }
+                    .sortedBy { entity -> favoritesList.indexOf("${serverId.value}-${entity.entityId}") }
+            }
+            favoritesGrid = EntityGridVehicleScreen(
+                carContext,
+                serverManager,
+                serverId,
+                prefsRepository,
+                serverManager.integrationRepository(serverId.value),
+                carContext.getString(commonR.string.favorites),
+                favoriteEntities,
+                allEntities
+            ) { }.getEntityGridItems(entities)
         }
-        domains.forEach { domain ->
-            val friendlyDomain =
-                SUPPORTED_DOMAINS_WITH_STRING[domain]?.let { carContext.getString(it) }
-                    ?: domain.split("_").joinToString(" ") { word ->
-                        word.capitalize(Locale.getDefault())
-                    }
-            val icon = Entity(
-                "$domain.ha_android_placeholder",
-                "",
-                mapOf<Any, Any>(),
-                Calendar.getInstance(),
-                Calendar.getInstance(),
-                null
-            ).getIcon(carContext)
-
-            listBuilder.addItem(
-                Row.Builder().apply {
-                    if (icon != null) {
-                        setImage(
-                            CarIcon.Builder(
-                                IconicsDrawable(carContext, icon)
-                                    .apply {
-                                        sizeDp = 48
-                                    }.toAndroidIconCompat()
-                            )
-                                .setTint(CarColor.DEFAULT)
-                                .build()
-                        )
-                    }
-                }
-                    .setTitle(friendlyDomain)
-                    .setOnClickListener {
-                        Log.i(TAG, "Domain:$domain clicked")
-                        screenManager.push(
-                            EntityGridVehicleScreen(
-                                carContext,
-                                serverManager.integrationRepository(serverId.value),
-                                friendlyDomain,
-                                allEntities.map { it.values.filter { entity -> entity.domain == domain } }
-                            )
-                        )
-                    }
-                    .build()
-            )
+        if (domains.isNotEmpty()) {
+            listBuilder = addDomainList(domains)
         }
 
         listBuilder.addItem(
@@ -273,27 +238,35 @@ class MainVehicleScreen(
             )
         }
 
-        return ListTemplate.Builder().apply {
-            setTitle(carContext.getString(commonR.string.app_name))
-            setHeaderAction(Action.APP_ICON)
-            if (isAutomotive && !iDrivingOptimized && BuildConfig.FLAVOR != "full") {
-                setActionStrip(
-                    ActionStrip.Builder().addAction(
-                        Action.Builder()
-                            .setTitle(carContext.getString(commonR.string.aa_launch_native))
-                            .setOnClickListener {
-                                startNativeActivity()
-                            }.build()
-                    ).build()
-                )
-            }
-            if (domains.isEmpty()) {
-                setLoading(true)
-            } else {
-                setLoading(false)
-                setSingleList(listBuilder.build())
-            }
-        }.build()
+        return if (favoritesList.isEmpty()) {
+            ListTemplate.Builder().apply {
+                setTitle(carContext.getString(commonR.string.app_name))
+                setHeaderAction(Action.APP_ICON)
+                if (isAutomotive && !iDrivingOptimized && BuildConfig.FLAVOR != "full") {
+                    setActionStrip(nativeModeActionStrip())
+                }
+                if (domains.isEmpty()) {
+                    setLoading(true)
+                } else {
+                    setLoading(false)
+                    setSingleList(listBuilder.build())
+                }
+            }.build()
+        } else {
+            GridTemplate.Builder().apply {
+                setTitle(carContext.getString(commonR.string.app_name))
+                setHeaderAction(Action.APP_ICON)
+                if (isAutomotive && !iDrivingOptimized && BuildConfig.FLAVOR != "full") {
+                    setActionStrip(nativeModeActionStrip())
+                }
+                if (loading) {
+                    setLoading(true)
+                } else {
+                    setLoading(false)
+                    setSingleList(favoritesGrid!!.build())
+                }
+            }.build()
+        }
     }
 
     private fun registerAutomotiveRestrictionListener() {
@@ -310,7 +283,7 @@ class MainVehicleScreen(
         }
     }
 
-    private fun startNativeActivity() {
+    fun startNativeActivity() {
         Log.i(TAG, "Starting login activity")
         with(carContext) {
             startActivity(
@@ -325,5 +298,69 @@ class MainVehicleScreen(
                 finishCarApp()
             }
         }
+    }
+
+    fun addDomainList(domains: MutableSet<String>): ItemList.Builder {
+        val listBuilder = ItemList.Builder()
+        domains.forEach { domain ->
+            val friendlyDomain =
+                SUPPORTED_DOMAINS_WITH_STRING[domain]?.let { carContext.getString(it) }
+                    ?: domain.split("_").joinToString(" ") { word ->
+                        word.capitalize(Locale.getDefault())
+                    }
+            val icon = Entity(
+                "$domain.ha_android_placeholder",
+                "",
+                mapOf<Any, Any>(),
+                Calendar.getInstance(),
+                Calendar.getInstance(),
+                null
+            ).getIcon(carContext)
+
+            listBuilder.addItem(
+                Row.Builder().apply {
+                    if (icon != null) {
+                        setImage(
+                            CarIcon.Builder(
+                                IconicsDrawable(carContext, icon)
+                                    .apply {
+                                        sizeDp = 48
+                                    }.toAndroidIconCompat()
+                            )
+                                .setTint(CarColor.DEFAULT)
+                                .build()
+                        )
+                    }
+                }
+                    .setTitle(friendlyDomain)
+                    .setOnClickListener {
+                        Log.i(TAG, "Domain:$domain clicked")
+                        screenManager.push(
+                            EntityGridVehicleScreen(
+                                carContext,
+                                serverManager,
+                                serverId,
+                                prefsRepository,
+                                serverManager.integrationRepository(serverId.value),
+                                friendlyDomain,
+                                allEntities.map { it.values.filter { entity -> entity.domain == domain } },
+                                allEntities
+                            ) { }
+                        )
+                    }
+                    .build()
+            )
+        }
+        return listBuilder
+    }
+
+    fun nativeModeActionStrip(): ActionStrip {
+        return ActionStrip.Builder().addAction(
+            Action.Builder()
+                .setTitle(carContext.getString(commonR.string.aa_launch_native))
+                .setOnClickListener {
+                    startNativeActivity()
+                }.build()
+        ).build()
     }
 }
