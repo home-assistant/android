@@ -18,6 +18,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.settings.vehicle.ManageAndroidAutoViewModel
@@ -49,12 +50,12 @@ fun AndroidAutoFavoritesSettings(
 
     val favoriteEntities = androidAutoViewModel.favoritesList.toList()
     var validEntities by remember { mutableStateOf<List<Entity<*>>>(emptyList()) }
-    LaunchedEffect(favoriteEntities.size, androidAutoViewModel.sortedEntities.size) {
+    LaunchedEffect(favoriteEntities.size, androidAutoViewModel.sortedEntities.size, selectedServer) {
         validEntities = withContext(Dispatchers.IO) {
             androidAutoViewModel.sortedEntities
                 .filter {
                     !favoriteEntities.contains("$selectedServer-${it.entityId}") &&
-                        (it.entityId.split(".")[0] in MainVehicleScreen.SUPPORTED_DOMAINS)
+                        (it.domain in MainVehicleScreen.SUPPORTED_DOMAINS)
                 }
                 .toList()
         }
@@ -83,7 +84,7 @@ fun AndroidAutoFavoritesSettings(
                         androidAutoViewModel.loadEntities(it)
                         selectedServer = it
                     },
-                    modifier = Modifier.fillMaxWidth().padding(all = 16.dp)
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 16.dp)
                 )
             }
         }
@@ -96,14 +97,14 @@ fun AndroidAutoFavoritesSettings(
                     androidAutoViewModel.onEntitySelected(true, it, selectedServer)
                     return@SingleEntityPicker false // Clear input
                 },
-                modifier = Modifier.padding(all = 16.dp),
+                modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp, top = if (serversList.size > 1) 0.dp else 16.dp),
                 label = { Text(stringResource(commonR.string.add_favorite)) }
             )
         }
         if (favoriteEntities.isNotEmpty() && androidAutoViewModel.sortedEntities.isNotEmpty()) {
             items(favoriteEntities.size, { favoriteEntities[it] }) { index ->
                 val favoriteEntity =
-                    favoriteEntities[index].replace("[", "").replace("]", "").split("-")
+                    favoriteEntities[index].split("-")
                 androidAutoViewModel.sortedEntities.firstOrNull { it.entityId == favoriteEntity[1] && favoriteEntity[0].toInt() == selectedServer }?.let {
                     ReorderableItem(
                         reorderableState = reorderState,

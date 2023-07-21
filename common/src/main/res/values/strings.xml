@@ -1121,7 +1121,7 @@
     <string name="sensor_description_car_fuel_type">List of available fuel types for the connected car</string>
     <string name="basic_sensor_name_car_ev_connector_type">Car EV Connector Type</string>
     <string name="sensor_description_car_ev_connector_type">List of available EV connectors for the connected car</string>
-    <string name="aa_set_favorites">Select your favorite entities to appear in the Favorites category in the Android Auto/Automotive driving optimized app. You can also drag and drop to change the order in which they appear.</string>
+    <string name="aa_set_favorites">Select your favorite entities to appear in the Favorites category in the Home Assistant driving interface. You can also drag and drop to change the order in which they appear. Keep in mind that the amount of entities shown will vary from vehicle to vehicle.</string>
     <string name="aa_favorites">Android Auto Favorites</string>
     <string name="aa_favorites_summary">Select your favorite entities to be shown in the app while viewing the driving optimized screen</string>
     <string name="android_automotive">Android Automotive</string>
