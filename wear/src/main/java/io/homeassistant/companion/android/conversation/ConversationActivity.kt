@@ -78,6 +78,16 @@ class ConversationActivity : ComponentActivity() {
         }
     }
 
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        this.intent = intent
+
+        val launchIntent = conversationViewModel.onNewIntent(intent)
+        if (launchIntent) {
+            launchVoiceInputIntent()
+        }
+    }
+
     private fun launchVoiceInputIntent() {
         val searchIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(

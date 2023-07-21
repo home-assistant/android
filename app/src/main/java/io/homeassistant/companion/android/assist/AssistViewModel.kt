@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.assist
 
 import android.app.Application
+import android.content.Intent
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -98,6 +99,18 @@ class AssistViewModel @Inject constructor(
                     loadPipelines()
                 }
             }
+        }
+    }
+
+    fun onNewIntent(intent: Intent?) {
+        if (
+            (
+                (intent?.flags != null && intent.flags and Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT != 0) ||
+                    intent?.action in listOf("android.intent.action.ASSIST", "android.intent.action.VOICE_ASSIST")
+                ) &&
+            (inputMode == AssistInputMode.VOICE_ACTIVE || inputMode == AssistInputMode.VOICE_INACTIVE)
+        ) {
+            onMicrophoneInput()
         }
     }
 

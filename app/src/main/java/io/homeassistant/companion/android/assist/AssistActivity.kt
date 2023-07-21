@@ -146,4 +146,10 @@ class AssistActivity : BaseActivity() {
         super.onPause()
         viewModel.onPause()
     }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        this.intent = intent
+        viewModel.onNewIntent(intent)
+    }
 }

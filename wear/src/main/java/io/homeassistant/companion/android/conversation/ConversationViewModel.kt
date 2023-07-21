@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.conversation
 
 import android.app.Application
+import android.content.Intent
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -96,6 +97,24 @@ class ConversationViewModel @Inject constructor(
             )
         }
 
+        return false
+    }
+
+    /** @return `true` if the voice input intent should be fired */
+    fun onNewIntent(intent: Intent?): Boolean {
+        if (
+            (
+                (intent?.flags != null && intent.flags and Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT != 0) ||
+                    intent?.action in listOf("android.intent.action.ASSIST", "android.intent.action.VOICE_ASSIST")
+                ) &&
+            inputMode != AssistInputMode.BLOCKED
+        ) {
+            if (inputMode == AssistInputMode.TEXT) {
+                return true
+            } else {
+                onMicrophoneInput()
+            }
+        }
         return false
     }
 

@@ -90,6 +90,7 @@
             android:name=".conversation.ConversationActivity"
             android:icon="@mipmap/ic_assist_launcher"
             android:label="@string/ha_assist"
+            android:launchMode="singleTask"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
