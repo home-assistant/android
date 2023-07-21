@@ -963,31 +963,23 @@ class MessagingManager @Inject constructor(
         if (useCarNotification) {
             CarNotificationManager.from(context).apply {
                 notify(tag, messageId, notificationBuilder)
-                if (!group.isNullOrBlank()) {
-                    Log.d(TAG, "Show group notification with tag \"$group\" and id \"$groupId\"")
-                    notify(group, groupId, getGroupNotificationBuilder(context, channelId, group, data))
-                } else if (previousGroup.isNotBlank()) {
-                    val systemManager = context.getSystemService<NotificationManager>() ?: return@apply
-                    Log.d(
-                        TAG,
-                        "Remove group notification with tag \"$previousGroup\" and id \"$previousGroupId\""
-                    )
-                    cancelGroupIfNeeded(systemManager, previousGroup, previousGroupId)
-                }
             }
         } else {
             notificationManagerCompat.apply {
                 notify(tag, messageId, notificationBuilder.build())
-                if (!group.isNullOrBlank()) {
-                    Log.d(TAG, "Show group notification with tag \"$group\" and id \"$groupId\"")
-                    notify(group, groupId, getGroupNotificationBuilder(context, channelId, group, data).build())
-                } else if (previousGroup.isNotBlank()) {
-                    Log.d(
-                        TAG,
-                        "Remove group notification with tag \"$previousGroup\" and id \"$previousGroupId\""
-                    )
-                    cancelGroupIfNeeded(previousGroup, previousGroupId)
-                }
+            }
+        }
+
+        notificationManagerCompat.apply {
+            if (!group.isNullOrBlank()) {
+                Log.d(TAG, "Show group notification with tag \"$group\" and id \"$groupId\"")
+                notify(group, groupId, getGroupNotificationBuilder(context, channelId, group, data).build())
+            } else if (previousGroup.isNotBlank()) {
+                Log.d(
+                    TAG,
+                    "Remove group notification with tag \"$previousGroup\" and id \"$previousGroupId\""
+                )
+                cancelGroupIfNeeded(previousGroup, previousGroupId)
             }
         }
     }
