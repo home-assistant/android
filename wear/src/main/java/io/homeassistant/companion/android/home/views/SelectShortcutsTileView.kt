@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
@@ -29,6 +30,7 @@ import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun SelectShortcutsTileView(
+    shortcutTileEntitiesCountById: Map<ShortcutsTileId, Int>,
     onSelectShortcutsTile: (ShortcutsTileId) -> Unit,
     isShowShortcutTextEnabled: Boolean,
     onShowShortcutTextEnabled: (Boolean) -> Unit
@@ -94,6 +96,12 @@ fun SelectShortcutsTileView(
                         label = {
                             Text(stringResource(commonR.string.shortcuts_tile_n, index + 1))
                         },
+                        secondaryLabel = {
+                            val entityCount = shortcutTileEntitiesCountById[shortcutsTileId] ?: 0
+                            if (entityCount > 0) {
+                                Text(pluralStringResource(commonR.plurals.n_entities, entityCount, entityCount))
+                            }
+                        },
                         onClick = { onSelectShortcutsTile(shortcutsTileId) },
                         colors = ChipDefaults.secondaryChipColors()
                     )
@@ -107,6 +115,11 @@ fun SelectShortcutsTileView(
 @Composable
 private fun PreviewSelectShortcutsTileView() {
     SelectShortcutsTileView(
+        shortcutTileEntitiesCountById = mapOf(
+            ShortcutsTileId.SHORTCUTS_TILE_1 to 7,
+            ShortcutsTileId.SHORTCUTS_TILE_2 to 1,
+            ShortcutsTileId.SHORTCUTS_TILE_3 to 0,
+        ),
         onSelectShortcutsTile = {},
         isShowShortcutTextEnabled = true,
         onShowShortcutTextEnabled = {}

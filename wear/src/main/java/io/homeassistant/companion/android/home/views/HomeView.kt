@@ -164,6 +164,7 @@ fun LoadHomePage(
             }
             composable("$ROUTE_SHORTCUTS_TILE/$SCREEN_SELECT_SHORTCUTS_TILE") {
                 SelectShortcutsTileView(
+                    shortcutTileEntitiesCountById = mainViewModel.shortcutEntitiesMap.mapValues { (_, entities) -> entities.size },
                     onSelectShortcutsTile = { shortcutsTileId ->
                         swipeDismissableNavController.navigate("$ROUTE_SHORTCUTS_TILE/$shortcutsTileId/$SCREEN_SET_SHORTCUTS_TILE")
                     },

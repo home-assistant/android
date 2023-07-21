@@ -217,6 +217,10 @@
         <item quantity="one">%d entity found</item>
         <item quantity="other">%d entities found</item>
     </plurals>
+    <plurals name="n_entities">
+        <item quantity="one">1 entity</item>
+        <item quantity="other">%d entities</item>
+    </plurals>
     <string name="entity_attribute_checkbox">Append Attribute Value</string>
     <string name="entity_id">Entity ID</string>
     <string name="entity_id_name">Entity ID: %1$s</string>
