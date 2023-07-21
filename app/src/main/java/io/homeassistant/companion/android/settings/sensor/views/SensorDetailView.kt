@@ -312,7 +312,7 @@ fun SensorDetailTopPanel(
                                     if (sensor.state.isBlank()) {
                                         stringResource(commonR.string.enabled)
                                     } else {
-                                        if (sensor.unitOfMeasurement.isNullOrBlank()) {
+                                        if (sensor.unitOfMeasurement.isNullOrBlank() || sensor.state.toDoubleOrNull() == null) {
                                             sensor.state
                                         } else {
                                             "${sensor.state} ${sensor.unitOfMeasurement}"
