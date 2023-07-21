@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.car.app.hardware.common.CarValue
 import androidx.car.app.hardware.info.EnergyLevel
+import androidx.car.app.hardware.info.EnergyProfile
 import androidx.car.app.hardware.info.EvStatus
 import androidx.car.app.hardware.info.Mileage
 import androidx.car.app.hardware.info.Model
@@ -72,29 +73,51 @@ class CarSensorManager :
             deviceClass = "distance"
         )
 
+        private val fuelType = SensorManager.BasicSensor(
+            "car_fuel_type",
+            "sensor",
+            R.string.basic_sensor_name_car_fuel_type,
+            R.string.sensor_description_car_fuel_type,
+            "mdi:gas-station",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+        )
+
+        private val evConnector = SensorManager.BasicSensor(
+            "car_ev_connector",
+            "sensor",
+            R.string.basic_sensor_name_car_ev_connector_type,
+            R.string.sensor_description_car_ev_connector_type,
+            "mdi:car-electric",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+        )
+
         private val sensorsList = listOf(
             batteryLevel,
             carName,
             carStatus,
+            evConnector,
             fuelLevel,
+            fuelType,
             odometerValue
         )
 
         private enum class Listener {
-            ENERGY, MODEL, MILEAGE, STATUS,
+            ENERGY, MODEL, MILEAGE, STATUS, PROFILE
         }
 
         private val listenerSensors = mapOf(
             Listener.ENERGY to listOf(batteryLevel, fuelLevel),
             Listener.MODEL to listOf(carName),
             Listener.STATUS to listOf(carStatus),
-            Listener.MILEAGE to listOf(odometerValue)
+            Listener.MILEAGE to listOf(odometerValue),
+            Listener.PROFILE to listOf(evConnector, fuelType)
         )
         private val listenerLastRegistered = mutableMapOf(
             Listener.ENERGY to -1L,
             Listener.MODEL to -1L,
             Listener.STATUS to -1L,
-            Listener.MILEAGE to -1L
+            Listener.MILEAGE to -1L,
+            Listener.PROFILE to -1L
         )
     }
 
@@ -119,7 +142,7 @@ class CarSensorManager :
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return when {
-            (sensorId == fuelLevel.id || sensorId == batteryLevel.id) -> {
+            (sensorId == fuelLevel.id || sensorId == batteryLevel.id || sensorId == fuelType.id || sensorId == evConnector.id) -> {
                 arrayOf("com.google.android.gms.permission.CAR_FUEL")
             }
             sensorId == odometerValue.id -> {
@@ -162,38 +185,45 @@ class CarSensorManager :
 
     @androidx.annotation.OptIn(androidx.car.app.annotations.ExperimentalCarApi::class)
     private fun setListener(l: Listener, enable: Boolean) {
+        val car = HaCarAppService.carInfo ?: return
+
         if (enable) {
             Log.d(TAG, "registering CarInfo $l listener")
         } else {
             Log.d(TAG, "unregistering CarInfo $l listener")
         }
 
-        val car = HaCarAppService.carInfo ?: return
+        val executor = ContextCompat.getMainExecutor(context)
         when (l) {
             Listener.ENERGY -> {
                 if (enable) {
-                    car.addEnergyLevelListener(ContextCompat.getMainExecutor(context), ::onEnergyAvailable)
+                    car.addEnergyLevelListener(executor, ::onEnergyAvailable)
                 } else {
                     car.removeEnergyLevelListener(::onEnergyAvailable)
                 }
             }
             Listener.MILEAGE -> {
                 if (enable) {
-                    car.addMileageListener(ContextCompat.getMainExecutor(context), ::onMileageAvailable)
+                    car.addMileageListener(executor, ::onMileageAvailable)
                 } else {
                     car.removeMileageListener(::onMileageAvailable)
                 }
             }
             Listener.MODEL -> {
                 if (enable) {
-                    car.fetchModel(ContextCompat.getMainExecutor(context), ::onModelAvailable)
+                    car.fetchModel(executor, ::onModelAvailable)
                 }
             }
             Listener.STATUS -> {
                 if (enable) {
-                    car.addEvStatusListener(ContextCompat.getMainExecutor(context), ::onStatusAvailable)
+                    car.addEvStatusListener(executor, ::onStatusAvailable)
                 } else {
                     car.removeEvStatusListener(::onStatusAvailable)
+                }
+            }
+            Listener.PROFILE -> {
+                if (enable) {
+                    car.fetchEnergyProfile(executor, ::onProfileAvailable)
                 }
             }
         }
@@ -297,6 +327,30 @@ class CarSensorManager :
         setListener(Listener.MILEAGE, false)
     }
 
+    private fun onProfileAvailable(data: EnergyProfile) {
+        val fuelTypeStatus = carValueStatus(data.fuelTypes.status)
+        val evConnectorTypeStatus = carValueStatus(data.evConnectorTypes.status)
+        Log.d(TAG, "Received energy profile: $data")
+        if (isEnabled(context, fuelType)) {
+            onSensorUpdated(
+                context,
+                fuelType,
+                fuelTypeStatus ?: getFuelType(data.fuelTypes.value!!),
+                fuelType.statelessIcon,
+                mapOf()
+            )
+        }
+        if (isEnabled(context, evConnector)) {
+            onSensorUpdated(
+                context,
+                evConnector,
+                evConnectorTypeStatus ?: getEvConnectorType(data.evConnectorTypes.value!!),
+                evConnector.statelessIcon,
+                mapOf()
+            )
+        }
+    }
+
     private fun carValueStatus(value: Int): String? {
         return when (value) {
             CarValue.STATUS_SUCCESS -> null
@@ -305,5 +359,51 @@ class CarSensorManager :
             CarValue.STATUS_UNIMPLEMENTED -> "unimplemented"
             else -> "unavailable"
         }
+    }
+
+    private fun getFuelType(values: List<Int>): String {
+        val fuelTypeList = emptyList<String>().toMutableList()
+        values.forEach {
+            fuelTypeList += when (it) {
+                EnergyProfile.FUEL_TYPE_BIODIESEL -> "Biodiesel"
+                EnergyProfile.FUEL_TYPE_CNG -> "Compressed natural gas"
+                EnergyProfile.FUEL_TYPE_DIESEL_1 -> "#1 Grade Diesel"
+                EnergyProfile.FUEL_TYPE_DIESEL_2 -> "#2 Grade Diesel"
+                EnergyProfile.FUEL_TYPE_E85 -> "85% ethanol/gasoline blend"
+                EnergyProfile.FUEL_TYPE_ELECTRIC -> "Electric"
+                EnergyProfile.FUEL_TYPE_HYDROGEN -> "Hydrogen fuel cell"
+                EnergyProfile.FUEL_TYPE_LEADED -> "Leaded gasoline"
+                EnergyProfile.FUEL_TYPE_LNG -> "Liquified natural gas"
+                EnergyProfile.FUEL_TYPE_LPG -> "Liquified petroleum gas"
+                EnergyProfile.FUEL_TYPE_OTHER -> "Other"
+                EnergyProfile.FUEL_TYPE_UNKNOWN -> "unknown"
+                EnergyProfile.FUEL_TYPE_UNLEADED -> "Unleaded gasoline"
+                else -> "unknown"
+            }
+        }
+        return fuelTypeList.toString()
+    }
+
+    private fun getEvConnectorType(values: List<Int>): String {
+        val evConnectorList = emptyList<String>().toMutableList()
+        values.forEach {
+            evConnectorList += when (it) {
+                EnergyProfile.EVCONNECTOR_TYPE_CHADEMO -> "CHAdeMo fast charger connector"
+                EnergyProfile.EVCONNECTOR_TYPE_COMBO_1 -> "Combined Charging System Combo 1"
+                EnergyProfile.EVCONNECTOR_TYPE_COMBO_2 -> "Combined Charging System Combo 2"
+                EnergyProfile.EVCONNECTOR_TYPE_GBT -> "GBT_AC Fast Charging Standard"
+                EnergyProfile.EVCONNECTOR_TYPE_GBT_DC -> "GBT_DC Fast Charging Standard"
+                EnergyProfile.EVCONNECTOR_TYPE_J1772 -> "Connector type SAE J1772"
+                EnergyProfile.EVCONNECTOR_TYPE_MENNEKES -> "IEC 62196 Type 2 connector"
+                EnergyProfile.EVCONNECTOR_TYPE_OTHER -> "other"
+                EnergyProfile.EVCONNECTOR_TYPE_SCAME -> "IEC_TYPE_3_AC connector"
+                EnergyProfile.EVCONNECTOR_TYPE_TESLA_HPWC -> "High Power Wall Charger of Tesla"
+                EnergyProfile.EVCONNECTOR_TYPE_TESLA_ROADSTER -> "Connector of Tesla Roadster"
+                EnergyProfile.EVCONNECTOR_TYPE_TESLA_SUPERCHARGER -> "Supercharger of Tesla"
+                EnergyProfile.EVCONNECTOR_TYPE_UNKNOWN -> "unknown"
+                else -> "unknown"
+            }
+        }
+        return evConnectorList.toString()
     }
 }
