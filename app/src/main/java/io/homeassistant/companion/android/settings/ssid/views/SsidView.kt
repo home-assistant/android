@@ -29,8 +29,8 @@ import androidx.compose.material.Icon
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
+import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Error
@@ -85,7 +85,7 @@ fun SsidView(
                     var ssidInput by remember { mutableStateOf("") }
                     var ssidError by remember { mutableStateOf(false) }
 
-                    OutlinedTextField(
+                    TextField(
                         value = ssidInput,
                         singleLine = true,
                         onValueChange = {
@@ -116,8 +116,8 @@ fun SsidView(
                     )
                     Button(
                         modifier = Modifier
-                            .height(64.dp) // align with OutlinedTextField: 56 + 8
-                            .padding(start = 8.dp, top = 8.dp),
+                            .height(56.dp) // align with TextField: 56
+                            .padding(start = 8.dp, top = 0.dp),
                         onClick = {
                             keyboardController?.hide()
                             ssidError = !onAddWifiSsid(ssidInput)

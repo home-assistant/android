@@ -11,11 +11,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
-import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Switch
 import androidx.compose.material.SwitchDefaults
 import androidx.compose.material.Text
+import androidx.compose.material.TextField
 import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -58,7 +58,7 @@ fun AssistShortcutView(
                 var startListening by rememberSaveable { mutableStateOf(true) }
                 var pipelineId by rememberSaveable(selectedServerId) { mutableStateOf<String?>(null) }
 
-                OutlinedTextField(
+                TextField(
                     value = name,
                     onValueChange = { name = it },
                     label = { Text(stringResource(commonR.string.widget_text_hint_label)) },
