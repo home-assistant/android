@@ -31,6 +31,7 @@ import io.homeassistant.companion.android.common.data.authentication.SessionStat
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.getIcon
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.capitalize
 import io.homeassistant.companion.android.launch.LaunchActivity
@@ -49,6 +50,7 @@ class MainVehicleScreen(
     val serverManager: ServerManager,
     private val serverId: StateFlow<Int>,
     private val allEntities: Flow<Map<String, Entity<*>>>,
+    private val prefsRepository: PrefsRepository,
     private val onChangeServer: (Int) -> Unit
 ) : Screen(carContext) {
 
@@ -66,7 +68,7 @@ class MainVehicleScreen(
             "script" to commonR.string.scripts,
             "switch" to commonR.string.switches
         )
-        private val SUPPORTED_DOMAINS = SUPPORTED_DOMAINS_WITH_STRING.keys
+        val SUPPORTED_DOMAINS = SUPPORTED_DOMAINS_WITH_STRING.keys
 
         private val MAP_DOMAINS = listOf(
             "device_tracker",
@@ -76,6 +78,7 @@ class MainVehicleScreen(
         )
     }
 
+    private var favoritesList = emptyList<String>()
     private var isLoggedIn: Boolean? = null
     private val domains = mutableSetOf<String>()
     private var car: Car? = null
@@ -92,6 +95,7 @@ class MainVehicleScreen(
     init {
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                favoritesList = prefsRepository.getAutoFavorites()
                 isLoggedIn = serverManager.isRegistered() &&
                     serverManager.authenticationRepository()
                     .getSessionState() == SessionState.CONNECTED
@@ -134,6 +138,33 @@ class MainVehicleScreen(
 
     override fun onGetTemplate(): Template {
         val listBuilder = ItemList.Builder()
+        if (favoritesList.isNotEmpty()) {
+            listBuilder.addItem(
+                Row.Builder().apply {
+                    setImage(
+                        CarIcon.Builder(
+                            IconicsDrawable(carContext, CommunityMaterial.Icon3.cmd_star).apply {
+                                sizeDp = 48
+                            }.toAndroidIconCompat()
+                        )
+                            .setTint(CarColor.DEFAULT)
+                            .build()
+                    )
+                    setTitle(carContext.getString(commonR.string.favorites))
+                    setOnClickListener {
+                        Log.i(TAG, "Favorites clicked: $favoritesList, current server: ${serverId.value}")
+                        screenManager.push(
+                            EntityGridVehicleScreen(
+                                carContext,
+                                serverManager.integrationRepository(serverId.value),
+                                carContext.getString(commonR.string.favorites),
+                                allEntities.map { it.values.filter { entity -> favoritesList.contains("${serverId.value}-${entity.entityId}") }.sortedBy { entity -> favoritesList.indexOf("${serverId.value}-${entity.entityId}") } }
+                            )
+                        )
+                    }
+                }.build()
+            )
+        }
         domains.forEach { domain ->
             val friendlyDomain =
                 SUPPORTED_DOMAINS_WITH_STRING[domain]?.let { carContext.getString(it) }

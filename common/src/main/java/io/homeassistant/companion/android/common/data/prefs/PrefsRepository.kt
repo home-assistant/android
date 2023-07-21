@@ -66,4 +66,8 @@ interface PrefsRepository {
     suspend fun getIgnoredSuggestions(): List<String>
 
     suspend fun setIgnoredSuggestions(ignored: List<String>)
+
+    suspend fun getAutoFavorites(): List<String>
+
+    suspend fun setAutoFavorites(favorites: List<String>)
 }
