@@ -71,7 +71,7 @@ fun AndroidAutoFavoritesSettings(
             Text(
                 text = stringResource(commonR.string.aa_set_favorites),
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp)
             )
         }
 
@@ -97,7 +97,7 @@ fun AndroidAutoFavoritesSettings(
                     androidAutoViewModel.onEntitySelected(true, it, selectedServer)
                     return@SingleEntityPicker false // Clear input
                 },
-                modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp, top = if (serversList.size > 1) 0.dp else 16.dp),
+                modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp),
                 label = { Text(stringResource(commonR.string.add_favorite)) }
             )
         }
