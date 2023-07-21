@@ -73,10 +73,11 @@ class EntityGridVehicleScreen(
     fun getEntityGridItems(entities: List<Entity<*>>): ItemList.Builder {
         val manager = carContext.getCarService(ConstraintManager::class.java)
         val gridLimit = manager.getContentLimit(ConstraintManager.CONTENT_LIMIT_TYPE_GRID)
-
+        val shouldSwitchServers = serverManager.defaultServers.size > 1
+        val extraGrid = if (shouldSwitchServers) 3 else 2
         val listBuilder = ItemList.Builder()
         entities.forEachIndexed { index, entity ->
-            if (index >= gridLimit) {
+            if (index >= (gridLimit - if (isFavorites) extraGrid else 0)) {
                 Log.i(TAG, "Grid limit ($gridLimit) reached, not adding more entities (${entities.size}) for $title ")
                 return@forEachIndexed
             }
@@ -166,7 +167,7 @@ class EntityGridVehicleScreen(
                 }
             }
             listBuilder.addItem(categoryItem.build())
-            if (serverManager.defaultServers.size > 1) {
+            if (shouldSwitchServers) {
                 val changeServerItem = GridItem.Builder().apply {
                     setTitle(carContext.getString(R.string.aa_change_server))
                     setImage(
