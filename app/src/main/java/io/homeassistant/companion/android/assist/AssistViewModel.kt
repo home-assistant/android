@@ -106,7 +106,7 @@ class AssistViewModel @Inject constructor(
         if (
             (
                 (intent?.flags != null && intent.flags and Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT != 0) ||
-                    intent?.action in listOf("android.intent.action.ASSIST", "android.intent.action.VOICE_ASSIST")
+                    intent?.action in listOf(Intent.ACTION_ASSIST, "android.intent.action.VOICE_ASSIST")
                 ) &&
             (inputMode == AssistInputMode.VOICE_ACTIVE || inputMode == AssistInputMode.VOICE_INACTIVE)
         ) {
