@@ -13,10 +13,9 @@ import androidx.car.app.model.Action
 import androidx.car.app.model.ActionStrip
 import androidx.car.app.model.CarColor
 import androidx.car.app.model.CarIcon
+import androidx.car.app.model.GridItem
 import androidx.car.app.model.GridTemplate
 import androidx.car.app.model.ItemList
-import androidx.car.app.model.ListTemplate
-import androidx.car.app.model.Row
 import androidx.car.app.model.Template
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
@@ -162,6 +161,7 @@ class MainVehicleScreen(
                 prefsRepository,
                 serverManager.integrationRepository(serverId.value),
                 carContext.getString(commonR.string.favorites),
+                domains,
                 favoriteEntities,
                 allEntities
             ) { onChangeServer(it) }.getEntityGridItems(entities)
@@ -171,7 +171,7 @@ class MainVehicleScreen(
         }
 
         listBuilder.addItem(
-            Row.Builder()
+            GridItem.Builder()
                 .setImage(
                     CarIcon.Builder(
                         IconicsDrawable(
@@ -200,7 +200,7 @@ class MainVehicleScreen(
 
         if (serverManager.defaultServers.size > 1) {
             listBuilder.addItem(
-                Row.Builder()
+                GridItem.Builder()
                     .setImage(
                         CarIcon.Builder(
                             IconicsDrawable(
@@ -232,35 +232,19 @@ class MainVehicleScreen(
             )
         }
 
-        return if (favoritesList.isEmpty()) {
-            ListTemplate.Builder().apply {
-                setTitle(carContext.getString(commonR.string.app_name))
-                setHeaderAction(Action.APP_ICON)
-                if (isAutomotive && !iDrivingOptimized && BuildConfig.FLAVOR != "full") {
-                    setActionStrip(nativeModeActionStrip())
-                }
-                if (domains.isEmpty()) {
-                    setLoading(true)
-                } else {
-                    setLoading(false)
-                    setSingleList(listBuilder.build())
-                }
-            }.build()
-        } else {
-            GridTemplate.Builder().apply {
-                setTitle(carContext.getString(commonR.string.app_name))
-                setHeaderAction(Action.APP_ICON)
-                if (isAutomotive && !iDrivingOptimized && BuildConfig.FLAVOR != "full") {
-                    setActionStrip(nativeModeActionStrip())
-                }
-                if (domains.isEmpty()) {
-                    setLoading(true)
-                } else {
-                    setLoading(false)
-                    setSingleList(favoritesGrid!!.build())
-                }
-            }.build()
-        }
+        return GridTemplate.Builder().apply {
+            setTitle(carContext.getString(commonR.string.app_name))
+            setHeaderAction(Action.APP_ICON)
+            if (isAutomotive && !iDrivingOptimized && BuildConfig.FLAVOR != "full") {
+                setActionStrip(nativeModeActionStrip())
+            }
+            if (domains.isEmpty()) {
+                setLoading(true)
+            } else {
+                setLoading(false)
+                setSingleList(if (favoritesList.isNotEmpty()) favoritesGrid!!.build() else listBuilder.build())
+            }
+        }.build()
     }
 
     private fun registerAutomotiveRestrictionListener() {
@@ -312,7 +296,7 @@ class MainVehicleScreen(
             ).getIcon(carContext)
 
             listBuilder.addItem(
-                Row.Builder().apply {
+                GridItem.Builder().apply {
                     if (icon != null) {
                         setImage(
                             CarIcon.Builder(
@@ -337,6 +321,7 @@ class MainVehicleScreen(
                                 prefsRepository,
                                 serverManager.integrationRepository(serverId.value),
                                 friendlyDomain,
+                                domains,
                                 allEntities.map { it.values.filter { entity -> entity.domain == domain } },
                                 allEntities
                             ) { }

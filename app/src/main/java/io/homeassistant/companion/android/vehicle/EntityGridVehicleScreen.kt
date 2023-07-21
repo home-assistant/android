@@ -44,6 +44,7 @@ class EntityGridVehicleScreen(
     val prefsRepository: PrefsRepository,
     val integrationRepository: IntegrationRepository,
     val title: String,
+    val domains: MutableSet<String>,
     private val entitiesFlow: Flow<List<Entity<*>>>,
     private val allEntities: Flow<Map<String, Entity<*>>>,
     private val onChangeServer: (Int) -> Unit
@@ -76,6 +77,13 @@ class EntityGridVehicleScreen(
         val shouldSwitchServers = serverManager.defaultServers.size > 1
         val extraGrid = if (shouldSwitchServers) 3 else 2
         val listBuilder = ItemList.Builder()
+        val domainGrid = MainVehicleScreen(
+            carContext,
+            serverManager,
+            serverId,
+            allEntities,
+            prefsRepository
+        ) { }.addDomainList(domains)
         entities.forEachIndexed { index, entity ->
             if (index >= (gridLimit - if (isFavorites) extraGrid else 0)) {
                 Log.i(TAG, "Grid limit ($gridLimit) reached, not adding more entities (${entities.size}) for $title ")
@@ -137,36 +145,42 @@ class EntityGridVehicleScreen(
                     )
                 }
             }
-            listBuilder.addItem(navGridItem.build())
-            val categoryItem = GridItem.Builder().apply {
-                setTitle(carContext.getString(R.string.all_entities))
-                setImage(
-                    CarIcon.Builder(
-                        IconicsDrawable(
-                            carContext,
-                            CommunityMaterial.Icon3.cmd_view_list
-                        ).apply {
-                            sizeDp = 48
-                        }.toAndroidIconCompat()
-                    )
-                        .setTint(CarColor.DEFAULT)
-                        .build()
-                )
-                setOnClickListener {
-                    Log.i(TAG, "Categories clicked")
-                    screenManager.push(
-                        DomainListScreen(
-                            carContext,
-                            serverManager,
-                            integrationRepository,
-                            serverId,
-                            allEntities,
-                            prefsRepository
-                        )
-                    )
-                }
+            if (entities.isNotEmpty()) {
+                listBuilder.addItem(navGridItem.build())
+            } else {
+                domainGrid.addItem(navGridItem.build())
             }
-            listBuilder.addItem(categoryItem.build())
+            if (entities.isNotEmpty()) {
+                val categoryItem = GridItem.Builder().apply {
+                    setTitle(carContext.getString(R.string.all_entities))
+                    setImage(
+                        CarIcon.Builder(
+                            IconicsDrawable(
+                                carContext,
+                                CommunityMaterial.Icon3.cmd_view_list
+                            ).apply {
+                                sizeDp = 48
+                            }.toAndroidIconCompat()
+                        )
+                            .setTint(CarColor.DEFAULT)
+                            .build()
+                    )
+                    setOnClickListener {
+                        Log.i(TAG, "Categories clicked")
+                        screenManager.push(
+                            DomainListScreen(
+                                carContext,
+                                serverManager,
+                                integrationRepository,
+                                serverId,
+                                allEntities,
+                                prefsRepository
+                            )
+                        )
+                    }
+                }
+                listBuilder.addItem(categoryItem.build())
+            }
             if (shouldSwitchServers) {
                 val changeServerItem = GridItem.Builder().apply {
                     setTitle(carContext.getString(R.string.aa_change_server))
@@ -197,10 +211,14 @@ class EntityGridVehicleScreen(
                         }
                     }
                 }
-                listBuilder.addItem(changeServerItem.build())
+                if (entities.isNotEmpty()) {
+                    listBuilder.addItem(changeServerItem.build())
+                } else {
+                    domainGrid.addItem(changeServerItem.build())
+                }
             }
         }
-        return listBuilder
+        return if (entities.isNotEmpty()) listBuilder else domainGrid
     }
 
     override fun onGetTemplate(): Template {

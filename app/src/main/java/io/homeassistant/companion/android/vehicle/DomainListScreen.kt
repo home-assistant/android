@@ -5,7 +5,7 @@ import androidx.annotation.RequiresApi
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
 import androidx.car.app.model.Action
-import androidx.car.app.model.ListTemplate
+import androidx.car.app.model.GridTemplate
 import androidx.car.app.model.Template
 import androidx.lifecycle.lifecycleScope
 import io.homeassistant.companion.android.BuildConfig
@@ -57,7 +57,7 @@ class DomainListScreen(
         ) { }
         val domainList = screen.addDomainList(domains)
 
-        return ListTemplate.Builder().apply {
+        return GridTemplate.Builder().apply {
             setTitle(carContext.getString(R.string.all_entities))
             setHeaderAction(Action.BACK)
             if (screen.isAutomotive && !screen.iDrivingOptimized && BuildConfig.FLAVOR != "full") {
