@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.util.compose
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.ExperimentalMaterialApi
@@ -52,12 +53,18 @@ fun ExposedDropdownMenu(label: String, keys: List<String>, currentIndex: Int?, o
 }
 
 @Composable
-fun ServerExposedDropdownMenu(servers: List<Server>, current: Int?, onSelected: (Int) -> Unit, modifier: Modifier = Modifier) {
+fun ServerExposedDropdownMenu(
+    servers: List<Server>,
+    current: Int?,
+    onSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    @StringRes title: Int = commonR.string.server_select
+) {
     val keys = servers.map { it.friendlyName }
     val ids = servers.map { it.id }
     val currentIndex = servers.indexOfFirst { it.id == current }.takeUnless { it == -1 }
     ExposedDropdownMenu(
-        label = stringResource(commonR.string.server_select),
+        label = stringResource(title),
         keys = keys,
         currentIndex = currentIndex,
         onSelected = { onSelected(ids[it]) },

@@ -37,7 +37,7 @@ import com.mikepenz.iconics.compose.IconicsPainter
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSettingsFragment
 import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsViewModel
-import io.homeassistant.companion.android.util.compose.ServerDropdownButton
+import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.SingleEntityPicker
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
@@ -207,12 +207,7 @@ private fun CreateShortcutView(
 
     if (viewModel.servers.size > 1 || viewModel.servers.none { it.id == shortcut.serverId.value }) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = stringResource(id = R.string.server_select),
-                fontSize = 15.sp,
-                modifier = Modifier.padding(end = 10.dp)
-            )
-            ServerDropdownButton(
+            ServerExposedDropdownMenu(
                 servers = viewModel.servers,
                 current = shortcut.serverId.value,
                 onSelected = { viewModel.shortcuts[i].serverId.value = it }
@@ -220,7 +215,10 @@ private fun CreateShortcutView(
         }
     }
 
-    Text(stringResource(id = R.string.shortcut_type))
+    Text(
+        text = stringResource(id = R.string.shortcut_type),
+        modifier = Modifier.padding(top = 16.dp)
+    )
 
     Row {
         ShortcutRadioButtonRow(viewModel = viewModel, type = "lovelace", index = i)
@@ -232,7 +230,7 @@ private fun CreateShortcutView(
             value = viewModel.shortcuts[i].path.value,
             onValueChange = { viewModel.shortcuts[i].path.value = it },
             label = { Text(stringResource(id = R.string.lovelace_view_dashboard)) },
-            modifier = Modifier.padding(top = 16.dp, bottom = 16.dp)
+            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
         )
     } else {
         SingleEntityPicker(
@@ -244,7 +242,8 @@ private fun CreateShortcutView(
             onEntitySelected = {
                 viewModel.shortcuts[i].path.value = "entityId:$it"
                 return@SingleEntityPicker true
-            }
+            },
+            modifier = Modifier.padding(bottom = 16.dp)
         )
     }
     for (item in viewModel.dynamicShortcuts) {

@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.settings.qs.ManageTilesViewModel
-import io.homeassistant.companion.android.util.compose.ServerDropdownButton
+import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.SingleEntityPicker
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -50,7 +50,6 @@ fun ManageTilesView(
     val context = LocalContext.current
     val scrollState = rememberScrollState()
     var expandedTile by remember { mutableStateOf(false) }
-    var expandedEntity by remember { mutableStateOf(false) }
 
     val scaffoldState = rememberScaffoldState()
     LaunchedEffect("snackbar") {
@@ -100,7 +99,7 @@ fun ManageTilesView(
                         Text(text = stringResource(id = R.string.tile_label))
                     },
                     modifier = Modifier
-                        .padding(10.dp)
+                        .padding(top = 16.dp)
                         .fillMaxWidth()
                 )
 
@@ -112,20 +111,18 @@ fun ManageTilesView(
                             Text(text = stringResource(id = R.string.tile_subtitle))
                         },
                         modifier = Modifier
-                            .padding(10.dp)
+                            .padding(top = 16.dp)
                             .fillMaxWidth()
                     )
                 }
 
                 if (viewModel.servers.size > 1 || viewModel.servers.none { it.id == viewModel.selectedServerId }) {
-                    Text(
-                        text = stringResource(id = R.string.tile_server),
-                        fontSize = 15.sp
-                    )
-                    ServerDropdownButton(
+                    ServerExposedDropdownMenu(
                         servers = viewModel.servers,
                         current = viewModel.selectedServerId,
-                        onSelected = viewModel::selectServerId
+                        onSelected = viewModel::selectServerId,
+                        title = R.string.tile_server,
+                        modifier = Modifier.padding(top = 16.dp)
                     )
                 }
 
@@ -138,7 +135,7 @@ fun ManageTilesView(
                         return@SingleEntityPicker true
                     },
                     modifier = Modifier
-                        .padding(10.dp)
+                        .padding(vertical = 16.dp)
                         .fillMaxWidth(),
                     label = { Text(stringResource(R.string.tile_entity)) }
                 )
