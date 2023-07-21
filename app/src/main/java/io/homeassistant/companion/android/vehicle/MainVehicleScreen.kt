@@ -170,7 +170,11 @@ class MainVehicleScreen(
                 carContext.getString(commonR.string.favorites),
                 favoriteEntities,
                 allEntities
-            ) { }.getEntityGridItems(entities)
+            ) {
+                it.toString().toIntOrNull()?.let { serverId ->
+                    onChangeServer(serverId)
+                }
+            }.getEntityGridItems(entities)
         }
         if (domains.isNotEmpty()) {
             listBuilder = addDomainList(domains)
