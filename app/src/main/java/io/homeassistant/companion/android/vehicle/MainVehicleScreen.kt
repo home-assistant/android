@@ -80,9 +80,8 @@ class MainVehicleScreen(
         )
     }
 
-    private var favoriteEntites: Flow<List<Entity<*>>> = flowOf()
+    private var favoriteEntities = flowOf<List<Entity<*>>>()
     private var entities: List<Entity<*>> = listOf()
-    private var loading = true
     private var favoritesList = emptyList<String>()
     private var isLoggedIn: Boolean? = null
     private val domains = mutableSetOf<String>()
@@ -127,12 +126,11 @@ class MainVehicleScreen(
             }
         }
         lifecycleScope.launch {
-            favoriteEntites = allEntities.map {
+            favoriteEntities = allEntities.map {
                 it.values.filter { entity -> favoritesList.contains("${serverId.value}-${entity.entityId}") }
                     .sortedBy { entity -> favoritesList.indexOf("${serverId.value}-${entity.entityId}") }
             }
-            favoriteEntites.collect {
-                loading = false
+            favoriteEntities.collect {
                 val hasChanged = entities.size != it.size || entities.toSet() != it.toSet()
                 entities = it
                 if (hasChanged) invalidate()
@@ -157,10 +155,6 @@ class MainVehicleScreen(
         var listBuilder = ItemList.Builder()
         var favoritesGrid: ItemList.Builder? = null
         if (favoritesList.isNotEmpty()) {
-            val favoriteEntities = allEntities.map {
-                it.values.filter { entity -> favoritesList.contains("${serverId.value}-${entity.entityId}") }
-                    .sortedBy { entity -> favoritesList.indexOf("${serverId.value}-${entity.entityId}") }
-            }
             favoritesGrid = EntityGridVehicleScreen(
                 carContext,
                 serverManager,
@@ -170,11 +164,7 @@ class MainVehicleScreen(
                 carContext.getString(commonR.string.favorites),
                 favoriteEntities,
                 allEntities
-            ) {
-                it.toString().toIntOrNull()?.let { serverId ->
-                    onChangeServer(serverId)
-                }
-            }.getEntityGridItems(entities)
+            ) { onChangeServer(it) }.getEntityGridItems(entities)
         }
         if (domains.isNotEmpty()) {
             listBuilder = addDomainList(domains)
@@ -263,7 +253,7 @@ class MainVehicleScreen(
                 if (isAutomotive && !iDrivingOptimized && BuildConfig.FLAVOR != "full") {
                     setActionStrip(nativeModeActionStrip())
                 }
-                if (loading) {
+                if (domains.isEmpty()) {
                     setLoading(true)
                 } else {
                     setLoading(false)
