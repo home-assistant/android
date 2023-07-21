@@ -2,7 +2,7 @@
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
     <release version="2023.7.7 - Main" versioncode="3">
-        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Assist - Default to last used pipeline, support preferred pipeline</change>
+        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Assist - Default to last used assistant instead of preferred</change>
         <change>Android Auto: Add Car Info Sensors (requires Android Auto app to open once per drive, not all vehicles support every sensor)</change>
         <change>Shortcuts, Tiles &amp; Wear Favorites: Replace entity drop down selection with search based text field to easily find entities</change>
         <change>Bug fixes, design improvements and dependency updates</change>
