@@ -7,9 +7,9 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
+import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.runtime.Composable
@@ -47,7 +47,7 @@ fun ExternalUrlInputView(
     Column(
         modifier = Modifier.padding(horizontal = 16.dp)
     ) {
-        OutlinedTextField(
+        TextField(
             value = urlInput ?: "",
             singleLine = true,
             onValueChange = {

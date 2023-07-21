@@ -31,7 +31,6 @@ import androidx.compose.material.ContentAlpha
 import androidx.compose.material.Divider
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.RadioButton
 import androidx.compose.material.Scaffold
 import androidx.compose.material.SnackbarResult
@@ -39,6 +38,7 @@ import androidx.compose.material.Surface
 import androidx.compose.material.Switch
 import androidx.compose.material.SwitchDefaults
 import androidx.compose.material.Text
+import androidx.compose.material.TextField
 import androidx.compose.material.contentColorFor
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
@@ -511,7 +511,7 @@ fun SensorDetailSettingDialog(
                     }
                 }
             } else {
-                OutlinedTextField(
+                TextField(
                     value = inputValue.value,
                     keyboardOptions = KeyboardOptions(
                         imeAction = ImeAction.Done,
