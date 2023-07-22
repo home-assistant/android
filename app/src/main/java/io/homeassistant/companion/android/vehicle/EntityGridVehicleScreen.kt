@@ -44,7 +44,7 @@ class EntityGridVehicleScreen(
     val prefsRepository: PrefsRepository,
     val integrationRepository: IntegrationRepository,
     val title: String,
-    val domains: MutableSet<String>,
+    private val domains: MutableSet<String>,
     private val entitiesFlow: Flow<List<Entity<*>>>,
     private val allEntities: Flow<Map<String, Entity<*>>>,
     private val onChangeServer: (Int) -> Unit
@@ -57,6 +57,7 @@ class EntityGridVehicleScreen(
     private var loading = true
     var entities: List<Entity<*>> = listOf()
     private val isFavorites = title == carContext.getString(R.string.favorites)
+    private val shouldSwitchServers = serverManager.defaultServers.size > 1
 
     init {
         lifecycleScope.launch {
@@ -72,18 +73,41 @@ class EntityGridVehicleScreen(
     }
 
     fun getEntityGridItems(entities: List<Entity<*>>): ItemList.Builder {
+        val listBuilder = if (entities.isNotEmpty()) {
+            createEntityGrid(entities)
+        } else {
+            createDomainGrid()
+        }
+        if (isFavorites) {
+            listBuilder.addItem(getNavigationGridItem().build())
+            listBuilder.addItem(getDomainsGridItem().build())
+            if (shouldSwitchServers) {
+                listBuilder.addItem(getChangeServerGridItem().build())
+            }
+        }
+        return listBuilder
+    }
+
+    override fun onGetTemplate(): Template {
+        val entityGrid = getEntityGridItems(entities)
+
+        return GridTemplate.Builder().apply {
+            setTitle(title)
+            setHeaderAction(Action.BACK)
+            if (loading) {
+                setLoading(true)
+            } else {
+                setLoading(false)
+                setSingleList(entityGrid.build())
+            }
+        }.build()
+    }
+
+    private fun createEntityGrid(entities: List<Entity<*>>): ItemList.Builder {
+        val listBuilder = ItemList.Builder()
         val manager = carContext.getCarService(ConstraintManager::class.java)
         val gridLimit = manager.getContentLimit(ConstraintManager.CONTENT_LIMIT_TYPE_GRID)
-        val shouldSwitchServers = serverManager.defaultServers.size > 1
         val extraGrid = if (shouldSwitchServers) 3 else 2
-        val listBuilder = ItemList.Builder()
-        val domainGrid = MainVehicleScreen(
-            carContext,
-            serverManager,
-            serverId,
-            allEntities,
-            prefsRepository
-        ) { }.addDomainList(domains)
         entities.forEachIndexed { index, entity ->
             if (index >= (gridLimit - if (isFavorites) extraGrid else 0)) {
                 Log.i(TAG, "Grid limit ($gridLimit) reached, not adding more entities (${entities.size}) for $title ")
@@ -118,121 +142,107 @@ class EntityGridVehicleScreen(
             }
             listBuilder.addItem(gridItem.build())
         }
+        return listBuilder
+    }
 
-        if (isFavorites) {
-            val navGridItem = GridItem.Builder().apply {
-                setTitle(carContext.getString(R.string.aa_navigation))
-                setImage(
-                    CarIcon.Builder(
-                        IconicsDrawable(
-                            carContext,
-                            CommunityMaterial.Icon3.cmd_map_outline
-                        ).apply {
-                            sizeDp = 48
-                        }.toAndroidIconCompat()
-                    )
-                        .setTint(CarColor.DEFAULT)
-                        .build()
+    private fun createDomainGrid(): ItemList.Builder {
+        return MainVehicleScreen(
+            carContext,
+            serverManager,
+            serverId,
+            allEntities,
+            prefsRepository
+        ) { }.addDomainList(domains)
+    }
+
+    private fun getChangeServerGridItem(): GridItem.Builder {
+        return GridItem.Builder().apply {
+            setTitle(carContext.getString(R.string.aa_change_server))
+            setImage(
+                CarIcon.Builder(
+                    IconicsDrawable(
+                        carContext,
+                        CommunityMaterial.Icon2.cmd_home_switch
+                    ).apply {
+                        sizeDp = 48
+                    }.toAndroidIconCompat()
                 )
-                setOnClickListener {
-                    Log.i(TAG, "Navigation clicked")
-                    screenManager.push(
-                        MapVehicleScreen(
-                            carContext,
-                            integrationRepository,
-                            allEntities.map { it.values.filter { entity -> entity.domain in MainVehicleScreen.MAP_DOMAINS } }
-                        )
+                    .setTint(CarColor.DEFAULT)
+                    .build()
+            )
+            setOnClickListener {
+                Log.i(TAG, "Change server clicked")
+                screenManager.pushForResult(
+                    ChangeServerScreen(
+                        carContext,
+                        serverManager,
+                        serverId
                     )
-                }
-            }
-            if (entities.isNotEmpty()) {
-                listBuilder.addItem(navGridItem.build())
-            } else {
-                domainGrid.addItem(navGridItem.build())
-            }
-            if (entities.isNotEmpty()) {
-                val categoryItem = GridItem.Builder().apply {
-                    setTitle(carContext.getString(R.string.all_entities))
-                    setImage(
-                        CarIcon.Builder(
-                            IconicsDrawable(
-                                carContext,
-                                CommunityMaterial.Icon3.cmd_view_list
-                            ).apply {
-                                sizeDp = 48
-                            }.toAndroidIconCompat()
-                        )
-                            .setTint(CarColor.DEFAULT)
-                            .build()
-                    )
-                    setOnClickListener {
-                        Log.i(TAG, "Categories clicked")
-                        screenManager.push(
-                            DomainListScreen(
-                                carContext,
-                                serverManager,
-                                integrationRepository,
-                                serverId,
-                                allEntities,
-                                prefsRepository
-                            )
-                        )
+                ) {
+                    it?.toString()?.toIntOrNull()?.let { serverId ->
+                        onChangeServer(serverId)
                     }
-                }
-                listBuilder.addItem(categoryItem.build())
-            }
-            if (shouldSwitchServers) {
-                val changeServerItem = GridItem.Builder().apply {
-                    setTitle(carContext.getString(R.string.aa_change_server))
-                    setImage(
-                        CarIcon.Builder(
-                            IconicsDrawable(
-                                carContext,
-                                CommunityMaterial.Icon2.cmd_home_switch
-                            ).apply {
-                                sizeDp = 48
-                            }.toAndroidIconCompat()
-                        )
-                            .setTint(CarColor.DEFAULT)
-                            .build()
-                    )
-                    setOnClickListener {
-                        Log.i(TAG, "Change server clicked")
-                        screenManager.pushForResult(
-                            ChangeServerScreen(
-                                carContext,
-                                serverManager,
-                                serverId
-                            )
-                        ) {
-                            it?.toString()?.toIntOrNull()?.let { serverId ->
-                                onChangeServer(serverId)
-                            }
-                        }
-                    }
-                }
-                if (entities.isNotEmpty()) {
-                    listBuilder.addItem(changeServerItem.build())
-                } else {
-                    domainGrid.addItem(changeServerItem.build())
                 }
             }
         }
-        return if (entities.isNotEmpty()) listBuilder else domainGrid
     }
 
-    override fun onGetTemplate(): Template {
-        val entityGrid = getEntityGridItems(entities)
-
-        return GridTemplate.Builder().apply {
-            setTitle(title)
-            setHeaderAction(Action.BACK)
-            if (loading) {
-                setLoading(true)
-            } else {
-                setLoading(false)
-                setSingleList(entityGrid.build())
+    private fun getDomainsGridItem(): GridItem.Builder {
+        return GridItem.Builder().apply {
+            setTitle(carContext.getString(R.string.all_entities))
+            setImage(
+                CarIcon.Builder(
+                    IconicsDrawable(
+                        carContext,
+                        CommunityMaterial.Icon3.cmd_view_list
+                    ).apply {
+                        sizeDp = 48
+                    }.toAndroidIconCompat()
+                )
+                    .setTint(CarColor.DEFAULT)
+                    .build()
+            )
+            setOnClickListener {
+                Log.i(TAG, "Categories clicked")
+                screenManager.push(
+                    DomainListScreen(
+                        carContext,
+                        serverManager,
+                        integrationRepository,
+                        serverId,
+                        allEntities,
+                        prefsRepository
+                    )
+                )
             }
-        }.build()
+        }
+    }
+
+    private fun getNavigationGridItem(): GridItem.Builder {
+        return GridItem.Builder().apply {
+            setTitle(carContext.getString(R.string.aa_navigation))
+            setImage(
+                CarIcon.Builder(
+                    IconicsDrawable(
+                        carContext,
+                        CommunityMaterial.Icon3.cmd_map_outline
+                    ).apply {
+                        sizeDp = 48
+                    }.toAndroidIconCompat()
+                )
+                    .setTint(CarColor.DEFAULT)
+                    .build()
+            )
+            setOnClickListener {
+                Log.i(TAG, "Navigation clicked")
+                screenManager.push(
+                    MapVehicleScreen(
+                        carContext,
+                        integrationRepository,
+                        allEntities.map { it.values.filter { entity -> entity.domain in MainVehicleScreen.MAP_DOMAINS } }
+                    )
+                )
+            }
+        }
     }
 }

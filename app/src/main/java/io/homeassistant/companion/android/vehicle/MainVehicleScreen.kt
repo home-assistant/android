@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.vehicle
 
 import android.car.Car
 import android.car.drivingstate.CarUxRestrictionsManager
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
@@ -10,7 +9,6 @@ import androidx.annotation.RequiresApi
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
 import androidx.car.app.model.Action
-import androidx.car.app.model.ActionStrip
 import androidx.car.app.model.CarColor
 import androidx.car.app.model.CarIcon
 import androidx.car.app.model.GridItem
@@ -34,7 +32,7 @@ import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.capitalize
-import io.homeassistant.companion.android.launch.LaunchActivity
+import io.homeassistant.companion.android.util.vehicle.nativeModeActionStrip
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -80,7 +78,7 @@ class MainVehicleScreen(
     }
 
     private var favoriteEntities = flowOf<List<Entity<*>>>()
-    private var entities: List<Entity<*>> = listOf()
+    private var entityList: List<Entity<*>> = listOf()
     private var favoritesList = emptyList<String>()
     private var isLoggedIn: Boolean? = null
     private val domains = mutableSetOf<String>()
@@ -130,8 +128,8 @@ class MainVehicleScreen(
                     .sortedBy { entity -> favoritesList.indexOf("${serverId.value}-${entity.entityId}") }
             }
             favoriteEntities.collect {
-                val hasChanged = entities.size != it.size || entities.toSet() != it.toSet()
-                entities = it
+                val hasChanged = entityList.size != it.size || entityList.toSet() != it.toSet()
+                entityList = it
                 if (hasChanged) invalidate()
             }
         }
@@ -151,10 +149,8 @@ class MainVehicleScreen(
     }
 
     override fun onGetTemplate(): Template {
-        var listBuilder = ItemList.Builder()
-        var favoritesGrid: ItemList.Builder? = null
-        if (favoritesList.isNotEmpty()) {
-            favoritesGrid = EntityGridVehicleScreen(
+        val listBuilder = if (favoritesList.isNotEmpty()) {
+            EntityGridVehicleScreen(
                 carContext,
                 serverManager,
                 serverId,
@@ -164,48 +160,20 @@ class MainVehicleScreen(
                 domains,
                 favoriteEntities,
                 allEntities
-            ) { onChangeServer(it) }.getEntityGridItems(entities)
-        }
-        if (domains.isNotEmpty()) {
-            listBuilder = addDomainList(domains)
-        }
+            ) { onChangeServer(it) }.getEntityGridItems(entityList)
+        } else {
+            var builder = ItemList.Builder()
+            if (domains.isNotEmpty()) {
+                builder = addDomainList(domains)
+            }
 
-        listBuilder.addItem(
-            GridItem.Builder()
-                .setImage(
-                    CarIcon.Builder(
-                        IconicsDrawable(
-                            carContext,
-                            CommunityMaterial.Icon3.cmd_map_outline
-                        ).apply {
-                            sizeDp = 48
-                        }.toAndroidIconCompat()
-                    )
-                        .setTint(CarColor.DEFAULT)
-                        .build()
-                )
-                .setTitle(carContext.getString(commonR.string.aa_navigation))
-                .setOnClickListener {
-                    Log.i(TAG, "Navigation clicked")
-                    screenManager.push(
-                        MapVehicleScreen(
-                            carContext,
-                            serverManager.integrationRepository(serverId.value),
-                            allEntities.map { it.values.filter { entity -> entity.domain in MAP_DOMAINS } }
-                        )
-                    )
-                }
-                .build()
-        )
-
-        if (serverManager.defaultServers.size > 1) {
-            listBuilder.addItem(
+            builder.addItem(
                 GridItem.Builder()
                     .setImage(
                         CarIcon.Builder(
                             IconicsDrawable(
                                 carContext,
-                                CommunityMaterial.Icon2.cmd_home_switch
+                                CommunityMaterial.Icon3.cmd_map_outline
                             ).apply {
                                 sizeDp = 48
                             }.toAndroidIconCompat()
@@ -213,36 +181,67 @@ class MainVehicleScreen(
                             .setTint(CarColor.DEFAULT)
                             .build()
                     )
-                    .setTitle(carContext.getString(commonR.string.aa_change_server))
+                    .setTitle(carContext.getString(commonR.string.aa_navigation))
                     .setOnClickListener {
-                        Log.i(TAG, "Change server clicked")
-                        screenManager.pushForResult(
-                            ChangeServerScreen(
+                        Log.i(TAG, "Navigation clicked")
+                        screenManager.push(
+                            MapVehicleScreen(
                                 carContext,
-                                serverManager,
-                                serverId
+                                serverManager.integrationRepository(serverId.value),
+                                allEntities.map { it.values.filter { entity -> entity.domain in MAP_DOMAINS } }
                             )
-                        ) {
-                            it?.toString()?.toIntOrNull()?.let { serverId ->
-                                onChangeServer(serverId)
-                            }
-                        }
+                        )
                     }
                     .build()
             )
+
+            if (serverManager.defaultServers.size > 1) {
+                builder.addItem(
+                    GridItem.Builder()
+                        .setImage(
+                            CarIcon.Builder(
+                                IconicsDrawable(
+                                    carContext,
+                                    CommunityMaterial.Icon2.cmd_home_switch
+                                ).apply {
+                                    sizeDp = 48
+                                }.toAndroidIconCompat()
+                            )
+                                .setTint(CarColor.DEFAULT)
+                                .build()
+                        )
+                        .setTitle(carContext.getString(commonR.string.aa_change_server))
+                        .setOnClickListener {
+                            Log.i(TAG, "Change server clicked")
+                            screenManager.pushForResult(
+                                ChangeServerScreen(
+                                    carContext,
+                                    serverManager,
+                                    serverId
+                                )
+                            ) {
+                                it?.toString()?.toIntOrNull()?.let { serverId ->
+                                    onChangeServer(serverId)
+                                }
+                            }
+                        }
+                        .build()
+                )
+            }
+            builder
         }
 
         return GridTemplate.Builder().apply {
             setTitle(carContext.getString(commonR.string.app_name))
             setHeaderAction(Action.APP_ICON)
             if (isAutomotive && !iDrivingOptimized && BuildConfig.FLAVOR != "full") {
-                setActionStrip(nativeModeActionStrip())
+                setActionStrip(nativeModeActionStrip(carContext))
             }
             if (domains.isEmpty()) {
                 setLoading(true)
             } else {
                 setLoading(false)
-                setSingleList(if (favoritesList.isNotEmpty()) favoritesGrid!!.build() else listBuilder.build())
+                setSingleList(listBuilder.build())
             }
         }.build()
     }
@@ -258,23 +257,6 @@ class MainVehicleScreen(
                     invalidate()
                 }
             carRestrictionManager?.registerListener(listener)
-        }
-    }
-
-    fun startNativeActivity() {
-        Log.i(TAG, "Starting login activity")
-        with(carContext) {
-            startActivity(
-                Intent(
-                    carContext,
-                    LaunchActivity::class.java
-                ).apply {
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                }
-            )
-            if (isAutomotive) {
-                finishCarApp()
-            }
         }
     }
 
@@ -331,15 +313,5 @@ class MainVehicleScreen(
             )
         }
         return listBuilder
-    }
-
-    fun nativeModeActionStrip(): ActionStrip {
-        return ActionStrip.Builder().addAction(
-            Action.Builder()
-                .setTitle(carContext.getString(commonR.string.aa_launch_native))
-                .setOnClickListener {
-                    startNativeActivity()
-                }.build()
-        ).build()
     }
 }

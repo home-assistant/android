@@ -15,6 +15,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.util.vehicle.nativeModeActionStrip
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -61,7 +62,7 @@ class DomainListScreen(
             setTitle(carContext.getString(R.string.all_entities))
             setHeaderAction(Action.BACK)
             if (screen.isAutomotive && !screen.iDrivingOptimized && BuildConfig.FLAVOR != "full") {
-                setActionStrip(screen.nativeModeActionStrip())
+                setActionStrip(nativeModeActionStrip(carContext))
             }
             if (domainList.build().items.isEmpty()) {
                 setLoading(true)
