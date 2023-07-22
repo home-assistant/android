@@ -12,7 +12,7 @@ import androidx.wear.tiles.TileService
 import io.homeassistant.companion.android.common.sensors.id
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
-import io.homeassistant.companion.android.tiles.ShortcutsTile
+import io.homeassistant.companion.android.tiles.BaseShortcutsTile
 import io.homeassistant.companion.android.tiles.TemplateTile
 import io.homeassistant.companion.android.views.ChooseEntityView
 import io.homeassistant.companion.android.wear.tiles.ShortcutsTileId
@@ -170,7 +170,7 @@ fun LoadHomePage(
                     isShowShortcutTextEnabled = mainViewModel.isShowShortcutTextEnabled.value,
                     onShowShortcutTextEnabled = {
                         mainViewModel.setShowShortcutTextEnabled(it)
-                        TileService.getUpdater(context).requestUpdate(ShortcutsTile::class.java)
+                        BaseShortcutsTile.requestUpdateForAllShortcutsTiles(context)
                     }
                 )
             }
@@ -215,12 +215,12 @@ fun LoadHomePage(
                     favoriteEntityIds = mainViewModel.favoriteEntityIds,
                     onNoneClicked = {
                         mainViewModel.clearTileShortcut(shortcutsTileId, entityIndex)
-                        TileService.getUpdater(context).requestUpdate(ShortcutsTile::class.java)
+                        BaseShortcutsTile.requestUpdate(shortcutsTileId, context)
                         swipeDismissableNavController.navigateUp()
                     },
                     onEntitySelected = { entity ->
                         mainViewModel.setTileShortcut(shortcutsTileId, entityIndex, entity)
-                        TileService.getUpdater(context).requestUpdate(ShortcutsTile::class.java)
+                        BaseShortcutsTile.requestUpdate(shortcutsTileId, context)
                         swipeDismissableNavController.navigateUp()
                     }
                 )

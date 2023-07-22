@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.tiles
 
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Color
@@ -264,6 +265,15 @@ abstract class BaseShortcutsTile(
             ShortcutsTileId.SHORTCUTS_TILE_1 -> ShortcutsTile::class
             ShortcutsTileId.SHORTCUTS_TILE_2 -> ShortcutsTile2::class
             ShortcutsTileId.SHORTCUTS_TILE_3 -> ShortcutsTile3::class
+        }
+        fun requestUpdate(shortcutsTileId: ShortcutsTileId, context: Context) {
+            val klass = shortcutsTileId.getTileServiceClass()
+            getUpdater(context).requestUpdate(klass.java)
+        }
+        fun requestUpdateForAllShortcutsTiles(context: Context) {
+            ShortcutsTileId.values().forEach {
+                requestUpdate(it, context)
+            }
         }
     }
 }

@@ -9,7 +9,7 @@ import io.homeassistant.companion.android.common.data.integration.DeviceRegistra
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.onboarding.getMessagingToken
 import io.homeassistant.companion.android.tiles.ConversationTile
-import io.homeassistant.companion.android.tiles.ShortcutsTile
+import io.homeassistant.companion.android.tiles.BaseShortcutsTile
 import io.homeassistant.companion.android.tiles.TemplateTile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -58,10 +58,11 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
 
     private fun updateTiles() = mainScope.launch {
         try {
-            val updater = TileService.getUpdater(view as Context)
+            val context = view as Context
+            val updater = TileService.getUpdater(context)
             updater.requestUpdate(ConversationTile::class.java)
-            updater.requestUpdate(ShortcutsTile::class.java)
             updater.requestUpdate(TemplateTile::class.java)
+            BaseShortcutsTile.requestUpdateForAllShortcutsTiles(context)
         } catch (e: Exception) {
             Log.w(TAG, "Unable to request tiles update")
         }

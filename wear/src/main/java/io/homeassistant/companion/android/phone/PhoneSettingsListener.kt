@@ -33,7 +33,7 @@ import io.homeassistant.companion.android.home.HomeActivity
 import io.homeassistant.companion.android.home.HomePresenterImpl
 import io.homeassistant.companion.android.onboarding.getMessagingToken
 import io.homeassistant.companion.android.tiles.ConversationTile
-import io.homeassistant.companion.android.tiles.ShortcutsTile
+import io.homeassistant.companion.android.tiles.BaseShortcutsTile
 import io.homeassistant.companion.android.tiles.TemplateTile
 import io.homeassistant.companion.android.util.UrlUtil
 import kotlinx.coroutines.CoroutineScope
@@ -224,8 +224,8 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
         try {
             val updater = TileService.getUpdater(applicationContext)
             updater.requestUpdate(ConversationTile::class.java)
-            updater.requestUpdate(ShortcutsTile::class.java)
             updater.requestUpdate(TemplateTile::class.java)
+            BaseShortcutsTile.requestUpdateForAllShortcutsTiles(applicationContext)
         } catch (e: Exception) {
             Log.w(TAG, "Unable to request tiles update")
         }
