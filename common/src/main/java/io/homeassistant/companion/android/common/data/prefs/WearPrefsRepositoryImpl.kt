@@ -64,7 +64,9 @@ class WearPrefsRepositoryImpl @Inject constructor(
                 // backwards compatibility with the previous format when there was only one Shortcut Tile:
                 if (shortcutsTileId == ShortcutsTileId.SHORTCUTS_TILE_1) {
                     JSONArray(jsonStr)
-                } else null
+                } else {
+                    null
+                }
             }.getOrNull()
         }
 
