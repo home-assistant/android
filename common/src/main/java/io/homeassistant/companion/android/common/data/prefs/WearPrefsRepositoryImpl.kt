@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.data.prefs
 
 import io.homeassistant.companion.android.common.data.LocalStorage
+import io.homeassistant.companion.android.common.util.toStringList
 import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
 import javax.inject.Inject
@@ -54,9 +55,7 @@ class WearPrefsRepositoryImpl @Inject constructor(
 
     override suspend fun getTileShortcuts(): List<String> {
         val jsonArray = JSONArray(localStorage.getString(PREF_TILE_SHORTCUTS) ?: "[]")
-        return List(jsonArray.length()) {
-            jsonArray.getString(it)
-        }
+        return jsonArray.toStringList()
     }
 
     override suspend fun setTileShortcuts(entities: List<String>) {
