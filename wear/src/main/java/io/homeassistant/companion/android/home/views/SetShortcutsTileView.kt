@@ -35,7 +35,7 @@ import io.homeassistant.companion.android.views.ThemeLazyColumn
 import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
-fun SetTileShortcutsView(
+fun SetShortcutsTileView(
     shortcutEntities: MutableList<SimplifiedEntity>,
     onShortcutEntitySelectionChange: (Int) -> Unit,
     isShowShortcutTextEnabled: Boolean,
@@ -143,7 +143,7 @@ fun SetTileShortcutsView(
 @Preview(device = Devices.WEAR_OS_LARGE_ROUND)
 @Composable
 private fun PreviewSetTileShortcutsView() {
-    SetTileShortcutsView(
+    SetShortcutsTileView(
         shortcutEntities = mutableListOf(simplifiedEntity),
         onShortcutEntitySelectionChange = {},
         isShowShortcutTextEnabled = true,
