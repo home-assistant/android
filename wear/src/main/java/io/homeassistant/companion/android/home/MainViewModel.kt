@@ -33,6 +33,7 @@ import io.homeassistant.companion.android.database.wear.getAllFlow
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.util.RegistriesDataHandler
 import io.homeassistant.companion.android.util.throttleLatest
+import io.homeassistant.companion.android.wear.tiles.ShortcutsTileId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
@@ -85,8 +86,8 @@ class MainViewModel @Inject constructor(
     val favoriteEntityIds = favoritesDao.getAllFlow().collectAsState()
     private val favoriteCaches = favoriteCachesDao.getAll()
 
-    var shortcutEntities = mutableStateListOf<SimplifiedEntity>()
-        private set
+    lateinit var shortcutEntitiesMap: MutableMap<ShortcutsTileId, MutableList<SimplifiedEntity>>
+
     var areas = mutableListOf<AreaRegistryResponse>()
         private set
 
@@ -136,7 +137,9 @@ class MainViewModel @Inject constructor(
             if (!homePresenter.isConnected()) {
                 return@launch
             }
-            shortcutEntities.addAll(homePresenter.getTileShortcuts())
+            shortcutEntitiesMap = homePresenter.getAllTileShortcuts().mapValues { (_, entities) ->
+                entities.toMutableList()
+            }.toMutableMap()
             isHapticEnabled.value = homePresenter.getWearHapticFeedback()
             isToastEnabled.value = homePresenter.getWearToastConfirmation()
             isShowShortcutTextEnabled.value = homePresenter.getShowShortcutText()
@@ -401,22 +404,24 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun setTileShortcut(index: Int, entity: SimplifiedEntity) {
+    fun setTileShortcut(id: ShortcutsTileId, index: Int, entity: SimplifiedEntity) {
         viewModelScope.launch {
+            val shortcutEntities = shortcutEntitiesMap[id]!!
             if (index < shortcutEntities.size) {
                 shortcutEntities[index] = entity
             } else {
                 shortcutEntities.add(entity)
             }
-            homePresenter.setTileShortcuts(shortcutEntities)
+            homePresenter.setTileShortcuts(id, entities = shortcutEntities)
         }
     }
 
-    fun clearTileShortcut(index: Int) {
+    fun clearTileShortcut(id: ShortcutsTileId, index: Int) {
         viewModelScope.launch {
+            val shortcutEntities = shortcutEntitiesMap[id]!!
             if (index < shortcutEntities.size) {
                 shortcutEntities.removeAt(index)
-                homePresenter.setTileShortcuts(shortcutEntities)
+                homePresenter.setTileShortcuts(id, entities = shortcutEntities)
             }
         }
     }

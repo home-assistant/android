@@ -216,7 +216,7 @@ fun SettingsView(
                 item {
                     SecondarySettingsChip(
                         icon = CommunityMaterial.Icon3.cmd_star_circle_outline,
-                        label = stringResource(commonR.string.shortcuts_tile),
+                        label = stringResource(commonR.string.shortcut_tiles),
                         onClick = onClickSetShortcuts
                     )
                 }

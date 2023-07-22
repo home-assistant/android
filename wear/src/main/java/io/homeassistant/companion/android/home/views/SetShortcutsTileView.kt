@@ -36,10 +36,8 @@ import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun SetShortcutsTileView(
-    shortcutEntities: MutableList<SimplifiedEntity>,
+    shortcutEntities: List<SimplifiedEntity>,
     onShortcutEntitySelectionChange: (Int) -> Unit,
-    isShowShortcutTextEnabled: Boolean,
-    onShowShortcutTextEnabled: (Boolean) -> Unit
 ) {
     val scalingLazyListState = rememberScalingLazyListState()
     WearAppTheme {
@@ -52,40 +50,6 @@ fun SetShortcutsTileView(
             timeText = { TimeText(scalingLazyListState = scalingLazyListState) }
         ) {
             ThemeLazyColumn(state = scalingLazyListState) {
-                item {
-                    ListHeader(id = commonR.string.shortcuts_tile)
-                }
-                item {
-                    ToggleChip(
-                        modifier = Modifier.fillMaxWidth(),
-                        checked = isShowShortcutTextEnabled,
-                        onCheckedChange = { onShowShortcutTextEnabled(it) },
-                        label = {
-                            Text(stringResource(commonR.string.shortcuts_tile_text_setting))
-                        },
-                        appIcon = {
-                            Image(
-                                asset =
-                                if (isShowShortcutTextEnabled) {
-                                    CommunityMaterial.Icon.cmd_alphabetical
-                                } else {
-                                    CommunityMaterial.Icon.cmd_alphabetical_off
-                                },
-                                colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
-                            )
-                        },
-                        toggleControl = {
-                            Icon(
-                                imageVector = ToggleChipDefaults.checkboxIcon(isShowShortcutTextEnabled),
-                                contentDescription = if (isShowShortcutTextEnabled) {
-                                    stringResource(commonR.string.show)
-                                } else {
-                                    stringResource(commonR.string.hide)
-                                }
-                            )
-                        }
-                    )
-                }
                 item {
                     ListHeader(id = commonR.string.shortcuts_choose)
                 }
@@ -145,8 +109,6 @@ fun SetShortcutsTileView(
 private fun PreviewSetTileShortcutsView() {
     SetShortcutsTileView(
         shortcutEntities = mutableListOf(simplifiedEntity),
-        onShortcutEntitySelectionChange = {},
-        isShowShortcutTextEnabled = true,
-        onShowShortcutTextEnabled = {}
+        onShortcutEntitySelectionChange = {}
     )
 }

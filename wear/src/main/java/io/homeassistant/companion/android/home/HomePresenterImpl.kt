@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.En
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryUpdatedEvent
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.onboarding.getMessagingToken
+import io.homeassistant.companion.android.wear.tiles.ShortcutsTileId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -233,12 +234,20 @@ class HomePresenterImpl @Inject constructor(
         return serverManager.webSocketRepository().getEntityRegistryUpdates()
     }
 
-    override suspend fun getTileShortcuts(): List<SimplifiedEntity> {
-        return wearPrefsRepository.getTileShortcuts().map { SimplifiedEntity(it) }
+    override suspend fun getAllTileShortcuts(): Map<ShortcutsTileId, List<SimplifiedEntity>> {
+        return wearPrefsRepository.getAllTileShortcuts().mapValues { (_, entities) ->
+            entities.map {
+                SimplifiedEntity(it)
+            }
+        }
     }
 
-    override suspend fun setTileShortcuts(entities: List<SimplifiedEntity>) {
-        wearPrefsRepository.setTileShortcuts(entities.map { it.entityString })
+    override suspend fun getTileShortcuts(id: ShortcutsTileId): List<SimplifiedEntity> {
+        return wearPrefsRepository.getTileShortcuts(id).map { SimplifiedEntity(it) }
+    }
+
+    override suspend fun setTileShortcuts(id: ShortcutsTileId, entities: List<SimplifiedEntity>) {
+        wearPrefsRepository.setTileShortcuts(id, entities.map { it.entityString })
     }
 
     override suspend fun getWearHapticFeedback(): Boolean {

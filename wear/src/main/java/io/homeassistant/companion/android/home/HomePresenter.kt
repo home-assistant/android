@@ -9,6 +9,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.De
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryUpdatedEvent
 import io.homeassistant.companion.android.data.SimplifiedEntity
+import io.homeassistant.companion.android.wear.tiles.ShortcutsTileId
 import kotlinx.coroutines.flow.Flow
 
 interface HomePresenter {
@@ -38,8 +39,9 @@ interface HomePresenter {
     suspend fun getDeviceRegistryUpdates(): Flow<DeviceRegistryUpdatedEvent>?
     suspend fun getEntityRegistryUpdates(): Flow<EntityRegistryUpdatedEvent>?
 
-    suspend fun getTileShortcuts(): List<SimplifiedEntity>
-    suspend fun setTileShortcuts(entities: List<SimplifiedEntity>)
+    suspend fun getAllTileShortcuts(): Map<ShortcutsTileId, List<SimplifiedEntity>>
+    suspend fun getTileShortcuts(id: ShortcutsTileId): List<SimplifiedEntity>
+    suspend fun setTileShortcuts(id: ShortcutsTileId, entities: List<SimplifiedEntity>)
 
     suspend fun getWearHapticFeedback(): Boolean
     suspend fun setWearHapticFeedback(enabled: Boolean)

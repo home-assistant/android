@@ -733,6 +733,9 @@
     <string name="shortcut5_note">Not all launchers support displaying 5 shortcuts, you may not see this shortcut if the above 4 are already added.</string>
     <string name="shortcuts_summary">Add shortcuts to launcher</string>
     <string name="shortcuts_tile">Shortcuts tile</string>
+    <string name="shortcut_tiles">Shortcut tiles</string>
+    <string name="shortcuts_tile_n">Shortcuts tile #%d</string>
+    <string name="shortcuts_tile_select">Select shortcuts tile to manage</string>
     <string name="shortcuts_tile_description">Select up to 7 entities</string>
     <string name="shortcuts_tile_empty">Choose entities in settings</string>
     <string name="shortcuts_tile_text_setting">Show names on shortcuts tile</string>

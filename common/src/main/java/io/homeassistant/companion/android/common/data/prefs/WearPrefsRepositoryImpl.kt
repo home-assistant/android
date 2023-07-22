@@ -2,8 +2,10 @@ package io.homeassistant.companion.android.common.data.prefs
 
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.util.toStringList
+import io.homeassistant.companion.android.wear.tiles.ShortcutsTileId
 import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
+import org.json.JSONObject
 import javax.inject.Inject
 import javax.inject.Named
 
@@ -53,13 +55,34 @@ class WearPrefsRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getTileShortcuts(): List<String> {
-        val jsonArray = JSONArray(localStorage.getString(PREF_TILE_SHORTCUTS) ?: "[]")
-        return jsonArray.toStringList()
+    override suspend fun getTileShortcuts(shortcutsTileId: ShortcutsTileId): List<String> {
+        val jsonArray = localStorage.getString(PREF_TILE_SHORTCUTS)?.let { jsonStr ->
+            runCatching {
+                val jsonObject = JSONObject(jsonStr)
+                jsonObject.getJSONArray(shortcutsTileId.name)
+            }.recover {
+                // backwards compatibility with the previous format when there was only one Shortcut Tile:
+                if (shortcutsTileId == ShortcutsTileId.SHORTCUTS_TILE_1) {
+                    JSONArray(jsonStr)
+                } else null
+            }.getOrNull()
+        }
+
+        return jsonArray?.toStringList() ?: emptyList()
     }
 
-    override suspend fun setTileShortcuts(entities: List<String>) {
-        localStorage.putString(PREF_TILE_SHORTCUTS, JSONArray(entities).toString())
+    override suspend fun getAllTileShortcuts(): Map<ShortcutsTileId, List<String>> =
+        ShortcutsTileId.values().associateWith {
+            getTileShortcuts(it)
+        }
+
+    override suspend fun setTileShortcuts(id: ShortcutsTileId, entities: List<String>) {
+        val map = getAllTileShortcuts() + mapOf(id to entities)
+        val jsonArrayMap = map.map { (shortcutsTileId, entities) ->
+            shortcutsTileId.name to JSONArray(entities)
+        }.toMap()
+        val jsonStr = JSONObject(jsonArrayMap).toString()
+        localStorage.putString(PREF_TILE_SHORTCUTS, jsonStr)
     }
 
     override suspend fun getTemplateTileContent(): String {
