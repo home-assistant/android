@@ -4,6 +4,7 @@ import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Process.myPid
 import android.os.Process.myUid
 import androidx.core.content.getSystemService
@@ -76,9 +77,19 @@ interface SensorManager {
 
     fun checkUsageStatsPermission(context: Context): Boolean {
         val pm = context.packageManager
-        val appInfo = pm.getApplicationInfo(context.packageName, 0)
-        val appOpsManager = context.getSystemService<AppOpsManager>()!!
-        val mode = appOpsManager.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, appInfo.uid, appInfo.packageName)
+        val appInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            pm.getApplicationInfo(context.packageName, PackageManager.ApplicationInfoFlags.of(0))
+        } else {
+            @Suppress("DEPRECATION")
+            pm.getApplicationInfo(context.packageName, 0)
+        }
+        val appOpsManager = context.getSystemService<AppOpsManager>()
+        val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            appOpsManager?.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, appInfo.uid, appInfo.packageName)
+        } else {
+            @Suppress("DEPRECATION")
+            appOpsManager?.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, appInfo.uid, appInfo.packageName)
+        }
         return mode == AppOpsManager.MODE_ALLOWED
     }
 

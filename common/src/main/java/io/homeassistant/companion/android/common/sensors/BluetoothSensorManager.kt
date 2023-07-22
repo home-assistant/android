@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.sensors
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
 import io.homeassistant.companion.android.common.bluetooth.BluetoothDevice
@@ -139,6 +140,7 @@ class BluetoothSensorManager : SensorManager {
         return listOf(bluetoothConnection, bluetoothState, bleTransmitter, beaconMonitor)
     }
 
+    @SuppressLint("InlinedApi")
     override fun requiredPermissions(sensorId: String): Array<String> {
         return when {
             (sensorId == bleTransmitter.id && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) -> {

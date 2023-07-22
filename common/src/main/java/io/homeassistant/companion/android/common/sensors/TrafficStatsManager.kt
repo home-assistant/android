@@ -76,6 +76,7 @@ class TrafficStatsManager : SensorManager {
         return emptyArray()
     }
 
+    @Suppress("DEPRECATION") // No synchronous option to get all networks
     override fun hasSensor(context: Context): Boolean {
         val cm = context.getSystemService<ConnectivityManager>()!!
         val networkInfo = cm.allNetworks

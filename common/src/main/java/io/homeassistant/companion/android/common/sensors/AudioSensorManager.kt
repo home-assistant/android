@@ -251,7 +251,7 @@ class AudioSensorManager : SensorManager {
                 }
             }
         } else {
-            // Use deprecated method as getDevices is API 23 and up only and we support API 21
+            @Suppress("DEPRECATION")
             isHeadphones = audioManager.isWiredHeadsetOn
         }
 

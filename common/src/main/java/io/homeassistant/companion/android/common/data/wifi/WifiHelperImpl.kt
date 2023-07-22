@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.common.data.wifi
 
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
 import javax.inject.Inject
@@ -45,8 +46,22 @@ class WifiHelperImpl @Inject constructor(
     }
 
     override fun getWifiSsid(): String? =
-        wifiManager?.connectionInfo?.ssid
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            connectivityManager.activeNetwork?.let {
+                val info = connectivityManager.getNetworkCapabilities(it)?.transportInfo ?: return null
+                (info as? WifiInfo)?.ssid
+            }
+        } else {
+            wifiManager?.connectionInfo?.ssid
+        }
 
     override fun getWifiBssid(): String? =
-        wifiManager?.connectionInfo?.bssid
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            connectivityManager.activeNetwork?.let {
+                val info = connectivityManager.getNetworkCapabilities(it)?.transportInfo ?: return null
+                (info as? WifiInfo)?.bssid
+            }
+        } else {
+            wifiManager?.connectionInfo?.bssid
+        }
 }

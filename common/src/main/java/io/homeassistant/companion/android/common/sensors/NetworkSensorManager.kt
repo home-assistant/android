@@ -192,12 +192,10 @@ class NetworkSensorManager : SensorManager {
         var connected = false
 
         if (checkPermission(context, wifiConnection.id)) {
-            val wifiManager =
-                context.applicationContext.getSystemService<WifiManager>()!!
-            conInfo = wifiManager.connectionInfo
+            conInfo = getWifiConnectionInfo(context)
 
-            if (conInfo.networkId == -1) {
-                if (conInfo.linkSpeed == -1) {
+            if (conInfo == null || conInfo.networkId == -1) {
+                if (conInfo == null || conInfo.linkSpeed == -1) {
                     ssid = "<not connected>"
                 } else {
                     ssid = "<unknown>"
@@ -232,12 +230,10 @@ class NetworkSensorManager : SensorManager {
         var conInfo: WifiInfo? = null
 
         if (checkPermission(context, bssidState.id)) {
-            val wifiManager =
-                context.applicationContext.getSystemService<WifiManager>()!!
-            conInfo = wifiManager.connectionInfo
+            conInfo = getWifiConnectionInfo(context)
         }
 
-        var bssid = if (conInfo!!.bssid == null) "<not connected>" else conInfo.bssid
+        var bssid = if (conInfo?.bssid == null) "<not connected>" else conInfo.bssid
 
         val settingName = "network_replace_mac_var1:$bssid:"
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
@@ -277,14 +273,23 @@ class NetworkSensorManager : SensorManager {
         var deviceIp = "Unknown"
 
         if (checkPermission(context, wifiIp.id)) {
-            val wifiManager =
-                context.applicationContext.getSystemService<WifiManager>()!!
-            val conInfo = wifiManager.connectionInfo
+            val conInfo = getWifiConnectionInfo(context)
 
-            deviceIp = if (conInfo.networkId == -1 && conInfo.linkSpeed == -1) {
+            deviceIp = if (conInfo == null || (conInfo.networkId == -1 && conInfo.linkSpeed == -1)) {
                 "<not connected>"
             } else {
-                getIpAddress(conInfo.ipAddress)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    val connectivityManager = context.applicationContext.getSystemService<ConnectivityManager>()
+                    connectivityManager?.activeNetwork?.let {
+                        // Get the IPv4 address without prefix length
+                        connectivityManager.getLinkProperties(it)?.linkAddresses
+                            ?.firstOrNull { address -> !address.toString().contains(":") }
+                            ?.toString()?.split("/")?.get(0)
+                    } ?: ""
+                } else {
+                    @Suppress("DEPRECATION")
+                    getIpAddress(conInfo.ipAddress)
+                }
             }
         }
 
@@ -306,23 +311,22 @@ class NetworkSensorManager : SensorManager {
         var rssi = -1
 
         if (checkPermission(context, wifiLinkSpeed.id)) {
-            val wifiManager =
-                context.applicationContext.getSystemService<WifiManager>()!!
-            val conInfo = wifiManager.connectionInfo
+            val conInfo = getWifiConnectionInfo(context)
 
-            linkSpeed = if (conInfo.linkSpeed == -1) {
+            linkSpeed = if (conInfo == null || conInfo.linkSpeed == -1) {
                 0
             } else {
                 conInfo.linkSpeed
             }
 
-            if (conInfo.networkId != -1 || conInfo.linkSpeed != -1) {
+            if (conInfo != null && (conInfo.networkId != -1 || conInfo.linkSpeed != -1)) {
                 rssi = conInfo.rssi
             }
         }
 
         var signalStrength = -1
         if (rssi != -1) {
+            @Suppress("DEPRECATION") // Always use 4 levels instead of depending on device
             signalStrength = WifiManager.calculateSignalLevel(rssi, 4)
         }
 
@@ -373,11 +377,9 @@ class NetworkSensorManager : SensorManager {
         var frequency = 0
 
         if (checkPermission(context, wifiFrequency.id)) {
-            val wifiManager =
-                context.applicationContext.getSystemService<WifiManager>()!!
-            val conInfo = wifiManager.connectionInfo
+            val conInfo = getWifiConnectionInfo(context)
 
-            frequency = if (conInfo.networkId == -1 && conInfo.linkSpeed == -1) {
+            frequency = if (conInfo == null || (conInfo.networkId == -1 && conInfo.linkSpeed == -1)) {
                 0
             } else {
                 conInfo.frequency
@@ -401,17 +403,16 @@ class NetworkSensorManager : SensorManager {
         var rssi = -1
 
         if (checkPermission(context, wifiSignalStrength.id)) {
-            val wifiManager =
-                context.applicationContext.getSystemService<WifiManager>()!!
-            val conInfo = wifiManager.connectionInfo
+            val conInfo = getWifiConnectionInfo(context)
 
-            if (conInfo.networkId != -1 || conInfo.linkSpeed != -1) {
+            if (conInfo != null && (conInfo.networkId != -1 || conInfo.linkSpeed != -1)) {
                 rssi = conInfo.rssi
             }
         }
 
         var signalStrength = -1
         if (rssi != -1) {
+            @Suppress("DEPRECATION") // Always use 4 levels instead of depending on device
             signalStrength = WifiManager.calculateSignalLevel(rssi, 4)
         }
 
@@ -520,4 +521,16 @@ class NetworkSensorManager : SensorManager {
             )
         )
     }
+
+    private fun getWifiConnectionInfo(context: Context): WifiInfo? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val connectivityManager = context.applicationContext.getSystemService<ConnectivityManager>()
+            connectivityManager?.activeNetwork?.let {
+                val info = connectivityManager.getNetworkCapabilities(it)?.transportInfo
+                return@let info as? WifiInfo
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            context.applicationContext.getSystemService<WifiManager>()?.connectionInfo
+        }
 }
