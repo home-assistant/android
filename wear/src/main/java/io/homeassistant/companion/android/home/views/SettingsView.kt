@@ -312,7 +312,7 @@ private fun PreviewSettingsView() {
     SettingsView(
         loadingState = MainViewModel.LoadingState.READY,
         favorites = previewFavoritesList,
-        onClickSetFavorites = { /*TODO*/ },
+        onClickSetFavorites = { },
         onClearFavorites = {},
         onClickSetShortcuts = {},
         onClickSensors = {},

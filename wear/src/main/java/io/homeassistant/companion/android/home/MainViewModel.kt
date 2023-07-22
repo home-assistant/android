@@ -442,13 +442,6 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun setTemplateTileContent(content: String) {
-        viewModelScope.launch {
-            homePresenter.setTemplateTileContent(content)
-            templateTileContent.value = content
-        }
-    }
-
     fun setWearFavoritesOnly(enabled: Boolean) {
         viewModelScope.launch {
             homePresenter.setWearFavoritesOnly(enabled)

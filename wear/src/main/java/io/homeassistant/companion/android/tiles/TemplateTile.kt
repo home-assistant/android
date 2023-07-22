@@ -66,6 +66,7 @@ class TemplateTile : TileService() {
                         vibrator?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
                     } else {
                         val vibrator = applicationContext.getSystemService<Vibrator>()
+                        @Suppress("DEPRECATION")
                         vibrator?.vibrate(200)
                     }
                 }
