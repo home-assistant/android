@@ -67,6 +67,10 @@ abstract class BaseShortcutsTile(
     @Inject
     lateinit var wearPrefsRepository: WearPrefsRepository
 
+    init {
+        require(id.getTileServiceClass() == this::class)
+    }
+
     override fun onTileRequest(requestParams: TileRequest): ListenableFuture<Tile> =
         serviceScope.future {
             val state = requestParams.state
@@ -254,4 +258,12 @@ abstract class BaseShortcutsTile(
         }
     }
         .build()
+
+    companion object {
+        private fun ShortcutsTileId.getTileServiceClass() = when(this) {
+            ShortcutsTileId.SHORTCUTS_TILE_1 -> ShortcutsTile::class
+            ShortcutsTileId.SHORTCUTS_TILE_2 -> ShortcutsTile2::class
+            ShortcutsTileId.SHORTCUTS_TILE_3 -> ShortcutsTile3::class
+        }
+    }
 }
