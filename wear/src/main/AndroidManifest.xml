@@ -112,7 +112,7 @@
         <!-- Tiles -->
         <service
             android:name=".tiles.ShortcutsTile"
-            android:label="Shortcuts #1"
+            android:label="@string/shortcuts_tile_1_title"
             android:description="@string/shortcuts_tile_description"
             android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER"
             android:exported="true">
@@ -125,7 +125,7 @@
         </service>
         <service
             android:name=".tiles.ShortcutsTile2"
-            android:label="Shortcuts #2"
+            android:label="@string/shortcuts_tile_2_title"
             android:description="@string/shortcuts_tile_description"
             android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER"
             android:exported="true">
@@ -138,7 +138,7 @@
         </service>
         <service
             android:name=".tiles.ShortcutsTile3"
-            android:label="Shortcuts #3"
+            android:label="@string/shortcuts_tile_3_title"
             android:description="@string/shortcuts_tile_description"
             android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER"
             android:exported="true">
