@@ -111,18 +111,9 @@ class MainVehicleScreen(
                         domains.addAll(newDomains)
                         invalidate()
                     }
+                    entityList = getFavoritesList(entities)
                 }
-            }
-        }
-        lifecycleScope.launch {
-            favoriteEntities = allEntities.map {
-                it.values.filter { entity -> favoritesList.contains("${serverId.value}-${entity.entityId}") }
-                    .sortedBy { entity -> favoritesList.indexOf("${serverId.value}-${entity.entityId}") }
-            }
-            favoriteEntities.collect {
-                val hasChanged = entityList.size != it.size || entityList.toSet() != it.toSet()
-                entityList = it
-                if (hasChanged) invalidate()
+                favoriteEntities = allEntities.map { getFavoritesList(it) }
             }
         }
 
@@ -216,5 +207,10 @@ class MainVehicleScreen(
                 }
             carRestrictionManager?.registerListener(listener)
         }
+    }
+
+    private fun getFavoritesList(entities: Map<String, Entity<*>>): List<Entity<*>> {
+        return entities.values.filter { entity -> favoritesList.contains("${serverId.value}-${entity.entityId}") }
+            .sortedBy { entity -> favoritesList.indexOf("${serverId.value}-${entity.entityId}") }
     }
 }
