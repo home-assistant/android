@@ -15,6 +15,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.util.vehicle.getDomainList
 import io.homeassistant.companion.android.util.vehicle.nativeModeActionStrip
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -56,7 +57,15 @@ class DomainListScreen(
             allEntities,
             prefsRepository
         ) { }
-        val domainList = screen.addDomainList(domains)
+        val domainList = getDomainList(
+            domains,
+            carContext,
+            screenManager,
+            serverManager,
+            serverId,
+            prefsRepository,
+            allEntities
+        )
 
         return GridTemplate.Builder().apply {
             setTitle(carContext.getString(R.string.all_entities))
