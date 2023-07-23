@@ -16,18 +16,14 @@ import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
-import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
-import androidx.wear.compose.material.ToggleChip
-import androidx.wear.compose.material.ToggleChipDefaults
 import androidx.wear.compose.material.rememberScalingLazyListState
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.theme.WearAppTheme
-import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.simplifiedEntity
 import io.homeassistant.companion.android.views.ListHeader
@@ -37,7 +33,7 @@ import io.homeassistant.companion.android.common.R as commonR
 @Composable
 fun SetShortcutsTileView(
     shortcutEntities: List<SimplifiedEntity>,
-    onShortcutEntitySelectionChange: (Int) -> Unit,
+    onShortcutEntitySelectionChange: (Int) -> Unit
 ) {
     val scalingLazyListState = rememberScalingLazyListState()
     WearAppTheme {

@@ -261,7 +261,7 @@ abstract class BaseShortcutsTile(
         .build()
 
     companion object {
-        private fun ShortcutsTileId.getTileServiceClass() = when(this) {
+        private fun ShortcutsTileId.getTileServiceClass() = when (this) {
             ShortcutsTileId.SHORTCUTS_TILE_1 -> ShortcutsTile::class
             ShortcutsTileId.SHORTCUTS_TILE_2 -> ShortcutsTile2::class
             ShortcutsTileId.SHORTCUTS_TILE_3 -> ShortcutsTile3::class

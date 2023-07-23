@@ -8,8 +8,8 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.onboarding.getMessagingToken
-import io.homeassistant.companion.android.tiles.ConversationTile
 import io.homeassistant.companion.android.tiles.BaseShortcutsTile
+import io.homeassistant.companion.android.tiles.ConversationTile
 import io.homeassistant.companion.android.tiles.TemplateTile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

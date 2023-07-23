@@ -32,8 +32,8 @@ import io.homeassistant.companion.android.database.wear.replaceAll
 import io.homeassistant.companion.android.home.HomeActivity
 import io.homeassistant.companion.android.home.HomePresenterImpl
 import io.homeassistant.companion.android.onboarding.getMessagingToken
-import io.homeassistant.companion.android.tiles.ConversationTile
 import io.homeassistant.companion.android.tiles.BaseShortcutsTile
+import io.homeassistant.companion.android.tiles.ConversationTile
 import io.homeassistant.companion.android.tiles.TemplateTile
 import io.homeassistant.companion.android.util.UrlUtil
 import kotlinx.coroutines.CoroutineScope

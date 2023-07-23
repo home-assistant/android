@@ -118,7 +118,7 @@ private fun PreviewSelectShortcutsTileView() {
         shortcutTileEntitiesCountById = mapOf(
             ShortcutsTileId.SHORTCUTS_TILE_1 to 7,
             ShortcutsTileId.SHORTCUTS_TILE_2 to 1,
-            ShortcutsTileId.SHORTCUTS_TILE_3 to 0,
+            ShortcutsTileId.SHORTCUTS_TILE_3 to 0
         ),
         onSelectShortcutsTile = {},
         isShowShortcutTextEnabled = true,

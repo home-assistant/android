@@ -181,7 +181,7 @@ fun LoadHomePage(
                     navArgument(name = ARG_SCREEN_SHORTCUTS_TILE_ID) {
                         type = NavType.StringType
                     }
-                ),
+                )
             ) { backStackEntry ->
                 val shortcutsTileId =
                     backStackEntry.arguments!!.getString(ARG_SCREEN_SHORTCUTS_TILE_ID)!!.let {
@@ -202,8 +202,8 @@ fun LoadHomePage(
                     },
                     navArgument(name = ARG_SCREEN_SHORTCUTS_TILE_ENTITY_INDEX) {
                         type = NavType.IntType
-                    },
-                ),
+                    }
+                )
             ) { backStackEntry ->
                 val entityIndex = backStackEntry.arguments!!.getInt(ARG_SCREEN_SHORTCUTS_TILE_ENTITY_INDEX)
                 val shortcutsTileId =
