@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.vehicle
 
+import android.content.pm.PackageManager
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.car.app.CarContext
@@ -50,13 +51,7 @@ class DomainListScreen(
         }
     }
     override fun onGetTemplate(): Template {
-        val screen = MainVehicleScreen(
-            carContext,
-            serverManager,
-            serverId,
-            allEntities,
-            prefsRepository
-        ) { }
+        val isAutomotive = carContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
         val domainList = getDomainList(
             domains,
             carContext,
@@ -70,14 +65,15 @@ class DomainListScreen(
         return GridTemplate.Builder().apply {
             setTitle(carContext.getString(R.string.all_entities))
             setHeaderAction(Action.BACK)
-            if (screen.isAutomotive && !screen.iDrivingOptimized && BuildConfig.FLAVOR != "full") {
+            if (isAutomotive && !HaCarAppService().isDrivingOptimized && BuildConfig.FLAVOR != "full") {
                 setActionStrip(nativeModeActionStrip(carContext))
             }
-            if (domainList.build().items.isEmpty()) {
+            val domainBuild = domainList.build()
+            if (domainBuild.items.isEmpty()) {
                 setLoading(true)
             } else {
                 setLoading(false)
-                setSingleList(domainList.build())
+                setSingleList(domainBuild)
             }
         }.build()
     }
