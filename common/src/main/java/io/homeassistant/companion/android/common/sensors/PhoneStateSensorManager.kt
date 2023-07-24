@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.sensors
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
@@ -74,6 +75,7 @@ class PhoneStateSensorManager : SensorManager {
         updateSimSensor(context, 1)
     }
 
+    @SuppressLint("MissingPermission")
     private fun checkPhoneState(context: Context) {
         if (isEnabled(context, phoneState)) {
             var currentPhoneState = "unknown"
@@ -82,7 +84,13 @@ class PhoneStateSensorManager : SensorManager {
                 val telephonyManager =
                     context.applicationContext.getSystemService<TelephonyManager>()!!
 
-                currentPhoneState = when (telephonyManager.callState) {
+                val callState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    telephonyManager.callStateForSubscription
+                } else {
+                    @Suppress("DEPRECATION")
+                    telephonyManager.callState
+                }
+                currentPhoneState = when (callState) {
                     TelephonyManager.CALL_STATE_IDLE -> "idle"
                     TelephonyManager.CALL_STATE_RINGING -> "ringing"
                     TelephonyManager.CALL_STATE_OFFHOOK -> "offhook"
@@ -109,6 +117,7 @@ class PhoneStateSensorManager : SensorManager {
         )
     }
 
+    @SuppressLint("MissingPermission")
     private fun updateSimSensor(context: Context, slotIndex: Int) {
         val basicSimSensor = when (slotIndex) {
             0 -> sim_1
