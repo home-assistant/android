@@ -12,7 +12,9 @@ import androidx.car.app.model.Action
 import androidx.car.app.model.GridTemplate
 import androidx.car.app.model.ItemList
 import androidx.car.app.model.Template
+import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import io.homeassistant.companion.android.BuildConfig
@@ -72,6 +74,14 @@ class MainVehicleScreen(
     private var favoritesList = emptyList<String>()
     private var isLoggedIn: Boolean? = null
     private val domains = mutableSetOf<String>()
+    var car: Car? = null
+    var carRestrictionManager: CarUxRestrictionsManager? = null
+    val isDrivingOptimized
+        get() = car?.let {
+            (
+                it.getCarManager(Car.CAR_UX_RESTRICTION_SERVICE) as CarUxRestrictionsManager
+                ).getCurrentCarUxRestrictions().isRequiresDistractionOptimization()
+        } ?: false
 
     private val isAutomotive get() = carContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
 
@@ -106,6 +116,19 @@ class MainVehicleScreen(
                 favoriteEntities = allEntities.map { getFavoritesList(it) }
             }
         }
+
+        lifecycle.addObserver(object : DefaultLifecycleObserver {
+
+            override fun onResume(owner: LifecycleOwner) {
+                registerAutomotiveRestrictionListener()
+            }
+
+            override fun onPause(owner: LifecycleOwner) {
+                carRestrictionManager?.unregisterListener()
+                car?.disconnect()
+                car = null
+            }
+        })
     }
 
     override fun onGetTemplate(): Template {
@@ -160,7 +183,7 @@ class MainVehicleScreen(
         return GridTemplate.Builder().apply {
             setTitle(carContext.getString(commonR.string.app_name))
             setHeaderAction(Action.APP_ICON)
-            if (isAutomotive && !HaCarAppService().isDrivingOptimized && BuildConfig.FLAVOR != "full") {
+            if (isAutomotive && !isDrivingOptimized && BuildConfig.FLAVOR != "full") {
                 setActionStrip(nativeModeActionStrip(carContext))
             }
             if (domains.isEmpty()) {
@@ -175,14 +198,14 @@ class MainVehicleScreen(
     fun registerAutomotiveRestrictionListener() {
         if (carContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
             Log.i(TAG, "Register for Automotive Restrictions")
-            HaCarAppService().car = Car.createCar(carContext)
-            HaCarAppService().carRestrictionManager =
-                HaCarAppService().car?.getCarManager(Car.CAR_UX_RESTRICTION_SERVICE) as CarUxRestrictionsManager
+            car = Car.createCar(carContext)
+            carRestrictionManager =
+                car?.getCarManager(Car.CAR_UX_RESTRICTION_SERVICE) as CarUxRestrictionsManager
             val listener =
                 CarUxRestrictionsManager.OnUxRestrictionsChangedListener { restrictions ->
                     invalidate()
                 }
-            HaCarAppService().carRestrictionManager?.registerListener(listener)
+            carRestrictionManager?.registerListener(listener)
         }
     }
 

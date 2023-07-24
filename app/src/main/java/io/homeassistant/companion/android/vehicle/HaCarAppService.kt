@@ -1,7 +1,5 @@
 package io.homeassistant.companion.android.vehicle
 
-import android.car.Car
-import android.car.drivingstate.CarUxRestrictionsManager
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.os.Build
@@ -15,8 +13,6 @@ import androidx.car.app.SessionInfo
 import androidx.car.app.hardware.CarHardwareManager
 import androidx.car.app.hardware.info.CarInfo
 import androidx.car.app.validation.HostValidator
-import androidx.lifecycle.DefaultLifecycleObserver
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
@@ -52,14 +48,6 @@ class HaCarAppService : CarAppService() {
     private val serverId = MutableStateFlow(0)
     private val allEntities = MutableStateFlow<Map<String, Entity<*>>>(emptyMap())
     private var allEntitiesJob: Job? = null
-    var car: Car? = null
-    var carRestrictionManager: CarUxRestrictionsManager? = null
-    val isDrivingOptimized
-        get() = car?.let {
-            (
-                it.getCarManager(Car.CAR_UX_RESTRICTION_SERVICE) as CarUxRestrictionsManager
-                ).getCurrentCarUxRestrictions().isRequiresDistractionOptimization()
-        } ?: false
 
     override fun createHostValidator(): HostValidator {
         return if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) {
@@ -77,24 +65,6 @@ class HaCarAppService : CarAppService() {
                 serverManager.getServer()?.let {
                     loadEntities(lifecycleScope, it.id)
                 }
-                lifecycle.addObserver(object : DefaultLifecycleObserver {
-
-                    override fun onResume(owner: LifecycleOwner) {
-                        MainVehicleScreen(
-                            carContext,
-                            serverManager,
-                            serverIdFlow,
-                            entityFlow,
-                            prefsRepository
-                        ) { loadEntities(lifecycleScope, it) }.registerAutomotiveRestrictionListener()
-                    }
-
-                    override fun onPause(owner: LifecycleOwner) {
-                        HaCarAppService().carRestrictionManager?.unregisterListener()
-                        HaCarAppService().car?.disconnect()
-                        HaCarAppService().car = null
-                    }
-                })
             }
 
             val serverIdFlow = serverId.asStateFlow()

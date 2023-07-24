@@ -52,6 +52,13 @@ class DomainListScreen(
     }
     override fun onGetTemplate(): Template {
         val isAutomotive = carContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+        val screen = MainVehicleScreen(
+            carContext,
+            serverManager,
+            serverId,
+            allEntities,
+            prefsRepository
+        ) { }
         val domainList = getDomainList(
             domains,
             carContext,
@@ -65,7 +72,7 @@ class DomainListScreen(
         return GridTemplate.Builder().apply {
             setTitle(carContext.getString(R.string.all_entities))
             setHeaderAction(Action.BACK)
-            if (isAutomotive && !HaCarAppService().isDrivingOptimized && BuildConfig.FLAVOR != "full") {
+            if (isAutomotive && !screen.isDrivingOptimized && BuildConfig.FLAVOR != "full") {
                 setActionStrip(nativeModeActionStrip(carContext))
             }
             val domainBuild = domainList.build()
