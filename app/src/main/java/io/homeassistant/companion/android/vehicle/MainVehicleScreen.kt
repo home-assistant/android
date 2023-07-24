@@ -76,7 +76,7 @@ class MainVehicleScreen(
     private val domains = mutableSetOf<String>()
     var car: Car? = null
     var carRestrictionManager: CarUxRestrictionsManager? = null
-    val isDrivingOptimized
+    private val isDrivingOptimized
         get() = car?.let {
             (
                 it.getCarManager(Car.CAR_UX_RESTRICTION_SERVICE) as CarUxRestrictionsManager

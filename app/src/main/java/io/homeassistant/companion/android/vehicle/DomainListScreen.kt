@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.vehicle
 
+import android.car.Car
+import android.car.drivingstate.CarUxRestrictionsManager
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -59,6 +61,11 @@ class DomainListScreen(
             allEntities,
             prefsRepository
         ) { }
+        val isDrivingOptimized = screen.car?.let {
+            (
+                it.getCarManager(Car.CAR_UX_RESTRICTION_SERVICE) as CarUxRestrictionsManager
+                ).getCurrentCarUxRestrictions().isRequiresDistractionOptimization()
+        } ?: false
         val domainList = getDomainList(
             domains,
             carContext,
@@ -72,7 +79,7 @@ class DomainListScreen(
         return GridTemplate.Builder().apply {
             setTitle(carContext.getString(R.string.all_entities))
             setHeaderAction(Action.BACK)
-            if (isAutomotive && !screen.isDrivingOptimized && BuildConfig.FLAVOR != "full") {
+            if (isAutomotive && !isDrivingOptimized && BuildConfig.FLAVOR != "full") {
                 setActionStrip(nativeModeActionStrip(carContext))
             }
             val domainBuild = domainList.build()
