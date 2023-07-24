@@ -192,7 +192,8 @@ class NetworkSensorManager : SensorManager {
         var connected = false
 
         if (checkPermission(context, wifiConnection.id)) {
-            conInfo = getWifiConnectionInfo(context)
+            @Suppress("DEPRECATION") // Unable to get SSID info (instantly) using callback
+            conInfo = context.getSystemService<WifiManager>()?.connectionInfo
 
             if (conInfo == null || conInfo.networkId == -1) {
                 if (conInfo == null || conInfo.linkSpeed == -1) {
@@ -230,7 +231,8 @@ class NetworkSensorManager : SensorManager {
         var conInfo: WifiInfo? = null
 
         if (checkPermission(context, bssidState.id)) {
-            conInfo = getWifiConnectionInfo(context)
+            @Suppress("DEPRECATION") // Unable to get BSSID info (instantly) using callback
+            conInfo = context.getSystemService<WifiManager>()?.connectionInfo
         }
 
         var bssid = if (conInfo?.bssid == null) "<not connected>" else conInfo.bssid
@@ -522,6 +524,7 @@ class NetworkSensorManager : SensorManager {
         )
     }
 
+    /** Get WiFi connection info (without location data such as (B)SSID on Android >=S) */
     private fun getWifiConnectionInfo(context: Context): WifiInfo? =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val connectivityManager = context.applicationContext.getSystemService<ConnectivityManager>()
