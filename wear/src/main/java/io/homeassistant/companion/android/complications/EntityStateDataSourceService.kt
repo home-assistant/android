@@ -80,12 +80,13 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
             null
         }
 
-        var stateText = entity.friendlyState(this, entityOptions)
-        if (entity.attributes.containsKey("unit_of_measurement")) {
-            stateText += " " + entity.attributes["unit_of_measurement"]
-        }
-
-        val text = PlainComplicationText.Builder(stateText).build()
+        val text = PlainComplicationText.Builder(
+            entity.friendlyState(
+                this,
+                entityOptions,
+                appendUnitOfMeasurement = true
+            )
+        ).build()
 
         val contentDescription = PlainComplicationText.Builder(getText(R.string.complication_entity_state_content_description)).build()
         val monochromaticImage = MonochromaticImage.Builder(Icon.createWithBitmap(iconBitmap)).build()

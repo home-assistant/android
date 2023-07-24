@@ -604,7 +604,7 @@ suspend fun <T> Entity<T>.onPressed(
 val <T> Entity<T>.friendlyName: String
     get() = (attributes as? Map<*, *>)?.get("friendly_name")?.toString() ?: entityId
 
-fun <T> Entity<T>.friendlyState(context: Context, options: EntityRegistryOptions? = null): String {
+fun <T> Entity<T>.friendlyState(context: Context, options: EntityRegistryOptions? = null, appendUnitOfMeasurement: Boolean = false): String {
     var friendlyState = when (state) {
         "closed" -> context.getString(commonR.string.state_closed)
         "closing" -> context.getString(commonR.string.state_closing)
@@ -649,6 +649,15 @@ fun <T> Entity<T>.friendlyState(context: Context, options: EntityRegistryOptions
             }
         }
     }
+
+    if (appendUnitOfMeasurement) {
+        val unit = (attributes as? Map<*, *>)?.get("unit_of_measurement")?.toString()
+
+        if (unit?.isNotEmpty() == true) {
+            return "$friendlyState $unit"
+        }
+    }
+
     return friendlyState
 }
 
