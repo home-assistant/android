@@ -2,7 +2,9 @@ package io.homeassistant.companion.android.settings.sensor
 
 import android.Manifest
 import android.app.Application
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.content.pm.PackageManager.NameNotFoundException
 import android.os.Build
 import android.util.Log
 import androidx.annotation.StringRes
@@ -233,6 +235,7 @@ class SensorDetailViewModel @Inject constructor(
             setting = setting,
             entries = when {
                 setting.valueType == SensorSettingType.LIST ||
+                    setting.valueType == SensorSettingType.LIST_APPS ||
                     setting.valueType == SensorSettingType.LIST_BLUETOOTH ||
                     setting.valueType == SensorSettingType.LIST_ZONES ->
                     listKeys.zip(listEntries)
@@ -243,6 +246,7 @@ class SensorDetailViewModel @Inject constructor(
             },
             entriesSelected = when {
                 setting.valueType == SensorSettingType.LIST ||
+                    setting.valueType == SensorSettingType.LIST_APPS ||
                     setting.valueType == SensorSettingType.LIST_BLUETOOTH ||
                     setting.valueType == SensorSettingType.LIST_ZONES ->
                     setting.value.split(", ").filter { listKeys.contains(it) }
@@ -351,10 +355,52 @@ class SensorDetailViewModel @Inject constructor(
         return stringVars.toTypedArray()
     }
 
+    /** @return list of [ApplicationInfo] for the [entries] or all applications if `null`*/
+    private fun getApplicationInfoForEntries(entries: List<String>?): List<ApplicationInfo?> {
+        val packageManager = getApplication<Application>().packageManager
+        return if (entries?.isNotEmpty() == true) {
+            entries.map {
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        packageManager.getApplicationInfo(it, PackageManager.ApplicationInfoFlags.of(0))
+                    } else {
+                        @Suppress("DEPRECATION")
+                        packageManager.getApplicationInfo(it, 0)
+                    }
+                } catch (e: NameNotFoundException) {
+                    null
+                }
+            }
+        } else {
+            val appInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                packageManager?.getInstalledApplications(PackageManager.ApplicationInfoFlags.of(PackageManager.GET_META_DATA.toLong()))
+            } else {
+                @Suppress("DEPRECATION")
+                packageManager?.getInstalledApplications(PackageManager.GET_META_DATA)
+            }
+            appInfo.orEmpty()
+        }
+    }
+
     private fun getSettingKeys(setting: SensorSetting): List<String> {
         return when (setting.valueType) {
             SensorSettingType.LIST ->
                 setting.entries
+            SensorSettingType.LIST_APPS -> {
+                val packageManager = getApplication<Application>().packageManager
+                getApplicationInfoForEntries(null)
+                    .filterNotNull()
+                    .sortedBy {
+                        packageManager.getApplicationLabel(it).let { label ->
+                            when {
+                                label.isBlank() -> it.packageName
+                                label != it.packageName -> "$label\n(${it.packageName}"
+                                else -> label.toString()
+                            }
+                        }.lowercase()
+                    }
+                    .map { it.packageName }
+            }
             SensorSettingType.LIST_BLUETOOTH ->
                 BluetoothUtils.getBluetoothDevices(getApplication()).map { it.address }
             SensorSettingType.LIST_ZONES ->
@@ -375,21 +421,24 @@ class SensorDetailViewModel @Inject constructor(
         return when (setting.valueType) {
             SensorSettingType.LIST ->
                 getSettingTranslatedEntries(setting.name, entries ?: setting.entries)
-            SensorSettingType.LIST_APPS ->
-                entries ?: run {
-                    val apps = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        getApplication<Application>().packageManager
-                            ?.getInstalledApplications(PackageManager.ApplicationInfoFlags.of(PackageManager.GET_META_DATA.toLong()))
-                    } else {
-                        @Suppress("DEPRECATION")
-                        getApplication<Application>().packageManager
-                            ?.getInstalledApplications(PackageManager.GET_META_DATA)
+            SensorSettingType.LIST_APPS -> {
+                val packageManager = getApplication<Application>().packageManager
+                val apps = getApplicationInfoForEntries(entries)
+                apps
+                    .mapIndexed { index, info ->
+                        if (info == null) return@mapIndexed entries?.get(index) ?: ""
+                        val label = packageManager.getApplicationLabel(info)
+                        when {
+                            label.isBlank() ->
+                                info.packageName
+                            label != info.packageName ->
+                                if (entries?.isNotEmpty() == true) label.toString() else "$label\n(${info.packageName})"
+                            else ->
+                                label.toString()
+                        }
                     }
-                    apps
-                        ?.map { packageItem -> packageItem.packageName }
-                        ?.sorted()
-                        .orEmpty()
-                }
+                    .sortedBy { it.lowercase() }
+            }
             SensorSettingType.LIST_BLUETOOTH -> {
                 val devices = BluetoothUtils.getBluetoothDevices(getApplication())
                     .filter { entries == null || entries.contains(it.address) }
