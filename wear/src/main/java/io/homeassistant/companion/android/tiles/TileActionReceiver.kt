@@ -41,6 +41,7 @@ class TileActionReceiver : BroadcastReceiver() {
                         vibrator?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
                     } else {
                         val vibrator = context?.getSystemService<Vibrator>()
+                        @Suppress("DEPRECATION")
                         vibrator?.vibrate(200)
                     }
                 }

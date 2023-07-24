@@ -10,12 +10,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.rotary.onRotaryScrollEvent
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -34,7 +34,6 @@ import kotlinx.coroutines.launch
 import kotlin.math.sign
 import io.homeassistant.companion.android.common.R as R
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun RefreshIntervalPickerView(
     currentInterval: Int,
@@ -57,6 +56,7 @@ fun RefreshIntervalPickerView(
         ListHeader(R.string.refresh_interval)
         Picker(
             state = state,
+            contentDescription = stringResource(R.string.refresh_interval),
             modifier = Modifier
                 .weight(1f)
                 .padding(all = 8.dp)

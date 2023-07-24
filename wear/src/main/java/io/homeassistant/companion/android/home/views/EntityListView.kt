@@ -107,7 +107,7 @@ private fun PreviewEntityListView() {
         entityListsOrder = listOf(stringResource(commonR.string.lights)),
         entityListFilter = { true },
         onEntityClicked = { _, _ -> },
-        onEntityLongClicked = { _ -> },
+        onEntityLongClicked = { },
         isHapticEnabled = false,
         isToastEnabled = false
     )
@@ -121,7 +121,7 @@ private fun PreviewEntityListScenes() {
         entityListsOrder = listOf(stringResource(commonR.string.scenes)),
         entityListFilter = { true },
         onEntityClicked = { _, _ -> },
-        onEntityLongClicked = { _ -> },
+        onEntityLongClicked = { },
         isHapticEnabled = false,
         isToastEnabled = false
     )
