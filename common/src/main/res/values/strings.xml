@@ -129,7 +129,7 @@
     <string name="clear_favorites">Clear Favorites</string>
     <string name="clear_search">Clear search</string>
     <string name="close">Close</string>
-    <string name="color_temp">Color temperature: %1$d</string>
+    <string name="color_temp">Color temperature: %1$s</string>
     <string name="collapse">Collapse</string>
     <string name="complication_entity_invalid">Invalid entity</string>
     <string name="complication_entity_state_content_description">Entity state</string>
