@@ -742,6 +742,7 @@
     <string name="show_share_logs_summary">Sharing logs with the Home Assistant team will help to solve issues. Please share the logs only if you have been asked to do so by a Home Assistant developer</string>
     <string name="show_share_logs">Show and Share Logs</string>
     <string name="show_entity_title">Show entity name</string>
+    <string name="show_unit_title">Show entity unit</string>
     <string name="sign_in_on_phone">Sign in on phone</string>
     <string name="slider_decreased">%1$s decreased</string>
     <string name="slider_increased">%1$s increased</string>

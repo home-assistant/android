@@ -52,11 +52,13 @@ fun LoadConfigView(
                 MainConfigView(
                     entity = complicationConfigViewModel.selectedEntity,
                     showTitle = complicationConfigViewModel.entityShowTitle,
+                    showUnit = complicationConfigViewModel.entityShowUnit,
                     loadingState = complicationConfigViewModel.loadingState,
                     onChooseEntityClicked = {
                         swipeDismissableNavController.navigate(SCREEN_CHOOSE_ENTITY)
                     },
                     onShowTitleClicked = complicationConfigViewModel::setShowTitle,
+                    onShowUnitClicked = complicationConfigViewModel::setShowUnit,
                     onAcceptClicked = onAcceptClicked
                 )
             }
@@ -81,9 +83,11 @@ fun LoadConfigView(
 fun MainConfigView(
     entity: SimplifiedEntity?,
     showTitle: Boolean,
+    showUnit: Boolean,
     loadingState: ComplicationConfigViewModel.LoadingState,
     onChooseEntityClicked: () -> Unit,
     onShowTitleClicked: (Boolean) -> Unit,
+    onShowUnitClicked: (Boolean) -> Unit,
     onAcceptClicked: () -> Unit
 ) {
     ThemeLazyColumn {
@@ -145,6 +149,26 @@ fun MainConfigView(
                     enabled = loaded && entity != null
                 )
             }
+            item {
+                val isChecked = !loaded || showUnit
+                ToggleChip(
+                    checked = isChecked,
+                    onCheckedChange = onShowUnitClicked,
+                    label = { Text(stringResource(R.string.show_unit_title)) },
+                    toggleControl = {
+                        Icon(
+                            imageVector = ToggleChipDefaults.switchIcon(isChecked),
+                            contentDescription = if (isChecked) {
+                                stringResource(R.string.enabled)
+                            } else {
+                                stringResource(R.string.disabled)
+                            }
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = loaded && entity != null
+                )
+            }
 
             item {
                 Button(
@@ -172,9 +196,11 @@ fun PreviewMainConfigView() {
     MainConfigView(
         entity = simplifiedEntity,
         showTitle = true,
+        showUnit = true,
         loadingState = ComplicationConfigViewModel.LoadingState.READY,
         onChooseEntityClicked = {},
         onShowTitleClicked = {},
+        onShowUnitClicked = {},
         onAcceptClicked = {}
     )
 }

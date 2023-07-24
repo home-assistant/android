@@ -84,7 +84,7 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
             entity.friendlyState(
                 this,
                 entityOptions,
-                appendUnitOfMeasurement = true
+                appendUnitOfMeasurement = settings.showUnit
             )
         ).build()
 

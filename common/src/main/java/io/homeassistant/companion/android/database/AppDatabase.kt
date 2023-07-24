@@ -90,7 +90,7 @@ import io.homeassistant.companion.android.common.R as commonR
         Server::class,
         Setting::class
     ],
-    version = 41,
+    version = 42,
     autoMigrations = [
         AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
@@ -107,7 +107,8 @@ import io.homeassistant.companion.android.common.R as commonR
         AutoMigration(from = 36, to = 37, spec = AppDatabase.Companion.Migration36to37::class),
         AutoMigration(from = 37, to = 38, spec = AppDatabase.Companion.Migration37to38::class),
         AutoMigration(from = 38, to = 39),
-        AutoMigration(from = 39, to = 40)
+        AutoMigration(from = 39, to = 40),
+        AutoMigration(from = 41, to = 42)
     ]
 )
 @TypeConverters(
