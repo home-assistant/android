@@ -79,7 +79,15 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
         } else {
             null
         }
-        val text = PlainComplicationText.Builder(entity.friendlyState(this, entityOptions)).build()
+
+        val text = PlainComplicationText.Builder(
+            entity.friendlyState(
+                this,
+                entityOptions,
+                appendUnitOfMeasurement = settings.showUnit
+            )
+        ).build()
+
         val contentDescription = PlainComplicationText.Builder(getText(R.string.complication_entity_state_content_description)).build()
         val monochromaticImage = MonochromaticImage.Builder(Icon.createWithBitmap(iconBitmap)).build()
         val tapAction = ComplicationReceiver.getComplicationToggleIntent(this, request.complicationInstanceId)

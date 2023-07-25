@@ -15,5 +15,7 @@ data class EntityStateComplications(
     @ColumnInfo(name = "entity_id")
     val entityId: String,
     @ColumnInfo(name = "show_title", defaultValue = "1")
-    val showTitle: Boolean
+    val showTitle: Boolean,
+    @ColumnInfo(name = "show_unit", defaultValue = "0")
+    val showUnit: Boolean
 )
