@@ -49,7 +49,7 @@ fun getChangeServerGridItem(
                     carContext,
                     CommunityMaterial.Icon2.cmd_home_switch
                 ).apply {
-                    sizeDp = 48
+                    sizeDp = 64
                 }.toAndroidIconCompat()
             )
                 .setTint(CarColor.DEFAULT)
@@ -87,7 +87,7 @@ fun getNavigationGridItem(
                     carContext,
                     CommunityMaterial.Icon3.cmd_map_outline
                 ).apply {
-                    sizeDp = 48
+                    sizeDp = 64
                 }.toAndroidIconCompat()
             )
                 .setTint(CarColor.DEFAULT)
@@ -139,7 +139,7 @@ fun getDomainList(
                         CarIcon.Builder(
                             IconicsDrawable(carContext, icon)
                                 .apply {
-                                    sizeDp = 48
+                                    sizeDp = 64
                                 }.toAndroidIconCompat()
                         )
                             .setTint(CarColor.DEFAULT)
@@ -188,7 +188,7 @@ fun getDomainsGridItem(
                     carContext,
                     CommunityMaterial.Icon3.cmd_view_list
                 ).apply {
-                    sizeDp = 48
+                    sizeDp = 64
                 }.toAndroidIconCompat()
             )
                 .setTint(CarColor.DEFAULT)
