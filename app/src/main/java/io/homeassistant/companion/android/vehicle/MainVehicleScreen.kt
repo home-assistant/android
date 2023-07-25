@@ -109,6 +109,13 @@ class MainVehicleScreen(
     }
 
     override fun onGetTemplate(): Template {
+        if (isLoggedIn != true) {
+            return GridTemplate.Builder().apply {
+                setTitle(carContext.getString(commonR.string.app_name))
+                setHeaderAction(Action.APP_ICON)
+                setLoading(true)
+            }.build()
+        }
         val listBuilder = if (favoritesList.isNotEmpty()) {
             EntityGridVehicleScreen(
                 carContext,
