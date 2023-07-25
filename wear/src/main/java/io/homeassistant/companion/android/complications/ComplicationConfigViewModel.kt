@@ -58,7 +58,7 @@ class ComplicationConfigViewModel @Inject constructor(
         private set
     var entityShowTitle by mutableStateOf(true)
         private set
-    var entityShowUnit by mutableStateOf(false)
+    var entityShowUnit by mutableStateOf(true)
         private set
 
     init {

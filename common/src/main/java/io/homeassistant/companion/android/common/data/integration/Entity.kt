@@ -653,7 +653,7 @@ fun <T> Entity<T>.friendlyState(context: Context, options: EntityRegistryOptions
     if (appendUnitOfMeasurement) {
         val unit = (attributes as? Map<*, *>)?.get("unit_of_measurement")?.toString()
 
-        if (unit?.isNotEmpty() == true) {
+        if (unit?.isNotBlank() == true) {
             return "$friendlyState $unit"
         }
     }
