@@ -16,8 +16,8 @@ abstract class BaseVehicleScreen(
     companion object {
         private const val TAG = "BaseVehicle"
     }
-    var car: Car? = null
-    var carRestrictionManager: CarUxRestrictionsManager? = null
+    private var car: Car? = null
+    private var carRestrictionManager: CarUxRestrictionsManager? = null
     protected val isDrivingOptimized
         get() = car?.let {
             (
