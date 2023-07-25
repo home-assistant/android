@@ -1,12 +1,9 @@
 package io.homeassistant.companion.android.vehicle
 
-import android.car.Car
-import android.car.drivingstate.CarUxRestrictionsManager
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.car.app.CarContext
-import androidx.car.app.Screen
 import androidx.car.app.model.Action
 import androidx.car.app.model.GridTemplate
 import androidx.car.app.model.Template
@@ -32,9 +29,17 @@ class DomainListScreen(
     private val serverId: StateFlow<Int>,
     private val allEntities: Flow<Map<String, Entity<*>>>,
     private val prefsRepository: PrefsRepository
-) : Screen(carContext) {
+) : BaseVehicleScreen(carContext) {
+
+    companion object {
+        private const val TAG = "DomainList"
+    }
 
     private val domains = mutableSetOf<String>()
+
+    override fun onDrivingOptimizedChanged(newState: Boolean) {
+        invalidate()
+    }
 
     init {
         lifecycleScope.launch {
@@ -52,20 +57,9 @@ class DomainListScreen(
             }
         }
     }
+
     override fun onGetTemplate(): Template {
         val isAutomotive = carContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
-        val screen = MainVehicleScreen(
-            carContext,
-            serverManager,
-            serverId,
-            allEntities,
-            prefsRepository
-        ) { }
-        val isDrivingOptimized = screen.car?.let {
-            (
-                it.getCarManager(Car.CAR_UX_RESTRICTION_SERVICE) as CarUxRestrictionsManager
-                ).getCurrentCarUxRestrictions().isRequiresDistractionOptimization()
-        } ?: false
         val domainList = getDomainList(
             domains,
             carContext,

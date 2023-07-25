@@ -1,20 +1,14 @@
 package io.homeassistant.companion.android.vehicle
 
-import android.car.Car
-import android.car.drivingstate.CarUxRestrictionsManager
 import android.content.pm.PackageManager
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.car.app.CarContext
-import androidx.car.app.Screen
 import androidx.car.app.model.Action
 import androidx.car.app.model.GridTemplate
 import androidx.car.app.model.ItemList
 import androidx.car.app.model.Template
-import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import io.homeassistant.companion.android.BuildConfig
@@ -43,7 +37,7 @@ class MainVehicleScreen(
     private val allEntities: Flow<Map<String, Entity<*>>>,
     private val prefsRepository: PrefsRepository,
     private val onChangeServer: (Int) -> Unit
-) : Screen(carContext) {
+) : BaseVehicleScreen(carContext) {
 
     companion object {
         private const val TAG = "MainVehicleScreen"
@@ -74,14 +68,6 @@ class MainVehicleScreen(
     private var favoritesList = emptyList<String>()
     private var isLoggedIn: Boolean? = null
     private val domains = mutableSetOf<String>()
-    var car: Car? = null
-    var carRestrictionManager: CarUxRestrictionsManager? = null
-    private val isDrivingOptimized
-        get() = car?.let {
-            (
-                it.getCarManager(Car.CAR_UX_RESTRICTION_SERVICE) as CarUxRestrictionsManager
-                ).getCurrentCarUxRestrictions().isRequiresDistractionOptimization()
-        } ?: false
 
     private val isAutomotive get() = carContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
 
@@ -116,19 +102,10 @@ class MainVehicleScreen(
                 favoriteEntities = allEntities.map { getFavoritesList(it) }
             }
         }
+    }
 
-        lifecycle.addObserver(object : DefaultLifecycleObserver {
-
-            override fun onResume(owner: LifecycleOwner) {
-                registerAutomotiveRestrictionListener()
-            }
-
-            override fun onPause(owner: LifecycleOwner) {
-                carRestrictionManager?.unregisterListener()
-                car?.disconnect()
-                car = null
-            }
-        })
+    override fun onDrivingOptimizedChanged(newState: Boolean) {
+        invalidate()
     }
 
     override fun onGetTemplate(): Template {
@@ -193,20 +170,6 @@ class MainVehicleScreen(
                 setSingleList(listBuilder.build())
             }
         }.build()
-    }
-
-    fun registerAutomotiveRestrictionListener() {
-        if (carContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
-            Log.i(TAG, "Register for Automotive Restrictions")
-            car = Car.createCar(carContext)
-            carRestrictionManager =
-                car?.getCarManager(Car.CAR_UX_RESTRICTION_SERVICE) as CarUxRestrictionsManager
-            val listener =
-                CarUxRestrictionsManager.OnUxRestrictionsChangedListener { restrictions ->
-                    invalidate()
-                }
-            carRestrictionManager?.registerListener(listener)
-        }
     }
 
     private fun getFavoritesList(entities: Map<String, Entity<*>>): List<Entity<*>> {
