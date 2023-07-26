@@ -175,7 +175,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.8.22")
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.8.22")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.2")
 
     implementation("com.google.dagger:hilt-android:2.47")
