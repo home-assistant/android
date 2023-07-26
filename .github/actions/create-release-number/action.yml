@@ -22,6 +22,7 @@ runs:
         echo Number Tags $TAGS
         echo Version Code $VC
         echo "version-code=$VC" >> $GITHUB_OUTPUT
+        cp version.txt version_code.txt
         VERSION=`cat version.txt`
         echo Version $VERSION
         echo "version=$VERSION" >> $GITHUB_OUTPUT

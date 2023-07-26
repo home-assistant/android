@@ -10,6 +10,7 @@ build/
 *.keystore
 
 version.txt
+version_code.txt
 
 # Make sure our translation downloads don't make our repo dirty when building.
 strings.zip
