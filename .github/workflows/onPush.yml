@@ -64,6 +64,14 @@ jobs:
         with:
           path: ./**/*.apk
 
+      - name: Create Version File
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
+        run: |
+          echo $VERSION_CODE > ./app/build/outputs/version_code.txt
+
       - name: Create Github Pre-Release
         if: github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v0.1.15
@@ -75,10 +83,10 @@ jobs:
           files: |
             ./app/build/outputs/apk/full/release/app-full-release.apk
             ./app/build/outputs/apk/minimal/release/app-minimal-release.apk
+            ./app/build/outputs/version_code.txt
             ./wear/build/outputs/apk/release/wear-release.apk
             ./automotive/build/outputs/apk/full/release/automotive-full-release.apk
             ./automotive/build/outputs/apk/minimal/release/automotive-minimal-release.apk
-            ./version.txt
 
       - name: Deploy to Firebase
         env:
