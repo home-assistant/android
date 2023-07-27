@@ -58,8 +58,13 @@ class WearPrefsRepositoryImpl @Inject constructor(
         localStorage.getString(PREF_TILE_SHORTCUTS)?.let { jsonStr ->
             runCatching {
                 val jsonObject = JSONObject(jsonStr)
-                val jsonArray = jsonObject.getJSONArray(tileId.toString())
-                jsonArray.toStringList()
+                val key = tileId.toString()
+                if (jsonObject.has(key)) {
+                    val jsonArray = jsonObject.getJSONArray(key)
+                    jsonArray.toStringList()
+                } else {
+                    null
+                }
             }.recover {
                 // backwards compatibility with the previous format when there was only one Shortcut Tile:
                 val jsonArray = JSONArray(jsonStr)
