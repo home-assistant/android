@@ -200,7 +200,7 @@ class PrefsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getAutoFavorites(): List<String> {
-        return localStorage.getString(PREF_AUTO_FAVORITES)?.removeSurrounding("[", "]")?.split(", ") ?: emptyList()
+        return localStorage.getString(PREF_AUTO_FAVORITES)?.removeSurrounding("[", "]")?.split(", ")?.filter { it.isNotBlank() } ?: emptyList()
     }
 
     override suspend fun setAutoFavorites(favorites: List<String>) {
