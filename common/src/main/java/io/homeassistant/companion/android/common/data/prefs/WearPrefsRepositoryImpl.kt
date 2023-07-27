@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.common.data.prefs
 
-import android.util.Log
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.util.toStringList
 import kotlinx.coroutines.runBlocking
@@ -62,7 +61,6 @@ class WearPrefsRepositoryImpl @Inject constructor(
                 val jsonArray = jsonObject.getJSONArray(tileId.toString())
                 jsonArray.toStringList()
             }.recover {
-                Log.w("RUBBERDUCK", "getTileShortcuts recover; tileId = $tileId", it)
                 // backwards compatibility with the previous format when there was only one Shortcut Tile:
                 val jsonArray = JSONArray(jsonStr)
                 val entities = jsonArray.toStringList()
@@ -84,7 +82,6 @@ class WearPrefsRepositoryImpl @Inject constructor(
                     }
                 }
             }.recover {
-                Log.w("RUBBERDUCK", "getAllTileShortcuts recover", it)
                 // backwards compatibility with the previous format when there was only one Shortcut Tile:
                 val jsonArray = JSONArray(jsonStr)
                 val entities = jsonArray.toStringList()
