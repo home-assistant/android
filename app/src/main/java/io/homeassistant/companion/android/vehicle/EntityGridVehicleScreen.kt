@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.vehicle
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -23,6 +25,7 @@ import com.mikepenz.iconics.utils.toAndroidIconCompat
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.friendlyState
 import io.homeassistant.companion.android.common.data.integration.getIcon
@@ -160,8 +163,19 @@ class EntityGridVehicleScreen(
                 gridItem
                     .setOnClickListener {
                         Log.i(TAG, "${entity.entityId} clicked")
-                        lifecycleScope.launch {
-                            entity.onPressed(integrationRepository)
+                        if (entity.domain in MainVehicleScreen.MAP_DOMAINS) {
+                            val attrs = entity.attributes as Map<*, *>
+                            val lat = attrs["latitude"] as Double
+                            val lon = attrs["longitude"] as Double
+                            val intent = Intent(
+                                CarContext.ACTION_NAVIGATE,
+                                Uri.parse("geo:$lat,$lon")
+                            )
+                            carContext.startCarApp(intent)
+                        } else {
+                            lifecycleScope.launch {
+                                entity.onPressed(integrationRepository)
+                            }
                         }
                     }
                     .setImage(

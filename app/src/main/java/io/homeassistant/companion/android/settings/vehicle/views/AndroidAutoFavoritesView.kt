@@ -55,7 +55,14 @@ fun AndroidAutoFavoritesSettings(
             androidAutoViewModel.sortedEntities
                 .filter {
                     !favoriteEntities.contains("$selectedServer-${it.entityId}") &&
-                        (it.domain in MainVehicleScreen.SUPPORTED_DOMAINS)
+                        (
+                            it.domain in MainVehicleScreen.SUPPORTED_DOMAINS ||
+                                (
+                                    it.domain in MainVehicleScreen.MAP_DOMAINS &&
+                                        ((it.attributes as Map<*, *>)["latitude"] as Double? != null) &&
+                                        ((it.attributes as Map<*, *>)["longitude"] as Double? != null)
+                                    )
+                            )
                 }
                 .toList()
         }

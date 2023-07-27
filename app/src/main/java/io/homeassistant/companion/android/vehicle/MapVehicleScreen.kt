@@ -11,9 +11,9 @@ import androidx.car.app.constraints.ConstraintManager
 import androidx.car.app.model.Action
 import androidx.car.app.model.CarColor
 import androidx.car.app.model.CarIcon
+import androidx.car.app.model.GridItem
+import androidx.car.app.model.GridTemplate
 import androidx.car.app.model.ItemList
-import androidx.car.app.model.ListTemplate
-import androidx.car.app.model.Row
 import androidx.car.app.model.Template
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -27,6 +27,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.friendlyName
+import io.homeassistant.companion.android.common.data.integration.friendlyState
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
@@ -36,14 +37,14 @@ import io.homeassistant.companion.android.common.R as commonR
 class MapVehicleScreen(
     carContext: CarContext,
     val integrationRepository: IntegrationRepository,
-    val entitiesFlow: Flow<List<Entity<*>>>
+    private val entitiesFlow: Flow<List<Entity<*>>>
 ) : Screen(carContext) {
 
     companion object {
         private const val TAG = "MapVehicleScreen"
     }
 
-    var loading = true
+    private var loading = true
     var entities: Set<Entity<*>> = setOf()
 
     init {
@@ -75,8 +76,8 @@ class MapVehicleScreen(
 
     override fun onGetTemplate(): Template {
         val manager = carContext.getCarService(ConstraintManager::class.java)
-        val listLimit = manager.getContentLimit(ConstraintManager.CONTENT_LIMIT_TYPE_LIST)
-        val listBuilder = ItemList.Builder()
+        val gridLimit = manager.getContentLimit(ConstraintManager.CONTENT_LIMIT_TYPE_GRID)
+        val gridBuilder = ItemList.Builder()
         entities
             .map { // Null checks handled during collection
                 val attrs = it.attributes as Map<*, *>
@@ -86,19 +87,20 @@ class MapVehicleScreen(
             }
             .sortedBy { it.first.friendlyName }
             .forEachIndexed { index, pair ->
-                if (index >= listLimit) {
-                    Log.i(TAG, "List limit ($listLimit) reached, not adding any more navigation entities (${entities.size})")
+                if (index >= gridLimit) {
+                    Log.i(TAG, "Grid limit ($gridLimit) reached, not adding any more navigation entities (${entities.size})")
                     return@forEachIndexed
                 }
                 val icon = pair.first.getIcon(carContext) ?: CommunityMaterial.Icon.cmd_account
-                listBuilder.addItem(
-                    Row.Builder()
+                gridBuilder.addItem(
+                    GridItem.Builder()
                         .setTitle(pair.first.friendlyName)
+                        .setText(pair.first.friendlyState(carContext))
                         .setImage(
                             CarIcon.Builder(
                                 IconicsDrawable(carContext, icon)
                                     .apply {
-                                        sizeDp = 48
+                                        sizeDp = 64
                                     }.toAndroidIconCompat()
                             )
                                 .setTint(CarColor.DEFAULT)
@@ -116,15 +118,15 @@ class MapVehicleScreen(
                 )
             }
 
-        return ListTemplate.Builder().apply {
+        return GridTemplate.Builder().apply {
             setTitle(carContext.getString(R.string.aa_navigation))
             setHeaderAction(Action.BACK)
             if (loading) {
                 setLoading(true)
             } else {
                 setLoading(false)
-                listBuilder.setNoItemsMessage(carContext.getString(commonR.string.aa_no_entities_with_locations))
-                setSingleList(listBuilder.build())
+                gridBuilder.setNoItemsMessage(carContext.getString(commonR.string.aa_no_entities_with_locations))
+                setSingleList(gridBuilder.build())
             }
         }.build()
     }
