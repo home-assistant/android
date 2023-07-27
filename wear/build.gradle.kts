@@ -115,7 +115,7 @@ dependencies {
 
     implementation("androidx.activity:activity-ktx:1.7.2")
     implementation("androidx.activity:activity-compose:1.7.2")
-    implementation("androidx.compose.compiler:compiler:1.4.8")
+    implementation("androidx.compose.compiler:compiler:1.5.1")
     implementation(platform("androidx.compose:compose-bom:2023.06.01"))
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.ui:ui-tooling")
@@ -129,7 +129,7 @@ dependencies {
 
     implementation("androidx.wear.watchface:watchface-complications-data-source-ktx:1.1.1")
 
-    implementation("androidx.health:health-services-client:1.0.0-beta03")
+    implementation("androidx.health:health-services-client:1.0.0-rc01")
 
     implementation(platform("com.google.firebase:firebase-bom:32.1.0"))
     implementation("com.google.firebase:firebase-messaging")
