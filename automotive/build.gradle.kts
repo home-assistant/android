@@ -184,10 +184,10 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    implementation("androidx.recyclerview:recyclerview:1.3.0")
+    implementation("androidx.recyclerview:recyclerview:1.3.1")
     implementation("androidx.preference:preference-ktx:1.2.0")
     implementation("com.google.android.material:material:1.9.0")
-    implementation("androidx.fragment:fragment-ktx:1.6.0")
+    implementation("androidx.fragment:fragment-ktx:1.6.1")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.5")
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
@@ -216,7 +216,7 @@ dependencies {
 
     implementation(platform("androidx.compose:compose-bom:2023.06.01"))
     implementation("androidx.compose.animation:animation")
-    implementation("androidx.compose.compiler:compiler:1.4.8")
+    implementation("androidx.compose.compiler:compiler:1.5.1")
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.material:material")
     implementation("androidx.compose.material:material-icons-core")
