@@ -128,6 +128,7 @@ fun LoadHomePage(
                     },
                     onClearFavorites = { mainViewModel.clearFavorites() },
                     onClickSetShortcuts = {
+                        mainViewModel.loadShortcutTileEntities()
                         swipeDismissableNavController.navigate(
                             "$ROUTE_SHORTCUTS_TILE/$SCREEN_SELECT_SHORTCUTS_TILE"
                         )

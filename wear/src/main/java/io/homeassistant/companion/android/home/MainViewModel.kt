@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -85,7 +86,7 @@ class MainViewModel @Inject constructor(
     val favoriteEntityIds = favoritesDao.getAllFlow().collectAsState()
     private val favoriteCaches = favoriteCachesDao.getAll()
 
-    lateinit var shortcutEntitiesMap: MutableMap<Int?, MutableList<SimplifiedEntity>>
+    val shortcutEntitiesMap = mutableStateMapOf<Int?, SnapshotStateList<SimplifiedEntity>>()
 
     var areas = mutableListOf<AreaRegistryResponse>()
         private set
@@ -136,9 +137,7 @@ class MainViewModel @Inject constructor(
             if (!homePresenter.isConnected()) {
                 return@launch
             }
-            shortcutEntitiesMap = homePresenter.getAllTileShortcuts().mapValues { (_, entities) ->
-                entities.toMutableList()
-            }.toMutableMap()
+            loadShortcutTileEntities()
             isHapticEnabled.value = homePresenter.getWearHapticFeedback()
             isToastEnabled.value = homePresenter.getWearToastConfirmation()
             isShowShortcutTextEnabled.value = homePresenter.getShowShortcutText()
@@ -152,6 +151,16 @@ class MainViewModel @Inject constructor(
             )
             isAssistantAppAllowed =
                 app.packageManager.getComponentEnabledSetting(assistantAppComponent) != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+        }
+    }
+
+    fun loadShortcutTileEntities() {
+        viewModelScope.launch {
+            val map = homePresenter.getAllTileShortcuts().mapValues { (_, entities) ->
+                entities.toMutableStateList()
+            }
+            shortcutEntitiesMap.clear()
+            shortcutEntitiesMap.putAll(map)
         }
     }
 
