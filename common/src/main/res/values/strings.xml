@@ -739,9 +739,6 @@
     <string name="shortcuts_tile">Shortcuts tile</string>
     <string name="shortcut_tiles">Shortcut tiles</string>
     <string name="shortcuts_tile_n">Shortcuts tile #%d</string>
-    <string name="shortcuts_tile_1_title">Shortcuts #1</string>
-    <string name="shortcuts_tile_2_title">Shortcuts #2</string>
-    <string name="shortcuts_tile_3_title">Shortcuts #3</string>
     <string name="shortcuts_tile_select">Select shortcuts tile to manage</string>
     <string name="shortcuts_tile_description">Select up to 7 entities</string>
     <string name="shortcuts_tile_empty">Choose entities in settings</string>

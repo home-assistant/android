@@ -12,10 +12,9 @@ import androidx.wear.tiles.TileService
 import io.homeassistant.companion.android.common.sensors.id
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
-import io.homeassistant.companion.android.tiles.BaseShortcutsTile
+import io.homeassistant.companion.android.tiles.ShortcutsTile
 import io.homeassistant.companion.android.tiles.TemplateTile
 import io.homeassistant.companion.android.views.ChooseEntityView
-import io.homeassistant.companion.android.wear.tiles.ShortcutsTileId
 
 private const val ARG_SCREEN_SENSOR_MANAGER_ID = "sensorManagerId"
 private const val ARG_SCREEN_SHORTCUTS_TILE_ID = "shortcutsTileId"
@@ -165,13 +164,13 @@ fun LoadHomePage(
             composable("$ROUTE_SHORTCUTS_TILE/$SCREEN_SELECT_SHORTCUTS_TILE") {
                 SelectShortcutsTileView(
                     shortcutTileEntitiesCountById = mainViewModel.shortcutEntitiesMap.mapValues { (_, entities) -> entities.size },
-                    onSelectShortcutsTile = { shortcutsTileId ->
-                        swipeDismissableNavController.navigate("$ROUTE_SHORTCUTS_TILE/$shortcutsTileId/$SCREEN_SET_SHORTCUTS_TILE")
+                    onSelectShortcutsTile = { tileId ->
+                        swipeDismissableNavController.navigate("$ROUTE_SHORTCUTS_TILE/$tileId/$SCREEN_SET_SHORTCUTS_TILE")
                     },
                     isShowShortcutTextEnabled = mainViewModel.isShowShortcutTextEnabled.value,
                     onShowShortcutTextEnabled = {
                         mainViewModel.setShowShortcutTextEnabled(it)
-                        BaseShortcutsTile.requestUpdateForAllShortcutsTiles(context)
+                        ShortcutsTile.requestUpdate(context)
                     }
                 )
             }
@@ -183,14 +182,11 @@ fun LoadHomePage(
                     }
                 )
             ) { backStackEntry ->
-                val shortcutsTileId =
-                    backStackEntry.arguments!!.getString(ARG_SCREEN_SHORTCUTS_TILE_ID)!!.let {
-                        ShortcutsTileId.valueOf(it)
-                    }
+                val tileId = backStackEntry.arguments!!.getString(ARG_SCREEN_SHORTCUTS_TILE_ID)!!.toIntOrNull()
                 SetShortcutsTileView(
-                    shortcutEntities = mainViewModel.shortcutEntitiesMap[shortcutsTileId]!!,
+                    shortcutEntities = mainViewModel.shortcutEntitiesMap[tileId]!!,
                     onShortcutEntitySelectionChange = { entityIndex ->
-                        swipeDismissableNavController.navigate("$ROUTE_SHORTCUTS_TILE/$shortcutsTileId/$SCREEN_SHORTCUTS_TILE_CHOOSE_ENTITY/$entityIndex")
+                        swipeDismissableNavController.navigate("$ROUTE_SHORTCUTS_TILE/$tileId/$SCREEN_SHORTCUTS_TILE_CHOOSE_ENTITY/$entityIndex")
                     }
                 )
             }
@@ -206,22 +202,19 @@ fun LoadHomePage(
                 )
             ) { backStackEntry ->
                 val entityIndex = backStackEntry.arguments!!.getInt(ARG_SCREEN_SHORTCUTS_TILE_ENTITY_INDEX)
-                val shortcutsTileId =
-                    backStackEntry.arguments!!.getString(ARG_SCREEN_SHORTCUTS_TILE_ID)!!.let {
-                        ShortcutsTileId.valueOf(it)
-                    }
+                val tileId = backStackEntry.arguments!!.getString(ARG_SCREEN_SHORTCUTS_TILE_ID)!!.toIntOrNull()
                 ChooseEntityView(
                     entitiesByDomainOrder = mainViewModel.entitiesByDomainOrder,
                     entitiesByDomain = mainViewModel.entitiesByDomain,
                     favoriteEntityIds = mainViewModel.favoriteEntityIds,
                     onNoneClicked = {
-                        mainViewModel.clearTileShortcut(shortcutsTileId, entityIndex)
-                        BaseShortcutsTile.requestUpdate(shortcutsTileId, context)
+                        mainViewModel.clearTileShortcut(tileId, entityIndex)
+                        ShortcutsTile.requestUpdate(context)
                         swipeDismissableNavController.navigateUp()
                     },
                     onEntitySelected = { entity ->
-                        mainViewModel.setTileShortcut(shortcutsTileId, entityIndex, entity)
-                        BaseShortcutsTile.requestUpdate(shortcutsTileId, context)
+                        mainViewModel.setTileShortcut(tileId, entityIndex, entity)
+                        ShortcutsTile.requestUpdate(context)
                         swipeDismissableNavController.navigateUp()
                     }
                 )

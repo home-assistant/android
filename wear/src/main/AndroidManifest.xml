@@ -68,6 +68,7 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="com.google.android.clockwork.tiles.category.PROVIDER_CONFIG" />
             </intent-filter>
         </activity>
         <activity android:name=".onboarding.OnboardingActivity" />
@@ -112,7 +113,7 @@
         <!-- Tiles -->
         <service
             android:name=".tiles.ShortcutsTile"
-            android:label="@string/shortcuts_tile_1_title"
+            android:label="@string/shortcuts"
             android:description="@string/shortcuts_tile_description"
             android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER"
             android:exported="true">
@@ -122,32 +123,19 @@
 
             <meta-data android:name="androidx.wear.tiles.PREVIEW"
                 android:resource="@drawable/favorite_entities_tile_example" />
-        </service>
-        <service
-            android:name=".tiles.ShortcutsTile2"
-            android:label="@string/shortcuts_tile_2_title"
-            android:description="@string/shortcuts_tile_description"
-            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
-            </intent-filter>
 
-            <meta-data android:name="androidx.wear.tiles.PREVIEW"
-                android:resource="@drawable/favorite_entities_tile_example" />
-        </service>
-        <service
-            android:name=".tiles.ShortcutsTile3"
-            android:label="@string/shortcuts_tile_3_title"
-            android:description="@string/shortcuts_tile_description"
-            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
-            </intent-filter>
+            <meta-data
+                android:name="com.google.android.clockwork.tiles.MULTI_INSTANCES_SUPPORTED"
+                android:value="true" />
 
-            <meta-data android:name="androidx.wear.tiles.PREVIEW"
-                android:resource="@drawable/favorite_entities_tile_example" />
+            <meta-data
+                android:name="com.google.android.clockwork.tiles.PROVIDER_CONFIG_ACTION"
+                android:value="_" />
+            <!-- Having PROVIDER_CONFIG_ACTION here is required for the Shortcut Tile to show
+                 up in the Tile selector (tested on Wear OS 3.5), when there's already a Shortcut Tile added.
+                 In the future, if we want to pop up a configuration screen for a newly added Tile,
+                 we need to change "_" to something else, and also add it as an <intent-filter><action>...
+                 to an Activity in the Manifest -->
         </service>
         <service
             android:name=".tiles.TemplateTile"

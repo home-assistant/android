@@ -25,13 +25,12 @@ import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
-import io.homeassistant.companion.android.wear.tiles.ShortcutsTileId
 import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun SelectShortcutsTileView(
-    shortcutTileEntitiesCountById: Map<ShortcutsTileId, Int>,
-    onSelectShortcutsTile: (ShortcutsTileId) -> Unit,
+    shortcutTileEntitiesCountById: Map<Int?, Int>,
+    onSelectShortcutsTile: (tileId: Int?) -> Unit,
     isShowShortcutTextEnabled: Boolean,
     onShowShortcutTextEnabled: (Boolean) -> Unit
 ) {
@@ -83,7 +82,7 @@ fun SelectShortcutsTileView(
                 item {
                     ListHeader(id = commonR.string.shortcuts_tile_select)
                 }
-                itemsIndexed(ShortcutsTileId.values().toList()) { index, shortcutsTileId ->
+                itemsIndexed(shortcutTileEntitiesCountById.keys.toList()) { index, shortcutsTileId ->
                     Chip(
                         modifier = Modifier
                             .fillMaxWidth(),
@@ -116,9 +115,9 @@ fun SelectShortcutsTileView(
 private fun PreviewSelectShortcutsTileView() {
     SelectShortcutsTileView(
         shortcutTileEntitiesCountById = mapOf(
-            ShortcutsTileId.SHORTCUTS_TILE_1 to 7,
-            ShortcutsTileId.SHORTCUTS_TILE_2 to 1,
-            ShortcutsTileId.SHORTCUTS_TILE_3 to 0
+            null to 7,
+            1111 to 1,
+            2222 to 0
         ),
         onSelectShortcutsTile = {},
         isShowShortcutTextEnabled = true,

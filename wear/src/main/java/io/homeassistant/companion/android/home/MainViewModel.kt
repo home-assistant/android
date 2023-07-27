@@ -33,7 +33,6 @@ import io.homeassistant.companion.android.database.wear.getAllFlow
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.util.RegistriesDataHandler
 import io.homeassistant.companion.android.util.throttleLatest
-import io.homeassistant.companion.android.wear.tiles.ShortcutsTileId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
@@ -86,7 +85,7 @@ class MainViewModel @Inject constructor(
     val favoriteEntityIds = favoritesDao.getAllFlow().collectAsState()
     private val favoriteCaches = favoriteCachesDao.getAll()
 
-    lateinit var shortcutEntitiesMap: MutableMap<ShortcutsTileId, MutableList<SimplifiedEntity>>
+    lateinit var shortcutEntitiesMap: MutableMap<Int?, MutableList<SimplifiedEntity>>
 
     var areas = mutableListOf<AreaRegistryResponse>()
         private set
@@ -404,24 +403,24 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun setTileShortcut(id: ShortcutsTileId, index: Int, entity: SimplifiedEntity) {
+    fun setTileShortcut(tileId: Int?, index: Int, entity: SimplifiedEntity) {
         viewModelScope.launch {
-            val shortcutEntities = shortcutEntitiesMap[id]!!
+            val shortcutEntities = shortcutEntitiesMap[tileId]!!
             if (index < shortcutEntities.size) {
                 shortcutEntities[index] = entity
             } else {
                 shortcutEntities.add(entity)
             }
-            homePresenter.setTileShortcuts(id, entities = shortcutEntities)
+            homePresenter.setTileShortcuts(tileId, entities = shortcutEntities)
         }
     }
 
-    fun clearTileShortcut(id: ShortcutsTileId, index: Int) {
+    fun clearTileShortcut(tileId: Int?, index: Int) {
         viewModelScope.launch {
-            val shortcutEntities = shortcutEntitiesMap[id]!!
+            val shortcutEntities = shortcutEntitiesMap[tileId]!!
             if (index < shortcutEntities.size) {
                 shortcutEntities.removeAt(index)
-                homePresenter.setTileShortcuts(id, entities = shortcutEntities)
+                homePresenter.setTileShortcuts(tileId, entities = shortcutEntities)
             }
         }
     }
