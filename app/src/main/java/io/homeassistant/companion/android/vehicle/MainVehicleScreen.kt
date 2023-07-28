@@ -17,6 +17,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.util.vehicle.SUPPORTED_DOMAINS
 import io.homeassistant.companion.android.util.vehicle.getChangeServerGridItem
@@ -45,6 +46,7 @@ class MainVehicleScreen(
     }
 
     private var favoritesEntities: List<Entity<*>> = listOf()
+    private var entityRegistry: List<EntityRegistryResponse>? = null
     private var favoritesList = emptyList<String>()
     private var isLoggedIn: Boolean? = null
     private val domains = mutableSetOf<String>()
@@ -66,6 +68,7 @@ class MainVehicleScreen(
                         .getSessionState() == SessionState.CONNECTED
                     invalidate()
                 }
+                entityRegistry = serverManager.webSocketRepository(serverId.value).getEntityRegistry()
                 allEntities.collect { entities ->
                     val newDomains = entities.values
                         .map { it.domain }
@@ -112,6 +115,7 @@ class MainVehicleScreen(
                 prefsRepository,
                 serverManager.integrationRepository(serverId.value),
                 carContext.getString(commonR.string.favorites),
+                entityRegistry,
                 domains,
                 flowOf(),
                 allEntities
@@ -126,7 +130,9 @@ class MainVehicleScreen(
                     serverManager,
                     serverId,
                     prefsRepository,
-                    allEntities
+                    allEntities,
+                    entityRegistry,
+                    lifecycleScope
                 )
             }
 
