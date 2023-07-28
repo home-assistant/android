@@ -46,7 +46,7 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.4.8"
+        kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
     }
 
     kotlinOptions {
@@ -207,7 +207,7 @@ dependencies {
     implementation(libs.reorderable)
     implementation(libs.changeLog)
 
-    implementation(libs.app)
+    implementation(libs.app.car)
     "fullImplementation"(libs.app.projected)
 }
 
