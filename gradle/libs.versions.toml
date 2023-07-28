@@ -142,10 +142,10 @@ lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", v
 reorderable = { module = "org.burnoutcrew.composereorderable:reorderable", version.ref = "reorderable" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 wear = { module = "androidx.wear:wear", version.ref = "wear" }
-wear-androidx-tiles-material = { module = "androidx.wear.tiles:tiles-material", version.ref = "wear-tiles" }
-wear-androidx-tiles = { module = "androidx.wear.tiles:tiles", version.ref = "wear-tiles" }
 wear-phone-interactions = { module = "androidx.wear:wear-phone-interactions", version.ref = "wearPhoneInteractions" }
 wear-input = { module = "androidx.wear:wear-input", version.ref = "wearInput" }
+wear-tiles-material = { module = "androidx.wear.tiles:tiles-material", version.ref = "wear-tiles" }
+wear-tiles = { module = "androidx.wear.tiles:tiles", version.ref = "wear-tiles" }
 webkit = { module = "androidx.webkit:webkit", version.ref = "webkit" }
 wear-remote-interactions = { module = "androidx.wear:wear-remote-interactions", version.ref = "wear-remote-interactions" }
 sentry-android = { module = "io.sentry:sentry-android", version.ref = "sentry-android" }
