@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.home.views
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -86,12 +85,6 @@ fun SelectShortcutsTileView(
                     Chip(
                         modifier = Modifier
                             .fillMaxWidth(),
-                        icon = {
-                            Image(
-                                CommunityMaterial.Icon.cmd_bookmark,
-                                colorFilter = ColorFilter.tint(Color.White)
-                            )
-                        },
                         label = {
                             Text(stringResource(commonR.string.shortcuts_tile_n, index + 1))
                         },
