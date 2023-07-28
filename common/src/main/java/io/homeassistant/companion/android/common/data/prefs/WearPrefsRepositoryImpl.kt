@@ -109,9 +109,9 @@ class WearPrefsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun removeTileShortcuts(tileId: Int) {
-        val asd = getAllTileShortcuts().toMutableMap()
-        asd.remove(tileId)
-        setTileShortcuts(asd)
+        val tileShortcutsMap = getAllTileShortcuts().toMutableMap()
+        tileShortcutsMap.remove(tileId)
+        setTileShortcuts(tileShortcutsMap)
     }
 
     override suspend fun getTemplateTileContent(): String {
