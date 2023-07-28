@@ -63,7 +63,7 @@ class WearPrefsRepositoryImpl @Inject constructor(
                     val jsonArray = jsonObject.getJSONArray(key)
                     jsonArray.toStringList()
                 } else {
-                    null
+                    emptyList()
                 }
             }.recover {
                 // backwards compatibility with the previous format when there was only one Shortcut Tile:
