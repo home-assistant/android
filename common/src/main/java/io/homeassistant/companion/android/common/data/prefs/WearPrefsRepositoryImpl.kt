@@ -80,7 +80,7 @@ class WearPrefsRepositoryImpl @Inject constructor(
                 val jsonObject = JSONObject(jsonStr)
                 buildMap {
                     jsonObject.keys().forEach { key ->
-                        val intKey = key.toInt()
+                        val intKey = key.toIntOrNull()
                         val jsonArray = jsonObject.getJSONArray(key)
                         val entities = jsonArray.toStringList()
                         put(intKey, entities)
