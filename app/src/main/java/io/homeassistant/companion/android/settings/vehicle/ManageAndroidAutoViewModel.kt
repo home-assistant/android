@@ -45,7 +45,14 @@ class ManageAndroidAutoViewModel @Inject constructor(
                 async {
                     entities[it.id] = try {
                         serverManager.integrationRepository(it.id).getEntities().orEmpty()
-                            .filter { it.domain in MainVehicleScreen.SUPPORTED_DOMAINS }
+                            .filter {
+                                it.domain in MainVehicleScreen.SUPPORTED_DOMAINS ||
+                                    (
+                                        it.domain in MainVehicleScreen.MAP_DOMAINS &&
+                                            ((it.attributes as? Map<*, *>)?.get("latitude") as? Double != null) &&
+                                            ((it.attributes as? Map<*, *>)?.get("longitude") as? Double != null)
+                                        )
+                            }
                     } catch (e: Exception) {
                         Log.e(TAG, "Couldn't load entities for server", e)
                         emptyList()
