@@ -185,7 +185,7 @@ fun LoadHomePage(
             ) { backStackEntry ->
                 val tileId = backStackEntry.arguments!!.getString(ARG_SCREEN_SHORTCUTS_TILE_ID)!!.toIntOrNull()
                 SetShortcutsTileView(
-                    shortcutEntities = mainViewModel.shortcutEntitiesMap[tileId]!!,
+                    shortcutEntities = mainViewModel.shortcutEntitiesMap[tileId] ?: emptyList(),
                     onShortcutEntitySelectionChange = { entityIndex ->
                         swipeDismissableNavController.navigate("$ROUTE_SHORTCUTS_TILE/$tileId/$SCREEN_SHORTCUTS_TILE_CHOOSE_ENTITY/$entityIndex")
                     }
