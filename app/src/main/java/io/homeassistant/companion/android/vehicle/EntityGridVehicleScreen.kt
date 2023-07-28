@@ -160,28 +160,40 @@ class EntityGridVehicleScreen(
             if (entity.isExecuting()) {
                 gridItem.setLoading(entity.isExecuting())
             } else {
-                gridItem
-                    .setOnClickListener {
-                        Log.i(TAG, "${entity.entityId} clicked")
-                        if (entity.domain in MainVehicleScreen.MAP_DOMAINS) {
-                            val attrs = entity.attributes as? Map<*, *>
-                            if (attrs != null) {
-                                val lat = attrs["latitude"] as? Double
-                                val lon = attrs["longitude"] as? Double
-                                if (lat != null && lon != null) {
-                                    val intent = Intent(
-                                        CarContext.ACTION_NAVIGATE,
-                                        Uri.parse("geo:$lat,$lon")
-                                    )
-                                    carContext.startCarApp(intent)
+                if (entity.domain !in MainVehicleScreen.NOT_ACTIONABLE_DOMAINS) {
+                    gridItem
+                        .setOnClickListener {
+                            Log.i(TAG, "${entity.entityId} clicked")
+                            when (entity.domain) {
+                                in MainVehicleScreen.MAP_DOMAINS -> {
+                                    val attrs = entity.attributes as? Map<*, *>
+                                    if (attrs != null) {
+                                        val lat = attrs["latitude"] as? Double
+                                        val lon = attrs["longitude"] as? Double
+                                        if (lat != null && lon != null) {
+                                            val intent = Intent(
+                                                CarContext.ACTION_NAVIGATE,
+                                                Uri.parse("geo:$lat,$lon")
+                                            )
+                                            carContext.startCarApp(intent)
+                                        }
+                                    }
+                                }
+
+                                in MainVehicleScreen.SUPPORTED_DOMAINS -> {
+                                    lifecycleScope.launch {
+                                        entity.onPressed(integrationRepository)
+                                    }
+                                }
+
+                                else -> {
+                                    // No op
                                 }
                             }
-                        } else {
-                            lifecycleScope.launch {
-                                entity.onPressed(integrationRepository)
-                            }
                         }
-                    }
+                }
+
+                gridItem
                     .setImage(
                         CarIcon.Builder(
                             IconicsDrawable(carContext, icon).apply {

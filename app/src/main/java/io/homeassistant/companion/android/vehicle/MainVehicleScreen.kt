@@ -62,6 +62,11 @@ class MainVehicleScreen(
             "sensor",
             "zone"
         )
+
+        val NOT_ACTIONABLE_DOMAINS = listOf(
+            "binary_sensor",
+            "sensor"
+        )
     }
 
     private var favoriteEntities = flowOf<List<Entity<*>>>()
