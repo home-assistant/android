@@ -17,7 +17,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.sensors.SensorUpdateReceiver
+import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.util.vehicle.getChangeServerGridItem
 import io.homeassistant.companion.android.util.vehicle.getDomainList
 import io.homeassistant.companion.android.util.vehicle.getNavigationGridItem
@@ -105,7 +105,7 @@ class MainVehicleScreen(
         }
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                SensorUpdateReceiver.updateSensors(carContext)
+                SensorReceiver.updateAllSensors(carContext)
             }
         }
     }
