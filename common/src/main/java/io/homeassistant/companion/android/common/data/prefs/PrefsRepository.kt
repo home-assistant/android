@@ -70,4 +70,7 @@ interface PrefsRepository {
     suspend fun getAutoFavorites(): List<String>
 
     suspend fun setAutoFavorites(favorites: List<String>)
+
+    /** Clean up any app-level preferences that might reference servers */
+    suspend fun removeServer(serverId: Int)
 }

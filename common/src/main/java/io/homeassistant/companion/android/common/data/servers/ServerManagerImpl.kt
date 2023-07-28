@@ -5,6 +5,7 @@ import io.homeassistant.companion.android.common.data.authentication.Authenticat
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepositoryFactory
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepositoryFactory
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager.Companion.SERVER_ID_ACTIVE
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepositoryFactory
@@ -30,6 +31,7 @@ class ServerManagerImpl @Inject constructor(
     private val authenticationRepositoryFactory: AuthenticationRepositoryFactory,
     private val integrationRepositoryFactory: IntegrationRepositoryFactory,
     private val webSocketRepositoryFactory: WebSocketRepositoryFactory,
+    private val prefsRepository: PrefsRepository,
     private val serverDao: ServerDao,
     private val sensorDao: SensorDao,
     private val settingsDao: SettingsDao,
@@ -144,6 +146,7 @@ class ServerManagerImpl @Inject constructor(
     override suspend fun removeServer(id: Int) {
         authenticationRepository(id).deletePreferences()
         integrationRepository(id).deletePreferences()
+        prefsRepository.removeServer(id)
         removeServerFromManager(id)
         if (localStorage.getInt(PREF_ACTIVE_SERVER) == id) localStorage.remove(PREF_ACTIVE_SERVER)
         settingsDao.delete(id)
@@ -155,6 +158,7 @@ class ServerManagerImpl @Inject constructor(
         if (_servers[id]?.type == ServerType.TEMPORARY) {
             authenticationRepository(id).deletePreferences()
             integrationRepository(id).deletePreferences()
+            prefsRepository.removeServer(id)
         } // else handled in removeServer
         authenticationRepos.remove(id)
         integrationRepos.remove(id)
