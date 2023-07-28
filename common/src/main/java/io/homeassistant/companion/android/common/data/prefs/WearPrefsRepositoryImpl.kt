@@ -69,6 +69,7 @@ class WearPrefsRepositoryImpl @Inject constructor(
                 // backwards compatibility with the previous format when there was only one Shortcut Tile:
                 val jsonArray = JSONArray(jsonStr)
                 val entities = jsonArray.toStringList()
+                // now that we have the tileId of the current single Tile, let's save it:
                 setTileShortcuts(mapOf(tileId to entities))
                 entities
             }.getOrNull()
