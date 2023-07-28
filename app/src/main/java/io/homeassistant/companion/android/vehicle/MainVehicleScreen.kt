@@ -122,7 +122,8 @@ class MainVehicleScreen(
                 setLoading(true)
             }.build()
         }
-        val listBuilder = if (favoritesList.isNotEmpty()) {
+        val serverHasFavorites = favoritesList.any { it.split("-")[0].toIntOrNull() == serverId.value }
+        val listBuilder = if (serverHasFavorites) {
             EntityGridVehicleScreen(
                 carContext,
                 serverManager,
