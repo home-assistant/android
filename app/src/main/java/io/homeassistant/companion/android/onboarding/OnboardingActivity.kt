@@ -43,6 +43,7 @@ class OnboardingActivity : BaseActivity() {
             false
         }
         viewModel.deviceIsWatch = input.isWatch
+        viewModel.discoveryOptions = input.discoveryOptions
 
         if (savedInstanceState == null) {
             supportFragmentManager.commit {

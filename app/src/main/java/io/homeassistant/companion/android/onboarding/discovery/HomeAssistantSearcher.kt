@@ -6,6 +6,7 @@ import android.net.wifi.WifiManager
 import android.util.Log
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
+import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import okio.internal.commonToUtf8String
 import java.net.URL
 import java.util.concurrent.locks.ReentrantLock
@@ -29,7 +30,7 @@ class HomeAssistantSearcher constructor(
 
     private var multicastLock: WifiManager.MulticastLock? = null
 
-    fun beginSearch() {
+    private fun beginSearch() {
         if (isSearching) {
             return
         }
@@ -93,13 +94,14 @@ class HomeAssistantSearcher constructor(
                     Log.i(TAG, "Service resolved: $resolvedService")
                     resolvedService?.let {
                         val baseUrl = it.attributes["base_url"]
-                        val version = it.attributes["version"]
+                        val versionAttr = it.attributes["version"]
+                        val version = versionAttr?.let { ver -> HomeAssistantVersion.fromString(ver.commonToUtf8String()) }
                         if (baseUrl != null && version != null) {
                             onInstanceFound(
                                 HomeAssistantInstance(
                                     it.serviceName,
                                     URL(baseUrl.commonToUtf8String()),
-                                    version.commonToUtf8String()
+                                    version
                                 )
                             )
                         }

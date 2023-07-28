@@ -136,7 +136,10 @@ class SettingsFragment(
         findPreference<Preference>("server_add")?.let {
             it.setOnPreferenceClickListener {
                 requestOnboardingResult.launch(
-                    OnboardApp.Input(url = "") // Empty url skips the 'Welcome' screen
+                    OnboardApp.Input(
+                        url = "", // Empty url skips the 'Welcome' screen
+                        discoveryOptions = OnboardApp.DiscoveryOptions.HIDE_EXISTING
+                    )
                 )
                 return@setOnPreferenceClickListener true
             }
