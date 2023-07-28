@@ -84,6 +84,17 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".tiles.OpenShortcutTileSettingsActivity"
+            android:exported="true"
+            android:excludeFromRecents="true">
+            <intent-filter>
+                <action android:name="ConfigShortcutsTile" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="com.google.android.clockwork.tiles.category.PROVIDER_CONFIG" />
+            </intent-filter>
+        </activity>
+
         <!-- To show confirmations and failures -->
         <activity android:name="androidx.wear.activity.ConfirmationActivity" />
 
@@ -130,12 +141,11 @@
 
             <meta-data
                 android:name="com.google.android.clockwork.tiles.PROVIDER_CONFIG_ACTION"
-                android:value="_" />
-            <!-- Having PROVIDER_CONFIG_ACTION here is required for the Shortcut Tile to show
+                android:value="ConfigShortcutsTile" />
+            <!--
+                 Having PROVIDER_CONFIG_ACTION here is required for the Shortcut Tile to show
                  up in the Tile selector (tested on Wear OS 3.5), when there's already a Shortcut Tile added.
-                 In the future, if we want to pop up a configuration screen for a newly added Tile,
-                 we need to change "_" to something else, and also add it as an <intent-filter><action>...
-                 to an Activity in the Manifest -->
+            -->
         </service>
         <service
             android:name=".tiles.TemplateTile"
