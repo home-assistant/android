@@ -164,14 +164,18 @@ class EntityGridVehicleScreen(
                     .setOnClickListener {
                         Log.i(TAG, "${entity.entityId} clicked")
                         if (entity.domain in MainVehicleScreen.MAP_DOMAINS) {
-                            val attrs = entity.attributes as Map<*, *>
-                            val lat = attrs["latitude"] as Double
-                            val lon = attrs["longitude"] as Double
-                            val intent = Intent(
-                                CarContext.ACTION_NAVIGATE,
-                                Uri.parse("geo:$lat,$lon")
-                            )
-                            carContext.startCarApp(intent)
+                            val attrs = entity.attributes as? Map<*, *>
+                            if (attrs != null) {
+                                val lat = attrs["latitude"] as? Double
+                                val lon = attrs["longitude"] as? Double
+                                if (lat != null && lon != null) {
+                                    val intent = Intent(
+                                        CarContext.ACTION_NAVIGATE,
+                                        Uri.parse("geo:$lat,$lon")
+                                    )
+                                    carContext.startCarApp(intent)
+                                }
+                            }
                         } else {
                             lifecycleScope.launch {
                                 entity.onPressed(integrationRepository)
