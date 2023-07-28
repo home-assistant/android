@@ -206,4 +206,12 @@ class PrefsRepositoryImpl @Inject constructor(
     override suspend fun setAutoFavorites(favorites: List<String>) {
         localStorage.putString(PREF_AUTO_FAVORITES, favorites.toString())
     }
+
+    override suspend fun removeServer(serverId: Int) {
+        val controlsAuthEntities = getControlsAuthEntities().filter { it.split(".")[0].toIntOrNull() != serverId }
+        setControlsAuthEntities(controlsAuthEntities)
+
+        val autoFavorites = getAutoFavorites().filter { it.split("-")[0].toIntOrNull() != serverId }
+        setAutoFavorites(autoFavorites)
+    }
 }
