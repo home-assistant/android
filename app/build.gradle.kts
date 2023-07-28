@@ -187,11 +187,11 @@ dependencies {
 
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.animation)
-    implementation(libs.compiler)
+    implementation(libs.compose.compiler)
     implementation(libs.compose.foundation)
     implementation(libs.compose.material)
-    implementation(libs.compose.material.iconsCore)
-    implementation(libs.compose.material.iconsExtended)
+    implementation(libs.compose.material.icons.core)
+    implementation(libs.compose.material.icons.extended)
     implementation(libs.compose.runtime)
     implementation(libs.compose.ui)
     implementation(libs.compose.uiTooling)
@@ -207,8 +207,8 @@ dependencies {
     implementation(libs.reorderable)
     implementation(libs.changeLog)
 
-    implementation(libs.app.car)
-    "fullImplementation"(libs.app.projected)
+    implementation(libs.car.core)
+    "fullImplementation"(libs.car.projected)
 }
 
 // Disable to fix memory leak and be compatible with the configuration cache.

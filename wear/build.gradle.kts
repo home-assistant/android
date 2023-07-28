@@ -115,7 +115,7 @@ dependencies {
 
     implementation(libs.activity.ktx)
     implementation(libs.activity.compose)
-    implementation(libs.compiler)
+    implementation(libs.compose.compiler)
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.foundation)
     implementation(libs.compose.uiTooling)
@@ -124,8 +124,8 @@ dependencies {
     implementation(libs.androidx.compose.navigation)
 
     implementation(libs.guava)
-    implementation(libs.androidx.tiles)
-    implementation(libs.androidx.tiles.material)
+    implementation(libs.wear.androidx.tiles)
+    implementation(libs.wear.androidx.tiles.material)
 
     implementation(libs.androidx.watchface.complications.data.source.ktx)
 
