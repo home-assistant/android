@@ -33,6 +33,9 @@ import io.homeassistant.companion.android.common.data.integration.isExecuting
 import io.homeassistant.companion.android.common.data.integration.onPressed
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.util.vehicle.MAP_DOMAINS
+import io.homeassistant.companion.android.util.vehicle.NOT_ACTIONABLE_DOMAINS
+import io.homeassistant.companion.android.util.vehicle.SUPPORTED_DOMAINS
 import io.homeassistant.companion.android.util.vehicle.canNavigate
 import io.homeassistant.companion.android.util.vehicle.getChangeServerGridItem
 import io.homeassistant.companion.android.util.vehicle.getDomainList
@@ -161,12 +164,12 @@ class EntityGridVehicleScreen(
             if (entity.isExecuting()) {
                 gridItem.setLoading(entity.isExecuting())
             } else {
-                if (entity.domain !in MainVehicleScreen.NOT_ACTIONABLE_DOMAINS || canNavigate(entity)) {
+                if (entity.domain !in NOT_ACTIONABLE_DOMAINS || canNavigate(entity)) {
                     gridItem
                         .setOnClickListener {
                             Log.i(TAG, "${entity.entityId} clicked")
                             when (entity.domain) {
-                                in MainVehicleScreen.MAP_DOMAINS -> {
+                                in MAP_DOMAINS -> {
                                     val attrs = entity.attributes as? Map<*, *>
                                     if (attrs != null) {
                                         val lat = attrs["latitude"] as? Double
@@ -181,7 +184,7 @@ class EntityGridVehicleScreen(
                                     }
                                 }
 
-                                in MainVehicleScreen.SUPPORTED_DOMAINS -> {
+                                in SUPPORTED_DOMAINS -> {
                                     lifecycleScope.launch {
                                         entity.onPressed(integrationRepository)
                                     }

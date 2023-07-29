@@ -24,7 +24,6 @@ import io.homeassistant.companion.android.common.util.capitalize
 import io.homeassistant.companion.android.vehicle.ChangeServerScreen
 import io.homeassistant.companion.android.vehicle.DomainListScreen
 import io.homeassistant.companion.android.vehicle.EntityGridVehicleScreen
-import io.homeassistant.companion.android.vehicle.MainVehicleScreen
 import io.homeassistant.companion.android.vehicle.MapVehicleScreen
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -99,7 +98,7 @@ fun getNavigationGridItem(
                 MapVehicleScreen(
                     carContext,
                     integrationRepository,
-                    allEntities.map { it.values.filter { entity -> entity.domain in MainVehicleScreen.MAP_DOMAINS } }
+                    allEntities.map { it.values.filter { entity -> entity.domain in MAP_DOMAINS } }
                 )
             )
         }
@@ -119,7 +118,7 @@ fun getDomainList(
     val listBuilder = ItemList.Builder()
     domains.forEach { domain ->
         val friendlyDomain =
-            MainVehicleScreen.SUPPORTED_DOMAINS_WITH_STRING[domain]?.let { carContext.getString(it) }
+            SUPPORTED_DOMAINS_WITH_STRING[domain]?.let { carContext.getString(it) }
                 ?: domain.split("_").joinToString(" ") { word ->
                     word.capitalize(Locale.getDefault())
                 }

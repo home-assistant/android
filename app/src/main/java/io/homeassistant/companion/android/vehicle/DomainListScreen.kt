@@ -15,6 +15,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.util.vehicle.SUPPORTED_DOMAINS
 import io.homeassistant.companion.android.util.vehicle.getDomainList
 import io.homeassistant.companion.android.util.vehicle.nativeModeActionStrip
 import kotlinx.coroutines.flow.Flow
@@ -47,7 +48,7 @@ class DomainListScreen(
                 val newDomains = entities.values
                     .map { it.domain }
                     .distinct()
-                    .filter { it in MainVehicleScreen.SUPPORTED_DOMAINS }
+                    .filter { it in SUPPORTED_DOMAINS }
                     .toSet()
                 if (newDomains.size != domains.size || newDomains != domains) {
                     domains.clear()
