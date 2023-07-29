@@ -137,7 +137,6 @@ private fun ChooseEntityChip(
                 overflow = TextOverflow.Ellipsis
             )
         },
-        enabled = entity.state != "unavailable",
         onClick = {
             onEntitySelected(
                 SimplifiedEntity(
