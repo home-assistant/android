@@ -255,7 +255,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     }
 
     private val entityDropDownOnItemClick =
-        AdapterView.OnItemClickListener { parent, view, position, id ->
+        AdapterView.OnItemClickListener { parent, _, position, _ ->
             selectedEntity = parent.getItemAtPosition(position) as Entity<Any>?
             setupAttributes()
         }
@@ -326,7 +326,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             )
 
             if (appendAttributes) {
-                val attributes = if (selectedAttributeIds.isNullOrEmpty()) {
+                val attributes = if (selectedAttributeIds.isEmpty()) {
                     binding.widgetTextConfigAttribute.text.toString()
                 } else {
                     selectedAttributeIds

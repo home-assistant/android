@@ -127,9 +127,7 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             binding.backgroundType.setSelection(0)
         }
 
-        binding.templateText.doAfterTextChanged { editableText ->
-            renderTemplateText()
-        }
+        binding.templateText.doAfterTextChanged { renderTemplateText() }
 
         binding.backgroundType.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {

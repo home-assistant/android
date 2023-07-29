@@ -21,7 +21,7 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.wearColorPalette
-import io.homeassistant.companion.android.util.IntervalToString
+import io.homeassistant.companion.android.util.intervalToString
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
 
@@ -61,7 +61,7 @@ fun TemplateTileSettingsView(
                                 text = stringResource(id = R.string.refresh_interval)
                             )
                         },
-                        secondaryLabel = { Text(IntervalToString(LocalContext.current, refreshInterval)) },
+                        secondaryLabel = { Text(intervalToString(LocalContext.current, refreshInterval)) },
                         onClick = onClickRefreshInterval
                     )
                 }

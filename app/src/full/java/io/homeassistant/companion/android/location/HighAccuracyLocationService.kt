@@ -64,7 +64,7 @@ class HighAccuracyLocationService : Service() {
 
         fun updateNotificationAddress(context: Context, location: Location, geocodedAddress: String = "") {
             var locationReadable = geocodedAddress
-            if (locationReadable.isNullOrEmpty()) {
+            if (locationReadable.isEmpty()) {
                 locationReadable = getFormattedLocationInDegree(location.latitude, location.longitude)
             }
             locationReadable = "$locationReadable (~${location.accuracy}m)"

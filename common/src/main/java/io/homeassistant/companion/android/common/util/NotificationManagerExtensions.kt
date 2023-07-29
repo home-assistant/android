@@ -102,12 +102,12 @@ fun cancelNotificationGroupIfNeeded(
                         false
                     }
                 } else {
-                    if (isGroupSummary && groupNotifications.size != 1) {
+                    if (isGroupSummary) {
                         Log.d(
                             TAG,
                             "Notification is the group summary, but the group has more than or no notifications inside (" + groupNotifications.size + "). Cancel notification"
                         )
-                    } else if (!isGroupSummary && groupNotifications.size != 2) {
+                    } else {
                         Log.d(
                             TAG,
                             "Notification is in a group, but the group has more/less than 2 notifications inside (" + groupNotifications.size + "). Cancel notification"

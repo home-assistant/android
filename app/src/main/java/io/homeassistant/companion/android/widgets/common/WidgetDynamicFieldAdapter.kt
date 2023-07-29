@@ -21,11 +21,14 @@ class WidgetDynamicFieldAdapter(
     private val serviceFieldList: ArrayList<ServiceFieldBinder>
 ) : RecyclerView.Adapter<WidgetDynamicFieldAdapter.ViewHolder>() {
 
+    companion object {
+        private const val TAG = "WidgetField"
+    }
+
     class ViewHolder(
         val binding: WidgetButtonConfigureDynamicFieldBinding
     ) : RecyclerView.ViewHolder(binding.root)
 
-    private val TAG = "WidgetField"
     private val dropDownOnFocus = View.OnFocusChangeListener { view, hasFocus ->
         if (hasFocus && view is AutoCompleteTextView) {
             view.showDropDown()
@@ -179,7 +182,7 @@ class WidgetDynamicFieldAdapter(
 
             this.split(",").forEach { subString ->
                 // Ignore whitespace
-                if (!subString.isBlank()) {
+                if (subString.isNotBlank()) {
                     subString.trim().toJsonType()?.let { jsonArray.add(it) }
                 }
             }

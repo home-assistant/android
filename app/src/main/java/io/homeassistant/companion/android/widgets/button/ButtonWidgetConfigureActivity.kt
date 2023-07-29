@@ -13,7 +13,6 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
 import android.view.View
-import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
@@ -24,6 +23,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.core.graphics.toColorInt
+import androidx.core.view.isVisible
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -215,7 +215,6 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         }
 
         val buttonWidget = buttonWidgetDao.get(appWidgetId)
-        var serviceText = ""
 
         val backgroundTypeValues = mutableListOf(
             getString(commonR.string.widget_background_type_daynight),
@@ -227,7 +226,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         binding.backgroundType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
 
         if (buttonWidget != null) {
-            serviceText = "${buttonWidget.domain}.${buttonWidget.service}"
+            val serviceText = "${buttonWidget.domain}.${buttonWidget.service}"
             binding.widgetTextConfigService.setText(serviceText)
             binding.label.setText(buttonWidget.label)
 
@@ -241,7 +240,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                         backgroundTypeValues.indexOf(getString(commonR.string.widget_background_type_daynight))
                 }
             )
-            binding.textColor.visibility = if (buttonWidget.backgroundType == WidgetBackgroundType.TRANSPARENT) View.VISIBLE else View.GONE
+            binding.textColor.isVisible = buttonWidget.backgroundType == WidgetBackgroundType.TRANSPARENT
             binding.textColorWhite.isChecked =
                 buttonWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, android.R.color.white) } ?: true
             binding.textColorBlack.isChecked =
@@ -256,7 +255,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
         setupServerSelect(buttonWidget?.serverId)
 
-        serviceAdapter = SingleItemArrayAdapter<Service>(this) {
+        serviceAdapter = SingleItemArrayAdapter(this) {
             if (it != null) getServiceString(it) else ""
         }
         binding.widgetTextConfigService.setAdapter(serviceAdapter)
@@ -274,7 +273,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                     // Custom components can cause services to not load
                     // Display error text
                     Log.e(TAG, "Unable to load services from Home Assistant", e)
-                    if (server.id == selectedServerId) binding.widgetConfigServiceError.visibility = VISIBLE
+                    if (server.id == selectedServerId) binding.widgetConfigServiceError.visibility = View.VISIBLE
                 }
             }
             lifecycleScope.launch {
@@ -295,16 +294,11 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
         binding.backgroundType.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                binding.textColor.visibility =
-                    if (parent?.adapter?.getItem(position) == getString(commonR.string.widget_background_type_transparent)) {
-                        View.VISIBLE
-                    } else {
-                        View.GONE
-                    }
+                binding.textColor.isVisible = parent?.adapter?.getItem(position) == getString(commonR.string.widget_background_type_transparent)
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {
-                binding.textColor.visibility = View.GONE
+                binding.textColor.isVisible = false
             }
         }
 

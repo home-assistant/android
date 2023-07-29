@@ -48,8 +48,11 @@ class ManageShortcutsViewModel @Inject constructor(
     application: Application
 ) : AndroidViewModel(application) {
 
+    companion object {
+        private const val TAG = "ShortcutViewModel"
+    }
+
     val app = application
-    private val TAG = "ShortcutViewModel"
     private var shortcutManager = application.applicationContext.getSystemService<ShortcutManager>()!!
     val canPinShortcuts = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && shortcutManager.isRequestPinShortcutSupported
     var pinnedShortcuts = shortcutManager.pinnedShortcuts

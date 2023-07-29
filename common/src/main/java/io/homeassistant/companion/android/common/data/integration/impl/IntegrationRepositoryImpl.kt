@@ -29,9 +29,6 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.As
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEventType
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineIntentEnd
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
@@ -71,8 +68,6 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
         private const val APPLOCK_TIMEOUT_GRACE_MS = 1000
     }
-
-    private val ioScope = CoroutineScope(Dispatchers.IO + Job())
 
     private val server get() = serverManager.getServer(serverId)!!
 

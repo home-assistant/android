@@ -8,6 +8,7 @@ import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.widget.SearchView
 import androidx.core.text.HtmlCompat
+import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
@@ -170,15 +171,10 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
                 pref.setOnPreferenceClickListener {
                     val args = Bundle()
                     args.putSerializable(NotificationDetailFragment.ARG_NOTIF, item)
-                    parentFragmentManager
-                        .beginTransaction()
-                        .replace(
-                            R.id.content,
-                            NotificationDetailFragment::class.java,
-                            args
-                        )
-                        .addToBackStack("Notification Detail")
-                        .commit()
+                    parentFragmentManager.commit {
+                        replace(R.id.content, NotificationDetailFragment::class.java, args)
+                        addToBackStack("Notification Detail")
+                    }
                     return@setOnPreferenceClickListener true
                 }
 

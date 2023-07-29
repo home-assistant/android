@@ -180,7 +180,7 @@ class LogFragment : Fragment() {
                         // Lets exclude github app, because github doesn't support sharing text files (only images)
                         // Also no issue template will be used
                         val excludedComponents = getExcludedComponentsForPackageName(sendIntent, arrayOf("com.github.android"))
-                        if (excludedComponents.size > 0) {
+                        if (excludedComponents.size > 0 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                             putExtra(Intent.EXTRA_EXCLUDE_COMPONENTS, excludedComponents.toTypedArray())
                         }
                     }

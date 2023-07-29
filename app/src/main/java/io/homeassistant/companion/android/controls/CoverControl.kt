@@ -20,7 +20,7 @@ import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.R)
 object CoverControl : HaControl {
-    const val SUPPORT_SET_POSITION = 4
+    private const val SUPPORT_SET_POSITION = 4
     override fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,

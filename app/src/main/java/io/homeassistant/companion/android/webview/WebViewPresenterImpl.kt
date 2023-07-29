@@ -317,9 +317,9 @@ class WebViewPresenterImpl @Inject constructor(
         val m: Matcher = c.matcher(colorString)
         return if (m.matches()) {
             Color.rgb(
-                m.group(1).toInt(),
-                m.group(2).toInt(),
-                m.group(3).toInt()
+                m.group(1)!!.toInt(),
+                m.group(2)!!.toInt(),
+                m.group(3)!!.toInt()
             )
         } else {
             Color.parseColor(colorString)

@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.settings.sensor
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -111,6 +112,7 @@ class SensorDetailFragment : Fragment() {
         }
     }
 
+    @SuppressLint("InlinedApi")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 

@@ -13,11 +13,11 @@ import kotlin.math.abs
 // We need to keep track of (pointer) down, move, (pointer) up and cancel events to be able to detect flings
 // (or swipes) and send the direction + number of pointers for that fling to the app
 abstract class OnSwipeListener(context: Context?) : View.OnTouchListener {
-    var handler = Handler(Looper.getMainLooper())
+    private var handler = Handler(Looper.getMainLooper())
 
-    var velocityTracker: VelocityTracker? = null
-    var downEvent: MotionEvent? = null
-    var numberOfPointers = 0
+    private var velocityTracker: VelocityTracker? = null
+    private var downEvent: MotionEvent? = null
+    private var numberOfPointers = 0
 
     private var minimumFlingVelocity = 0
     private var maximumFlingVelocity = 0

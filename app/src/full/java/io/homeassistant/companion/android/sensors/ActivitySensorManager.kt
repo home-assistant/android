@@ -109,7 +109,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
                     activity,
                     probActivity,
                     getSensorIcon(probActivity),
-                    result.probableActivities.map { typeToString(it) to it.confidence }.toMap()
+                    result.probableActivities.associate { typeToString(it) to it.confidence }
                 )
             }
         }

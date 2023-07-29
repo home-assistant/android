@@ -9,7 +9,6 @@ import android.service.controls.actions.ControlAction
 import android.service.controls.templates.ControlButton
 import android.service.controls.templates.ToggleTemplate
 import androidx.annotation.RequiresApi
-import androidx.compose.ui.text.capitalize
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain

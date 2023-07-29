@@ -26,7 +26,7 @@ import io.homeassistant.companion.android.common.R as commonR
 class NotificationDetailFragment : Fragment() {
 
     companion object {
-        val ARG_NOTIF = "notification"
+        const val ARG_NOTIF = "notification"
     }
 
     @Inject
