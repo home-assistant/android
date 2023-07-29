@@ -54,8 +54,8 @@ class WearPrefsRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getTileShortcuts(tileId: Int): List<String> {
-        val tileIdToShortcutsMap = getAllTileShortcuts().toMutableMap()
+    override suspend fun getTileShortcutsAndSaveTileId(tileId: Int): List<String> {
+        val tileIdToShortcutsMap = getAllTileShortcuts()
         return if (null in tileIdToShortcutsMap && tileId !in tileIdToShortcutsMap) {
             // if there are shortcuts with an unknown (null) tileId key from a previous installation,
             // and the tileId parameter is not already present in the map, associate it with those shortcuts
@@ -63,7 +63,11 @@ class WearPrefsRepositoryImpl @Inject constructor(
             setTileShortcuts(tileId, entities)
             entities
         } else {
-            tileIdToShortcutsMap[tileId] ?: emptyList()
+            val entities = tileIdToShortcutsMap[tileId]
+            if (entities == null) {
+                setTileShortcuts(tileId, emptyList())
+            }
+            entities ?: emptyList()
         }
     }
 

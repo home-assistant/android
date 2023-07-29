@@ -166,7 +166,7 @@ class ShortcutsTile : TileService() {
     }
 
     private suspend fun getEntities(tileId: Int): List<SimplifiedEntity> {
-        return wearPrefsRepository.getTileShortcuts(tileId).map { SimplifiedEntity(it) }
+        return wearPrefsRepository.getTileShortcutsAndSaveTileId(tileId).map { SimplifiedEntity(it) }
     }
 
     private suspend fun timeline(tileId: Int): Timeline {

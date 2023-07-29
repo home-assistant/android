@@ -2,7 +2,7 @@ package io.homeassistant.companion.android.common.data.prefs
 
 interface WearPrefsRepository {
     suspend fun getAllTileShortcuts(): Map<Int?, List<String>>
-    suspend fun getTileShortcuts(tileId: Int): List<String>
+    suspend fun getTileShortcutsAndSaveTileId(tileId: Int): List<String>
     suspend fun setTileShortcuts(tileId: Int?, entities: List<String>)
     suspend fun removeTileShortcuts(tileId: Int?): List<String>?
     suspend fun getShowShortcutText(): Boolean

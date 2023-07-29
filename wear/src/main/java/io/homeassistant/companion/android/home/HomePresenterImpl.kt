@@ -242,7 +242,7 @@ class HomePresenterImpl @Inject constructor(
     }
 
     override suspend fun getTileShortcuts(tileId: Int): List<SimplifiedEntity> {
-        return wearPrefsRepository.getTileShortcuts(tileId).map { SimplifiedEntity(it) }
+        return wearPrefsRepository.getTileShortcutsAndSaveTileId(tileId).map { SimplifiedEntity(it) }
     }
 
     override suspend fun setTileShortcuts(tileId: Int?, entities: List<SimplifiedEntity>) {
