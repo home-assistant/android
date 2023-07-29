@@ -153,7 +153,7 @@ dependencies {
     kapt(libs.hilt.android.compiler)
 
     implementation(libs.appcompat)
-    implementation(libs.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.constraintlayout)
     implementation(libs.recyclerview)
     implementation(libs.preference.ktx)

@@ -12,7 +12,7 @@ changeLog = "3.4"
 community-material-typeface = "7.0.96.0-kotlin"
 compose-bom = "2023.06.01"
 compose-compiler = "1.4.8"
-composeFoundation = "1.1.2"
+constraintlayout = "2.1.4"
 converterJackson = "2.9.0"
 coreKtx = "1.10.1"
 cronet-embedded = "113.5672.61"
@@ -21,7 +21,6 @@ exoplayer = "2.19.0"
 firebase-bom = "32.2.0"
 firebaseAppdistributionGradle = "4.0.0"
 fragment-ktx = "1.6.1"
-constraintlayout = "2.1.4"
 googleServices = "4.3.15"
 guava = "32.1.1-android"
 healthServicesClient = "1.0.0-rc01"
@@ -31,32 +30,31 @@ jackson-module-kotlin = "2.13.5"
 kotlinx-coroutines = "1.7.2"
 kotlin = "1.8.22"
 ktlint = "11.5.0"
-lifecycleViewmodelKtx = "2.6.1"
+lifecycle = "2.6.1"
 loggingInterceptor = "4.11.0"
+material = "1.9.0"
 navigation-compose = "2.6.0"
 okhttp = "4.11.0"
-material = "1.9.0"
+picasso = "2.8"
 play-services-threadnetwork = "16.0.0"
 play-services-home = "16.0.0"
 play-services-location = "21.0.1"
-picasso = "2.8"
 play-services-wearable = "18.0.0"
 playPublisher = "3.8.4"
 preference-ktx = "1.2.0"
 recyclerview = "1.3.1"
-lifecycle-runtime-ktx = "2.6.1"
 reorderable = "0.9.6"
 retrofit = "2.9.0"
-roomKtx = "2.5.2"
-roomRuntime = "2.5.2"
+room = "2.5.2"
+sentry-android = "6.26.0"
 watchfaceComplicationsDataSourceKtx = "1.1.1"
 wear = "1.2.0"
+wear-compose-foundation = "1.1.2"
 wear-tiles = "1.1.0"
 wearPhoneInteractions = "1.0.1"
 wearInput = "1.2.0-alpha02"
 webkit = "1.7.0"
 wear-remote-interactions = "1.0.0"
-sentry-android = "6.26.0"
 workRuntimeKtx = "2.8.1"
 
 [plugins]
@@ -70,14 +68,12 @@ activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activ
 android-beacon-library = { module = "org.altbeacon:android-beacon-library", version.ref = "androidBeaconLibrary" }
 android-plugin = { module = "com.android.tools.build:gradle", version.ref = "androidPlugin" }
 android-junit5 = { module = "de.mannodermaus.gradle.plugins:android-junit5", version.ref = "androidJunit5" }
-androidx-compose-foundation = { module = "androidx.wear.compose:compose-foundation", version.ref = "composeFoundation" }
-androidx-compose-material = { module = "androidx.wear.compose:compose-material", version.ref = "composeFoundation" }
-androidx-compose-navigation = { module = "androidx.wear.compose:compose-navigation", version.ref = "composeFoundation" }
 androidx-health-services-client = { module = "androidx.health:health-services-client", version.ref = "healthServicesClient" }
-androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomRuntime" }
-androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomKtx" }
-androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
-androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtx" }
+androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
+androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
+androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
+androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
+androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
 androidx-watchface-complications-data-source-ktx = { module = "androidx.wear.watchface:watchface-complications-data-source-ktx", version.ref = "watchfaceComplicationsDataSourceKtx" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtx" }
 appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
@@ -138,14 +134,16 @@ picasso = { module = "com.squareup.picasso:picasso", version.ref = "picasso" }
 play-services-wearable = { module = "com.google.android.gms:play-services-wearable", version.ref = "play-services-wearable" }
 preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "preference-ktx" }
 recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "recyclerview" }
-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle-runtime-ktx" }
 reorderable = { module = "org.burnoutcrew.composereorderable:reorderable", version.ref = "reorderable" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
+sentry-android = { module = "io.sentry:sentry-android", version.ref = "sentry-android" }
 wear = { module = "androidx.wear:wear", version.ref = "wear" }
+wear-compose-foundation = { module = "androidx.wear.compose:compose-foundation", version.ref = "wear-compose-foundation" }
+wear-compose-material = { module = "androidx.wear.compose:compose-material", version.ref = "wear-compose-foundation" }
+wear-compose-navigation = { module = "androidx.wear.compose:compose-navigation", version.ref = "wear-compose-foundation" }
 wear-phone-interactions = { module = "androidx.wear:wear-phone-interactions", version.ref = "wearPhoneInteractions" }
 wear-input = { module = "androidx.wear:wear-input", version.ref = "wearInput" }
+wear-remote-interactions = { module = "androidx.wear:wear-remote-interactions", version.ref = "wear-remote-interactions" }
 wear-tiles-material = { module = "androidx.wear.tiles:tiles-material", version.ref = "wear-tiles" }
 wear-tiles = { module = "androidx.wear.tiles:tiles", version.ref = "wear-tiles" }
 webkit = { module = "androidx.webkit:webkit", version.ref = "webkit" }
-wear-remote-interactions = { module = "androidx.wear:wear-remote-interactions", version.ref = "wear-remote-interactions" }
-sentry-android = { module = "io.sentry:sentry-android", version.ref = "sentry-android" }

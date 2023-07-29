@@ -63,7 +63,7 @@ dependencies {
     kapt(libs.hilt.android.compiler)
 
     implementation(libs.appcompat)
-    implementation(libs.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
 
     api(libs.androidx.room.runtime)

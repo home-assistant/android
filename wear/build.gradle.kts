@@ -119,9 +119,9 @@ dependencies {
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.foundation)
     implementation(libs.compose.uiTooling)
-    implementation(libs.androidx.compose.foundation)
-    implementation(libs.androidx.compose.material)
-    implementation(libs.androidx.compose.navigation)
+    implementation(libs.wear.compose.foundation)
+    implementation(libs.wear.compose.material)
+    implementation(libs.wear.compose.navigation)
 
     implementation(libs.guava)
     implementation(libs.wear.tiles)
