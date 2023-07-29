@@ -1,0 +1,149 @@
+[versions]
+accompanist = "0.30.1"
+activity-compose = "1.7.2"
+androidBeaconLibrary = "2.19.6"
+androidJunit5 = "1.9.3.0"
+androidPlugin = "8.0.2"
+appcompat = "1.6.1"
+biometric = "1.1.0"
+blurView = "version-1.6.6"
+car-versions = "1.3.0-rc01"
+changeLog = "3.4"
+community-material-typeface = "7.0.96.0-kotlin"
+compose-bom = "2023.06.01"
+compose-compiler = "1.4.8"
+constraintlayout = "2.1.4"
+converterJackson = "2.9.0"
+coreKtx = "1.10.1"
+cronet-embedded = "113.5672.61"
+emojiJava = "5.1.1"
+exoplayer = "2.19.0"
+firebase-bom = "32.2.0"
+firebaseAppdistributionGradle = "4.0.0"
+fragment-ktx = "1.6.1"
+googleServices = "4.3.15"
+guava = "32.1.1-android"
+healthServicesClient = "1.0.0-rc01"
+hilt = "2.47"
+iconics = "5.4.0"
+jackson-module-kotlin = "2.13.5"
+kotlinx-coroutines = "1.7.2"
+kotlin = "1.8.22"
+ktlint = "11.5.0"
+lifecycle = "2.6.1"
+loggingInterceptor = "4.11.0"
+material = "1.9.0"
+navigation-compose = "2.6.0"
+okhttp = "4.11.0"
+picasso = "2.8"
+play-services-threadnetwork = "16.0.0"
+play-services-home = "16.0.0"
+play-services-location = "21.0.1"
+play-services-wearable = "18.0.0"
+playPublisher = "3.8.4"
+preference-ktx = "1.2.0"
+recyclerview = "1.3.1"
+reorderable = "0.9.6"
+retrofit = "2.9.0"
+room = "2.5.2"
+sentry-android = "6.26.0"
+watchfaceComplicationsDataSourceKtx = "1.1.1"
+wear = "1.2.0"
+wear-compose-foundation = "1.1.2"
+wear-tiles = "1.1.0"
+wearPhoneInteractions = "1.0.1"
+wearInput = "1.2.0-alpha02"
+webkit = "1.7.0"
+wear-remote-interactions = "1.0.0"
+workRuntimeKtx = "2.8.1"
+
+[plugins]
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
+
+[libraries]
+accompanist-themeadapter-material = { module = "com.google.accompanist:accompanist-themeadapter-material", version.ref = "accompanist" }
+accompanist-systemuicontroller = { module = "com.google.accompanist:accompanist-systemuicontroller", version.ref = "accompanist" }
+activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activity-compose" }
+activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activity-compose" }
+android-beacon-library = { module = "org.altbeacon:android-beacon-library", version.ref = "androidBeaconLibrary" }
+android-plugin = { module = "com.android.tools.build:gradle", version.ref = "androidPlugin" }
+android-junit5 = { module = "de.mannodermaus.gradle.plugins:android-junit5", version.ref = "androidJunit5" }
+androidx-health-services-client = { module = "androidx.health:health-services-client", version.ref = "healthServicesClient" }
+androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
+androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
+androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
+androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
+androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
+androidx-watchface-complications-data-source-ktx = { module = "androidx.wear.watchface:watchface-complications-data-source-ktx", version.ref = "watchfaceComplicationsDataSourceKtx" }
+androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtx" }
+appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
+biometric = { module = "androidx.biometric:biometric", version.ref = "biometric" }
+blurView = { module = "com.github.Dimezis:BlurView", version.ref = "blurView" }
+car-core = { module = "androidx.car.app:app", version.ref = "car-versions" }
+car-automotive = { module = "androidx.car.app:app-automotive", version.ref = "car-versions" }
+car-projected = { module = "androidx.car.app:app-projected", version.ref = "car-versions" }
+changeLog = { module = "com.github.AppDevNext:ChangeLog", version.ref = "changeLog" }
+community-material-typeface = { module = "com.mikepenz:community-material-typeface", version.ref = "community-material-typeface" }
+compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose-bom" }
+compose-animation = { module = "androidx.compose.animation:animation" }
+compose-foundation = { module = "androidx.compose.foundation:foundation" }
+compose-material = { module = "androidx.compose.material:material" }
+compose-material-icons-core = { module = "androidx.compose.material:material-icons-core" }
+compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
+compose-runtime = { module = "androidx.compose.runtime:runtime" }
+compose-ui = { module = "androidx.compose.ui:ui" }
+compose-uiTooling = { module = "androidx.compose.ui:ui-tooling" }
+compose-compiler = { module = "androidx.compose.compiler:compiler", version.ref = "compose-compiler" }
+converter-jackson = { module = "com.squareup.retrofit2:converter-jackson", version.ref = "converterJackson" }
+core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
+cronet-embedded = { module = "org.chromium.net:cronet-embedded", version.ref = "cronet-embedded" }
+emojiJava = { module = "com.vdurmont:emoji-java", version.ref = "emojiJava" }
+extension-cronet = { module = "com.google.android.exoplayer:extension-cronet", version.ref = "exoplayer" }
+exoplayer-ui = { module = "com.google.android.exoplayer:exoplayer-ui", version.ref = "exoplayer" }
+exoplayer-hls = { module = "com.google.android.exoplayer:exoplayer-hls", version.ref = "exoplayer" }
+exoplayer-core = { module = "com.google.android.exoplayer:exoplayer-core", version.ref = "exoplayer" }
+firebase-appdistribution-gradle = { module = "com.google.firebase:firebase-appdistribution-gradle", version.ref = "firebaseAppdistributionGradle" }
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
+firebase-messaging = { module = "com.google.firebase:firebase-messaging" }
+fragment-ktx = { module = "androidx.fragment:fragment-ktx", version.ref = "fragment-ktx" }
+constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "constraintlayout" }
+google-services = { module = "com.google.gms:google-services", version.ref = "googleServices" }
+guava = { module = "com.google.guava:guava", version.ref = "guava" }
+hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hilt" }
+hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
+hilt-android-gradle-plugin = { module = "com.google.dagger:hilt-android-gradle-plugin", version.ref = "hilt" }
+iconics-compose = { module = "com.mikepenz:iconics-compose", version.ref = "iconics" }
+iconics-core = { module = "com.mikepenz:iconics-core", version.ref = "iconics" }
+jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson-module-kotlin" }
+kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+kotlinx-coroutines-guava = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-guava", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
+logging-interceptor = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "loggingInterceptor" }
+navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation-compose" }
+okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+material = { module = "com.google.android.material:material", version.ref = "material" }
+play-publisher = { module = "com.github.triplet.gradle:play-publisher", version.ref = "playPublisher" }
+play-services-threadnetwork = { module = "com.google.android.gms:play-services-threadnetwork", version.ref = "play-services-threadnetwork" }
+play-services-home = { module = "com.google.android.gms:play-services-home", version.ref = "play-services-home" }
+play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "play-services-location" }
+picasso = { module = "com.squareup.picasso:picasso", version.ref = "picasso" }
+play-services-wearable = { module = "com.google.android.gms:play-services-wearable", version.ref = "play-services-wearable" }
+preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "preference-ktx" }
+recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "recyclerview" }
+reorderable = { module = "org.burnoutcrew.composereorderable:reorderable", version.ref = "reorderable" }
+retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
+sentry-android = { module = "io.sentry:sentry-android", version.ref = "sentry-android" }
+wear = { module = "androidx.wear:wear", version.ref = "wear" }
+wear-compose-foundation = { module = "androidx.wear.compose:compose-foundation", version.ref = "wear-compose-foundation" }
+wear-compose-material = { module = "androidx.wear.compose:compose-material", version.ref = "wear-compose-foundation" }
+wear-compose-navigation = { module = "androidx.wear.compose:compose-navigation", version.ref = "wear-compose-foundation" }
+wear-phone-interactions = { module = "androidx.wear:wear-phone-interactions", version.ref = "wearPhoneInteractions" }
+wear-input = { module = "androidx.wear:wear-input", version.ref = "wearInput" }
+wear-remote-interactions = { module = "androidx.wear:wear-remote-interactions", version.ref = "wear-remote-interactions" }
+wear-tiles-material = { module = "androidx.wear.tiles:tiles-material", version.ref = "wear-tiles" }
+wear-tiles = { module = "androidx.wear.tiles:tiles", version.ref = "wear-tiles" }
+webkit = { module = "androidx.webkit:webkit", version.ref = "webkit" }
