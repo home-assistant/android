@@ -149,7 +149,22 @@ class ShortcutsTile : TileService() {
 
     override fun onTileAddEvent(requestParams: EventBuilders.TileAddEvent) {
         serviceScope.launch {
-            wearPrefsRepository.setTileShortcuts(requestParams.tileId, emptyList())
+            /**
+             * When the app is updated from an older version (which only supported a single Shortcut Tile),
+             * and the user is adding a new Shortcuts Tile, we can't tell for sure if it's the 1st or 2nd Tile.
+             * Even though we may have the shortcut list stored in the prefs, it doesn't guarantee that
+             *   the tile was actually added to the Tiles carousel.
+             * The [WearPrefsRepositoryImpl::getTileShortcutsAndSaveTileId] method will handle both of the following cases:
+             * 1. There was no Tile added, but there were shortcuts stored in the prefs.
+             *    In this case, the stored shortcuts will be associated to the new tileId.
+             * 2. There was a single Tile added, and there were shortcuts stored in the prefs.
+             *    If there was a Tile update since updating the app, the tileId will be already
+             *    associated to the shortcuts, because it also calls [getTileShortcutsAndSaveTileId].
+             *    If there was no Tile update yet, the new Tile will "steal" the shortcuts from the existing Tile,
+             *    and the old Tile will behave as it is the new Tile. This is needed because
+             *    we don't know if it's the 1st or 2nd Tile.
+             */
+            wearPrefsRepository.getTileShortcutsAndSaveTileId(requestParams.tileId)
         }
     }
 
