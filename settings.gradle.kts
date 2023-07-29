@@ -1,4 +1,3 @@
-import org.gradle.kotlin.dsl.support.serviceOf
 
 include(":common", ":app", ":wear", ":automotive")
 
