@@ -10,9 +10,10 @@ import io.homeassistant.companion.android.vehicle.MainVehicleScreen
 fun isVehicleDomain(entity: Entity<*>): Boolean {
     return entity.domain in MainVehicleScreen.SUPPORTED_DOMAINS ||
         entity.domain in MainVehicleScreen.NOT_ACTIONABLE_DOMAINS ||
-        (
-            entity.domain in MainVehicleScreen.MAP_DOMAINS &&
-                ((entity.attributes as? Map<*, *>)?.get("latitude") as? Double != null) &&
-                ((entity.attributes as? Map<*, *>)?.get("longitude") as? Double != null)
-            )
+        (entity.domain in MainVehicleScreen.MAP_DOMAINS && canNavigate(entity))
+}
+
+fun canNavigate(entity: Entity<*>): Boolean {
+    return ((entity.attributes as? Map<*, *>)?.get("latitude") as? Double != null) &&
+        ((entity.attributes as? Map<*, *>)?.get("longitude") as? Double != null)
 }

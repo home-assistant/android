@@ -33,6 +33,7 @@ import io.homeassistant.companion.android.common.data.integration.isExecuting
 import io.homeassistant.companion.android.common.data.integration.onPressed
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.util.vehicle.canNavigate
 import io.homeassistant.companion.android.util.vehicle.getChangeServerGridItem
 import io.homeassistant.companion.android.util.vehicle.getDomainList
 import io.homeassistant.companion.android.util.vehicle.getDomainsGridItem
@@ -160,7 +161,7 @@ class EntityGridVehicleScreen(
             if (entity.isExecuting()) {
                 gridItem.setLoading(entity.isExecuting())
             } else {
-                if (entity.domain !in MainVehicleScreen.NOT_ACTIONABLE_DOMAINS) {
+                if (entity.domain !in MainVehicleScreen.NOT_ACTIONABLE_DOMAINS || canNavigate(entity)) {
                     gridItem
                         .setOnClickListener {
                             Log.i(TAG, "${entity.entityId} clicked")
