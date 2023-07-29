@@ -26,7 +26,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -64,8 +63,7 @@ class MainVehicleScreen(
         )
     }
 
-    private var favoriteEntities = flowOf<List<Entity<*>>>()
-    private var entityList: List<Entity<*>> = listOf()
+    private var favoritesEntities: List<Entity<*>> = listOf()
     private var favoritesList = emptyList<String>()
     private var isLoggedIn: Boolean? = null
     private val domains = mutableSetOf<String>()
@@ -93,14 +91,16 @@ class MainVehicleScreen(
                         .distinct()
                         .filter { it in SUPPORTED_DOMAINS }
                         .toSet()
-                    if (newDomains.size != domains.size || newDomains != domains) {
-                        domains.clear()
-                        domains.addAll(newDomains)
-                        invalidate()
-                    }
-                    entityList = getFavoritesList(entities)
+                    var invalidate = newDomains.size != domains.size || newDomains != domains
+                    domains.clear()
+                    domains.addAll(newDomains)
+
+                    val newFavorites = getFavoritesList(entities)
+                    invalidate = invalidate || (newFavorites.size != favoritesEntities.size || newFavorites.toSet() != favoritesEntities.toSet())
+                    favoritesEntities = newFavorites
+
+                    if (invalidate) invalidate()
                 }
-                favoriteEntities = allEntities.map { getFavoritesList(it) }
             }
         }
         lifecycleScope.launch {
@@ -132,9 +132,9 @@ class MainVehicleScreen(
                 serverManager.integrationRepository(serverId.value),
                 carContext.getString(commonR.string.favorites),
                 domains,
-                favoriteEntities,
+                flowOf(),
                 allEntities
-            ) { onChangeServer(it) }.getEntityGridItems(entityList)
+            ) { onChangeServer(it) }.getEntityGridItems(favoritesEntities)
         } else {
             var builder = ItemList.Builder()
             if (domains.isNotEmpty()) {
