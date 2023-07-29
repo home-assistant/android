@@ -15,7 +15,7 @@ plugins {
 android {
     namespace = "io.homeassistant.companion.android"
 
-    compileSdk = 33
+    compileSdk = libs.versions.androidSdk.compile.get().toInt()
 
     ndkVersion = "21.3.6528147"
 
@@ -23,8 +23,8 @@ android {
 
     defaultConfig {
         applicationId = "io.homeassistant.companion.android"
-        minSdk = 21
-        targetSdk = 33
+        minSdk = libs.versions.androidSdk.min.get().toInt()
+        targetSdk = libs.versions.androidSdk.target.get().toInt()
 
         versionName = project.version.toString()
         versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
@@ -49,12 +49,12 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = libs.versions.javaVersion.get()
     }
 
     compileOptions {
-        sourceCompatibility(JavaVersion.VERSION_11)
-        targetCompatibility(JavaVersion.VERSION_11)
+        sourceCompatibility(libs.versions.javaVersion.get())
+        targetCompatibility(libs.versions.javaVersion.get())
     }
 
     firebaseAppDistribution {

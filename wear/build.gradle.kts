@@ -15,7 +15,7 @@ android {
     defaultConfig {
         applicationId = "io.homeassistant.companion.android"
         minSdk = 26
-        targetSdk = 32
+        targetSdk = libs.versions.androidSdk.target.get().toInt()
 
         versionName = project.version.toString()
         // We add 1 because the app and wear versions need to have different version codes.
@@ -60,12 +60,12 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = libs.versions.javaVersion.get()
     }
 
     compileOptions {
-        sourceCompatibility(JavaVersion.VERSION_11)
-        targetCompatibility(JavaVersion.VERSION_11)
+        sourceCompatibility(libs.versions.javaVersion.get())
+        targetCompatibility(libs.versions.javaVersion.get())
     }
 
     lint {

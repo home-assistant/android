@@ -19,7 +19,7 @@ allprojects {
 
     tasks.withType<KotlinCompile>().configureEach {
         kotlinOptions {
-            jvmTarget = "11"
+            jvmTarget = libs.versions.javaVersion.get()
         }
     }
 }

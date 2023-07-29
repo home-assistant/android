@@ -17,7 +17,7 @@ android {
     compileSdk = 33
 
     defaultConfig {
-        minSdk = 21
+        minSdk = libs.versions.androidSdk.min.get().toInt()
         buildConfigField("String", "PUSH_URL", "\"$homeAssistantAndroidPushUrl\"")
         buildConfigField("String", "RATE_LIMIT_URL", "\"$homeAssistantAndroidRateLimitUrl\"")
         buildConfigField("String", "VERSION_NAME", "\"$versionName-$versionCode\"")
@@ -35,12 +35,12 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = libs.versions.javaVersion.get()
     }
 
     compileOptions {
-        sourceCompatibility(JavaVersion.VERSION_11)
-        targetCompatibility(JavaVersion.VERSION_11)
+        sourceCompatibility(libs.versions.javaVersion.get())
+        targetCompatibility(libs.versions.javaVersion.get())
     }
 
     lint {
