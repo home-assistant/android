@@ -54,44 +54,38 @@ class WearPrefsRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getTileShortcuts(tileId: Int): List<String> =
-        localStorage.getString(PREF_TILE_SHORTCUTS)?.let { jsonStr ->
-            runCatching {
-                val jsonObject = JSONObject(jsonStr)
-                val key = tileId.toString()
-                if (jsonObject.has(key)) {
-                    val jsonArray = jsonObject.getJSONArray(key)
-                    jsonArray.toStringList()
-                } else {
-                    emptyList()
-                }
-            }.recover {
-                // backwards compatibility with the previous format when there was only one Shortcut Tile:
-                val jsonArray = JSONArray(jsonStr)
-                val entities = jsonArray.toStringList()
-                // now that we have the tileId of the current single Tile, let's save it:
-                setTileShortcuts(mapOf(tileId to entities))
-                entities
-            }.getOrNull()
-        } ?: emptyList()
+    override suspend fun getTileShortcuts(tileId: Int): List<String> {
+        val tileIdToShortcutsMap = getAllTileShortcuts().toMutableMap()
+        return if (null in tileIdToShortcutsMap && tileId !in tileIdToShortcutsMap) {
+            // if there are shortcuts with an unknown (null) tileId key from a previous installation,
+            // and the tileId parameter is not already present in the map, associate it with those shortcuts
+            val entities = removeTileShortcuts(null)!!
+            setTileShortcuts(tileId, entities)
+            entities
+        } else {
+            tileIdToShortcutsMap[tileId] ?: emptyList()
+        }
+    }
 
-    override suspend fun getAllTileShortcuts(): Map<out Int?, List<String>> {
+    override suspend fun getAllTileShortcuts(): Map<Int?, List<String>> {
         return localStorage.getString(PREF_TILE_SHORTCUTS)?.let { jsonStr ->
             runCatching {
+                // backward compatibility with the previous format when there was only one Shortcut Tile:
+                val jsonArray = JSONArray(jsonStr)
+                val entities = jsonArray.toStringList()
+                mapOf<Int?, List<String>>(
+                    null to entities // the key is null since we don't (yet) have the tileId
+                )
+            }.recover {
                 val jsonObject = JSONObject(jsonStr)
                 buildMap {
-                    jsonObject.keys().forEach { key ->
-                        val intKey = key.toIntOrNull()
-                        val jsonArray = jsonObject.getJSONArray(key)
+                    jsonObject.keys().forEach { stringKey ->
+                        val intKey = stringKey.toIntOrNull()
+                        val jsonArray = jsonObject.getJSONArray(stringKey)
                         val entities = jsonArray.toStringList()
                         put(intKey, entities)
                     }
                 }
-            }.recover {
-                // backwards compatibility with the previous format when there was only one Shortcut Tile:
-                val jsonArray = JSONArray(jsonStr)
-                val entities = jsonArray.toStringList()
-                mapOf(null to entities)
             }.getOrNull()
         } ?: emptyMap()
     }
@@ -109,10 +103,11 @@ class WearPrefsRepositoryImpl @Inject constructor(
         localStorage.putString(PREF_TILE_SHORTCUTS, jsonStr)
     }
 
-    override suspend fun removeTileShortcuts(tileId: Int) {
+    override suspend fun removeTileShortcuts(tileId: Int?): List<String>? {
         val tileShortcutsMap = getAllTileShortcuts().toMutableMap()
-        tileShortcutsMap.remove(tileId)
+        val entities = tileShortcutsMap.remove(tileId)
         setTileShortcuts(tileShortcutsMap)
+        return entities
     }
 
     override suspend fun getTemplateTileContent(): String {
