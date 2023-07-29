@@ -3,7 +3,7 @@ accompanist = "0.30.1"
 activity-compose = "1.7.2"
 androidBeaconLibrary = "2.19.6"
 androidJunit5 = "1.9.3.0"
-androidPlugin = "8.0.2"
+androidPlugin = "8.1.0"
 appcompat = "1.6.1"
 biometric = "1.1.0"
 blurView = "version-1.6.6"
@@ -58,7 +58,16 @@ wear-remote-interactions = "1.0.0"
 workRuntimeKtx = "2.8.1"
 
 [plugins]
+android-application = { id = "com.android.application", version.ref = "androidPlugin" }
+android-library = { id = "com.android.library", version.ref = "androidPlugin" }
+firebase-appdistribution = { id = "com.google.firebase.appdistribution", version.ref = "firebaseAppdistributionGradle" }
+google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
+hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
+kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
+play-publisher = { id = "com.github.triplet.play", version.ref = "playPublisher" }
 
 [libraries]
 accompanist-themeadapter-material = { module = "com.google.accompanist:accompanist-themeadapter-material", version.ref = "accompanist" }
@@ -66,8 +75,6 @@ accompanist-systemuicontroller = { module = "com.google.accompanist:accompanist-
 activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activity-compose" }
 activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activity-compose" }
 android-beacon-library = { module = "org.altbeacon:android-beacon-library", version.ref = "androidBeaconLibrary" }
-android-plugin = { module = "com.android.tools.build:gradle", version.ref = "androidPlugin" }
-android-junit5 = { module = "de.mannodermaus.gradle.plugins:android-junit5", version.ref = "androidJunit5" }
 androidx-health-services-client = { module = "androidx.health:health-services-client", version.ref = "healthServicesClient" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
@@ -102,20 +109,16 @@ extension-cronet = { module = "com.google.android.exoplayer:extension-cronet", v
 exoplayer-ui = { module = "com.google.android.exoplayer:exoplayer-ui", version.ref = "exoplayer" }
 exoplayer-hls = { module = "com.google.android.exoplayer:exoplayer-hls", version.ref = "exoplayer" }
 exoplayer-core = { module = "com.google.android.exoplayer:exoplayer-core", version.ref = "exoplayer" }
-firebase-appdistribution-gradle = { module = "com.google.firebase:firebase-appdistribution-gradle", version.ref = "firebaseAppdistributionGradle" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging" }
 fragment-ktx = { module = "androidx.fragment:fragment-ktx", version.ref = "fragment-ktx" }
 constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "constraintlayout" }
-google-services = { module = "com.google.gms:google-services", version.ref = "googleServices" }
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
 hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hilt" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
-hilt-android-gradle-plugin = { module = "com.google.dagger:hilt-android-gradle-plugin", version.ref = "hilt" }
 iconics-compose = { module = "com.mikepenz:iconics-compose", version.ref = "iconics" }
 iconics-core = { module = "com.mikepenz:iconics-core", version.ref = "iconics" }
 jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson-module-kotlin" }
-kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlinx-coroutines-guava = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-guava", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
@@ -126,7 +129,6 @@ logging-interceptor = { module = "com.squareup.okhttp3:logging-interceptor", ver
 navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation-compose" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
-play-publisher = { module = "com.github.triplet.gradle:play-publisher", version.ref = "playPublisher" }
 play-services-threadnetwork = { module = "com.google.android.gms:play-services-threadnetwork", version.ref = "play-services-threadnetwork" }
 play-services-home = { module = "com.google.android.gms:play-services-home", version.ref = "play-services-home" }
 play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "play-services-location" }

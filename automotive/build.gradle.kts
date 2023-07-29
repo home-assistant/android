@@ -2,14 +2,13 @@ import com.github.triplet.gradle.androidpublisher.ResolutionStrategy
 import com.google.gms.googleservices.GoogleServicesPlugin.GoogleServicesPluginConfig
 
 plugins {
-    id("com.android.application")
-    id("kotlin-android")
-    id("kotlin-kapt")
-    id("kotlin-parcelize")
-    id("com.github.triplet.play")
-    id("com.google.gms.google-services")
-    kotlin("kapt")
-    id("dagger.hilt.android.plugin")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.kapt)
+    alias(libs.plugins.kotlin.parcelize)
+    alias(libs.plugins.play.publisher)
+    alias(libs.plugins.google.services)
+    alias(libs.plugins.hilt)
 }
 
 android {
