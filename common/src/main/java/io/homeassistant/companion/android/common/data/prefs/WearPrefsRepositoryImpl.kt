@@ -74,23 +74,27 @@ class WearPrefsRepositoryImpl @Inject constructor(
     override suspend fun getAllTileShortcuts(): Map<Int?, List<String>> {
         return localStorage.getString(PREF_TILE_SHORTCUTS)?.let { jsonStr ->
             runCatching {
-                // backward compatibility with the previous format when there was only one Shortcut Tile:
-                val jsonArray = JSONArray(jsonStr)
-                val entities = jsonArray.toStringList()
-                mapOf<Int?, List<String>>(
-                    null to entities // the key is null since we don't (yet) have the tileId
-                )
-            }.recover {
-                val jsonObject = JSONObject(jsonStr)
-                buildMap {
-                    jsonObject.keys().forEach { stringKey ->
-                        val intKey = stringKey.takeUnless { it == "null" }?.toInt()
-                        val jsonArray = jsonObject.getJSONArray(stringKey)
-                        val entities = jsonArray.toStringList()
-                        put(intKey, entities)
+                JSONObject(jsonStr)
+            }.fold(
+                onSuccess = { jsonObject ->
+                    buildMap {
+                        jsonObject.keys().forEach { stringKey ->
+                            val intKey = stringKey.takeUnless { it == "null" }?.toInt()
+                            val jsonArray = jsonObject.getJSONArray(stringKey)
+                            val entities = jsonArray.toStringList()
+                            put(intKey, entities)
+                        }
                     }
+                },
+                onFailure = {
+                    // backward compatibility with the previous format when there was only one Shortcut Tile:
+                    val jsonArray = JSONArray(jsonStr)
+                    val entities = jsonArray.toStringList()
+                    mapOf(
+                        null to entities // the key is null since we don't (yet) have the tileId
+                    )
                 }
-            }.getOrNull()
+            )
         } ?: emptyMap()
     }
 
