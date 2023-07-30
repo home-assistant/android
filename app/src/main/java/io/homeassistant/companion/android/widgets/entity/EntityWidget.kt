@@ -12,17 +12,21 @@ import android.util.Log
 import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.IntegrationException
 import io.homeassistant.companion.android.common.data.integration.canSupportPrecision
 import io.homeassistant.companion.android.common.data.integration.friendlyState
+import io.homeassistant.companion.android.common.data.integration.onPressed
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
+import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.util.getAttribute
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import kotlinx.coroutines.launch
@@ -34,6 +38,8 @@ class EntityWidget : BaseWidgetProvider() {
 
     companion object {
         private const val TAG = "StaticWidget"
+        internal const val TOGGLE_ENTITY =
+            "io.homeassistant.companion.android.widgets.entity.EntityWidget.TOGGLE_ENTITY"
 
         internal const val EXTRA_SERVER_ID = "EXTRA_SERVER_ID"
         internal const val EXTRA_ENTITY_ID = "EXTRA_ENTITY_ID"
@@ -42,6 +48,7 @@ class EntityWidget : BaseWidgetProvider() {
         internal const val EXTRA_TEXT_SIZE = "EXTRA_TEXT_SIZE"
         internal const val EXTRA_STATE_SEPARATOR = "EXTRA_STATE_SEPARATOR"
         internal const val EXTRA_ATTRIBUTE_SEPARATOR = "EXTRA_ATTRIBUTE_SEPARATOR"
+        internal const val EXTRA_TAP_ACTION = "EXTRA_TAP_ACTION"
         internal const val EXTRA_BACKGROUND_TYPE = "EXTRA_BACKGROUND_TYPE"
         internal const val EXTRA_TEXT_COLOR = "EXTRA_TEXT_COLOR"
 
@@ -55,12 +62,13 @@ class EntityWidget : BaseWidgetProvider() {
         ComponentName(context, EntityWidget::class.java)
 
     override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity<Map<String, Any>>?): RemoteViews {
+        val widget = staticWidgetDao.get(appWidgetId)
+
         val intent = Intent(context, EntityWidget::class.java).apply {
-            action = UPDATE_VIEW
+            action = if (widget?.tapAction == WidgetTapAction.TOGGLE) TOGGLE_ENTITY else UPDATE_VIEW
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         }
 
-        val widget = staticWidgetDao.get(appWidgetId)
         val useDynamicColors = widget?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
         val views = RemoteViews(context.packageName, if (useDynamicColors) R.layout.widget_static_wrapper_dynamiccolor else R.layout.widget_static_wrapper_default).apply {
             if (widget != null) {
@@ -194,6 +202,12 @@ class EntityWidget : BaseWidgetProvider() {
         val textSizeSelection: String? = extras.getString(EXTRA_TEXT_SIZE)
         val stateSeparatorSelection: String? = extras.getString(EXTRA_STATE_SEPARATOR)
         val attributeSeparatorSelection: String? = extras.getString(EXTRA_ATTRIBUTE_SEPARATOR)
+        val tapActionSelection: WidgetTapAction = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            extras.getSerializable(EXTRA_TAP_ACTION, WidgetTapAction::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            extras.getSerializable(EXTRA_TAP_ACTION) as? WidgetTapAction
+        } ?: WidgetTapAction.REFRESH
         val backgroundTypeSelection: WidgetBackgroundType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             extras.getSerializable(EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
         } else {
@@ -224,6 +238,7 @@ class EntityWidget : BaseWidgetProvider() {
                     textSizeSelection?.toFloatOrNull() ?: 30F,
                     stateSeparatorSelection ?: "",
                     attributeSeparatorSelection ?: "",
+                    tapActionSelection,
                     staticWidgetDao.get(appWidgetId)?.lastUpdate ?: "",
                     backgroundTypeSelection,
                     textColorSelection
@@ -238,6 +253,36 @@ class EntityWidget : BaseWidgetProvider() {
         widgetScope?.launch {
             val views = getWidgetRemoteViews(context, appWidgetId, entity as Entity<Map<String, Any>>)
             AppWidgetManager.getInstance(context).updateAppWidget(appWidgetId, views)
+        }
+    }
+
+    private fun toggleEntity(context: Context, appWidgetId: Int) {
+        widgetScope?.launch {
+            val widget = staticWidgetDao.get(appWidgetId) ?: return@launch
+            val entity = try {
+                serverManager.integrationRepository(widget.serverId).getEntity(widget.entityId)
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to fetch entity to toggle", e)
+                null
+            }
+            if (entity == null) {
+                Toast.makeText(context, commonR.string.service_call_failure, Toast.LENGTH_LONG).show()
+                return@launch
+            }
+            try {
+                entity.onPressed(serverManager.integrationRepository(widget.serverId))
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to send toggle service call", e)
+                Toast.makeText(context, commonR.string.service_call_failure, Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    override fun onReceive(context: Context, intent: Intent) {
+        val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
+        super.onReceive(context, intent)
+        when (lastIntent) {
+            TOGGLE_ENTITY -> toggleEntity(context, appWidgetId)
         }
     }
 

@@ -22,6 +22,8 @@ data class StaticWidgetEntity(
     val stateSeparator: String = "",
     @ColumnInfo(name = "attribute_separator")
     val attributeSeparator: String = "",
+    @ColumnInfo(name = "tap_action", defaultValue = "REFRESH")
+    val tapAction: WidgetTapAction,
     @ColumnInfo(name = "last_update")
     val lastUpdate: String,
     @ColumnInfo(name = "background_type", defaultValue = "DAYNIGHT")

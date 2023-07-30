@@ -23,9 +23,12 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
+import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.databinding.WidgetStaticConfigureBinding
+import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.util.getHexForColor
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
@@ -122,6 +125,9 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
         val staticWidget = staticWidgetDao.get(appWidgetId)
 
+        val tapActionValues = listOf(getString(commonR.string.widget_tap_action_toggle), getString(commonR.string.refresh))
+        binding.tapActionList.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, tapActionValues)
+
         val backgroundTypeValues = mutableListOf(
             getString(commonR.string.widget_background_type_daynight),
             getString(commonR.string.widget_background_type_transparent)
@@ -161,6 +167,10 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 selectedEntity = entity as Entity<Any>?
                 setupAttributes()
             }
+
+            val toggleable = entity?.domain in ManageTilesFragment.validDomains
+            binding.tapAction.isVisible = toggleable
+            binding.tapActionList.setSelection(if (toggleable && staticWidget.tapAction == WidgetTapAction.TOGGLE) 0 else 1)
 
             binding.backgroundType.setSelection(
                 when {
@@ -272,6 +282,8 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         attributesAdapter.addAll(*fetchedAttributes?.keys.orEmpty().toTypedArray())
         binding.widgetTextConfigAttribute.setTokenizer(CommaTokenizer())
         runOnUiThread {
+            binding.tapAction.isVisible = selectedEntity?.domain in ManageTilesFragment.validDomains
+            binding.tapActionList.setSelection(1)
             attributesAdapter.notifyDataSetChanged()
         }
     }
@@ -341,6 +353,14 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                     binding.attributeSeparator.text.toString()
                 )
             }
+
+            intent.putExtra(
+                EntityWidget.EXTRA_TAP_ACTION,
+                when (binding.tapActionList.selectedItemPosition) {
+                    0 -> WidgetTapAction.TOGGLE
+                    else -> WidgetTapAction.REFRESH
+                }
+            )
 
             intent.putExtra(
                 EntityWidget.EXTRA_BACKGROUND_TYPE,

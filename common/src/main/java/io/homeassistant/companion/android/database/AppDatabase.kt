@@ -67,6 +67,7 @@ import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundTypeConverter
+import io.homeassistant.companion.android.database.widget.WidgetTapActionConverter
 import kotlinx.coroutines.runBlocking
 import java.util.UUID
 import io.homeassistant.companion.android.common.R as commonR
@@ -90,7 +91,7 @@ import io.homeassistant.companion.android.common.R as commonR
         Server::class,
         Setting::class
     ],
-    version = 42,
+    version = 43,
     autoMigrations = [
         AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
@@ -108,7 +109,8 @@ import io.homeassistant.companion.android.common.R as commonR
         AutoMigration(from = 37, to = 38, spec = AppDatabase.Companion.Migration37to38::class),
         AutoMigration(from = 38, to = 39),
         AutoMigration(from = 39, to = 40),
-        AutoMigration(from = 41, to = 42)
+        AutoMigration(from = 41, to = 42),
+        AutoMigration(from = 42, to = 43)
     ]
 )
 @TypeConverters(
@@ -116,7 +118,8 @@ import io.homeassistant.companion.android.common.R as commonR
     LocalSensorSettingConverter::class,
     EntriesTypeConverter::class,
     SensorSettingTypeConverter::class,
-    WidgetBackgroundTypeConverter::class
+    WidgetBackgroundTypeConverter::class,
+    WidgetTapActionConverter::class
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun authenticationDao(): AuthenticationDao
