@@ -81,22 +81,28 @@ fun SelectShortcutsTileView(
                 item {
                     ListHeader(id = commonR.string.shortcuts_tile_select)
                 }
-                itemsIndexed(shortcutTileEntitiesCountById.keys.toList()) { index, shortcutsTileId ->
-                    Chip(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        label = {
-                            Text(stringResource(commonR.string.shortcuts_tile_n, index + 1))
-                        },
-                        secondaryLabel = {
-                            val entityCount = shortcutTileEntitiesCountById[shortcutsTileId] ?: 0
-                            if (entityCount > 0) {
-                                Text(pluralStringResource(commonR.plurals.n_entities, entityCount, entityCount))
-                            }
-                        },
-                        onClick = { onSelectShortcutsTile(shortcutsTileId) },
-                        colors = ChipDefaults.secondaryChipColors()
-                    )
+                if (shortcutTileEntitiesCountById.isEmpty()) {
+                    item {
+                        Text(stringResource(commonR.string.shortcuts_tile_no_tiles_yet))
+                    }
+                } else {
+                    itemsIndexed(shortcutTileEntitiesCountById.keys.toList()) { index, shortcutsTileId ->
+                        Chip(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            label = {
+                                Text(stringResource(commonR.string.shortcuts_tile_n, index + 1))
+                            },
+                            secondaryLabel = {
+                                val entityCount = shortcutTileEntitiesCountById[shortcutsTileId] ?: 0
+                                if (entityCount > 0) {
+                                    Text(pluralStringResource(commonR.plurals.n_entities, entityCount, entityCount))
+                                }
+                            },
+                            onClick = { onSelectShortcutsTile(shortcutsTileId) },
+                            colors = ChipDefaults.secondaryChipColors()
+                        )
+                    }
                 }
             }
         }
@@ -112,6 +118,17 @@ private fun PreviewSelectShortcutsTileView() {
             1111 to 1,
             2222 to 0
         ),
+        onSelectShortcutsTile = {},
+        isShowShortcutTextEnabled = true,
+        onShowShortcutTextEnabled = {}
+    )
+}
+
+@Preview(device = Devices.WEAR_OS_LARGE_ROUND)
+@Composable
+private fun PreviewSelectShortcutsTileEmptyView() {
+    SelectShortcutsTileView(
+        shortcutTileEntitiesCountById = emptyMap(),
         onSelectShortcutsTile = {},
         isShowShortcutTextEnabled = true,
         onShowShortcutTextEnabled = {}
