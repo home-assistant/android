@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.UiModeManager
 import android.content.ComponentName
 import android.content.Context
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.media.MediaMetadata
 import android.media.session.MediaSessionManager
@@ -70,7 +71,11 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
     }
     override fun hasSensor(context: Context): Boolean {
         val uiManager = context.getSystemService<UiModeManager>()
-        return uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION
+        return if (!context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION
+        } else {
+            false
+        }
     }
     override val name: Int
         get() = commonR.string.sensor_name_last_notification
