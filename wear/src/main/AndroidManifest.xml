@@ -137,15 +137,13 @@
 
             <meta-data
                 android:name="com.google.android.clockwork.tiles.MULTI_INSTANCES_SUPPORTED"
-                android:value="true" />
+                android:value="true" /> <!-- This is supported starting from Wear OS 3 -->
 
             <meta-data
                 android:name="com.google.android.clockwork.tiles.PROVIDER_CONFIG_ACTION"
                 android:value="ConfigShortcutsTile" />
-            <!--
-                 Having PROVIDER_CONFIG_ACTION here is required for the Shortcut Tile to show
-                 up in the Tile selector (tested on Wear OS 3.5), when there's already a Shortcut Tile added.
-            -->
+            <!-- Having PROVIDER_CONFIG_ACTION here is required for the Shortcut Tile to show
+                 up in the Tile selector when there's already a Shortcut Tile added. -->
         </service>
         <service
             android:name=".tiles.TemplateTile"
