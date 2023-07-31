@@ -68,7 +68,6 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="com.google.android.clockwork.tiles.category.PROVIDER_CONFIG" />
             </intent-filter>
         </activity>
         <activity android:name=".onboarding.OnboardingActivity" />
@@ -142,8 +141,6 @@
             <meta-data
                 android:name="com.google.android.clockwork.tiles.PROVIDER_CONFIG_ACTION"
                 android:value="ConfigShortcutsTile" />
-            <!-- Having PROVIDER_CONFIG_ACTION here is required for the Shortcut Tile to show
-                 up in the Tile selector when there's already a Shortcut Tile added. -->
         </service>
         <service
             android:name=".tiles.TemplateTile"
