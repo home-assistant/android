@@ -10,12 +10,12 @@ plugins {
 android {
     namespace = "io.homeassistant.companion.android"
 
-    compileSdk = 33
+    compileSdk = libs.versions.androidSdk.compile.get().toInt()
 
     defaultConfig {
         applicationId = "io.homeassistant.companion.android"
-        minSdk = 26
-        targetSdk = libs.versions.androidSdk.target.get().toInt()
+        minSdk = libs.versions.androidSdk.wear.min.get().toInt()
+        targetSdk = libs.versions.androidSdk.wear.target.get().toInt()
 
         versionName = project.version.toString()
         // We add 1 because the app and wear versions need to have different version codes.

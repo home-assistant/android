@@ -14,7 +14,7 @@ val versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
 android {
     namespace = "io.homeassistant.companion.android.common"
 
-    compileSdk = 33
+    compileSdk = libs.versions.androidSdk.compile.get().toInt()
 
     defaultConfig {
         minSdk = libs.versions.androidSdk.min.get().toInt()

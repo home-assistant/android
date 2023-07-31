@@ -14,7 +14,7 @@ plugins {
 android {
     namespace = "io.homeassistant.companion.android"
 
-    compileSdk = 33
+    compileSdk = libs.versions.androidSdk.compile.get().toInt()
 
     ndkVersion = "21.3.6528147"
 
@@ -22,7 +22,7 @@ android {
 
     defaultConfig {
         applicationId = "io.homeassistant.companion.android"
-        minSdk = 29
+        minSdk = libs.versions.androidSdk.automotive.min.get().toInt()
         targetSdk = libs.versions.androidSdk.target.get().toInt()
 
         versionName = project.version.toString()
