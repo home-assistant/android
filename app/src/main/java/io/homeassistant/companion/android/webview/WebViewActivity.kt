@@ -143,7 +143,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
     private val requestPermissions =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-            if (it.any { it.value }) {
+            if (it.any { result -> result.value }) {
                 webView.reload()
             }
         }
@@ -385,7 +385,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 ) {
                     Log.e(TAG, "onReceivedSslError: $error")
                     showError(
-                        io.homeassistant.companion.android.webview.WebView.ErrorType.SSL,
+                        ErrorType.SSL,
                         error,
                         null
                     )
@@ -819,7 +819,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     private suspend fun checkAndWarnForDisabledLocation() {
         var showLocationDisabledWarning = false
-        var settingsWithLocationPermissions = mutableListOf<String>()
+        val settingsWithLocationPermissions = mutableListOf<String>()
         if (!DisabledLocationHandler.isLocationEnabled(this) && presenter.isSsidUsed()) {
             showLocationDisabledWarning = true
             settingsWithLocationPermissions.add(getString(commonR.string.pref_connection_wifi))
@@ -827,7 +827,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         for (manager in SensorReceiver.MANAGERS) {
             for (basicSensor in manager.getAvailableSensors(this)) {
                 if (manager.isEnabled(this, basicSensor)) {
-                    var permissions = manager.requiredPermissions(basicSensor.id)
+                    val permissions = manager.requiredPermissions(basicSensor.id)
 
                     val fineLocation = DisabledLocationHandler.containsLocationPermission(permissions, true)
                     val coarseLocation = DisabledLocationHandler.containsLocationPermission(permissions, false)
@@ -882,7 +882,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             exoPlayer?.prepare()
             exoMute = !exoMute
             exoToggleMute()
-            exoPlayerView.setPlayer(exoPlayer)
+            exoPlayerView.player = exoPlayer
             exoPlayerView.visibility = View.VISIBLE
 
             findViewById<ImageView>(R.id.exo_fullscreen_icon).setOnClickListener {
@@ -916,11 +916,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         exoLeft = (rect.getInt("left") * displayMetrics.density).toInt()
         exoTop = (rect.getInt("top") * displayMetrics.density).toInt()
         exoRight = (rect.getInt("right") * displayMetrics.density).toInt()
-        if ((exoPlayer == null) || (exoPlayer!!.videoFormat == null)) {
+        exoBottom = if ((exoPlayer == null) || (exoPlayer!!.videoFormat == null)) {
             // only set exoBottom if we can't calculate it from the video
-            exoBottom = (rect.getInt("bottom") * displayMetrics.density).toInt()
+            (rect.getInt("bottom") * displayMetrics.density).toInt()
         } else {
-            exoBottom = exoTop + (exoRight - exoLeft) * exoPlayer!!.videoFormat!!.height /
+            exoTop + (exoRight - exoLeft) * exoPlayer!!.videoFormat!!.height /
                 exoPlayer!!.videoFormat!!.width
         }
         runOnUiThread {
@@ -928,7 +928,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
     }
 
-    fun exoToggleMute() {
+    private fun exoToggleMute() {
         exoMute = !exoMute
         if (exoMute) {
             exoPlayer?.volume = 0f
@@ -1152,12 +1152,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         if (statusBarColor != 0) {
             window.statusBarColor = statusBarColor
         } else {
-            Log.e(TAG, "Cannot set status bar color $statusBarColor. Skipping coloring...")
+            Log.e(TAG, "Cannot set status bar color. Skipping coloring...")
         }
         if (navigationBarColor != 0) {
             window.navigationBarColor = navigationBarColor
         } else {
-            Log.e(TAG, "Cannot set navigation bar color $navigationBarColor. Skipping coloring...")
+            Log.e(TAG, "Cannot set navigation bar color. Skipping coloring...")
         }
 
         // Set foreground colors
@@ -1281,7 +1281,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             alert.setMessage(commonR.string.security_vulnerably_message)
             alert.setPositiveButton(commonR.string.security_vulnerably_view) { _, _ ->
                 val intent = Intent(Intent.ACTION_VIEW)
-                intent.setData(Uri.parse("https://www.home-assistant.io/latest-security-alert/"))
+                intent.data = Uri.parse("https://www.home-assistant.io/latest-security-alert/")
                 startActivity(intent)
             }
             alert.setNegativeButton(commonR.string.security_vulnerably_understand) { _, _ ->
@@ -1505,7 +1505,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     private fun enablePinchToZoom() {
         // Enable pinch to zoom
-        webView.getSettings().setBuiltInZoomControls(presenter.isPinchToZoomEnabled())
+        webView.settings.builtInZoomControls = presenter.isPinchToZoomEnabled()
         // Use idea from https://github.com/home-assistant/iOS/pull/1472 to filter viewport
         val pinchToZoom = if (presenter.isPinchToZoomEnabled()) "true" else "false"
         webView.evaluateJavascript(

@@ -28,7 +28,7 @@ open class BaseActivity : AppCompatActivity() {
             car = Car.createCar(this)
             carRestrictionManager =
                 car?.getCarManager(Car.CAR_UX_RESTRICTION_SERVICE) as CarUxRestrictionsManager
-            var listener =
+            val listener =
                 CarUxRestrictionsManager.OnUxRestrictionsChangedListener { restrictions ->
                     if (restrictions.isRequiresDistractionOptimization) {
                         startCarAppActivity()

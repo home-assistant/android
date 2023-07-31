@@ -48,7 +48,7 @@ import io.homeassistant.companion.android.common.R as commonR
 class ButtonWidget : AppWidgetProvider() {
     companion object {
         private const val TAG = "ButtonWidget"
-        public const val CALL_SERVICE =
+        const val CALL_SERVICE =
             "io.homeassistant.companion.android.widgets.button.ButtonWidget.CALL_SERVICE"
         private const val CALL_SERVICE_AUTH =
             "io.homeassistant.companion.android.widgets.button.ButtonWidget.CALL_SERVICE_AUTH"

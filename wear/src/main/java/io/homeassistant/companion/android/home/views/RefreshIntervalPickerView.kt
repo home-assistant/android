@@ -28,7 +28,7 @@ import androidx.wear.compose.material.rememberPickerState
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.theme.wearColorPalette
-import io.homeassistant.companion.android.util.IntervalToString
+import io.homeassistant.companion.android.util.intervalToString
 import io.homeassistant.companion.android.views.ListHeader
 import kotlinx.coroutines.launch
 import kotlin.math.sign
@@ -72,7 +72,7 @@ fun RefreshIntervalPickerView(
                 .focusable()
         ) {
             Text(
-                IntervalToString(LocalContext.current, options[it]),
+                intervalToString(LocalContext.current, options[it]),
                 fontSize = 24.sp,
                 color = if (it != this.selectedOption) wearColorPalette.onBackground else wearColorPalette.primary
             )

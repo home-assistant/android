@@ -47,7 +47,7 @@ class DefaultIconFilter(
     override fun queryIcons(pack: ITypeface, query: String?): List<IIcon> {
         val icons = pack.icons
 
-        if (query == null || query.isBlank()) {
+        if (query.isNullOrBlank()) {
             // No search query, return all icons.
             return icons.map { key -> pack.getIcon(key) }
         }

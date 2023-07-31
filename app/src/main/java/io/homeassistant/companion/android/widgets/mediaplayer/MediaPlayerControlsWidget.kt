@@ -469,10 +469,10 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         val serverId = if (extras.containsKey(EXTRA_SERVER_ID)) extras.getInt(EXTRA_SERVER_ID) else null
         val entitySelection: String? = extras.getString(EXTRA_ENTITY_ID)
         val labelSelection: String? = extras.getString(EXTRA_LABEL)
-        val showSkip: Boolean? = extras.getBoolean(EXTRA_SHOW_SKIP)
-        val showSeek: Boolean? = extras.getBoolean(EXTRA_SHOW_SEEK)
-        val showVolume: Boolean? = extras.getBoolean(EXTRA_SHOW_VOLUME)
-        val showSource: Boolean? = extras.getBoolean(EXTRA_SHOW_SOURCE)
+        val showSkip: Boolean = extras.getBoolean(EXTRA_SHOW_SKIP)
+        val showSeek: Boolean = extras.getBoolean(EXTRA_SHOW_SEEK)
+        val showVolume: Boolean = extras.getBoolean(EXTRA_SHOW_VOLUME)
+        val showSource: Boolean = extras.getBoolean(EXTRA_SHOW_SOURCE)
         val backgroundType: WidgetBackgroundType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             extras.getSerializable(EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
         } else {
@@ -480,7 +480,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
             extras.getSerializable(EXTRA_BACKGROUND_TYPE) as? WidgetBackgroundType
         } ?: WidgetBackgroundType.DAYNIGHT
 
-        if (serverId == null || entitySelection == null || showSkip == null || showSeek == null || showVolume == null || showSource == null) {
+        if (serverId == null || entitySelection == null) {
             Log.e(TAG, "Did not receive complete configuration data")
             return
         }

@@ -46,14 +46,14 @@ class OnboardingViewModel @Inject constructor(
     var discoveryOptions: OnboardApp.DiscoveryOptions? = null
     var manualContinueEnabled by mutableStateOf(false)
         private set
-    var authCode by mutableStateOf("")
-        private set
     var deviceIsWatch by mutableStateOf(false)
     val deviceName = mutableStateOf("")
     val locationTrackingPossible = mutableStateOf(false)
     var locationTrackingEnabled by mutableStateOf(false)
     val notificationsPossible = mutableStateOf(true)
     var notificationsEnabled by mutableStateOf(false)
+
+    private var authCode = ""
 
     fun onManualUrlUpdated(url: String) {
         manualUrl.value = url

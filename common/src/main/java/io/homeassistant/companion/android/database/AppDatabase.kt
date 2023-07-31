@@ -397,7 +397,6 @@ abstract class AppDatabase : RoomDatabase() {
             override fun migrate(database: SupportSQLiteDatabase) {
                 val cursor = database.query("SELECT * FROM sensor_settings")
                 val sensorSettings = mutableListOf<ContentValues>()
-                var migrationSuccessful = false
                 var migrationFailed = false
                 try {
                     if (cursor.moveToFirst()) {
@@ -406,7 +405,7 @@ abstract class AppDatabase : RoomDatabase() {
                                 ContentValues().also {
                                     val currentSensorId = cursor.getString(cursor.getColumnIndex("sensor_id"))
                                     val currentSensorSettingName = cursor.getString(cursor.getColumnIndex("name"))
-                                    var entries: String = ""
+                                    var entries = ""
                                     var newSensorSettingName = currentSensorSettingName
                                     // Alarm
                                     if (currentSensorId == "next_alarm" && currentSensorSettingName == "Allow List") {
@@ -482,12 +481,11 @@ abstract class AppDatabase : RoomDatabase() {
                 } catch (e: Exception) {
                     migrationFailed = true
                     Log.e(TAG, "Unable to migrate, proceeding with recreating the table", e)
-                    null
                 }
                 database.execSQL("DROP TABLE IF EXISTS `sensor_settings`")
                 database.execSQL("CREATE TABLE IF NOT EXISTS `sensor_settings` (`sensor_id` TEXT NOT NULL, `name` TEXT NOT NULL, `value` TEXT NOT NULL, `value_type` TEXT NOT NULL DEFAULT 'string', `entries` TEXT NOT NULL, `enabled` INTEGER NOT NULL DEFAULT '1', PRIMARY KEY(`sensor_id`, `name`))")
 
-                sensorSettings?.forEach {
+                sensorSettings.forEach {
                     database.insert("sensor_settings", OnConflictStrategy.REPLACE, it)
                 }
                 if (migrationFailed) {

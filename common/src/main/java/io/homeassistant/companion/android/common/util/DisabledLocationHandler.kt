@@ -60,10 +60,11 @@ object DisabledLocationHandler {
     }
 
     fun showLocationDisabledWarnDialog(context: Context, settings: Array<String>, showAsNotification: Boolean = false, withDisableOption: Boolean = false, callback: (() -> Unit)? = null) {
-        var positionTextId = commonR.string.confirm_positive
-        var negativeTextId = commonR.string.confirm_negative
-        if (withDisableOption && callback != null) {
-            negativeTextId = commonR.string.location_disabled_option_disable
+        val positionTextId = commonR.string.confirm_positive
+        val negativeTextId = if (withDisableOption && callback != null) {
+            commonR.string.location_disabled_option_disable
+        } else {
+            commonR.string.confirm_negative
         }
 
         val intent = Intent(

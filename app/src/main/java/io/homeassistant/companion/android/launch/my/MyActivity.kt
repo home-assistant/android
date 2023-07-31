@@ -16,7 +16,7 @@ import io.homeassistant.companion.android.webview.WebViewActivity
 class MyActivity : BaseActivity() {
 
     companion object {
-        val EXTRA_URI = "EXTRA_URI"
+        private const val EXTRA_URI = "EXTRA_URI"
 
         fun newInstance(context: Context, uri: Uri): Intent {
             return Intent(context, MyActivity::class.java).apply {

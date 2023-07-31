@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.vehicle
 
-import android.util.Log
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
 import androidx.car.app.model.Action
@@ -12,7 +11,6 @@ import io.homeassistant.companion.android.common.R
 class SwitchToDrivingOptimizedScreen(carContext: CarContext) : Screen(carContext) {
 
     override fun onGetTemplate(): Template {
-        Log.i(TAG, "onGetTemplate")
         return MessageTemplate.Builder(carContext.getString(R.string.aa_driving_optimized_change))
             .setIcon(CarIcon.APP_ICON)
             .addAction(

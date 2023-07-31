@@ -17,7 +17,7 @@ import io.homeassistant.companion.android.common.R as commonR
 class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationView {
     companion object {
         private const val TAG = "MobileAppIntegrationActivity"
-        val EXTRA_SERVER = "server"
+        const val EXTRA_SERVER = "server"
 
         fun newInstance(context: Context, serverId: Int): Intent {
             return Intent(context, MobileAppIntegrationActivity::class.java).apply {

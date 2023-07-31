@@ -59,8 +59,8 @@ import java.time.format.FormatStyle
 import io.homeassistant.companion.android.common.R as commonR
 
 class SettingsFragment(
-    val presenter: SettingsPresenter,
-    val langProvider: LanguagesProvider
+    private val presenter: SettingsPresenter,
+    private val langProvider: LanguagesProvider
 ) : SettingsView, PreferenceFragmentCompat() {
 
     companion object {
@@ -274,10 +274,6 @@ class SettingsFragment(
         }
         findPreference<SwitchPreference>("crash_reporting")?.let {
             it.isVisible = BuildConfig.FLAVOR == "full"
-            it.setOnPreferenceChangeListener { _, newValue ->
-                val checked = newValue as Boolean
-                true
-            }
         }
 
         lifecycleScope.launch {
@@ -358,9 +354,9 @@ class SettingsFragment(
             if (pref != null) {
                 val systemIndex = pref.findIndexOfValue("system")
                 if (systemIndex > 0) {
-                    var entries = pref.entries?.toMutableList()
+                    val entries = pref.entries?.toMutableList()
                     entries?.removeAt(systemIndex)
-                    var entryValues = pref.entryValues?.toMutableList()
+                    val entryValues = pref.entryValues?.toMutableList()
                     entryValues?.removeAt(systemIndex)
                     if (entries != null && entryValues != null) {
                         pref.entries = entries.toTypedArray()

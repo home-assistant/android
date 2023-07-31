@@ -153,7 +153,7 @@ class SettingsActivity : BaseActivity() {
         Log.d(TAG, "settingsActivityAuthenticationResult(): authenticating: $authenticating, externalAuth: $isExtAuth")
 
         externalAuthCallback?.let {
-            if (it(result) == true) {
+            if (it(result)) {
                 externalAuthCallback = null
             }
         }

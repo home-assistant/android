@@ -22,7 +22,7 @@ abstract class BaseVehicleScreen(
         get() = car?.let {
             (
                 it.getCarManager(Car.CAR_UX_RESTRICTION_SERVICE) as CarUxRestrictionsManager
-                ).getCurrentCarUxRestrictions().isRequiresDistractionOptimization()
+                ).currentCarUxRestrictions.isRequiresDistractionOptimization
         } ?: false
 
     init {
@@ -50,7 +50,7 @@ abstract class BaseVehicleScreen(
                 car?.getCarManager(Car.CAR_UX_RESTRICTION_SERVICE) as CarUxRestrictionsManager
             val listener =
                 CarUxRestrictionsManager.OnUxRestrictionsChangedListener { restrictions ->
-                    onDrivingOptimizedChanged(restrictions.isRequiresDistractionOptimization())
+                    onDrivingOptimizedChanged(restrictions.isRequiresDistractionOptimization)
                 }
             carRestrictionManager?.registerListener(listener)
         }

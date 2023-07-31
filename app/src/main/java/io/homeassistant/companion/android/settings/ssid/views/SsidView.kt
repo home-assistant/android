@@ -238,7 +238,7 @@ fun SsidView(
                     }
                     if (prioritizeDropdown) {
                         DropdownMenu(
-                            expanded = prioritizeDropdown,
+                            expanded = true,
                             onDismissRequest = { prioritizeDropdown = false },
                             modifier = Modifier.fillMaxWidth()
                         ) {

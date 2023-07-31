@@ -96,8 +96,8 @@ class PrefsRepositoryImpl @Inject constructor(
         return localStorage.getString(PREF_LOCALES)
     }
 
-    override suspend fun saveLocales(locales: String) {
-        localStorage.putString(PREF_LOCALES, locales)
+    override suspend fun saveLocales(lang: String) {
+        localStorage.putString(PREF_LOCALES, lang)
     }
 
     override suspend fun getScreenOrientation(): String? {
