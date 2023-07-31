@@ -18,14 +18,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.settings.vehicle.ManageAndroidAutoViewModel
 import io.homeassistant.companion.android.util.compose.FavoriteEntityRow
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.SingleEntityPicker
-import io.homeassistant.companion.android.vehicle.MainVehicleScreen
+import io.homeassistant.companion.android.util.vehicle.isVehicleDomain
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.burnoutcrew.reorderable.ReorderableItem
@@ -55,14 +54,7 @@ fun AndroidAutoFavoritesSettings(
             androidAutoViewModel.sortedEntities
                 .filter {
                     !favoriteEntities.contains("$selectedServer-${it.entityId}") &&
-                        (
-                            it.domain in MainVehicleScreen.SUPPORTED_DOMAINS ||
-                                (
-                                    it.domain in MainVehicleScreen.MAP_DOMAINS &&
-                                        ((it.attributes as? Map<*, *>)?.get("latitude") as? Double != null) &&
-                                        ((it.attributes as? Map<*, *>)?.get("longitude") as? Double != null)
-                                    )
-                            )
+                        isVehicleDomain(it)
                 }
                 .toList()
         }

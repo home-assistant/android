@@ -18,6 +18,7 @@ import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
+import io.homeassistant.companion.android.util.vehicle.SUPPORTED_DOMAINS
 import io.homeassistant.companion.android.util.vehicle.getChangeServerGridItem
 import io.homeassistant.companion.android.util.vehicle.getDomainList
 import io.homeassistant.companion.android.util.vehicle.getNavigationGridItem
@@ -42,26 +43,6 @@ class MainVehicleScreen(
 
     companion object {
         private const val TAG = "MainVehicleScreen"
-
-        val SUPPORTED_DOMAINS_WITH_STRING = mapOf(
-            "button" to commonR.string.buttons,
-            "cover" to commonR.string.covers,
-            "input_boolean" to commonR.string.input_booleans,
-            "input_button" to commonR.string.input_buttons,
-            "light" to commonR.string.lights,
-            "lock" to commonR.string.locks,
-            "scene" to commonR.string.scenes,
-            "script" to commonR.string.scripts,
-            "switch" to commonR.string.switches
-        )
-        val SUPPORTED_DOMAINS = SUPPORTED_DOMAINS_WITH_STRING.keys
-
-        val MAP_DOMAINS = listOf(
-            "device_tracker",
-            "person",
-            "sensor",
-            "zone"
-        )
     }
 
     private var favoriteEntities = flowOf<List<Entity<*>>>()

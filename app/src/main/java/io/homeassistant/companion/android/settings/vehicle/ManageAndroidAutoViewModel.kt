@@ -12,10 +12,9 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.vehicle.MainVehicleScreen
+import io.homeassistant.companion.android.util.vehicle.isVehicleDomain
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
@@ -46,12 +45,7 @@ class ManageAndroidAutoViewModel @Inject constructor(
                     entities[it.id] = try {
                         serverManager.integrationRepository(it.id).getEntities().orEmpty()
                             .filter {
-                                it.domain in MainVehicleScreen.SUPPORTED_DOMAINS ||
-                                    (
-                                        it.domain in MainVehicleScreen.MAP_DOMAINS &&
-                                            ((it.attributes as? Map<*, *>)?.get("latitude") as? Double != null) &&
-                                            ((it.attributes as? Map<*, *>)?.get("longitude") as? Double != null)
-                                        )
+                                isVehicleDomain(it)
                             }
                     } catch (e: Exception) {
                         Log.e(TAG, "Couldn't load entities for server", e)
