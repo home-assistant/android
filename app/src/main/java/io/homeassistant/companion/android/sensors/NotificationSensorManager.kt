@@ -70,8 +70,8 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         return "https://companion.home-assistant.io/docs/core/sensors#notification-sensors"
     }
     override fun hasSensor(context: Context): Boolean {
-        val uiManager = context.getSystemService<UiModeManager>()
         return if (!context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            val uiManager = context.getSystemService<UiModeManager>()
             uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION
         } else {
             false
