@@ -83,6 +83,17 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".tiles.OpenShortcutTileSettingsActivity"
+            android:exported="true"
+            android:excludeFromRecents="true">
+            <intent-filter>
+                <action android:name="ConfigShortcutsTile" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="com.google.android.clockwork.tiles.category.PROVIDER_CONFIG" />
+            </intent-filter>
+        </activity>
+
         <!-- To show confirmations and failures -->
         <activity android:name="androidx.wear.activity.ConfirmationActivity" />
 
@@ -122,6 +133,14 @@
 
             <meta-data android:name="androidx.wear.tiles.PREVIEW"
                 android:resource="@drawable/favorite_entities_tile_example" />
+
+            <meta-data
+                android:name="com.google.android.clockwork.tiles.MULTI_INSTANCES_SUPPORTED"
+                android:value="true" /> <!-- This is supported starting from Wear OS 3 -->
+
+            <meta-data
+                android:name="com.google.android.clockwork.tiles.PROVIDER_CONFIG_ACTION"
+                android:value="ConfigShortcutsTile" />
         </service>
         <service
             android:name=".tiles.TemplateTile"

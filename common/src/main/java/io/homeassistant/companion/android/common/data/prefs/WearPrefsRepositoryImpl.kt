@@ -1,8 +1,10 @@
 package io.homeassistant.companion.android.common.data.prefs
 
 import io.homeassistant.companion.android.common.data.LocalStorage
+import io.homeassistant.companion.android.common.util.toStringList
 import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
+import org.json.JSONObject
 import javax.inject.Inject
 import javax.inject.Named
 
@@ -52,15 +54,68 @@ class WearPrefsRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getTileShortcuts(): List<String> {
-        val jsonArray = JSONArray(localStorage.getString(PREF_TILE_SHORTCUTS) ?: "[]")
-        return List(jsonArray.length()) {
-            jsonArray.getString(it)
+    override suspend fun getTileShortcutsAndSaveTileId(tileId: Int): List<String> {
+        val tileIdToShortcutsMap = getAllTileShortcuts()
+        return if (null in tileIdToShortcutsMap && tileId !in tileIdToShortcutsMap) {
+            // if there are shortcuts with an unknown (null) tileId key from a previous installation,
+            // and the tileId parameter is not already present in the map, associate it with those shortcuts
+            val entities = removeTileShortcuts(null)!!
+            setTileShortcuts(tileId, entities)
+            entities
+        } else {
+            val entities = tileIdToShortcutsMap[tileId]
+            if (entities == null) {
+                setTileShortcuts(tileId, emptyList())
+            }
+            entities ?: emptyList()
         }
     }
 
-    override suspend fun setTileShortcuts(entities: List<String>) {
-        localStorage.putString(PREF_TILE_SHORTCUTS, JSONArray(entities).toString())
+    override suspend fun getAllTileShortcuts(): Map<Int?, List<String>> {
+        return localStorage.getString(PREF_TILE_SHORTCUTS)?.let { jsonStr ->
+            runCatching {
+                JSONObject(jsonStr)
+            }.fold(
+                onSuccess = { jsonObject ->
+                    buildMap {
+                        jsonObject.keys().forEach { stringKey ->
+                            val intKey = stringKey.takeUnless { it == "null" }?.toInt()
+                            val jsonArray = jsonObject.getJSONArray(stringKey)
+                            val entities = jsonArray.toStringList()
+                            put(intKey, entities)
+                        }
+                    }
+                },
+                onFailure = {
+                    // backward compatibility with the previous format when there was only one Shortcut Tile:
+                    val jsonArray = JSONArray(jsonStr)
+                    val entities = jsonArray.toStringList()
+                    mapOf(
+                        null to entities // the key is null since we don't (yet) have the tileId
+                    )
+                }
+            )
+        } ?: emptyMap()
+    }
+
+    override suspend fun setTileShortcuts(tileId: Int?, entities: List<String>) {
+        val map = getAllTileShortcuts() + mapOf(tileId to entities)
+        setTileShortcuts(map)
+    }
+
+    private suspend fun setTileShortcuts(map: Map<Int?, List<String>>) {
+        val jsonArrayMap = map.map { (tileId, entities) ->
+            tileId.toString() to JSONArray(entities)
+        }.toMap()
+        val jsonStr = JSONObject(jsonArrayMap).toString()
+        localStorage.putString(PREF_TILE_SHORTCUTS, jsonStr)
+    }
+
+    override suspend fun removeTileShortcuts(tileId: Int?): List<String>? {
+        val tileShortcutsMap = getAllTileShortcuts().toMutableMap()
+        val entities = tileShortcutsMap.remove(tileId)
+        setTileShortcuts(tileShortcutsMap)
+        return entities
     }
 
     override suspend fun getTemplateTileContent(): String {

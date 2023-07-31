@@ -38,8 +38,9 @@ interface HomePresenter {
     suspend fun getDeviceRegistryUpdates(): Flow<DeviceRegistryUpdatedEvent>?
     suspend fun getEntityRegistryUpdates(): Flow<EntityRegistryUpdatedEvent>?
 
-    suspend fun getTileShortcuts(): List<SimplifiedEntity>
-    suspend fun setTileShortcuts(entities: List<SimplifiedEntity>)
+    suspend fun getAllTileShortcuts(): Map<Int?, List<SimplifiedEntity>>
+    suspend fun getTileShortcuts(tileId: Int): List<SimplifiedEntity>
+    suspend fun setTileShortcuts(tileId: Int?, entities: List<SimplifiedEntity>)
 
     suspend fun getWearHapticFeedback(): Boolean
     suspend fun setWearHapticFeedback(enabled: Boolean)

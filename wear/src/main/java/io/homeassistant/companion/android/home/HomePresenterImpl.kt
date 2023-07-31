@@ -233,12 +233,20 @@ class HomePresenterImpl @Inject constructor(
         return serverManager.webSocketRepository().getEntityRegistryUpdates()
     }
 
-    override suspend fun getTileShortcuts(): List<SimplifiedEntity> {
-        return wearPrefsRepository.getTileShortcuts().map { SimplifiedEntity(it) }
+    override suspend fun getAllTileShortcuts(): Map<Int?, List<SimplifiedEntity>> {
+        return wearPrefsRepository.getAllTileShortcuts().mapValues { (_, entities) ->
+            entities.map {
+                SimplifiedEntity(it)
+            }
+        }
     }
 
-    override suspend fun setTileShortcuts(entities: List<SimplifiedEntity>) {
-        wearPrefsRepository.setTileShortcuts(entities.map { it.entityString })
+    override suspend fun getTileShortcuts(tileId: Int): List<SimplifiedEntity> {
+        return wearPrefsRepository.getTileShortcutsAndSaveTileId(tileId).map { SimplifiedEntity(it) }
+    }
+
+    override suspend fun setTileShortcuts(tileId: Int?, entities: List<SimplifiedEntity>) {
+        wearPrefsRepository.setTileShortcuts(tileId, entities.map { it.entityString })
     }
 
     override suspend fun getWearHapticFeedback(): Boolean {
