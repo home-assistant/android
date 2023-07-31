@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
 import com.google.android.gms.location.ActivityRecognition
@@ -205,6 +206,14 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
             )
         } else {
             arrayOf()
+        }
+    }
+
+    override fun hasSensor(context: Context): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            !context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+        } else {
+            true
         }
     }
 

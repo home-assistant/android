@@ -115,6 +115,11 @@ class BatterySensorManager : SensorManager {
         )
     }
 
+    override fun hasSensor(context: Context): Boolean {
+        val intent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        return intent?.getBooleanExtra(BatteryManager.EXTRA_PRESENT, false) == true
+    }
+
     override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }
@@ -298,6 +303,7 @@ class BatterySensorManager : SensorManager {
             BatteryManager.BATTERY_PLUGGED_AC -> "ac"
             BatteryManager.BATTERY_PLUGGED_USB -> "usb"
             BatteryManager.BATTERY_PLUGGED_WIRELESS -> "wireless"
+            BatteryManager.BATTERY_PLUGGED_DOCK -> "dock"
             else -> "none"
         }
     }

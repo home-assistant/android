@@ -35,7 +35,11 @@ class LastAppSensorManager : SensorManager {
     }
 
     override fun hasSensor(context: Context): Boolean {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+        return if (context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            false
+        } else {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.M)

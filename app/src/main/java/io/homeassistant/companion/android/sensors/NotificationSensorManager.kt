@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.UiModeManager
 import android.content.ComponentName
 import android.content.Context
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.media.MediaMetadata
 import android.media.session.MediaSessionManager
@@ -69,8 +70,12 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         return "https://companion.home-assistant.io/docs/core/sensors#notification-sensors"
     }
     override fun hasSensor(context: Context): Boolean {
-        val uiManager = context.getSystemService<UiModeManager>()
-        return uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION
+        return if (!context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            val uiManager = context.getSystemService<UiModeManager>()
+            uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION
+        } else {
+            false
+        }
     }
     override val name: Int
         get() = commonR.string.sensor_name_last_notification
