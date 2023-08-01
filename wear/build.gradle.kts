@@ -2,7 +2,6 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.kapt)
-    alias(libs.plugins.play.publisher)
     alias(libs.plugins.hilt)
     alias(libs.plugins.google.services)
 }
@@ -75,13 +74,6 @@ android {
     kapt {
         correctErrorTypes = true
     }
-}
-
-play {
-    serviceAccountCredentials.set(file("playStorePublishServiceCredentialsFile.json"))
-    track.set("internal")
-    resolutionStrategy.set(com.github.triplet.gradle.androidpublisher.ResolutionStrategy.IGNORE)
-    commit.set(false)
 }
 
 dependencies {

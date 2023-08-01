@@ -1,1 +1,0 @@
-android@home-assistant.io
