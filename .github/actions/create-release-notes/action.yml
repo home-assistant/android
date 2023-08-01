@@ -1,23 +1,56 @@
 name: 'Create Release Notes'
 description: 'Creates the current releases release notes'
+inputs:
+  tag-name:
+    description: 'Name of the tag that will be used for this release'
+    required: true
+  gh-token:
+    description: 'The GitHub token used to get details from the API'
+    required: true
 runs:
   using: 'composite'
   steps:
+    - name: Get Previous Release Tag
+      uses: actions/github-script@v6
+      id: latest-release-tag
+      with:
+        github-token: ${{ inputs.gh-token }}
+        result-encoding: string
+        script: |
+          const { data } = await github.rest.repos.getLatestRelease({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+          })
+          return data.tag_name
+    - name: Get Generated Release Notes
+      uses: actions/github-script@v6
+      id: generate-notes
+      with:
+        github-token: ${{ inputs.gh-token }}
+        result-encoding: string
+        script: |
+          const { data } = await github.rest.repos.generateReleaseNotes({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            tag_name: '${{ inputs.tag-name }}',
+            target_commitish: 'master',
+            previous_tag_name: '${{ steps.latest-release-tag.outputs.result }}',
+          })
+          return data.body
     - name: Generate Release Notes
       id: version-generator
       shell: bash
       run: |
         mkdir -p ./app/build/outputs/
         
-        echo "Previous Release Commit:"
-        git tag -l --sort=-creatordate | grep -v beta- | head -n 1
-        previous=`git tag -l --sort=-creatordate | grep -v beta- | head -n 1`
+        echo "Previous Release Tag:"
+        echo "${{ steps.latest-release-tag.outputs.result }}"
         
-        echo "# Changes:" > ./app/build/outputs/changelogGithub
-        echo "Changlog:"
-        git log --format="* %s" ${previous}..HEAD
-        git log --format="* %s" ${previous}..HEAD >> ./app/build/outputs/changelogGithub
+        echo "Full Changelog:"
+        CHANGELOG="${{ steps.generate-notes.outputs.result }}"
+        echo -e "$CHANGELOG"
+        printf "$CHANGELOG" > ./app/build/outputs/changelogGithub
 
-        echo "Beta Changelog"
+        echo "Beta Changelog:"
         git log --format="* %s" HEAD^..HEAD
         git log --format="* %s" HEAD^..HEAD > ./app/build/outputs/changelogBeta
