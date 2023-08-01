@@ -20,3 +20,7 @@ wear/src/main/res/xml/locales_config.xml
 
 firebaseAppDistributionServiceCredentialsFile.json
 playStorePublishServiceCredentialsFile.json
+
+# Ruby stuff we don't care about
+.bundle/
+vendor/
