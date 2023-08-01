@@ -26,6 +26,10 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
       - uses: actions/cache@v3
         with:
           path: |
@@ -101,7 +105,7 @@ jobs:
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
         run: ./gradlew appDistributionUploadFullRelease
 
-      - name: Promote Internal to Beta
+      - name: Prepare Amazon Listing
         if: github.event.inputs.beta == 'true'
         run: bundle exec fastlane prep_amazon
 
