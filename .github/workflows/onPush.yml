@@ -2,6 +2,11 @@ name: On Push
 
 on:
   workflow_dispatch:
+    inputs:
+      beta:
+        description: 'true if this is a beta release'
+        required: false
+        default: 'false'
   push:
     branches:
       - master
@@ -65,7 +70,7 @@ jobs:
           path: ./**/*.apk
 
       - name: Create Version File
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event.inputs.beta == 'true'
         shell: bash
         env:
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
@@ -73,7 +78,7 @@ jobs:
           echo $VERSION_CODE > ./app/build/outputs/version_code.txt
 
       - name: Create Github Pre-Release
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event.inputs.beta == 'true'
         uses: softprops/action-gh-release@v0.1.15
         with:
           tag_name: ${{ steps.rel_number.outputs.version }}
@@ -96,6 +101,10 @@ jobs:
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
         run: ./gradlew appDistributionUploadFullRelease
 
+      - name: Promote Internal to Beta
+        if: github.event.inputs.beta == 'true'
+        run: bundle exec fastlane prep_amazon
+
       - name: Print `git status`
         run: git status
 
@@ -114,6 +123,10 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
 
       - uses: actions/cache@v3
         with:
@@ -154,24 +167,8 @@ jobs:
         run: ./gradlew bundleRelease
 
       - name: Deploy to Playstore Internal
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
-          KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
-          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
-          VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
-        run: |
-          ./gradlew :wear:publishReleaseBundle :app:publishReleaseBundle
-          ./gradlew :automotive:publishReleaseBundle || echo "Failed to publish Automotive!"
+        run: bundle exec fastlane deploy_internal
 
       - name: Promote Internal to Beta
-        if: github.event_name == 'workflow_dispatch'
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
-          KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
-          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
-          VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
-        run: |
-          ./gradlew promoteArtifact --from-track internal --promote-track beta
-
-      - name: Print `git status`
-        run: git status
+        if: github.event.inputs.beta == 'true'
+        run: bundle exec fastlane promote_to_beta

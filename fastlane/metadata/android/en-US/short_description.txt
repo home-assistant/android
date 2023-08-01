@@ -1,0 +1,1 @@
+The official app for Home Assistant. Control your home anywhere in the world.

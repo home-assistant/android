@@ -8,7 +8,6 @@ plugins {
     alias(libs.plugins.kotlin.android).apply(false)
     alias(libs.plugins.google.services).apply(false)
     alias(libs.plugins.firebase.appdistribution).apply(false)
-    alias(libs.plugins.play.publisher).apply(false)
     alias(libs.plugins.hilt).apply(false)
     alias(libs.plugins.kotlin.kapt).apply(false)
     alias(libs.plugins.kotlin.parcelize).apply(false)
@@ -21,12 +20,6 @@ allprojects {
         kotlinOptions {
             jvmTarget = libs.versions.javaVersion.get()
         }
-    }
-}
-
-gradle.projectsEvaluated {
-    project(":app").tasks.matching { it.name.startsWith("publish") }.configureEach {
-        mustRunAfter(project(":wear").tasks.matching { it.name.startsWith("publish") })
     }
 }
 

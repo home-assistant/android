@@ -33,4 +33,7 @@ jobs:
               repo: context.repo.repo,
               workflow_id: 'onPush.yml',
               ref: 'master',
+              inputs: {
+                "beta": "true",
+              },
             })

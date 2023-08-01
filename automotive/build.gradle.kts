@@ -1,4 +1,3 @@
-import com.github.triplet.gradle.androidpublisher.ResolutionStrategy
 import com.google.gms.googleservices.GoogleServicesPlugin.GoogleServicesPluginConfig
 
 plugins {
@@ -6,7 +5,6 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.kapt)
     alias(libs.plugins.kotlin.parcelize)
-    alias(libs.plugins.play.publisher)
     alias(libs.plugins.google.services)
     alias(libs.plugins.hilt)
 }
@@ -132,12 +130,6 @@ android {
         defaultConfig.buildConfigField("String[]", "APPLICATION_IDS", "{$values}")
     }
 
-    playConfigs {
-        register("minimal") {
-            enabled.set(false)
-        }
-    }
-
     testOptions {
         unitTests.isReturnDefaultValues = true
     }
@@ -156,14 +148,6 @@ android {
     kapt {
         correctErrorTypes = true
     }
-}
-
-play {
-    serviceAccountCredentials.set(file("playStorePublishServiceCredentialsFile.json"))
-    track.set("automotive:internal")
-    resolutionStrategy.set(ResolutionStrategy.IGNORE)
-    // We will depend on the wear commit.
-    commit.set(true)
 }
 
 dependencies {
