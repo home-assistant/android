@@ -15,6 +15,8 @@ jobs:
   app_build:
     name: Github, Firebase, and Sentry Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v3
         with:
@@ -121,6 +123,8 @@ jobs:
     runs-on: ubuntu-latest
     concurrency:
       group: playstore_deploy
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v3
         with:
