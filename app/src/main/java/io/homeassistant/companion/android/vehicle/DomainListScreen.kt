@@ -15,6 +15,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.util.vehicle.SUPPORTED_DOMAINS
 import io.homeassistant.companion.android.util.vehicle.getDomainList
 import io.homeassistant.companion.android.util.vehicle.nativeModeActionStrip
@@ -29,7 +30,8 @@ class DomainListScreen(
     val integrationRepository: IntegrationRepository,
     private val serverId: StateFlow<Int>,
     private val allEntities: Flow<Map<String, Entity<*>>>,
-    private val prefsRepository: PrefsRepository
+    private val prefsRepository: PrefsRepository,
+    private val entityRegistry: List<EntityRegistryResponse>?
 ) : BaseVehicleScreen(carContext) {
 
     companion object {
@@ -68,7 +70,9 @@ class DomainListScreen(
             serverManager,
             serverId,
             prefsRepository,
-            allEntities
+            allEntities,
+            entityRegistry,
+            lifecycleScope
         )
 
         return GridTemplate.Builder().apply {

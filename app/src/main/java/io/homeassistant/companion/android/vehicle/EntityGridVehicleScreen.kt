@@ -33,6 +33,7 @@ import io.homeassistant.companion.android.common.data.integration.isExecuting
 import io.homeassistant.companion.android.common.data.integration.onPressed
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.util.vehicle.MAP_DOMAINS
 import io.homeassistant.companion.android.util.vehicle.NOT_ACTIONABLE_DOMAINS
 import io.homeassistant.companion.android.util.vehicle.SUPPORTED_DOMAINS
@@ -53,6 +54,7 @@ class EntityGridVehicleScreen(
     val prefsRepository: PrefsRepository,
     val integrationRepository: IntegrationRepository,
     val title: String,
+    private val entityRegistry: List<EntityRegistryResponse>?,
     private val domains: MutableSet<String>,
     private val entitiesFlow: Flow<List<Entity<*>>>,
     private val allEntities: Flow<Map<String, Entity<*>>>,
@@ -92,7 +94,9 @@ class EntityGridVehicleScreen(
                 serverManager,
                 serverId,
                 prefsRepository,
-                allEntities
+                allEntities,
+                entityRegistry,
+                lifecycleScope
             )
         }
         if (isFavorites) {
@@ -112,7 +116,8 @@ class EntityGridVehicleScreen(
                     integrationRepository,
                     serverId,
                     allEntities,
-                    prefsRepository
+                    prefsRepository,
+                    entityRegistry
                 ).build()
             )
             if (shouldSwitchServers) {
