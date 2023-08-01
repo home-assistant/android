@@ -37,7 +37,7 @@ runs:
             --data "{\"tag_name\":\"${{inputs.tag-name}}\",\"target_commitish\":\"master\",\"previous_tag_name\":\"$TAG\"}" \
          | jq -r .body
         `
-        echo $CHANGELOG
+        echo -e $CHANGELOG
         printf "$CHANGELOG" > ./app/build/outputs/changelogGithub
 
         echo "Beta Changelog:"
