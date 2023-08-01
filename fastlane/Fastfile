@@ -60,19 +60,22 @@ platform :android do
       track: 'beta',
       track_promote_to: 'production',
       skip_upload_changelogs: true,
-      skip_upload_metadata: true,
-      skip_upload_images: true,
-      skip_upload_screenshots: true,
     )
     supply(
       track: 'wear:beta',
       track_promote_to: 'wear:production',
       skip_upload_changelogs: true,
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
     )
     supply(
       track: 'automotive:beta',
       track_promote_to: 'automotive:production',
       skip_upload_changelogs: true,
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
     )
   end
 
