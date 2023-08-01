@@ -14,7 +14,7 @@ runs:
       uses: actions/github-script@v6
       id: release-tag
       with:
-        github_token: ${{ inputs.gh-token }}
+        github-token: ${{ inputs.gh-token }}
         script: |
           return await github.rest.repos.getLatestRelease({
             home-assistant,
@@ -24,7 +24,7 @@ runs:
       uses: actions/github-script@v6
       id: generate-notes
       with:
-        github_token: ${{ inputs.gh-token }}
+        github-token: ${{ inputs.gh-token }}
         script: |
           return await github.rest.repos.generateReleaseNotes({
             home-assistant,
