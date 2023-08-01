@@ -48,7 +48,7 @@ runs:
         
         echo "Full Changelog:"
         CHANGELOG="${{ steps.generate-notes.outputs.result }}"
-        echo -e $CHANGELOG
+        echo -e "$CHANGELOG"
         printf "$CHANGELOG" > ./app/build/outputs/changelogGithub
 
         echo "Beta Changelog:"
