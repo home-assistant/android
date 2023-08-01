@@ -8,6 +8,7 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import okio.internal.commonToUtf8String
+import java.net.MalformedURLException
 import java.net.URL
 import java.util.concurrent.locks.ReentrantLock
 
@@ -95,15 +96,18 @@ class HomeAssistantSearcher constructor(
                     resolvedService?.let {
                         val baseUrl = it.attributes["base_url"]
                         val versionAttr = it.attributes["version"]
-                        val version = versionAttr?.let { ver -> HomeAssistantVersion.fromString(ver.commonToUtf8String()) }
-                        if (baseUrl != null && version != null) {
-                            onInstanceFound(
-                                HomeAssistantInstance(
+                        val version = if (versionAttr?.isNotEmpty() == true) HomeAssistantVersion.fromString(versionAttr.commonToUtf8String()) else null
+                        if (baseUrl?.isNotEmpty() == true && version != null) {
+                            try {
+                                val instance = HomeAssistantInstance(
                                     it.serviceName,
                                     URL(baseUrl.commonToUtf8String()),
                                     version
                                 )
-                            )
+                                onInstanceFound(instance)
+                            } catch (e: MalformedURLException) {
+                                Log.w(TAG, "Failed to create instance: ${baseUrl.commonToUtf8String()}")
+                            }
                         }
                     }
                     lock.unlock()
