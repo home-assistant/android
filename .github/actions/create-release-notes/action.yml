@@ -10,6 +10,29 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: Get Previous Release Tag
+      uses: actions/github-script@v6
+      id: release-tag
+      with:
+        github_token: ${{ inputs.gh-token }}
+        script: |
+          return await github.rest.repos.getLatestRelease({
+            home-assistant,
+            android
+          })
+    - name: Get Generated Release Notes
+      uses: actions/github-script@v6
+      id: generate-notes
+      with:
+        github_token: ${{ inputs.gh-token }}
+        script: |
+          return await github.rest.repos.generateReleaseNotes({
+            home-assistant,
+            android,
+            ${{inputs.tag_name}},
+            master,
+            ${{steps.release-tag.outputs.result.tag_name}},
+          })
     - name: Generate Release Notes
       id: version-generator
       shell: bash
@@ -17,26 +40,10 @@ runs:
         mkdir -p ./app/build/outputs/
         
         echo "Previous Release Tag:"
-        TAG=`\
-          curl --no-progress-meter --request GET \
-            --url "https://api.github.com/repos/home-assistant/android/releases/latest" \
-            --header "Accept: application/vnd.github+json" \
-            --header "Authorization: Bearer ${{inputs.gh-token}}" \
-            --header "X-GitHub-Api-Version: 2022-11-28" \
-         | jq -r .tag_name
-        `
-        echo $TAG
+        echo "${{steps.release-tag.outputs.result.tag_name}}"
         
         echo "Full Changelog:"
-        CHANGELOG=`\
-          curl --no-progress-meter --request POST \
-            --url "https://api.github.com/repos/home-assistant/android/releases/generate-notes" \
-            --header "Accept: application/vnd.github+json" \
-            --header "Authorization: Bearer ${{inputs.gh-token}}" \
-            --header "X-GitHub-Api-Version: 2022-11-28" \
-            --data "{\"tag_name\":\"${{inputs.tag-name}}\",\"target_commitish\":\"master\",\"previous_tag_name\":\"$TAG\"}" \
-         | jq -r .body
-        `
+        CHANGELOG="${{steps.generate-notes.outputs.result.body}}"
         echo -e $CHANGELOG
         printf "$CHANGELOG" > ./app/build/outputs/changelogGithub
 
