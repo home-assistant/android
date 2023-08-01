@@ -12,27 +12,29 @@ runs:
   steps:
     - name: Get Previous Release Tag
       uses: actions/github-script@v6
-      id: release-tag
+      id: latest-release-tag
       with:
         github-token: ${{ inputs.gh-token }}
         script: |
-          return await github.rest.repos.getLatestRelease({
+          const { data } = await github.rest.repos.getLatestRelease({
             owner: context.repo.owner,
             repo: context.repo.repo,
           })
+          return data.tag_name
     - name: Get Generated Release Notes
       uses: actions/github-script@v6
       id: generate-notes
       with:
         github-token: ${{ inputs.gh-token }}
         script: |
-          return await github.rest.repos.generateReleaseNotes({
+          const { data } = await github.rest.repos.generateReleaseNotes({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            tag_name: "${{inputs.tag_name}}",
-            target_commitish: "master",
-            previous_tag_name: "${{steps.release-tag.outputs.result.tag_name}}",
+            tag_name: '${{ inputs.tag_name }}',
+            target_commitish: 'master',
+            previous_tag_name: '${{ steps.latest-release-tag.outputs.result }}',
           })
+          return data.body
     - name: Generate Release Notes
       id: version-generator
       shell: bash
@@ -40,10 +42,10 @@ runs:
         mkdir -p ./app/build/outputs/
         
         echo "Previous Release Tag:"
-        echo "${{steps.release-tag.outputs.result.tag_name}}"
+        echo "${{steps.latest-release-tag.outputs.result}}"
         
         echo "Full Changelog:"
-        CHANGELOG="${{steps.generate-notes.outputs.result.body}}"
+        CHANGELOG="${{ steps.generate-notes.outputs.result }}"
         echo -e $CHANGELOG
         printf "$CHANGELOG" > ./app/build/outputs/changelogGithub
 
