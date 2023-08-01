@@ -4,13 +4,14 @@ inputs:
   tag-name:
     description: 'Name of the tag that will be used for this release'
     required: true
+  gh-token:
+    description: 'The GitHub token used to get details from the API'
+    required: true
 runs:
   using: 'composite'
   steps:
     - name: Generate Release Notes
       id: version-generator
-      env:
-        GH_TOKEN: ${{ secrets.TAG_PUSH_TOKEN }}
       shell: bash
       run: |
         mkdir -p ./app/build/outputs/
@@ -20,7 +21,7 @@ runs:
           curl --no-progress-meter --request GET \
             --url "https://api.github.com/repos/home-assistant/android/releases/latest" \
             --header "Accept: application/vnd.github+json" \
-            --header "Authorization: Bearer $GH_TOKEN" \
+            --header "Authorization: Bearer ${{inputs.gh-token}}" \
             --header "X-GitHub-Api-Version: 2022-11-28" \
          | jq -r .tag_name
         `
@@ -28,10 +29,10 @@ runs:
         
         echo "Full Changelog:"
         CHANGELOG=`\
-          curl --no-progress-meter --request POST \
+          curl --verbose --request POST \
             --url "https://api.github.com/repos/home-assistant/android/releases/generate-notes" \
             --header "Accept: application/vnd.github+json" \
-            --header "Authorization: Bearer $GH_TOKEN" \
+            --header "Authorization: Bearer ${{inputs.gh-token}}" \
             --header "X-GitHub-Api-Version: 2022-11-28" \
             --data "{\"tag_name\":\"${{inputs.tag-name}}\",\"target_commitish\":\"master\",\"previous_tag_name\":\"$TAG\"}" \
          | jq -r .body

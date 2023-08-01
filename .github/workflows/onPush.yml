@@ -56,6 +56,7 @@ jobs:
         name: Create Release Notes
         with:
           tag-name: ${{ steps.rel_number.outputs.version }}
+          gh-token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: ./.github/actions/download-translations
         name: Download Translations
@@ -161,6 +162,7 @@ jobs:
         name: Create Release Notes
         with:
           tag-name: ${{ steps.rel_number.outputs.version }}
+          gh-token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: ./.github/actions/download-translations
         name: Download Translations
