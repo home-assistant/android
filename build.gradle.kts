@@ -2,30 +2,24 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     alias(libs.plugins.ktlint)
-}
 
-buildscript {
-    repositories {
-        google()
-        gradlePluginPortal()
-    }
-    dependencies {
-        classpath(libs.android.plugin)
-        classpath(libs.kotlin.gradle.plugin)
-        classpath(libs.google.services)
-        classpath(libs.firebase.appdistribution.gradle)
-        classpath(libs.android.junit5)
-        classpath(libs.play.publisher)
-        classpath(libs.hilt.android.gradle.plugin)
-    }
+    alias(libs.plugins.android.application).apply(false)
+    alias(libs.plugins.android.library).apply(false)
+    alias(libs.plugins.kotlin.android).apply(false)
+    alias(libs.plugins.google.services).apply(false)
+    alias(libs.plugins.firebase.appdistribution).apply(false)
+    alias(libs.plugins.play.publisher).apply(false)
+    alias(libs.plugins.hilt).apply(false)
+    alias(libs.plugins.kotlin.kapt).apply(false)
+    alias(libs.plugins.kotlin.parcelize).apply(false)
 }
 
 allprojects {
-    apply(plugin = "org.jlleitschuh.gradle.ktlint")
+    apply(plugin = rootProject.libs.plugins.ktlint.get().pluginId)
 
     tasks.withType<KotlinCompile>().configureEach {
         kotlinOptions {
-            jvmTarget = "11"
+            jvmTarget = libs.versions.javaVersion.get()
         }
     }
 }
