@@ -46,7 +46,7 @@ platform :android do
     )
     supply(
       track: 'automotive:internal',
-      track_promote_to: 'wear:beta',
+      track_promote_to: 'automotive:beta',
       skip_upload_changelogs: true,
       skip_upload_metadata: true,
       skip_upload_images: true,
@@ -71,7 +71,7 @@ platform :android do
     )
     supply(
       track: 'automotive:beta',
-      track_promote_to: 'wear:production',
+      track_promote_to: 'automotive:production',
       skip_upload_changelogs: true,
     )
   end
