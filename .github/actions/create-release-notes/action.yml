@@ -15,6 +15,7 @@ runs:
       id: latest-release-tag
       with:
         github-token: ${{ inputs.gh-token }}
+        result-encoding: string
         script: |
           const { data } = await github.rest.repos.getLatestRelease({
             owner: context.repo.owner,
@@ -26,6 +27,7 @@ runs:
       id: generate-notes
       with:
         github-token: ${{ inputs.gh-token }}
+        result-encoding: string
         script: |
           const { data } = await github.rest.repos.generateReleaseNotes({
             owner: context.repo.owner,
