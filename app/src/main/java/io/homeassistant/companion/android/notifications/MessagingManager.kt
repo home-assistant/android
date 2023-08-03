@@ -761,7 +761,7 @@ class MessagingManager @Inject constructor(
                 }
             }
             COMMAND_PERSISTENT_CONNECTION -> {
-                togglePersistentConnection(data[PERSISTENT].toString())
+                togglePersistentConnection(data[PERSISTENT].toString(), serverId.toIntOrNull() ?: ServerManager.SERVER_ID_ACTIVE)
             }
             COMMAND_AUTO_SCREEN_BRIGHTNESS, COMMAND_SCREEN_BRIGHTNESS_LEVEL, COMMAND_SCREEN_OFF_TIMEOUT -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -1809,28 +1809,28 @@ class MessagingManager @Inject constructor(
         }
     }
 
-    private fun togglePersistentConnection(mode: String) {
+    private fun togglePersistentConnection(mode: String, serverId: Int) {
         when (mode.uppercase()) {
             WebsocketSetting.NEVER.name -> {
-                settingsDao.get(0)?.let {
+                settingsDao.get(serverId)?.let {
                     it.websocketSetting = WebsocketSetting.NEVER
                     settingsDao.update(it)
                 }
             }
             WebsocketSetting.ALWAYS.name -> {
-                settingsDao.get(0)?.let {
+                settingsDao.get(serverId)?.let {
                     it.websocketSetting = WebsocketSetting.ALWAYS
                     settingsDao.update(it)
                 }
             }
             WebsocketSetting.HOME_WIFI.name -> {
-                settingsDao.get(0)?.let {
+                settingsDao.get(serverId)?.let {
                     it.websocketSetting = WebsocketSetting.HOME_WIFI
                     settingsDao.update(it)
                 }
             }
             WebsocketSetting.SCREEN_ON.name -> {
-                settingsDao.get(0)?.let {
+                settingsDao.get(serverId)?.let {
                     it.websocketSetting = WebsocketSetting.SCREEN_ON
                     settingsDao.update(it)
                 }
