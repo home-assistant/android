@@ -62,7 +62,8 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         private const val PREF_SESSION_EXPIRE = "session_expire"
         private const val PREF_TRUSTED = "trusted"
         private const val PREF_SEC_WARNING_NEXT = "sec_warning_last"
-        private const val PREF_LAST_USED_PIPELINE = "last_used_pipeline"
+        private const val PREF_LAST_USED_PIPELINE_ID = "last_used_pipeline"
+        private const val PREF_LAST_USED_PIPELINE_STT = "last_used_pipeline_stt"
         private const val TAG = "IntegrationRepository"
         private const val RATE_LIMIT_URL = BuildConfig.RATE_LIMIT_URL
 
@@ -166,7 +167,8 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         localStorage.remove("${serverId}_$PREF_SESSION_EXPIRE")
         localStorage.remove("${serverId}_$PREF_TRUSTED")
         localStorage.remove("${serverId}_$PREF_SEC_WARNING_NEXT")
-        localStorage.remove("${serverId}_$PREF_LAST_USED_PIPELINE")
+        localStorage.remove("${serverId}_$PREF_LAST_USED_PIPELINE_ID")
+        localStorage.remove("${serverId}_$PREF_LAST_USED_PIPELINE_STT")
         // app version and push token is device-specific
     }
 
@@ -552,11 +554,16 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         }
     }
 
-    override suspend fun getLastUsedPipeline(): String? =
-        localStorage.getString("${serverId}_$PREF_LAST_USED_PIPELINE")
+    override suspend fun getLastUsedPipelineId(): String? =
+        localStorage.getString("${serverId}_$PREF_LAST_USED_PIPELINE_ID")
 
-    override suspend fun setLastUsedPipeline(pipelineId: String) =
-        localStorage.putString("${serverId}_$PREF_LAST_USED_PIPELINE", pipelineId)
+    override suspend fun getLastUsedPipelineSttSupport(): Boolean =
+        localStorage.getBoolean("${serverId}_$PREF_LAST_USED_PIPELINE_STT")
+
+    override suspend fun setLastUsedPipeline(pipelineId: String, supportsStt: Boolean) {
+        localStorage.putString("${serverId}_$PREF_LAST_USED_PIPELINE_ID", pipelineId)
+        localStorage.putBoolean("${serverId}_$PREF_LAST_USED_PIPELINE_STT", supportsStt)
+    }
 
     override suspend fun getEntities(): List<Entity<Any>>? {
         val response = webSocketRepository.getStates()

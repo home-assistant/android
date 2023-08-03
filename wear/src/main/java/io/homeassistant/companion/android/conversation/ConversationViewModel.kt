@@ -56,14 +56,25 @@ class ConversationViewModel @Inject constructor(
     val conversation: List<AssistMessage> = _conversation
 
     /** @return `true` if the voice input intent should be fired */
-    suspend fun onCreate(): Boolean {
-        val supported = checkAssistSupport()
+    suspend fun onCreate(hasPermission: Boolean): Boolean {
+        this.hasPermission = hasPermission
+
         if (!serverManager.isRegistered()) {
             _conversation.clear()
             _conversation.add(
                 AssistMessage(app.getString(commonR.string.not_registered), isInput = false)
             )
-        } else if (supported == null) { // Couldn't get config
+            return false
+        }
+
+        if (hasPermission && hasMicrophone && serverManager.integrationRepository().getLastUsedPipelineSttSupport()) {
+            // Start microphone recording to prevent missing voice input while doing network checks
+            onMicrophoneInput(proactive = true)
+        }
+
+        val supported = checkAssistSupport()
+        if (supported != true) stopRecording()
+        if (supported == null) { // Couldn't get config
             _conversation.clear()
             _conversation.add(
                 AssistMessage(app.getString(commonR.string.assist_connnect), isInput = false)
@@ -90,7 +101,7 @@ class ConversationViewModel @Inject constructor(
 
             return setPipeline(
                 if (useAssistPipeline) {
-                    serverManager.integrationRepository().getLastUsedPipeline()
+                    serverManager.integrationRepository().getLastUsedPipelineId()
                 } else {
                     null
                 }
@@ -168,7 +179,7 @@ class ConversationViewModel @Inject constructor(
         if (pipeline != null || !useAssistPipeline) {
             currentPipeline = pipeline
             currentPipeline?.let {
-                serverManager.integrationRepository().setLastUsedPipeline(it.id)
+                serverManager.integrationRepository().setLastUsedPipeline(it.id, pipeline?.sttEngine != null)
             }
 
             _conversation.clear()
@@ -178,7 +189,7 @@ class ConversationViewModel @Inject constructor(
                 if (hasPermission || requestSilently) {
                     inputMode = AssistInputMode.VOICE_INACTIVE
                     useAssistPipelineStt = true
-                    onMicrophoneInput()
+                    onMicrophoneInput(proactive = null)
                 } else {
                     inputMode = AssistInputMode.TEXT
                 }
@@ -198,31 +209,37 @@ class ConversationViewModel @Inject constructor(
 
     fun updateSpeechResult(commonResult: String) = runAssistPipeline(commonResult)
 
-    fun onMicrophoneInput() {
+    /**
+     * Start/stop microphone input for Assist, depending on the current state.
+     * @param proactive true if proactive, null if not important, false if not
+     */
+    fun onMicrophoneInput(proactive: Boolean? = false) {
         if (!hasPermission) {
             requestPermission?.let { it() }
             return
         }
 
-        if (inputMode == AssistInputMode.VOICE_ACTIVE) {
+        if (inputMode == AssistInputMode.VOICE_ACTIVE && proactive == false) {
             stopRecording()
             return
         }
 
         val recording = try {
-            audioRecorder.startRecording()
+            recorderProactive || audioRecorder.startRecording()
         } catch (e: Exception) {
             Log.e(TAG, "Exception while starting recording", e)
             false
         }
 
         if (recording) {
-            setupRecorderQueue()
+            if (!recorderProactive) setupRecorderQueue()
             inputMode = AssistInputMode.VOICE_ACTIVE
-            runAssistPipeline(null)
+            if (proactive == true) _conversation.add(AssistMessage("…", isInput = true))
+            if (proactive != true) runAssistPipeline(null)
         } else {
             _conversation.add(AssistMessage(app.getString(commonR.string.assist_error), isInput = false, isError = true))
         }
+        recorderProactive = recording && proactive == true
     }
 
     private fun runAssistPipeline(text: String?) {
@@ -248,6 +265,9 @@ class ConversationViewModel @Inject constructor(
                     _conversation.add(haMessage)
                     message = haMessage
                 }
+                if (isError && inputMode == AssistInputMode.VOICE_ACTIVE) {
+                    stopRecording()
+                }
             }
         }
     }
@@ -260,14 +280,15 @@ class ConversationViewModel @Inject constructor(
     fun onPermissionResult(granted: Boolean, voiceInputIntent: (() -> Unit)) {
         hasPermission = granted
         useAssistPipelineStt = currentPipeline?.sttEngine != null && granted
+        val proactive = currentPipeline == null
         if (granted) {
             inputMode = AssistInputMode.VOICE_INACTIVE
-            onMicrophoneInput()
-        } else if (requestSilently) { // Don't notify the user if they haven't explicitly requested
+            onMicrophoneInput(proactive = proactive)
+        } else if (requestSilently && !proactive) { // Don't notify the user if they haven't explicitly requested
             inputMode = AssistInputMode.TEXT
             voiceInputIntent()
         }
-        requestSilently = false
+        if (!proactive) requestSilently = false
     }
 
     fun onConversationScreenHidden() {
