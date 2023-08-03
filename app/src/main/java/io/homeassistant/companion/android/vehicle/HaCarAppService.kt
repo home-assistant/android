@@ -120,6 +120,11 @@ class HaCarAppService : CarAppService() {
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        carInfo = null
+    }
+
     private fun loadEntities(scope: CoroutineScope, id: Int) {
         allEntitiesJob?.cancel()
         allEntitiesJob = scope.launch {
