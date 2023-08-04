@@ -159,11 +159,9 @@ dependencies {
     implementation(libs.biometric)
     implementation(libs.webkit)
 
-    implementation(libs.exoplayer.core)
-    implementation(libs.exoplayer.hls)
-    implementation(libs.exoplayer.ui)
-    "fullImplementation"(libs.extension.cronet)
-    "minimalImplementation"(libs.extension.cronet) {
+    implementation(libs.bundles.media3)
+    "fullImplementation"(libs.media3.datasource.cronet)
+    "minimalImplementation"(libs.media3.datasource.cronet) {
         exclude(group = "com.google.android.gms", module = "play-services-cronet")
     }
     "minimalImplementation"(libs.cronet.embedded)

@@ -42,8 +42,6 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.widget.FrameLayout
-import android.widget.ImageButton
-import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.IntentSenderRequest
@@ -51,7 +49,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.ColorUtils
@@ -60,18 +57,17 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.common.VideoSize
+import androidx.media3.datasource.cronet.CronetDataSource
+import androidx.media3.exoplayer.DefaultLoadControl
+import androidx.media3.exoplayer.SimpleExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.ui.AspectRatioFrameLayout
+import androidx.media3.ui.PlayerView
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
-import com.google.android.exoplayer2.DefaultLoadControl
-import com.google.android.exoplayer2.MediaItem
-import com.google.android.exoplayer2.Player
-import com.google.android.exoplayer2.SimpleExoPlayer
-import com.google.android.exoplayer2.ext.cronet.CronetDataSource
-import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
-import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
-import com.google.android.exoplayer2.ui.PlayerView
-import com.google.android.exoplayer2.ui.StyledPlayerView
-import com.google.android.exoplayer2.video.VideoSize
 import dagger.hilt.android.AndroidEntryPoint
 import eightbitlab.com.blurview.RenderScriptBlur
 import io.homeassistant.companion.android.BaseActivity
@@ -196,7 +192,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private lateinit var decor: FrameLayout
     private lateinit var myCustomView: View
     private lateinit var authenticator: Authenticator
-    private lateinit var exoPlayerView: StyledPlayerView
+    private lateinit var exoPlayerView: PlayerView
     private lateinit var windowInsetsController: WindowInsetsControllerCompat
 
     private var mFilePathCallback: ValueCallback<Array<Uri>>? = null
@@ -223,6 +219,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var downloadFileContentDisposition = ""
     private var downloadFileMimetype = ""
 
+    @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -252,7 +249,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         exoPlayerView.visibility = View.GONE
         exoPlayerView.setBackgroundColor(Color.BLACK)
         exoPlayerView.alpha = 1f
-        exoPlayerView.setShowBuffering(StyledPlayerView.SHOW_BUFFERING_ALWAYS)
+        exoPlayerView.setShowBuffering(PlayerView.SHOW_BUFFERING_ALWAYS)
         exoPlayerView.controllerHideOnTouch = true
         exoPlayerView.controllerShowTimeoutMs = 2000
 
@@ -844,6 +841,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
     }
 
+    @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
     fun exoPlayHls(json: JSONObject) {
         val payload = json.getJSONObject("payload")
         val uri = Uri.parse(payload.getString("url"))
@@ -896,6 +894,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
     }
 
+    @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
     fun exoStopHls() {
         runOnUiThread {
             exoPlayerView.visibility = View.GONE
@@ -905,6 +904,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
     }
 
+    @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
     fun exoResizeHls(json: JSONObject) {
         val rect = json.getJSONObject("payload")
         val displayMetrics = applicationContext.resources.displayMetrics
@@ -923,6 +923,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
     }
 
+    @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
     fun exoResizeLayout() {
         val exoLayoutParams = exoPlayerView.layoutParams as FrameLayout.LayoutParams
         if (isExoFullScreen) {
