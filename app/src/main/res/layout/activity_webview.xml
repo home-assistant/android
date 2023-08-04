@@ -23,7 +23,8 @@
         <androidx.media3.ui.PlayerView
             android:id="@+id/exoplayerView"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            app:show_buffering="always">
         </androidx.media3.ui.PlayerView>
     </FrameLayout>
 
