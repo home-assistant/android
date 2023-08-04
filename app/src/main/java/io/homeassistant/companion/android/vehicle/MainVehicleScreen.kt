@@ -76,7 +76,7 @@ class MainVehicleScreen(
                         .distinct()
                         .filter { it in SUPPORTED_DOMAINS }
                         .toSet()
-                    var invalidate = newDomains.size != domains.size || newDomains != domains
+                    var invalidate = newDomains.size != domains.size || newDomains != domains || !domainsAdded
                     domains.clear()
                     domains.addAll(newDomains)
                     domainsAdded = true
