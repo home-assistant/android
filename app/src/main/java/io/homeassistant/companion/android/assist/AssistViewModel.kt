@@ -53,22 +53,37 @@ class AssistViewModel @Inject constructor(
     var inputMode by mutableStateOf<AssistInputMode?>(null)
         private set
 
-    fun onCreate(serverId: Int?, pipelineId: String?, startListening: Boolean?) {
+    fun onCreate(hasPermission: Boolean, serverId: Int?, pipelineId: String?, startListening: Boolean?) {
         viewModelScope.launch {
+            this@AssistViewModel.hasPermission = hasPermission
             serverId?.let {
                 filteredServerId = serverId
                 selectedServerId = serverId
             }
             startListening?.let { recorderAutoStart = it }
 
-            val supported = checkSupport()
             if (!serverManager.isRegistered()) {
                 inputMode = AssistInputMode.BLOCKED
                 _conversation.clear()
                 _conversation.add(
                     AssistMessage(app.getString(commonR.string.not_registered), isInput = false)
                 )
-            } else if (supported == null) { // Couldn't get config
+                return@launch
+            }
+
+            if (
+                pipelineId == PIPELINE_LAST_USED && recorderAutoStart &&
+                hasPermission && hasMicrophone &&
+                serverManager.getServer(selectedServerId) != null &&
+                serverManager.integrationRepository(selectedServerId).getLastUsedPipelineSttSupport()
+            ) {
+                // Start microphone recording to prevent missing voice input while doing network checks
+                onMicrophoneInput(proactive = true)
+            }
+
+            val supported = checkSupport()
+            if (supported != true) stopRecording()
+            if (supported == null) { // Couldn't get config
                 inputMode = AssistInputMode.BLOCKED
                 _conversation.clear()
                 _conversation.add(
@@ -86,7 +101,7 @@ class AssistViewModel @Inject constructor(
             } else {
                 setPipeline(
                     when {
-                        pipelineId == PIPELINE_LAST_USED -> serverManager.integrationRepository(selectedServerId).getLastUsedPipeline()
+                        pipelineId == PIPELINE_LAST_USED -> serverManager.integrationRepository(selectedServerId).getLastUsedPipelineId()
                         pipelineId == PIPELINE_PREFERRED -> null
                         pipelineId?.isNotBlank() == true -> pipelineId
                         else -> null
@@ -169,7 +184,7 @@ class AssistViewModel @Inject constructor(
                 id = it.id,
                 name = it.name
             )
-            serverManager.integrationRepository(selectedServerId).setLastUsedPipeline(it.id)
+            serverManager.integrationRepository(selectedServerId).setLastUsedPipeline(it.id, it.sttEngine != null)
 
             _conversation.clear()
             _conversation.add(startMessage)
@@ -177,7 +192,7 @@ class AssistViewModel @Inject constructor(
             if (hasMicrophone && it.sttEngine != null) {
                 if (recorderAutoStart && (hasPermission || requestSilently)) {
                     inputMode = AssistInputMode.VOICE_INACTIVE
-                    onMicrophoneInput()
+                    onMicrophoneInput(proactive = null)
                 } else { // already requested permission once and was denied
                     inputMode = AssistInputMode.TEXT
                 }
@@ -219,31 +234,37 @@ class AssistViewModel @Inject constructor(
 
     fun onTextInput(input: String) = runAssistPipeline(input)
 
-    fun onMicrophoneInput() {
+    /**
+     * Start/stop microphone input for Assist, depending on the current state.
+     * @param proactive true if proactive, null if not important, false if not
+     */
+    fun onMicrophoneInput(proactive: Boolean? = false) {
         if (!hasPermission) {
             requestPermission?.let { it() }
             return
         }
 
-        if (inputMode == AssistInputMode.VOICE_ACTIVE) {
+        if (inputMode == AssistInputMode.VOICE_ACTIVE && proactive == false) {
             stopRecording()
             return
         }
 
         val recording = try {
-            audioRecorder.startRecording()
+            recorderProactive || audioRecorder.startRecording()
         } catch (e: Exception) {
             Log.e(TAG, "Exception while starting recording", e)
             false
         }
 
         if (recording) {
-            setupRecorderQueue()
+            if (!recorderProactive) setupRecorderQueue()
             inputMode = AssistInputMode.VOICE_ACTIVE
-            runAssistPipeline(null)
+            if (proactive == true) _conversation.add(AssistMessage("…", isInput = true))
+            if (proactive != true) runAssistPipeline(null)
         } else {
             _conversation.add(AssistMessage(app.getString(commonR.string.assist_error), isInput = false, isError = true))
         }
+        recorderProactive = recording && proactive == true
     }
 
     private fun runAssistPipeline(text: String?) {
@@ -269,6 +290,9 @@ class AssistViewModel @Inject constructor(
                     _conversation.add(haMessage)
                     message = haMessage
                 }
+                if (isError && inputMode == AssistInputMode.VOICE_ACTIVE) {
+                    stopRecording()
+                }
             }
         }
     }
@@ -280,15 +304,16 @@ class AssistViewModel @Inject constructor(
 
     fun onPermissionResult(granted: Boolean) {
         hasPermission = granted
+        val proactive = currentPipeline == null
         if (granted) {
             inputMode = AssistInputMode.VOICE_INACTIVE
-            onMicrophoneInput()
-        } else if (requestSilently) { // Don't notify the user if they haven't explicitly requested
+            onMicrophoneInput(proactive = proactive)
+        } else if (requestSilently && !proactive) { // Don't notify the user if they haven't explicitly requested
             inputMode = AssistInputMode.TEXT
-        } else {
+        } else if (!requestSilently) {
             _conversation.add(AssistMessage(app.getString(commonR.string.assist_permission), isInput = false))
         }
-        requestSilently = false
+        if (!proactive) requestSilently = false
     }
 
     fun onPause() {

@@ -48,7 +48,7 @@ class ConversationActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         lifecycleScope.launch {
-            val launchIntent = conversationViewModel.onCreate()
+            val launchIntent = conversationViewModel.onCreate(hasRecordingPermission())
             if (launchIntent) {
                 launchVoiceInputIntent()
             }
@@ -64,9 +64,7 @@ class ConversationActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        conversationViewModel.setPermissionInfo(
-            ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
-        ) { requestPermission.launch(Manifest.permission.RECORD_AUDIO) }
+        conversationViewModel.setPermissionInfo(hasRecordingPermission()) { requestPermission.launch(Manifest.permission.RECORD_AUDIO) }
     }
 
     override fun onPause() {
@@ -87,6 +85,9 @@ class ConversationActivity : ComponentActivity() {
             launchVoiceInputIntent()
         }
     }
+
+    private fun hasRecordingPermission() =
+        ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
 
     private fun launchVoiceInputIntent() {
         val searchIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {

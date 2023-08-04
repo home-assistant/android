@@ -74,6 +74,7 @@ class AssistActivity : BaseActivity() {
 
         if (savedInstanceState == null) {
             viewModel.onCreate(
+                hasPermission = hasRecordingPermission(),
                 serverId = if (intent.hasExtra(EXTRA_SERVER)) {
                     intent.getIntExtra(EXTRA_SERVER, ServerManager.SERVER_ID_ACTIVE)
                 } else {
@@ -137,9 +138,7 @@ class AssistActivity : BaseActivity() {
 
     override fun onResume() {
         super.onResume()
-        viewModel.setPermissionInfo(
-            ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
-        ) { requestPermission.launch(Manifest.permission.RECORD_AUDIO) }
+        viewModel.setPermissionInfo(hasRecordingPermission()) { requestPermission.launch(Manifest.permission.RECORD_AUDIO) }
     }
 
     override fun onPause() {
@@ -152,4 +151,7 @@ class AssistActivity : BaseActivity() {
         this.intent = intent
         viewModel.onNewIntent(intent)
     }
+
+    private fun hasRecordingPermission() =
+        ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
 }

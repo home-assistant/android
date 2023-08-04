@@ -43,6 +43,7 @@ abstract class AssistViewModelBase(
 
     protected var selectedServerId = ServerManager.SERVER_ID_ACTIVE
 
+    protected var recorderProactive = false
     private var recorderJob: Job? = null
     private var recorderQueue: MutableList<ByteArray>? = null
     protected val hasMicrophone = app.packageManager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE)
@@ -99,8 +100,11 @@ abstract class AssistViewModelBase(
                     }
                     AssistPipelineEventType.STT_START -> {
                         viewModelScope.launch {
-                            recorderQueue?.forEach { item ->
-                                sendVoiceData(item)
+                            binaryHandlerId?.let { id ->
+                                // Manually loop here to avoid the queue being reset too soon
+                                recorderQueue?.forEach { data ->
+                                    serverManager.webSocketRepository(selectedServerId).sendVoiceData(id, data)
+                                }
                             }
                             recorderQueue = null
                         }
@@ -156,7 +160,7 @@ abstract class AssistViewModelBase(
         binaryHandlerId?.let {
             viewModelScope.launch {
                 // Launch to prevent blocking the output flow if the network is slow
-                serverManager.webSocketRepository().sendVoiceData(it, data)
+                serverManager.webSocketRepository(selectedServerId).sendVoiceData(it, data)
             }
         }
     }
@@ -186,8 +190,9 @@ abstract class AssistViewModelBase(
             recorderQueue = null
         }
         if (getInput() == AssistInputMode.VOICE_ACTIVE) {
-            setInput(AssistInputMode.VOICE_INACTIVE)
+            setInput(if (recorderProactive) AssistInputMode.BLOCKED else AssistInputMode.VOICE_INACTIVE)
         }
+        recorderProactive = false
     }
 
     protected fun stopPlayback() = audioUrlPlayer.stop()
