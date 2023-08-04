@@ -42,10 +42,12 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.widget.FrameLayout
+import android.widget.ImageButton
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
@@ -113,7 +115,6 @@ import org.chromium.net.CronetEngine
 import org.json.JSONObject
 import java.util.concurrent.Executors
 import javax.inject.Inject
-import androidx.annotation.OptIn
 import io.homeassistant.companion.android.common.R as commonR
 
 @OptIn(androidx.media3.common.util.UnstableApi::class)
@@ -208,10 +209,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var appLocked = true
     private var exoPlayer: ExoPlayer? = null
     private var isExoFullScreen = false
-    private var exoTop: Int = 0 // These margins are from the DOM and scaled to screen
-    private var exoLeft: Int = 0
-    private var exoRight: Int = 0
-    private var exoBottom: Int = 0
+    private var exoTop = 0 // These margins are from the DOM and scaled to screen
+    private var exoLeft = 0
+    private var exoRight = 0
+    private var exoBottom = 0
+    private var exoMute = true
     private var failedConnection = "external"
     private var clearHistory = false
     private var moreInfoEntity = ""
@@ -843,7 +845,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     fun exoPlayHls(json: JSONObject) {
         val payload = json.getJSONObject("payload")
         val uri = Uri.parse(payload.getString("url"))
-        val mute = payload.optBoolean("muted")
+        exoMute = payload.optBoolean("muted")
         runOnUiThread {
             exoPlayer = ExoPlayer.Builder(applicationContext).setMediaSourceFactory(
                 DefaultMediaSourceFactory(
@@ -874,13 +876,15 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 }
             })
             exoPlayer?.prepare()
-            exoPlayer?.volume = if (mute) 0f else 1f
+            exoMute = !exoMute // Invert because exoToggleMute() will invert again
+            exoToggleMute()
             exoPlayerView.setFullscreenButtonClickListener { isFullScreen ->
                 isExoFullScreen = isFullScreen
                 exoResizeLayout()
             }
             exoPlayerView.player = exoPlayer
             exoPlayerView.visibility = View.VISIBLE
+            findViewById<ImageButton>(R.id.exo_ha_mute)?.setOnClickListener { exoToggleMute() }
         }
         webView.externalBus(
             id = json.get("id"),
@@ -916,6 +920,17 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
         runOnUiThread {
             exoResizeLayout()
+        }
+    }
+
+    private fun exoToggleMute() {
+        exoMute = !exoMute
+        if (exoMute) {
+            exoPlayer?.volume = 0f
+            findViewById<ImageButton>(R.id.exo_ha_mute)?.setImageResource(R.drawable.ic_baseline_volume_off_24)
+        } else {
+            exoPlayer?.volume = 1f
+            findViewById<ImageButton>(R.id.exo_ha_mute)?.setImageResource(R.drawable.ic_baseline_volume_up_24)
         }
     }
 
