@@ -50,6 +50,7 @@ class MainVehicleScreen(
     private var favoritesList = emptyList<String>()
     private var isLoggedIn: Boolean? = null
     private val domains = mutableSetOf<String>()
+    private var domainsAdded = false
 
     private val isAutomotive get() = carContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
 
@@ -75,9 +76,10 @@ class MainVehicleScreen(
                         .distinct()
                         .filter { it in SUPPORTED_DOMAINS }
                         .toSet()
-                    var invalidate = newDomains.size != domains.size || newDomains != domains
+                    var invalidate = newDomains.size != domains.size || newDomains != domains || !domainsAdded
                     domains.clear()
                     domains.addAll(newDomains)
+                    domainsAdded = true
 
                     val newFavorites = getFavoritesList(entities)
                     invalidate = invalidate || (newFavorites.size != favoritesEntities.size || newFavorites.toSet() != favoritesEntities.toSet())
@@ -164,7 +166,7 @@ class MainVehicleScreen(
             if (isAutomotive && !isDrivingOptimized && BuildConfig.FLAVOR != "full") {
                 setActionStrip(nativeModeActionStrip(carContext))
             }
-            if (domains.isEmpty()) {
+            if (!domainsAdded) {
                 setLoading(true)
             } else {
                 setLoading(false)
