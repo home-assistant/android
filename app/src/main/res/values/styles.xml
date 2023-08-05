@@ -131,4 +131,9 @@
         <item name="android:windowIsFloating">true</item>
         <item name="android:backgroundDimEnabled">false</item>
     </style>
+
+    <style name="ExoStyledControls.Button.Bottom.HaMute">
+        <item name="android:src">@drawable/ic_baseline_volume_up_24</item>
+        <item name="android:contentDescription">@string/mute_unmute</item>
+    </style>
 </resources>

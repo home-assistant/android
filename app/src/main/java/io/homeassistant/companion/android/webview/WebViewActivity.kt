@@ -42,15 +42,15 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.widget.FrameLayout
-import android.widget.ImageView
+import android.widget.ImageButton
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.ColorUtils
@@ -59,17 +59,17 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.common.VideoSize
+import androidx.media3.datasource.cronet.CronetDataSource
+import androidx.media3.exoplayer.DefaultLoadControl
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.ui.AspectRatioFrameLayout
+import androidx.media3.ui.PlayerView
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
-import com.google.android.exoplayer2.DefaultLoadControl
-import com.google.android.exoplayer2.MediaItem
-import com.google.android.exoplayer2.Player
-import com.google.android.exoplayer2.SimpleExoPlayer
-import com.google.android.exoplayer2.ext.cronet.CronetDataSource
-import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
-import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
-import com.google.android.exoplayer2.ui.PlayerView
-import com.google.android.exoplayer2.video.VideoSize
 import dagger.hilt.android.AndroidEntryPoint
 import eightbitlab.com.blurview.RenderScriptBlur
 import io.homeassistant.companion.android.BaseActivity
@@ -85,7 +85,6 @@ import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.databinding.ActivityWebviewBinding
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
-import io.homeassistant.companion.android.databinding.ExoPlayerViewBinding
 import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.matter.MatterFrontendCommissioningStatus
 import io.homeassistant.companion.android.nfc.WriteNfcTag
@@ -118,6 +117,7 @@ import java.util.concurrent.Executors
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
+@OptIn(androidx.media3.common.util.UnstableApi::class)
 @AndroidEntryPoint
 class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webview.WebView {
 
@@ -196,7 +196,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private lateinit var myCustomView: View
     private lateinit var authenticator: Authenticator
     private lateinit var exoPlayerView: PlayerView
-    private lateinit var playerBinding: ExoPlayerViewBinding
     private lateinit var windowInsetsController: WindowInsetsControllerCompat
 
     private var mFilePathCallback: ValueCallback<Array<Uri>>? = null
@@ -208,13 +207,13 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var firstAuthTime: Long = 0
     private var resourceURL: String = ""
     private var appLocked = true
-    private var exoPlayer: SimpleExoPlayer? = null
+    private var exoPlayer: ExoPlayer? = null
     private var isExoFullScreen = false
-    private var exoTop: Int = 0 // These margins are from the DOM and scaled to screen
-    private var exoLeft: Int = 0
-    private var exoRight: Int = 0
-    private var exoBottom: Int = 0
-    private var exoMute: Boolean = true
+    private var exoTop = 0 // These margins are from the DOM and scaled to screen
+    private var exoLeft = 0
+    private var exoRight = 0
+    private var exoBottom = 0
+    private var exoMute = true
     private var failedConnection = "external"
     private var clearHistory = false
     private var moreInfoEntity = ""
@@ -253,11 +252,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         exoPlayerView.visibility = View.GONE
         exoPlayerView.setBackgroundColor(Color.BLACK)
         exoPlayerView.alpha = 1f
-        exoPlayerView.setShowBuffering(PlayerView.SHOW_BUFFERING_ALWAYS)
-        exoPlayerView.controllerHideOnTouch = true
         exoPlayerView.controllerShowTimeoutMs = 2000
-
-        playerBinding = ExoPlayerViewBinding.bind(exoPlayerView)
 
         appLocked = presenter.isAppLocked()
         binding.blurView.setBlurEnabled(appLocked)
@@ -852,7 +847,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         val uri = Uri.parse(payload.getString("url"))
         exoMute = payload.optBoolean("muted")
         runOnUiThread {
-            exoPlayer = SimpleExoPlayer.Builder(applicationContext).setMediaSourceFactory(
+            exoPlayer = ExoPlayer.Builder(applicationContext).setMediaSourceFactory(
                 DefaultMediaSourceFactory(
                     CronetDataSource.Factory(
                         CronetEngine.Builder(applicationContext).enableQuic(true).build(),
@@ -872,6 +867,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             exoPlayer?.addListener(object : Player.Listener {
                 override fun onVideoSizeChanged(videoSize: VideoSize) {
                     super.onVideoSizeChanged(videoSize)
+                    if (videoSize.height == 0 || videoSize.width == 0) return
                     exoBottom =
                         exoTop + ((exoRight - exoLeft) * videoSize.height / videoSize.width)
                     runOnUiThread {
@@ -880,16 +876,15 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 }
             })
             exoPlayer?.prepare()
-            exoMute = !exoMute
+            exoMute = !exoMute // Invert because exoToggleMute() will invert again
             exoToggleMute()
-            exoPlayerView.player = exoPlayer
-            exoPlayerView.visibility = View.VISIBLE
-
-            findViewById<ImageView>(R.id.exo_fullscreen_icon).setOnClickListener {
-                isExoFullScreen = !isExoFullScreen
+            exoPlayerView.setFullscreenButtonClickListener { isFullScreen ->
+                isExoFullScreen = isFullScreen
                 exoResizeLayout()
             }
-            findViewById<ImageView>(R.id.exo_mute_icon).setOnClickListener { exoToggleMute() }
+            exoPlayerView.player = exoPlayer
+            exoPlayerView.visibility = View.VISIBLE
+            findViewById<ImageButton>(R.id.exo_ha_mute)?.setOnClickListener { exoToggleMute() }
         }
         webView.externalBus(
             id = json.get("id"),
@@ -932,20 +927,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         exoMute = !exoMute
         if (exoMute) {
             exoPlayer?.volume = 0f
-            findViewById<ImageView>(R.id.exo_mute_icon).setImageDrawable(
-                ContextCompat.getDrawable(
-                    applicationContext,
-                    R.drawable.ic_baseline_volume_off_24
-                )
-            )
+            findViewById<ImageButton>(R.id.exo_ha_mute)?.setImageResource(R.drawable.ic_baseline_volume_off_24)
         } else {
             exoPlayer?.volume = 1f
-            findViewById<ImageView>(R.id.exo_mute_icon).setImageDrawable(
-                ContextCompat.getDrawable(
-                    applicationContext,
-                    R.drawable.ic_baseline_volume_up_24
-                )
-            )
+            findViewById<ImageButton>(R.id.exo_ha_mute)?.setImageResource(R.drawable.ic_baseline_volume_up_24)
         }
     }
 
@@ -953,22 +938,16 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         val exoLayoutParams = exoPlayerView.layoutParams as FrameLayout.LayoutParams
         if (isExoFullScreen) {
             if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                playerBinding.exoContentFrame.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FILL
+                exoPlayerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FILL
             } else {
-                playerBinding.exoContentFrame.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH
+                exoPlayerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH
             }
             exoLayoutParams.setMargins(0, 0, 0, 0)
             exoPlayerView.layoutParams.height = FrameLayout.LayoutParams.MATCH_PARENT
             exoPlayerView.layoutParams.width = FrameLayout.LayoutParams.MATCH_PARENT
-            findViewById<ImageView>(R.id.exo_fullscreen_icon).setImageDrawable(
-                ContextCompat.getDrawable(
-                    applicationContext,
-                    R.drawable.ic_baseline_fullscreen_exit_24
-                )
-            )
             hideSystemUI()
         } else {
-            playerBinding.exoContentFrame.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FILL
+            exoPlayerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FILL
             exoPlayerView.layoutParams.height = FrameLayout.LayoutParams.WRAP_CONTENT
             exoPlayerView.layoutParams.width = FrameLayout.LayoutParams.MATCH_PARENT
             val screenWidth: Int = resources.displayMetrics.widthPixels
@@ -978,12 +957,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 exoTop,
                 maxOf(screenWidth - exoRight, 0),
                 maxOf(screenHeight - exoBottom, 0)
-            )
-            findViewById<ImageView>(R.id.exo_fullscreen_icon).setImageDrawable(
-                ContextCompat.getDrawable(
-                    applicationContext,
-                    R.drawable.ic_baseline_fullscreen_24
-                )
             )
             showSystemUI()
         }
