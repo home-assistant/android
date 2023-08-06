@@ -25,6 +25,7 @@ class CarSensorManager :
 
     companion object {
         internal const val TAG = "CarSM"
+        private const val OPEN_APP = "Open Home Assistant app to activate the sensor"
 
         private val fuelLevel = SensorManager.BasicSensor(
             "car_fuel",
@@ -173,9 +174,11 @@ class CarSensorManager :
                         onSensorUpdated(
                             context,
                             it,
-                            context.getString(R.string.car_data_unavailable),
+                            if (it.unitOfMeasurement.isNullOrEmpty()) OPEN_APP else "unknown",
                             it.statelessIcon,
-                            mapOf()
+                            mapOf(
+                                "status" to OPEN_APP
+                            )
                         )
                     }
                 }
@@ -257,9 +260,12 @@ class CarSensorManager :
             onSensorUpdated(
                 context,
                 fuelLevel,
-                fuelStatus ?: data.fuelPercent.value!!,
+                if (fuelStatus == "success") data.fuelPercent.value!! else "unknown",
                 fuelLevel.statelessIcon,
-                mapOf()
+                mapOf(
+                    "status" to fuelStatus
+                ),
+                forceUpdate = true
             )
         }
         val batteryStatus = carValueStatus(data.batteryPercent.status)
@@ -267,9 +273,12 @@ class CarSensorManager :
             onSensorUpdated(
                 context,
                 batteryLevel,
-                batteryStatus ?: data.batteryPercent.value!!,
+                if (batteryStatus == "success") data.batteryPercent.value!! else "unknown",
                 batteryLevel.statelessIcon,
-                mapOf()
+                mapOf(
+                    "status" to batteryStatus
+                ),
+                forceUpdate = true
             )
         }
         setListener(Listener.ENERGY, false)
@@ -282,12 +291,14 @@ class CarSensorManager :
             onSensorUpdated(
                 context,
                 carName,
-                status ?: data.name.value!!,
+                if (status == "success") data.name.value!! else "unknown",
                 carName.statelessIcon,
                 mapOf(
                     "car_manufacturer" to data.manufacturer.value,
-                    "car_manufactured_year" to data.year.value
-                )
+                    "car_manufactured_year" to data.year.value,
+                    "status" to status
+                ),
+                forceUpdate = true
             )
         }
         setListener(Listener.MODEL, false)
@@ -301,11 +312,13 @@ class CarSensorManager :
             onSensorUpdated(
                 context,
                 carStatus,
-                status ?: (data.evChargePortConnected.value == true),
+                if (status == "success") (data.evChargePortConnected.value == true) else "unknown",
                 carStatus.statelessIcon,
                 mapOf(
-                    "car_charge_port_open" to (data.evChargePortOpen.value == true)
-                )
+                    "car_charge_port_open" to (data.evChargePortOpen.value == true),
+                    "status" to status
+                ),
+                forceUpdate = true
             )
         }
         setListener(Listener.STATUS, false)
@@ -319,9 +332,12 @@ class CarSensorManager :
             onSensorUpdated(
                 context,
                 odometerValue,
-                status ?: data.odometerMeters.value!!,
+                if (status == "success") data.odometerMeters.value!! else "unknown",
                 odometerValue.statelessIcon,
-                mapOf()
+                mapOf(
+                    "status" to status
+                ),
+                forceUpdate = true
             )
         }
         setListener(Listener.MILEAGE, false)
@@ -335,29 +351,35 @@ class CarSensorManager :
             onSensorUpdated(
                 context,
                 fuelType,
-                fuelTypeStatus ?: getFuelType(data.fuelTypes.value!!),
+                if (fuelTypeStatus == "success") getFuelType(data.fuelTypes.value!!) else "unknown",
                 fuelType.statelessIcon,
-                mapOf()
+                mapOf(
+                    "status" to fuelTypeStatus
+                ),
+                forceUpdate = true
             )
         }
         if (isEnabled(context, evConnector)) {
             onSensorUpdated(
                 context,
                 evConnector,
-                evConnectorTypeStatus ?: getEvConnectorType(data.evConnectorTypes.value!!),
+                if (evConnectorTypeStatus == "success") getEvConnectorType(data.evConnectorTypes.value!!) else "unknown",
                 evConnector.statelessIcon,
-                mapOf()
+                mapOf(
+                    "status" to evConnectorTypeStatus
+                ),
+                forceUpdate = true
             )
         }
     }
 
     private fun carValueStatus(value: Int): String? {
         return when (value) {
-            CarValue.STATUS_SUCCESS -> null
+            CarValue.STATUS_SUCCESS -> "success"
             CarValue.STATUS_UNAVAILABLE -> "unavailable"
             CarValue.STATUS_UNKNOWN -> "unknown"
             CarValue.STATUS_UNIMPLEMENTED -> "unimplemented"
-            else -> "unavailable"
+            else -> null
         }
     }
 

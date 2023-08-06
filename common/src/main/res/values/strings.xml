@@ -1125,7 +1125,6 @@
     <string name="ha_assist">HA: Assist</string>
     <string name="only_favorites">Only Show Favorites</string>
     <string name="beacon_scanning">Beacon Monitor Scanning</string>
-    <string name="car_data_unavailable">Open Home Assistant app to activate the sensor</string>
     <string name="basic_sensor_name_car_fuel_type">Car Fuel Type</string>
     <string name="sensor_description_car_fuel_type">List of available fuel types for the connected car</string>
     <string name="basic_sensor_name_car_ev_connector_type">Car EV Connector Type</string>
