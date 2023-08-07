@@ -1134,4 +1134,15 @@
     <string name="aa_favorites_summary">Select your favorite entities to be shown in the app while viewing the Home Assistant driving interface</string>
     <string name="android_automotive">Android Automotive</string>
     <string name="android_automotive_favorites">Driving Favorites</string>
+    <string name="alarm_control_panels">Alarm Control Panels</string>
+    <string name="state_triggered">Triggered</string>
+    <string name="state_disarmed">Disarmed</string>
+    <string name="state_armed_vacation">Armed vacation</string>
+    <string name="state_armed_night">Armed night</string>
+    <string name="state_armed_home">Armed home</string>
+    <string name="state_armed_custom_bypass">Armed custom bypass</string>
+    <string name="state_armed_away">Armed away</string>
+    <string name="state_arming">Arming</string>
+    <string name="state_disarming">Disarming</string>
+    <string name="state_pending">Pending</string>
 </resources>

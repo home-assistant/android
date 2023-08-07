@@ -41,6 +41,7 @@ object EntityExt {
     val LIGHT_MODE_NO_BRIGHTNESS_SUPPORT = listOf("unknown", "onoff")
     const val LIGHT_SUPPORT_BRIGHTNESS_DEPR = 1
     const val LIGHT_SUPPORT_COLOR_TEMP_DEPR = 2
+    const val ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY = 2
 }
 
 val <T> Entity<T>.domain: String
@@ -111,6 +112,16 @@ fun <T> Entity<T>.getCoverPosition(): EntityPosition? {
     } catch (e: Exception) {
         Log.e(EntityExt.TAG, "Unable to get getCoverPosition", e)
         null
+    }
+}
+
+fun <T> Entity<T>.supportsAlarmControlPanelArmAway(): Boolean {
+    return try {
+        if (domain != "alarm_control_panel") return false
+        ((attributes as Map<*, *>)["supported_features"] as Int) and EntityExt.ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY == EntityExt.ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY
+    } catch (e: Exception) {
+        Log.e(EntityExt.TAG, "Unable to get supportsArmedAway", e)
+        false
     }
 }
 
@@ -259,8 +270,19 @@ fun <T> Entity<T>.getIcon(context: Context): IIcon? {
         val compareState =
             state.ifBlank { attributes["state"] as String? }
         when (domain) {
-            "alert" -> CommunityMaterial.Icon.cmd_alert
             "air_quality" -> CommunityMaterial.Icon.cmd_air_filter
+            "alarm_control_panel" -> when (compareState) {
+                "armed_away" -> CommunityMaterial.Icon3.cmd_shield_lock
+                "armed_custom_bypass" -> CommunityMaterial.Icon3.cmd_security
+                "armed_home" -> CommunityMaterial.Icon3.cmd_shield_home
+                "armed_night" -> CommunityMaterial.Icon3.cmd_shield_moon
+                "armed_vacation" -> CommunityMaterial.Icon3.cmd_shield_airplane
+                "disarmed" -> CommunityMaterial.Icon3.cmd_shield_off
+                "pending" -> CommunityMaterial.Icon3.cmd_shield_outline
+                "triggered" -> CommunityMaterial.Icon.cmd_bell_ring
+                else -> CommunityMaterial.Icon3.cmd_shield
+            }
+            "alert" -> CommunityMaterial.Icon.cmd_alert
             "automation" -> if (compareState == "off") {
                 CommunityMaterial.Icon3.cmd_robot_off
             } else {
@@ -582,6 +604,9 @@ suspend fun <T> Entity<T>.onPressed(
         "cover" -> {
             if (state == "open") "close_cover" else "open_cover"
         }
+        "alarm_control_panel" -> {
+            if (state != "disarmed") "alarm_disarm" else "alarm_arm_away"
+        }
         "button",
         "input_button" -> "press"
         "fan",
@@ -606,8 +631,16 @@ val <T> Entity<T>.friendlyName: String
 
 fun <T> Entity<T>.friendlyState(context: Context, options: EntityRegistryOptions? = null, appendUnitOfMeasurement: Boolean = false): String {
     var friendlyState = when (state) {
+        "armed_away" -> context.getString(commonR.string.state_armed_away)
+        "armed_custom_bypass" -> context.getString(commonR.string.state_armed_custom_bypass)
+        "armed_home" -> context.getString(commonR.string.state_armed_home)
+        "armed_night" -> context.getString(commonR.string.state_armed_night)
+        "armed_vacation" -> context.getString(commonR.string.state_armed_vacation)
+        "arming" -> context.getString(commonR.string.state_arming)
         "closed" -> context.getString(commonR.string.state_closed)
         "closing" -> context.getString(commonR.string.state_closing)
+        "disarmed" -> context.getString(commonR.string.state_disarmed)
+        "disarming" -> context.getString(commonR.string.state_disarming)
         "jammed" -> context.getString(commonR.string.state_jammed)
         "locked" -> context.getString(commonR.string.state_locked)
         "locking" -> context.getString(commonR.string.state_locking)
@@ -615,6 +648,8 @@ fun <T> Entity<T>.friendlyState(context: Context, options: EntityRegistryOptions
         "on" -> context.getString(commonR.string.state_on)
         "open" -> context.getString(commonR.string.state_open)
         "opening" -> context.getString(commonR.string.state_opening)
+        "pending" -> context.getString(commonR.string.state_pending)
+        "triggered" -> context.getString(commonR.string.state_triggered)
         "unavailable" -> context.getString(commonR.string.state_unavailable)
         "unlocked" -> context.getString(commonR.string.state_unlocked)
         "unlocking" -> context.getString(commonR.string.state_unlocking)
@@ -664,12 +699,13 @@ fun <T> Entity<T>.friendlyState(context: Context, options: EntityRegistryOptions
 fun <T> Entity<T>.canSupportPrecision() = domain == "sensor" && state.toDoubleOrNull() != null
 
 fun <T> Entity<T>.isExecuting() = when (state) {
+    "arming" -> true
+    "buffering" -> true
     "closing" -> true
+    "disarming" -> true
     "locking" -> true
     "opening" -> true
+    "pending" -> true
     "unlocking" -> true
-    "buffering" -> true
-    "disarming" -> true
-    "arming" -> true
     else -> false
 }
