@@ -259,8 +259,19 @@ fun <T> Entity<T>.getIcon(context: Context): IIcon? {
         val compareState =
             state.ifBlank { attributes["state"] as String? }
         when (domain) {
-            "alert" -> CommunityMaterial.Icon.cmd_alert
             "air_quality" -> CommunityMaterial.Icon.cmd_air_filter
+            "alarm_control_panel" -> when (compareState) {
+                "armed_away" -> CommunityMaterial.Icon3.cmd_shield_lock
+                "armed_custom_bypass" -> CommunityMaterial.Icon3.cmd_security
+                "armed_home" -> CommunityMaterial.Icon3.cmd_shield_home
+                "armed_night" -> CommunityMaterial.Icon3.cmd_shield_moon
+                "armed_vacation" -> CommunityMaterial.Icon3.cmd_shield_airplane
+                "disarmed" -> CommunityMaterial.Icon3.cmd_shield_off
+                "pending" -> CommunityMaterial.Icon3.cmd_shield_outline
+                "triggered" -> CommunityMaterial.Icon.cmd_bell_ring
+                else -> CommunityMaterial.Icon3.cmd_shield
+            }
+            "alert" -> CommunityMaterial.Icon.cmd_alert
             "automation" -> if (compareState == "off") {
                 CommunityMaterial.Icon3.cmd_robot_off
             } else {
@@ -581,6 +592,9 @@ suspend fun <T> Entity<T>.onPressed(
         }
         "cover" -> {
             if (state == "open") "close_cover" else "open_cover"
+        }
+        "alarm_control_panel" -> {
+            if (state != "disarmed") "alarm_disarm" else "alarm_arm_away"
         }
         "button",
         "input_button" -> "press"

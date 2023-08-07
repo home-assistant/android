@@ -5,6 +5,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
 
 val SUPPORTED_DOMAINS_WITH_STRING = mapOf(
+    "alarm_control_panel" to R.string.alarm_control_panels,
     "button" to R.string.buttons,
     "cover" to R.string.covers,
     "input_boolean" to R.string.input_booleans,
@@ -25,6 +26,7 @@ val MAP_DOMAINS = listOf(
 )
 
 val NOT_ACTIONABLE_DOMAINS = listOf(
+    "alarm_control_panel",
     "binary_sensor",
     "sensor"
 )
@@ -41,4 +43,8 @@ fun canNavigate(entity: Entity<*>): Boolean {
             ((entity.attributes as? Map<*, *>)?.get("latitude") as? Double != null) &&
             ((entity.attributes as? Map<*, *>)?.get("longitude") as? Double != null)
         )
+}
+
+fun alarmHasNoCode(entity: Entity<*>): Boolean {
+    return (entity.attributes as? Map<*, *>)?.get("code_format") as? String == null
 }
