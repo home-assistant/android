@@ -25,7 +25,6 @@ class CarSensorManager :
 
     companion object {
         internal const val TAG = "CarSM"
-        private const val OPEN_APP = "Open Home Assistant app to activate the sensor"
 
         private val fuelLevel = SensorManager.BasicSensor(
             "car_fuel",
@@ -174,11 +173,9 @@ class CarSensorManager :
                         onSensorUpdated(
                             context,
                             it,
-                            if (it.unitOfMeasurement.isNullOrEmpty()) OPEN_APP else "unknown",
+                            "unavailable",
                             it.statelessIcon,
-                            mapOf(
-                                "status" to OPEN_APP
-                            )
+                            mapOf()
                         )
                     }
                 }
