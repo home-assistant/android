@@ -46,5 +46,6 @@ fun canNavigate(entity: Entity<*>): Boolean {
 }
 
 fun alarmHasNoCode(entity: Entity<*>): Boolean {
-    return (entity.attributes as? Map<*, *>)?.get("code_format") as? String == null
+    return entity.domain == "alarm_control_panel" &&
+        (entity.attributes as? Map<*, *>)?.get("code_format") as? String == null
 }
