@@ -970,7 +970,7 @@
     <string name="widget_text_color_white">White</string>
     <string name="widgets">Widgets</string>
     <string name="zone_event_failure">Unable to send zone event to Home Assistant</string>
-    <string name="companion_app">Companion App</string>
+    <string name="companion_app">Companion app</string>
     <string name="basic_sensor_name_last_used_app">Last used app</string>
     <string name="sensor_description_last_used_app">Application name or package name of the last used application on the device</string>
     <string name="sensor_name_last_app">Last used app</string>
