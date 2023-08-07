@@ -636,9 +636,11 @@ fun <T> Entity<T>.friendlyState(context: Context, options: EntityRegistryOptions
         "armed_home" -> context.getString(commonR.string.state_armed_home)
         "armed_night" -> context.getString(commonR.string.state_armed_night)
         "armed_vacation" -> context.getString(commonR.string.state_armed_vacation)
+        "arming" -> context.getString(commonR.string.state_arming)
         "closed" -> context.getString(commonR.string.state_closed)
         "closing" -> context.getString(commonR.string.state_closing)
         "disarmed" -> context.getString(commonR.string.state_disarmed)
+        "disarming" -> context.getString(commonR.string.state_disarming)
         "jammed" -> context.getString(commonR.string.state_jammed)
         "locked" -> context.getString(commonR.string.state_locked)
         "locking" -> context.getString(commonR.string.state_locking)
@@ -646,6 +648,7 @@ fun <T> Entity<T>.friendlyState(context: Context, options: EntityRegistryOptions
         "on" -> context.getString(commonR.string.state_on)
         "open" -> context.getString(commonR.string.state_open)
         "opening" -> context.getString(commonR.string.state_opening)
+        "pending" -> context.getString(commonR.string.state_pending)
         "triggered" -> context.getString(commonR.string.state_triggered)
         "unavailable" -> context.getString(commonR.string.state_unavailable)
         "unlocked" -> context.getString(commonR.string.state_unlocked)
@@ -696,12 +699,13 @@ fun <T> Entity<T>.friendlyState(context: Context, options: EntityRegistryOptions
 fun <T> Entity<T>.canSupportPrecision() = domain == "sensor" && state.toDoubleOrNull() != null
 
 fun <T> Entity<T>.isExecuting() = when (state) {
+    "arming" -> true
+    "buffering" -> true
     "closing" -> true
+    "disarming" -> true
     "locking" -> true
     "opening" -> true
+    "pending" -> true
     "unlocking" -> true
-    "buffering" -> true
-    "disarming" -> true
-    "arming" -> true
     else -> false
 }

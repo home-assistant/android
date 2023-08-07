@@ -1138,9 +1138,12 @@
     <string name="alarm_control_panels">Alarm Control Panels</string>
     <string name="state_triggered">Triggered</string>
     <string name="state_disarmed">Disarmed</string>
-    <string name="state_armed_vacation">Armed Vacation</string>
-    <string name="state_armed_night">Armed Night</string>
-    <string name="state_armed_home">Armed Home</string>
-    <string name="state_armed_custom_bypass">Armed Custom Bypass</string>
-    <string name="state_armed_away">Armed Away</string>
+    <string name="state_armed_vacation">Armed vacation</string>
+    <string name="state_armed_night">Armed night</string>
+    <string name="state_armed_home">Armed home</string>
+    <string name="state_armed_custom_bypass">Armed custom bypass</string>
+    <string name="state_armed_away">Armed away</string>
+    <string name="state_arming">Arming</string>
+    <string name="state_disarming">Disarming</string>
+    <string name="state_pending">Pending</string>
 </resources>
