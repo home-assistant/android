@@ -39,6 +39,7 @@ class DomainListScreen(
     }
 
     private val domains = mutableSetOf<String>()
+    private var domainsAdded = false
 
     override fun onDrivingOptimizedChanged(newState: Boolean) {
         invalidate()
@@ -52,11 +53,11 @@ class DomainListScreen(
                     .distinct()
                     .filter { it in SUPPORTED_DOMAINS }
                     .toSet()
-                if (newDomains.size != domains.size || newDomains != domains) {
-                    domains.clear()
-                    domains.addAll(newDomains)
-                    invalidate()
-                }
+                val invalidate = newDomains.size != domains.size || newDomains != domains || !domainsAdded
+                domains.clear()
+                domains.addAll(newDomains)
+                domainsAdded = true
+                if (invalidate) invalidate()
             }
         }
     }
@@ -82,7 +83,7 @@ class DomainListScreen(
                 setActionStrip(nativeModeActionStrip(carContext))
             }
             val domainBuild = domainList.build()
-            if (domainBuild.items.isEmpty()) {
+            if (!domainsAdded) {
                 setLoading(true)
             } else {
                 setLoading(false)

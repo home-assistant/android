@@ -124,7 +124,7 @@ class MainVehicleScreen(
             ) { onChangeServer(it) }.getEntityGridItems(favoritesEntities)
         } else {
             var builder = ItemList.Builder()
-            if (domains.isNotEmpty()) {
+            if (domains.isNotEmpty() && domainsAdded) {
                 builder = getDomainList(
                     domains,
                     carContext,
