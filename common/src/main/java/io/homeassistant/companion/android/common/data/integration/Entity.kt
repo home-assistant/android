@@ -41,7 +41,7 @@ object EntityExt {
     val LIGHT_MODE_NO_BRIGHTNESS_SUPPORT = listOf("unknown", "onoff")
     const val LIGHT_SUPPORT_BRIGHTNESS_DEPR = 1
     const val LIGHT_SUPPORT_COLOR_TEMP_DEPR = 2
-    const val ALARM_CONTROL_PANEL_SUPPORT_ARMED_AWAY = 2
+    const val ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY = 2
 }
 
 val <T> Entity<T>.domain: String
@@ -115,10 +115,10 @@ fun <T> Entity<T>.getCoverPosition(): EntityPosition? {
     }
 }
 
-fun <T> Entity<T>.supportsArmedAway(): Boolean {
+fun <T> Entity<T>.supportsAlarmControlPanelArmAway(): Boolean {
     return try {
         if (domain != "alarm_control_panel") return false
-        ((attributes as Map<*, *>)["supported_features"] as Int) and EntityExt.ALARM_CONTROL_PANEL_SUPPORT_ARMED_AWAY == EntityExt.ALARM_CONTROL_PANEL_SUPPORT_ARMED_AWAY
+        ((attributes as Map<*, *>)["supported_features"] as Int) and EntityExt.ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY == EntityExt.ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY
     } catch (e: Exception) {
         Log.e(EntityExt.TAG, "Unable to get supportsArmedAway", e)
         false
@@ -631,8 +631,14 @@ val <T> Entity<T>.friendlyName: String
 
 fun <T> Entity<T>.friendlyState(context: Context, options: EntityRegistryOptions? = null, appendUnitOfMeasurement: Boolean = false): String {
     var friendlyState = when (state) {
+        "armed_away" -> context.getString(commonR.string.state_armed_away)
+        "armed_custom_bypass" -> context.getString(commonR.string.state_armed_custom_bypass)
+        "armed_home" -> context.getString(commonR.string.state_armed_home)
+        "armed_night" -> context.getString(commonR.string.state_armed_night)
+        "armed_vacation" -> context.getString(commonR.string.state_armed_vacation)
         "closed" -> context.getString(commonR.string.state_closed)
         "closing" -> context.getString(commonR.string.state_closing)
+        "disarmed" -> context.getString(commonR.string.state_disarmed)
         "jammed" -> context.getString(commonR.string.state_jammed)
         "locked" -> context.getString(commonR.string.state_locked)
         "locking" -> context.getString(commonR.string.state_locking)
@@ -640,6 +646,7 @@ fun <T> Entity<T>.friendlyState(context: Context, options: EntityRegistryOptions
         "on" -> context.getString(commonR.string.state_on)
         "open" -> context.getString(commonR.string.state_open)
         "opening" -> context.getString(commonR.string.state_opening)
+        "triggered" -> context.getString(commonR.string.state_triggered)
         "unavailable" -> context.getString(commonR.string.state_unavailable)
         "unlocked" -> context.getString(commonR.string.state_unlocked)
         "unlocking" -> context.getString(commonR.string.state_unlocking)

@@ -1136,4 +1136,11 @@
     <string name="android_automotive">Android Automotive</string>
     <string name="android_automotive_favorites">Driving Favorites</string>
     <string name="alarm_control_panels">Alarm Control Panels</string>
+    <string name="state_triggered">Triggered</string>
+    <string name="state_disarmed">Disarmed</string>
+    <string name="state_armed_vacation">Armed Vacation</string>
+    <string name="state_armed_night">Armed Night</string>
+    <string name="state_armed_home">Armed Home</string>
+    <string name="state_armed_custom_bypass">Armed Custom Bypass</string>
+    <string name="state_armed_away">Armed Away</string>
 </resources>
