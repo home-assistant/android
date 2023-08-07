@@ -14,6 +14,7 @@
     <string name="add_favorite">Add favorite</string>
     <string name="add_service_data_field">Add field</string>
     <string name="add_shortcut">Add shortcut</string>
+    <string name="disable_all_sensors">Disable all %1$d sensors</string>
     <string name="add_ssid">Add</string>
     <string name="add_ssid_name_suggestion">Add %1$s</string>
     <string name="add_widget">Add widget</string>
