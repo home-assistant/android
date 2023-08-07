@@ -41,6 +41,7 @@ object EntityExt {
     val LIGHT_MODE_NO_BRIGHTNESS_SUPPORT = listOf("unknown", "onoff")
     const val LIGHT_SUPPORT_BRIGHTNESS_DEPR = 1
     const val LIGHT_SUPPORT_COLOR_TEMP_DEPR = 2
+    const val ALARM_CONTROL_PANEL_SUPPORT_ARMED_AWAY = 2
 }
 
 val <T> Entity<T>.domain: String
@@ -111,6 +112,16 @@ fun <T> Entity<T>.getCoverPosition(): EntityPosition? {
     } catch (e: Exception) {
         Log.e(EntityExt.TAG, "Unable to get getCoverPosition", e)
         null
+    }
+}
+
+fun <T> Entity<T>.supportsArmedAway(): Boolean {
+    return try {
+        if (domain != "alarm_control_panel") return false
+        ((attributes as Map<*, *>)["supported_features"] as Int) and EntityExt.ALARM_CONTROL_PANEL_SUPPORT_ARMED_AWAY == EntityExt.ALARM_CONTROL_PANEL_SUPPORT_ARMED_AWAY
+    } catch (e: Exception) {
+        Log.e(EntityExt.TAG, "Unable to get supportsArmedAway", e)
+        false
     }
 }
 

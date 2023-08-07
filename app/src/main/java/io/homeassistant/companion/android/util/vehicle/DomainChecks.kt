@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.util.vehicle
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
+import io.homeassistant.companion.android.common.data.integration.supportsArmedAway
 
 val SUPPORTED_DOMAINS_WITH_STRING = mapOf(
     "alarm_control_panel" to R.string.alarm_control_panels,
@@ -47,5 +48,6 @@ fun canNavigate(entity: Entity<*>): Boolean {
 
 fun alarmHasNoCode(entity: Entity<*>): Boolean {
     return entity.domain == "alarm_control_panel" &&
-        (entity.attributes as? Map<*, *>)?.get("code_format") as? String == null
+        (entity.attributes as? Map<*, *>)?.get("code_format") as? String == null &&
+        entity.supportsArmedAway()
 }
