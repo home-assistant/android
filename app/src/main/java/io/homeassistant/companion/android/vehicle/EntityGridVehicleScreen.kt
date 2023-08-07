@@ -108,18 +108,20 @@ class EntityGridVehicleScreen(
                     allEntities
                 ).build()
             )
-            listBuilder.addItem(
-                getDomainsGridItem(
-                    carContext,
-                    screenManager,
-                    serverManager,
-                    integrationRepository,
-                    serverId,
-                    allEntities,
-                    prefsRepository,
-                    entityRegistry
-                ).build()
-            )
+            if (domains.isNotEmpty()) {
+                listBuilder.addItem(
+                    getDomainsGridItem(
+                        carContext,
+                        screenManager,
+                        serverManager,
+                        integrationRepository,
+                        serverId,
+                        allEntities,
+                        prefsRepository,
+                        entityRegistry
+                    ).build()
+                )
+            }
             if (shouldSwitchServers) {
                 listBuilder.addItem(
                     getChangeServerGridItem(

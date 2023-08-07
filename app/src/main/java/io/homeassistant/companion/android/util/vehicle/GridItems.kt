@@ -189,6 +189,8 @@ fun getDomainList(
             )
         }
     }
+    listBuilder.setNoItemsMessage(carContext.getString(R.string.no_supported_entities))
+
     return listBuilder
 }
 
