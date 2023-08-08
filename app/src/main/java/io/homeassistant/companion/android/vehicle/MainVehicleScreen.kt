@@ -24,6 +24,7 @@ import io.homeassistant.companion.android.util.vehicle.getChangeServerGridItem
 import io.homeassistant.companion.android.util.vehicle.getDomainList
 import io.homeassistant.companion.android.util.vehicle.getNavigationGridItem
 import io.homeassistant.companion.android.util.vehicle.nativeModeActionStrip
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -50,6 +51,7 @@ class MainVehicleScreen(
     private var favoritesList = emptyList<String>()
     private var isLoggedIn: Boolean? = null
     private val domains = mutableSetOf<String>()
+    private var domainsJob: Job? = null
     private var domainsAdded = false
     private var domainsAddedFor: Int? = null
 
@@ -78,22 +80,25 @@ class MainVehicleScreen(
                         entityRegistry = serverManager.webSocketRepository(server).getEntityRegistry()
                     }
 
-                    allEntities.collect { entities ->
-                        val newDomains = entities.values
-                            .map { it.domain }
-                            .distinct()
-                            .filter { it in SUPPORTED_DOMAINS }
-                            .toSet()
-                        var invalidate = newDomains.size != domains.size || newDomains != domains || !domainsAdded
-                        domains.clear()
-                        domains.addAll(newDomains)
-                        domainsAdded = true
+                    if (domainsJob?.isActive == true) domainsJob?.cancel()
+                    domainsJob = launch {
+                        allEntities.collect { entities ->
+                            val newDomains = entities.values
+                                .map { it.domain }
+                                .distinct()
+                                .filter { it in SUPPORTED_DOMAINS }
+                                .toSet()
+                            var invalidate = newDomains.size != domains.size || newDomains != domains || !domainsAdded
+                            domains.clear()
+                            domains.addAll(newDomains)
+                            domainsAdded = true
 
-                        val newFavorites = getFavoritesList(entities)
-                        invalidate = invalidate || newFavorites.size != favoritesEntities.size || newFavorites.toSet() != favoritesEntities.toSet()
-                        favoritesEntities = newFavorites
+                            val newFavorites = getFavoritesList(entities)
+                            invalidate = invalidate || newFavorites.size != favoritesEntities.size || newFavorites.toSet() != favoritesEntities.toSet()
+                            favoritesEntities = newFavorites
 
-                        if (invalidate) invalidate()
+                            if (invalidate) invalidate()
+                        }
                     }
                 }
             }
