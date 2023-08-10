@@ -13,6 +13,7 @@ object DeviceCommandData {
 
     const val COMMAND_BEACON_MONITOR = "command_beacon_monitor"
     const val COMMAND_BLE_TRANSMITTER = "command_ble_transmitter"
+    const val COMMAND_UPDATE_SENSORS = "command_update_sensors"
 
     // Enable/Disable Commands
     const val TURN_ON = "turn_on"

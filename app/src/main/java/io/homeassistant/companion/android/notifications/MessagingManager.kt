@@ -154,7 +154,6 @@ class MessagingManager @Inject constructor(
         const val COMMAND_BLUETOOTH = "command_bluetooth"
         const val COMMAND_SCREEN_ON = "command_screen_on"
         const val COMMAND_MEDIA = "command_media"
-        const val COMMAND_UPDATE_SENSORS = "command_update_sensors"
         const val COMMAND_HIGH_ACCURACY_MODE = "command_high_accuracy_mode"
         const val COMMAND_ACTIVITY = "command_activity"
         const val COMMAND_WEBVIEW = "command_webview"
@@ -213,7 +212,7 @@ class MessagingManager @Inject constructor(
             COMMAND_WEBVIEW,
             COMMAND_SCREEN_ON,
             COMMAND_MEDIA,
-            COMMAND_UPDATE_SENSORS,
+            DeviceCommandData.COMMAND_UPDATE_SENSORS,
             COMMAND_LAUNCH_APP,
             COMMAND_APP_LOCK,
             COMMAND_PERSISTENT_CONNECTION,
@@ -477,7 +476,7 @@ class MessagingManager @Inject constructor(
                                 sendNotification(jsonData)
                             }
                         }
-                        COMMAND_UPDATE_SENSORS -> SensorReceiver.updateAllSensors(context)
+                        DeviceCommandData.COMMAND_UPDATE_SENSORS -> SensorReceiver.updateAllSensors(context)
                         COMMAND_LAUNCH_APP -> {
                             if (!jsonData[PACKAGE_NAME].isNullOrEmpty()) {
                                 handleDeviceCommands(jsonData)

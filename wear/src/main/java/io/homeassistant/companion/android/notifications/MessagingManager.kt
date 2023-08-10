@@ -23,6 +23,7 @@ import io.homeassistant.companion.android.common.util.stopTTS
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.database.sensor.SensorDao
+import io.homeassistant.companion.android.sensors.SensorReceiver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -71,6 +72,7 @@ class MessagingManager @Inject constructor(
                 }
                 message == TextToSpeechData.TTS -> speakText(context, notificationData)
                 message == TextToSpeechData.COMMAND_STOP_TTS -> stopTTS()
+                message == DeviceCommandData.COMMAND_UPDATE_SENSORS -> SensorReceiver.updateAllSensors(context)
                 else -> sendNotification(notificationData, now)
             }
         }
