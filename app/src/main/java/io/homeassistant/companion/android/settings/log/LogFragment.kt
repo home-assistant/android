@@ -15,6 +15,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.ScrollView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
@@ -51,6 +52,12 @@ class LogFragment : Fragment() {
     private var processLog = ""
     private var crashLog: String? = null
     private var currentLog = ""
+
+    private var toolbarGroupVisible = false
+        set(value) {
+            field = value
+            activity?.invalidateMenu()
+        }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val menuHost: MenuHost = requireActivity()
