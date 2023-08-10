@@ -1,14 +1,15 @@
 package io.homeassistant.companion.android.settings.notification
 
 import android.app.AlertDialog
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import androidx.appcompat.widget.SearchView
 import androidx.core.text.HtmlCompat
+import androidx.core.view.MenuHost
 import androidx.fragment.app.commit
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
@@ -33,40 +34,32 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
     @Inject
     lateinit var notificationDao: NotificationDao
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setHasOptionsMenu(true)
-    }
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        val menuHost: MenuHost = requireActivity()
+        menuHost.addMenuProvider(
+            object : NotificationMenuProvider() {
+                override fun onPrepareMenu(menu: Menu) {
+                    super.onPrepareMenu(menu)
+                    menu.findItem(R.id.last25)?.title = getString(commonR.string.last_num_notifications, 25)
+                    menu.findItem(R.id.last50)?.title = getString(commonR.string.last_num_notifications, 50)
+                    menu.findItem(R.id.last100)?.title = getString(commonR.string.last_num_notifications, 100)
 
-    @Deprecated("Deprecated in Java")
-    override fun onPrepareOptionsMenu(menu: Menu) {
-        super.onPrepareOptionsMenu(menu)
-        menu.setGroupVisible(R.id.notification_toolbar_group, true)
+                    val prefCategory = findPreference<PreferenceCategory>("list_notifications")
+                    val allNotifications = notificationDao.getAll()
 
-        menu.findItem(R.id.get_help)?.let {
-            it.isVisible = true
-            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://companion.home-assistant.io/docs/notifications/notifications-basic"))
-        }
-        menu.findItem(R.id.last25)?.title = getString(commonR.string.last_num_notifications, 25)
-        menu.findItem(R.id.last50)?.title = getString(commonR.string.last_num_notifications, 50)
-        menu.findItem(R.id.last100)?.title = getString(commonR.string.last_num_notifications, 100)
+                    if (allNotifications.isNullOrEmpty()) {
+                        menu.removeItem(R.id.search_notifications)
+                        menu.removeItem(R.id.notification_filter)
+                        menu.removeItem(R.id.action_delete)
+                    } else {
+                        val searchViewItem = menu.findItem(R.id.search_notifications)
+                        val searchView: SearchView = searchViewItem.actionView as SearchView
+                        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                            override fun onQueryTextSubmit(query: String?): Boolean {
+                                searchView.clearFocus()
 
-        val prefCategory = findPreference<PreferenceCategory>("list_notifications")
-        val allNotifications = notificationDao.getAll()
-
-        if (allNotifications.isNullOrEmpty()) {
-            menu.removeItem(R.id.search_notifications)
-            menu.removeItem(R.id.notification_filter)
-            menu.removeItem(R.id.action_delete)
-        } else {
-            val searchViewItem = menu.findItem(R.id.search_notifications)
-            val searchView: SearchView = searchViewItem.actionView as SearchView
-            searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-                override fun onQueryTextSubmit(query: String?): Boolean {
-                    searchView.clearFocus()
-
-                    return false
-                }
+                                return false
+                            }
 
                 override fun onQueryTextChange(query: String?): Boolean {
                     var searchList: Array<NotificationItem> = emptyArray()
@@ -88,22 +81,29 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
         }
     }
 
-    @Deprecated("Deprecated in Java")
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        val prefCategory = findPreference<PreferenceCategory>("list_notifications")
-        if (item.itemId in listOf(R.id.last25, R.id.last50, R.id.last100)) {
-            filterValue = when (item.itemId) {
-                R.id.last25 -> 25
-                R.id.last50 -> 50
-                R.id.last100 -> 100
-                else -> 25
-            }
-            item.isChecked = !item.isChecked
-            filterNotifications(filterValue, notificationDao, prefCategory)
-        } else if (item.itemId == R.id.action_delete) {
-            deleteAllConfirmation(notificationDao)
-        }
-        return super.onOptionsItemSelected(item)
+                override fun onMenuItemSelected(menuItem: MenuItem): Boolean = when (menuItem.itemId) {
+                    R.id.last25, R.id.last50, R.id.last100 -> {
+                        val prefCategory = findPreference<PreferenceCategory>("list_notifications")
+                        filterValue = when (menuItem.itemId) {
+                            R.id.last25 -> 25
+                            R.id.last50 -> 50
+                            R.id.last100 -> 100
+                            else -> 25
+                        }
+                        menuItem.isChecked = !menuItem.isChecked
+                        filterNotifications(filterValue, notificationDao, prefCategory)
+                        true
+                    }
+                    R.id.action_delete -> {
+                        deleteAllConfirmation(notificationDao)
+                        true
+                    }
+                    else -> false
+                }
+            },
+            viewLifecycleOwner,
+            Lifecycle.State.RESUMED
+        )
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {

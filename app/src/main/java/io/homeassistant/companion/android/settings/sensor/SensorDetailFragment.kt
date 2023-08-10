@@ -3,16 +3,15 @@ package io.homeassistant.companion.android.settings.sensor
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.view.LayoutInflater
-import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.Toolbar
 import androidx.compose.ui.platform.ComposeView
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -20,9 +19,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.accompanist.themeadapter.material.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.LocationPermissionInfoHandler
+import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.settings.sensor.views.SensorDetailView
 import kotlinx.coroutines.launch
 
@@ -47,51 +46,6 @@ class SensorDetailFragment : Fragment() {
         viewModel.onPermissionsResult(it, requestForServer)
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setHasOptionsMenu(true)
-
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                launch {
-                    viewModel.serversShowExpand.collect { updateSensorToolbarMenu() }
-                }
-                launch {
-                    viewModel.serversDoExpand.collect { updateSensorToolbarMenu() }
-                }
-            }
-        }
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onPrepareOptionsMenu(menu: Menu) {
-        super.onPrepareOptionsMenu(menu)
-        menu.setGroupVisible(R.id.senor_detail_toolbar_group, true)
-        menu.removeItem(R.id.action_filter)
-        menu.removeItem(R.id.action_search)
-
-        menu.setGroupVisible(R.id.sensor_detail_server_group, true)
-        menu.findItem(R.id.action_sensor_expand)?.let {
-            it.setOnMenuItemClickListener {
-                viewModel.setServersExpanded(true)
-                true
-            }
-        }
-        menu.findItem(R.id.action_sensor_collapse)?.let {
-            it.setOnMenuItemClickListener {
-                viewModel.setServersExpanded(false)
-                true
-            }
-        }
-        updateSensorToolbarMenu(menu)
-
-        menu.findItem(R.id.get_help)?.let {
-            val docsLink = viewModel.basicSensor?.docsLink ?: viewModel.sensorManager?.docsLink()
-            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(docsLink))
-            it.isVisible = docsLink != null // should always be true
-        }
-    }
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -114,7 +68,8 @@ class SensorDetailFragment : Fragment() {
 
     @SuppressLint("InlinedApi")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+        val docsLink = viewModel.basicSensor?.docsLink ?: viewModel.sensorManager?.docsLink()
+        docsLink?.toUri()?.let { addHelpMenuProvider(it) }
 
         viewModel.permissionRequests.observe(viewLifecycleOwner) {
             if (it == null || it.permissions.isNullOrEmpty()) return@observe

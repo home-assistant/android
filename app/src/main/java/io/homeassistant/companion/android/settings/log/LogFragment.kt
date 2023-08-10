@@ -8,19 +8,22 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.ScrollView
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.widget.Toolbar
 import androidx.core.content.FileProvider
+import androidx.core.view.MenuHost
+import androidx.core.view.MenuProvider
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.tabs.TabLayout
 import dagger.hilt.android.AndroidEntryPoint
@@ -49,33 +52,40 @@ class LogFragment : Fragment() {
     private var crashLog: String? = null
     private var currentLog = ""
 
-    @Deprecated("Deprecated in Java")
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.share_log -> {
-                shareLog()
-                return true
-            }
-            R.id.refresh_log -> {
-                refreshLog()
-            }
-        }
-        return super.onOptionsItemSelected(item)
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-        setHasOptionsMenu(true)
-
-        requireView().findViewById<TabLayout>(R.id.logTabLayout)
-            .addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
-                override fun onTabSelected(tab: TabLayout.Tab?) {
-                    showLog()
+        val menuHost: MenuHost = requireActivity()
+        menuHost.addMenuProvider(
+            object : MenuProvider {
+                override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                    menuInflater.inflate(R.menu.menu_fragment_log, menu)
                 }
 
-                override fun onTabUnselected(tab: TabLayout.Tab?) {
+                override fun onPrepareMenu(menu: Menu) {
+                    menu.setGroupVisible(R.id.log_toolbar_group, toolbarGroupVisible)
                 }
+
+                override fun onMenuItemSelected(menuItem: MenuItem) = when (menuItem.itemId) {
+                    R.id.share_log -> {
+                        shareLog()
+                        true
+                    }
+                    R.id.refresh_log -> {
+                        refreshLog()
+                        true
+                    }
+                    else -> false
+                }
+            },
+            viewLifecycleOwner,
+            Lifecycle.State.RESUMED
+        )
+
+    requireView().findViewById<TabLayout>(R.id.logTabLayout)
+        .addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab?) {
+                showLog()
+            }
+            override fun onTabUnselected(tab: TabLayout.Tab?) {}
 
                 override fun onTabReselected(tab: TabLayout.Tab?) {
                     (requireView().findViewById<ScrollView>(R.id.logScrollview))?.apply {
@@ -95,9 +105,6 @@ class LogFragment : Fragment() {
 
     private fun refreshLog() = lifecycleScope.launch(Dispatchers.Main) {
         if (view != null && activity != null) {
-            val toolbar = requireActivity().findViewById<Toolbar>(R.id.toolbar)
-
-            toolbar.menu.setGroupVisible(R.id.log_toolbar_group, false)
             showHideLogLoader(true)
 
             // Runs with Dispatcher IO
@@ -105,7 +112,6 @@ class LogFragment : Fragment() {
             crashLog = getLatestFatalCrash(requireContext(), prefsRepository.isCrashReporting())
 
             showLog()
-            toolbar.menu.setGroupVisible(R.id.log_toolbar_group, true)
             showHideLogLoader(false)
         }
     }
@@ -227,6 +233,7 @@ class LogFragment : Fragment() {
     }
 
     private fun showHideLogLoader(show: Boolean) {
+        toolbarGroupVisible = !show
         if (view != null) {
             val logLoader = requireView().findViewById<LinearLayout>(R.id.logLoader)
             val logContents = requireView().findViewById<LinearLayout>(R.id.logContents)

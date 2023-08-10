@@ -5,6 +5,5 @@
         android:id="@+id/get_help"
         android:title="@string/get_help"
         android:icon="@drawable/ic_question_toolbar"
-        android:visible="false"
         app:showAsAction="always"/>
 </menu>
