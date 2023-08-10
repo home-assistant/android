@@ -27,9 +27,7 @@ import io.homeassistant.companion.android.common.R as commonR
 @AndroidEntryPoint
 class NotificationHistoryFragment : PreferenceFragmentCompat() {
 
-    companion object {
-        private var filterValue = 25
-    }
+    private var filterValue = 25
 
     @Inject
     lateinit var notificationDao: NotificationDao
@@ -63,27 +61,27 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
                                 return false
                             }
 
-                override fun onQueryTextChange(query: String?): Boolean {
-                    var searchList: Array<NotificationItem> = emptyArray()
-                    if (!query.isNullOrEmpty()) {
-                        for (item in allNotifications) {
-                            if (item.message.contains(query, true)) {
-                                searchList += item
+                            override fun onQueryTextChange(query: String?): Boolean {
+                                var searchList: Array<NotificationItem> = emptyArray()
+                                if (!query.isNullOrEmpty()) {
+                                    for (item in allNotifications) {
+                                        if (item.message.contains(query, true)) {
+                                            searchList += item
+                                        }
+                                    }
+                                    prefCategory?.title = getString(commonR.string.search_results)
+                                    reloadNotifications(searchList, prefCategory)
+                                } else if (query.isNullOrEmpty()) {
+                                    prefCategory?.title = getString(commonR.string.notifications)
+                                    filterNotifications(filterValue, notificationDao, prefCategory)
+                                }
+                                return false
                             }
-                        }
-                        prefCategory?.title = getString(commonR.string.search_results)
-                        reloadNotifications(searchList, prefCategory)
-                    } else if (query.isNullOrEmpty()) {
-                        prefCategory?.title = getString(commonR.string.notifications)
-                        filterNotifications(filterValue, notificationDao, prefCategory)
+                        })
                     }
-                    return false
                 }
-            })
-        }
-    }
 
-                override fun onMenuItemSelected(menuItem: MenuItem): Boolean = when (menuItem.itemId) {
+                override fun onMenuItemSelected(menuItem: MenuItem) = when (menuItem.itemId) {
                     R.id.last25, R.id.last50, R.id.last100 -> {
                         val prefCategory = findPreference<PreferenceCategory>("list_notifications")
                         filterValue = when (menuItem.itemId) {

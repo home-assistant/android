@@ -5,7 +5,6 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
@@ -13,7 +12,6 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.widget.Toolbar
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.net.toUri
 import androidx.core.view.MenuHost
@@ -28,7 +26,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.LocationPermissionInfoHandler
-import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.settings.sensor.views.SensorDetailView
 import kotlinx.coroutines.launch
 
@@ -112,7 +109,7 @@ class SensorDetailFragment : Fragment() {
                     }
                 }
 
-                override fun onMenuItemSelected(menuItem: MenuItem): Boolean = when (menuItem.itemId) {
+                override fun onMenuItemSelected(menuItem: MenuItem) = when (menuItem.itemId) {
                     R.id.action_sensor_expand, R.id.action_sensor_collapse -> {
                         viewModel.setServersExpanded(menuItem.itemId == R.id.action_sensor_expand)
                         true

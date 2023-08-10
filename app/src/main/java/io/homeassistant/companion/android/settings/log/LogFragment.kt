@@ -87,12 +87,11 @@ class LogFragment : Fragment() {
             Lifecycle.State.RESUMED
         )
 
-    requireView().findViewById<TabLayout>(R.id.logTabLayout)
-        .addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
-            override fun onTabSelected(tab: TabLayout.Tab?) {
-                showLog()
-            }
-            override fun onTabUnselected(tab: TabLayout.Tab?) {}
+        requireView().findViewById<TabLayout>(R.id.logTabLayout)
+            .addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+                override fun onTabSelected(tab: TabLayout.Tab?) = showLog()
+
+                override fun onTabUnselected(tab: TabLayout.Tab?) {}
 
                 override fun onTabReselected(tab: TabLayout.Tab?) {
                     (requireView().findViewById<ScrollView>(R.id.logScrollview))?.apply {

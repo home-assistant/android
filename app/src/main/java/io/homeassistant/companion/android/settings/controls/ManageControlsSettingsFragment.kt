@@ -13,8 +13,8 @@ import androidx.fragment.app.viewModels
 import com.google.accompanist.themeadapter.material.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
-import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.settings.controls.views.ManageControlsView
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
