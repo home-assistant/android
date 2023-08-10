@@ -21,11 +21,6 @@ class ExternalUrlFragment : Fragment() {
 
     val viewModel by viewModels<ExternalUrlViewModel>()
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setHasOptionsMenu(false)
-    }
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
