@@ -846,7 +846,10 @@
     <string name="tag_reader_title">Processing tag</string>
     <string name="template">Template</string>
     <string name="template_tile">Template tile</string>
-    <string name="template_tile_set_on_watch">Set template to display on Wear OS tile</string>
+    <string name="template_tile_n">Template tile #%d</string>
+    <string name="template_tiles">Template tiles</string>
+    <string name="template_tile_configure">Configure Template tile</string>
+    <string name="template_tile_set_on_watch">Configure templates to use as Wear OS tiles</string>
     <string name="template_tile_change_message">Change template in phone settings</string>
     <string name="template_tile_content">Template tile content</string>
     <string name="template_tile_desc">Renders and displays a template</string>

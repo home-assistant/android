@@ -187,7 +187,7 @@ fun SettingsView(
             item {
                 SecondarySettingsChip(
                     icon = CommunityMaterial.Icon3.cmd_text_box,
-                    label = stringResource(commonR.string.template_tile),
+                    label = stringResource(commonR.string.template_tiles),
                     onClick = onClickTemplateTile
                 )
             }

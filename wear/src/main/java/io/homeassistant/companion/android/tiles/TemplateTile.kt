@@ -95,7 +95,7 @@ class TemplateTile : TileService() {
     }
 
     private suspend fun timeline(): Timeline {
-        val template = wearPrefsRepository.getTemplateTileContent()
+        val template = wearPrefsRepository.getTemplateTile()
         val renderedText = try {
             if (serverManager.isRegistered()) {
                 serverManager.integrationRepository().renderTemplate(template, mapOf()).toString()

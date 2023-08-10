@@ -7,10 +7,10 @@ interface WearPrefsRepository {
     suspend fun removeTileShortcuts(tileId: Int?): List<String>?
     suspend fun getShowShortcutText(): Boolean
     suspend fun setShowShortcutTextEnabled(enabled: Boolean)
-    suspend fun getTemplateTileContent(): String
-    suspend fun setTemplateTileContent(content: String)
-    suspend fun getTemplateTileRefreshInterval(): Int
-    suspend fun setTemplateTileRefreshInterval(interval: Int)
+    suspend fun getAllTemplateTiles(): Map<Int?, Pair<String, Int>>
+    suspend fun getTemplateTile(tileId: Int?): Pair<String, Int>?
+    suspend fun setTemplateTile(tileId: Int?, content: String, refreshInterval: Int)
+    suspend fun removeTemplateTile(tileId: Int?): Pair<String, Int>?
     suspend fun getWearHapticFeedback(): Boolean
     suspend fun setWearHapticFeedback(enabled: Boolean)
     suspend fun getWearToastConfirmation(): Boolean

@@ -271,7 +271,7 @@ class HomePresenterImpl @Inject constructor(
     }
 
     override suspend fun getTemplateTileContent(): String {
-        return wearPrefsRepository.getTemplateTileContent()
+        return wearPrefsRepository.getTemplateTile()
     }
 
     override suspend fun getTemplateTileRefreshInterval(): Int {

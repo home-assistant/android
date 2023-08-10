@@ -74,6 +74,8 @@ class SettingsWearViewModel @Inject constructor(
         private set
     var favoriteEntityIds = mutableStateListOf<String>()
         private set
+    var templateTiles = mutableStateMapOf<Int?, Pair<String, Int>>()
+        private set
     var templateTileContent = mutableStateOf("")
         private set
     var templateTileContentRendered = mutableStateOf("")

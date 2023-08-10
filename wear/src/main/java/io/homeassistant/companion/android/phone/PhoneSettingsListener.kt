@@ -103,7 +103,7 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
             }
             dataMap.putString(WearDataMessages.CONFIG_SUPPORTED_DOMAINS, objectMapper.writeValueAsString(HomePresenterImpl.supportedDomains))
             dataMap.putString(WearDataMessages.CONFIG_FAVORITES, objectMapper.writeValueAsString(currentFavorites))
-            dataMap.putString(WearDataMessages.CONFIG_TEMPLATE_TILE, wearPrefsRepository.getTemplateTileContent())
+            dataMap.putString(WearDataMessages.CONFIG_TEMPLATE_TILE, wearPrefsRepository.getTemplateTile())
             dataMap.putInt(WearDataMessages.CONFIG_TEMPLATE_TILE_REFRESH_INTERVAL, wearPrefsRepository.getTemplateTileRefreshInterval())
             setUrgent()
             asPutDataRequest()
@@ -249,7 +249,8 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
     private fun saveTileTemplate(dataMap: DataMap) = mainScope.launch {
         val content = dataMap.getString(WearDataMessages.CONFIG_TEMPLATE_TILE, "")
         val interval = dataMap.getInt(WearDataMessages.CONFIG_TEMPLATE_TILE_REFRESH_INTERVAL, 0)
-        wearPrefsRepository.setTemplateTileContent(content)
+        // TODO: combine to one call
+        wearPrefsRepository.setTemplateTile(content)
         wearPrefsRepository.setTemplateTileRefreshInterval(interval)
     }
 

@@ -32,7 +32,8 @@ class SettingsWearMainView : AppCompatActivity() {
         private var registerUrl: String? = null
         const val LANDING = "Landing"
         const val FAVORITES = "Favorites"
-        const val TEMPLATE = "Template"
+        const val TEMPLATES = "Templates"
+        const val TEMPLATE_TILE = "Template/%s"
 
         fun newInstance(context: Context, wearNodes: Set<Node>, url: String?): Intent {
             currentNodes = wearNodes
