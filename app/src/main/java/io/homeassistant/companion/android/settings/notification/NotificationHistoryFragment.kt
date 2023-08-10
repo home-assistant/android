@@ -35,6 +35,8 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
     lateinit var notificationDao: NotificationDao
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
         val menuHost: MenuHost = requireActivity()
         menuHost.addMenuProvider(
             object : NotificationMenuProvider() {

@@ -87,7 +87,7 @@ fun ManageControlsView(
                         )
                     }
                 }
-                items(entitiesList[selectedServer]!!.size, key = { "$selectedServer.${entitiesList[selectedServer]?.get(it)?.entityId}" }) { index ->
+                items(entitiesList[selectedServer]?.size ?: 0, key = { "$selectedServer.${entitiesList[selectedServer]?.get(it)?.entityId}" }) { index ->
                     val entity = entitiesList[selectedServer]?.get(index) as Entity<Map<String, Any>>
                     ManageControlsEntity(
                         entityName = (
