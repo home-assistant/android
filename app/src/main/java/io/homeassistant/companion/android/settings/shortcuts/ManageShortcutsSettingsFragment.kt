@@ -12,7 +12,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
-import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.google.accompanist.themeadapter.material.MdcTheme
@@ -61,7 +60,7 @@ class ManageShortcutsSettingsFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        addHelpMenuProvider("https://companion.home-assistant.io/docs/integrations/android-shortcuts".toUri())
+        addHelpMenuProvider("https://companion.home-assistant.io/docs/integrations/android-shortcuts")
     }
 
     @RequiresApi(Build.VERSION_CODES.N_MR1)

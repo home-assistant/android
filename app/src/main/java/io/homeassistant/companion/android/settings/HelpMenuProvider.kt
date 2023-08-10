@@ -6,6 +6,7 @@ import android.net.Uri
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
+import androidx.core.net.toUri
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
@@ -33,7 +34,7 @@ class HelpMenuProvider(private val helpLink: Uri) : MenuProvider {
 /**
  * Wrapper around [MenuHost.addMenuProvider] to attach a [HelpMenuProvider] to a fragment's parent activity.
  */
-fun Fragment.addHelpMenuProvider(helpLink: Uri) {
+fun Fragment.addHelpMenuProvider(helpLink: String) {
     val menuHost: MenuHost = requireActivity()
-    menuHost.addMenuProvider(HelpMenuProvider(helpLink), viewLifecycleOwner, Lifecycle.State.RESUMED)
+    menuHost.addMenuProvider(HelpMenuProvider(helpLink.toUri()), viewLifecycleOwner, Lifecycle.State.RESUMED)
 }

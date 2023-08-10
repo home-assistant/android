@@ -95,12 +95,7 @@ class SettingsActivity : BaseActivity() {
                     } else if (settingsNavigation == "websocket") {
                         val servers = serverManager.defaultServers
                         if (servers.size == 1) {
-                            Bundle().apply {
-                                putInt(
-                                    WebsocketSettingFragment.EXTRA_SERVER,
-                                    servers[0].id
-                                )
-                            }
+                            Bundle().apply { putInt(WebsocketSettingFragment.EXTRA_SERVER, servers[0].id) }
                         } else {
                             null
                         }
