@@ -34,17 +34,18 @@ fun SettingsWearTemplateTileList(
                 .padding(padding)
                 .padding(all = 16.dp)
         ) {
+            var index = 1
             for (templateTileEntry in templateTiles.entries) {
-                val tileId = templateTileEntry.key ?: 0
-
                 SettingsRow(
-                    primaryText = stringResource(commonR.string.template_tile_n, tileId + 1),
+                    primaryText = stringResource(commonR.string.template_tile_n, index++),
                     secondaryText = stringResource(commonR.string.template_tile_configure),
                     mdiIcon = CommunityMaterial.Icon3.cmd_text_box,
                     enabled = true,
                     onClicked = { onTemplateTileClicked(templateTileEntry.key) }
                 )
             }
+
+            // TODO: add help text: "New Template tiles can be added on the Wear OS device."
         }
     }
 }

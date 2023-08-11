@@ -57,6 +57,8 @@ fun SelectTemplateTileView(
                         )
                     }
                 }
+
+                // TODO: button for adding a new Template tile
             }
         }
     }
