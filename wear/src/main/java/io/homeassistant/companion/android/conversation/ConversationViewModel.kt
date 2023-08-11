@@ -224,6 +224,8 @@ class ConversationViewModel @Inject constructor(
             return
         }
 
+        stopPlayback()
+
         val recording = try {
             recorderProactive || audioRecorder.startRecording()
         } catch (e: Exception) {
@@ -244,6 +246,7 @@ class ConversationViewModel @Inject constructor(
 
     private fun runAssistPipeline(text: String?) {
         val isVoice = text == null
+        stopPlayback()
 
         val userMessage = AssistMessage(text ?: "…", isInput = true)
         _conversation.add(userMessage)
