@@ -296,6 +296,10 @@ class MessagingManager @Inject constructor(
         val serverId = jsonData[NotificationData.WEBHOOK_ID]?.let { webhookId ->
             serverManager.getServer(webhookId = webhookId)?.id
         } ?: ServerManager.SERVER_ID_ACTIVE
+        if (serverManager.getServer(serverId) == null) {
+            Log.w(TAG, "Received notification but no server for it, discarding")
+            return
+        }
         jsonData = jsonData + mutableMapOf<String, String>().apply { put(THIS_SERVER_ID, serverId.toString()) }
 
         mainScope.launch {
