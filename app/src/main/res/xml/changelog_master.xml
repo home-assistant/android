@@ -1,21 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2023.8.1 - Main" versioncode="3">
+    <release version="2023.8.2 - Main" versioncode="3">
         <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Assist - Default to last used assistant instead of preferred</change>
         <change>Android Auto: Home Screen redesign switch from lists to grid, Allow selecting Favorite entities in main app settings to be shown in driving interface home screen, Add Car Info Sensors (requires Android Auto app to open once per drive, not all vehicles support every sensor)</change>
         <change>Shortcuts, Tiles &amp; Wear Favorites: Replace entity drop down selection with search based text field to easily find entities</change>
         <change>Show application name for easier searching when adding apps to a sensors allow list</change>
         <change>Bug fixes, design improvements and dependency updates</change>
     </release>
-    <release version="2023.8.1 - Wear" versioncode="2">
+    <release version="2023.8.2 - Wear" versioncode="2">
         <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Assist - Default to last used pipeline, support preferred pipeline</change>
         <change>Allow multiple Shortcut tiles</change>
         <change>Add setting toggle to disable Assist as a digital assistant app</change>
+        <change>Add notification command to update sensors</change>
         <change>Complications: Add setting to show unit of measurement with entity state complication</change>
         <change>Bug fixes, design improvements and dependency updates</change>
     </release>
-    <release version="2023.8.1 - Automotive" versioncode="1">
+    <release version="2023.8.2 - Automotive" versioncode="1">
         <change>Bug fixes, design improvements and dependency updates</change>
     </release>
 </changelog>
