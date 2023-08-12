@@ -401,11 +401,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     view: WebView?,
                     handler: RenderProcessGoneDetail?
                 ): Boolean {
-                    webView.removeAllViews();
-                    webView.clearCache(true);
-                    webView.reload();
+                    webView.removeAllViews()
+                    webView.clearCache(true)
+                    webView.reload()
 
-                    return true;
+                    return true
                 }
 
                 override fun onLoadResource(
