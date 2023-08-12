@@ -153,9 +153,9 @@ class WearPrefsRepositoryImpl @Inject constructor(
         return localStorage.getString(PREF_TILE_TEMPLATES)?.let { jsonStr ->
             val jsonObject = JSONObject(jsonStr)
             buildMap {
-                JSONObject(jsonStr).keys().forEach { tileId ->
+                jsonObject.keys().forEach { tileId ->
                     val id = tileId.takeUnless { it == "null" }?.toInt()
-                    val templateTileConfig = TemplateTileConfig(jsonObject.getJSONObject(id))
+                    val templateTileConfig = TemplateTileConfig(jsonObject.getJSONObject(tileId))
                     put(id, templateTileConfig)
                 }
             }
