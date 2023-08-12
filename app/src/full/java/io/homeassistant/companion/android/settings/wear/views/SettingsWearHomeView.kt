@@ -77,12 +77,18 @@ fun LoadSettingsHomeView(
                 // TODO: error handling
                 templateTile?.let {
                     SettingsWearTemplateTile(
-                        template = it.first,
+                        template = it.template,
                         // TODO: use rendered template
                         renderedTemplate = "",
-                        refreshInterval = it.second,
-                        onContentChanged = {},
-                        onRefreshIntervalChanged = {}
+                        refreshInterval = it.refreshInterval,
+                        onContentChanged = {
+                            // TODO: send template config to wearable device
+                            //settingsWearViewModel.setTemplateContent(it)
+                        },
+                        onRefreshIntervalChanged = {
+                            // TODO: send template config to wearable device
+                            //settingsWearViewModel.templateTileRefreshInterval.value = it
+                        }
                     ) {}
                 }
             }
