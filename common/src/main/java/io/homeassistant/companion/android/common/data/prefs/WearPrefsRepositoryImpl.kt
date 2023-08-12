@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.data.prefs
 
 import io.homeassistant.companion.android.common.data.LocalStorage
+import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.util.toStringList
 import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
@@ -62,7 +63,7 @@ class WearPrefsRepositoryImpl @Inject constructor(
 
                 if (template != null && templateRefreshInterval != null) {
                     val templates = mapOf(
-                        null to TemplateTileData(template, templateRefreshInterval).toJSONObject()
+                        null to TemplateTileConfig(template, templateRefreshInterval).toJSONObject()
                     )
 
                     localStorage.putString(PREF_TILE_TEMPLATES, JSONObject(templates).toString())
@@ -148,7 +149,7 @@ class WearPrefsRepositoryImpl @Inject constructor(
         localStorage.putBoolean(PREF_SHOW_TILE_SHORTCUTS_TEXT, enabled)
     }
 
-    override suspend fun getAllTemplateTiles(): Map<Int?, Pair<String, Int>> {
+    override suspend fun getAllTemplateTiles(): Map<Int?, TemplateTileConfig> {
         return localStorage.getString(PREF_TILE_TEMPLATES)?.let { jsonStr ->
             runCatching {
                 JSONObject(jsonStr)
@@ -157,8 +158,8 @@ class WearPrefsRepositoryImpl @Inject constructor(
                     buildMap {
                         jsonObject.keys().forEach { stringKey ->
                             val intKey = stringKey.takeUnless { it == "null" }?.toInt()
-                            val templateData = TemplateTileData(jsonObject.getJSONObject(stringKey))
-                            put(intKey, Pair(templateData.template, templateData.refreshInterval))
+                            val templateData = TemplateTileConfig(jsonObject.getJSONObject(stringKey))
+                            put(intKey, TemplateTileConfig(templateData.template, templateData.refreshInterval))
                         }
                     }
                 },
@@ -171,13 +172,13 @@ class WearPrefsRepositoryImpl @Inject constructor(
         } ?: emptyMap()
     }
 
-    override suspend fun getTemplateTile(tileId: Int?): Pair<String, Int>? {
+    override suspend fun getTemplateTile(tileId: Int?): TemplateTileConfig? {
         val tileIdToTemplatesMap = getAllTemplateTiles()
         return if (null in tileIdToTemplatesMap && tileId !in tileIdToTemplatesMap) {
             // if there are Templates with an unknown (null) tileId key from a previous installation,
             // and the tileId parameter is not already present in the map, associate it with that Template
             val templateData = removeTemplateTile(null)!!
-            setTemplateTile(tileId, templateData.first, templateData.second)
+            setTemplateTile(tileId, templateData.template, templateData.refreshInterval)
             templateData
         } else {
             val templateData = tileIdToTemplatesMap[tileId]
@@ -186,20 +187,20 @@ class WearPrefsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun setTemplateTile(tileId: Int?, content: String, refreshInterval: Int) {
-        val map = getAllTemplateTiles() + mapOf(tileId to Pair(content, refreshInterval))
+        val map = getAllTemplateTiles() + mapOf(tileId to TemplateTileConfig(content, refreshInterval))
         setTemplateTiles(map)
     }
 
-    override suspend fun removeTemplateTile(tileId: Int?): Pair<String, Int>? {
+    override suspend fun removeTemplateTile(tileId: Int?): TemplateTileConfig? {
         val templateTilesMap = getAllTemplateTiles().toMutableMap()
         val templateTile = templateTilesMap.remove(tileId)
         setTemplateTiles(templateTilesMap)
         return templateTile
     }
 
-    private suspend fun setTemplateTiles(map: Map<Int?, Pair<String, Int>>) {
-        val jsonMap = map.map { (tileId, templateData) ->
-            tileId?.toString() to TemplateTileData(templateData.first, templateData.second).toJSONObject()
+    private suspend fun setTemplateTiles(map: Map<Int?, TemplateTileConfig>) {
+        val jsonMap = map.map { (tileId, templateTileConfig) ->
+            tileId?.toString() to templateTileConfig.toJSONObject()
         }.toMap()
         val jsonStr = JSONObject(jsonMap).toString()
         localStorage.putString(PREF_TILE_TEMPLATES, jsonStr)
@@ -227,24 +228,5 @@ class WearPrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setWearFavoritesOnly(enabled: Boolean) {
         localStorage.putBoolean(PREF_WEAR_FAVORITES_ONLY, enabled)
-    }
-
-    data class TemplateTileData(
-        val template: String,
-        val refreshInterval: Int
-    ) {
-        constructor(jsonObject: JSONObject) : this(
-            jsonObject.getString("template"),
-            jsonObject.getInt("refresh_interval")
-        )
-
-        fun toJSONObject(): JSONObject {
-            return JSONObject(
-                mapOf(
-                    "template" to template,
-                    "refresh_interval" to refreshInterval
-                )
-            )
-        }
     }
 }
