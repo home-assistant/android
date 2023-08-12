@@ -55,7 +55,7 @@ class WearPrefsRepositoryImpl @Inject constructor(
                 localStorage.putInt(MIGRATION_PREF, MIGRATION_VERSION)
             }
 
-            if (currentVersion == 1) {
+            if (currentVersion == null || currentVersion < 2) {
                 val template = localStorage.getString(legacyPrefTileTemplate)
                 val templateRefreshInterval = localStorage.getInt(
                     legacyPrefTileTemplateRefreshInterval
@@ -151,24 +151,14 @@ class WearPrefsRepositoryImpl @Inject constructor(
 
     override suspend fun getAllTemplateTiles(): Map<Int?, TemplateTileConfig> {
         return localStorage.getString(PREF_TILE_TEMPLATES)?.let { jsonStr ->
-            runCatching {
-                JSONObject(jsonStr)
-            }.fold(
-                onSuccess = { jsonObject ->
-                    buildMap {
-                        jsonObject.keys().forEach { stringKey ->
-                            val intKey = stringKey.takeUnless { it == "null" }?.toInt()
-                            val templateData = TemplateTileConfig(jsonObject.getJSONObject(stringKey))
-                            put(intKey, TemplateTileConfig(templateData.template, templateData.refreshInterval))
-                        }
-                    }
-                },
-                onFailure = {
-                    // TODO: should not be needed if the data is migrated
-                    // backward compatibility with the previous format when there was only one Template Tile:
-                    null
+            val jsonObject = JSONObject(jsonStr)
+            buildMap {
+                JSONObject(jsonStr).keys().forEach { tileId ->
+                    val id = tileId.takeUnless { it == "null" }?.toInt()
+                    val templateTileConfig = TemplateTileConfig(jsonObject.getJSONObject(id))
+                    put(id, templateTileConfig)
                 }
-            )
+            }
         } ?: emptyMap()
     }
 
