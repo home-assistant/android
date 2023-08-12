@@ -34,6 +34,7 @@ import android.webkit.HttpAuthHandler
 import android.webkit.JavascriptInterface
 import android.webkit.JsResult
 import android.webkit.PermissionRequest
+import android.webkit.RenderProcessGoneDetail
 import android.webkit.SslErrorHandler
 import android.webkit.URLUtil
 import android.webkit.ValueCallback
@@ -394,6 +395,17 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                         error,
                         null
                     )
+                }
+
+                override fun onRenderProcessGone(
+                    view: WebView?,
+                    handler: RenderProcessGoneDetail?
+                ): Boolean {
+                    webView.removeAllViews();
+                    webView.clearCache(true);
+                    webView.reload();
+
+                    return true;
                 }
 
                 override fun onLoadResource(
