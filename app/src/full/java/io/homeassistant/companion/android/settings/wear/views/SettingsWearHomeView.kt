@@ -81,13 +81,12 @@ fun LoadSettingsHomeView(
                         // TODO: use rendered template
                         renderedTemplate = "",
                         refreshInterval = it.refreshInterval,
-                        onContentChanged = {
-                            // TODO: send template config to wearable device
-                            //settingsWearViewModel.setTemplateContent(it)
+                        onContentChanged = { templateContent ->
+                            // TODO: how to handle null tile ID?
+                            settingsWearViewModel.setTemplateTileContent(tileId!!, templateContent)
                         },
-                        onRefreshIntervalChanged = {
-                            // TODO: send template config to wearable device
-                            //settingsWearViewModel.templateTileRefreshInterval.value = it
+                        onRefreshIntervalChanged = { refreshInterval ->
+                            settingsWearViewModel.setTemplateTileRefreshInterval(tileId!!, refreshInterval)
                         }
                     ) {}
                 }

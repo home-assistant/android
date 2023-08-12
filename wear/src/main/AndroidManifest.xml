@@ -252,7 +252,7 @@
                 <data android:scheme="wear" android:host="*"
                     android:path="/updateFavorites" />
                 <data android:scheme="wear" android:host="*"
-                    android:path="/updateTemplateTile" />
+                    android:path="/updateTemplateTiles" />
             </intent-filter>
         </service>
 

@@ -23,6 +23,7 @@ import com.google.android.gms.wearable.Wearable
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.WearDataMessages
 import io.homeassistant.companion.android.database.server.Server
@@ -74,13 +75,9 @@ class SettingsWearViewModel @Inject constructor(
         private set
     var favoriteEntityIds = mutableStateListOf<String>()
         private set
-    var templateTiles = mutableStateMapOf<Int?, Pair<String, Int>>()
+    var templateTiles = mutableStateMapOf<Int?, TemplateTileConfig>()
         private set
-    var templateTileContent = mutableStateOf("")
-        private set
-    var templateTileContentRendered = mutableStateOf("")
-        private set
-    var templateTileRefreshInterval = mutableStateOf(0)
+    var templateTilesRenderedTemplates = mutableStateMapOf<Int?, String>()
         private set
 
     private val _resultSnackbar = MutableSharedFlow<String>()
@@ -146,17 +143,33 @@ class SettingsWearViewModel @Inject constructor(
         }
     }
 
-    fun setTemplateContent(template: String) {
-        templateTileContent.value = template
+    fun setTemplateTileContent(tileId: Int, updatedTemplateTileContent: String) {
+        // TODO: implement
+    }
+
+    fun setTemplateTileRefreshInterval(tileId: Int, refreshInterval: Int) {
+        // TODO: implement
+    }
+
+    private fun setTemplateTiles(newTemplateTiles: Map<Int?, TemplateTileConfig>) {
+        templateTiles.clear()
+        templateTilesRenderedTemplates.clear()
+
+        templateTiles.putAll(newTemplateTiles)
+        templateTiles.forEach {
+            templateTilesRenderedTemplates[it.key] = renderTemplate(it.key, it.value.template)
+        }
+    }
+
+    private fun renderTemplate(tileId: Int?, template: String): String {
         if (template.isNotEmpty() && serverId != 0) {
             viewModelScope.launch {
                 try {
-                    templateTileContentRendered.value =
-                        serverManager.integrationRepository(serverId).renderTemplate(template, mapOf()).toString()
+                    serverManager.integrationRepository(serverId).renderTemplate(template, mapOf()).toString()
                 } catch (e: Exception) {
-                    Log.e(TAG, "Exception while rendering template", e)
+                    Log.e(TAG, "Exception while rendering template for tile ID $tileId", e)
                     // JsonMappingException suggests that template is not a String (= error)
-                    templateTileContentRendered.value = getApplication<Application>().getString(
+                    getApplication<Application>().getString(
                         if (e.cause is JsonMappingException) {
                             commonR.string.template_error
                         } else {
@@ -166,7 +179,7 @@ class SettingsWearViewModel @Inject constructor(
                 }
             }
         } else {
-            templateTileContentRendered.value = ""
+            ""
         }
     }
 
@@ -256,9 +269,8 @@ class SettingsWearViewModel @Inject constructor(
     }
 
     fun sendTemplateTileInfo() {
-        val putDataRequest = PutDataMapRequest.create("/updateTemplateTile").run {
-            dataMap.putString(WearDataMessages.CONFIG_TEMPLATE_TILE, templateTileContent.value)
-            dataMap.putInt(WearDataMessages.CONFIG_TEMPLATE_TILE_REFRESH_INTERVAL, templateTileRefreshInterval.value)
+        val putDataRequest = PutDataMapRequest.create("/updateTemplateTiles").run {
+            dataMap.putString(WearDataMessages.CONFIG_TEMPLATE_TILES, objectMapper.writeValueAsString(templateTiles))
             setUrgent()
             asPutDataRequest()
         }
@@ -310,8 +322,14 @@ class SettingsWearViewModel @Inject constructor(
         favoriteEntityIdList.forEach { entityId ->
             favoriteEntityIds.add(entityId)
         }
-        setTemplateContent(data.getString(WearDataMessages.CONFIG_TEMPLATE_TILE, ""))
-        templateTileRefreshInterval.value = data.getInt(WearDataMessages.CONFIG_TEMPLATE_TILE_REFRESH_INTERVAL, 0)
+
+        val templateTilesFromWear: Map<Int?, TemplateTileConfig> = objectMapper.readValue(
+            data.getString(
+                WearDataMessages.CONFIG_TEMPLATE_TILES,
+                "{}"
+            )
+        )
+        setTemplateTiles(templateTilesFromWear)
 
         _hasData.value = true
     }
