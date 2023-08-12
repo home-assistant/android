@@ -9,8 +9,11 @@ import javax.inject.Inject
 @Suppress("DEPRECATION")
 class WifiHelperImpl @Inject constructor(
     private val connectivityManager: ConnectivityManager,
-    private val wifiManager: WifiManager
+    private val wifiManager: WifiManager?
 ) : WifiHelper {
+    override fun hasWifi(): Boolean =
+        wifiManager != null
+
     override fun isUsingWifi(): Boolean =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             connectivityManager.activeNetwork?.let {
@@ -42,8 +45,8 @@ class WifiHelperImpl @Inject constructor(
     }
 
     override fun getWifiSsid(): String? =
-        wifiManager.connectionInfo.ssid
+        wifiManager?.connectionInfo?.ssid // Deprecated but callback doesn't provide SSID info instantly
 
     override fun getWifiBssid(): String? =
-        wifiManager.connectionInfo.bssid
+        wifiManager?.connectionInfo?.bssid // Deprecated but callback doesn't provide BSSID info instantly
 }

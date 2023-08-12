@@ -35,8 +35,13 @@ class LastAppSensorManager : SensorManager {
     }
 
     override fun hasSensor(context: Context): Boolean {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+        return if (context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            false
+        } else {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+        }
     }
+
     @RequiresApi(Build.VERSION_CODES.M)
     override fun requiredPermissions(sensorId: String): Array<String> {
         return arrayOf(Manifest.permission.PACKAGE_USAGE_STATS)
@@ -51,8 +56,9 @@ class LastAppSensorManager : SensorManager {
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP_MR1)
     private fun updateLastApp(context: Context) {
-        if (!isEnabled(context, last_used))
+        if (!isEnabled(context, last_used)) {
             return
+        }
 
         val usageStats = context.getSystemService<UsageStatsManager>()!!
         val current = System.currentTimeMillis()
@@ -62,7 +68,12 @@ class LastAppSensorManager : SensorManager {
 
         try {
             val pm = context.packageManager
-            val appInfo = pm.getApplicationInfo(lastApp, PackageManager.GET_META_DATA)
+            val appInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                pm.getApplicationInfo(lastApp, PackageManager.ApplicationInfoFlags.of(PackageManager.GET_META_DATA.toLong()))
+            } else {
+                @Suppress("DEPRECATION")
+                pm.getApplicationInfo(lastApp, PackageManager.GET_META_DATA)
+            }
             appLabel = pm.getApplicationLabel(appInfo).toString()
         } catch (e: Exception) {
             Log.e(TAG, "Unable to get package label for: $lastApp", e)

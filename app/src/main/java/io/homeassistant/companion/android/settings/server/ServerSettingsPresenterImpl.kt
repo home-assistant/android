@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.settings.server
 import android.util.Log
 import androidx.preference.PreferenceDataStore
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.wifi.WifiHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -12,7 +13,8 @@ import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 class ServerSettingsPresenterImpl @Inject constructor(
-    private val serverManager: ServerManager
+    private val serverManager: ServerManager,
+    private val wifiHelper: WifiHelper
 ) : ServerSettingsPresenter, PreferenceDataStore() {
 
     companion object {
@@ -32,6 +34,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
 
     override fun getBoolean(key: String?, defValue: Boolean): Boolean = runBlocking {
         when (key) {
+            "trust_server" -> serverManager.integrationRepository(serverId).isTrusted()
             "app_lock" -> serverManager.authenticationRepository(serverId).isLockEnabledRaw()
             "app_lock_home_bypass" -> serverManager.authenticationRepository(serverId).isLockHomeBypassEnabled()
             else -> throw IllegalArgumentException("No boolean found by this key: $key")
@@ -41,6 +44,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
     override fun putBoolean(key: String?, value: Boolean) {
         mainScope.launch {
             when (key) {
+                "trust_server" -> serverManager.integrationRepository(serverId).setTrusted(value)
                 "app_lock" -> serverManager.authenticationRepository(serverId).setLockEnabled(value)
                 "app_lock_home_bypass" -> serverManager.authenticationRepository(serverId).setLockHomeBypassEnabled(value)
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
@@ -112,13 +116,19 @@ class ServerSettingsPresenterImpl @Inject constructor(
                 // Remove server anyway, the user wants to delete and we don't need the server for that
             }
             serverManager.removeServer(serverId)
-            view.onRemovedServer(success = true, hasAnyRemaining = serverManager.defaultServers.any())
+            view.onRemovedServer(
+                success = true,
+                hasAnyRemaining = serverManager.defaultServers.any { it.id != serverId }
+            )
         } ?: run {
             view.onRemovedServer(success = false, hasAnyRemaining = true)
         }
     }
 
     override fun onFinish() {
+        if (serverManager.getServer()?.id != serverId) {
+            setAppActive(false)
+        }
         mainScope.cancel()
     }
 
@@ -155,6 +165,8 @@ class ServerSettingsPresenterImpl @Inject constructor(
         }
     }
 
+    override fun hasWifi(): Boolean = wifiHelper.hasWifi()
+
     override fun isSsidUsed(): Boolean = runBlocking {
         serverManager.getServer(serverId)?.connection?.internalSsids?.isNotEmpty() == true
     }
@@ -174,7 +186,12 @@ class ServerSettingsPresenterImpl @Inject constructor(
         }
     }
 
-    override fun setAppActive() = runBlocking {
-        serverManager.integrationRepository(serverId).setAppActive(true)
+    override fun setAppActive(active: Boolean) = runBlocking {
+        try {
+            serverManager.integrationRepository(serverId).setAppActive(active)
+        } catch (e: IllegalArgumentException) {
+            Log.w(TAG, "Cannot set app active $active for server $serverId")
+            Unit
+        }
     }
 }

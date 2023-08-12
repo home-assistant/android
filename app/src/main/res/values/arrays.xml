@@ -10,6 +10,16 @@
         <item>@string/themes_option_value_light</item>
         <item>@string/themes_option_value_dark</item>
     </string-array>
+    <string-array name="pref_screen_orientation_option_values">
+        <item>@string/screen_orientation_option_value_system</item>
+        <item>@string/screen_orientation_option_value_landscape</item>
+        <item>@string/screen_orientation_option_value_portrait</item>
+    </string-array>
+    <string-array name="pref_screen_orientation_option_labels">
+        <item>@string/screen_orientation_option_label_system</item>
+        <item>@string/screen_orientation_option_label_landscape</item>
+        <item>@string/screen_orientation_option_label_portrait</item>
+    </string-array>
     <string-array name="tile_ids">
         <item>tile_1</item>
         <item>tile_2</item>

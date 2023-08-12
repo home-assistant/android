@@ -28,6 +28,10 @@ interface SensorDao {
     fun getFull(id: String): Map<Sensor, List<Attribute>>
 
     @Transaction
+    @Query("SELECT * FROM sensors LEFT JOIN sensor_attributes ON sensors.id = sensor_attributes.sensor_id WHERE sensors.id = :id AND sensors.server_id = :serverId")
+    fun getFull(id: String, serverId: Int): Map<Sensor, List<Attribute>>
+
+    @Transaction
     @Query("SELECT * FROM sensors LEFT JOIN sensor_attributes ON sensors.id = sensor_attributes.sensor_id WHERE sensors.id = :id")
     fun getFullFlow(id: String): Flow<Map<Sensor, List<Attribute>>>
 
@@ -105,6 +109,13 @@ interface SensorDao {
     suspend fun getEnabledCount(): Int?
 
     @Transaction
+    suspend fun setSensorEnabled(sensorId: String, serverIds: List<Int>, enabled: Boolean) {
+        serverIds.forEach {
+            setSensorsEnabled(listOf(sensorId), it, enabled)
+        }
+    }
+
+    @Transaction
     suspend fun setSensorsEnabled(sensorIds: List<String>, serverId: Int, enabled: Boolean) {
         coroutineScope {
             sensorIds.map { sensorId ->
@@ -121,14 +132,10 @@ interface SensorDao {
     }
 
     @Transaction
-    fun getOrDefault(sensorId: String, serverId: Int, permission: Boolean, enabledByDefault: Boolean): Sensor {
-        var sensor = get(sensorId, serverId)
+    fun getOrDefault(sensorId: String, serverId: Int, permission: Boolean, enabledByDefault: Boolean): Sensor? {
+        val sensor = get(sensorId, serverId)
 
-        if (sensor == null) {
-            // If we haven't created the entity yet do so and default to enabled if required
-            sensor = Sensor(sensorId, serverId, enabled = permission && enabledByDefault, state = "")
-            add(sensor)
-        } else if (sensor.enabled && !permission) {
+        if (sensor?.enabled == true && !permission) {
             // If we don't have permission but we are still enabled then we aren't really enabled.
             sensor.enabled = false
             update(sensor)
@@ -159,7 +166,7 @@ interface SensorDao {
             val newServers = servers.filter { it !in sensorList.map { sensor -> sensor.serverId } }
             if (newServers.isNotEmpty()) {
                 // If we have any new servers but don't have entries create one for updates.
-                val singleSensor = sensorList.first()
+                val singleSensor = sensorList.maxBy { it.enabled } // Prefer enabled
                 newServers.forEach {
                     add(
                         singleSensor.copy(

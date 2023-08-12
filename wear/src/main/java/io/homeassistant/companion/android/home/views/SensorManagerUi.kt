@@ -30,16 +30,17 @@ fun SensorManagerUi(
     allSensors: List<Sensor>?,
     allAvailSensors: List<SensorManager.BasicSensor>?,
     sensorManager: SensorManager,
-    onSensorClicked: (String, Boolean) -> Unit,
+    onSensorClicked: (String, Boolean) -> Unit
 ) {
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
     WearAppTheme {
         Scaffold(
             positionIndicator = {
-                if (scalingLazyListState.isScrollInProgress)
+                if (scalingLazyListState.isScrollInProgress) {
                     PositionIndicator(scalingLazyListState = scalingLazyListState)
+                }
             },
-            timeText = { TimeText(!scalingLazyListState.isScrollInProgress) }
+            timeText = { TimeText(scalingLazyListState = scalingLazyListState) }
         ) {
             ThemeLazyColumn(
                 state = scalingLazyListState
@@ -76,7 +77,7 @@ fun SensorManagerUi(
                             SensorUi(
                                 sensor = sensor,
                                 manager = sensorManager,
-                                basicSensor = basicSensor,
+                                basicSensor = basicSensor
                             ) { sensorId, enabled -> onSensorClicked(sensorId, enabled) }
                         }
                     }

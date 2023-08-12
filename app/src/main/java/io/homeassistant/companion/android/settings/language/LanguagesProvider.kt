@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.settings.language
 
 import android.content.Context
+import io.homeassistant.companion.android.common.util.capitalize
 import java.util.Locale
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
@@ -16,9 +17,7 @@ class LanguagesProvider @Inject constructor(
         val locales = langManager.getLocaleTags(context)
         locales.forEach {
             val locale = makeLocale(it)
-            var display = locale.getDisplayLanguage(locale).replaceFirstChar { char ->
-                if (char.isLowerCase()) char.titlecase(locale) else char.toString()
-            }
+            var display = locale.getDisplayLanguage(locale).capitalize(Locale.getDefault())
             if (locale.country.isNotBlank()) display += " (${locale.getDisplayCountry(locale)})"
             listAppLocales[display] = it
         }

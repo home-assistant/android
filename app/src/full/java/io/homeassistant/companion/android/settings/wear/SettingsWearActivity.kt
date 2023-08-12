@@ -49,7 +49,7 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
         menu?.findItem(R.id.get_help)?.let {
             it.isVisible = true
-            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://companion.home-assistant.io/docs/wear-os/wear-os"))
+            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://companion.home-assistant.io/docs/wear-os"))
         }
         return true
     }
@@ -115,7 +115,6 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
     }
 
     private suspend fun findWearDevicesWithApp() {
-
         try {
             val capabilityInfo = capabilityClient
                 .getCapability(CAPABILITY_WEAR_APP, CapabilityClient.FILTER_ALL)
@@ -135,7 +134,6 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
     }
 
     private suspend fun findAllWearDevices() {
-
         try {
             val connectedNodes = nodeClient.connectedNodes.await()
 
@@ -151,7 +149,6 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
     }
 
     private fun updateUI() {
-
         val wearNodesWithApp = wearNodesWithApp
         val allConnectedNodes = allConnectedNodes
 
@@ -185,7 +182,6 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
     }
 
     private fun openPlayStoreOnWearDevicesWithoutApp() {
-
         val wearNodesWithApp = wearNodesWithApp ?: return
         val allConnectedNodes = allConnectedNodes ?: return
 

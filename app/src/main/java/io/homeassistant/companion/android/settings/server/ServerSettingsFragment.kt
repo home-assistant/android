@@ -18,6 +18,7 @@ import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
+import androidx.preference.Preference.OnPreferenceClickListener
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
@@ -41,7 +42,7 @@ import io.homeassistant.companion.android.common.R as commonR
 class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
 
     companion object {
-        private const val TAG = "ServerSettingsFragment"
+        const val TAG = "ServerSettingsFragment"
 
         const val EXTRA_SERVER = "server"
     }
@@ -81,15 +82,20 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         }
 
         if (presenter.hasMultipleServers()) {
+            val activateClickListener = OnPreferenceClickListener {
+                val intent = WebViewActivity.newInstance(requireContext(), null, serverId).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                }
+                requireContext().startActivity(intent)
+                return@OnPreferenceClickListener true
+            }
             findPreference<Preference>("activate_server")?.let {
                 it.isVisible = true
-                it.setOnPreferenceClickListener {
-                    val intent = WebViewActivity.newInstance(requireContext(), null, serverId).apply {
-                        addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                    }
-                    requireContext().startActivity(intent)
-                    return@setOnPreferenceClickListener true
-                }
+                it.onPreferenceClickListener = activateClickListener
+            }
+            findPreference<Preference>("activate_server_hint")?.let {
+                it.isVisible = true
+                it.onPreferenceClickListener = activateClickListener
             }
         }
 
@@ -116,7 +122,7 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         }
 
         findPreference<SwitchPreference>("app_lock_home_bypass")?.let {
-            it.isVisible = findPreference<SwitchPreference>("app_lock")?.isChecked == true
+            it.isVisible = findPreference<SwitchPreference>("app_lock")?.isChecked == true && presenter.hasWifi()
         }
 
         findPreference<EditTextPreference>("session_timeout")?.let { pref ->
@@ -127,8 +133,12 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         }
 
         findPreference<EditTextPreference>("connection_internal")?.let {
+            it.setOnBindEditTextListener { edit ->
+                edit.inputType = InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+            }
             it.onPreferenceChangeListener =
                 onChangeUrlValidator
+            it.isVisible = presenter.hasWifi()
         }
 
         findPreference<Preference>("connection_external")?.setOnPreferenceClickListener {
@@ -148,6 +158,7 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
                 onDisplaySsidScreen()
                 return@setOnPreferenceClickListener true
             }
+            it.isVisible = presenter.hasWifi()
         }
 
         findPreference<PreferenceCategory>("security_category")?.isVisible = Build.MODEL != "Quest"
@@ -227,16 +238,22 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
     override fun updateExternalUrl(url: String, useCloud: Boolean) {
         findPreference<Preference>("connection_external")?.let {
             it.summary =
-                if (useCloud) getString(commonR.string.input_cloud)
-                else url
+                if (useCloud) {
+                    getString(commonR.string.input_cloud)
+                } else {
+                    url
+                }
         }
     }
 
     override fun updateSsids(ssids: List<String>) {
         findPreference<Preference>("connection_internal_ssids")?.let {
             it.summary =
-                if (ssids.isEmpty()) getString(commonR.string.pref_connection_ssids_empty)
-                else ssids.joinToString()
+                if (ssids.isEmpty()) {
+                    getString(commonR.string.pref_connection_ssids_empty)
+                } else {
+                    ssids.joinToString()
+                }
         }
     }
 
@@ -250,13 +267,16 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         if (DisabledLocationHandler.isLocationEnabled(requireContext())) {
             if (!checkPermission(permissionsToCheck)) {
                 LocationPermissionInfoHandler.showLocationPermInfoDialogIfNeeded(
-                    requireContext(), permissionsToCheck,
+                    requireContext(),
+                    permissionsToCheck,
                     continueYesCallback = {
                         requestLocationPermission()
                         // showSsidSettings() will be called if permission is granted
                     }
                 )
-            } else showSsidSettings()
+            } else {
+                showSsidSettings()
+            }
         } else {
             if (presenter.isSsidUsed()) {
                 DisabledLocationHandler.showLocationDisabledWarnDialog(
@@ -264,7 +284,8 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
                     arrayOf(
                         getString(commonR.string.pref_connection_wifi)
                     ),
-                    showAsNotification = false, withDisableOption = true
+                    showAsNotification = false,
+                    withDisableOption = true
                 ) {
                     presenter.clearSsids()
                 }
@@ -296,9 +317,9 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         switchLock?.isChecked = success
 
         // Prevent requesting authentication after just enabling the app lock
-        presenter.setAppActive()
+        presenter.setAppActive(true)
 
-        findPreference<SwitchPreference>("app_lock_home_bypass")?.isVisible = success
+        findPreference<SwitchPreference>("app_lock_home_bypass")?.isVisible = success && presenter.hasWifi()
         findPreference<EditTextPreference>("session_timeout")?.isVisible = success
         return (result == Authenticator.SUCCESS || result == Authenticator.CANCELED)
     }
@@ -376,4 +397,6 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         presenter.onFinish()
         super.onDestroy()
     }
+
+    fun getServerId(): Int = serverId
 }

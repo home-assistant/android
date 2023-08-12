@@ -19,6 +19,7 @@ class PrefsRepositoryImpl @Inject constructor(
         private const val PREF_THEME = "theme"
         private const val PREF_LANG = "lang"
         private const val PREF_LOCALES = "locales"
+        private const val PREF_SCREEN_ORIENTATION = "screen_orientation"
         private const val PREF_CONTROLS_AUTH_REQUIRED = "controls_auth_required"
         private const val PREF_CONTROLS_AUTH_ENTITIES = "controls_auth_entities"
         private const val PREF_FULLSCREEN_ENABLED = "fullscreen_enabled"
@@ -29,6 +30,8 @@ class PrefsRepositoryImpl @Inject constructor(
         private const val PREF_WEBVIEW_DEBUG_ENABLED = "webview_debug_enabled"
         private const val PREF_KEY_ALIAS = "key-alias"
         private const val PREF_CRASH_REPORTING_DISABLED = "crash_reporting"
+        private const val PREF_IGNORED_SUGGESTIONS = "ignored_suggestions"
+        private const val PREF_AUTO_FAVORITES = "auto_favorites"
     }
 
     init {
@@ -93,8 +96,16 @@ class PrefsRepositoryImpl @Inject constructor(
         return localStorage.getString(PREF_LOCALES)
     }
 
-    override suspend fun saveLocales(locales: String) {
-        localStorage.putString(PREF_LOCALES, locales)
+    override suspend fun saveLocales(lang: String) {
+        localStorage.putString(PREF_LOCALES, lang)
+    }
+
+    override suspend fun getScreenOrientation(): String? {
+        return localStorage.getString(PREF_SCREEN_ORIENTATION)
+    }
+
+    override suspend fun saveScreenOrientation(orientation: String?) {
+        localStorage.putString(PREF_SCREEN_ORIENTATION, orientation)
     }
 
     override suspend fun getControlsAuthRequired(): ControlsAuthRequiredSetting {
@@ -178,5 +189,29 @@ class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun getKeyAlias(): String? {
         return localStorage.getString(PREF_KEY_ALIAS)
+    }
+
+    override suspend fun getIgnoredSuggestions(): List<String> {
+        return localStorage.getStringSet(PREF_IGNORED_SUGGESTIONS)?.toList() ?: emptyList()
+    }
+
+    override suspend fun setIgnoredSuggestions(ignored: List<String>) {
+        localStorage.putStringSet(PREF_IGNORED_SUGGESTIONS, ignored.toSet())
+    }
+
+    override suspend fun getAutoFavorites(): List<String> {
+        return localStorage.getString(PREF_AUTO_FAVORITES)?.removeSurrounding("[", "]")?.split(", ")?.filter { it.isNotBlank() } ?: emptyList()
+    }
+
+    override suspend fun setAutoFavorites(favorites: List<String>) {
+        localStorage.putString(PREF_AUTO_FAVORITES, favorites.toString())
+    }
+
+    override suspend fun removeServer(serverId: Int) {
+        val controlsAuthEntities = getControlsAuthEntities().filter { it.split(".")[0].toIntOrNull() != serverId }
+        setControlsAuthEntities(controlsAuthEntities)
+
+        val autoFavorites = getAutoFavorites().filter { it.split("-")[0].toIntOrNull() != serverId }
+        setAutoFavorites(autoFavorites)
     }
 }

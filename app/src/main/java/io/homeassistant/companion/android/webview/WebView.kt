@@ -18,5 +18,7 @@ interface WebView {
 
     fun relaunchApp()
 
+    fun unlockAppIfNeeded()
+
     fun showError(errorType: ErrorType = ErrorType.TIMEOUT, error: SslError? = null, description: String? = null)
 }

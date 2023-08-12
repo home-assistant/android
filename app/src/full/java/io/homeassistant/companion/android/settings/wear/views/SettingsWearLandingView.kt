@@ -10,7 +10,9 @@ import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
+import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -20,6 +22,10 @@ import androidx.compose.ui.unit.dp
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.settings.views.SettingsRow
 import io.homeassistant.companion.android.util.wearDeviceName
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
@@ -30,9 +36,18 @@ fun SettingWearLandingView(
     navigateFavorites: () -> Unit,
     navigateTemplateTile: () -> Unit,
     loginWearOs: () -> Unit,
-    onBackClicked: () -> Unit
+    onBackClicked: () -> Unit,
+    events: Flow<String>
 ) {
+    val scaffoldState = rememberScaffoldState()
+    LaunchedEffect("snackbar") {
+        events.onEach { message ->
+            scaffoldState.snackbarHostState.showSnackbar(message)
+        }.launchIn(this)
+    }
+
     Scaffold(
+        scaffoldState = scaffoldState,
         topBar = {
             SettingsWearTopAppBar(
                 title = { Text(stringResource(commonR.string.wear_settings)) },
@@ -104,6 +119,7 @@ private fun PreviewSettingWearLandingView() {
         navigateFavorites = {},
         navigateTemplateTile = {},
         loginWearOs = {},
-        onBackClicked = {}
+        onBackClicked = {},
+        events = emptyFlow()
     )
 }

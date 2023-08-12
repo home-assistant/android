@@ -29,8 +29,8 @@ import androidx.compose.material.Icon
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
+import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Error
@@ -85,7 +85,7 @@ fun SsidView(
                     var ssidInput by remember { mutableStateOf("") }
                     var ssidError by remember { mutableStateOf(false) }
 
-                    OutlinedTextField(
+                    TextField(
                         value = ssidInput,
                         singleLine = true,
                         onValueChange = {
@@ -109,13 +109,15 @@ fun SsidView(
                                     contentDescription = stringResource(commonR.string.manage_ssids_input_exists)
                                 )
                             }
-                        } else null,
+                        } else {
+                            null
+                        },
                         modifier = Modifier.weight(1f)
                     )
                     Button(
                         modifier = Modifier
-                            .height(64.dp) // align with OutlinedTextField: 56 + 8
-                            .padding(start = 8.dp, top = 8.dp),
+                            .height(56.dp) // align with TextField: 56
+                            .padding(start = 8.dp, top = 0.dp),
                         onClick = {
                             keyboardController?.hide()
                             ssidError = !onAddWifiSsid(ssidInput)
@@ -169,16 +171,25 @@ fun SsidView(
                     imageVector = Icons.Default.Wifi,
                     contentDescription = null,
                     tint =
-                    if (connected) colorResource(commonR.color.colorAccent)
-                    else LocalContentColor.current.copy(alpha = LocalContentAlpha.current)
+                    if (connected) {
+                        colorResource(commonR.color.colorAccent)
+                    } else {
+                        LocalContentColor.current.copy(alpha = LocalContentAlpha.current)
+                    }
                 )
                 Text(
                     text =
-                    if (it.startsWith(WifiHelper.BSSID_PREFIX)) it.removePrefix(WifiHelper.BSSID_PREFIX)
-                    else it,
+                    if (it.startsWith(WifiHelper.BSSID_PREFIX)) {
+                        it.removePrefix(WifiHelper.BSSID_PREFIX)
+                    } else {
+                        it
+                    },
                     fontFamily =
-                    if (it.startsWith(WifiHelper.BSSID_PREFIX)) FontFamily.Monospace
-                    else null,
+                    if (it.startsWith(WifiHelper.BSSID_PREFIX)) {
+                        FontFamily.Monospace
+                    } else {
+                        null
+                    },
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .weight(1f)
@@ -215,8 +226,11 @@ fun SsidView(
                         CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
                             Text(
                                 text = stringResource(
-                                    if (prioritizeInternal) commonR.string.prioritize_internal_on
-                                    else commonR.string.prioritize_internal_off
+                                    if (prioritizeInternal) {
+                                        commonR.string.prioritize_internal_on
+                                    } else {
+                                        commonR.string.prioritize_internal_off
+                                    }
                                 ),
                                 style = MaterialTheme.typography.body2
                             )
@@ -224,7 +238,7 @@ fun SsidView(
                     }
                     if (prioritizeDropdown) {
                         DropdownMenu(
-                            expanded = prioritizeDropdown,
+                            expanded = true,
                             onDismissRequest = { prioritizeDropdown = false },
                             modifier = Modifier.fillMaxWidth()
                         ) {

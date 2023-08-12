@@ -26,6 +26,7 @@ class ManageWidgetsSettingsFragment : Fragment() {
         setHasOptionsMenu(true)
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onPrepareOptionsMenu(menu: Menu) {
         super.onPrepareOptionsMenu(menu)
 

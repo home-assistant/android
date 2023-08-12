@@ -32,7 +32,7 @@ class SensorWorker(
                     .build()
 
             WorkManager.getInstance(context)
-                .enqueueUniquePeriodicWork(TAG, ExistingPeriodicWorkPolicy.REPLACE, sensorWorker)
+                .enqueueUniquePeriodicWork(TAG, ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE, sensorWorker)
         }
     }
 

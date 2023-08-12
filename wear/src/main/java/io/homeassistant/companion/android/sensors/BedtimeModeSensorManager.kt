@@ -45,9 +45,9 @@ class BedtimeModeSensorManager : SensorManager {
     }
 
     private fun updateBedtimeMode(context: Context) {
-
-        if (!isEnabled(context, bedtimeMode))
+        if (!isEnabled(context, bedtimeMode)) {
             return
+        }
 
         val state = try {
             Settings.Global.getInt(context.contentResolver, if (Build.MANUFACTURER == "samsung") "setting_bedtime_mode_running_state" else "bedtime_mode") == 1

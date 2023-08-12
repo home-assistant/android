@@ -22,8 +22,10 @@ import androidx.fragment.app.viewModels
 import com.google.accompanist.themeadapter.material.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.data.wifi.WifiHelper
 import io.homeassistant.companion.android.settings.SettingViewModel
 import io.homeassistant.companion.android.settings.websocket.views.WebsocketSettingView
+import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
@@ -32,6 +34,9 @@ class WebsocketSettingFragment : Fragment() {
     companion object {
         const val EXTRA_SERVER = "server"
     }
+
+    @Inject
+    lateinit var wifiHelper: WifiHelper
 
     val viewModel: SettingViewModel by viewModels()
 
@@ -51,6 +56,7 @@ class WebsocketSettingFragment : Fragment() {
         }
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onPrepareOptionsMenu(menu: Menu) {
         super.onPrepareOptionsMenu(menu)
 
@@ -73,6 +79,7 @@ class WebsocketSettingFragment : Fragment() {
                     WebsocketSettingView(
                         websocketSetting = settings.value.websocketSetting,
                         unrestrictedBackgroundAccess = isIgnoringBatteryOptimizations,
+                        hasWifi = wifiHelper.hasWifi(),
                         onSettingChanged = { viewModel.updateWebsocketSetting(serverId, it) },
                         onBackgroundAccessTapped = {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {

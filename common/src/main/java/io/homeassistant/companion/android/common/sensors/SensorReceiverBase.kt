@@ -20,7 +20,9 @@ import io.homeassistant.companion.android.common.util.sensorCoreSyncChannel
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.sensor.SensorWithAttributes
+import io.homeassistant.companion.android.database.sensor.toSensorWithAttributes
 import io.homeassistant.companion.android.database.sensor.toSensorsWithAttributes
+import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -30,8 +32,9 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 import java.io.IOException
+import java.net.ConnectException
+import java.net.SocketTimeoutException
 import java.util.Locale
 import javax.inject.Inject
 
@@ -39,6 +42,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
     companion object {
         const val ACTION_UPDATE_SENSOR = "io.homeassistant.companion.android.UPDATE_SENSOR"
         const val ACTION_UPDATE_SENSORS = "io.homeassistant.companion.android.UPDATE_SENSORS"
+        const val ACTION_STOP_BEACON_SCANNING = "io.homeassistant.companion.android.STOP_BEACON_SCANNING"
         const val EXTRA_SENSOR_ID = "sensorId"
 
         fun shouldDoFastUpdates(context: Context): Boolean {
@@ -90,8 +94,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
             if (!isSensorEnabled(sensor!!)) {
                 Log.d(
                     tag,
-                    String.format
-                    (
+                    String.format(
                         "Sensor %s corresponding to received event %s is disabled, skipping sensors update",
                         sensor,
                         intent.action
@@ -101,18 +104,28 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
             }
         }
 
+        if (intent.action == ACTION_STOP_BEACON_SCANNING) {
+            BluetoothSensorManager.enableDisableBeaconMonitor(context, false)
+            return
+        }
+
         if (isSensorEnabled(LastUpdateManager.lastUpdate.id)) {
             LastUpdateManager().sendLastUpdate(context, intent.action)
             val allSettings = sensorDao.getSettings(LastUpdateManager.lastUpdate.id)
             for (setting in allSettings) {
                 if (setting.value != "" && intent.action == setting.value) {
-                    val eventData = intent.extras?.keySet()?.map { it.toString() to intent.extras?.get(it).toString() }?.toMap()?.plus("intent" to intent.action.toString())
+                    val eventData = intent.extras?.keySet()
+                        ?.associate {
+                            it.toString() to (intent.extras?.getString(it) ?: "")
+                        }
+                        ?.plus("intent" to intent.action.toString())
                         ?: mapOf("intent" to intent.action.toString())
                     Log.d(tag, "Event data: $eventData")
-                    serverManager.defaultServers.forEach { server ->
+                    sensorDao.get(LastUpdateManager.lastUpdate.id).forEach { sensor ->
+                        if (!sensor.enabled) return@forEach
                         ioScope.launch {
                             try {
-                                serverManager.integrationRepository(server.id).fireEvent(
+                                serverManager.integrationRepository(sensor.serverId).fireEvent(
                                     "android.intent_received",
                                     eventData as Map<String, Any>
                                 )
@@ -158,44 +171,17 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         sensorDao: SensorDao,
         intent: Intent?
     ) {
-        val enabledRegistrations = mutableListOf<SensorRegistration<Any>>()
-
         if (!serverManager.isRegistered()) {
             Log.w(tag, "Device not registered, skipping sensor update/registration")
             return
         }
 
-        val serverHAversion = mutableMapOf<Int, String>()
-        val serverSupportsDisabled = mutableMapOf<Int, Boolean>()
-        val serverSensorStatus = mutableMapOf<Int, Map<String, Boolean>?>()
-        serverManager.defaultServers.map { server ->
-            ioScope.async {
-                withTimeoutOrNull(10_000) {
-                    server._version?.let { serverHAversion[server.id] = it } // Cached
-                    serverHAversion[server.id] =
-                        serverManager.integrationRepository(server.id).getHomeAssistantVersion()
-                    serverSupportsDisabled[server.id] =
-                        serverManager.integrationRepository(server.id).isHomeAssistantVersionAtLeast(2022, 6, 0)
-                    serverSensorStatus[server.id] = if (serverSupportsDisabled[server.id] == true) {
-                        try {
-                            val config = serverManager.integrationRepository(server.id).getConfig().entities
-                            config
-                                ?.filter { it.value["disabled"] != null }
-                                ?.mapValues { !(it.value["disabled"] as Boolean) } // Map to sensor id -> enabled
-                        } catch (e: Exception) {
-                            Log.e(tag, "Error while getting core config to sync sensor status", e)
-                            null
-                        }
-                    } else null
-                }
-            }
-        }.awaitAll()
-
         managers.forEach { manager ->
             // Since we don't have this manager injected it doesn't fulfil its injects, manually
             // inject for now I guess?
-            if (manager is LocationSensorManagerBase)
+            if (manager is LocationSensorManagerBase) {
                 manager.serverManager = serverManager
+            }
 
             val hasSensor = manager.hasSensor(context)
             if (hasSensor) {
@@ -205,9 +191,54 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                     Log.e(tag, "Issue requesting updates for ${context.getString(manager.name)}", e)
                 }
             }
+        }
+
+        try {
+            serverManager.defaultServers.map { server ->
+                ioScope.async { syncSensorsWithServer(context, serverManager, server, sensorDao) }
+            }.awaitAll()
+            Log.i(tag, "Sensor updates and sync completed")
+        } catch (e: Exception) {
+            Log.e(tag, "Exception while awaiting sensor updates.", e)
+        }
+    }
+
+    private suspend fun syncSensorsWithServer(
+        context: Context,
+        serverManager: ServerManager,
+        server: Server,
+        sensorDao: SensorDao
+    ): Boolean {
+        val currentHAversion = serverManager.integrationRepository(server.id).getHomeAssistantVersion()
+        val supportsDisabledSensors = serverManager.integrationRepository(server.id).isHomeAssistantVersionAtLeast(2022, 6, 0)
+        val serverIsTrusted = serverManager.integrationRepository(server.id).isTrusted()
+        val coreSensorStatus: Map<String, Boolean>? =
+            if (supportsDisabledSensors && (serverIsTrusted || (sensorDao.getEnabledCount() ?: 0) > 0)) {
+                try {
+                    val config = serverManager.integrationRepository(server.id).getConfig().entities
+                    config
+                        ?.filter { it.value["disabled"] != null }
+                        ?.mapValues { !(it.value["disabled"] as Boolean) } // Map to sensor id -> enabled
+                } catch (e: Exception) {
+                    Log.e(tag, "Error while getting core config to sync sensor status", e)
+                    null
+                }
+            } else {
+                // Cannot sync disabled, or all sensors disabled and server changes aren't trusted
+                null
+            }
+
+        var serverIsReachable = true
+        val enabledRegistrations = mutableListOf<SensorRegistration<Any>>()
+
+        managers.forEach { manager ->
+            // Each manager was already asked to update in updateSensors
+            val hasSensor = manager.hasSensor(context)
+
             manager.getAvailableSensors(context).forEach sensorForEach@{ basicSensor ->
-                val fullSensors = sensorDao.getFull(basicSensor.id).toSensorsWithAttributes()
-                if (fullSensors.isEmpty()) return@sensorForEach
+                val fullSensor = sensorDao.getFull(basicSensor.id, server.id).toSensorWithAttributes()
+                val sensor = fullSensor?.sensor ?: return@sensorForEach
+                val sensorCoreEnabled = coreSensorStatus?.get(basicSensor.id)
                 val canBeRegistered = hasSensor &&
                     basicSensor.type.isNotBlank() &&
                     basicSensor.statelessIcon.isNotBlank()
@@ -216,161 +247,137 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                 // 1. There is a new sensor or change in enabled state according to the app
                 // 2. There is a change in enabled state according to core (user changed in frontend)
                 // 3. There is no change in enabled state, but app/core version has changed
-                // Because sensor enabled state is kept in sync across all servers, if one of the
-                // first 2 scenarios applies on one server, it will be applied to all servers.
-
-                val coreEnabledDifference: (SensorWithAttributes) -> Boolean = { (sensor, _) ->
-                    serverSupportsDisabled[sensor.serverId] == true &&
-                        serverSensorStatus[sensor.serverId]?.get(sensor.id) != null &&
-                        serverSensorStatus[sensor.serverId]!![sensor.id] != sensor.registered
-                }
-                val versionDifference: (SensorWithAttributes) -> Boolean = { (sensor, _) ->
-                    (sensor.enabled || serverSupportsDisabled[sensor.serverId] == true) &&
-                        (currentAppVersion != sensor.appRegistration || serverHAversion[sensor.serverId] != sensor.coreRegistration)
-                }
                 if (
                     canBeRegistered &&
-                    fullSensors.any { (sensor, _) ->
-                        (sensor.registered == null && (sensor.enabled || serverSupportsDisabled[sensor.serverId] == true)) ||
-                            (sensor.enabled != sensor.registered && serverSupportsDisabled[sensor.serverId] == true) ||
-                            (sensor.registered != null && serverSensorStatus[sensor.serverId] != null && serverSensorStatus[sensor.serverId]!![sensor.id] == null)
-                    }
+                    (
+                        (sensor.registered == null && (sensor.enabled || supportsDisabledSensors)) ||
+                            (sensor.enabled != sensor.registered && supportsDisabledSensors) ||
+                            (sensor.registered != null && coreSensorStatus != null && sensorCoreEnabled == null)
+                        )
                 ) {
                     // 1. (Re-)register sensors with core when they can be registered and:
                     // - sensor isn't registered, but is enabled or on core >=2022.6
                     // - sensor enabled has changed from registered enabled state on core >=2022.6
                     // - sensor is registered according to database, but core >=2022.6 doesn't know about it
-                    fullSensors.forEach { fullSensor ->
-                        val sensor = fullSensor.sensor
-                        if (serverSupportsDisabled[sensor.serverId] == true || (sensor.registered == null && sensor.enabled)) {
-                            try {
-                                registerSensor(context, serverManager, fullSensor, basicSensor)
-                                sensor.registered = sensor.enabled
-                                sensor.coreRegistration = serverHAversion[sensor.serverId]
-                                sensor.appRegistration = currentAppVersion
-                                sensorDao.update(sensor)
-                            } catch (e: Exception) {
-                                Log.e(tag, "Issue registering sensor ${basicSensor.id}", e)
-                            }
-                        }
+                    try {
+                        registerSensor(context, serverManager, fullSensor, basicSensor)
+                        sensor.registered = sensor.enabled
+                        sensor.coreRegistration = currentHAversion
+                        sensor.appRegistration = currentAppVersion
+                        sensorDao.update(sensor)
+                    } catch (e: Exception) {
+                        Log.e(tag, "Issue registering sensor ${basicSensor.id}", e)
                     }
-                } else if (canBeRegistered && fullSensors.any(coreEnabledDifference)) {
+                } else if (
+                    canBeRegistered &&
+                    supportsDisabledSensors &&
+                    sensorCoreEnabled != null &&
+                    sensorCoreEnabled != sensor.registered
+                ) {
                     // 2. Try updating the sensor enabled state to match core state when it's different from
-                    // the app, if the sensor can be registered and on core >= 2022.6
-                    val difference = fullSensors.first(coreEnabledDifference).sensor
-                    val sensorCoreEnabled =
-                        serverSensorStatus[difference.serverId]?.get(difference.id) == true
-                    Log.d(tag, "Sync: ${if (sensorCoreEnabled) "enabling" else "disabling"} ${difference.id}")
-
-                    fullSensors.forEach { fullSensor ->
-                        try {
-                            val sensor = fullSensor.sensor
-                            var appliedDifference = true
-                            if (sensorCoreEnabled) { // App disabled, should enable
-                                if (manager.checkPermission(context.applicationContext, basicSensor.id)) {
-                                    sensor.enabled = true
-                                    sensor.registered = true
-                                } else {
-                                    // Can't enable due to missing permission(s), 'override' core and notify user
-                                    if (difference.serverId == sensor.serverId && serverSupportsDisabled[sensor.serverId] == true) {
-                                        registerSensor(context, serverManager, fullSensor, basicSensor)
-                                        appliedDifference = false
-                                    }
-
-                                    context.getSystemService<NotificationManager>()?.let { notificationManager ->
-                                        createNotificationChannel(context)
-                                        val notificationId = "$sensorCoreSyncChannel-${basicSensor.id}".hashCode()
-                                        val notificationIntent = getSensorSettingsIntent(context, basicSensor.id, manager.id(), notificationId)
-                                        val notification = NotificationCompat.Builder(context, sensorCoreSyncChannel)
-                                            .setSmallIcon(R.drawable.ic_stat_ic_notification)
-                                            .setContentTitle(context.getString(basicSensor.name))
-                                            .setContentText(context.getString(R.string.sensor_worker_sync_missing_permissions))
-                                            .setContentIntent(notificationIntent)
-                                            .setAutoCancel(true)
-                                            .build()
-                                        notificationManager.notify(notificationId, notification)
-                                    }
-                                }
-                            } else { // App enabled, should disable
-                                sensor.enabled = false
-                                sensor.registered = false
-                            }
-
-                            sensor.coreRegistration = serverHAversion[sensor.serverId]
-                            sensor.appRegistration = currentAppVersion
-                            if (appliedDifference && difference.serverId != sensor.serverId) {
-                                // We're applying enabled from a different server, send it to this one as well
+                    // the app, if the sensor can be registered, on core >= 2022.6 and server trusted.
+                    // If the server isn't trusted, update registered state to match app.
+                    try {
+                        if (!serverIsTrusted) { // Core changed, but app doesn't trust server so 'override'
+                            registerSensor(context, serverManager, fullSensor, basicSensor)
+                        } else if (sensorCoreEnabled) { // App disabled, should enable
+                            if (manager.checkPermission(context.applicationContext, basicSensor.id)) {
+                                sensor.enabled = true
+                                sensor.registered = true
+                            } else {
+                                // Can't enable due to missing permission(s), 'override' core and notify user
                                 registerSensor(context, serverManager, fullSensor, basicSensor)
+
+                                context.getSystemService<NotificationManager>()?.let { notificationManager ->
+                                    createNotificationChannel(context)
+                                    val notificationId = "$sensorCoreSyncChannel-${basicSensor.id}".hashCode()
+                                    val notificationIntent = getSensorSettingsIntent(context, basicSensor.id, manager.id(), notificationId)
+                                    val notification = NotificationCompat.Builder(context, sensorCoreSyncChannel)
+                                        .setSmallIcon(R.drawable.ic_stat_ic_notification)
+                                        .setContentTitle(context.getString(basicSensor.name))
+                                        .setContentText(context.getString(R.string.sensor_worker_sync_missing_permissions))
+                                        .setContentIntent(notificationIntent)
+                                        .setAutoCancel(true)
+                                        .build()
+                                    notificationManager.notify(notificationId, notification)
+                                }
                             }
-                            sensorDao.update(sensor)
-                        } catch (e: Exception) {
-                            Log.e(tag, "Issue enabling/disabling sensor ${basicSensor.id}", e)
+                        } else { // App enabled, should disable
+                            sensor.enabled = false
+                            sensor.registered = false
                         }
+
+                        sensor.coreRegistration = currentHAversion
+                        sensor.appRegistration = currentAppVersion
+                        sensorDao.update(sensor)
+                    } catch (e: Exception) {
+                        Log.e(tag, "Issue enabling/disabling sensor ${basicSensor.id}", e)
                     }
-                } else if (canBeRegistered && fullSensors.any(versionDifference)) {
+                } else if (
+                    canBeRegistered &&
+                    serverIsReachable &&
+                    (sensor.enabled || supportsDisabledSensors) &&
+                    (currentAppVersion != sensor.appRegistration || currentHAversion != sensor.coreRegistration)
+                ) {
                     // 3. Re-register sensors with core when they can be registered and are enabled or on
                     // core >= 2022.6, and app or core version change is detected
-                    fullSensors.filter(versionDifference).forEach { fullSensor ->
-                        try {
-                            registerSensor(context, serverManager, fullSensor, basicSensor)
-                            val sensor = fullSensor.sensor
-                            sensor.registered = sensor.enabled
-                            sensor.coreRegistration = serverHAversion[sensor.serverId]
-                            sensor.appRegistration = currentAppVersion
-                            sensorDao.update(sensor)
-                        } catch (e: Exception) {
-                            Log.e(tag, "Issue re-registering sensor ${basicSensor.id}", e)
+                    try {
+                        registerSensor(context, serverManager, fullSensor, basicSensor)
+                        sensor.registered = sensor.enabled
+                        sensor.coreRegistration = currentHAversion
+                        sensor.appRegistration = currentAppVersion
+                        sensorDao.update(sensor)
+                    } catch (e: Exception) {
+                        Log.e(tag, "Issue re-registering sensor ${basicSensor.id}", e)
+                        if (e is IntegrationException && (e.cause is ConnectException || e.cause is SocketTimeoutException)) {
+                            Log.w(tag, "Server can't be reached, skipping other registrations for sensors due to version change")
+                            serverIsReachable = false
                         }
                     }
                 }
 
-                fullSensors.forEach { fullSensor ->
-                    val sensor = fullSensor.sensor
-                    if (canBeRegistered && sensor.enabled && sensor.registered != null && (sensor.state != sensor.lastSentState || sensor.icon != sensor.lastSentIcon)) {
-                        enabledRegistrations.add(fullSensor.toSensorRegistration(basicSensor))
-                    }
+                if (canBeRegistered && sensor.enabled && sensor.registered != null && (sensor.state != sensor.lastSentState || sensor.icon != sensor.lastSentIcon)) {
+                    enabledRegistrations.add(fullSensor.toSensorRegistration(basicSensor))
                 }
             }
         }
 
+        var success = true
         if (enabledRegistrations.isNotEmpty()) {
-            val jobs = enabledRegistrations.groupBy { it.serverId }.map { (serverId, registrations) ->
-                ioScope.async {
-                    val success = try {
-                        val success = serverManager.integrationRepository(serverId).updateSensors(registrations.toTypedArray())
-                        registrations.forEach {
-                            sensorDao.updateLastSentStateAndIcon(it.uniqueId, it.serverId, it.state.toString(), it.icon)
-                        }
-                        success
-                    } catch (e: Exception) {
-                        // Don't trigger re-registration when the server is down or job was cancelled
-                        val exceptionOk = e is IntegrationException &&
-                            (e.cause is IOException || e.cause is CancellationException)
-                        if (exceptionOk) Log.w(tag, "Exception while updating sensors: ${e::class.java.simpleName}: ${e.cause?.let { it::class.java.name } }")
-                        else Log.e(tag, "Exception while updating sensors.", e)
-                        exceptionOk
-                    }
+            success = try {
+                val serverSuccess = serverManager.integrationRepository(server.id).updateSensors(enabledRegistrations.toTypedArray())
+                enabledRegistrations.forEach {
+                    sensorDao.updateLastSentStateAndIcon(it.uniqueId, it.serverId, it.state.toString(), it.icon)
+                }
+                serverSuccess
+            } catch (e: Exception) {
+                // Don't trigger re-registration when the server is down or job was cancelled
+                val exceptionOk = e is IntegrationException &&
+                    (e.cause is IOException || e.cause is CancellationException)
+                if (exceptionOk) {
+                    Log.w(tag, "Exception while updating sensors: ${e::class.java.simpleName}: ${e.cause?.let { it::class.java.name } }")
+                } else {
+                    Log.e(tag, "Exception while updating sensors.", e)
+                }
+                exceptionOk
+            }
 
-                    // We failed to update a sensor, we should re register next time
-                    if (!success) {
-                        registrations.forEach {
-                            val sensor = sensorDao.get(it.uniqueId, it.serverId)
-                            if (sensor != null) {
-                                sensor.registered = null
-                                sensor.lastSentState = null
-                                sensor.lastSentIcon = null
-                                sensorDao.update(sensor)
-                            }
-                        }
+            // We failed to update a sensor, we should re register next time
+            if (!success) {
+                enabledRegistrations.forEach {
+                    val sensor = sensorDao.get(it.uniqueId, it.serverId)
+                    if (sensor != null) {
+                        sensor.registered = null
+                        sensor.lastSentState = null
+                        sensor.lastSentIcon = null
+                        sensorDao.update(sensor)
                     }
                 }
             }
-            try {
-                jobs.awaitAll()
-            } catch (e: Exception) {
-                Log.e(tag, "Exception while awaiting sensor updates.", e)
-            }
-        } else Log.d(tag, "Nothing to update")
+        } else {
+            Log.d(tag, "Nothing to update for server ${server.id} (${server.friendlyName})")
+        }
+        return success
     }
 
     private suspend fun registerSensor(
@@ -428,7 +435,9 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                 notificationManager.getNotificationChannel(sensorCoreSyncChannel)
             if (notificationChannel == null) {
                 notificationChannel = NotificationChannel(
-                    sensorCoreSyncChannel, sensorCoreSyncChannel, NotificationManager.IMPORTANCE_DEFAULT
+                    sensorCoreSyncChannel,
+                    sensorCoreSyncChannel,
+                    NotificationManager.IMPORTANCE_DEFAULT
                 )
                 notificationManager.createNotificationChannel(notificationChannel)
             }

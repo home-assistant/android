@@ -70,7 +70,8 @@ class SettingsWearMainView : AppCompatActivity() {
                 defaultDeviceName = currentNodes.firstOrNull()?.displayName ?: "unknown",
                 locationTrackingPossible = false,
                 notificationsPossible = false,
-                isWatch = true
+                isWatch = true,
+                discoveryOptions = OnboardApp.DiscoveryOptions.ADD_EXISTING_EXTERNAL
             ) // While notifications are technically possible, the app can't handle this for the Wear device
         )
     }
@@ -79,7 +80,8 @@ class SettingsWearMainView : AppCompatActivity() {
         if (result != null) {
             val (url, authCode, deviceName, deviceTrackingEnabled, _) = result
             settingsWearViewModel.sendAuthToWear(url, authCode, deviceName, deviceTrackingEnabled, true)
-        } else
+        } else {
             Log.e(TAG, "onOnboardingComplete: Activity result returned null intent data")
+        }
     }
 }

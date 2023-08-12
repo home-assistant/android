@@ -1,6 +1,9 @@
 package io.homeassistant.companion.android.matter
 
 import android.app.Application
+import android.content.IntentSender
+import android.util.Log
+import androidx.activity.result.ActivityResult
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -8,15 +11,21 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.thread.ThreadManager
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class MatterCommissioningViewModel @Inject constructor(
     private val matterManager: MatterManager,
+    private val threadManager: ThreadManager,
     private val serverManager: ServerManager,
     application: Application
 ) : AndroidViewModel(application) {
+
+    companion object {
+        private const val TAG = "MatterCommissioningView"
+    }
 
     sealed class CommissioningFlowStep {
         object NotStarted : CommissioningFlowStep()
@@ -36,9 +45,13 @@ class MatterCommissioningViewModel @Inject constructor(
     var serverId by mutableStateOf(0)
         private set
 
-    fun checkSetup() {
+    fun checkSetup(isNewDevice: Boolean) {
         viewModelScope.launch {
-            if (step != CommissioningFlowStep.NotStarted) return@launch
+            if (!isNewDevice && step != CommissioningFlowStep.NotStarted) {
+                return@launch
+            } else {
+                step = CommissioningFlowStep.NotStarted
+            }
 
             if (!serverManager.isRegistered()) {
                 step = CommissioningFlowStep.NotRegistered
@@ -70,8 +83,37 @@ class MatterCommissioningViewModel @Inject constructor(
 
             val coreSupport = matterManager.coreSupportsCommissioning(id)
             step =
-                if (coreSupport) CommissioningFlowStep.Confirmation
-                else CommissioningFlowStep.NotSupported
+                if (coreSupport) {
+                    CommissioningFlowStep.Confirmation
+                } else {
+                    CommissioningFlowStep.NotSupported
+                }
+        }
+    }
+
+    suspend fun syncThreadIfNecessary(): IntentSender? {
+        step = CommissioningFlowStep.Working
+        return try {
+            val result = threadManager.syncPreferredDataset(
+                getApplication<Application>().applicationContext,
+                serverId,
+                viewModelScope
+            )
+            when (result) {
+                is ThreadManager.SyncResult.OnlyOnDevice -> result.exportIntent
+                is ThreadManager.SyncResult.AllHaveCredentials -> result.exportIntent
+                else -> null
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Unable to sync preferred Thread dataset, continuing", e)
+            null
+        }
+    }
+
+    fun onThreadPermissionResult(result: ActivityResult, code: String) {
+        viewModelScope.launch {
+            threadManager.sendThreadDatasetExportResult(result, serverId)
+            commissionDeviceWithCode(code)
         }
     }
 
@@ -81,8 +123,11 @@ class MatterCommissioningViewModel @Inject constructor(
 
             val result = matterManager.commissionDevice(code, serverId)
             step =
-                if (result?.success == true) CommissioningFlowStep.Success
-                else CommissioningFlowStep.Failure(result?.errorCode)
+                if (result?.success == true) {
+                    CommissioningFlowStep.Success
+                } else {
+                    CommissioningFlowStep.Failure(result?.errorCode)
+                }
         }
     }
 }

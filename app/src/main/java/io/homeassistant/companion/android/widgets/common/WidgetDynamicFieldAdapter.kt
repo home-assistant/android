@@ -10,7 +10,9 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.RecyclerView
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.Service
+import io.homeassistant.companion.android.common.util.capitalize
 import io.homeassistant.companion.android.databinding.WidgetButtonConfigureDynamicFieldBinding
+import java.util.Locale
 import kotlin.Exception
 
 class WidgetDynamicFieldAdapter(
@@ -19,11 +21,14 @@ class WidgetDynamicFieldAdapter(
     private val serviceFieldList: ArrayList<ServiceFieldBinder>
 ) : RecyclerView.Adapter<WidgetDynamicFieldAdapter.ViewHolder>() {
 
+    companion object {
+        private const val TAG = "WidgetField"
+    }
+
     class ViewHolder(
         val binding: WidgetButtonConfigureDynamicFieldBinding
     ) : RecyclerView.ViewHolder(binding.root)
 
-    private val TAG = "WidgetField"
     private val dropDownOnFocus = View.OnFocusChangeListener { view, hasFocus ->
         if (hasFocus && view is AutoCompleteTextView) {
             view.showDropDown()
@@ -53,10 +58,13 @@ class WidgetDynamicFieldAdapter(
         // Set label for the text view
         // Reformat text to "Capital Words" instead of "capital_words"
         binding.dynamicAutocompleteLabel.text =
-            fieldKey.split("_").map {
-                if (it == "id") it.toUpperCase()
-                else it.capitalize()
-            }.joinToString(" ")
+            fieldKey.split("_").joinToString(" ") {
+                if (it == "id") {
+                    it.uppercase(Locale.getDefault())
+                } else {
+                    it.capitalize(Locale.getDefault())
+                }
+            }
 
         // If the field has an example, use it as a hint
         if (services[serviceText]?.serviceData?.fields?.get(fieldKey)?.example != null) {
@@ -174,7 +182,7 @@ class WidgetDynamicFieldAdapter(
 
             this.split(",").forEach { subString ->
                 // Ignore whitespace
-                if (!subString.isBlank()) {
+                if (subString.isNotBlank()) {
                     subString.trim().toJsonType()?.let { jsonArray.add(it) }
                 }
             }
@@ -197,7 +205,7 @@ class WidgetDynamicFieldAdapter(
 
     private fun String.toBooleanOrNull(): Boolean? {
         // Parse all valid YAML boolean values
-        return when (this.trim().toLowerCase()) {
+        return when (this.trim().lowercase(Locale.getDefault())) {
             "true" -> true
             "on" -> true
             "yes" -> true

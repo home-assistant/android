@@ -10,7 +10,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -22,7 +21,6 @@ import androidx.wear.compose.material.ScalingLazyListState
 import androidx.wear.compose.material.rememberScalingLazyListState
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ThemeLazyColumn(
     state: ScalingLazyListState = rememberScalingLazyListState(),

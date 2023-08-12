@@ -138,7 +138,11 @@ abstract class DataModule {
 
         @Provides
         @Singleton
-        fun wifiManager(@ApplicationContext appContext: Context) = appContext.getSystemService<WifiManager>()!!
+        fun wifiManager(@ApplicationContext appContext: Context) = appContext.getSystemService<WifiManager>()
+
+        @Provides
+        @Singleton
+        fun packageManager(@ApplicationContext appContext: Context) = appContext.packageManager
     }
 
     @Binds

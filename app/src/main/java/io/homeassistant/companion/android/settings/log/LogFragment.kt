@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -48,6 +49,7 @@ class LogFragment : Fragment() {
     private var crashLog: String? = null
     private var currentLog = ""
 
+    @Deprecated("Deprecated in Java")
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.share_log -> {
@@ -78,8 +80,11 @@ class LogFragment : Fragment() {
                 override fun onTabReselected(tab: TabLayout.Tab?) {
                     (requireView().findViewById<ScrollView>(R.id.logScrollview))?.apply {
                         post {
-                            if (tab?.id == R.id.logTabCrash) fullScroll(ScrollView.FOCUS_UP)
-                            else fullScroll(ScrollView.FOCUS_DOWN)
+                            if (tab?.id == R.id.logTabCrash) {
+                                fullScroll(ScrollView.FOCUS_UP)
+                            } else {
+                                fullScroll(ScrollView.FOCUS_DOWN)
+                            }
                         }
                     }
                 }
@@ -160,7 +165,6 @@ class LogFragment : Fragment() {
                 fLogFile.appendText(currentLog)
 
                 if (fLogFile.exists()) {
-
                     val uriToLog: Uri = FileProvider.getUriForFile(requireContext(), requireContext().packageName + ".provider", fLogFile)
 
                     val sendIntent: Intent = Intent().apply {
@@ -176,7 +180,7 @@ class LogFragment : Fragment() {
                         // Lets exclude github app, because github doesn't support sharing text files (only images)
                         // Also no issue template will be used
                         val excludedComponents = getExcludedComponentsForPackageName(sendIntent, arrayOf("com.github.android"))
-                        if (excludedComponents.size > 0) {
+                        if (excludedComponents.size > 0 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                             putExtra(Intent.EXTRA_EXCLUDE_COMPONENTS, excludedComponents.toTypedArray())
                         }
                     }
@@ -206,7 +210,12 @@ class LogFragment : Fragment() {
 
     private fun getExcludedComponentsForPackageName(sendIntent: Intent, packageNames: Array<String>): ArrayList<ComponentName> {
         val excludedComponents = ArrayList<ComponentName>()
-        val resInfos = requireContext().packageManager.queryIntentActivities(sendIntent, 0)
+        val resInfos = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requireContext().packageManager.queryIntentActivities(sendIntent, PackageManager.ResolveInfoFlags.of(0))
+        } else {
+            @Suppress("DEPRECATION")
+            requireContext().packageManager.queryIntentActivities(sendIntent, 0)
+        }
         for (resInfo in resInfos) {
             val packageName = resInfo.activityInfo.packageName
             val name = resInfo.activityInfo.name

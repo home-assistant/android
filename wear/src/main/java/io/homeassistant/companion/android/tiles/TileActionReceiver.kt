@@ -41,6 +41,7 @@ class TileActionReceiver : BroadcastReceiver() {
                         vibrator?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
                     } else {
                         val vibrator = context?.getSystemService<Vibrator>()
+                        @Suppress("DEPRECATION")
                         vibrator?.vibrate(200)
                     }
                 }
@@ -54,10 +55,11 @@ class TileActionReceiver : BroadcastReceiver() {
                         } catch (e: Exception) {
                             null
                         }
-                        if (lockEntity?.state == "locked")
+                        if (lockEntity?.state == "locked") {
                             "unlock"
-                        else
+                        } else {
                             "lock"
+                        }
                     }
                     in HomePresenterImpl.toggleDomains -> "toggle"
                     else -> "turn_on"

@@ -5,7 +5,6 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.net.ConnectivityManager
 import android.os.Build
 import android.os.PowerManager
 import android.util.Log
@@ -31,6 +30,7 @@ import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.notifications.MessagingManager
 import io.homeassistant.companion.android.settings.SettingsActivity
+import io.homeassistant.companion.android.util.hasActiveConnection
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -66,7 +66,7 @@ class WebsocketManager(
             if (workInfo == null || workInfo.state.isFinished || workInfo.state == WorkInfo.State.ENQUEUED) {
                 workManager.enqueueUniquePeriodicWork(
                     TAG,
-                    ExistingPeriodicWorkPolicy.REPLACE,
+                    ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
                     websocketNotifications
                 )
             } else {
@@ -125,21 +125,18 @@ class WebsocketManager(
 
     private fun shouldWeRun(): Boolean = serverManager.defaultServers.any { shouldRunForServer(it.id) }
 
-    @Suppress("DEPRECATION")
     private fun shouldRunForServer(serverId: Int): Boolean {
         val server = serverManager.getServer(serverId) ?: return false
         val setting = settingsDao.get(serverId)?.websocketSetting ?: DEFAULT_WEBSOCKET_SETTING
         val isHome = server.connection.isInternal()
 
         // Check for connectivity but not internet access, based on WorkManager's NetworkConnectedController API <26
-        val connectivityManager = applicationContext.getSystemService<ConnectivityManager>()
-        val networkInfo = connectivityManager?.activeNetworkInfo
         val powerManager = applicationContext.getSystemService<PowerManager>()!!
         val displayOff = !powerManager.isInteractive
 
         return when {
             (setting == WebsocketSetting.NEVER) -> false
-            (networkInfo != null && !networkInfo.isConnected) -> false
+            (!applicationContext.hasActiveConnection()) -> false
             !serverManager.isRegistered() -> false
             (displayOff && setting == WebsocketSetting.SCREEN_ON) -> false
             (!isHome && setting == WebsocketSetting.HOME_WIFI) -> false
@@ -198,8 +195,9 @@ class WebsocketManager(
             }
             // Message and title are in the root unlike all the others.
             listOf("message", "title").forEach { key ->
-                if (it.containsKey(key))
+                if (it.containsKey(key)) {
                     flattened[key] = it[key].toString()
+                }
             }
             serverManager.getServer(serverId)?.let { server ->
                 flattened["webhook_id"] = server.connection.webhookId.toString()

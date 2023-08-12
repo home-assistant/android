@@ -11,6 +11,7 @@ import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.nfc.tech.Ndef
 import android.nfc.tech.NdefFormatable
+import android.os.Build
 import io.homeassistant.companion.android.BuildConfig
 import java.io.IOException
 
@@ -20,7 +21,12 @@ object NFCUtil {
             return null
         }
 
-        val rawMessages = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES)
+        val rawMessages = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES, NdefMessage::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES)
+        }
         val ndefMessage = rawMessages?.get(0) as NdefMessage?
         return ndefMessage?.records?.get(0)?.toUri()
     }
@@ -35,7 +41,12 @@ object NFCUtil {
         val nfcMessage = NdefMessage(arrayOf(nfcRecord) + applicationRecords)
         val nfcFallbackMessage = NdefMessage(arrayOf(nfcRecord))
         intent?.let {
-            val tag = it.getParcelableExtra<Tag>(NfcAdapter.EXTRA_TAG)
+            val tag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                it.getParcelableExtra(NfcAdapter.EXTRA_TAG, Tag::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                it.getParcelableExtra(NfcAdapter.EXTRA_TAG)
+            }
             return writeMessageToTag(nfcMessage, nfcFallbackMessage, tag)
         }
         return false
@@ -47,8 +58,10 @@ object NFCUtil {
 
     fun <T> enableNFCInForeground(nfcAdapter: NfcAdapter, activity: Activity, classType: Class<T>) {
         val pendingIntent = PendingIntent.getActivity(
-            activity, 0,
-            Intent(activity, classType).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), PendingIntent.FLAG_MUTABLE
+            activity,
+            0,
+            Intent(activity, classType).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+            PendingIntent.FLAG_MUTABLE
         )
         val nfcIntentFilter = IntentFilter(NfcAdapter.ACTION_NDEF_DISCOVERED)
         val filters = arrayOf(nfcIntentFilter)

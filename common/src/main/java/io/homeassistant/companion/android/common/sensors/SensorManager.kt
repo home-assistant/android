@@ -4,6 +4,7 @@ import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Process.myPid
 import android.os.Process.myUid
 import androidx.core.content.getSystemService
@@ -66,9 +67,9 @@ interface SensorManager {
 
     fun checkPermission(context: Context, sensorId: String): Boolean {
         return requiredPermissions(sensorId).all {
-            if (sensorId != "last_used_app")
+            if (sensorId != "last_used_app") {
                 context.checkPermission(it, myPid(), myUid()) == PackageManager.PERMISSION_GRANTED
-            else {
+            } else {
                 checkUsageStatsPermission(context)
             }
         }
@@ -76,12 +77,23 @@ interface SensorManager {
 
     fun checkUsageStatsPermission(context: Context): Boolean {
         val pm = context.packageManager
-        val appInfo = pm.getApplicationInfo(context.packageName, 0)
-        val appOpsManager = context.getSystemService<AppOpsManager>()!!
-        val mode = appOpsManager.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, appInfo.uid, appInfo.packageName)
+        val appInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            pm.getApplicationInfo(context.packageName, PackageManager.ApplicationInfoFlags.of(0))
+        } else {
+            @Suppress("DEPRECATION")
+            pm.getApplicationInfo(context.packageName, 0)
+        }
+        val appOpsManager = context.getSystemService<AppOpsManager>()
+        val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            appOpsManager?.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, appInfo.uid, appInfo.packageName)
+        } else {
+            @Suppress("DEPRECATION")
+            appOpsManager?.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, appInfo.uid, appInfo.packageName)
+        }
         return mode == AppOpsManager.MODE_ALLOWED
     }
 
+    /** @return `true` if this sensor is enabled on any server */
     fun isEnabled(context: Context, basicSensor: BasicSensor): Boolean {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val permission = checkPermission(context, basicSensor.id)
@@ -91,6 +103,25 @@ interface SensorManager {
             permission,
             basicSensor.enabledByDefault
         )
+    }
+
+    /** @return `true` if this sensor is enabled for the specified server */
+    fun isEnabled(context: Context, basicSensor: BasicSensor, serverId: Int): Boolean {
+        val sensorDao = AppDatabase.getInstance(context).sensorDao()
+        val permission = checkPermission(context, basicSensor.id)
+        return sensorDao.getOrDefault(
+            basicSensor.id,
+            serverId,
+            permission,
+            basicSensor.enabledByDefault
+        )?.enabled == true
+    }
+
+    /** @return Set of server IDs for which this sensor is enabled */
+    fun getEnabledServers(context: Context, basicSensor: BasicSensor): Set<Int> {
+        val sensorDao = AppDatabase.getInstance(context).sensorDao()
+        val permission = checkPermission(context, basicSensor.id)
+        return sensorDao.get(basicSensor.id).filter { it.enabled && permission }.map { it.serverId }.toSet()
     }
 
     /**
@@ -178,15 +209,16 @@ interface SensorManager {
         settingType: SensorSettingType,
         default: String,
         enabled: Boolean = true,
-        entries: List<String> = arrayListOf(),
+        entries: List<String> = arrayListOf()
     ): String {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val setting = sensorDao
             .getSettings(sensor.id)
             .firstOrNull { it.name == settingName }
             ?.value
-        if (setting == null)
+        if (setting == null) {
             sensorDao.add(SensorSetting(sensor.id, settingName, default, settingType, enabled, entries = entries))
+        }
 
         return setting ?: default
     }
@@ -197,7 +229,7 @@ interface SensorManager {
         state: Any,
         mdiIcon: String,
         attributes: Map<String, Any?>,
-        forceUpdate: Boolean = false,
+        forceUpdate: Boolean = false
     ) {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val sensors = sensorDao.get(basicSensor.id)
@@ -221,7 +253,7 @@ interface SensorManager {
                 stateClass = basicSensor.stateClass,
                 entityCategory = basicSensor.entityCategory,
                 lastSentState = if (forceUpdate) null else it.lastSentState,
-                lastSentIcon = if (forceUpdate) null else it.lastSentIcon,
+                lastSentIcon = if (forceUpdate) null else it.lastSentIcon
             )
             sensorDao.update(sensor)
         }

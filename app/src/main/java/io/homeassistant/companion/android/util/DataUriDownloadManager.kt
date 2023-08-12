@@ -71,7 +71,6 @@ object DataUriDownloadManager {
             .notify(url.hashCode(), notification.build())
     }
 
-    @Suppress("DEPRECATION")
     private suspend fun writeDataUriToFile(
         context: Context,
         url: String,

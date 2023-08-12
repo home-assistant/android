@@ -23,16 +23,18 @@ import io.homeassistant.companion.android.common.util.stopTTS
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.database.sensor.SensorDao
+import io.homeassistant.companion.android.sensors.SensorReceiver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 import javax.inject.Inject
 
 class MessagingManager @Inject constructor(
     @ApplicationContext val context: Context,
     private val serverManager: ServerManager,
-    private val sensorDao: SensorDao,
+    private val sensorDao: SensorDao
 ) {
 
     companion object {
@@ -42,7 +44,6 @@ class MessagingManager @Inject constructor(
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     fun handleMessage(notificationData: Map<String, String>, source: String) {
-
         val notificationDao = AppDatabase.getInstance(context).notificationDao()
         val now = System.currentTimeMillis()
 
@@ -50,25 +51,34 @@ class MessagingManager @Inject constructor(
         val jsonObject = jsonData?.let { JSONObject(it) }
         val serverId = jsonData?.get(NotificationData.WEBHOOK_ID)?.let {
             serverManager.getServer(webhookId = it)?.id
-        }
+        } ?: ServerManager.SERVER_ID_ACTIVE
         val notificationRow =
             NotificationItem(0, now, notificationData[NotificationData.MESSAGE].toString(), jsonObject.toString(), source, serverId)
         notificationDao.add(notificationRow)
+        if (serverManager.getServer(serverId) == null) {
+            Log.w(TAG, "Received notification but no server for it, discarding")
+            return
+        }
 
-        when (notificationData[NotificationData.MESSAGE]) {
-            DeviceCommandData.COMMAND_BEACON_MONITOR -> {
-                if (!commandBeaconMonitor(context, notificationData)) {
-                    sendNotification(notificationData, now)
+        mainScope.launch {
+            val allowCommands = serverManager.integrationRepository(serverId).isTrusted()
+            val message = notificationData[NotificationData.MESSAGE]
+            when {
+                message == DeviceCommandData.COMMAND_BEACON_MONITOR && allowCommands -> {
+                    if (!commandBeaconMonitor(context, notificationData)) {
+                        sendNotification(notificationData, now)
+                    }
                 }
-            }
-            DeviceCommandData.COMMAND_BLE_TRANSMITTER -> {
-                if (!commandBleTransmitter(context, notificationData, sensorDao, mainScope)) {
-                    sendNotification(notificationData)
+                message == DeviceCommandData.COMMAND_BLE_TRANSMITTER && allowCommands -> {
+                    if (!commandBleTransmitter(context, notificationData, sensorDao, mainScope)) {
+                        sendNotification(notificationData)
+                    }
                 }
+                message == TextToSpeechData.TTS -> speakText(context, notificationData)
+                message == TextToSpeechData.COMMAND_STOP_TTS -> stopTTS()
+                message == DeviceCommandData.COMMAND_UPDATE_SENSORS -> SensorReceiver.updateAllSensors(context)
+                else -> sendNotification(notificationData, now)
             }
-            TextToSpeechData.TTS -> speakText(context, notificationData)
-            TextToSpeechData.COMMAND_STOP_TTS -> stopTTS()
-            else -> sendNotification(notificationData, now)
         }
     }
 

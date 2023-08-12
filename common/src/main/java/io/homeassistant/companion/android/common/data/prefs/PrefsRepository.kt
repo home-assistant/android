@@ -35,6 +35,10 @@ interface PrefsRepository {
 
     suspend fun setKeepScreenOnEnabled(enabled: Boolean)
 
+    suspend fun getScreenOrientation(): String?
+
+    suspend fun saveScreenOrientation(orientation: String?)
+
     suspend fun isPinchToZoomEnabled(): Boolean
 
     suspend fun setPinchToZoomEnabled(enabled: Boolean)
@@ -58,4 +62,15 @@ interface PrefsRepository {
     suspend fun saveKeyAlias(alias: String)
 
     suspend fun getKeyAlias(): String?
+
+    suspend fun getIgnoredSuggestions(): List<String>
+
+    suspend fun setIgnoredSuggestions(ignored: List<String>)
+
+    suspend fun getAutoFavorites(): List<String>
+
+    suspend fun setAutoFavorites(favorites: List<String>)
+
+    /** Clean up any app-level preferences that might reference servers */
+    suspend fun removeServer(serverId: Int)
 }

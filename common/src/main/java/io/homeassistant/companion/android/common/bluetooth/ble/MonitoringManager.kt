@@ -1,6 +1,18 @@
 package io.homeassistant.companion.android.common.bluetooth.ble
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
+import android.os.Build
+import androidx.core.app.NotificationCompat
+import androidx.core.content.getSystemService
+import io.homeassistant.companion.android.common.BuildConfig
+import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
+import io.homeassistant.companion.android.common.sensors.SensorUpdateReceiver
+import io.homeassistant.companion.android.common.util.beaconMonitorChannel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -33,6 +45,10 @@ class MonitoringManager {
         if (!this::beaconManager.isInitialized) {
             beaconManager = BeaconManager.getInstanceForApplication(context)
 
+            if (BuildConfig.DEBUG) {
+                BeaconManager.setDebug(true)
+            }
+
             // find iBeacons
             beaconManager.beaconParsers.add(
                 BeaconParser()
@@ -50,14 +66,30 @@ class MonitoringManager {
             region = buildRegion()
             scope.launch(Dispatchers.Main) {
                 beaconManager.getRegionViewModel(region).rangedBeacons.observeForever { beacons ->
-                    haMonitor.setBeacons(
-                        context,
-                        beacons
-                    )
+                    if (beaconManager.isAnyConsumerBound) {
+                        haMonitor.setBeacons(
+                            context,
+                            beacons
+                        )
+                    }
                 }
             }
         }
 
+        val builder = NotificationCompat.Builder(context, beaconMonitorChannel)
+        builder.setSmallIcon(R.drawable.ic_stat_ic_notification)
+        builder.setContentTitle(context.getString(R.string.beacon_scanning))
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(beaconMonitorChannel, context.getString(R.string.beacon_scanning), NotificationManager.IMPORTANCE_LOW)
+            val notifManager = context.getSystemService<NotificationManager>()!!
+            notifManager.createNotificationChannel(channel)
+        }
+        val stopScanningIntent = Intent(context, SensorUpdateReceiver::class.java)
+        stopScanningIntent.action = SensorReceiverBase.ACTION_STOP_BEACON_SCANNING
+        val stopScanningPendingIntent = PendingIntent.getBroadcast(context, 0, stopScanningIntent, PendingIntent.FLAG_MUTABLE)
+        builder.addAction(0, context.getString(R.string.disable), stopScanningPendingIntent)
+        beaconManager.enableForegroundServiceScanning(builder.build(), 444)
+        beaconManager.setEnableScheduledScanJobs(false)
         beaconManager.startRangingBeacons(region)
         haMonitor.sensorManager.updateBeaconMonitoringSensor(context)
     }
@@ -65,6 +97,8 @@ class MonitoringManager {
     fun stopMonitoring(context: Context, haMonitor: IBeaconMonitor) {
         if (isMonitoring()) {
             beaconManager.stopRangingBeacons(region)
+            haMonitor.clearBeacons()
+            beaconManager.disableForegroundServiceScanning()
             haMonitor.sensorManager.updateBeaconMonitoringSensor(context)
         }
     }

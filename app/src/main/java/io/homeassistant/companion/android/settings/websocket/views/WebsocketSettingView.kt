@@ -30,6 +30,7 @@ import io.homeassistant.companion.android.util.compose.RadioButtonRow
 fun WebsocketSettingView(
     websocketSetting: WebsocketSetting,
     unrestrictedBackgroundAccess: Boolean,
+    hasWifi: Boolean,
     onSettingChanged: (WebsocketSetting) -> Unit,
     onBackgroundAccessTapped: () -> Unit
 ) {
@@ -55,11 +56,13 @@ fun WebsocketSettingView(
                 selected = websocketSetting == WebsocketSetting.NEVER,
                 onClick = { onSettingChanged(WebsocketSetting.NEVER) }
             )
-            RadioButtonRow(
-                text = stringResource(if (BuildConfig.FLAVOR == "full") R.string.websocket_setting_home_wifi else R.string.websocket_setting_home_wifi_minimal),
-                selected = websocketSetting == WebsocketSetting.HOME_WIFI,
-                onClick = { onSettingChanged(WebsocketSetting.HOME_WIFI) }
-            )
+            if (hasWifi) {
+                RadioButtonRow(
+                    text = stringResource(if (BuildConfig.FLAVOR == "full") R.string.websocket_setting_home_wifi else R.string.websocket_setting_home_wifi_minimal),
+                    selected = websocketSetting == WebsocketSetting.HOME_WIFI,
+                    onClick = { onSettingChanged(WebsocketSetting.HOME_WIFI) }
+                )
+            }
             RadioButtonRow(
                 text = stringResource(if (BuildConfig.FLAVOR == "full") R.string.websocket_setting_while_screen_on else R.string.websocket_setting_while_screen_on_minimal),
                 selected = websocketSetting == WebsocketSetting.SCREEN_ON,

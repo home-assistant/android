@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
 import com.google.android.gms.location.ActivityRecognition
@@ -64,7 +65,6 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-
         when (intent.action) {
             ACTION_UPDATE_ACTIVITY -> handleActivityUpdate(intent, context)
             ACTION_SLEEP_ACTIVITY -> handleSleepUpdate(intent, context)
@@ -100,8 +100,9 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
             val result = ActivityRecognitionResult.extractResult(intent)
             var probActivity = result?.let { typeToString(it.mostProbableActivity) }
 
-            if (probActivity == "on_foot")
+            if (probActivity == "on_foot") {
                 probActivity = result?.let { getSubActivity(it) }
+            }
 
             if (probActivity != null && result != null) {
                 onSensorUpdated(
@@ -109,7 +110,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
                     activity,
                     probActivity,
                     getSensorIcon(probActivity),
-                    result.probableActivities.map { typeToString(it) to it.confidence }.toMap()
+                    result.probableActivities.associate { typeToString(it) to it.confidence }
                 )
             }
         }
@@ -208,6 +209,14 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
         }
     }
 
+    override fun hasSensor(context: Context): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            !context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+        } else {
+            true
+        }
+    }
+
     override fun requestSensorUpdate(context: Context) {
         if (isEnabled(context, activity)) {
             val actReg = ActivityRecognition.getClient(context)
@@ -274,7 +283,6 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
     }
 
     private fun getSensorIcon(activity: String): String {
-
         return when (activity) {
             "in_vehicle" -> "mdi:car"
             "on_bicycle" -> "mdi:bike"

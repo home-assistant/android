@@ -1,10 +1,12 @@
 package io.homeassistant.companion.android.webview
 
+import android.app.Activity
 import android.content.Context
 import android.content.IntentSender
 import android.graphics.Color
 import android.net.Uri
 import android.util.Log
+import androidx.activity.result.ActivityResult
 import dagger.hilt.android.qualifiers.ActivityContext
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
@@ -12,10 +14,12 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.matter.MatterFrontendCommissioningStatus
 import io.homeassistant.companion.android.matter.MatterManager
-import io.homeassistant.companion.android.util.UrlHandler
+import io.homeassistant.companion.android.thread.ThreadManager
+import io.homeassistant.companion.android.util.UrlUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,7 +40,8 @@ class WebViewPresenterImpl @Inject constructor(
     @ActivityContext context: Context,
     private val serverManager: ServerManager,
     private val prefsRepository: PrefsRepository,
-    private val matterUseCase: MatterManager
+    private val matterUseCase: MatterManager,
+    private val threadUseCase: ThreadManager
 ) : WebViewPresenter {
 
     companion object {
@@ -85,7 +90,7 @@ class WebViewPresenterImpl @Inject constructor(
             urlForServer = server?.id
 
             if (path != null && !path.startsWith("entityId:")) {
-                url = UrlHandler.handle(url, path)
+                url = UrlUtil.handle(url, path)
             }
 
             /*
@@ -123,6 +128,31 @@ class WebViewPresenterImpl @Inject constructor(
                 serverManager.activateServer(id)
                 serverId = id
             }
+        }
+    }
+
+    override fun switchActiveServer(id: Int) {
+        if (serverId != id && serverId != ServerManager.SERVER_ID_ACTIVE) {
+            setAppActive(false) // 'Lock' old server
+        }
+        setActiveServer(id)
+        onViewReady(null)
+        view.unlockAppIfNeeded()
+    }
+
+    override fun nextServer() = moveToServer(next = true)
+
+    override fun previousServer() = moveToServer(next = false)
+
+    private fun moveToServer(next: Boolean) {
+        val servers = serverManager.defaultServers
+        if (servers.size < 2) return
+        val currentServerIndex = servers.indexOfFirst { it.id == serverId }
+        if (currentServerIndex > -1) {
+            var newServerIndex = if (next) currentServerIndex + 1 else currentServerIndex - 1
+            if (newServerIndex == servers.size) newServerIndex = 0
+            if (newServerIndex < 0) newServerIndex = servers.size - 1
+            servers.getOrNull(newServerIndex)?.let { switchActiveServer(it.id) }
         }
     }
 
@@ -187,6 +217,10 @@ class WebViewPresenterImpl @Inject constructor(
         prefsRepository.isFullScreenEnabled()
     }
 
+    override fun getScreenOrientation(): String? = runBlocking {
+        prefsRepository.getScreenOrientation()
+    }
+
     override fun isKeepScreenOnEnabled(): Boolean = runBlocking {
         prefsRepository.isKeepScreenOnEnabled()
     }
@@ -207,12 +241,19 @@ class WebViewPresenterImpl @Inject constructor(
                 Log.w(TAG, "Cannot determine app locked state")
                 false
             }
-        } else false
+        } else {
+            false
+        }
     }
 
     override fun setAppActive(active: Boolean) = runBlocking {
         serverManager.getServer(serverId)?.let {
-            serverManager.integrationRepository(serverId).setAppActive(active)
+            try {
+                serverManager.integrationRepository(serverId).setAppActive(active)
+            } catch (e: IllegalStateException) {
+                Log.w(TAG, "Cannot set app active $active for server $serverId")
+                Unit
+            }
         } ?: Unit
     }
 
@@ -276,11 +317,13 @@ class WebViewPresenterImpl @Inject constructor(
         val m: Matcher = c.matcher(colorString)
         return if (m.matches()) {
             Color.rgb(
-                m.group(1).toInt(),
-                m.group(2).toInt(),
-                m.group(3).toInt()
+                m.group(1)!!.toInt(),
+                m.group(2)!!.toInt(),
+                m.group(3)!!.toInt()
             )
-        } else Color.parseColor(colorString)
+        } else {
+            Color.parseColor(colorString)
+        }
     }
 
     override fun appCanCommissionMatterDevice(): Boolean = matterUseCase.appSupportsCommissioning()
@@ -289,19 +332,40 @@ class WebViewPresenterImpl @Inject constructor(
         if (_matterCommissioningStatus.value != MatterFrontendCommissioningStatus.REQUESTED) {
             _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.REQUESTED)
 
-            matterUseCase.startNewCommissioningFlow(
-                context,
-                { intentSender ->
-                    Log.d(TAG, "Matter commissioning is ready")
-                    matterCommissioningIntentSender = intentSender
-                    _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.IN_PROGRESS)
-                },
-                { e ->
-                    Log.e(TAG, "Matter commissioning couldn't be prepared", e)
-                    _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.ERROR)
+            mainScope.launch {
+                val deviceThreadIntent = try {
+                    when (val result = threadUseCase.syncPreferredDataset(context, serverId, CoroutineScope(coroutineContext + SupervisorJob()))) {
+                        is ThreadManager.SyncResult.OnlyOnDevice -> result.exportIntent
+                        is ThreadManager.SyncResult.AllHaveCredentials -> result.exportIntent
+                        else -> null
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "Unable to sync preferred Thread dataset, continuing", e)
+                    null
                 }
-            )
+                if (deviceThreadIntent != null) {
+                    matterCommissioningIntentSender = deviceThreadIntent
+                    _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.THREAD_EXPORT_TO_SERVER)
+                } else {
+                    startMatterCommissioningFlow(context)
+                }
+            }
         } // else already waiting for a result, don't send another request
+    }
+
+    private fun startMatterCommissioningFlow(context: Context) {
+        matterUseCase.startNewCommissioningFlow(
+            context,
+            { intentSender ->
+                Log.d(TAG, "Matter commissioning is ready")
+                matterCommissioningIntentSender = intentSender
+                _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.IN_PROGRESS)
+            },
+            { e ->
+                Log.e(TAG, "Matter commissioning couldn't be prepared", e)
+                _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.ERROR)
+            }
+        )
     }
 
     override fun getMatterCommissioningStatusFlow(): Flow<MatterFrontendCommissioningStatus> =
@@ -311,6 +375,25 @@ class WebViewPresenterImpl @Inject constructor(
         val intent = matterCommissioningIntentSender
         matterCommissioningIntentSender = null
         return intent
+    }
+
+    override fun onMatterCommissioningIntentResult(context: Context, result: ActivityResult) {
+        when (_matterCommissioningStatus.value) {
+            MatterFrontendCommissioningStatus.THREAD_EXPORT_TO_SERVER -> {
+                mainScope.launch {
+                    threadUseCase.sendThreadDatasetExportResult(result, serverId)
+                    startMatterCommissioningFlow(context)
+                }
+            }
+            else -> {
+                // Any errors will have been shown in the UI provided by Play Services
+                if (result.resultCode == Activity.RESULT_OK) {
+                    Log.d(TAG, "Matter commissioning returned success")
+                } else {
+                    Log.d(TAG, "Matter commissioning returned with non-OK code ${result.resultCode}")
+                }
+            }
+        }
     }
 
     override fun confirmMatterCommissioningError() {

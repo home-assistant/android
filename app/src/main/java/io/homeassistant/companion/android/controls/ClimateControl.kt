@@ -58,10 +58,12 @@ object ClimateControl : HaControl {
             entity.attributes["current_temperature"] as? Number
             )?.toFloat() ?: 0f
         // Ensure the current value is never lower than the minimum or higher than the maximum
-        if (currentValue < minValue)
+        if (currentValue < minValue) {
             currentValue = minValue
-        if (currentValue > maxValue)
+        }
+        if (currentValue > maxValue) {
             currentValue = maxValue
+        }
 
         val temperatureUnit = entity.attributes["temperature_unit"] ?: ""
         val temperatureStepSize = (entity.attributes["target_temperature_step"] as? Number)?.toFloat()
@@ -100,10 +102,11 @@ object ClimateControl : HaControl {
     }
 
     override fun getDeviceType(entity: Entity<Map<String, Any>>): Int =
-        if (entityShouldBePresentedAsThermostat(entity))
+        if (entityShouldBePresentedAsThermostat(entity)) {
             DeviceTypes.TYPE_THERMOSTAT
-        else
+        } else {
             DeviceTypes.TYPE_AC_HEATER
+        }
 
     override fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String =
         context.getString(commonR.string.domain_climate)
@@ -145,14 +148,15 @@ object ClimateControl : HaControl {
         }
     }
 
-    private fun entityShouldBePresentedAsThermostat(entity: Entity<Map<String, Any>>): Boolean {
-        return temperatureControlModes.containsKey(entity.state) &&
-            ((entity.attributes["hvac_modes"] as? List<String>)?.isNotEmpty() == true) &&
-            ((entity.attributes["hvac_modes"] as? List<String>)?.any { it == entity.state } == true) &&
-            ((entity.attributes["hvac_modes"] as? List<String>)?.all { temperatureControlModes.containsKey(it) } == true) &&
-            (
-                ((entity.attributes["supported_features"] as Int) and SUPPORT_TARGET_TEMPERATURE == SUPPORT_TARGET_TEMPERATURE) ||
-                    ((entity.attributes["supported_features"] as Int) and SUPPORT_TARGET_TEMPERATURE_RANGE == SUPPORT_TARGET_TEMPERATURE_RANGE)
-                )
-    }
+    private fun entityShouldBePresentedAsThermostat(entity: Entity<Map<String, Any>>): Boolean =
+        (entity.attributes["hvac_modes"] as? List<String>).let { modes ->
+            temperatureControlModes.containsKey(entity.state) &&
+                modes?.isNotEmpty() == true &&
+                modes.any { it == entity.state } &&
+                modes.all { temperatureControlModes.containsKey(it) } &&
+                (
+                    ((entity.attributes["supported_features"] as Int) and SUPPORT_TARGET_TEMPERATURE == SUPPORT_TARGET_TEMPERATURE) ||
+                        ((entity.attributes["supported_features"] as Int) and SUPPORT_TARGET_TEMPERATURE_RANGE == SUPPORT_TARGET_TEMPERATURE_RANGE)
+                    )
+        }
 }

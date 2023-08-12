@@ -6,6 +6,10 @@
         android:icon="@drawable/ic_launch"
         android:title="@string/server_activate"
         app:isPreferenceVisible="false"/>
+    <Preference
+        android:key="activate_server_hint"
+        android:summary="@string/server_activate_swipe_hint"
+        app:isPreferenceVisible="false"/>
     <PreferenceCategory
         android:title="@string/device_registration">
         <EditTextPreference
@@ -37,6 +41,12 @@
     <PreferenceCategory
         android:key="security_category"
         android:title="@string/security">
+        <SwitchPreference
+            android:key="trust_server"
+            android:defaultValue="true"
+            android:icon="@drawable/ic_settings_remote"
+            android:title="@string/trust_server_title"
+            android:summary="@string/trust_server_summary"/>
         <SwitchPreference
             android:key="app_lock"
             android:icon="@drawable/ic_lock"

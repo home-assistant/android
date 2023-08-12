@@ -91,10 +91,11 @@ class HomePresenterImpl @Inject constructor(
             "button", "input_button" -> "press"
             "lock" -> {
                 // Defaults to locking, to be save
-                if (state == "locked")
+                if (state == "locked") {
                     "unlock"
-                else
+                } else {
                     "lock"
+                }
             }
             in toggleDomains -> "toggle"
             else -> "turn_on"
@@ -140,14 +141,15 @@ class HomePresenterImpl @Inject constructor(
         }
     }
 
-    override suspend fun onColorTempChanged(entityId: String, colorTemp: Float) {
+    override suspend fun onColorTempChanged(entityId: String, colorTemp: Float, isKelvin: Boolean) {
         try {
+            val colorTempKey = if (isKelvin) "color_temp_kelvin" else "color_temp"
             serverManager.integrationRepository().callService(
                 entityId.split(".")[0],
                 "turn_on",
                 hashMapOf(
                     "entity_id" to entityId,
-                    "color_temp" to colorTemp.toInt()
+                    colorTempKey to colorTemp.toInt()
                 )
             )
         } catch (e: Exception) {
@@ -191,6 +193,7 @@ class HomePresenterImpl @Inject constructor(
                             false
                         )
                     )
+                    serverManager.webSocketRepository(it.id).getCurrentUser() // Update cached data
                 } catch (e: Exception) {
                     Log.e(TAG, "Issue updating Registration", e)
                 }
@@ -230,12 +233,20 @@ class HomePresenterImpl @Inject constructor(
         return serverManager.webSocketRepository().getEntityRegistryUpdates()
     }
 
-    override suspend fun getTileShortcuts(): List<SimplifiedEntity> {
-        return wearPrefsRepository.getTileShortcuts().map { SimplifiedEntity(it) }
+    override suspend fun getAllTileShortcuts(): Map<Int?, List<SimplifiedEntity>> {
+        return wearPrefsRepository.getAllTileShortcuts().mapValues { (_, entities) ->
+            entities.map {
+                SimplifiedEntity(it)
+            }
+        }
     }
 
-    override suspend fun setTileShortcuts(entities: List<SimplifiedEntity>) {
-        wearPrefsRepository.setTileShortcuts(entities.map { it.entityString })
+    override suspend fun getTileShortcuts(tileId: Int): List<SimplifiedEntity> {
+        return wearPrefsRepository.getTileShortcutsAndSaveTileId(tileId).map { SimplifiedEntity(it) }
+    }
+
+    override suspend fun setTileShortcuts(tileId: Int?, entities: List<SimplifiedEntity>) {
+        wearPrefsRepository.setTileShortcuts(tileId, entities.map { it.entityString })
     }
 
     override suspend fun getWearHapticFeedback(): Boolean {
@@ -264,10 +275,6 @@ class HomePresenterImpl @Inject constructor(
 
     override suspend fun getTemplateTileContent(): String {
         return wearPrefsRepository.getTemplateTileContent()
-    }
-
-    override suspend fun setTemplateTileContent(content: String) {
-        wearPrefsRepository.setTemplateTileContent(content)
     }
 
     override suspend fun getTemplateTileRefreshInterval(): Int {

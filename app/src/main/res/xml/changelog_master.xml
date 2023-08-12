@@ -1,18 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2023.2 - Phone" versioncode="2">
-        <change>Multi-server support! Add additional servers in Companion App Settings.</change>
-        <change>Android Auto: Add support to navigate to any sensor that has latitude and longitude attributes</change>
-        <change>Change sensor enabled by default logic, new users will no longer have Battery Power, Battery Temperature or Is Charging sensors enabled by default</change>
-        <change>Bug fixes and dependency updates</change>
+    <release version="2023.8.2 - Main" versioncode="3">
+        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Assist - Default to last used assistant instead of preferred</change>
+        <change>Android Auto: Home Screen redesign switch from lists to grid, Allow selecting Favorite entities in main app settings to be shown in driving interface home screen, Add Car Info Sensors (requires Android Auto app to open once per drive, not all vehicles support every sensor)</change>
+        <change>Shortcuts, Tiles &amp; Wear Favorites: Replace entity drop down selection with search based text field to easily find entities</change>
+        <change>Show application name for easier searching when adding apps to a sensors allow list</change>
+        <change>Bug fixes, design improvements and dependency updates</change>
     </release>
-    <release version="2023.2 - Wear" versioncode="1">
-        <change>Add Text To Speech notifications</change>
-        <change>Add watchface complication for Assist</change>
-        <change>Add new setting to only show favorites on the home screen</change>
-        <change>Show app version number in settings</change>
-        <change>Note: Multi-server not currently supported on Wear OS</change>
-        <change>Bug fixes and dependency updates</change>
+    <release version="2023.8.2 - Wear" versioncode="2">
+        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Assist - Default to last used pipeline, support preferred pipeline</change>
+        <change>Allow multiple Shortcut tiles</change>
+        <change>Add setting toggle to disable Assist as a digital assistant app</change>
+        <change>Add notification command to update sensors</change>
+        <change>Complications: Add setting to show unit of measurement with entity state complication</change>
+        <change>Bug fixes, design improvements and dependency updates</change>
+    </release>
+    <release version="2023.8.2 - Automotive" versioncode="1">
+        <change>Bug fixes, design improvements and dependency updates</change>
     </release>
 </changelog>

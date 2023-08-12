@@ -31,10 +31,15 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
         get() = commonR.string.sensor_name_android_auto
 
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             listOf(androidAutoConnected)
-        else
+        } else {
             emptyList()
+        }
+    }
+
+    override fun hasSensor(context: Context): Boolean {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
@@ -45,26 +50,26 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
     private var carConnection: CarConnection? = null
 
     override fun requestSensorUpdate(context: Context) {
-        this.context = context
+        this.context = context.applicationContext
         if (!isEnabled(context, androidAutoConnected)) {
             return
         }
         CoroutineScope(Dispatchers.Main + Job()).launch {
             if (carConnection == null) {
-                carConnection = CarConnection(context)
+                carConnection = CarConnection(context.applicationContext)
             }
             carConnection?.type?.observeForever(this@AndroidAutoSensorManager)
         }
     }
 
-    override fun onChanged(type: Int?) {
+    override fun onChanged(value: Int) {
         if (!isEnabled(context, androidAutoConnected)) {
             CoroutineScope(Dispatchers.Main + Job()).launch {
                 carConnection?.type?.removeObserver(this@AndroidAutoSensorManager)
             }
             return
         }
-        val (connected, typeString) = when (type) {
+        val (connected, typeString) = when (value) {
             CarConnection.CONNECTION_TYPE_NOT_CONNECTED -> {
                 false to "Disconnected"
             }
@@ -75,7 +80,7 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
                 true to "Native"
             }
             else -> {
-                false to "Unknown($type)"
+                false to "Unknown($value)"
             }
         }
         onSensorUpdated(
@@ -85,7 +90,7 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
             androidAutoConnected.statelessIcon,
             mapOf(
                 "connection_type" to typeString
-            ),
+            )
         )
     }
 }

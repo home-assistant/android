@@ -32,52 +32,57 @@ fun speakText(
     val audioManager = context.getSystemService<AudioManager>()
     val currentAlarmVolume = audioManager?.getStreamVolume(AudioManager.STREAM_ALARM)
     val maxAlarmVolume = audioManager?.getStreamMaxVolume(AudioManager.STREAM_ALARM)
-    if (tts.isNullOrEmpty())
+    if (tts.isNullOrEmpty()) {
         tts = context.getString(R.string.tts_no_text)
+    }
     textToSpeech = TextToSpeech(
         context
     ) {
         if (it == TextToSpeech.SUCCESS) {
             val listener = object : UtteranceProgressListener() {
                 override fun onStart(p0: String?) {
-                    if (data[NotificationData.MEDIA_STREAM] == NotificationData.ALARM_STREAM_MAX)
+                    if (data[NotificationData.MEDIA_STREAM] == NotificationData.ALARM_STREAM_MAX) {
                         audioManager?.setStreamVolume(
                             AudioManager.STREAM_ALARM,
                             maxAlarmVolume!!,
                             0
                         )
+                    }
                 }
 
                 override fun onDone(p0: String?) {
                     textToSpeech?.stop()
                     textToSpeech?.shutdown()
-                    if (data[NotificationData.MEDIA_STREAM] == NotificationData.ALARM_STREAM_MAX)
+                    if (data[NotificationData.MEDIA_STREAM] == NotificationData.ALARM_STREAM_MAX) {
                         audioManager?.setStreamVolume(
                             AudioManager.STREAM_ALARM,
                             currentAlarmVolume!!,
                             0
                         )
+                    }
                 }
 
                 @Deprecated("Deprecated in Java")
                 override fun onError(p0: String?) {
                     textToSpeech?.stop()
                     textToSpeech?.shutdown()
-                    if (data[NotificationData.MEDIA_STREAM] == NotificationData.ALARM_STREAM_MAX)
+                    if (data[NotificationData.MEDIA_STREAM] == NotificationData.ALARM_STREAM_MAX) {
                         audioManager?.setStreamVolume(
                             AudioManager.STREAM_ALARM,
                             currentAlarmVolume!!,
                             0
                         )
+                    }
                 }
 
                 override fun onStop(utteranceId: String?, interrupted: Boolean) {
-                    if (data[NotificationData.MEDIA_STREAM] == NotificationData.ALARM_STREAM_MAX)
+                    if (data[NotificationData.MEDIA_STREAM] == NotificationData.ALARM_STREAM_MAX) {
                         audioManager?.setStreamVolume(
                             AudioManager.STREAM_ALARM,
                             currentAlarmVolume!!,
                             0
                         )
+                    }
                 }
             }
             textToSpeech?.setOnUtteranceProgressListener(listener)

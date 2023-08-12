@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:minHeight="40dp"
     android:minWidth="40dp"
-    android:background="@drawable/widget_button_background"
+    android:background="@drawable/widget_transparent_background"
     android:theme="@style/Theme.HomeAssistant.Widget">
 
     <ImageView
@@ -13,8 +13,9 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="invisible"
+        android:adjustViewBounds="true"
         android:contentDescription="@string/widget_camera_contentdescription"
-        android:scaleType="centerInside" />
+        android:scaleType="fitCenter" />
     <ImageView
         android:id="@+id/widgetCameraPlaceholder"
         android:layout_width="match_parent"

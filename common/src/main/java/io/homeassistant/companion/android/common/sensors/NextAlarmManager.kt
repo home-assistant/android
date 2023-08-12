@@ -2,6 +2,8 @@ package io.homeassistant.companion.android.common.sensors
 
 import android.app.AlarmManager
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import android.util.Log
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.database.AppDatabase
@@ -11,6 +13,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.GregorianCalendar
+import java.util.Locale
 import java.util.TimeZone
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -40,6 +43,14 @@ class NextAlarmManager : SensorManager {
         return listOf(nextAlarm)
     }
 
+    override fun hasSensor(context: Context): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            !context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+        } else {
+            true
+        }
+    }
+
     override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }
@@ -51,9 +62,9 @@ class NextAlarmManager : SensorManager {
     }
 
     private fun updateNextAlarm(context: Context) {
-
-        if (!isEnabled(context, nextAlarm))
+        if (!isEnabled(context, nextAlarm)) {
             return
+        }
 
         var triggerTime = 0L
         var local = ""
@@ -89,11 +100,12 @@ class NextAlarmManager : SensorManager {
                 local = cal.time.toString()
 
                 val dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
-                val sdf = SimpleDateFormat(dateFormat)
+                val sdf = SimpleDateFormat(dateFormat, Locale.getDefault())
                 sdf.timeZone = TimeZone.getTimeZone("UTC")
                 utc = sdf.format(Date(triggerTime))
-            } else
+            } else {
                 Log.d(TAG, "No alarm is scheduled, sending unavailable")
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Error getting the next alarm info", e)
         }

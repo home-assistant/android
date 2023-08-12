@@ -8,14 +8,15 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
-import android.text.Html.fromHtml
 import android.util.Log
 import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
+import androidx.core.text.HtmlCompat
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
@@ -142,7 +143,9 @@ class TemplateWidget : AppWidgetProvider() {
                     val templateUpdates =
                         if (serverManager.getServer(widget.serverId) != null) {
                             serverManager.integrationRepository(widget.serverId).getTemplateUpdates(widget.template)
-                        } else null
+                        } else {
+                            null
+                        }
                     if (templateUpdates != null) {
                         widgetTemplates[widget.id] = widget.template
                         widgetJobs[widget.id] = widgetScope!!.launch {
@@ -247,7 +250,7 @@ class TemplateWidget : AppWidgetProvider() {
                 }
                 setTextViewText(
                     R.id.widgetTemplateText,
-                    fromHtml(renderedTemplate)
+                    renderedTemplate?.let { HtmlCompat.fromHtml(it, HtmlCompat.FROM_HTML_MODE_LEGACY) }
                 )
                 setTextViewTextSize(
                     R.id.widgetTemplateText,
@@ -266,7 +269,12 @@ class TemplateWidget : AppWidgetProvider() {
         val serverId = if (extras.containsKey(EXTRA_SERVER_ID)) extras.getInt(EXTRA_SERVER_ID) else null
         val template: String? = extras.getString(EXTRA_TEMPLATE)
         val textSize: Float = extras.getFloat(EXTRA_TEXT_SIZE)
-        val backgroundTypeSelection: WidgetBackgroundType = extras.getSerializable(EXTRA_BACKGROUND_TYPE) as WidgetBackgroundType
+        val backgroundTypeSelection: WidgetBackgroundType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            extras.getSerializable(EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            extras.getSerializable(EXTRA_BACKGROUND_TYPE) as? WidgetBackgroundType
+        } ?: WidgetBackgroundType.DAYNIGHT
         val textColorSelection: String? = extras.getString(EXTRA_TEXT_COLOR)
 
         if (serverId == null || template == null) {

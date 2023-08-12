@@ -1,5 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-sdk tools:overrideLibrary="com.google.android.gms.threadnetwork" />
+    <uses-permission android:name="com.google.android.gms.permission.CAR_FUEL" />
+    <uses-permission android:name="com.google.android.gms.permission.CAR_MILEAGE" />
+
+    <queries>
+        <!-- For GMS Core/Play service -->
+        <package android:name="com.google.android.gms" />
+        <package android:name="com.android.vending" />
+        <!-- End of GMS Core/Play service-->
+    </queries>
 
     <application
         android:name="io.homeassistant.companion.android.HomeAssistantApplication" >
@@ -11,7 +23,8 @@
             android:name=".matter.MatterCommissioningActivity"
             android:configChanges="orientation|screenSize"
             android:exported="true"
-            android:theme="@style/Theme.HomeAssistant.Config">
+            android:theme="@style/Theme.HomeAssistant.Config"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="com.google.android.gms.home.matter.ACTION_COMMISSION_DEVICE"/>
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -59,6 +72,17 @@
                 <action android:name="androidx.car.app.CarAppService" />
                 <category android:name="androidx.car.app.category.IOT"/>
             </intent-filter>
+        </service>
+        <service
+            android:name="com.google.android.gms.metadata.ModuleDependencies"
+            android:enabled="false"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.android.gms.metadata.MODULE_DEPENDENCIES" />
+            </intent-filter>
+            <meta-data
+                android:name="home:0:preferred"
+                android:value=""/>
         </service>
     </application>
 

@@ -68,10 +68,11 @@ fun MainView(
     WearAppTheme {
         Scaffold(
             positionIndicator = {
-                if (scalingLazyListState.isScrollInProgress)
+                if (scalingLazyListState.isScrollInProgress) {
                     PositionIndicator(scalingLazyListState = scalingLazyListState)
+                }
             },
-            timeText = { TimeText(!scalingLazyListState.isScrollInProgress) }
+            timeText = { TimeText(scalingLazyListState = scalingLazyListState) }
         ) {
             ThemeLazyColumn(
                 state = scalingLazyListState
@@ -137,8 +138,11 @@ fun MainView(
                             }
                             item {
                                 val minHeight =
-                                    if (favoriteEntityIds.isEmpty()) LocalConfiguration.current.screenHeightDp - 64
-                                    else 0
+                                    if (favoriteEntityIds.isEmpty()) {
+                                        LocalConfiguration.current.screenHeightDp - 64
+                                    } else {
+                                        0
+                                    }
                                 Column(
                                     modifier = Modifier
                                         .heightIn(min = minHeight.dp)
@@ -329,10 +333,11 @@ fun MainView(
                     }
                 }
 
-                if (mainViewModel.isFavoritesOnly)
+                if (mainViewModel.isFavoritesOnly) {
                     item {
                         Spacer(Modifier.padding(32.dp))
                     }
+                }
 
                 // Settings
                 item {

@@ -20,7 +20,7 @@ import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.R)
 object CoverControl : HaControl {
-    const val SUPPORT_SET_POSITION = 4
+    private const val SUPPORT_SET_POSITION = 4
     override fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
@@ -40,7 +40,7 @@ object CoverControl : HaControl {
         )
         val position = entity.getCoverPosition()
         control.setControlTemplate(
-            if ((entity.attributes["supported_features"] as Int) and SUPPORT_SET_POSITION == SUPPORT_SET_POSITION)
+            if ((entity.attributes["supported_features"] as Int) and SUPPORT_SET_POSITION == SUPPORT_SET_POSITION) {
                 ToggleRangeTemplate(
                     entity.entityId,
                     entity.state in listOf("open", "opening"),
@@ -54,7 +54,7 @@ object CoverControl : HaControl {
                         "%.0f%%"
                     )
                 )
-            else
+            } else {
                 ToggleTemplate(
                     entity.entityId,
                     ControlButton(
@@ -62,6 +62,7 @@ object CoverControl : HaControl {
                         "Description"
                     )
                 )
+            }
         )
         return control
     }

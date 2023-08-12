@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.common.data.integration
 import dagger.assisted.AssistedFactory
 import io.homeassistant.companion.android.common.data.integration.impl.IntegrationRepositoryImpl
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import kotlinx.coroutines.flow.Flow
 
@@ -50,9 +51,23 @@ interface IntegrationRepository {
     suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>)
     suspend fun updateSensors(sensors: Array<SensorRegistration<Any>>): Boolean
 
+    suspend fun isTrusted(): Boolean
+
+    suspend fun setTrusted(trusted: Boolean)
+
     suspend fun shouldNotifySecurityWarning(): Boolean
 
-    suspend fun getConversation(speech: String): String?
+    suspend fun getAssistResponse(
+        text: String,
+        pipelineId: String? = null,
+        conversationId: String? = null
+    ): Flow<AssistPipelineEvent>?
+
+    suspend fun getLastUsedPipelineId(): String?
+
+    suspend fun getLastUsedPipelineSttSupport(): Boolean
+
+    suspend fun setLastUsedPipeline(pipelineId: String, supportsStt: Boolean)
 }
 
 @AssistedFactory

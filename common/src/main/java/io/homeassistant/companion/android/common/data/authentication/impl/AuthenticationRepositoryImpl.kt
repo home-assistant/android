@@ -55,6 +55,15 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
         }
     }
 
+    override suspend fun registerRefreshToken(refreshToken: String) {
+        val url = server.connection.getUrl()?.toHttpUrlOrNull()
+        if (url == null) {
+            Log.e(TAG, "Unable to register session with refresh token.")
+            return
+        }
+        refreshSessionWithToken(refreshToken)
+    }
+
     override suspend fun retrieveExternalAuthentication(forceRefresh: Boolean): String {
         ensureValidSession(forceRefresh)
         return jacksonObjectMapper().writeValueAsString(
@@ -76,11 +85,18 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
             Log.e(TAG, "Unable to revoke session.")
             return
         }
-        authenticationService.revokeToken(
-            url.newBuilder().addPathSegments("auth/token").build(),
-            server.session.refreshToken!!,
-            AuthenticationService.REVOKE_ACTION
-        )
+        if (server.version?.isAtLeast(2022, 9, 0) == true) {
+            authenticationService.revokeToken(
+                url.newBuilder().addPathSegments("auth/revoke").build(),
+                server.session.refreshToken!!
+            )
+        } else {
+            authenticationService.revokeTokenLegacy(
+                url.newBuilder().addPathSegments("auth/token").build(),
+                server.session.refreshToken!!,
+                AuthenticationService.REVOKE_ACTION
+            )
+        }
         serverManager.updateServer(
             server.copy(
                 session = server.session.copy(
@@ -126,33 +142,37 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
         }
 
         if (server.session.isExpired() || forceRefresh) {
-            return authenticationService.refreshToken(
-                url.newBuilder().addPathSegments("auth/token").build(),
-                AuthenticationService.GRANT_TYPE_REFRESH,
-                server.session.refreshToken!!,
-                AuthenticationService.CLIENT_ID
-            ).let {
-                if (it.isSuccessful) {
-                    val refreshedToken = it.body() ?: throw AuthorizationException()
-                    serverManager.updateServer(
-                        server.copy(
-                            session = ServerSessionInfo(
-                                refreshedToken.accessToken,
-                                server.session.refreshToken,
-                                System.currentTimeMillis() / 1000 + refreshedToken.expiresIn,
-                                refreshedToken.tokenType,
-                                installId
-                            )
+            refreshSessionWithToken(server.session.refreshToken!!)
+        }
+    }
+
+    private suspend fun refreshSessionWithToken(refreshToken: String) {
+        return authenticationService.refreshToken(
+            server.connection.getUrl()?.toHttpUrlOrNull()!!.newBuilder().addPathSegments("auth/token").build(),
+            AuthenticationService.GRANT_TYPE_REFRESH,
+            refreshToken,
+            AuthenticationService.CLIENT_ID
+        ).let {
+            if (it.isSuccessful) {
+                val refreshedToken = it.body() ?: throw AuthorizationException()
+                serverManager.updateServer(
+                    server.copy(
+                        session = ServerSessionInfo(
+                            refreshedToken.accessToken,
+                            refreshToken,
+                            System.currentTimeMillis() / 1000 + refreshedToken.expiresIn,
+                            refreshedToken.tokenType,
+                            installId
                         )
                     )
-                    return@let
-                } else if (it.code() == 400 &&
-                    it.errorBody()?.string()?.contains("invalid_grant") == true
-                ) {
-                    revokeSession()
-                }
-                throw AuthorizationException()
+                )
+                return@let
+            } else if (it.code() == 400 &&
+                it.errorBody()?.string()?.contains("invalid_grant") == true
+            ) {
+                revokeSession()
             }
+            throw AuthorizationException()
         }
     }
 

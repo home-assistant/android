@@ -4,10 +4,11 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.text.Html.fromHtml
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.widget.SearchView
+import androidx.core.text.HtmlCompat
+import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
@@ -37,6 +38,7 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
         setHasOptionsMenu(true)
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onPrepareOptionsMenu(menu: Menu) {
         super.onPrepareOptionsMenu(menu)
         menu.setGroupVisible(R.id.notification_toolbar_group, true)
@@ -70,8 +72,9 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
                     var searchList: Array<NotificationItem> = emptyArray()
                     if (!query.isNullOrEmpty()) {
                         for (item in allNotifications) {
-                            if (item.message.contains(query, true))
+                            if (item.message.contains(query, true)) {
                                 searchList += item
+                            }
                         }
                         prefCategory?.title = getString(commonR.string.search_results)
                         reloadNotifications(searchList, prefCategory)
@@ -85,6 +88,7 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
         }
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val prefCategory = findPreference<PreferenceCategory>("list_notifications")
         if (item.itemId in listOf(R.id.last25, R.id.last50, R.id.last100)) {
@@ -96,8 +100,9 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
             }
             item.isChecked = !item.isChecked
             filterNotifications(filterValue, notificationDao, prefCategory)
-        } else if (item.itemId == R.id.action_delete)
+        } else if (item.itemId == R.id.action_delete) {
             deleteAllConfirmation(notificationDao)
+        }
         return super.onOptionsItemSelected(item)
     }
 
@@ -160,21 +165,16 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
                 cal.timeInMillis = item.received
                 pref.key = item.id.toString()
                 pref.title = "${cal.time} - ${item.source}"
-                pref.summary = fromHtml(item.message)
+                pref.summary = HtmlCompat.fromHtml(item.message, HtmlCompat.FROM_HTML_MODE_LEGACY)
                 pref.isIconSpaceReserved = false
 
                 pref.setOnPreferenceClickListener {
                     val args = Bundle()
                     args.putSerializable(NotificationDetailFragment.ARG_NOTIF, item)
-                    parentFragmentManager
-                        .beginTransaction()
-                        .replace(
-                            R.id.content,
-                            NotificationDetailFragment::class.java,
-                            args
-                        )
-                        .addToBackStack("Notification Detail")
-                        .commit()
+                    parentFragmentManager.commit {
+                        replace(R.id.content, NotificationDetailFragment::class.java, args)
+                        addToBackStack("Notification Detail")
+                    }
                     return@setOnPreferenceClickListener true
                 }
 

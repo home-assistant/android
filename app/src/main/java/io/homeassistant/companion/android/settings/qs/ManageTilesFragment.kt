@@ -8,20 +8,23 @@ import android.view.LayoutInflater
 import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.google.accompanist.themeadapter.material.MdcTheme
-import com.maltaisn.icondialog.IconDialog
-import com.maltaisn.icondialog.IconDialogSettings
-import com.maltaisn.icondialog.pack.IconPack
+import com.mikepenz.iconics.typeface.IIcon
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.settings.qs.views.ManageTilesView
+import io.homeassistant.companion.android.util.icondialog.IconDialog
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
-class ManageTilesFragment : Fragment(), IconDialog.Callback {
+class ManageTilesFragment : Fragment() {
 
     companion object {
         private const val TAG = "TileFragment"
@@ -38,6 +41,7 @@ class ManageTilesFragment : Fragment(), IconDialog.Callback {
         setHasOptionsMenu(true)
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onPrepareOptionsMenu(menu: Menu) {
         super.onPrepareOptionsMenu(menu)
 
@@ -53,17 +57,24 @@ class ManageTilesFragment : Fragment(), IconDialog.Callback {
         savedInstanceState: Bundle?
     ): View {
         return ComposeView(requireContext()).apply {
-            val settings = IconDialogSettings {
-                searchVisibility = IconDialog.SearchVisibility.ALWAYS
-            }
-            val iconDialog = IconDialog.newInstance(settings)
-
             setContent {
                 MdcTheme {
+                    var showingDialog by remember { mutableStateOf(false) }
+
+                    if (showingDialog) {
+                        IconDialog(
+                            onSelect = {
+                                onIconDialogIconsSelected(it)
+                                showingDialog = false
+                            },
+                            onDismissRequest = { showingDialog = false }
+                        )
+                    }
+
                     ManageTilesView(
                         viewModel = viewModel,
-                        onShowIconDialog = { tag ->
-                            iconDialog.show(childFragmentManager, tag)
+                        onShowIconDialog = {
+                            showingDialog = true
                         }
                     )
                 }
@@ -76,14 +87,8 @@ class ManageTilesFragment : Fragment(), IconDialog.Callback {
         activity?.title = getString(commonR.string.tiles)
     }
 
-    override val iconDialogIconPack: IconPack
-        get() = viewModel.iconPack
-
-    override fun onIconDialogIconsSelected(dialog: IconDialog, icons: List<com.maltaisn.icondialog.data.Icon>) {
-        Log.d(TAG, "Selected icon: ${icons.firstOrNull()}")
-        val selectedIcon = icons.firstOrNull()
-        if (selectedIcon != null) {
-            viewModel.selectIcon(selectedIcon)
-        }
+    private fun onIconDialogIconsSelected(selectedIcon: IIcon) {
+        Log.d(TAG, "Selected icon: ${selectedIcon.name}")
+        viewModel.selectIcon(selectedIcon)
     }
 }

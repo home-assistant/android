@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.home
 
 import android.app.Application
+import android.content.ComponentName
+import android.content.pm.PackageManager
 import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
@@ -9,9 +11,11 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
@@ -25,9 +29,11 @@ import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.wear.FavoriteCaches
 import io.homeassistant.companion.android.database.wear.FavoriteCachesDao
 import io.homeassistant.companion.android.database.wear.FavoritesDao
+import io.homeassistant.companion.android.database.wear.getAll
 import io.homeassistant.companion.android.database.wear.getAllFlow
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.util.RegistriesDataHandler
+import io.homeassistant.companion.android.util.throttleLatest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
@@ -52,6 +58,8 @@ class MainViewModel @Inject constructor(
     enum class LoadingState {
         LOADING, READY, ERROR
     }
+
+    private val app = application
 
     private lateinit var homePresenter: HomePresenter
     private var areaRegistry: List<AreaRegistryResponse>? = null
@@ -78,8 +86,8 @@ class MainViewModel @Inject constructor(
     val favoriteEntityIds = favoritesDao.getAllFlow().collectAsState()
     private val favoriteCaches = favoriteCachesDao.getAll()
 
-    var shortcutEntities = mutableStateListOf<SimplifiedEntity>()
-        private set
+    val shortcutEntitiesMap = mutableStateMapOf<Int?, SnapshotStateList<SimplifiedEntity>>()
+
     var areas = mutableListOf<AreaRegistryResponse>()
         private set
 
@@ -112,6 +120,8 @@ class MainViewModel @Inject constructor(
         private set
     var isFavoritesOnly by mutableStateOf(false)
         private set
+    var isAssistantAppAllowed by mutableStateOf(true)
+        private set
 
     fun supportedDomains(): List<String> = HomePresenterImpl.supportedDomains
 
@@ -127,13 +137,30 @@ class MainViewModel @Inject constructor(
             if (!homePresenter.isConnected()) {
                 return@launch
             }
-            shortcutEntities.addAll(homePresenter.getTileShortcuts())
+            loadShortcutTileEntities()
             isHapticEnabled.value = homePresenter.getWearHapticFeedback()
             isToastEnabled.value = homePresenter.getWearToastConfirmation()
             isShowShortcutTextEnabled.value = homePresenter.getShowShortcutText()
             templateTileContent.value = homePresenter.getTemplateTileContent()
             templateTileRefreshInterval.value = homePresenter.getTemplateTileRefreshInterval()
             isFavoritesOnly = homePresenter.getWearFavoritesOnly()
+
+            val assistantAppComponent = ComponentName(
+                BuildConfig.APPLICATION_ID,
+                "io.homeassistant.companion.android.conversation.AssistantActivity"
+            )
+            isAssistantAppAllowed =
+                app.packageManager.getComponentEnabledSetting(assistantAppComponent) != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+        }
+    }
+
+    fun loadShortcutTileEntities() {
+        viewModelScope.launch {
+            val map = homePresenter.getAllTileShortcuts().mapValues { (_, entities) ->
+                entities.toMutableStateList()
+            }
+            shortcutEntitiesMap.clear()
+            shortcutEntitiesMap.putAll(map)
         }
     }
 
@@ -195,24 +222,28 @@ class MainViewModel @Inject constructor(
             entities.clear()
             it.forEach { state -> updateEntityStates(state) }
         }
-        if (!isFavoritesOnly)
+        if (!isFavoritesOnly) {
             updateEntityDomains()
+        }
     }
 
     suspend fun entityUpdates() {
-        if (!homePresenter.isConnected())
+        if (!homePresenter.isConnected()) {
             return
+        }
         homePresenter.getEntityUpdates(supportedEntities.value)?.collect {
             updateEntityStates(it)
-            if (!isFavoritesOnly)
+            if (!isFavoritesOnly) {
                 updateEntityDomains()
+            }
         }
     }
 
     suspend fun areaUpdates() {
-        if (!homePresenter.isConnected() || isFavoritesOnly)
+        if (!homePresenter.isConnected() || isFavoritesOnly) {
             return
-        homePresenter.getAreaRegistryUpdates()?.collect {
+        }
+        homePresenter.getAreaRegistryUpdates()?.throttleLatest(1000)?.collect {
             areaRegistry = homePresenter.getAreaRegistry()
             areas.clear()
             areaRegistry?.let {
@@ -223,18 +254,20 @@ class MainViewModel @Inject constructor(
     }
 
     suspend fun deviceUpdates() {
-        if (!homePresenter.isConnected() || isFavoritesOnly)
+        if (!homePresenter.isConnected() || isFavoritesOnly) {
             return
-        homePresenter.getDeviceRegistryUpdates()?.collect {
+        }
+        homePresenter.getDeviceRegistryUpdates()?.throttleLatest(1000)?.collect {
             deviceRegistry = homePresenter.getDeviceRegistry()
             updateEntityDomains()
         }
     }
 
     suspend fun entityRegistryUpdates() {
-        if (!homePresenter.isConnected())
+        if (!homePresenter.isConnected()) {
             return
-        homePresenter.getEntityRegistryUpdates()?.collect {
+        }
+        homePresenter.getEntityRegistryUpdates()?.throttleLatest(1000)?.collect {
             entityRegistry = homePresenter.getEntityRegistry()
             _supportedEntities.value = getSupportedEntities()
             updateEntityDomains()
@@ -307,9 +340,9 @@ class MainViewModel @Inject constructor(
             homePresenter.onBrightnessChanged(entityId, brightness)
         }
     }
-    fun setColorTemp(entityId: String, colorTemp: Float) {
+    fun setColorTemp(entityId: String, colorTemp: Float, isKelvin: Boolean) {
         viewModelScope.launch {
-            homePresenter.onColorTempChanged(entityId, colorTemp)
+            homePresenter.onColorTempChanged(entityId, colorTemp, isKelvin)
         }
     }
 
@@ -319,10 +352,12 @@ class MainViewModel @Inject constructor(
                 .first { basicSensor -> basicSensor.id == sensorId }
             updateSensorEntity(sensorsDao, basicSensor, isEnabled)
 
-            if (isEnabled) try {
-                sensorManager.requestSensorUpdate(getApplication())
-            } catch (e: Exception) {
-                Log.e(TAG, "Exception while requesting update for sensor $sensorId", e)
+            if (isEnabled) {
+                try {
+                    sensorManager.requestSensorUpdate(getApplication())
+                } catch (e: Exception) {
+                    Log.e(TAG, "Exception while requesting update for sensor $sensorId", e)
+                }
             }
         }
     }
@@ -373,25 +408,28 @@ class MainViewModel @Inject constructor(
     fun clearFavorites() {
         viewModelScope.launch {
             favoritesDao.deleteAll()
+            setWearFavoritesOnly(false)
         }
     }
 
-    fun setTileShortcut(index: Int, entity: SimplifiedEntity) {
+    fun setTileShortcut(tileId: Int?, index: Int, entity: SimplifiedEntity) {
         viewModelScope.launch {
+            val shortcutEntities = shortcutEntitiesMap[tileId]!!
             if (index < shortcutEntities.size) {
                 shortcutEntities[index] = entity
             } else {
                 shortcutEntities.add(entity)
             }
-            homePresenter.setTileShortcuts(shortcutEntities)
+            homePresenter.setTileShortcuts(tileId, entities = shortcutEntities)
         }
     }
 
-    fun clearTileShortcut(index: Int) {
+    fun clearTileShortcut(tileId: Int?, index: Int) {
         viewModelScope.launch {
+            val shortcutEntities = shortcutEntitiesMap[tileId]!!
             if (index < shortcutEntities.size) {
                 shortcutEntities.removeAt(index)
-                homePresenter.setTileShortcuts(shortcutEntities)
+                homePresenter.setTileShortcuts(tileId, entities = shortcutEntities)
             }
         }
     }
@@ -414,13 +452,6 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             homePresenter.setShowShortcutTextEnabled(enabled)
             isShowShortcutTextEnabled.value = enabled
-        }
-    }
-
-    fun setTemplateTileContent(content: String) {
-        viewModelScope.launch {
-            homePresenter.setTemplateTileContent(content)
-            templateTileContent.value = content
         }
     }
 
@@ -449,6 +480,10 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             favoritesDao.delete(entityId)
             favoriteCachesDao.delete(entityId)
+
+            if (favoritesDao.getAll().isEmpty() && isFavoritesOnly) {
+                setWearFavoritesOnly(false)
+            }
         }
     }
 
@@ -463,6 +498,19 @@ class MainViewModel @Inject constructor(
             val name = attributes["friendly_name"]?.toString() ?: entityId
             favoriteCachesDao.add(FavoriteCaches(entityId, name, icon))
         }
+    }
+
+    fun setAssistantApp(allowed: Boolean) {
+        val assistantAppComponent = ComponentName(
+            BuildConfig.APPLICATION_ID,
+            "io.homeassistant.companion.android.conversation.AssistantActivity"
+        )
+        app.packageManager.setComponentEnabledSetting(
+            assistantAppComponent,
+            if (allowed) PackageManager.COMPONENT_ENABLED_STATE_DEFAULT else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+            PackageManager.DONT_KILL_APP
+        )
+        isAssistantAppAllowed = allowed
     }
 
     fun logout() {

@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.launch
 
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.compose.setContent
@@ -21,6 +23,7 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerType
+import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.onboarding.getMessagingToken
@@ -80,7 +83,15 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
     override fun displayWebview() {
         presenter.setSessionExpireMillis(0)
 
-        startActivity(WebViewActivity.newInstance(this, intent.data?.path))
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) && BuildConfig.FLAVOR == "full") {
+            val carIntent = Intent(
+                this,
+                Class.forName("androidx.car.app.activity.CarAppActivity")
+            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(carIntent)
+        } else {
+            startActivity(WebViewActivity.newInstance(this, intent.data?.path))
+        }
         finish()
         overridePendingTransition(0, 0) // Disable activity start/stop animation
     }
@@ -126,8 +137,9 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                         notificationsEnabled
                     )
                 }
-            } else
+            } else {
                 Log.e(TAG, "onOnboardingComplete: Activity result returned null intent data")
+            }
         }
     }
 
@@ -148,7 +160,8 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                 connection = ServerConnectionInfo(
                     externalUrl = formattedUrl
                 ),
-                session = ServerSessionInfo()
+                session = ServerSessionInfo(),
+                user = ServerUserInfo()
             )
             serverId = serverManager.addServer(server)
             serverManager.authenticationRepository(serverId).registerAuthorizationCode(authCode)

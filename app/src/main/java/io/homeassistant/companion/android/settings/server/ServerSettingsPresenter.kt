@@ -11,8 +11,9 @@ interface ServerSettingsPresenter {
     fun hasMultipleServers(): Boolean
     fun updateServerName()
     fun updateUrlStatus()
+    fun hasWifi(): Boolean
     fun isSsidUsed(): Boolean
     fun clearSsids()
 
-    fun setAppActive()
+    fun setAppActive(active: Boolean)
 }

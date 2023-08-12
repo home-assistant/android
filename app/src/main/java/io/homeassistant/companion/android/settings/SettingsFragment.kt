@@ -2,6 +2,8 @@ package io.homeassistant.companion.android.settings
 
 import android.annotation.SuppressLint
 import android.app.UiModeManager
+import android.content.ActivityNotFoundException
+import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -27,12 +29,13 @@ import androidx.preference.SwitchPreference
 import com.google.android.material.snackbar.Snackbar
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.settings.controls.ManageControlsSettingsFragment
+import io.homeassistant.companion.android.settings.developer.DeveloperSettingsFragment
 import io.homeassistant.companion.android.settings.language.LanguagesProvider
-import io.homeassistant.companion.android.settings.log.LogFragment
 import io.homeassistant.companion.android.settings.notification.NotificationChannelFragment
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
@@ -40,6 +43,7 @@ import io.homeassistant.companion.android.settings.sensor.SensorSettingsFragment
 import io.homeassistant.companion.android.settings.sensor.SensorUpdateFrequencyFragment
 import io.homeassistant.companion.android.settings.server.ServerSettingsFragment
 import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSettingsFragment
+import io.homeassistant.companion.android.settings.vehicle.ManageAndroidAutoSettingsFragment
 import io.homeassistant.companion.android.settings.wear.SettingsWearActivity
 import io.homeassistant.companion.android.settings.wear.SettingsWearDetection
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
@@ -55,8 +59,8 @@ import java.time.format.FormatStyle
 import io.homeassistant.companion.android.common.R as commonR
 
 class SettingsFragment(
-    val presenter: SettingsPresenter,
-    val langProvider: LanguagesProvider
+    private val presenter: SettingsPresenter,
+    private val langProvider: LanguagesProvider
 ) : SettingsView, PreferenceFragmentCompat() {
 
     companion object {
@@ -73,6 +77,7 @@ class SettingsFragment(
 
     private val requestOnboardingResult = registerForActivityResult(OnboardApp(), this::onOnboardingComplete)
 
+    private var serverAuth: Int? = null
     private val serverMutex = Mutex()
 
     private var snackbar: Snackbar? = null
@@ -105,12 +110,35 @@ class SettingsFragment(
             }
         }
 
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                presenter.getSuggestionFlow().collect { suggestion ->
+                    findPreference<SettingsSuggestionPreference>("settings_suggestion")?.let {
+                        if (suggestion != null) {
+                            it.setTitle(suggestion.title)
+                            it.setSummary(suggestion.summary)
+                            it.setIcon(suggestion.icon)
+                            it.setOnPreferenceClickListener {
+                                when (suggestion.id) {
+                                    SettingsPresenter.SUGGESTION_ASSISTANT_APP -> updateAssistantApp()
+                                    SettingsPresenter.SUGGESTION_NOTIFICATION_PERMISSION -> openNotificationSettings()
+                                }
+                                return@setOnPreferenceClickListener true
+                            }
+                            it.setOnPreferenceCancelListener { presenter.cancelSuggestion(requireContext(), suggestion.id) }
+                        }
+                        it.isVisible = suggestion != null
+                    }
+                }
+            }
+        }
+
         findPreference<Preference>("server_add")?.let {
             it.setOnPreferenceClickListener {
                 requestOnboardingResult.launch(
                     OnboardApp.Input(
-                        url = "", // Skip the 'Welcome' screen
-                        locationTrackingPossible = false // Skip because sensors are shared
+                        url = "", // Empty url skips the 'Welcome' screen
+                        discoveryOptions = OnboardApp.DiscoveryOptions.HIDE_EXISTING
                     )
                 )
                 return@setOnPreferenceClickListener true
@@ -222,7 +250,6 @@ class SettingsFragment(
 
         if (BuildConfig.FLAVOR == "full") {
             findPreference<Preference>("notification_rate_limit")?.let {
-
                 lifecycleScope.launch(Dispatchers.Main) {
                     // Runs in IO Dispatcher
                     val rateLimits = presenter.getNotificationRateLimits()
@@ -247,10 +274,6 @@ class SettingsFragment(
         }
         findPreference<SwitchPreference>("crash_reporting")?.let {
             it.isVisible = BuildConfig.FLAVOR == "full"
-            it.setOnPreferenceChangeListener { _, newValue ->
-                val checked = newValue as Boolean
-                true
-            }
         }
 
         lifecycleScope.launch {
@@ -264,9 +287,11 @@ class SettingsFragment(
         }
 
         findPreference<Preference>("changelog_github")?.let {
-            val link = if (BuildConfig.VERSION_NAME.startsWith("LOCAL"))
+            val link = if (BuildConfig.VERSION_NAME.startsWith("LOCAL")) {
                 "https://github.com/home-assistant/android/releases"
-            else "https://github.com/home-assistant/android/releases/tag/${BuildConfig.VERSION_NAME.replace("-full", "").replace("-minimal", "")}"
+            } else {
+                "https://github.com/home-assistant/android/releases/tag/${BuildConfig.VERSION_NAME.replace("-full", "").replace("-minimal", "")}"
+            }
             it.summary = link
             it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
         }
@@ -292,12 +317,34 @@ class SettingsFragment(
             it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(it.summary.toString()))
         }
 
-        findPreference<Preference>("show_share_logs")?.setOnPreferenceClickListener {
+        findPreference<Preference>("developer")?.setOnPreferenceClickListener {
             parentFragmentManager.commit {
-                replace(R.id.content, LogFragment::class.java, null)
-                addToBackStack(getString(commonR.string.log))
+                replace(R.id.content, DeveloperSettingsFragment::class.java, null)
+                addToBackStack(getString(commonR.string.troubleshooting))
             }
             return@setOnPreferenceClickListener true
+        }
+
+        val isAutomotive = requireContext().packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+        findPreference<PreferenceCategory>("android_auto")?.let {
+            it.isVisible =
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && (BuildConfig.FLAVOR == "full" || isAutomotive)
+            if (isAutomotive) {
+                it.title = getString(commonR.string.android_automotive)
+            }
+        }
+
+        findPreference<Preference>("auto_favorites")?.let { pref ->
+            if (isAutomotive) {
+                pref.title = getString(commonR.string.android_automotive_favorites)
+            }
+            pref.setOnPreferenceClickListener {
+                parentFragmentManager.commit {
+                    replace(R.id.content, ManageAndroidAutoSettingsFragment::class.java, null)
+                    addToBackStack(getString(commonR.string.basic_sensor_name_android_auto))
+                }
+                return@setOnPreferenceClickListener true
+            }
         }
     }
 
@@ -307,9 +354,9 @@ class SettingsFragment(
             if (pref != null) {
                 val systemIndex = pref.findIndexOfValue("system")
                 if (systemIndex > 0) {
-                    var entries = pref.entries?.toMutableList()
+                    val entries = pref.entries?.toMutableList()
                     entries?.removeAt(systemIndex)
-                    var entryValues = pref.entryValues?.toMutableList()
+                    val entryValues = pref.entryValues?.toMutableList()
                     entryValues?.removeAt(systemIndex)
                     if (entries != null && entryValues != null) {
                         pref.entries = entries.toTypedArray()
@@ -317,6 +364,25 @@ class SettingsFragment(
                     }
                 }
             }
+        }
+    }
+
+    @SuppressLint("InlinedApi")
+    private fun updateAssistantApp() {
+        // On Android Q+, this is a workaround as Android doesn't allow requesting the assistant role
+        try {
+            val openIntent = Intent(Intent.ACTION_MAIN)
+            openIntent.component = ComponentName("com.android.settings", "com.android.settings.Settings\$ManageAssistActivity")
+            openIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            startActivity(openIntent)
+        } catch (e: ActivityNotFoundException) {
+            // The exact activity/package doesn't exist on this device, use the official intent
+            // which sends the user to the 'Default apps' screen (one more tap required to change)
+            startActivity(
+                Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+            )
         }
     }
 
@@ -369,13 +435,16 @@ class SettingsFragment(
                 Log.e(TAG, "Unable to set the server icon", e)
             }
             serverPreference.setOnPreferenceClickListener {
-                parentFragmentManager.commit {
-                    replace(
-                        R.id.content,
-                        ServerSettingsFragment::class.java,
-                        Bundle().apply { putInt(ServerSettingsFragment.EXTRA_SERVER, server.id) }
-                    )
-                    addToBackStack(getString(commonR.string.server_settings))
+                serverAuth = server.id
+                val settingsActivity = requireActivity() as SettingsActivity
+                val needsAuth = settingsActivity.isAppLocked(server.id)
+                if (!needsAuth) {
+                    onServerLockResult(Authenticator.SUCCESS)
+                } else {
+                    val canAuth = settingsActivity.requestAuthentication(getString(commonR.string.biometric_set_title), ::onServerLockResult)
+                    if (!canAuth) {
+                        onServerLockResult(Authenticator.SUCCESS)
+                    }
                 }
                 return@setOnPreferenceClickListener true
             }
@@ -398,6 +467,22 @@ class SettingsFragment(
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
                 uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION
         }
+    }
+
+    private fun onServerLockResult(result: Int): Boolean {
+        if (result == Authenticator.SUCCESS && serverAuth != null) {
+            (activity as? SettingsActivity)?.setAppActive(serverAuth, true)
+            parentFragmentManager.commit {
+                replace(
+                    R.id.content,
+                    ServerSettingsFragment::class.java,
+                    Bundle().apply { putInt(ServerSettingsFragment.EXTRA_SERVER, serverAuth!!) },
+                    ServerSettingsFragment.TAG
+                )
+                addToBackStack(getString(commonR.string.server_settings))
+            }
+        }
+        return true
     }
 
     private fun onOnboardingComplete(result: OnboardApp.Output?) {
@@ -463,6 +548,7 @@ class SettingsFragment(
     override fun onResume() {
         super.onResume()
         activity?.title = getString(commonR.string.companion_app)
+        context?.let { presenter.updateSuggestions(it) }
     }
 
     override fun onDestroy() {

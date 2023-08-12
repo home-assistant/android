@@ -1,7 +1,9 @@
 package io.homeassistant.companion.android.phone
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.util.Log
+import androidx.wear.tiles.TileService
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.google.android.gms.wearable.DataClient
@@ -18,16 +20,21 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.WearDataMessages
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerType
+import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.wear.getAll
 import io.homeassistant.companion.android.database.wear.replaceAll
 import io.homeassistant.companion.android.home.HomeActivity
 import io.homeassistant.companion.android.home.HomePresenterImpl
 import io.homeassistant.companion.android.onboarding.getMessagingToken
+import io.homeassistant.companion.android.tiles.ConversationTile
+import io.homeassistant.companion.android.tiles.ShortcutsTile
+import io.homeassistant.companion.android.tiles.TemplateTile
 import io.homeassistant.companion.android.util.UrlUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -37,6 +44,7 @@ import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 @AndroidEntryPoint
+@SuppressLint("VisibleForTests") // https://issuetracker.google.com/issues/239451111
 class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChangedListener {
 
     @Inject
@@ -54,13 +62,6 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
 
     companion object {
         private const val TAG = "PhoneSettingsListener"
-
-        private const val KEY_UPDATE_TIME = "UpdateTime"
-        private const val KEY_IS_AUTHENTICATED = "isAuthenticated"
-        private const val KEY_SUPPORTED_DOMAINS = "supportedDomains"
-        private const val KEY_FAVORITES = "favorites"
-        private const val KEY_TEMPLATE_TILE = "templateTile"
-        private const val KEY_TEMPLATE_TILE_REFRESH_INTERVAL = "templateTileRefreshInterval"
     }
 
     override fun onMessageReceived(event: MessageEvent) {
@@ -73,12 +74,22 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
     private fun sendPhoneData() = mainScope.launch {
         val currentFavorites = favoritesDao.getAll()
         val putDataRequest = PutDataMapRequest.create("/config").run {
-            dataMap.putLong(KEY_UPDATE_TIME, System.nanoTime())
-            dataMap.putBoolean(KEY_IS_AUTHENTICATED, serverManager.isRegistered())
-            dataMap.putString(KEY_SUPPORTED_DOMAINS, objectMapper.writeValueAsString(HomePresenterImpl.supportedDomains))
-            dataMap.putString(KEY_FAVORITES, objectMapper.writeValueAsString(currentFavorites))
-            dataMap.putString(KEY_TEMPLATE_TILE, wearPrefsRepository.getTemplateTileContent())
-            dataMap.putInt(KEY_TEMPLATE_TILE_REFRESH_INTERVAL, wearPrefsRepository.getTemplateTileRefreshInterval())
+            dataMap.putLong(WearDataMessages.KEY_UPDATE_TIME, System.nanoTime())
+            val isRegistered = serverManager.isRegistered()
+            dataMap.putBoolean(WearDataMessages.CONFIG_IS_AUTHENTICATED, isRegistered)
+            if (isRegistered) {
+                dataMap.putInt(WearDataMessages.CONFIG_SERVER_ID, serverManager.getServer()?.id ?: 0)
+                dataMap.putString(WearDataMessages.CONFIG_SERVER_EXTERNAL_URL, serverManager.getServer()?.connection?.externalUrl ?: "")
+                dataMap.putString(WearDataMessages.CONFIG_SERVER_WEBHOOK_ID, serverManager.getServer()?.connection?.webhookId ?: "")
+                dataMap.putString(WearDataMessages.CONFIG_SERVER_CLOUD_URL, serverManager.getServer()?.connection?.cloudUrl ?: "")
+                dataMap.putString(WearDataMessages.CONFIG_SERVER_CLOUDHOOK_URL, serverManager.getServer()?.connection?.cloudhookUrl ?: "")
+                dataMap.putBoolean(WearDataMessages.CONFIG_SERVER_USE_CLOUD, serverManager.getServer()?.connection?.useCloud ?: false)
+                dataMap.putString(WearDataMessages.CONFIG_SERVER_REFRESH_TOKEN, serverManager.getServer()?.session?.refreshToken ?: "")
+            }
+            dataMap.putString(WearDataMessages.CONFIG_SUPPORTED_DOMAINS, objectMapper.writeValueAsString(HomePresenterImpl.supportedDomains))
+            dataMap.putString(WearDataMessages.CONFIG_FAVORITES, objectMapper.writeValueAsString(currentFavorites))
+            dataMap.putString(WearDataMessages.CONFIG_TEMPLATE_TILE, wearPrefsRepository.getTemplateTileContent())
+            dataMap.putInt(WearDataMessages.CONFIG_TEMPLATE_TILE_REFRESH_INTERVAL, wearPrefsRepository.getTemplateTileRefreshInterval())
             setUrgent()
             asPutDataRequest()
         }
@@ -114,13 +125,15 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
     }
 
     private fun login(dataMap: DataMap) = mainScope.launch {
+        var authId = ""
         var serverId: Int? = null
         try {
+            authId = dataMap.getString("AuthId", "")
             val url = dataMap.getString("URL", "")
             val authCode = dataMap.getString("AuthCode", "")
             val deviceName = dataMap.getString("DeviceName")
             val deviceTrackingEnabled = dataMap.getBoolean("LocationTracking")
-            val notificationsEnabled = dataMap.getString("Notifications")
+            val notificationsEnabled = dataMap.getBoolean("Notifications")
 
             val formattedUrl = UrlUtil.formattedUrlString(url)
             val server = Server(
@@ -129,7 +142,8 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
                 connection = ServerConnectionInfo(
                     externalUrl = formattedUrl
                 ),
-                session = ServerSessionInfo()
+                session = ServerSessionInfo(),
+                user = ServerUserInfo()
             )
             serverId = serverManager.addServer(server)
             serverManager.authenticationRepository(serverId).registerAuthorizationCode(authCode)
@@ -142,6 +156,10 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
                 )
             )
             serverManager.convertTemporaryServer(serverId)
+            launch {
+                sendLoginResult(authId, true, null)
+                updateTiles()
+            }
 
             val intent = HomeActivity.newInstance(applicationContext)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
@@ -156,24 +174,60 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
             } catch (e: Exception) {
                 Log.e(TAG, "Can't revoke session", e)
             }
+            launch {
+                sendLoginResult(authId, false, e.stackTraceToString())
+            }
         }
 
         sendPhoneData()
     }
 
+    private suspend fun sendLoginResult(id: String?, success: Boolean, exception: String?) {
+        try {
+            val putDataRequest = PutDataMapRequest.create(WearDataMessages.PATH_LOGIN_RESULT).run {
+                dataMap.putString(WearDataMessages.KEY_ID, id ?: "")
+                dataMap.putBoolean(WearDataMessages.KEY_SUCCESS, success)
+                if (exception != null) {
+                    dataMap.putString(WearDataMessages.LOGIN_RESULT_EXCEPTION, exception)
+                }
+                setUrgent()
+                asPutDataRequest()
+            }
+            Wearable.getDataClient(this@PhoneSettingsListener).putDataItem(putDataRequest).await()
+            Log.d(TAG, "Successfully sent ${WearDataMessages.PATH_LOGIN_RESULT} to device")
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to send ${WearDataMessages.PATH_LOGIN_RESULT} to device", e)
+        }
+    }
+
     private fun saveFavorites(dataMap: DataMap) {
         val favoritesIds: List<String> =
-            objectMapper.readValue(dataMap.getString(KEY_FAVORITES, "[]"))
+            objectMapper.readValue(dataMap.getString(WearDataMessages.CONFIG_FAVORITES, "[]"))
 
         mainScope.launch {
             favoritesDao.replaceAll(favoritesIds)
+
+            if (favoritesIds.isEmpty() && wearPrefsRepository.getWearFavoritesOnly()) {
+                wearPrefsRepository.setWearFavoritesOnly(false)
+            }
         }
     }
 
     private fun saveTileTemplate(dataMap: DataMap) = mainScope.launch {
-        val content = dataMap.getString(KEY_TEMPLATE_TILE, "")
-        val interval = dataMap.getInt(KEY_TEMPLATE_TILE_REFRESH_INTERVAL, 0)
+        val content = dataMap.getString(WearDataMessages.CONFIG_TEMPLATE_TILE, "")
+        val interval = dataMap.getInt(WearDataMessages.CONFIG_TEMPLATE_TILE_REFRESH_INTERVAL, 0)
         wearPrefsRepository.setTemplateTileContent(content)
         wearPrefsRepository.setTemplateTileRefreshInterval(interval)
+    }
+
+    private fun updateTiles() = mainScope.launch {
+        try {
+            val updater = TileService.getUpdater(applicationContext)
+            updater.requestUpdate(ConversationTile::class.java)
+            updater.requestUpdate(ShortcutsTile::class.java)
+            updater.requestUpdate(TemplateTile::class.java)
+        } catch (e: Exception) {
+            Log.w(TAG, "Unable to request tiles update")
+        }
     }
 }

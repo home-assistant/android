@@ -4,6 +4,8 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.graphics.Color
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.RingtoneManager
@@ -16,6 +18,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.text.HtmlCompat
 import com.mikepenz.iconics.IconicsDrawable
+import com.mikepenz.iconics.utils.colorFilter
 import com.mikepenz.iconics.utils.toAndroidIconCompat
 import com.vdurmont.emoji.EmojiParser
 import io.homeassistant.companion.android.common.R
@@ -81,8 +84,9 @@ fun handleChannel(
             handleImportance(data)
         )
 
-        if (channelName == NotificationData.ALARM_STREAM)
+        if (channelName == NotificationData.ALARM_STREAM) {
             handleChannelSound(context, channel)
+        }
 
         setChannelLedColor(context, data, channel)
         setChannelVibrationPattern(data, channel)
@@ -95,7 +99,6 @@ fun handleChannel(
 fun handleImportance(
     data: Map<String, String>
 ): Int {
-
     when (data[NotificationData.IMPORTANCE]) {
         "high" -> {
             return NotificationManager.IMPORTANCE_HIGH
@@ -210,12 +213,14 @@ fun handleSmallIcon(
         val iconName = notificationIcon.split(":")[1]
         val iconDrawable =
             IconicsDrawable(context, "cmd-$iconName")
-        if (iconDrawable.icon != null)
-            builder.setSmallIcon(iconDrawable.toAndroidIconCompat())
-        else
+        if (iconDrawable.icon != null) {
+            builder.setSmallIcon(iconDrawable.colorFilter { PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN) }.toAndroidIconCompat())
+        } else {
             builder.setSmallIcon(R.drawable.ic_stat_ic_notification)
-    } else
+        }
+    } else {
         builder.setSmallIcon(R.drawable.ic_stat_ic_notification)
+    }
 }
 
 fun getGroupNotificationBuilder(
@@ -224,7 +229,6 @@ fun getGroupNotificationBuilder(
     group: String,
     data: Map<String, String>
 ): NotificationCompat.Builder {
-
     val groupNotificationBuilder = NotificationCompat.Builder(context, channelId)
         .setStyle(
             NotificationCompat.BigTextStyle()
@@ -235,8 +239,9 @@ fun getGroupNotificationBuilder(
         .setGroup(group)
         .setGroupSummary(true)
 
-    if (data[NotificationData.ALERT_ONCE].toBoolean())
+    if (data[NotificationData.ALERT_ONCE].toBoolean()) {
         groupNotificationBuilder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
+    }
     handleColor(context, groupNotificationBuilder, data)
     handleSmallIcon(context, groupNotificationBuilder, data)
     return groupNotificationBuilder

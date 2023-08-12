@@ -17,7 +17,7 @@ If you are looking for documentation around the companion applications check out
  - `io.homeassistant.companion.android.minimal`
  - `io.homeassistant.companion.android.minimal.debug`
 
-5. Now download the `google-services.json` file and put it in the _home-assistant-Android/app_ and _home-assistant-Android/wear_ folder. This file contains the configuration of the whole project (all four applications). ([You can also use the mock services file instead of generating your own](/.github/mock-google-services.json). The file should contain client IDs for all packages listed above for debugging to work properly.  **If you do not generate your own file FCM push notification will never work, only websocket notifications will**)
+5. Now download the `google-services.json` file and put it in the project's _/app_, _/automotive_ and _/wear_ folders. This file contains the configuration of the whole project (all four applications). ([You can also use the mock services file instead of generating your own](/.github/mock-google-services.json). The file should contain client IDs for all packages listed above for debugging to work properly.  **If you do not generate your own file FCM push notification will never work, only websocket notifications will**)
 6. Start Android Studio, open your source code folder and check if the Gradle build will be successful using Build/Make Module "App". You might have to install the right Android SDK via Tools/SDK Manager first.
 7. Run `gradlew assembleDebug` to build all debug versions, this might take a while.
 8. If the build is successful, you can run the app by doing the following: click **Run** -> **Run 'app'**.
@@ -77,7 +77,7 @@ The project currently uses [lokalise](https://lokalise.com/public/145814835dd655
 
 
 ## Generating a release to production
-* Create a new release with the name and tag in the `{MAJOR}.{MINOR}.{PATCH}` format
-* Steal the release notes from the latest beta build
-* This will cause a tag to be added to the project and the `Production Deploy` Workflow will handle the rest
-* Note: Only the first 500 characters of the release notes get set in the Google Play release
+* Go to the latest Pre-Release and edit it
+* Delete the body of the release, select the last full release tag and auto generate the release notes
+* Uncheck the Pre-Release box and click update release
+* This should cause the `Play Publish Production` Workflow to execute and should handle the rest

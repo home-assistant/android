@@ -21,6 +21,8 @@ class LaunchPresenterImpl @Inject constructor(
                             "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
                         )
                     )
+                    serverManager.integrationRepository(it.id).getConfig() // Update cached data
+                    serverManager.webSocketRepository(it.id).getCurrentUser() // Update cached data
                 } catch (e: Exception) {
                     Log.e(TAG, "Issue updating Registration", e)
                 }

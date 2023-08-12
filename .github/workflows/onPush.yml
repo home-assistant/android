@@ -1,0 +1,190 @@
+name: On Push
+
+on:
+  workflow_dispatch:
+    inputs:
+      beta:
+        description: 'true if this is a beta release'
+        required: false
+        default: 'false'
+  push:
+    branches:
+      - master
+
+jobs:
+  app_build:
+    name: Github, Firebase, and Sentry Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3.12.0
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - uses: ./.github/actions/create-release-number
+        name: Create Release Number
+        id: rel_number
+
+      - uses: ./.github/actions/inflate-secrets
+        name: Inflate Secrets
+        with:
+          keystore: ${{ secrets.ORIGINAL_KEYSTORE_FILE }}
+          google-services: ${{ secrets.GOOGLESERVICES }}
+          firebase-creds: ${{ secrets.FIREBASECREDS }}
+          playstore-creds: ${{ secrets.PLAYSTORECREDS }}
+
+      - uses: ./.github/actions/create-release-notes
+        name: Create Release Notes
+        with:
+          tag-name: ${{ steps.rel_number.outputs.version }}
+          gh-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: ./.github/actions/download-translations
+        name: Download Translations
+        with:
+          lokalise-project: ${{ secrets.LOKALISE_PROJECT }}
+          lokalise-token: ${{ secrets.LOKALISE_TOKEN }}
+
+      - name: Build Release
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_FILE_PASSWORD }}
+          KEYSTORE_ALIAS: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS }}
+          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS_PASSWORD }}
+          VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
+        run: ./gradlew assembleRelease
+
+      - name: Archive Build
+        uses: actions/upload-artifact@v3
+        with:
+          path: ./**/*.apk
+
+      - name: Create Version File
+        if: github.event.inputs.beta == 'true'
+        shell: bash
+        env:
+          VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
+        run: |
+          echo $VERSION_CODE > ./app/build/outputs/version_code.txt
+
+      - name: Create Github Pre-Release
+        if: github.event.inputs.beta == 'true'
+        uses: softprops/action-gh-release@v0.1.15
+        with:
+          tag_name: ${{ steps.rel_number.outputs.version }}
+          body_path: ./app/build/outputs/changelogGithub
+          draft: false
+          prerelease: true
+          files: |
+            ./app/build/outputs/apk/full/release/app-full-release.apk
+            ./app/build/outputs/apk/minimal/release/app-minimal-release.apk
+            ./app/build/outputs/version_code.txt
+            ./wear/build/outputs/apk/release/wear-release.apk
+            ./automotive/build/outputs/apk/full/release/automotive-full-release.apk
+            ./automotive/build/outputs/apk/minimal/release/automotive-minimal-release.apk
+
+      - name: Deploy to Firebase
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_FILE_PASSWORD }}
+          KEYSTORE_ALIAS: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS }}
+          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS_PASSWORD }}
+          VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
+        run: ./gradlew appDistributionUploadFullRelease
+
+      - name: Prepare Amazon Listing
+        if: github.event.inputs.beta == 'true'
+        run: bundle exec fastlane prep_amazon
+
+      - name: Print `git status`
+        run: git status
+
+  play_publish:
+    name: Play Publish
+    runs-on: ubuntu-latest
+    concurrency:
+      group: playstore_deploy
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3.12.0
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - uses: ./.github/actions/create-release-number
+        name: Create Release Number
+        id: rel_number
+
+      - uses: ./.github/actions/inflate-secrets
+        name: Inflate Secrets
+        with:
+          keystore: ${{ secrets.UPLOAD_KEYSTORE_FILE }}
+          google-services: ${{ secrets.GOOGLESERVICES }}
+          firebase-creds: ${{ secrets.FIREBASECREDS }}
+          playstore-creds: ${{ secrets.PLAYSTORECREDS }}
+
+      - uses: ./.github/actions/create-release-notes
+        name: Create Release Notes
+        with:
+          tag-name: ${{ steps.rel_number.outputs.version }}
+          gh-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: ./.github/actions/download-translations
+        name: Download Translations
+        with:
+          lokalise-project: ${{ secrets.LOKALISE_PROJECT }}
+          lokalise-token: ${{ secrets.LOKALISE_TOKEN }}
+
+      - name: Build Release
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
+          KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
+          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
+          VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
+        run: ./gradlew bundleRelease
+
+      - name: Deploy to Playstore Internal
+        run: bundle exec fastlane deploy_internal
+
+      - name: Promote Internal to Beta
+        if: github.event.inputs.beta == 'true'
+        run: bundle exec fastlane promote_to_beta

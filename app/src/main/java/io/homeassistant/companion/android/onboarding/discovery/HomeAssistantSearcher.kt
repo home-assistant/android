@@ -6,7 +6,9 @@ import android.net.wifi.WifiManager
 import android.util.Log
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
+import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import okio.internal.commonToUtf8String
+import java.net.MalformedURLException
 import java.net.URL
 import java.util.concurrent.locks.ReentrantLock
 
@@ -29,9 +31,10 @@ class HomeAssistantSearcher constructor(
 
     private var multicastLock: WifiManager.MulticastLock? = null
 
-    fun beginSearch() {
-        if (isSearching)
+    private fun beginSearch() {
+        if (isSearching) {
             return
+        }
         isSearching = true
         try {
             nsdManager.discoverServices(SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, this)
@@ -54,8 +57,9 @@ class HomeAssistantSearcher constructor(
     }
 
     fun stopSearch() {
-        if (!isSearching)
+        if (!isSearching) {
             return
+        }
         isSearching = false
         try {
             nsdManager.stopServiceDiscovery(this)
@@ -91,15 +95,19 @@ class HomeAssistantSearcher constructor(
                     Log.i(TAG, "Service resolved: $resolvedService")
                     resolvedService?.let {
                         val baseUrl = it.attributes["base_url"]
-                        val version = it.attributes["version"]
-                        if (baseUrl != null && version != null) {
-                            onInstanceFound(
-                                HomeAssistantInstance(
+                        val versionAttr = it.attributes["version"]
+                        val version = if (versionAttr?.isNotEmpty() == true) HomeAssistantVersion.fromString(versionAttr.commonToUtf8String()) else null
+                        if (baseUrl?.isNotEmpty() == true && version != null) {
+                            try {
+                                val instance = HomeAssistantInstance(
                                     it.serviceName,
                                     URL(baseUrl.commonToUtf8String()),
-                                    version.commonToUtf8String()
+                                    version
                                 )
-                            )
+                                onInstanceFound(instance)
+                            } catch (e: MalformedURLException) {
+                                Log.w(TAG, "Failed to create instance: ${baseUrl.commonToUtf8String()}")
+                            }
                         }
                     }
                     lock.unlock()

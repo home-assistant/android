@@ -11,6 +11,7 @@ import android.net.wifi.WifiManager
 import android.os.PowerManager
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.common.sensors.AndroidOsSensorManager
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.sensors.BatterySensorManager
 import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
@@ -52,10 +53,12 @@ class SensorReceiver : SensorReceiverBase() {
         val MANAGERS = listOf(
             ActivitySensorManager(),
             AndroidAutoSensorManager(),
+            AndroidOsSensorManager(),
             AppSensorManager(),
             AudioSensorManager(),
             BatterySensorManager(),
             BluetoothSensorManager(),
+            CarSensorManager(),
             DisplaySensorManager(),
             DNDSensorManager(),
             DynamicColorSensorManager(),
@@ -110,7 +113,7 @@ class SensorReceiver : SensorReceiverBase() {
         AudioManager.RINGER_MODE_CHANGED_ACTION to AudioSensorManager.audioSensor.id,
         Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE to DevicePolicyManager.isWorkProfile.id,
         Intent.ACTION_MANAGED_PROFILE_AVAILABLE to DevicePolicyManager.isWorkProfile.id,
-        WifiManager.WIFI_STATE_CHANGED_ACTION to NetworkSensorManager.wifiState.id,
+        WifiManager.WIFI_STATE_CHANGED_ACTION to NetworkSensorManager.wifiState.id
     )
 
     override fun getSensorSettingsIntent(

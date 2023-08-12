@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.onboarding
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.util.Log
@@ -18,6 +19,7 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerType
+import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.util.UrlUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,6 +31,7 @@ import java.util.concurrent.Executors
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
+@SuppressLint("VisibleForTests") // https://issuetracker.google.com/issues/239451111
 class OnboardingPresenterImpl @Inject constructor(
     @ActivityContext context: Context,
     private val serverManager: ServerManager
@@ -143,7 +146,8 @@ class OnboardingPresenterImpl @Inject constructor(
                     connection = ServerConnectionInfo(
                         externalUrl = formattedUrl
                     ),
-                    session = ServerSessionInfo()
+                    session = ServerSessionInfo(),
+                    user = ServerUserInfo()
                 )
                 serverId = serverManager.addServer(server)
                 serverManager.authenticationRepository(serverId).registerAuthorizationCode(code)
