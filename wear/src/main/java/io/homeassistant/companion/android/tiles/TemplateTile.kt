@@ -28,6 +28,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
+import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -53,14 +54,17 @@ class TemplateTile : TileService() {
                 if (wearPrefsRepository.getWearHapticFeedback()) hapticClick(applicationContext)
             }
 
+            val tileId = requestParams.tileId
+            val templateTileConfig = getTemplateTileConfig(tileId)
+
             Tile.Builder()
                 .setResourcesVersion("1")
                 .setFreshnessIntervalMillis(
-                    wearPrefsRepository.getTemplateTileRefreshInterval().toLong() * 1000
+                    templateTileConfig.refreshInterval.toLong() * 1_000
                 )
                 .setTileTimeline(
                     if (serverManager.isRegistered()) {
-                        timeline()
+                        timeline(templateTileConfig)
                     } else {
                         loggedOutTimeline(
                             this@TemplateTile,
@@ -94,11 +98,10 @@ class TemplateTile : TileService() {
         serviceJob.cancel()
     }
 
-    private suspend fun timeline(): Timeline {
-        val template = wearPrefsRepository.getTemplateTile()
+    private suspend fun timeline(templateTileConfig: TemplateTileConfig): Timeline {
         val renderedText = try {
             if (serverManager.isRegistered()) {
-                serverManager.integrationRepository().renderTemplate(template, mapOf()).toString()
+                serverManager.integrationRepository().renderTemplate(templateTileConfig.template, mapOf()).toString()
             } else {
                 ""
             }
@@ -113,6 +116,11 @@ class TemplateTile : TileService() {
         }
 
         return Timeline.fromLayoutElement(layout(renderedText))
+    }
+
+    private suspend fun getTemplateTileConfig(tileId: Int): TemplateTileConfig {
+        // TODO: handle null
+        return wearPrefsRepository.getTemplateTile(tileId)!!
     }
 
     fun layout(renderedText: String): LayoutElement = Box.Builder().apply {

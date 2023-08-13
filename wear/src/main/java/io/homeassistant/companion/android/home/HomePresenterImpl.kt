@@ -7,6 +7,7 @@ import io.homeassistant.companion.android.common.data.integration.DeviceRegistra
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
+import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
@@ -270,10 +271,12 @@ class HomePresenterImpl @Inject constructor(
         wearPrefsRepository.setShowShortcutTextEnabled(enabled)
     }
 
-    override suspend fun getTemplateTileContent(): String {
-        return wearPrefsRepository.getTemplateTile()
+    override suspend fun getAllTemplateTiles(): Map<Int?, TemplateTileConfig> {
+        return wearPrefsRepository.getAllTemplateTiles()
     }
 
+    // TODO: fix
+    /*
     override suspend fun getTemplateTileRefreshInterval(): Int {
         return wearPrefsRepository.getTemplateTileRefreshInterval()
     }
@@ -281,6 +284,7 @@ class HomePresenterImpl @Inject constructor(
     override suspend fun setTemplateTileRefreshInterval(interval: Int) {
         wearPrefsRepository.setTemplateTileRefreshInterval(interval)
     }
+    */
 
     override suspend fun getWearFavoritesOnly(): Boolean {
         return wearPrefsRepository.getWearFavoritesOnly()

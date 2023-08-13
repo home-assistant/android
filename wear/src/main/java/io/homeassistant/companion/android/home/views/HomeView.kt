@@ -318,9 +318,10 @@ fun LoadHomePage(
                 )
             }
             composable(SCREEN_SET_TILE_TEMPLATE) {
+                // TODO: fix
                 TemplateTileSettingsView(
-                    templateContent = mainViewModel.templateTileContent.value,
-                    refreshInterval = mainViewModel.templateTileRefreshInterval.value
+                    templateContent = "mainViewModel.templateTileContent.value",
+                    refreshInterval = 0
                 ) {
                     swipeDismissableNavController.navigate(
                         SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL
@@ -328,8 +329,9 @@ fun LoadHomePage(
                 }
             }
             composable(SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL) {
+                // TODO: fix
                 RefreshIntervalPickerView(
-                    currentInterval = mainViewModel.templateTileRefreshInterval.value
+                    currentInterval = 0
                 ) {
                     mainViewModel.setTemplateTileRefreshInterval(it)
                     TileService.getUpdater(context).requestUpdate(TemplateTile::class.java)
