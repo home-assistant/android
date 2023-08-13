@@ -21,6 +21,7 @@ import io.homeassistant.companion.android.common.data.integration.DeviceRegistra
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepositoryImpl
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
+import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.WearDataMessages
 import io.homeassistant.companion.android.database.server.Server
@@ -129,7 +130,7 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
                             saveFavorites(DataMapItem.fromDataItem(item).dataMap)
                         }
                         "/updateTemplateTiles" -> {
-                            saveTileTemplate(DataMapItem.fromDataItem(item).dataMap)
+                            saveTemplateTiles(DataMapItem.fromDataItem(item).dataMap)
                         }
                     }
                 }
@@ -245,12 +246,15 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
         }
     }
 
-    private fun saveTileTemplate(dataMap: DataMap) = mainScope.launch {
-        val templateTiles = dataMap.getString(WearDataMessages.CONFIG_TEMPLATE_TILES, "{}")
-        val interval = dataMap.getInt(WearDataMessages.CONFIG_TEMPLATE_TILE_REFRESH_INTERVAL, 0)
-        // TODO: combine to one call
-        wearPrefsRepository.setTemplateTile(content)
-        wearPrefsRepository.setTemplateTileRefreshInterval(interval)
+    private fun saveTemplateTiles(dataMap: DataMap) = mainScope.launch {
+        val templateTilesFromPhone: Map<Int?, TemplateTileConfig> = objectMapper.readValue(
+            dataMap.getString(
+                WearDataMessages.CONFIG_TEMPLATE_TILES,
+                "{}"
+            )
+        )
+
+        wearPrefsRepository.setAllTemplateTiles(templateTilesFromPhone)
     }
 
     private fun updateTiles() = mainScope.launch {

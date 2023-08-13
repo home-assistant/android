@@ -157,15 +157,17 @@ class SettingsWearViewModel @Inject constructor(
 
         templateTiles.putAll(newTemplateTiles)
         templateTiles.forEach {
-            templateTilesRenderedTemplates[it.key] = renderTemplate(it.key, it.value.template)
+            renderTemplate(it.key, it.value.template)
         }
     }
 
-    private fun renderTemplate(tileId: Int?, template: String): String {
+    private fun renderTemplate(tileId: Int?, template: String) {
         if (template.isNotEmpty() && serverId != 0) {
             viewModelScope.launch {
                 try {
-                    serverManager.integrationRepository(serverId).renderTemplate(template, mapOf()).toString()
+                    templateTilesRenderedTemplates[tileId] = serverManager
+                        .integrationRepository(serverId)
+                        .renderTemplate(template, mapOf()).toString()
                 } catch (e: Exception) {
                     Log.e(TAG, "Exception while rendering template for tile ID $tileId", e)
                     // JsonMappingException suggests that template is not a String (= error)
@@ -179,7 +181,7 @@ class SettingsWearViewModel @Inject constructor(
                 }
             }
         } else {
-            ""
+            templateTilesRenderedTemplates[tileId] = ""
         }
     }
 

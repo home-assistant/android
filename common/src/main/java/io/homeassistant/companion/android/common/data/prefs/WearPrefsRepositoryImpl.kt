@@ -176,24 +176,24 @@ class WearPrefsRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun setAllTemplateTiles(templateTiles: Map<Int?, TemplateTileConfig>) {
+        val templateTilesJson = templateTiles.map { (tileId, templateTileConfig) ->
+            tileId?.toString() to templateTileConfig.toJSONObject()
+        }.toMap()
+        val jsonStr = JSONObject(templateTilesJson).toString()
+        localStorage.putString(PREF_TILE_TEMPLATES, jsonStr)
+    }
+
     override suspend fun setTemplateTile(tileId: Int?, content: String, refreshInterval: Int) {
         val map = getAllTemplateTiles() + mapOf(tileId to TemplateTileConfig(content, refreshInterval))
-        setTemplateTiles(map)
+        setAllTemplateTiles(map)
     }
 
     override suspend fun removeTemplateTile(tileId: Int?): TemplateTileConfig? {
         val templateTilesMap = getAllTemplateTiles().toMutableMap()
         val templateTile = templateTilesMap.remove(tileId)
-        setTemplateTiles(templateTilesMap)
+        setAllTemplateTiles(templateTilesMap)
         return templateTile
-    }
-
-    private suspend fun setTemplateTiles(map: Map<Int?, TemplateTileConfig>) {
-        val jsonMap = map.map { (tileId, templateTileConfig) ->
-            tileId?.toString() to templateTileConfig.toJSONObject()
-        }.toMap()
-        val jsonStr = JSONObject(jsonMap).toString()
-        localStorage.putString(PREF_TILE_TEMPLATES, jsonStr)
     }
 
     override suspend fun getWearHapticFeedback(): Boolean {
