@@ -402,7 +402,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     handler: RenderProcessGoneDetail?
                 ): Boolean {
                     Log.e(TAG, "onRenderProcessGone: webView crashed")
-                    webView.reload()
+                    view!!.reload()
 
                     return true
                 }
