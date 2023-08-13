@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.data.prefs.impl.entities
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import io.homeassistant.companion.android.common.data.integration.impl.entities.Template
 import org.json.JSONObject
 
 const val FIELD_TEMPLATE = "template"
@@ -24,5 +25,13 @@ data class TemplateTileConfig(
                 FIELD_REFRESH_INTERVAL to refreshInterval
             )
         )
+    }
+
+    fun withTemplate(template: String): TemplateTileConfig {
+        return TemplateTileConfig(template, refreshInterval)
+    }
+
+    fun withRefreshInterval(refreshInterval: Int): TemplateTileConfig {
+        return TemplateTileConfig(template, refreshInterval)
     }
 }

@@ -73,19 +73,20 @@ fun LoadSettingsHomeView(
             ) { backStackEntry ->
                 val tileId = backStackEntry.arguments?.getInt("tileId")
                 val templateTile = settingsWearViewModel.templateTiles[tileId]
+                val renderedTemplate = settingsWearViewModel.templateTilesRenderedTemplates[tileId]
 
                 // TODO: error handling
                 templateTile?.let {
                     SettingsWearTemplateTile(
                         template = it.template,
-                        // TODO: use rendered template
-                        renderedTemplate = "",
+                        renderedTemplate = renderedTemplate ?: "",
                         refreshInterval = it.refreshInterval,
                         onContentChanged = { templateContent ->
                             // TODO: how to handle null tile ID?
                             settingsWearViewModel.setTemplateTileContent(tileId!!, templateContent)
                         },
                         onRefreshIntervalChanged = { refreshInterval ->
+                            // TODO: how to handle null tile ID?
                             settingsWearViewModel.setTemplateTileRefreshInterval(tileId!!, refreshInterval)
                         }
                     ) {}
