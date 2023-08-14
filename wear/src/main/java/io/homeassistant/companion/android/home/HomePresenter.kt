@@ -50,8 +50,10 @@ interface HomePresenter {
     suspend fun getShowShortcutText(): Boolean
     suspend fun setShowShortcutTextEnabled(enabled: Boolean)
     suspend fun getAllTemplateTiles(): Map<Int?, TemplateTileConfig>
-    //suspend fun getTemplateTileRefreshInterval(): Int
-    //suspend fun setTemplateTileRefreshInterval(interval: Int)
+
+    // suspend fun getTemplateTileRefreshInterval(): Int
+    // suspend fun setTemplateTileRefreshInterval(interval: Int)
+
     suspend fun getWearFavoritesOnly(): Boolean
     suspend fun setWearFavoritesOnly(enabled: Boolean)
 }
