@@ -68,7 +68,7 @@ fun LoadSettingsHomeView(
                 )
             }
             composable(
-                SettingsWearMainView.TEMPLATE_TILE.format("{tileId}"),
+                route = SettingsWearMainView.TEMPLATE_TILE.format("{tileId}"),
                 arguments = listOf(navArgument("tileId") { type = NavType.IntType })
             ) { backStackEntry ->
                 val tileId = backStackEntry.arguments?.getInt("tileId")

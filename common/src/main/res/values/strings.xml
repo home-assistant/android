@@ -849,6 +849,8 @@
     <string name="template_tile_n">Template tile #%d</string>
     <string name="template_tiles">Template tiles</string>
     <string name="template_tile_configure">Configure Template tile</string>
+    <string name="template_tile_select">Select Template tile to manage</string>
+    <string name="template_tile_no_tiles_yet">There are no Template tiles added yet</string>
     <string name="template_tile_set_on_watch">Configure templates to use as Wear OS tiles</string>
     <string name="template_tile_change_message">Change template in phone settings</string>
     <string name="template_tile_content">Template tile content</string>

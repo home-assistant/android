@@ -24,6 +24,7 @@ private const val ARG_SCREEN_SENSOR_MANAGER_ID = "sensorManagerId"
 private const val ARG_SCREEN_CAMERA_TILE_ID = "cameraTileId"
 private const val ARG_SCREEN_SHORTCUTS_TILE_ID = "shortcutsTileId"
 private const val ARG_SCREEN_SHORTCUTS_TILE_ENTITY_INDEX = "shortcutsTileEntityIndex"
+private const val ARG_SCREEN_TEMPLATE_TILE_ID = "templateTileId"
 
 private const val SCREEN_LANDING = "landing"
 private const val SCREEN_ENTITY_DETAIL = "entity_detail"
@@ -38,7 +39,9 @@ private const val SCREEN_SET_CAMERA_TILE = "set_camera_tile"
 private const val SCREEN_SET_CAMERA_TILE_ENTITY = "entity"
 private const val SCREEN_SET_CAMERA_TILE_REFRESH_INTERVAL = "refresh_interval"
 private const val ROUTE_SHORTCUTS_TILE = "shortcuts_tile"
+private const val ROUTE_TEMPLATE_TILE = "template_tile"
 private const val SCREEN_SELECT_SHORTCUTS_TILE = "select_shortcuts_tile"
+private const val SCREEN_SELECT_TEMPLATE_TILE = "select_template_tile"
 private const val SCREEN_SET_SHORTCUTS_TILE = "set_shortcuts_tile"
 private const val SCREEN_SHORTCUTS_TILE_CHOOSE_ENTITY = "shortcuts_tile_choose_entity"
 private const val SCREEN_SET_TILE_TEMPLATE = "set_tile_template"
@@ -317,23 +320,48 @@ fun LoadHomePage(
                     }
                 )
             }
-            composable(SCREEN_SET_TILE_TEMPLATE) {
-                // TODO: fix
+            composable("$ROUTE_TEMPLATE_TILE/$SCREEN_SELECT_TEMPLATE_TILE") {
+                SelectTemplateTileView(
+                    templateTileIds = mainViewModel.templateTiles.keys.toList(),
+                    onSelectTemplateTile = { tileId ->
+                        swipeDismissableNavController.navigate("$ROUTE_TEMPLATE_TILE/$tileId/$SCREEN_SET_TILE_TEMPLATE")
+                    }
+                )
+            }
+            composable(
+                route = "$ROUTE_TEMPLATE_TILE/{$ARG_SCREEN_TEMPLATE_TILE_ID}/$SCREEN_SET_TILE_TEMPLATE",
+                arguments = listOf(
+                    navArgument(name = ARG_SCREEN_TEMPLATE_TILE_ID) {
+                        type = NavType.IntType
+                    }
+                )
+            ) { backStackEntry ->
+                val tileId = backStackEntry.arguments!!.getString(ARG_SCREEN_TEMPLATE_TILE_ID)!!.toIntOrNull()
                 TemplateTileSettingsView(
-                    templateContent = "mainViewModel.templateTileContent.value",
-                    refreshInterval = 0
+                    // TODO: handle null in another way?
+                    templateContent = mainViewModel.templateTiles[tileId]?.template ?: "",
+                    // TODO: handle null in another way?
+                    refreshInterval = mainViewModel.templateTiles[tileId]?.refreshInterval ?: 0
                 ) {
                     swipeDismissableNavController.navigate(
                         SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL
                     )
                 }
             }
-            composable(SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL) {
-                // TODO: fix
+            composable(
+                route = "$ROUTE_TEMPLATE_TILE/{$ARG_SCREEN_TEMPLATE_TILE_ID}/$SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL",
+                arguments = listOf(
+                    navArgument(name = ARG_SCREEN_TEMPLATE_TILE_ID) {
+                        type = NavType.IntType
+                    }
+                )
+            ) { backStackEntry ->
+                val tileId = backStackEntry.arguments!!.getString(ARG_SCREEN_TEMPLATE_TILE_ID)!!.toIntOrNull()
                 RefreshIntervalPickerView(
-                    currentInterval = 0
+                    currentInterval = mainViewModel.templateTiles[tileId]?.refreshInterval ?: 0
                 ) {
-                    mainViewModel.setTemplateTileRefreshInterval(it)
+                    // TODO: handle null
+                    mainViewModel.setTemplateTileRefreshInterval(tileId!!, it)
                     TileService.getUpdater(context).requestUpdate(TemplateTile::class.java)
                     swipeDismissableNavController.navigateUp()
                 }

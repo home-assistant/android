@@ -486,13 +486,12 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun setTemplateTileRefreshInterval(interval: Int) {
-        // TODO: fix
-        /*viewModelScope.launch {
-            homePresenter.setTemplateTileRefreshInterval(interval)
-            templateTileRefreshInterval.value = interval
+    fun setTemplateTileRefreshInterval(tileId: Int, interval: Int) {
+        viewModelScope.launch {
+            homePresenter.setTemplateTileRefreshInterval(tileId, interval)
+            // TODO: better null handling
+            templateTiles[tileId] = templateTiles[tileId]!!.withRefreshInterval(interval)
         }
-        */
     }
 
     fun addFavoriteEntity(entityId: String) {
