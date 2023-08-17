@@ -486,7 +486,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun setTemplateTileRefreshInterval(tileId: Int, interval: Int) {
+    fun setTemplateTileRefreshInterval(tileId: Int?, interval: Int) {
         viewModelScope.launch {
             homePresenter.setTemplateTileRefreshInterval(tileId, interval)
             // TODO: better null handling

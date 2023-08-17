@@ -84,12 +84,17 @@ fun LoadSettingsHomeView(
                         onContentChanged = { templateContent ->
                             // TODO: how to handle null tile ID?
                             settingsWearViewModel.setTemplateTileContent(tileId!!, templateContent)
+                            settingsWearViewModel.sendTemplateTileInfo()
                         },
                         onRefreshIntervalChanged = { refreshInterval ->
                             // TODO: how to handle null tile ID?
                             settingsWearViewModel.setTemplateTileRefreshInterval(tileId!!, refreshInterval)
+                            settingsWearViewModel.sendTemplateTileInfo()
+                        },
+                        onBackClicked = {
+                            navController.navigateUp()
                         }
-                    ) {}
+                    )
                 }
             }
         }

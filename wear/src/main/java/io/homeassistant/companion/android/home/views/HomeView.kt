@@ -164,7 +164,7 @@ fun LoadHomePage(
                     onClickCameraTile = {
                         swipeDismissableNavController.navigate("$ROUTE_CAMERA_TILE/$SCREEN_SELECT_CAMERA_TILE")
                     },
-                    onClickTemplateTile = { swipeDismissableNavController.navigate(SCREEN_SET_TILE_TEMPLATE) },
+                    onClickTemplateTile = { swipeDismissableNavController.navigate("$ROUTE_TEMPLATE_TILE/$SCREEN_SELECT_TEMPLATE_TILE") },
                     onAssistantAppAllowed = mainViewModel::setAssistantApp
                 )
             }
@@ -332,7 +332,7 @@ fun LoadHomePage(
                 route = "$ROUTE_TEMPLATE_TILE/{$ARG_SCREEN_TEMPLATE_TILE_ID}/$SCREEN_SET_TILE_TEMPLATE",
                 arguments = listOf(
                     navArgument(name = ARG_SCREEN_TEMPLATE_TILE_ID) {
-                        type = NavType.IntType
+                        type = NavType.StringType
                     }
                 )
             ) { backStackEntry ->
@@ -344,7 +344,7 @@ fun LoadHomePage(
                     refreshInterval = mainViewModel.templateTiles[tileId]?.refreshInterval ?: 0
                 ) {
                     swipeDismissableNavController.navigate(
-                        SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL
+                        "$ROUTE_TEMPLATE_TILE/$tileId/$SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL"
                     )
                 }
             }
@@ -352,7 +352,7 @@ fun LoadHomePage(
                 route = "$ROUTE_TEMPLATE_TILE/{$ARG_SCREEN_TEMPLATE_TILE_ID}/$SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL",
                 arguments = listOf(
                     navArgument(name = ARG_SCREEN_TEMPLATE_TILE_ID) {
-                        type = NavType.IntType
+                        type = NavType.StringType
                     }
                 )
             ) { backStackEntry ->
@@ -360,8 +360,7 @@ fun LoadHomePage(
                 RefreshIntervalPickerView(
                     currentInterval = mainViewModel.templateTiles[tileId]?.refreshInterval ?: 0
                 ) {
-                    // TODO: handle null
-                    mainViewModel.setTemplateTileRefreshInterval(tileId!!, it)
+                    mainViewModel.setTemplateTileRefreshInterval(tileId, it)
                     TileService.getUpdater(context).requestUpdate(TemplateTile::class.java)
                     swipeDismissableNavController.navigateUp()
                 }

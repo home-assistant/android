@@ -63,7 +63,7 @@ class WearPrefsRepositoryImpl @Inject constructor(
 
                 if (template != null && templateRefreshInterval != null) {
                     val templates = mapOf(
-                        null to TemplateTileConfig(template, templateRefreshInterval).toJSONObject()
+                        "null" to TemplateTileConfig(template, templateRefreshInterval).toJSONObject()
                     )
 
                     localStorage.putString(PREF_TILE_TEMPLATES, JSONObject(templates).toString())
@@ -178,7 +178,7 @@ class WearPrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setAllTemplateTiles(templateTiles: Map<Int?, TemplateTileConfig>) {
         val templateTilesJson = templateTiles.map { (tileId, templateTileConfig) ->
-            tileId?.toString() to templateTileConfig.toJSONObject()
+            (tileId?.toString() ?: "null") to templateTileConfig.toJSONObject()
         }.toMap()
         val jsonStr = JSONObject(templateTilesJson).toString()
         localStorage.putString(PREF_TILE_TEMPLATES, jsonStr)
