@@ -160,6 +160,14 @@
 
             <meta-data android:name="androidx.wear.tiles.PREVIEW"
                 android:resource="@drawable/template_tile_example" />
+
+            <meta-data
+                android:name="com.google.android.clockwork.tiles.MULTI_INSTANCES_SUPPORTED"
+                android:value="true" /> <!-- This is supported starting from Wear OS 3 -->
+
+            <meta-data
+                android:name="com.google.android.clockwork.tiles.PROVIDER_CONFIG_ACTION"
+                android:value="ConfigTemplateTile" />
         </service>
         <service
             android:name=".tiles.ConversationTile"
