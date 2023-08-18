@@ -282,8 +282,9 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         attributesAdapter.addAll(*fetchedAttributes?.keys.orEmpty().toTypedArray())
         binding.widgetTextConfigAttribute.setTokenizer(CommaTokenizer())
         runOnUiThread {
-            binding.tapAction.isVisible = selectedEntity?.domain in EntityExt.APP_PRESS_ACTION_DOMAINS
-            binding.tapActionList.setSelection(1)
+            val toggleable = selectedEntity?.domain in EntityExt.APP_PRESS_ACTION_DOMAINS
+            binding.tapAction.isVisible = toggleable
+            binding.tapActionList.setSelection(if (toggleable) 0 else 1)
             attributesAdapter.notifyDataSetChanged()
         }
     }
