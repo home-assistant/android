@@ -19,7 +19,6 @@ import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.IntegrationException
 import io.homeassistant.companion.android.common.data.integration.canSupportPrecision
 import io.homeassistant.companion.android.common.data.integration.friendlyState
 import io.homeassistant.companion.android.common.data.integration.onPressed
@@ -91,6 +90,14 @@ class EntityWidget : BaseWidgetProvider() {
                 }
 
                 // Content
+                setViewVisibility(
+                    R.id.widgetTextLayout,
+                    View.VISIBLE
+                )
+                setViewVisibility(
+                    R.id.widgetProgressBar,
+                    View.INVISIBLE
+                )
                 val resolvedText = resolveTextToShow(
                     context,
                     serverId,
@@ -258,23 +265,37 @@ class EntityWidget : BaseWidgetProvider() {
 
     private fun toggleEntity(context: Context, appWidgetId: Int) {
         widgetScope?.launch {
-            val widget = staticWidgetDao.get(appWidgetId) ?: return@launch
-            val entity = try {
-                serverManager.integrationRepository(widget.serverId).getEntity(widget.entityId)
-            } catch (e: Exception) {
-                Log.e(TAG, "Unable to fetch entity to toggle", e)
-                null
+            // Show progress bar as feedback
+            val appWidgetManager = AppWidgetManager.getInstance(context)
+            val loadingViews = RemoteViews(context.packageName, R.layout.widget_static)
+            loadingViews.setViewVisibility(R.id.widgetProgressBar, View.VISIBLE)
+            loadingViews.setViewVisibility(R.id.widgetTextLayout, View.GONE)
+            appWidgetManager.partiallyUpdateAppWidget(appWidgetId, loadingViews)
+
+            var success = false
+            staticWidgetDao.get(appWidgetId)?.let {
+                val entity = try {
+                    serverManager.integrationRepository(it.serverId).getEntity(it.entityId)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unable to fetch entity to toggle", e)
+                    null
+                }
+                if (entity != null) {
+                    try {
+                        entity.onPressed(serverManager.integrationRepository(it.serverId))
+                        success = true
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Unable to send toggle service call", e)
+                    }
+                }
             }
-            if (entity == null) {
+
+            if (!success) {
                 Toast.makeText(context, commonR.string.service_call_failure, Toast.LENGTH_LONG).show()
-                return@launch
-            }
-            try {
-                entity.onPressed(serverManager.integrationRepository(widget.serverId))
-            } catch (e: Exception) {
-                Log.e(TAG, "Unable to send toggle service call", e)
-                Toast.makeText(context, commonR.string.service_call_failure, Toast.LENGTH_LONG).show()
-            }
+
+                val views = getWidgetRemoteViews(context, appWidgetId)
+                appWidgetManager.updateAppWidget(appWidgetId, views)
+            } // else update will be triggered by websocket subscription
         }
     }
 

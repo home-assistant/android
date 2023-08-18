@@ -957,7 +957,7 @@
     <string name="widget_state_separator_label">State and attribute separator:</string>
     <string name="widget_static_image_description">Entity state</string>
     <string name="widget_tap_action_label">Tap action:</string>
-    <string name="widget_tap_action_toggle">Toggle entity</string>
+    <string name="widget_tap_action_toggle">Toggle</string>
     <string name="widget_template_error">Unable to render the template</string>
     <string name="widget_text_hint_label">Label</string>
     <string name="widget_text_hint_service_data">Entity ID</string>
