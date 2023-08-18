@@ -21,7 +21,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.canSupportPrecision
 import io.homeassistant.companion.android.common.data.integration.friendlyState
-import io.homeassistant.companion.android.common.data.integration.onPressed
+import io.homeassistant.companion.android.common.data.integration.onEntityPressedWithoutState
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -274,19 +274,14 @@ class EntityWidget : BaseWidgetProvider() {
 
             var success = false
             staticWidgetDao.get(appWidgetId)?.let {
-                val entity = try {
-                    serverManager.integrationRepository(it.serverId).getEntity(it.entityId)
+                try {
+                    onEntityPressedWithoutState(
+                        it.entityId,
+                        serverManager.integrationRepository(it.serverId)
+                    )
+                    success = true
                 } catch (e: Exception) {
-                    Log.e(TAG, "Unable to fetch entity to toggle", e)
-                    null
-                }
-                if (entity != null) {
-                    try {
-                        entity.onPressed(serverManager.integrationRepository(it.serverId))
-                        success = true
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Unable to send toggle service call", e)
-                    }
+                    Log.e(TAG, "Unable to send toggle service call", e)
                 }
             }
 

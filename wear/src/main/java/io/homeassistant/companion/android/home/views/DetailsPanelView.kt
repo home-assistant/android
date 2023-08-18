@@ -41,7 +41,6 @@ import io.homeassistant.companion.android.common.data.integration.getLightBright
 import io.homeassistant.companion.android.common.data.integration.supportsFanSetSpeed
 import io.homeassistant.companion.android.common.data.integration.supportsLightBrightness
 import io.homeassistant.companion.android.common.data.integration.supportsLightColorTemperature
-import io.homeassistant.companion.android.home.HomePresenterImpl
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.util.getColorTemperature
 import io.homeassistant.companion.android.util.onEntityClickedFeedback
@@ -84,7 +83,7 @@ fun DetailsPanelView(
                         val friendlyName = attributes["friendly_name"].toString()
                         Text(friendlyName)
 
-                        if (entity.domain in HomePresenterImpl.toggleDomains) {
+                        if (entity.domain in EntityExt.DOMAINS_TOGGLE) {
                             val isChecked = entity.state in listOf("on", "locked", "open", "opening")
                             ToggleButton(
                                 checked = isChecked,

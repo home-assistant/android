@@ -22,7 +22,9 @@ import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.getIcon
+import io.homeassistant.companion.android.common.data.integration.onEntityPressedWithoutState
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.TileEntity
@@ -236,22 +238,9 @@ abstract class TileExtensions : TileService() {
             }
             withContext(Dispatchers.IO) {
                 try {
-                    serverManager.integrationRepository(tileData.serverId).callService(
-                        tileData.entityId.split(".")[0],
-                        when (tileData.entityId.split(".")[0]) {
-                            "button", "input_button" -> "press"
-                            in toggleDomains -> "toggle"
-                            "lock" -> {
-                                val state = serverManager.integrationRepository(tileData.serverId).getEntity(tileData.entityId)
-                                if (state?.state == "locked") {
-                                    "unlock"
-                                } else {
-                                    "lock"
-                                }
-                            }
-                            else -> "turn_on"
-                        },
-                        hashMapOf("entity_id" to tileData.entityId)
+                    onEntityPressedWithoutState(
+                        tileData.entityId,
+                        serverManager.integrationRepository(tileData.serverId)
                     )
                     Log.d(TAG, "Service call sent for tile ID: $tileId")
                 } catch (e: Exception) {
@@ -342,11 +331,7 @@ abstract class TileExtensions : TileService() {
 
     companion object {
         private const val TAG = "TileExtensions"
-        private val toggleDomains = listOf(
-            "automation", "cover", "fan", "humidifier", "input_boolean", "light",
-            "media_player", "remote", "siren", "switch"
-        )
-        private val toggleDomainsWithLock = toggleDomains.plus("lock")
+        private val toggleDomainsWithLock = EntityExt.DOMAINS_TOGGLE
         private val validActiveStates = listOf("on", "open", "locked")
     }
 

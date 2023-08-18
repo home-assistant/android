@@ -23,12 +23,12 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.databinding.WidgetStaticConfigureBinding
-import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.util.getHexForColor
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
@@ -168,7 +168,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 setupAttributes()
             }
 
-            val toggleable = entity?.domain in ManageTilesFragment.validDomains
+            val toggleable = entity?.domain in EntityExt.APP_PRESS_ACTION_DOMAINS
             binding.tapAction.isVisible = toggleable
             binding.tapActionList.setSelection(if (toggleable && staticWidget.tapAction == WidgetTapAction.TOGGLE) 0 else 1)
 
@@ -282,7 +282,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         attributesAdapter.addAll(*fetchedAttributes?.keys.orEmpty().toTypedArray())
         binding.widgetTextConfigAttribute.setTokenizer(CommaTokenizer())
         runOnUiThread {
-            binding.tapAction.isVisible = selectedEntity?.domain in ManageTilesFragment.validDomains
+            binding.tapAction.isVisible = selectedEntity?.domain in EntityExt.APP_PRESS_ACTION_DOMAINS
             binding.tapActionList.setSelection(1)
             attributesAdapter.notifyDataSetChanged()
         }
