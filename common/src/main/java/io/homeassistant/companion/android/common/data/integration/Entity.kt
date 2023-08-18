@@ -612,9 +612,6 @@ suspend fun <T> Entity<T>.onPressed(
         "lock" -> {
             if (state == "unlocked") "lock" else "unlock"
         }
-        "cover" -> {
-            if (state == "open") "close_cover" else "open_cover"
-        }
         "alarm_control_panel" -> {
             if (state != "disarmed") "alarm_disarm" else "alarm_arm_away"
         }
