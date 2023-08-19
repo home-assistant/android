@@ -84,13 +84,9 @@ class PhoneStateSensorManager : SensorManager {
                 val telephonyManager =
                     context.applicationContext.getSystemService<TelephonyManager>()!!
 
-                val callState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    telephonyManager.callStateForSubscription
-                } else {
-                    @Suppress("DEPRECATION")
-                    telephonyManager.callState
-                }
-                currentPhoneState = when (callState) {
+                // Deprecated function provides state for any call, not for a specific subscription only
+                @Suppress("DEPRECATION")
+                currentPhoneState = when (telephonyManager.callState) {
                     TelephonyManager.CALL_STATE_IDLE -> "idle"
                     TelephonyManager.CALL_STATE_RINGING -> "ringing"
                     TelephonyManager.CALL_STATE_OFFHOOK -> "offhook"
