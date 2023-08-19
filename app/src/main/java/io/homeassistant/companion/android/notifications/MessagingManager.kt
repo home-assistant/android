@@ -1489,7 +1489,12 @@ class MessagingManager @Inject constructor(
                 context.packageManager.getLaunchIntentForPackage(uri.substringAfter(APP_PREFIX))
             }
             uri.startsWith(INTENT_PREFIX) -> {
-                Intent.parseUri(uri, Intent.URI_INTENT_SCHEME)
+                try {
+                    Intent.parseUri(uri, Intent.URI_INTENT_SCHEME)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unable to parse intent URI", e)
+                    null
+                }
             }
             uri.startsWith(SETTINGS_PREFIX) -> {
                 if (uri.substringAfter(SETTINGS_PREFIX) == NOTIFICATION_HISTORY) {
