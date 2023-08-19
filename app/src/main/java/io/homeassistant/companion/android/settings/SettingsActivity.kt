@@ -4,10 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.view.Menu
 import android.view.MenuItem
 import android.view.ViewGroup
-import androidx.appcompat.widget.SearchView
 import androidx.biometric.BiometricManager
 import androidx.fragment.app.commit
 import dagger.hilt.EntryPoint
@@ -50,17 +48,6 @@ class SettingsActivity : BaseActivity() {
         }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.menu_activity_settings, menu)
-
-        (menu.findItem(R.id.action_search)?.actionView as SearchView).apply {
-            queryHint = getString(commonR.string.search_sensors)
-            maxWidth = Integer.MAX_VALUE
-        }
-
-        return true
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         val entryPoint = EntryPointAccessors.fromActivity(this, SettingsFragmentFactoryEntryPoint::class.java)
         supportFragmentManager.fragmentFactory = entryPoint.getSettingsFragmentFactory()
@@ -93,6 +80,7 @@ class SettingsActivity : BaseActivity() {
                             } else {
                                 SettingsFragment::class.java
                             }
+
                         settingsNavigation == "notification_history" -> NotificationHistoryFragment::class.java
                         settingsNavigation?.startsWith("sensors/") == true -> SensorDetailFragment::class.java
                         settingsNavigation?.startsWith("tiles/") == true -> ManageTilesFragment::class.java
@@ -240,6 +228,7 @@ class SettingsActivity : BaseActivity() {
         }
     }
 
+    /** Used to inject classes before [onCreate] */
     @EntryPoint
     @InstallIn(ActivityComponent::class)
     interface SettingsFragmentFactoryEntryPoint {

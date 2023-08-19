@@ -3,16 +3,19 @@ package io.homeassistant.companion.android.settings.sensor
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.widget.Toolbar
 import androidx.compose.ui.platform.ComposeView
+import androidx.core.net.toUri
+import androidx.core.view.MenuHost
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -49,46 +52,15 @@ class SensorDetailFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setHasOptionsMenu(true)
-
         lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
                 launch {
-                    viewModel.serversShowExpand.collect { updateSensorToolbarMenu() }
+                    viewModel.serversShowExpand.collect { activity?.invalidateMenu() }
                 }
                 launch {
-                    viewModel.serversDoExpand.collect { updateSensorToolbarMenu() }
+                    viewModel.serversDoExpand.collect { activity?.invalidateMenu() }
                 }
             }
-        }
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onPrepareOptionsMenu(menu: Menu) {
-        super.onPrepareOptionsMenu(menu)
-        menu.setGroupVisible(R.id.senor_detail_toolbar_group, true)
-        menu.removeItem(R.id.action_filter)
-        menu.removeItem(R.id.action_search)
-
-        menu.setGroupVisible(R.id.sensor_detail_server_group, true)
-        menu.findItem(R.id.action_sensor_expand)?.let {
-            it.setOnMenuItemClickListener {
-                viewModel.setServersExpanded(true)
-                true
-            }
-        }
-        menu.findItem(R.id.action_sensor_collapse)?.let {
-            it.setOnMenuItemClickListener {
-                viewModel.setServersExpanded(false)
-                true
-            }
-        }
-        updateSensorToolbarMenu(menu)
-
-        menu.findItem(R.id.get_help)?.let {
-            val docsLink = viewModel.basicSensor?.docsLink ?: viewModel.sensorManager?.docsLink()
-            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(docsLink))
-            it.isVisible = docsLink != null // should always be true
         }
     }
 
@@ -114,7 +86,40 @@ class SensorDetailFragment : Fragment() {
 
     @SuppressLint("InlinedApi")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+        val menuHost: MenuHost = requireActivity()
+        menuHost.addMenuProvider(
+            object : MenuProvider {
+                override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                    menuInflater.inflate(R.menu.menu_fragment_sensordetail, menu)
+                }
+
+                override fun onPrepareMenu(menu: Menu) {
+                    menu.findItem(R.id.action_sensor_expand)?.let {
+                        it.isVisible = viewModel.serversShowExpand.value && !viewModel.serversDoExpand.value
+                    }
+                    menu.findItem(R.id.action_sensor_collapse)?.let {
+                        it.isVisible = viewModel.serversShowExpand.value && viewModel.serversDoExpand.value
+                    }
+                    menu.findItem(R.id.get_help)?.let {
+                        val docsLink = viewModel.basicSensor?.docsLink ?: viewModel.sensorManager?.docsLink()
+                        it.isVisible = docsLink != null
+                        if (docsLink != null) {
+                            it.intent = Intent(Intent.ACTION_VIEW, docsLink.toUri())
+                        }
+                    }
+                }
+
+                override fun onMenuItemSelected(menuItem: MenuItem) = when (menuItem.itemId) {
+                    R.id.action_sensor_expand, R.id.action_sensor_collapse -> {
+                        viewModel.setServersExpanded(menuItem.itemId == R.id.action_sensor_expand)
+                        true
+                    }
+                    else -> false
+                }
+            },
+            viewLifecycleOwner,
+            Lifecycle.State.RESUMED
+        )
 
         viewModel.permissionRequests.observe(viewLifecycleOwner) {
             if (it == null || it.permissions.isNullOrEmpty()) return@observe
@@ -161,21 +166,5 @@ class SensorDetailFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         activity?.title = null
-    }
-
-    private fun updateSensorToolbarMenu(menu: Menu? = null) {
-        val group = if (menu != null) {
-            menu
-        } else {
-            if (view == null || activity == null) return
-            val toolbar = activity?.findViewById<Toolbar>(R.id.toolbar) ?: return
-            toolbar.menu
-        }
-        group.findItem(R.id.action_sensor_expand)?.let {
-            it.isVisible = viewModel.serversShowExpand.value && !viewModel.serversDoExpand.value
-        }
-        group.findItem(R.id.action_sensor_collapse)?.let {
-            it.isVisible = viewModel.serversShowExpand.value && viewModel.serversDoExpand.value
-        }
     }
 }
