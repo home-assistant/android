@@ -29,6 +29,7 @@ import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.friendlyState
 import io.homeassistant.companion.android.common.data.integration.getIcon
+import io.homeassistant.companion.android.common.data.integration.isActive
 import io.homeassistant.companion.android.common.data.integration.isExecuting
 import io.homeassistant.companion.android.common.data.integration.onPressed
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
@@ -212,7 +213,16 @@ class EntityGridVehicleScreen(
                                 sizeDp = 64
                             }.toAndroidIconCompat()
                         )
-                            .setTint(CarColor.DEFAULT)
+                            .setTint(
+                                if (entity.isActive()) {
+                                    CarColor.createCustom(
+                                        carContext.getColor(R.color.colorYellow),
+                                        carContext.getColor(R.color.colorYellow)
+                                    )
+                                } else {
+                                    CarColor.DEFAULT
+                                }
+                            )
                             .build()
                     )
             }

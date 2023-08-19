@@ -746,3 +746,21 @@ fun <T> Entity<T>.isExecuting() = when (state) {
     "unlocking" -> true
     else -> false
 }
+
+fun <T> Entity<T>.isActive() = when {
+    (domain in listOf("button", "input_button", "event", "scene")) -> state != "unavailable"
+    (state == "unavailable" || state == "unknown") -> false
+    (state == "off" && domain != "alert") -> false
+    (domain == "alarm_control_panel") -> state != "disarmed"
+    (domain == "alert") -> state != "idle"
+    (domain == "cover") -> state != "closed"
+    (domain in listOf("device_tracker", "person")) -> state != "not_home"
+    (domain == "lock") -> state != "locked"
+    (domain == "media_player") -> state != "standby"
+    (domain == "vacuum") -> state !in listOf("idle", "docked", "paused")
+    (domain == "plant") -> state == "problem"
+    (domain == "group") -> state in listOf("on", "home", "open", "locked", "problem")
+    (domain == "timer") -> state == "active"
+    (domain == "camera") -> state == "streaming"
+    else -> true
+}
