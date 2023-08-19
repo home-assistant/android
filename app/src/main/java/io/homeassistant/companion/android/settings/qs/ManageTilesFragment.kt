@@ -15,6 +15,7 @@ import androidx.fragment.app.viewModels
 import com.google.accompanist.themeadapter.material.MdcTheme
 import com.mikepenz.iconics.typeface.IIcon
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.settings.qs.views.ManageTilesView
 import io.homeassistant.companion.android.util.icondialog.IconDialog
@@ -25,10 +26,7 @@ class ManageTilesFragment : Fragment() {
 
     companion object {
         private const val TAG = "TileFragment"
-        val validDomains = listOf(
-            "automation", "button", "cover", "fan", "humidifier", "input_boolean", "input_button", "light",
-            "lock", "media_player", "remote", "siren", "scene", "script", "switch"
-        )
+        val validDomains = EntityExt.APP_PRESS_ACTION_DOMAINS
     }
 
     val viewModel: ManageTilesViewModel by viewModels()

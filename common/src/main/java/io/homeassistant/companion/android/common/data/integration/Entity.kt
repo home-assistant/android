@@ -42,6 +42,17 @@ object EntityExt {
     const val LIGHT_SUPPORT_BRIGHTNESS_DEPR = 1
     const val LIGHT_SUPPORT_COLOR_TEMP_DEPR = 2
     const val ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY = 2
+
+    val DOMAINS_PRESS = listOf("button", "input_button")
+    val DOMAINS_TOGGLE = listOf(
+        "automation", "cover", "fan", "humidifier", "input_boolean", "light", "lock",
+        "media_player", "remote", "siren", "switch"
+    )
+
+    val APP_PRESS_ACTION_DOMAINS = DOMAINS_PRESS + DOMAINS_TOGGLE + listOf(
+        "scene",
+        "script"
+    )
 }
 
 val <T> Entity<T>.domain: String
@@ -601,14 +612,10 @@ suspend fun <T> Entity<T>.onPressed(
         "lock" -> {
             if (state == "unlocked") "lock" else "unlock"
         }
-        "cover" -> {
-            if (state == "open") "close_cover" else "open_cover"
-        }
         "alarm_control_panel" -> {
             if (state != "disarmed") "alarm_disarm" else "alarm_arm_away"
         }
-        "button",
-        "input_button" -> "press"
+        in EntityExt.DOMAINS_PRESS -> "press"
         "fan",
         "input_boolean",
         "script",
@@ -621,6 +628,36 @@ suspend fun <T> Entity<T>.onPressed(
 
     integrationRepository.callService(
         domain = this.domain,
+        service = service,
+        serviceData = hashMapOf("entity_id" to entityId)
+    )
+}
+
+/**
+ * Execute an app press action like [Entity.onPressed], but without a current state if possible to
+ * speed up the execution.
+ * @throws IntegrationException on network errors
+ */
+suspend fun onEntityPressedWithoutState(
+    entityId: String,
+    integrationRepository: IntegrationRepository
+) {
+    val domain = entityId.split(".")[0]
+    val service = when (domain) {
+        "lock" -> {
+            val lockEntity = try {
+                integrationRepository.getEntity(entityId)
+            } catch (e: Exception) {
+                null
+            }
+            if (lockEntity?.state == "locked") "unlock" else "lock"
+        }
+        in EntityExt.DOMAINS_PRESS -> "press"
+        in EntityExt.DOMAINS_TOGGLE -> "toggle"
+        else -> "turn_on"
+    }
+    integrationRepository.callService(
+        domain = domain,
         service = service,
         serviceData = hashMapOf("entity_id" to entityId)
     )

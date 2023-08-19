@@ -224,7 +224,7 @@
     <string name="entity_attribute_checkbox">Append attribute value</string>
     <string name="entity_id">Entity ID</string>
     <string name="entity_id_name">Entity ID: %1$s</string>
-    <string name="entity_widget_desc">Current state and attribute of any entity</string>
+    <string name="entity_widget_desc">View any entity\'s current state and toggle it</string>
     <string name="error_auth_revoked">It appears that your authorization was revoked, please reconnect to Home Assistant.</string>
     <string name="error_connection_failed">Unable to connect to Home Assistant.</string>
     <string name="error_loading_entities">Error loading entities</string>
@@ -956,6 +956,8 @@
     <string name="widget_spinner_server">Server:</string>
     <string name="widget_state_separator_label">State and attribute separator:</string>
     <string name="widget_static_image_description">Entity state</string>
+    <string name="widget_tap_action_label">Tap action:</string>
+    <string name="widget_tap_action_toggle">Toggle</string>
     <string name="widget_template_error">Unable to render the template</string>
     <string name="widget_text_hint_label">Label</string>
     <string name="widget_text_hint_service_data">Entity ID</string>

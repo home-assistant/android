@@ -10,9 +10,9 @@ import android.os.VibratorManager
 import android.util.Log
 import androidx.core.content.getSystemService
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.data.integration.onEntityPressedWithoutState
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.home.HomePresenterImpl
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
@@ -46,30 +46,10 @@ class TileActionReceiver : BroadcastReceiver() {
                     }
                 }
 
-                val domain = entityId.split(".")[0]
-                val serviceName = when (domain) {
-                    "button", "input_button" -> "press"
-                    "lock" -> {
-                        val lockEntity = try {
-                            serverManager.integrationRepository().getEntity(entityId)
-                        } catch (e: Exception) {
-                            null
-                        }
-                        if (lockEntity?.state == "locked") {
-                            "unlock"
-                        } else {
-                            "lock"
-                        }
-                    }
-                    in HomePresenterImpl.toggleDomains -> "toggle"
-                    else -> "turn_on"
-                }
-
                 try {
-                    serverManager.integrationRepository().callService(
-                        domain,
-                        serviceName,
-                        hashMapOf("entity_id" to entityId)
+                    onEntityPressedWithoutState(
+                        entityId = entityId,
+                        integrationRepository = serverManager.integrationRepository()
                     )
                 } catch (e: Exception) {
                     Log.e(TAG, "Cannot call tile service", e)
