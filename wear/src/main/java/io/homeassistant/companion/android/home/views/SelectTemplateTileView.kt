@@ -40,6 +40,7 @@ fun SelectTemplateTileView(
                 item {
                     ListHeader(id = commonR.string.template_tile_select)
                 }
+                // TODO: make sure this refreshes whenever a new Template tile is added
                 if (templateTileIds.isEmpty()) {
                     item {
                         Text(stringResource(commonR.string.template_tile_no_tiles_yet))
@@ -57,8 +58,6 @@ fun SelectTemplateTileView(
                         )
                     }
                 }
-
-                // TODO: button for adding a new Template tile
             }
         }
     }

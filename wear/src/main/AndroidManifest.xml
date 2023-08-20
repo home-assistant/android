@@ -99,6 +99,17 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".tiles.OpenTemplateTileSettingsActivity"
+            android:exported="true"
+            android:excludeFromRecents="true">
+            <intent-filter>
+                <action android:name="ConfigTemplateTile" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="com.google.android.clockwork.tiles.category.PROVIDER_CONFIG" />
+            </intent-filter>
+        </activity>
+
         <!-- To show confirmations and failures -->
         <activity android:name="androidx.wear.activity.ConfirmationActivity" />
 

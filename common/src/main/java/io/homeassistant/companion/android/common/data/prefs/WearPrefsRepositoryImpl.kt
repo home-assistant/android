@@ -162,7 +162,7 @@ class WearPrefsRepositoryImpl @Inject constructor(
         } ?: emptyMap()
     }
 
-    override suspend fun getTemplateTile(tileId: Int?): TemplateTileConfig? {
+    override suspend fun getTemplateTileAndSaveTileId(tileId: Int?): TemplateTileConfig? {
         val tileIdToTemplatesMap = getAllTemplateTiles()
         return if (null in tileIdToTemplatesMap && tileId !in tileIdToTemplatesMap) {
             // if there are Templates with an unknown (null) tileId key from a previous installation,
@@ -171,7 +171,10 @@ class WearPrefsRepositoryImpl @Inject constructor(
             setTemplateTile(tileId, templateData.template, templateData.refreshInterval)
             templateData
         } else {
-            val templateData = tileIdToTemplatesMap[tileId]
+            var templateData = tileIdToTemplatesMap[tileId]
+            if (templateData == null) {
+                templateData = setTemplateTile(tileId, "", 0)
+            }
             templateData
         }
     }
@@ -184,9 +187,11 @@ class WearPrefsRepositoryImpl @Inject constructor(
         localStorage.putString(PREF_TILE_TEMPLATES, jsonStr)
     }
 
-    override suspend fun setTemplateTile(tileId: Int?, content: String, refreshInterval: Int) {
-        val map = getAllTemplateTiles() + mapOf(tileId to TemplateTileConfig(content, refreshInterval))
+    override suspend fun setTemplateTile(tileId: Int?, content: String, refreshInterval: Int): TemplateTileConfig {
+        val templateTileConfig = TemplateTileConfig(content, refreshInterval)
+        val map = getAllTemplateTiles() + mapOf(tileId to templateTileConfig)
         setAllTemplateTiles(map)
+        return templateTileConfig
     }
 
     override suspend fun removeTemplateTile(tileId: Int?): TemplateTileConfig? {

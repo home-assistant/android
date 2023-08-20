@@ -19,6 +19,7 @@ import androidx.wear.protolayout.LayoutElementBuilders.LayoutElement
 import androidx.wear.protolayout.ResourceBuilders
 import androidx.wear.protolayout.ResourceBuilders.Resources
 import androidx.wear.protolayout.TimelineBuilders.Timeline
+import androidx.wear.tiles.EventBuilders
 import androidx.wear.tiles.RequestBuilders.ResourcesRequest
 import androidx.wear.tiles.RequestBuilders.TileRequest
 import androidx.wear.tiles.TileBuilders.Tile
@@ -34,6 +35,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.guava.future
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -92,6 +94,33 @@ class TemplateTile : TileService() {
                 .build()
         }
 
+    override fun onTileAddEvent(requestParams: EventBuilders.TileAddEvent) {
+        serviceScope.launch {
+            /**
+             * When the app is updated from an older version (which only supported a single Template Tile),
+             * and the user is adding a new Template Tile, we can't tell for sure if it's the 1st or 2nd Tile.
+             * Even though we may have the Template tile config stored in the prefs, it doesn't guarantee that
+             *   the tile was actually added to the Tiles carousel.
+             * The [WearPrefsRepositoryImpl::getTemplateTileAndSaveTileId] method will handle both of the following cases:
+             * 1. There was no Tile added, but there was a Template tile config stored in the prefs.
+             *    In this case, the stored config will be associated to the new tileId.
+             * 2. There was a single Tile added, and there was a Template tile config stored in the prefs.
+             *    If there was a Tile update since updating the app, the tileId will be already
+             *    associated to the config, because it also calls [getTemplateTileAndSaveTileId].
+             *    If there was no Tile update yet, the new Tile will "steal" the config from the existing Tile,
+             *    and the old Tile will behave as it is the new Tile. This is needed because
+             *    we don't know if it's the 1st or 2nd Tile.
+             */
+            wearPrefsRepository.getTemplateTileAndSaveTileId(requestParams.tileId)
+        }
+    }
+
+    override fun onTileRemoveEvent(requestParams: EventBuilders.TileRemoveEvent) {
+        serviceScope.launch {
+            wearPrefsRepository.removeTemplateTile(requestParams.tileId)
+        }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         // Cleans up the coroutine
@@ -120,7 +149,7 @@ class TemplateTile : TileService() {
 
     private suspend fun getTemplateTileConfig(tileId: Int): TemplateTileConfig {
         // TODO: handle null
-        return wearPrefsRepository.getTemplateTile(tileId)!!
+        return wearPrefsRepository.getTemplateTileAndSaveTileId(tileId)!!
     }
 
     fun layout(renderedText: String): LayoutElement = Box.Builder().apply {

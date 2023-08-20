@@ -10,9 +10,9 @@ interface WearPrefsRepository {
     suspend fun getShowShortcutText(): Boolean
     suspend fun setShowShortcutTextEnabled(enabled: Boolean)
     suspend fun getAllTemplateTiles(): Map<Int?, TemplateTileConfig>
-    suspend fun getTemplateTile(tileId: Int?): TemplateTileConfig?
+    suspend fun getTemplateTileAndSaveTileId(tileId: Int?): TemplateTileConfig?
     suspend fun setAllTemplateTiles(templateTiles: Map<Int?, TemplateTileConfig>)
-    suspend fun setTemplateTile(tileId: Int?, content: String, refreshInterval: Int)
+    suspend fun setTemplateTile(tileId: Int?, content: String, refreshInterval: Int): TemplateTileConfig
     suspend fun removeTemplateTile(tileId: Int?): TemplateTileConfig?
     suspend fun getWearHapticFeedback(): Boolean
     suspend fun setWearHapticFeedback(enabled: Boolean)
