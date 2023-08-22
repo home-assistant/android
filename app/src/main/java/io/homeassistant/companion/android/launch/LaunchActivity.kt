@@ -29,6 +29,7 @@ import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.onboarding.getMessagingToken
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.settings.SettingViewModel
+import io.homeassistant.companion.android.settings.server.ServerChooserFragment
 import io.homeassistant.companion.android.util.UrlUtil
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.CoroutineScope
@@ -89,6 +90,20 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                 Class.forName("androidx.car.app.activity.CarAppActivity")
             ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             startActivity(carIntent)
+        } else if (presenter.hasMultipleServers() && intent.data?.path?.isNotBlank() == true) {
+            supportFragmentManager.setFragmentResultListener(ServerChooserFragment.RESULT_KEY, this) { _, bundle ->
+                val serverId = if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
+                    bundle.getInt(ServerChooserFragment.RESULT_SERVER)
+                } else {
+                    null
+                }
+                supportFragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)
+                startActivity(WebViewActivity.newInstance(this, intent.data?.path, serverId))
+                finish()
+                overridePendingTransition(0, 0) // Disable activity start/stop animation
+            }
+            ServerChooserFragment().show(supportFragmentManager, ServerChooserFragment.TAG)
+            return
         } else {
             startActivity(WebViewActivity.newInstance(this, intent.data?.path))
         }

@@ -49,6 +49,8 @@ abstract class LaunchPresenterBase(
         }
     }
 
+    override fun hasMultipleServers(): Boolean = serverManager.defaultServers.size > 1
+
     override fun onFinish() {
         mainScope.cancel()
     }
