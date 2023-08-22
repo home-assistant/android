@@ -1,5 +1,5 @@
 [versions]
-accompanist = "0.30.1"
+accompanist = "0.32.0"
 activity-compose = "1.7.2"
 androidBeaconLibrary = "2.19.6"
 androidJunit5 = "1.9.3.0"
