@@ -748,6 +748,7 @@ fun <T> Entity<T>.isExecuting() = when (state) {
 }
 
 fun <T> Entity<T>.isActive() = when {
+    // https://github.com/home-assistant/frontend/blob/dev/src/common/entity/state_active.ts
     (domain in listOf("button", "input_button", "event", "scene")) -> state != "unavailable"
     (state == "unavailable" || state == "unknown") -> false
     (state == "off" && domain != "alert") -> false
