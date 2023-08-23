@@ -148,6 +148,8 @@ class WidgetDynamicFieldAdapter(
                 // Set text to empty string to prevent a recycled, incorrect value
                 autoCompleteTextView.setText("")
             }
+        } else {
+            autoCompleteTextView.setText("")
         }
 
         // Have the text view store its text for later recall
