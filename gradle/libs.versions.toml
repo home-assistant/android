@@ -23,7 +23,7 @@ converterJackson = "2.9.0"
 coreKtx = "1.10.1"
 cronet-embedded = "113.5672.61"
 emojiJava = "5.1.1"
-firebase-bom = "32.2.0"
+firebase-bom = "32.2.2"
 firebaseAppdistributionGradle = "4.0.0"
 fragment-ktx = "1.6.1"
 googleServices = "4.3.15"
@@ -40,7 +40,7 @@ ktlint = "11.5.1"
 lifecycle = "2.6.1"
 loggingInterceptor = "4.11.0"
 material = "1.9.0"
-media3 = "1.1.0"
+media3 = "1.1.1"
 navigation-compose = "2.7.1"
 okhttp = "4.11.0"
 picasso = "2.8"
@@ -48,16 +48,17 @@ play-services-threadnetwork = "16.0.0"
 play-services-home = "16.0.0"
 play-services-location = "21.0.1"
 play-services-wearable = "18.0.0"
-preference-ktx = "1.2.0"
+preference-ktx = "1.2.1"
 recyclerview = "1.3.1"
 reorderable = "0.9.6"
 retrofit = "2.9.0"
 room = "2.5.2"
 sentry-android = "6.28.0"
 watchfaceComplicationsDataSourceKtx = "1.1.1"
-wear = "1.2.0"
+wear = "1.3.0"
 wear-compose-foundation = "1.2.0"
-wear-tiles = "1.2.0-alpha07"
+wear-protolayout = "1.0.0"
+wear-tiles = "1.2.0"
 wearPhoneInteractions = "1.0.1"
 wearInput = "1.2.0-alpha02"
 webkit = "1.7.0"
@@ -152,10 +153,13 @@ wear-compose-material = { module = "androidx.wear.compose:compose-material", ver
 wear-compose-navigation = { module = "androidx.wear.compose:compose-navigation", version.ref = "wear-compose-foundation" }
 wear-phone-interactions = { module = "androidx.wear:wear-phone-interactions", version.ref = "wearPhoneInteractions" }
 wear-input = { module = "androidx.wear:wear-input", version.ref = "wearInput" }
+wear-protolayout-expression = { module = "androidx.wear.protolayout:protolayout-expression", version.ref = "wear-protolayout" }
+wear-protolayout-main = { module = "androidx.wear.protolayout:protolayout", version.ref = "wear-protolayout" }
+wear-protolayout-material = { module = "androidx.wear.protolayout:protolayout-material", version.ref = "wear-protolayout" }
 wear-remote-interactions = { module = "androidx.wear:wear-remote-interactions", version.ref = "wear-remote-interactions" }
-wear-tiles-material = { module = "androidx.wear.tiles:tiles-material", version.ref = "wear-tiles" }
 wear-tiles = { module = "androidx.wear.tiles:tiles", version.ref = "wear-tiles" }
 webkit = { module = "androidx.webkit:webkit", version.ref = "webkit" }
 
 [bundles]
 media3 = ["media3-exoplayer", "media3-exoplayer-hls", "media3-ui"]
+wear-tiles = ["wear-tiles", "wear-protolayout-main", "wear-protolayout-expression", "wear-protolayout-material"]
