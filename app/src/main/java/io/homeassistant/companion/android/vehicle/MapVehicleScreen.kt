@@ -24,11 +24,13 @@ import com.mikepenz.iconics.utils.sizeDp
 import com.mikepenz.iconics.utils.toAndroidIconCompat
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.friendlyState
 import io.homeassistant.companion.android.common.data.integration.getIcon
+import io.homeassistant.companion.android.common.data.integration.isActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import io.homeassistant.companion.android.common.R as commonR
@@ -103,7 +105,16 @@ class MapVehicleScreen(
                                         sizeDp = 64
                                     }.toAndroidIconCompat()
                             )
-                                .setTint(CarColor.DEFAULT)
+                                .setTint(
+                                    if (pair.first.isActive() && pair.first.domain in EntityExt.STATE_COLORED_DOMAINS) {
+                                        CarColor.createCustom(
+                                            carContext.getColor(R.color.colorYellow),
+                                            carContext.getColor(R.color.colorYellow)
+                                        )
+                                    } else {
+                                        CarColor.DEFAULT
+                                    }
+                                )
                                 .build()
                         )
                         .setOnClickListener {

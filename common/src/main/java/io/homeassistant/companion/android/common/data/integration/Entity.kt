@@ -53,6 +53,38 @@ object EntityExt {
         "scene",
         "script"
     )
+
+    val STATE_COLORED_DOMAINS = listOf(
+        "alarm_control_panel",
+        "alert",
+        "automation",
+        "binary_sensor",
+        "calendar",
+        "camera",
+        "climate",
+        "cover",
+        "device_tracker",
+        "fan",
+        "group",
+        "humidifier",
+        "input_boolean",
+        "lawn_mower",
+        "light",
+        "lock",
+        "media_player",
+        "person",
+        "plant",
+        "remote",
+        "schedule",
+        "script",
+        "siren",
+        "sun",
+        "switch",
+        "timer",
+        "update",
+        "vacuum",
+        "water_heater"
+    )
 }
 
 val <T> Entity<T>.domain: String
@@ -745,4 +777,24 @@ fun <T> Entity<T>.isExecuting() = when (state) {
     "pending" -> true
     "unlocking" -> true
     else -> false
+}
+
+fun <T> Entity<T>.isActive() = when {
+    // https://github.com/home-assistant/frontend/blob/dev/src/common/entity/state_active.ts
+    (domain in listOf("button", "input_button", "event", "scene")) -> state != "unavailable"
+    (state == "unavailable" || state == "unknown") -> false
+    (state == "off" && domain != "alert") -> false
+    (domain == "alarm_control_panel") -> state != "disarmed"
+    (domain == "alert") -> state != "idle"
+    (domain == "cover") -> state != "closed"
+    (domain in listOf("device_tracker", "person")) -> state != "not_home"
+    (domain == "lawn_mower") -> state in listOf("mowing", "error")
+    (domain == "lock") -> state != "locked"
+    (domain == "media_player") -> state != "standby"
+    (domain == "vacuum") -> state !in listOf("idle", "docked", "paused")
+    (domain == "plant") -> state == "problem"
+    (domain == "group") -> state in listOf("on", "home", "open", "locked", "problem")
+    (domain == "timer") -> state == "active"
+    (domain == "camera") -> state == "streaming"
+    else -> true
 }
