@@ -9,13 +9,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
-import androidx.wear.compose.material.ScalingLazyListState
 import androidx.wear.compose.material.Text
-import androidx.wear.compose.material.rememberScalingLazyListState
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.theme.WearAppTheme
@@ -27,7 +26,7 @@ import io.homeassistant.companion.android.common.R as commonR
 fun SensorsView(
     onClickSensorManager: (SensorManager) -> Unit
 ) {
-    val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
+    val scalingLazyListState = rememberScalingLazyListState()
 
     WearAppTheme {
         Scaffold(
