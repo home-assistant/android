@@ -93,14 +93,18 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             .setView(fieldKeyInput)
             .setNegativeButton(android.R.string.cancel) { _, _ -> }
             .setPositiveButton(android.R.string.ok) { _, _ ->
+                if (dynamicFields.any { it.field == binding.widgetTextConfigService.text.toString() }) return@setPositiveButton
+
+                val position = dynamicFields.size
                 dynamicFields.add(
+                    position,
                     ServiceFieldBinder(
                         binding.widgetTextConfigService.text.toString(),
                         fieldKeyInput.text.toString()
                     )
                 )
 
-                dynamicFieldAdapter.notifyDataSetChanged()
+                dynamicFieldAdapter.notifyItemInserted(position)
             }
             .show()
     }
@@ -134,6 +138,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                     Log.d(TAG, "Fields applicable to this service: $fields")
 
                     val existingServiceData = mutableMapOf<String, Any?>()
+                    val addedFields = mutableListOf<String>()
                     buttonWidgetDao.get(appWidgetId)?.let { buttonWidget ->
                         if (
                             buttonWidget.serverId != selectedServerId ||
@@ -146,6 +151,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                         for (item in dbMap) {
                             val value = item.value.toString().replace("[", "").replace("]", "") + if (item.key == "entity_id") ", " else ""
                             existingServiceData[item.key] = value.ifEmpty { null }
+                            addedFields.add(item.key)
                         }
                     }
 
@@ -164,6 +170,10 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                         } else {
                             dynamicFields.add(ServiceFieldBinder(serviceText, fieldKey, existingServiceData[fieldKey]))
                         }
+                    }
+                    addedFields.minus("entity_id").minus(fieldKeys).forEach { extraFieldKey ->
+                        Log.d(TAG, "Creating a text input box for extra $extraFieldKey")
+                        dynamicFields.add(ServiceFieldBinder(serviceText, extraFieldKey, existingServiceData[extraFieldKey]))
                     }
 
                     dynamicFieldAdapter.notifyDataSetChanged()
