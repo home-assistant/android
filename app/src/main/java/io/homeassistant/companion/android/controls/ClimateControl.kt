@@ -12,7 +12,6 @@ import android.service.controls.templates.TemperatureControlTemplate
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.integration.friendlyState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -40,7 +39,6 @@ object ClimateControl : HaControl {
         area: AreaRegistryResponse?,
         baseUrl: String?
     ): Control.StatefulBuilder {
-        control.setStatusText(entity.friendlyState(context))
         val minValue = (entity.attributes["min_temp"] as? Number)?.toFloat() ?: 0f
         val maxValue = (entity.attributes["max_temp"] as? Number)?.toFloat() ?: 100f
         var currentValue = (entity.attributes["temperature"] as? Number)?.toFloat() ?: (

@@ -14,7 +14,6 @@ import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.integration.friendlyState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -35,8 +34,6 @@ object CameraControl : HaControl {
         area: AreaRegistryResponse?,
         baseUrl: String?
     ): Control.StatefulBuilder {
-        control.setStatusText(entity.friendlyState(context))
-
         val image = if (baseUrl != null && (entity.attributes["entity_picture"] as? String)?.isNotBlank() == true) {
             getThumbnail(baseUrl + entity.attributes["entity_picture"] as String)
         } else {
