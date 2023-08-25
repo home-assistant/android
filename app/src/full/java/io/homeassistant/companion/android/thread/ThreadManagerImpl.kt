@@ -12,6 +12,7 @@ import com.google.android.gms.threadnetwork.ThreadBorderAgent
 import com.google.android.gms.threadnetwork.ThreadNetwork
 import com.google.android.gms.threadnetwork.ThreadNetworkCredentials
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetResponse
 import kotlinx.coroutines.CoroutineScope
@@ -23,12 +24,13 @@ import kotlin.coroutines.suspendCoroutine
 
 class ThreadManagerImpl @Inject constructor(
     private val serverManager: ServerManager,
-    private val packageManager: PackageManager
+    private val packageManager: PackageManager,
+    private val integrationRepository: IntegrationRepository
 ) : ThreadManager {
     companion object {
         private const val TAG = "ThreadManagerImpl"
 
-        // ID is a placeholder while we wait for Google to remove the requirement to provide one
+        // ID is a placeholder used in previous app versions / for older Home Assistant versions
         private const val BORDER_AGENT_ID = "0000000000000001"
     }
 
@@ -62,8 +64,12 @@ class ThreadManagerImpl @Inject constructor(
 
         return if (deviceThreadIntent == null && coreThreadDataset != null) {
             try {
-                importDatasetFromServer(context, coreThreadDataset.datasetId, serverId)
+                importDatasetFromServer(context, coreThreadDataset.datasetId, coreThreadDataset.preferredBorderAgentId, serverId)
+                val localIds = integrationRepository.getThreadBorderAgentIds()
+                integrationRepository.setThreadBorderAgentIds(localIds + (coreThreadDataset.preferredBorderAgentId ?: BORDER_AGENT_ID))
+
                 Log.d(TAG, "Thread import to device completed")
+
                 ThreadManager.SyncResult.OnlyOnServer(imported = true)
             } catch (e: Exception) {
                 Log.e(TAG, "Thread import to device failed", e)
@@ -85,11 +91,31 @@ class ThreadManagerImpl @Inject constructor(
                     if (appIsDevicePreferred) {
                         // Update or remove the device preferred credential to match core state
                         try {
+                            val localIds = integrationRepository.getThreadBorderAgentIds().toMutableList()
+                            if (localIds.isEmpty()) { // Prefers something from HA, must've been added before BA ID logic
+                                localIds += BORDER_AGENT_ID
+                            }
+
                             updated = if (coreThreadDataset.source != "Google") { // Credential from HA, update
-                                importDatasetFromServer(context, coreThreadDataset.datasetId, serverId)
+                                localIds.filter { it != coreThreadDataset.preferredBorderAgentId }.forEach { baId ->
+                                    try {
+                                        deleteThreadCredential(context, baId)
+                                    } catch (e: Exception) {
+                                        Log.e(TAG, "Unable to delete credential for border agent ID $baId", e)
+                                    }
+                                }
+                                importDatasetFromServer(context, coreThreadDataset.datasetId, coreThreadDataset.preferredBorderAgentId, serverId)
+                                integrationRepository.setThreadBorderAgentIds(listOf(coreThreadDataset.preferredBorderAgentId ?: BORDER_AGENT_ID))
                                 true
-                            } else { // Imported from another app, so this shouldn't be managed by HA
-                                deleteThreadCredential(context)
+                            } else { // Core prefers imported from other app, this shouldn't be managed by HA
+                                localIds.forEach { baId ->
+                                    try {
+                                        deleteThreadCredential(context, baId)
+                                    } catch (e: Exception) {
+                                        Log.e(TAG, "Unable to delete credential for border agent ID $baId", e)
+                                    }
+                                }
+                                integrationRepository.setThreadBorderAgentIds(emptyList())
                                 false
                             }
                             Log.d(TAG, "Thread update device completed")
@@ -120,10 +146,21 @@ class ThreadManagerImpl @Inject constructor(
     override suspend fun getPreferredDatasetFromServer(serverId: Int): ThreadDatasetResponse? =
         getDatasetsFromServer(serverId)?.firstOrNull { it.preferred }
 
-    override suspend fun importDatasetFromServer(context: Context, datasetId: String, serverId: Int) {
+    override suspend fun importDatasetFromServer(
+        context: Context,
+        datasetId: String,
+        preferredBorderAgentId: String?,
+        serverId: Int
+    ) {
         val tlv = serverManager.webSocketRepository(serverId).getThreadDatasetTlv(datasetId)?.tlvAsByteArray
         if (tlv != null) {
-            val threadBorderAgent = ThreadBorderAgent.newBuilder(BORDER_AGENT_ID.toByteArray()).build()
+            val borderAgentId = (
+                preferredBorderAgentId ?: run {
+                    Log.w(TAG, "Adding dataset with placeholder border agent ID")
+                    BORDER_AGENT_ID
+                }
+                ).toByteArray()
+            val threadBorderAgent = ThreadBorderAgent.newBuilder(borderAgentId).build()
             val threadNetworkCredentials = ThreadNetworkCredentials.fromActiveOperationalDataset(tlv)
             suspendCoroutine { cont ->
                 ThreadNetwork.getClient(context).addCredentials(threadBorderAgent, threadNetworkCredentials)
@@ -189,9 +226,8 @@ class ThreadManagerImpl @Inject constructor(
         return null
     }
 
-    private suspend fun deleteThreadCredential(context: Context) = suspendCoroutine { cont ->
-        // This only works because we currently always use the same border agent ID
-        val threadBorderAgent = ThreadBorderAgent.newBuilder(BORDER_AGENT_ID.toByteArray()).build()
+    private suspend fun deleteThreadCredential(context: Context, borderAgentId: String) = suspendCoroutine { cont ->
+        val threadBorderAgent = ThreadBorderAgent.newBuilder(borderAgentId.toByteArray()).build()
         ThreadNetwork.getClient(context)
             .removeCredentials(threadBorderAgent)
             .addOnSuccessListener { cont.resume(true) }

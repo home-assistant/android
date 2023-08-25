@@ -48,10 +48,16 @@ interface ThreadManager {
     /**
      * Import a Thread dataset from the server to this device.
      * @param datasetId The dataset ID as provided by the server
+     * @param preferredBorderAgentId The ID for the border agent that provides the dataset
      * @throws Exception if a preferred dataset exists on the server, but it wasn't possible to
      * import it
      */
-    suspend fun importDatasetFromServer(context: Context, datasetId: String, serverId: Int)
+    suspend fun importDatasetFromServer(
+        context: Context,
+        datasetId: String,
+        preferredBorderAgentId: String?,
+        serverId: Int
+    )
 
     /**
      * Start a flow to get the preferred Thread dataset from this device to export to the server.

@@ -68,6 +68,12 @@ interface IntegrationRepository {
     suspend fun getLastUsedPipelineSttSupport(): Boolean
 
     suspend fun setLastUsedPipeline(pipelineId: String, supportsStt: Boolean)
+
+    /** @return List of border agent IDs added from the server to this device */
+    suspend fun getThreadBorderAgentIds(): List<String>
+
+    /** Set the list of border agent IDs added from the server to this device */
+    suspend fun setThreadBorderAgentIds(ids: List<String>)
 }
 
 @AssistedFactory

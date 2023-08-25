@@ -64,6 +64,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         private const val PREF_SEC_WARNING_NEXT = "sec_warning_last"
         private const val PREF_LAST_USED_PIPELINE_ID = "last_used_pipeline"
         private const val PREF_LAST_USED_PIPELINE_STT = "last_used_pipeline_stt"
+        private const val PREF_THREAD_BORDER_AGENT_IDS = "thread_border_agent_ids"
         private const val TAG = "IntegrationRepository"
         private const val RATE_LIMIT_URL = BuildConfig.RATE_LIMIT_URL
 
@@ -169,6 +170,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         localStorage.remove("${serverId}_$PREF_SEC_WARNING_NEXT")
         localStorage.remove("${serverId}_$PREF_LAST_USED_PIPELINE_ID")
         localStorage.remove("${serverId}_$PREF_LAST_USED_PIPELINE_STT")
+        // TODO Thread
         // app version and push token is device-specific
     }
 
@@ -563,6 +565,13 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     override suspend fun setLastUsedPipeline(pipelineId: String, supportsStt: Boolean) {
         localStorage.putString("${serverId}_$PREF_LAST_USED_PIPELINE_ID", pipelineId)
         localStorage.putBoolean("${serverId}_$PREF_LAST_USED_PIPELINE_STT", supportsStt)
+    }
+
+    override suspend fun getThreadBorderAgentIds(): List<String> =
+        localStorage.getStringSet("${serverId}_$PREF_THREAD_BORDER_AGENT_IDS").orEmpty().toList()
+
+    override suspend fun setThreadBorderAgentIds(ids: List<String>) {
+        localStorage.putStringSet("${serverId}_$PREF_THREAD_BORDER_AGENT_IDS", ids.toSet())
     }
 
     override suspend fun getEntities(): List<Entity<Any>>? {
