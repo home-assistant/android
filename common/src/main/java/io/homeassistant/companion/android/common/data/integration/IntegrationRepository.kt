@@ -69,11 +69,17 @@ interface IntegrationRepository {
 
     suspend fun setLastUsedPipeline(pipelineId: String, supportsStt: Boolean)
 
-    /** @return List of border agent IDs added from the server to this device */
+    /** @return List of border agent IDs added to this device from the server */
     suspend fun getThreadBorderAgentIds(): List<String>
 
-    /** Set the list of border agent IDs added from the server to this device */
+    /** Set the list of border agent IDs added to this device from the server */
     suspend fun setThreadBorderAgentIds(ids: List<String>)
+
+    /** @return List of border agent IDs added to this device from a server that no longer exists */
+    suspend fun getOrphanedThreadBorderAgentIds(): List<String>
+
+    /** Clear the list of orphaned border agent IDs, to use after removing them from storage */
+    suspend fun clearOrphanedThreadBorderAgentIds()
 }
 
 @AssistedFactory

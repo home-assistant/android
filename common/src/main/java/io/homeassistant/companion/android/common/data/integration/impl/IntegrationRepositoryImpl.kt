@@ -56,6 +56,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
         private const val PREF_APP_VERSION = "app_version" // Note: _not_ server-specific
         private const val PREF_PUSH_TOKEN = "push_token" // Note: _not_ server-specific
+        private const val PREF_ORPHANED_THREAD_BORDER_AGENT_IDS = "orphaned_thread_border_agent_ids" // Note: _not_ server-specific
 
         private const val PREF_CHECK_SENSOR_REGISTRATION_NEXT = "sensor_reg_last"
         private const val PREF_SESSION_TIMEOUT = "session_timeout"
@@ -170,7 +171,15 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         localStorage.remove("${serverId}_$PREF_SEC_WARNING_NEXT")
         localStorage.remove("${serverId}_$PREF_LAST_USED_PIPELINE_ID")
         localStorage.remove("${serverId}_$PREF_LAST_USED_PIPELINE_STT")
-        // TODO Thread
+
+        // Thread credentials are managed in the app module and can't be deleted now, so store them
+        val threadBorderAgentIds = getThreadBorderAgentIds()
+        if (threadBorderAgentIds.any()) {
+            val orphanedBorderAgentIds = localStorage.getStringSet(PREF_ORPHANED_THREAD_BORDER_AGENT_IDS).orEmpty()
+            localStorage.putStringSet(PREF_ORPHANED_THREAD_BORDER_AGENT_IDS, orphanedBorderAgentIds + threadBorderAgentIds.toSet())
+        }
+        localStorage.remove("${serverId}_$PREF_THREAD_BORDER_AGENT_IDS")
+
         // app version and push token is device-specific
     }
 
@@ -572,6 +581,13 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
     override suspend fun setThreadBorderAgentIds(ids: List<String>) {
         localStorage.putStringSet("${serverId}_$PREF_THREAD_BORDER_AGENT_IDS", ids.toSet())
+    }
+
+    override suspend fun getOrphanedThreadBorderAgentIds(): List<String> =
+        localStorage.getStringSet(PREF_ORPHANED_THREAD_BORDER_AGENT_IDS).orEmpty().toList()
+
+    override suspend fun clearOrphanedThreadBorderAgentIds() {
+        localStorage.remove(PREF_ORPHANED_THREAD_BORDER_AGENT_IDS)
     }
 
     override suspend fun getEntities(): List<Entity<Any>>? {
