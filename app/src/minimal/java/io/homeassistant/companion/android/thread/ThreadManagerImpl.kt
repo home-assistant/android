@@ -24,7 +24,12 @@ class ThreadManagerImpl @Inject constructor() : ThreadManager {
 
     override suspend fun getPreferredDatasetFromServer(serverId: Int): ThreadDatasetResponse? = null
 
-    override suspend fun importDatasetFromServer(context: Context, datasetId: String, serverId: Int) { }
+    override suspend fun importDatasetFromServer(
+        context: Context,
+        datasetId: String,
+        preferredBorderAgentId: String?,
+        serverId: Int
+    ) { }
 
     override suspend fun getPreferredDatasetFromDevice(context: Context): IntentSender? {
         throw IllegalStateException("Thread is not supported with the minimal flavor")
