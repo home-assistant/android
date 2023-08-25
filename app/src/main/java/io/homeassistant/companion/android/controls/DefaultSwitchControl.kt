@@ -12,6 +12,7 @@ import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
+import io.homeassistant.companion.android.common.data.integration.isActive
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.util.capitalize
 import java.util.Locale
@@ -30,7 +31,7 @@ object DefaultSwitchControl : HaControl {
             ToggleTemplate(
                 entity.entityId,
                 ControlButton(
-                    entity.state == "on",
+                    entity.isActive(),
                     "Description"
                 )
             )

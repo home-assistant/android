@@ -24,6 +24,7 @@ import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.getIcon
+import io.homeassistant.companion.android.common.data.integration.isActive
 import io.homeassistant.companion.android.common.data.integration.onEntityPressedWithoutState
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.qs.TileDao
@@ -111,7 +112,7 @@ abstract class TileExtensions : TileService() {
                 ) {
                     serverManager.integrationRepository(tileData.serverId).getEntityUpdates(listOf(tileData.entityId))?.collect {
                         tile.state =
-                            if (it.state in validActiveStates) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
+                            if (it.isActive()) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
                         getTileIcon(tileData.iconName, it, applicationContext)?.let { icon ->
                             tile.icon = Icon.createWithBitmap(icon)
                         }
@@ -161,8 +162,8 @@ abstract class TileExtensions : TileService() {
                     }
                 if (tileData.entityId.split('.')[0] in toggleDomainsWithLock) {
                     tile.state = when {
-                        state?.state in validActiveStates -> Tile.STATE_ACTIVE
-                        state?.state != null && state.state !in validActiveStates -> Tile.STATE_INACTIVE
+                        state?.isActive() == true -> Tile.STATE_ACTIVE
+                        state?.state != null && !state.isActive() -> Tile.STATE_INACTIVE
                         else -> Tile.STATE_UNAVAILABLE
                     }
                 } else {
@@ -332,7 +333,6 @@ abstract class TileExtensions : TileService() {
     companion object {
         private const val TAG = "TileExtensions"
         private val toggleDomainsWithLock = EntityExt.DOMAINS_TOGGLE
-        private val validActiveStates = listOf("on", "open", "locked")
     }
 
     private fun handleInject() {

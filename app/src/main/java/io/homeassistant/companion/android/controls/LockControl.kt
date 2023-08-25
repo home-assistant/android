@@ -11,6 +11,8 @@ import android.service.controls.templates.ToggleTemplate
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.friendlyState
+import io.homeassistant.companion.android.common.data.integration.isActive
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -23,22 +25,12 @@ object LockControl : HaControl {
         area: AreaRegistryResponse?,
         baseUrl: String?
     ): Control.StatefulBuilder {
-        control.setStatusText(
-            when (entity.state) {
-                "jammed" -> context.getString(commonR.string.state_jammed)
-                "locked" -> context.getString(commonR.string.state_locked)
-                "locking" -> context.getString(commonR.string.state_locking)
-                "unlocked" -> context.getString(commonR.string.state_unlocked)
-                "unlocking" -> context.getString(commonR.string.state_unlocking)
-                "unavailable" -> context.getString(commonR.string.state_unavailable)
-                else -> context.getString(commonR.string.state_unknown)
-            }
-        )
+        control.setStatusText(entity.friendlyState(context))
         control.setControlTemplate(
             ToggleTemplate(
                 entity.entityId,
                 ControlButton(
-                    entity.state == "locked",
+                    entity.isActive(),
                     "Description"
                 )
             )
