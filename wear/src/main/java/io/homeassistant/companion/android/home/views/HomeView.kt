@@ -323,7 +323,7 @@ fun LoadHomePage(
             }
             composable("$ROUTE_TEMPLATE_TILE/$SCREEN_SELECT_TEMPLATE_TILE") {
                 SelectTemplateTileView(
-                    templateTileIds = mainViewModel.templateTiles.keys.toList(),
+                    templateTiles = mainViewModel.templateTiles,
                     onSelectTemplateTile = { tileId ->
                         swipeDismissableNavController.navigate("$ROUTE_TEMPLATE_TILE/$tileId/$SCREEN_SET_TILE_TEMPLATE")
                     }
