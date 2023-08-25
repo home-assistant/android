@@ -375,8 +375,8 @@ class CarSensorManager :
     private fun carValueStatus(value: Int): String? {
         return when (value) {
             CarValue.STATUS_SUCCESS -> "success"
-            CarValue.STATUS_UNAVAILABLE -> "unavailable"
-            CarValue.STATUS_UNKNOWN -> "unknown"
+            CarValue.STATUS_UNAVAILABLE -> STATE_UNAVAILABLE
+            CarValue.STATUS_UNKNOWN -> STATE_UNKNOWN
             CarValue.STATUS_UNIMPLEMENTED -> "unimplemented"
             else -> null
         }
@@ -397,9 +397,9 @@ class CarSensorManager :
                 EnergyProfile.FUEL_TYPE_LNG -> "Liquified natural gas"
                 EnergyProfile.FUEL_TYPE_LPG -> "Liquified petroleum gas"
                 EnergyProfile.FUEL_TYPE_OTHER -> "Other"
-                EnergyProfile.FUEL_TYPE_UNKNOWN -> "unknown"
+                EnergyProfile.FUEL_TYPE_UNKNOWN -> STATE_UNKNOWN
                 EnergyProfile.FUEL_TYPE_UNLEADED -> "Unleaded gasoline"
-                else -> "unknown"
+                else -> STATE_UNKNOWN
             }
         }
         return fuelTypeList.toString()
@@ -421,8 +421,8 @@ class CarSensorManager :
                 EnergyProfile.EVCONNECTOR_TYPE_TESLA_HPWC -> "High Power Wall Charger of Tesla"
                 EnergyProfile.EVCONNECTOR_TYPE_TESLA_ROADSTER -> "Connector of Tesla Roadster"
                 EnergyProfile.EVCONNECTOR_TYPE_TESLA_SUPERCHARGER -> "Supercharger of Tesla"
-                EnergyProfile.EVCONNECTOR_TYPE_UNKNOWN -> "unknown"
-                else -> "unknown"
+                EnergyProfile.EVCONNECTOR_TYPE_UNKNOWN -> STATE_UNKNOWN
+                else -> STATE_UNKNOWN
             }
         }
         return evConnectorList.toString()

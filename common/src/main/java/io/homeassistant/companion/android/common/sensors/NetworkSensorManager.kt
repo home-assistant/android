@@ -500,7 +500,7 @@ class NetworkSensorManager : SensorManager {
                     (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) -> "vpn"
                     (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) -> "wifi"
                     (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI_AWARE)) -> "wifi_aware"
-                    else -> "unknown"
+                    else -> STATE_UNKNOWN
                 }
 
             metered = !capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED)

@@ -7,6 +7,7 @@ import android.os.Build
 import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
+import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.M)
@@ -67,8 +68,8 @@ class DNDSensorManager : SensorManager {
             NotificationManager.INTERRUPTION_FILTER_ALL -> "off"
             NotificationManager.INTERRUPTION_FILTER_NONE -> "total_silence"
             NotificationManager.INTERRUPTION_FILTER_PRIORITY -> "priority_only"
-            NotificationManager.INTERRUPTION_FILTER_UNKNOWN -> "unknown"
-            else -> "unknown"
+            NotificationManager.INTERRUPTION_FILTER_UNKNOWN -> STATE_UNKNOWN
+            else -> STATE_UNKNOWN
         }
 
         onSensorUpdated(
