@@ -162,7 +162,7 @@ class WearPrefsRepositoryImpl @Inject constructor(
         } ?: emptyMap()
     }
 
-    override suspend fun getTemplateTileAndSaveTileId(tileId: Int?): TemplateTileConfig? {
+    override suspend fun getTemplateTileAndSaveTileId(tileId: Int?): TemplateTileConfig {
         val tileIdToTemplatesMap = getAllTemplateTiles()
         return if (null in tileIdToTemplatesMap && tileId !in tileIdToTemplatesMap) {
             // if there are Templates with an unknown (null) tileId key from a previous installation,

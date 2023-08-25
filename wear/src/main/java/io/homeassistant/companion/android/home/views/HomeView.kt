@@ -338,11 +338,11 @@ fun LoadHomePage(
                 )
             ) { backStackEntry ->
                 val tileId = backStackEntry.arguments!!.getString(ARG_SCREEN_TEMPLATE_TILE_ID)!!.toIntOrNull()
+                val templateTileConfig = mainViewModel.templateTiles[tileId]
+
                 TemplateTileSettingsView(
-                    // TODO: handle null in another way?
-                    templateContent = mainViewModel.templateTiles[tileId]?.template ?: "",
-                    // TODO: handle null in another way?
-                    refreshInterval = mainViewModel.templateTiles[tileId]?.refreshInterval ?: 0
+                    templateContent = templateTileConfig?.template ?: "",
+                    refreshInterval = templateTileConfig?.refreshInterval ?: 0
                 ) {
                     swipeDismissableNavController.navigate(
                         "$ROUTE_TEMPLATE_TILE/$tileId/$SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL"

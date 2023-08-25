@@ -145,15 +145,17 @@ class SettingsWearViewModel @Inject constructor(
 
     fun setTemplateTileContent(tileId: Int, updatedTemplateTileContent: String) {
         val templateTileConfig = templateTiles[tileId]
-        // TODO: null?
-        templateTiles[tileId] = templateTileConfig!!.withTemplate(updatedTemplateTileContent)
-        renderTemplate(tileId, updatedTemplateTileContent)
+        templateTileConfig?.let {
+            templateTiles[tileId] = it.withTemplate(updatedTemplateTileContent)
+            renderTemplate(tileId, updatedTemplateTileContent)
+        }
     }
 
     fun setTemplateTileRefreshInterval(tileId: Int, refreshInterval: Int) {
         val templateTileConfig = templateTiles[tileId]
-        // TODO: null?
-        templateTiles[tileId] = templateTileConfig!!.withRefreshInterval(refreshInterval)
+        templateTileConfig?.let {
+            templateTiles[tileId] = it.withRefreshInterval(refreshInterval)
+        }
     }
 
     private fun setTemplateTiles(newTemplateTiles: Map<Int?, TemplateTileConfig>) {

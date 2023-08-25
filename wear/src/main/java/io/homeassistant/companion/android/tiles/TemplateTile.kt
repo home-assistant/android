@@ -148,8 +148,7 @@ class TemplateTile : TileService() {
     }
 
     private suspend fun getTemplateTileConfig(tileId: Int): TemplateTileConfig {
-        // TODO: handle null
-        return wearPrefsRepository.getTemplateTileAndSaveTileId(tileId)!!
+        return wearPrefsRepository.getTemplateTileAndSaveTileId(tileId)
     }
 
     fun layout(renderedText: String): LayoutElement = Box.Builder().apply {
