@@ -1170,6 +1170,5 @@
     <string name="state_snowy">Snowy</string>
     <string name="state_standby">Standby</string>
     <string name="state_sunny">Sunny</string>
-    <string name="state_windy_variant">Windy</string>
     <string name="state_windy">Windy</string>
 </resources>

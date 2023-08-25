@@ -762,8 +762,7 @@ fun <T> Entity<T>.friendlyState(context: Context, options: EntityRegistryOptions
         "unlocked" -> context.getString(commonR.string.state_unlocked)
         "unlocking" -> context.getString(commonR.string.state_unlocking)
         "unknown" -> context.getString(commonR.string.state_unknown)
-        "windy-variant" -> context.getString(commonR.string.state_windy_variant)
-        "windy" -> context.getString(commonR.string.state_windy)
+        "windy", "windy-variant" -> context.getString(commonR.string.state_windy)
         else -> state
     }
     if (friendlyState == state && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
