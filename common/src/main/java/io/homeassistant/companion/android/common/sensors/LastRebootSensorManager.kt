@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.os.SystemClock
 import android.util.Log
+import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
@@ -62,7 +63,7 @@ class LastRebootSensorManager : SensorManager {
 
         var timeInMillis = 0L
         var local = ""
-        var utc = "unavailable"
+        var utc = STATE_UNAVAILABLE
 
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val fullSensor = sensorDao.getFull(lastRebootSensor.id).toSensorWithAttributes()

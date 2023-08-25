@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.common.sensors
 
 import android.content.Context
 import android.os.Build
+import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.R as commonR
 
 class AndroidOsSensorManager : SensorManager {
@@ -67,10 +68,10 @@ class AndroidOsSensorManager : SensorManager {
                 osSecurityPatch.id -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     Build.VERSION.SECURITY_PATCH
                 } else {
-                    "unknown"
+                    STATE_UNKNOWN
                 }
                 else -> {
-                    "unknown"
+                    STATE_UNKNOWN
                 }
             },
             sensor.statelessIcon,

@@ -9,6 +9,7 @@ import android.os.Build.VERSION.SDK_INT
 import android.util.Log
 import com.google.android.gms.location.LocationServices
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
@@ -132,7 +133,7 @@ class GeocodeSensorManager : SensorManager {
         onSensorUpdated(
             context,
             geocodedLocation,
-            if (!prettyAddress.isNullOrEmpty()) prettyAddress else "Unknown",
+            if (!prettyAddress.isNullOrEmpty()) prettyAddress else STATE_UNKNOWN,
             geocodedLocation.statelessIcon,
             attributes
         )

@@ -6,6 +6,8 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
 import androidx.core.content.getSystemService
+import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
+import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
@@ -68,7 +70,7 @@ class NextAlarmManager : SensorManager {
 
         var triggerTime = 0L
         var local = ""
-        var utc = "unavailable"
+        var utc = STATE_UNAVAILABLE
         var pendingIntent = ""
 
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
@@ -81,7 +83,7 @@ class NextAlarmManager : SensorManager {
             val alarmClockInfo = alarmManager.nextAlarmClock
 
             if (alarmClockInfo != null) {
-                pendingIntent = alarmClockInfo.showIntent?.creatorPackage ?: "Unknown"
+                pendingIntent = alarmClockInfo.showIntent?.creatorPackage ?: STATE_UNKNOWN
                 triggerTime = alarmClockInfo.triggerTime
 
                 Log.d(TAG, "Next alarm is scheduled by $pendingIntent with trigger time $triggerTime")

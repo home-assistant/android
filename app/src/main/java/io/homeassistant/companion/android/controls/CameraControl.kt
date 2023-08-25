@@ -15,6 +15,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
+import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -47,7 +48,7 @@ object CameraControl : HaControl {
         control.setControlTemplate(
             ThumbnailTemplate(
                 entity.entityId,
-                entity.state != "unavailable" && image != null,
+                entity.state != STATE_UNAVAILABLE && image != null,
                 icon,
                 context.getString(commonR.string.widget_camera_contentdescription)
             )
