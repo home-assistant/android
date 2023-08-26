@@ -230,10 +230,20 @@
         <service android:name=".controls.HaControlsProviderService"
             android:permission="android.permission.BIND_CONTROLS"
             android:exported="true">
+            <meta-data
+                android:name="android.service.controls.META_DATA_PANEL_ACTIVITY"
+                android:value="${applicationId}/io.homeassistant.companion.android.controls.HaControlsPanelActivity" />
             <intent-filter>
                 <action android:name="android.service.controls.ControlsProviderService"/>
             </intent-filter>
         </service>
+
+        <activity android:name=".controls.HaControlsPanelActivity"
+            android:permission="android.permission.BIND_CONTROLS"
+            android:exported="true"
+            android:resizeableActivity="true"
+            android:taskAffinity="io.homeassistant.companion.android.controls"
+            android:enabled="true" />
 
         <receiver
             android:name=".sensors.LocationSensorManager"
