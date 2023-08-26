@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2023.8.3 - Main" versioncode="3">
+    <release version="2023.8.4 - Main" versioncode="3">
         <change>Widgets can now toggle on tap or refresh</change>
+        <change>Android Auto: Color icons to indicate entity is active</change>
+        <change>Show select server dialog when deep link is used</change>
         <change>Bug fixes, design improvements and dependency updates</change>
     </release>
-    <release version="2023.8.3 - Wear" versioncode="2">
+    <release version="2023.8.4 - Wear" versioncode="2">
         <change>Bug fixes, design improvements and dependency updates</change>
     </release>
-    <release version="2023.8.3 - Automotive" versioncode="1">
+    <release version="2023.8.4 - Automotive" versioncode="1">
+        <change>Driving Interface: Color icons to indicate entity is active</change>
         <change>Bug fixes, design improvements and dependency updates</change>
     </release>
 </changelog>
