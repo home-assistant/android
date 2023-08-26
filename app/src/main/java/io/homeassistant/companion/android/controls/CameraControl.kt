@@ -15,13 +15,11 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
-import io.homeassistant.companion.android.common.util.capitalize
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.net.URL
-import java.util.Locale
 import java.util.concurrent.TimeUnit
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -36,15 +34,6 @@ object CameraControl : HaControl {
         area: AreaRegistryResponse?,
         baseUrl: String?
     ): Control.StatefulBuilder {
-        control.setStatusText(
-            when (entity.state) {
-                "idle" -> context.getString(commonR.string.state_idle)
-                "recording" -> context.getString(commonR.string.state_recording)
-                "streaming" -> context.getString(commonR.string.state_streaming)
-                else -> entity.state.capitalize(Locale.getDefault())
-            }
-        )
-
         val image = if (baseUrl != null && (entity.attributes["entity_picture"] as? String)?.isNotBlank() == true) {
             getThumbnail(baseUrl + entity.attributes["entity_picture"] as String)
         } else {

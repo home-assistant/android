@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
+import io.homeassistant.companion.android.common.data.integration.friendlyState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.webview.WebViewActivity
 
@@ -46,14 +47,7 @@ interface HaControl {
                 (info.area?.name ?: getDomainString(context, entity))
         )
         control.setStatus(Control.STATUS_OK)
-        control.setStatusText(
-            when (entity.state) {
-                "off" -> context.getString(R.string.state_off)
-                "on" -> context.getString(R.string.state_on)
-                "unavailable" -> context.getString(R.string.state_unavailable)
-                else -> context.getString(R.string.state_unknown)
-            }
-        )
+        control.setStatusText(entity.friendlyState(context))
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             control.setAuthRequired(info.authRequired)
         }

@@ -39,19 +39,6 @@ object ClimateControl : HaControl {
         area: AreaRegistryResponse?,
         baseUrl: String?
     ): Control.StatefulBuilder {
-        control.setStatusText(
-            when (entity.state) {
-                "auto" -> context.getString(commonR.string.state_auto)
-                "cool" -> context.getString(commonR.string.state_cool)
-                "dry" -> context.getString(commonR.string.state_dry)
-                "fan_only" -> context.getString(commonR.string.state_fan_only)
-                "heat" -> context.getString(commonR.string.state_heat)
-                "heat_cool" -> context.getString(commonR.string.state_heat_cool)
-                "off" -> context.getString(commonR.string.state_off)
-                "unavailable" -> context.getString(commonR.string.state_unavailable)
-                else -> entity.state
-            }
-        )
         val minValue = (entity.attributes["min_temp"] as? Number)?.toFloat() ?: 0f
         val maxValue = (entity.attributes["max_temp"] as? Number)?.toFloat() ?: 100f
         var currentValue = (entity.attributes["temperature"] as? Number)?.toFloat() ?: (

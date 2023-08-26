@@ -213,7 +213,7 @@ fun <T> Entity<T>.getFanSteps(): Int? {
             ((attributes as Map<*, *>)["percentage_step"] as? Double)?.toDouble() ?: 1.0
         ) - 1
     } catch (e: Exception) {
-        Log.e(EntityExt.TAG, "Unable to get getFanSteps")
+        Log.e(EntityExt.TAG, "Unable to get getFanSteps", e)
         null
     }
 }
@@ -227,7 +227,7 @@ fun <T> Entity<T>.supportsLightBrightness(): Boolean {
         val supportedColorModes =
             (attributes as Map<*, *>)["supported_color_modes"] as? List<String>
         val supportsBrightness =
-            if (supportedColorModes == null) false else (supportedColorModes - EntityExt.LIGHT_MODE_NO_BRIGHTNESS_SUPPORT).isNotEmpty()
+            if (supportedColorModes == null) false else (supportedColorModes - EntityExt.LIGHT_MODE_NO_BRIGHTNESS_SUPPORT.toSet()).isNotEmpty()
         val supportedFeatures = attributes["supported_features"] as Int
         supportsBrightness || (supportedFeatures and EntityExt.LIGHT_SUPPORT_BRIGHTNESS_DEPR == EntityExt.LIGHT_SUPPORT_BRIGHTNESS_DEPR)
     } catch (e: Exception) {
@@ -298,7 +298,7 @@ fun <T> Entity<T>.getLightColor(): Int? {
     }
 }
 
-fun <T> Entity<T>.getIcon(context: Context): IIcon? {
+fun <T> Entity<T>.getIcon(context: Context): IIcon {
     val attributes = this.attributes as Map<String, Any?>
     val icon = attributes["icon"] as? String
     return if (icon?.startsWith("mdi") == true) {
@@ -383,6 +383,7 @@ fun <T> Entity<T>.getIcon(context: Context): IIcon? {
             "input_number" -> CommunityMaterial.Icon3.cmd_ray_vertex
             "input_select" -> CommunityMaterial.Icon2.cmd_format_list_bulleted
             "input_text" -> CommunityMaterial.Icon2.cmd_form_textbox
+            "lawn_mower" -> CommunityMaterial.Icon3.cmd_robot_mower
             "light" -> CommunityMaterial.Icon2.cmd_lightbulb
             "lock" -> when (compareState) {
                 "unlocked" -> CommunityMaterial.Icon2.cmd_lock_open
@@ -699,30 +700,69 @@ val <T> Entity<T>.friendlyName: String
     get() = (attributes as? Map<*, *>)?.get("friendly_name")?.toString() ?: entityId
 
 fun <T> Entity<T>.friendlyState(context: Context, options: EntityRegistryOptions? = null, appendUnitOfMeasurement: Boolean = false): String {
+    // https://github.com/mikey0000/frontend/blob/c14d801380f04ac63c4cf9ac2479e3b39ef4db32/src/common/entity/get_states.ts#L5
     var friendlyState = when (state) {
+        "above_horizon" -> context.getString(commonR.string.state_above_horizon)
+        "active" -> context.getString(commonR.string.state_active)
         "armed_away" -> context.getString(commonR.string.state_armed_away)
         "armed_custom_bypass" -> context.getString(commonR.string.state_armed_custom_bypass)
         "armed_home" -> context.getString(commonR.string.state_armed_home)
         "armed_night" -> context.getString(commonR.string.state_armed_night)
         "armed_vacation" -> context.getString(commonR.string.state_armed_vacation)
         "arming" -> context.getString(commonR.string.state_arming)
+        "auto" -> context.getString(commonR.string.state_auto)
+        "below_horizon" -> context.getString(commonR.string.state_below_horizon)
+        "buffering" -> context.getString(commonR.string.state_buffering)
+        "cleaning" -> context.getString(commonR.string.state_cleaning)
+        "clear-night" -> context.getString(commonR.string.state_clear_night)
+        "cloudy" -> context.getString(commonR.string.state_cloudy)
         "closed" -> context.getString(commonR.string.state_closed)
         "closing" -> context.getString(commonR.string.state_closing)
+        "cool" -> context.getString(commonR.string.state_cool)
         "disarmed" -> context.getString(commonR.string.state_disarmed)
         "disarming" -> context.getString(commonR.string.state_disarming)
+        "docked" -> context.getString(commonR.string.state_docked)
+        "dry" -> context.getString(commonR.string.state_dry)
+        "error" -> context.getString(commonR.string.state_error)
+        "exceptional" -> context.getString(commonR.string.state_exceptional)
+        "fan_only" -> context.getString(commonR.string.state_fan_only)
+        "fog" -> context.getString(commonR.string.state_fog)
+        "hail" -> context.getString(commonR.string.state_hail)
+        "heat" -> context.getString(commonR.string.state_heat)
+        "heat_cool" -> context.getString(commonR.string.state_heat_cool)
+        "home" -> context.getString(commonR.string.state_home)
+        "idle" -> context.getString(commonR.string.state_idle)
         "jammed" -> context.getString(commonR.string.state_jammed)
+        "lightning-raining" -> context.getString(commonR.string.state_lightning_raining)
+        "lightning" -> context.getString(commonR.string.state_lightning)
         "locked" -> context.getString(commonR.string.state_locked)
         "locking" -> context.getString(commonR.string.state_locking)
+        "mowing" -> context.getString(commonR.string.state_mowing)
+        "not_home" -> context.getString(commonR.string.state_not_home)
         "off" -> context.getString(commonR.string.state_off)
         "on" -> context.getString(commonR.string.state_on)
         "open" -> context.getString(commonR.string.state_open)
         "opening" -> context.getString(commonR.string.state_opening)
+        "partlycloudy" -> context.getString(commonR.string.state_partlycloudy)
+        "paused" -> context.getString(commonR.string.state_paused)
         "pending" -> context.getString(commonR.string.state_pending)
+        "playing" -> context.getString(commonR.string.state_playing)
+        "problem" -> context.getString(commonR.string.state_problem)
+        "pouring" -> context.getString(commonR.string.state_pouring)
+        "rainy" -> context.getString(commonR.string.state_rainy)
+        "recording" -> context.getString(commonR.string.state_recording)
+        "returning" -> context.getString(commonR.string.state_returning)
+        "snowy-rainy" -> context.getString(commonR.string.state_snowy_rainy)
+        "snowy" -> context.getString(commonR.string.state_snowy)
+        "standby" -> context.getString(commonR.string.state_standby)
+        "streaming" -> context.getString(commonR.string.state_streaming)
+        "sunny" -> context.getString(commonR.string.state_sunny)
         "triggered" -> context.getString(commonR.string.state_triggered)
         "unavailable" -> context.getString(commonR.string.state_unavailable)
         "unlocked" -> context.getString(commonR.string.state_unlocked)
         "unlocking" -> context.getString(commonR.string.state_unlocking)
         "unknown" -> context.getString(commonR.string.state_unknown)
+        "windy", "windy-variant" -> context.getString(commonR.string.state_windy)
         else -> state
     }
     if (friendlyState == state && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

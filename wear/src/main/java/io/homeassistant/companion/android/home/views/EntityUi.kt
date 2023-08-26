@@ -26,6 +26,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.getIcon
+import io.homeassistant.companion.android.common.data.integration.isActive
 import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.WearToggleChip
 import io.homeassistant.companion.android.util.onEntityClickedFeedback
@@ -47,7 +48,7 @@ fun EntityUi(
     val friendlyName = attributes["friendly_name"].toString()
 
     if (entity.domain in EntityExt.DOMAINS_TOGGLE) {
-        val isChecked = entity.state in listOf("on", "locked", "open", "opening")
+        val isChecked = entity.isActive()
         ToggleChip(
             checked = isChecked,
             onCheckedChange = {

@@ -15,6 +15,7 @@ import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.getCoverPosition
+import io.homeassistant.companion.android.common.data.integration.isActive
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -28,22 +29,12 @@ object CoverControl : HaControl {
         area: AreaRegistryResponse?,
         baseUrl: String?
     ): Control.StatefulBuilder {
-        control.setStatusText(
-            when (entity.state) {
-                "closed" -> context.getString(commonR.string.state_closed)
-                "closing" -> context.getString(commonR.string.state_closing)
-                "open" -> context.getString(commonR.string.state_open)
-                "opening" -> context.getString(commonR.string.state_opening)
-                "unavailable" -> context.getString(commonR.string.state_unavailable)
-                else -> entity.state
-            }
-        )
         val position = entity.getCoverPosition()
         control.setControlTemplate(
             if ((entity.attributes["supported_features"] as Int) and SUPPORT_SET_POSITION == SUPPORT_SET_POSITION) {
                 ToggleRangeTemplate(
                     entity.entityId,
-                    entity.state in listOf("open", "opening"),
+                    entity.isActive(),
                     "",
                     RangeTemplate(
                         entity.entityId,
@@ -58,7 +49,7 @@ object CoverControl : HaControl {
                 ToggleTemplate(
                     entity.entityId,
                     ControlButton(
-                        entity.state in listOf("open", "opening"),
+                        entity.isActive(),
                         "Description"
                     )
                 )
