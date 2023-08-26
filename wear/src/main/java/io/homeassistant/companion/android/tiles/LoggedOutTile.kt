@@ -3,17 +3,17 @@ package io.homeassistant.companion.android.tiles
 import android.content.Context
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
-import androidx.wear.tiles.ActionBuilders
-import androidx.wear.tiles.ColorBuilders.argb
-import androidx.wear.tiles.ModifiersBuilders
+import androidx.wear.protolayout.ActionBuilders
+import androidx.wear.protolayout.ColorBuilders.argb
+import androidx.wear.protolayout.ModifiersBuilders
+import androidx.wear.protolayout.TimelineBuilders.Timeline
+import androidx.wear.protolayout.material.ChipColors
+import androidx.wear.protolayout.material.Colors
+import androidx.wear.protolayout.material.CompactChip
+import androidx.wear.protolayout.material.Text
+import androidx.wear.protolayout.material.Typography
+import androidx.wear.protolayout.material.layouts.PrimaryLayout
 import androidx.wear.tiles.RequestBuilders
-import androidx.wear.tiles.TimelineBuilders.Timeline
-import androidx.wear.tiles.material.ChipColors
-import androidx.wear.tiles.material.Colors
-import androidx.wear.tiles.material.CompactChip
-import androidx.wear.tiles.material.Text
-import androidx.wear.tiles.material.Typography
-import androidx.wear.tiles.material.layouts.PrimaryLayout
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.splash.SplashActivity
 import io.homeassistant.companion.android.common.R as commonR
@@ -47,7 +47,7 @@ fun loggedOutTimeline(
                 ).build()
         ).build()
     return Timeline.fromLayoutElement(
-        PrimaryLayout.Builder(requestParams.deviceParameters!!)
+        PrimaryLayout.Builder(requestParams.deviceConfiguration)
             .setPrimaryLabelTextContent(
                 Text.Builder(context, context.getString(title))
                     .setTypography(Typography.TYPOGRAPHY_CAPTION1)
@@ -66,7 +66,7 @@ fun loggedOutTimeline(
                     context,
                     context.getString(commonR.string.login),
                     chipAction,
-                    requestParams.deviceParameters!!
+                    requestParams.deviceConfiguration
                 )
                     .setChipColors(chipColors)
                     .build()

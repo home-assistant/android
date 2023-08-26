@@ -6,26 +6,26 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
-import androidx.wear.tiles.ActionBuilders
-import androidx.wear.tiles.ColorBuilders.argb
-import androidx.wear.tiles.DimensionBuilders.dp
-import androidx.wear.tiles.DimensionBuilders.sp
+import androidx.wear.protolayout.ActionBuilders
+import androidx.wear.protolayout.ColorBuilders.argb
+import androidx.wear.protolayout.DimensionBuilders.dp
+import androidx.wear.protolayout.DimensionBuilders.sp
+import androidx.wear.protolayout.LayoutElementBuilders
+import androidx.wear.protolayout.LayoutElementBuilders.Box
+import androidx.wear.protolayout.LayoutElementBuilders.Column
+import androidx.wear.protolayout.LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER
+import androidx.wear.protolayout.LayoutElementBuilders.LayoutElement
+import androidx.wear.protolayout.LayoutElementBuilders.Row
+import androidx.wear.protolayout.LayoutElementBuilders.Spacer
+import androidx.wear.protolayout.ModifiersBuilders
+import androidx.wear.protolayout.ResourceBuilders
+import androidx.wear.protolayout.ResourceBuilders.Resources
+import androidx.wear.protolayout.TimelineBuilders.Timeline
 import androidx.wear.tiles.EventBuilders
-import androidx.wear.tiles.LayoutElementBuilders
-import androidx.wear.tiles.LayoutElementBuilders.Box
-import androidx.wear.tiles.LayoutElementBuilders.Column
-import androidx.wear.tiles.LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER
-import androidx.wear.tiles.LayoutElementBuilders.LayoutElement
-import androidx.wear.tiles.LayoutElementBuilders.Row
-import androidx.wear.tiles.LayoutElementBuilders.Spacer
-import androidx.wear.tiles.ModifiersBuilders
 import androidx.wear.tiles.RequestBuilders.ResourcesRequest
 import androidx.wear.tiles.RequestBuilders.TileRequest
-import androidx.wear.tiles.ResourceBuilders
-import androidx.wear.tiles.ResourceBuilders.Resources
 import androidx.wear.tiles.TileBuilders.Tile
 import androidx.wear.tiles.TileService
-import androidx.wear.tiles.TimelineBuilders.Timeline
 import com.google.common.util.concurrent.ListenableFuture
 import com.mikepenz.iconics.IconicsColor
 import com.mikepenz.iconics.IconicsDrawable
@@ -71,8 +71,8 @@ class ShortcutsTile : TileService() {
 
     override fun onTileRequest(requestParams: TileRequest): ListenableFuture<Tile> =
         serviceScope.future {
-            val state = requestParams.state
-            if (state != null && state.lastClickableId.isNotEmpty()) {
+            val state = requestParams.currentState
+            if (state.lastClickableId.isNotEmpty()) {
                 Intent().also { intent ->
                     intent.action = "io.homeassistant.companion.android.TILE_ACTION"
                     intent.putExtra("entity_id", state.lastClickableId)
@@ -86,7 +86,7 @@ class ShortcutsTile : TileService() {
 
             Tile.Builder()
                 .setResourcesVersion(entities.toString())
-                .setTimeline(
+                .setTileTimeline(
                     if (serverManager.isRegistered()) {
                         timeline(tileId)
                     } else {
@@ -100,11 +100,11 @@ class ShortcutsTile : TileService() {
                 ).build()
         }
 
-    override fun onResourcesRequest(requestParams: ResourcesRequest): ListenableFuture<Resources> =
+    override fun onTileResourcesRequest(requestParams: ResourcesRequest): ListenableFuture<Resources> =
         serviceScope.future {
             val showLabels = wearPrefsRepository.getShowShortcutText()
             val iconSize = if (showLabels) ICON_SIZE_SMALL else ICON_SIZE_FULL
-            val density = requestParams.deviceParameters!!.screenDensity
+            val density = requestParams.deviceConfiguration.screenDensity
             val iconSizePx = (iconSize * density).roundToInt()
             val entities = getEntities(requestParams.tileId)
 

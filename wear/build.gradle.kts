@@ -109,8 +109,7 @@ dependencies {
     implementation(libs.wear.compose.navigation)
 
     implementation(libs.guava)
-    implementation(libs.wear.tiles)
-    implementation(libs.wear.tiles.material)
+    implementation(libs.bundles.wear.tiles)
 
     implementation(libs.androidx.watchface.complications.data.source.ktx)
 
