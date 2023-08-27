@@ -124,6 +124,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     companion object {
         const val EXTRA_PATH = "path"
         const val EXTRA_SERVER = "server"
+        const val EXTRA_SHOW_WHEN_LOCKED = "show_when_locked"
 
         private const val TAG = "WebviewActivity"
         private const val APP_PREFIX = "app://"
@@ -227,6 +228,14 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (
+            intent.extras?.containsKey(EXTRA_SHOW_WHEN_LOCKED) == true &&
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1
+        ) {
+            // Allow showing this on the lock screen when using device controls panel
+            setShowWhenLocked(intent.extras?.getBoolean(EXTRA_SHOW_WHEN_LOCKED) ?: false)
+        }
 
         binding = ActivityWebviewBinding.inflate(layoutInflater)
         setContentView(binding.root)

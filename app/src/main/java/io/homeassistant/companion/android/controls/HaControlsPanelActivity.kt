@@ -15,9 +15,15 @@ class HaControlsPanelActivity : AppCompatActivity() {
                 context = this,
                 path = null,
                 serverId = null
-            )
+            ).apply {
+                putExtra(WebViewActivity.EXTRA_SHOW_WHEN_LOCKED, true)
+            }
         )
+        // finish() is in onPause to prevent lockscreen flickering
+    }
+
+    override fun onPause() {
+        super.onPause()
         finish()
-        overridePendingTransition(0, 0) // Disable activity start/stop animation
     }
 }
