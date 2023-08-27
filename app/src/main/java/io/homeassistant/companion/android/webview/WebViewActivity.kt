@@ -724,9 +724,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                     // Set event lister for HA theme change
                                     webView.evaluateJavascript(
                                         "document.addEventListener('settheme', function ()" +
-                                                "{" +
-                                                "window.externalApp.onHomeAssistantSetTheme();" +
-                                                "});",
+                                            "{" +
+                                            "window.externalApp.onHomeAssistantSetTheme();" +
+                                            "});",
                                         null
                                     )
                                 }
