@@ -38,6 +38,7 @@ import java.net.SocketTimeoutException
 import java.util.Locale
 import javax.inject.Inject
 
+@Suppress("DEPRECATION")
 abstract class SensorReceiverBase : BroadcastReceiver() {
     companion object {
         const val ACTION_UPDATE_SENSOR = "io.homeassistant.companion.android.UPDATE_SENSOR"
