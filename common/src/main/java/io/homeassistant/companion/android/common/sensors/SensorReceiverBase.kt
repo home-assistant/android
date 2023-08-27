@@ -38,7 +38,6 @@ import java.net.SocketTimeoutException
 import java.util.Locale
 import javax.inject.Inject
 
-@Suppress("DEPRECATION")
 abstract class SensorReceiverBase : BroadcastReceiver() {
     companion object {
         const val ACTION_UPDATE_SENSOR = "io.homeassistant.companion.android.UPDATE_SENSOR"
@@ -110,6 +109,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
             return
         }
 
+        @Suppress("DEPRECATION")
         if (isSensorEnabled(LastUpdateManager.lastUpdate.id)) {
             LastUpdateManager().sendLastUpdate(context, intent.action)
             val allSettings = sensorDao.getSettings(LastUpdateManager.lastUpdate.id)
