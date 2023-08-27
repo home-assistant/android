@@ -115,9 +115,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
             for (setting in allSettings) {
                 if (setting.value != "" && intent.action == setting.value) {
                     val eventData = intent.extras?.keySet()
-                        ?.associate {
-                            it.toString() to (intent.extras?.getString(it) ?: "")
-                        }
+                        ?.associate { it.toString() to intent.extras?.get(it).toString() }
                         ?.plus("intent" to intent.action.toString())
                         ?: mapOf("intent" to intent.action.toString())
                     Log.d(tag, "Event data: $eventData")
