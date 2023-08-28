@@ -17,6 +17,7 @@ import com.google.android.gms.location.SleepSegmentRequest
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
+import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import java.util.concurrent.TimeUnit
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -168,8 +169,8 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
             DetectedActivity.STILL -> "still"
             DetectedActivity.TILTING -> "tilting"
             DetectedActivity.WALKING -> "walking"
-            DetectedActivity.UNKNOWN -> "unknown"
-            else -> "unknown"
+            DetectedActivity.UNKNOWN -> STATE_UNKNOWN
+            else -> STATE_UNKNOWN
         }
     }
 
@@ -184,7 +185,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
             SleepSegmentEvent.STATUS_SUCCESSFUL -> "successful"
             SleepSegmentEvent.STATUS_MISSING_DATA -> "missing data"
             SleepSegmentEvent.STATUS_NOT_DETECTED -> "not detected"
-            else -> "unknown"
+            else -> STATE_UNKNOWN
         }
     }
 

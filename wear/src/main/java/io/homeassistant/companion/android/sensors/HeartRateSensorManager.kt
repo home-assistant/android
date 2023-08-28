@@ -15,6 +15,7 @@ import android.hardware.SensorManager.SENSOR_STATUS_UNRELIABLE
 import android.util.Log
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import kotlin.math.roundToInt
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -135,7 +136,7 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
             SENSOR_STATUS_ACCURACY_LOW -> "low"
             SENSOR_STATUS_UNRELIABLE -> "unreliable"
             SENSOR_STATUS_NO_CONTACT -> "no_contact"
-            else -> "unknown"
+            else -> STATE_UNKNOWN
         }
     }
 }

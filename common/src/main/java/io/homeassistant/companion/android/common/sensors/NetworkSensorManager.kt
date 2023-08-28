@@ -11,6 +11,8 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
+import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
+import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
@@ -188,7 +190,7 @@ class NetworkSensorManager : SensorManager {
         }
 
         var conInfo: WifiInfo? = null
-        var ssid = "Unknown"
+        var ssid = STATE_UNKNOWN
         var connected = false
 
         if (checkPermission(context, wifiConnection.id)) {
@@ -272,7 +274,7 @@ class NetworkSensorManager : SensorManager {
             return
         }
 
-        var deviceIp = "Unknown"
+        var deviceIp = STATE_UNKNOWN
 
         if (checkPermission(context, wifiIp.id)) {
             val conInfo = getWifiConnectionInfo(context)
@@ -445,7 +447,7 @@ class NetworkSensorManager : SensorManager {
             return
         }
 
-        var ip = "unknown"
+        var ip = STATE_UNKNOWN
         val client = OkHttpClient()
         val request = Request.Builder().url("https://api.ipify.org?format=json").build()
 
@@ -485,7 +487,7 @@ class NetworkSensorManager : SensorManager {
         val activeNetwork = connectivityManager?.activeNetwork
         val capabilities = connectivityManager?.getNetworkCapabilities(activeNetwork)
 
-        var networkCapability = "unavailable"
+        var networkCapability = STATE_UNAVAILABLE
         var metered = false
         if (capabilities != null) {
             networkCapability =
@@ -498,7 +500,7 @@ class NetworkSensorManager : SensorManager {
                     (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) -> "vpn"
                     (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) -> "wifi"
                     (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI_AWARE)) -> "wifi_aware"
-                    else -> "unknown"
+                    else -> STATE_UNKNOWN
                 }
 
             metered = !capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED)

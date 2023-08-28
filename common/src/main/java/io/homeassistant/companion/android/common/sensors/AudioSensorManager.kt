@@ -6,6 +6,7 @@ import android.media.AudioManager
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
+import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.R as commonR
 
 class AudioSensorManager : SensorManager {
@@ -187,7 +188,7 @@ class AudioSensorManager : SensorManager {
             AudioManager.RINGER_MODE_NORMAL -> "normal"
             AudioManager.RINGER_MODE_SILENT -> "silent"
             AudioManager.RINGER_MODE_VIBRATE -> "vibrate"
-            else -> "unknown"
+            else -> STATE_UNKNOWN
         }
 
         val icon = when (audioManager.ringerMode) {
@@ -216,7 +217,7 @@ class AudioSensorManager : SensorManager {
             AudioManager.MODE_IN_CALL -> "in_call"
             AudioManager.MODE_IN_COMMUNICATION -> "in_communication"
             AudioManager.MODE_CALL_SCREENING -> "call_screening"
-            else -> "unknown"
+            else -> STATE_UNKNOWN
         }
 
         val icon = when (audioManager.mode) {

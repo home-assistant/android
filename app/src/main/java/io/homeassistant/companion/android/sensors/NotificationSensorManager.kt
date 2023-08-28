@@ -17,6 +17,8 @@ import android.util.Log
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
+import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -266,7 +268,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         val mediaSessionManager = context.getSystemService<MediaSessionManager>()!!
         val mediaList = mediaSessionManager.getActiveSessions(ComponentName(context, NotificationSensorManager::class.java))
         val sessionCount = mediaList.size
-        val primaryPlaybackState = if (sessionCount > 0) getPlaybackState(mediaList[0].playbackState?.state) else "Unavailable"
+        val primaryPlaybackState = if (sessionCount > 0) getPlaybackState(mediaList[0].playbackState?.state) else STATE_UNAVAILABLE
         val attr: MutableMap<String, Any?> = mutableMapOf()
         if (mediaList.size > 0) {
             for (item in mediaList) {
@@ -306,7 +308,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             PlaybackState.STATE_SKIPPING_TO_NEXT -> "Skip to Next"
             PlaybackState.STATE_SKIPPING_TO_PREVIOUS -> "Skip to Previous"
             PlaybackState.STATE_SKIPPING_TO_QUEUE_ITEM -> "Skip to Queue Item"
-            else -> "Unknown"
+            else -> STATE_UNKNOWN
         }
     }
 

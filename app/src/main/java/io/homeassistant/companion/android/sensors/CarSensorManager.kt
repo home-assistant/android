@@ -16,6 +16,8 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
+import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.vehicle.HaCarAppService
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -173,7 +175,7 @@ class CarSensorManager :
                         onSensorUpdated(
                             context,
                             it,
-                            "unavailable",
+                            STATE_UNAVAILABLE,
                             it.statelessIcon,
                             mapOf()
                         )
@@ -257,7 +259,7 @@ class CarSensorManager :
             onSensorUpdated(
                 context,
                 fuelLevel,
-                if (fuelStatus == "success") data.fuelPercent.value!! else "unknown",
+                if (fuelStatus == "success") data.fuelPercent.value!! else STATE_UNKNOWN,
                 fuelLevel.statelessIcon,
                 mapOf(
                     "status" to fuelStatus
@@ -270,7 +272,7 @@ class CarSensorManager :
             onSensorUpdated(
                 context,
                 batteryLevel,
-                if (batteryStatus == "success") data.batteryPercent.value!! else "unknown",
+                if (batteryStatus == "success") data.batteryPercent.value!! else STATE_UNKNOWN,
                 batteryLevel.statelessIcon,
                 mapOf(
                     "status" to batteryStatus
@@ -288,7 +290,7 @@ class CarSensorManager :
             onSensorUpdated(
                 context,
                 carName,
-                if (status == "success") data.name.value!! else "unknown",
+                if (status == "success") data.name.value!! else STATE_UNKNOWN,
                 carName.statelessIcon,
                 mapOf(
                     "car_manufacturer" to data.manufacturer.value,
@@ -309,7 +311,7 @@ class CarSensorManager :
             onSensorUpdated(
                 context,
                 carStatus,
-                if (status == "success") (data.evChargePortConnected.value == true) else "unknown",
+                if (status == "success") (data.evChargePortConnected.value == true) else STATE_UNKNOWN,
                 carStatus.statelessIcon,
                 mapOf(
                     "car_charge_port_open" to (data.evChargePortOpen.value == true),
@@ -329,7 +331,7 @@ class CarSensorManager :
             onSensorUpdated(
                 context,
                 odometerValue,
-                if (status == "success") data.odometerMeters.value!! else "unknown",
+                if (status == "success") data.odometerMeters.value!! else STATE_UNKNOWN,
                 odometerValue.statelessIcon,
                 mapOf(
                     "status" to status
@@ -348,7 +350,7 @@ class CarSensorManager :
             onSensorUpdated(
                 context,
                 fuelType,
-                if (fuelTypeStatus == "success") getFuelType(data.fuelTypes.value!!) else "unknown",
+                if (fuelTypeStatus == "success") getFuelType(data.fuelTypes.value!!) else STATE_UNKNOWN,
                 fuelType.statelessIcon,
                 mapOf(
                     "status" to fuelTypeStatus
@@ -360,7 +362,7 @@ class CarSensorManager :
             onSensorUpdated(
                 context,
                 evConnector,
-                if (evConnectorTypeStatus == "success") getEvConnectorType(data.evConnectorTypes.value!!) else "unknown",
+                if (evConnectorTypeStatus == "success") getEvConnectorType(data.evConnectorTypes.value!!) else STATE_UNKNOWN,
                 evConnector.statelessIcon,
                 mapOf(
                     "status" to evConnectorTypeStatus
@@ -373,8 +375,8 @@ class CarSensorManager :
     private fun carValueStatus(value: Int): String? {
         return when (value) {
             CarValue.STATUS_SUCCESS -> "success"
-            CarValue.STATUS_UNAVAILABLE -> "unavailable"
-            CarValue.STATUS_UNKNOWN -> "unknown"
+            CarValue.STATUS_UNAVAILABLE -> STATE_UNAVAILABLE
+            CarValue.STATUS_UNKNOWN -> STATE_UNKNOWN
             CarValue.STATUS_UNIMPLEMENTED -> "unimplemented"
             else -> null
         }
@@ -395,9 +397,9 @@ class CarSensorManager :
                 EnergyProfile.FUEL_TYPE_LNG -> "Liquified natural gas"
                 EnergyProfile.FUEL_TYPE_LPG -> "Liquified petroleum gas"
                 EnergyProfile.FUEL_TYPE_OTHER -> "Other"
-                EnergyProfile.FUEL_TYPE_UNKNOWN -> "unknown"
+                EnergyProfile.FUEL_TYPE_UNKNOWN -> STATE_UNKNOWN
                 EnergyProfile.FUEL_TYPE_UNLEADED -> "Unleaded gasoline"
-                else -> "unknown"
+                else -> STATE_UNKNOWN
             }
         }
         return fuelTypeList.toString()
@@ -419,8 +421,8 @@ class CarSensorManager :
                 EnergyProfile.EVCONNECTOR_TYPE_TESLA_HPWC -> "High Power Wall Charger of Tesla"
                 EnergyProfile.EVCONNECTOR_TYPE_TESLA_ROADSTER -> "Connector of Tesla Roadster"
                 EnergyProfile.EVCONNECTOR_TYPE_TESLA_SUPERCHARGER -> "Supercharger of Tesla"
-                EnergyProfile.EVCONNECTOR_TYPE_UNKNOWN -> "unknown"
-                else -> "unknown"
+                EnergyProfile.EVCONNECTOR_TYPE_UNKNOWN -> STATE_UNKNOWN
+                else -> STATE_UNKNOWN
             }
         }
         return evConnectorList.toString()

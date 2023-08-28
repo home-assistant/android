@@ -35,6 +35,7 @@ import androidx.wear.compose.material.Text
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.wearColorPalette
@@ -107,7 +108,7 @@ fun MainView(
                                         )
                                     },
                                     onClick = {
-                                        onEntityClicked(favoriteEntityID, "unknown")
+                                        onEntityClicked(favoriteEntityID, STATE_UNKNOWN)
                                         onEntityClickedFeedback(isToastEnabled, isHapticEnabled, context, favoriteEntityID, haptic)
                                     },
                                     colors = ChipDefaults.secondaryChipColors()

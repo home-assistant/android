@@ -9,6 +9,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.R as commonR
 
 class LastAppSensorManager : SensorManager {
@@ -64,7 +65,7 @@ class LastAppSensorManager : SensorManager {
         val current = System.currentTimeMillis()
         val lastApp = usageStats.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, current - 1000 * 1000, current).maxByOrNull { it.lastTimeUsed }?.packageName ?: "none"
 
-        var appLabel = "unknown"
+        var appLabel = STATE_UNKNOWN
 
         try {
             val pm = context.packageManager

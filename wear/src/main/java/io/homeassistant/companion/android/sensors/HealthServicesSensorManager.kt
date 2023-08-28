@@ -20,6 +20,7 @@ import androidx.health.services.client.data.PassiveMonitoringCapabilities
 import androidx.health.services.client.data.UserActivityInfo
 import androidx.health.services.client.data.UserActivityState
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.database.AppDatabase
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.runBlocking
@@ -199,7 +200,7 @@ class HealthServicesSensorManager : SensorManager {
                         UserActivityState.USER_ACTIVITY_ASLEEP -> "asleep"
                         UserActivityState.USER_ACTIVITY_PASSIVE -> "passive"
                         UserActivityState.USER_ACTIVITY_EXERCISE -> "exercise"
-                        else -> "unknown"
+                        else -> STATE_UNKNOWN
                     },
                     getActivityIcon(info),
                     mapOf(

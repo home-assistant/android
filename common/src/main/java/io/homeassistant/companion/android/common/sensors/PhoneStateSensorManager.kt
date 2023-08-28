@@ -10,6 +10,8 @@ import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
 import android.util.Log
 import androidx.core.content.getSystemService
+import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
+import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.R as commonR
 
 class PhoneStateSensorManager : SensorManager {
@@ -78,7 +80,7 @@ class PhoneStateSensorManager : SensorManager {
     @SuppressLint("MissingPermission")
     private fun checkPhoneState(context: Context) {
         if (isEnabled(context, phoneState)) {
-            var currentPhoneState = "unknown"
+            var currentPhoneState = STATE_UNKNOWN
 
             if (checkPermission(context, phoneState.id)) {
                 val telephonyManager =
@@ -90,7 +92,7 @@ class PhoneStateSensorManager : SensorManager {
                     TelephonyManager.CALL_STATE_IDLE -> "idle"
                     TelephonyManager.CALL_STATE_RINGING -> "ringing"
                     TelephonyManager.CALL_STATE_OFFHOOK -> "offhook"
-                    else -> "unknown"
+                    else -> STATE_UNKNOWN
                 }
             }
 
@@ -124,7 +126,7 @@ class PhoneStateSensorManager : SensorManager {
             return
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-            var displayName = "Unavailable"
+            var displayName = STATE_UNAVAILABLE
             val attrs = mutableMapOf<String, Any>()
 
             if (checkPermission(context, basicSimSensor.id)) {

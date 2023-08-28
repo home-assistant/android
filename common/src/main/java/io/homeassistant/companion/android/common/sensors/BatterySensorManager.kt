@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
+import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import java.math.RoundingMode
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -314,7 +315,7 @@ class BatterySensorManager : SensorManager {
             BatteryManager.BATTERY_STATUS_CHARGING -> "charging"
             BatteryManager.BATTERY_STATUS_DISCHARGING -> "discharging"
             BatteryManager.BATTERY_STATUS_NOT_CHARGING -> "not_charging"
-            else -> "unknown"
+            else -> STATE_UNKNOWN
         }
     }
 
@@ -326,7 +327,7 @@ class BatterySensorManager : SensorManager {
             BatteryManager.BATTERY_HEALTH_OVERHEAT -> "overheated"
             BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE -> "over_voltage"
             BatteryManager.BATTERY_HEALTH_UNSPECIFIED_FAILURE -> "failed"
-            else -> "unknown"
+            else -> STATE_UNKNOWN
         }
     }
 

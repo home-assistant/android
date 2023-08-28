@@ -14,6 +14,7 @@ import io.homeassistant.companion.android.common.bluetooth.ble.KalmanFilter
 import io.homeassistant.companion.android.common.bluetooth.ble.MonitoringManager
 import io.homeassistant.companion.android.common.bluetooth.ble.TransmitterManager
 import io.homeassistant.companion.android.common.bluetooth.ble.name
+import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
@@ -353,7 +354,7 @@ class BluetoothSensorManager : SensorManager {
             TransmitterManager.stopTransmitting(bleTransmitterDevice)
         }
 
-        val lastState = AppDatabase.getInstance(context).sensorDao().get(bleTransmitter.id).firstOrNull()?.state ?: "unknown"
+        val lastState = AppDatabase.getInstance(context).sensorDao().get(bleTransmitter.id).firstOrNull()?.state ?: STATE_UNKNOWN
         val state = if (isBtOn(context)) bleTransmitterDevice.state else "Bluetooth is turned off"
         val icon = if (bleTransmitterDevice.transmitting) "mdi:bluetooth" else "mdi:bluetooth-off"
         onSensorUpdated(
