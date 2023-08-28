@@ -30,7 +30,7 @@ fun stringForDomain(domain: String, context: Context): String? =
         )
         )[domain]?.let { context.getString(it) }
 
-fun getIcon(icon: String?, domain: String, context: Context): IIcon? {
+fun getIcon(icon: String?, domain: String, context: Context): IIcon {
     val simpleEntity = Entity(
         "$domain.ha_android_placeholder",
         "",

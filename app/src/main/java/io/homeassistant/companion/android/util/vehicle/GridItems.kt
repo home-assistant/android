@@ -154,18 +154,16 @@ fun getDomainList(
         if (!domainIsEmpty) {
             listBuilder.addItem(
                 GridItem.Builder().apply {
-                    if (icon != null) {
-                        setImage(
-                            CarIcon.Builder(
-                                IconicsDrawable(carContext, icon)
-                                    .apply {
-                                        sizeDp = 64
-                                    }.toAndroidIconCompat()
-                            )
-                                .setTint(CarColor.DEFAULT)
-                                .build()
+                    setImage(
+                        CarIcon.Builder(
+                            IconicsDrawable(carContext, icon)
+                                .apply {
+                                    sizeDp = 64
+                                }.toAndroidIconCompat()
                         )
-                    }
+                            .setTint(CarColor.DEFAULT)
+                            .build()
+                    )
                 }
                     .setTitle(friendlyDomain)
                     .setOnClickListener {

@@ -106,7 +106,7 @@ fun MainConfigView(
                     modifier = Modifier.fillMaxWidth(),
                     icon = {
                         Image(
-                            asset = iconBitmap ?: CommunityMaterial.Icon.cmd_bookmark,
+                            asset = iconBitmap,
                             colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
                         )
                     },

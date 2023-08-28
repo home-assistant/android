@@ -13,7 +13,6 @@ import androidx.wear.watchface.complications.data.ShortTextComplicationData
 import androidx.wear.watchface.complications.datasource.ComplicationRequest
 import androidx.wear.watchface.complications.datasource.SuspendingComplicationDataSourceService
 import com.mikepenz.iconics.IconicsDrawable
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import com.mikepenz.iconics.utils.colorInt
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R
@@ -69,7 +68,7 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
             null
         }
 
-        val icon = entity.getIcon(applicationContext) ?: CommunityMaterial.Icon.cmd_bookmark
+        val icon = entity.getIcon(applicationContext)
         val iconBitmap = IconicsDrawable(this, icon).apply {
             colorInt = Color.WHITE
         }.toBitmap()
