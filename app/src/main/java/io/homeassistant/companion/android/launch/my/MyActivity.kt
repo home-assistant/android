@@ -37,11 +37,21 @@ class MyActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        if (!serverManager.isRegistered()) {
+            finish()
+            return
+        }
+
         val binding = ActivityMyBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        if (Intent.ACTION_VIEW == intent?.action && intent.data != null) {
-            if (intent.data?.getQueryParameter("mobile")?.equals("1") == true) {
+        if (intent?.action == Intent.ACTION_VIEW && intent.data != null) {
+            if (
+                intent.data?.scheme != "https" ||
+                intent.data?.host != "my.home-assistant.io" ||
+                intent.data?.path?.startsWith("/redirect/") != true ||
+                intent.data?.getQueryParameter("mobile")?.equals("1") == true
+            ) {
                 finish()
                 return
             }
