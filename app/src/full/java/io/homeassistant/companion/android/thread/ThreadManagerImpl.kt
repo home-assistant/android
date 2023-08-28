@@ -252,8 +252,10 @@ class ThreadManagerImpl @Inject constructor(
         serverManager.integrationRepository(serverId).clearOrphanedThreadBorderAgentIds()
     }
 
+    @OptIn(ExperimentalStdlibApi::class)
     private suspend fun deleteThreadCredential(context: Context, borderAgentId: String) = suspendCoroutine { cont ->
-        val threadBorderAgent = ThreadBorderAgent.newBuilder(borderAgentId.toByteArray()).build()
+        val idAsBytes = borderAgentId.let { if (it.length == 16) it.toByteArray() else it.hexToByteArray() }
+        val threadBorderAgent = ThreadBorderAgent.newBuilder(idAsBytes).build()
         ThreadNetwork.getClient(context)
             .removeCredentials(threadBorderAgent)
             .addOnSuccessListener { cont.resume(true) }
