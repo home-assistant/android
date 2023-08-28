@@ -109,15 +109,14 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
             return
         }
 
+        @Suppress("DEPRECATION")
         if (isSensorEnabled(LastUpdateManager.lastUpdate.id)) {
             LastUpdateManager().sendLastUpdate(context, intent.action)
             val allSettings = sensorDao.getSettings(LastUpdateManager.lastUpdate.id)
             for (setting in allSettings) {
                 if (setting.value != "" && intent.action == setting.value) {
                     val eventData = intent.extras?.keySet()
-                        ?.associate {
-                            it.toString() to (intent.extras?.getString(it) ?: "")
-                        }
+                        ?.associate { it.toString() to intent.extras?.get(it).toString() }
                         ?.plus("intent" to intent.action.toString())
                         ?: mapOf("intent" to intent.action.toString())
                     Log.d(tag, "Event data: $eventData")
