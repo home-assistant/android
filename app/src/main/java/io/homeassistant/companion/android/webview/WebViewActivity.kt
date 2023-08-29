@@ -1113,11 +1113,20 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         finish()
     }
 
-    override fun loadUrl(url: String, keepHistory: Boolean) {
-        loadedUrl = url
-        clearHistory = !keepHistory
-        webView.loadUrl(url)
-        waitForConnection()
+    override fun loadUrl(url: String, keepHistory: Boolean, openInApp: Boolean) {
+        if (openInApp) {
+            loadedUrl = url
+            clearHistory = !keepHistory
+            webView.loadUrl(url)
+            waitForConnection()
+        } else {
+            try {
+                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                startActivity(browserIntent)
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to view url", e)
+            }
+        }
     }
 
     override fun setStatusBarAndNavigationBarColor(statusBarColor: Int, navigationBarColor: Int) {

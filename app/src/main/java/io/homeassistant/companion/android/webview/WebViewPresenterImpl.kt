@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.matter.MatterFrontendCommissioningStat
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
 import io.homeassistant.companion.android.util.UrlUtil
+import io.homeassistant.companion.android.util.UrlUtil.baseIsEqual
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -88,6 +89,7 @@ class WebViewPresenterImpl @Inject constructor(
                 serverConnectionInfo.isInternal() || (serverConnectionInfo.prioritizeInternal && !DisabledLocationHandler.isLocationEnabled(view as Context))
             )
             urlForServer = server?.id
+            val baseUrl = url
 
             if (path != null && !path.startsWith("entityId:")) {
                 url = UrlUtil.handle(url, path)
@@ -101,12 +103,13 @@ class WebViewPresenterImpl @Inject constructor(
              */
             if (oldUrlForServer != urlForServer || oldUrl?.host != url?.host) {
                 view.loadUrl(
-                    Uri.parse(url.toString())
+                    url = Uri.parse(url.toString())
                         .buildUpon()
                         .appendQueryParameter("external_auth", "1")
                         .build()
                         .toString(),
-                    oldUrlForServer == urlForServer
+                    keepHistory = oldUrlForServer == urlForServer,
+                    openInApp = url?.baseIsEqual(baseUrl) ?: false
                 )
             }
         }
