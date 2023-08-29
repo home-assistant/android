@@ -1034,7 +1034,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             val path = intent.getStringExtra(EXTRA_PATH)
             presenter.onViewReady(path)
             if (path?.startsWith("entityId:") == true) {
-                moreInfoEntity = path.substringAfter("entityId:")
+                // Get the entity ID from a string formatted "entityId:domain.entity"
+                // https://github.com/home-assistant/core/blob/dev/homeassistant/core.py#L159
+                val pattern = "(?<=^entityId:)((?!.+__)(?!_)[\\da-z_]+(?<!_)\\.(?!_)[\\da-z_]+(?<!_)$)".toRegex()
+                moreInfoEntity = pattern.find(path)?.value ?: ""
             }
             intent.removeExtra(EXTRA_PATH)
 
