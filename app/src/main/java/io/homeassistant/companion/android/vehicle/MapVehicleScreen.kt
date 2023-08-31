@@ -19,7 +19,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.mikepenz.iconics.IconicsDrawable
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import com.mikepenz.iconics.utils.sizeDp
 import com.mikepenz.iconics.utils.toAndroidIconCompat
 import io.homeassistant.companion.android.common.R
@@ -93,7 +92,7 @@ class MapVehicleScreen(
                     Log.i(TAG, "Grid limit ($gridLimit) reached, not adding any more navigation entities (${entities.size})")
                     return@forEachIndexed
                 }
-                val icon = pair.first.getIcon(carContext) ?: CommunityMaterial.Icon.cmd_account
+                val icon = pair.first.getIcon(carContext)
                 gridBuilder.addItem(
                     GridItem.Builder()
                         .setTitle(pair.first.friendlyName)

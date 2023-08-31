@@ -19,7 +19,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.mikepenz.iconics.IconicsDrawable
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import com.mikepenz.iconics.utils.sizeDp
 import com.mikepenz.iconics.utils.toAndroidIconCompat
 import io.homeassistant.companion.android.common.R
@@ -164,7 +163,7 @@ class EntityGridVehicleScreen(
                 Log.i(TAG, "Grid limit ($gridLimit) reached, not adding more entities (${entities.size}) for $title ")
                 return@forEachIndexed
             }
-            val icon = entity.getIcon(carContext) ?: CommunityMaterial.Icon.cmd_cloud_question
+            val icon = entity.getIcon(carContext)
             val gridItem =
                 GridItem.Builder()
                     .setLoading(false)

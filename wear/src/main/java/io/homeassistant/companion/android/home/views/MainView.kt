@@ -96,7 +96,7 @@ fun MainView(
                                         .fillMaxWidth(),
                                     icon = {
                                         Image(
-                                            asset = getIcon(cached?.icon, favoriteEntityID.split(".")[0], context) ?: CommunityMaterial.Icon.cmd_bookmark,
+                                            asset = getIcon(cached?.icon, favoriteEntityID.split(".")[0], context),
                                             colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
                                         )
                                     },
@@ -273,7 +273,7 @@ fun MainView(
                                                     "",
                                                     domain,
                                                     context
-                                                )?.let { Image(asset = it) }
+                                                ).let { Image(asset = it) }
                                             },
                                             label = {
                                                 Text(text = mainViewModel.stringForDomain(domain)!!)

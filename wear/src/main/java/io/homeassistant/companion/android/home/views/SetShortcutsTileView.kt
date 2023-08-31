@@ -62,7 +62,7 @@ fun SetShortcutsTileView(
                             .fillMaxWidth(),
                         icon = {
                             Image(
-                                iconBitmap ?: CommunityMaterial.Icon.cmd_bookmark,
+                                iconBitmap,
                                 colorFilter = ColorFilter.tint(Color.White)
                             )
                         },
