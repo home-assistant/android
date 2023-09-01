@@ -31,7 +31,7 @@ assignees: ''
 <!--
 - For Wear OS devices we will need the LogCat logs from the device.
 - For Android Auto the logs can be retrieved from the connected device.
-- Logs from the device can be taken from Settings > Companion App > Show and Share Logs
+- Logs from the device can be taken from Settings > Companion App Troubleshooting > Show and Share Logs
 -->
 **Companion App Logs:**
 
