@@ -167,12 +167,10 @@ class ThreadManagerImpl @Inject constructor(
     ) {
         val tlv = serverManager.webSocketRepository(serverId).getThreadDatasetTlv(datasetId)?.tlvAsByteArray
         if (tlv != null) {
-            val borderAgentId = (
-                preferredBorderAgentId ?: run {
+            val borderAgentId = preferredBorderAgentId ?: run {
                     Log.w(TAG, "Adding dataset with placeholder border agent ID")
                     BORDER_AGENT_ID
                 }
-                ).toByteArray()
             val idAsBytes = borderAgentId.let { if (it.length == 16) it.toByteArray() else it.hexToByteArray() }
             val threadBorderAgent = ThreadBorderAgent.newBuilder(idAsBytes).build()
             val threadNetworkCredentials = ThreadNetworkCredentials.fromActiveOperationalDataset(tlv)
