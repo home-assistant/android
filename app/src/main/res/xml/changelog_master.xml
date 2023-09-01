@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2023.8.4 - Main" versioncode="3">
+    <release version="2023.8.5 - Main" versioncode="3">
         <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Tiles and Device Controls may show a different highlighted state for some domains, to better match the frontend</change>
         <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Unavailable is now unavailable and Unknown is now unknown for all sensors that report those states. Phone SIM, Next Alarm, Media Session, Geocoded location</change>
         <change>Widgets can now toggle on tap or refresh</change>
@@ -9,12 +9,12 @@
         <change>Show select server dialog when deep link is used</change>
         <change>Bug fixes, design improvements and dependency updates</change>
     </release>
-    <release version="2023.8.4 - Wear" versioncode="2">
+    <release version="2023.8.5 - Wear" versioncode="2">
         <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Home screen may show a different highlighted state for some domains, to better match the frontend</change>
         <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Unavailable is now unavailable and Unknown is now unknown for all sensors that report those states. Phone SIM, Next Alarm</change>
         <change>Bug fixes, design improvements and dependency updates</change>
     </release>
-    <release version="2023.8.4 - Automotive" versioncode="1">
+    <release version="2023.8.5 - Automotive" versioncode="1">
         <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Unavailable is now unavailable and Unknown is now unknown for all sensors that report those states. Phone SIM, Next Alarm, Media Session, Geocoded location</change>
         <change>Driving Interface: Color icons to indicate entity is active</change>
         <change>Bug fixes, design improvements and dependency updates</change>
