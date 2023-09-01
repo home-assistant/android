@@ -158,6 +158,7 @@ class ThreadManagerImpl @Inject constructor(
     override suspend fun getPreferredDatasetFromServer(serverId: Int): ThreadDatasetResponse? =
         getDatasetsFromServer(serverId)?.firstOrNull { it.preferred }
 
+    @OptIn(ExperimentalStdlibApi::class)
     override suspend fun importDatasetFromServer(
         context: Context,
         datasetId: String,
@@ -172,7 +173,8 @@ class ThreadManagerImpl @Inject constructor(
                     BORDER_AGENT_ID
                 }
                 ).toByteArray()
-            val threadBorderAgent = ThreadBorderAgent.newBuilder(borderAgentId).build()
+            val idAsBytes = borderAgentId.let { if (it.length == 16) it.toByteArray() else it.hexToByteArray() }
+            val threadBorderAgent = ThreadBorderAgent.newBuilder(idAsBytes).build()
             val threadNetworkCredentials = ThreadNetworkCredentials.fromActiveOperationalDataset(tlv)
             suspendCoroutine { cont ->
                 ThreadNetwork.getClient(context).addCredentials(threadBorderAgent, threadNetworkCredentials)
