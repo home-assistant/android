@@ -207,6 +207,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var firstAuthTime: Long = 0
     private var resourceURL: String = ""
     private var appLocked = true
+    private var unlockingApp = false
     private var exoPlayer: ExoPlayer? = null
     private var isExoFullScreen = false
     private var exoTop = 0 // These margins are from the DOM and scaled to screen
@@ -1025,6 +1026,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             }
             else -> Log.d(TAG, "Authentication failed, retry attempts allowed")
         }
+        unlockingApp = false
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -1053,7 +1055,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         appLocked = presenter.isAppLocked()
         if (appLocked) {
             binding.blurView.setBlurEnabled(true)
-            authenticator.authenticate(getString(commonR.string.biometric_title))
+            if (!unlockingApp) {
+                authenticator.authenticate(getString(commonR.string.biometric_title))
+            }
+            unlockingApp = true
         } else {
             binding.blurView.setBlurEnabled(false)
         }
