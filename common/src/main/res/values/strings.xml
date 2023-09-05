@@ -153,6 +153,10 @@
     <string name="continue_connect">Continue</string>
     <string name="controls_setting_category">Device controls</string>
     <string name="controls_setting_title">Manage device controls</string>
+    <string name="controls_setting_panel">Choose which device controls experience you would like to use:</string>
+    <string name="controls_setting_mode_builtin_title">Built-in</string>
+    <string name="controls_setting_mode_builtin_info">Easy to use, with advanced features like locked device settings and multiple servers support</string>
+    <string name="controls_setting_mode_panel_info">Use one of your Home Assistant dashboards to fully customize your controls</string>
     <string name="controls_setting_summary">Choose if quick access device controls can be used when this device is locked</string>
     <string name="controls_setting_choose_setting">Choose which entities you want to be able to control using the built-in device controls option when this device is locked:</string>
     <string name="controls_setting_choose_all">Select all</string>
