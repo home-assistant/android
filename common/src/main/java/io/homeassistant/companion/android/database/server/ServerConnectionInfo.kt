@@ -8,7 +8,6 @@ import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.homeassistant.companion.android.common.data.wifi.WifiHelper
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.net.URL
 
@@ -43,34 +42,34 @@ data class ServerConnectionInfo(
             return arrayOf()
         }
 
-        val retVal = ArrayList<URL>()
+        val retVal = mutableListOf<URL?>()
 
         // If we are local then add the local URL in the first position, otherwise no reason to try
         if (isInternal() || prioritizeInternal) {
             internalUrl?.let {
                 retVal.add(
-                    it.toHttpUrl().newBuilder()
-                        .addPathSegments("api/webhook/$webhookId")
-                        .build()
-                        .toUrl()
+                    it.toHttpUrlOrNull()?.newBuilder()
+                        ?.addPathSegments("api/webhook/$webhookId")
+                        ?.build()
+                        ?.toUrl()
                 )
             }
         }
 
         cloudhookUrl?.let {
-            retVal.add(it.toHttpUrl().toUrl())
+            retVal.add(it.toHttpUrlOrNull()?.toUrl())
         }
 
         externalUrl.let {
             retVal.add(
-                it.toHttpUrl().newBuilder()
-                    .addPathSegments("api/webhook/$webhookId")
-                    .build()
-                    .toUrl()
+                it.toHttpUrlOrNull()?.newBuilder()
+                    ?.addPathSegments("api/webhook/$webhookId")
+                    ?.build()
+                    ?.toUrl()
             )
         }
 
-        return retVal.toTypedArray()
+        return retVal.filterNotNull().toTypedArray()
     }
 
     fun getUrl(isInternal: Boolean? = null, force: Boolean = false): URL? {
