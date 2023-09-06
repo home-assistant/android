@@ -114,6 +114,7 @@ class ThreadManagerImpl @Inject constructor(
                                         }
                                     )
                                 }
+                                Log.d(TAG, "Thread update device completed: deleted ${localIds.size} datasets, updated 1")
                                 true
                             } else { // Core prefers imported from other app, this shouldn't be managed by HA
                                 localIds.forEach { baId ->
@@ -126,9 +127,9 @@ class ThreadManagerImpl @Inject constructor(
                                 serverManager.defaultServers.forEach {
                                     serverManager.integrationRepository(it.id).setThreadBorderAgentIds(emptyList())
                                 }
+                                Log.d(TAG, "Thread update device completed: deleted ${localIds.size} datasets")
                                 false
                             }
-                            Log.d(TAG, "Thread update device completed")
                         } catch (e: Exception) {
                             Log.e(TAG, "Thread update device failed", e)
                         }
