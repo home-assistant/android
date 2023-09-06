@@ -239,7 +239,7 @@ class ThreadManagerImpl @Inject constructor(
     }
 
     private suspend fun deleteOrphanedThreadCredentials(context: Context, serverId: Int) {
-        val orphanedCredentials = serverManager.integrationRepository(serverId).getThreadBorderAgentIds()
+        val orphanedCredentials = serverManager.integrationRepository(serverId).getOrphanedThreadBorderAgentIds()
         if (orphanedCredentials.isEmpty()) return
 
         orphanedCredentials.forEach {
