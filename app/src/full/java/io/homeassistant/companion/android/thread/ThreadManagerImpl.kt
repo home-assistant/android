@@ -211,7 +211,13 @@ class ThreadManagerImpl @Inject constructor(
                 .addOnFailureListener { cont.resume(null) }
         }
         return try {
-            appCredentials?.any { isPreferredCredentials(context, it) } ?: false
+            appCredentials?.any {
+                val isPreferred = isPreferredCredentials(context, it)
+                if (isPreferred) {
+                    Log.d(TAG, "Thread device prefers app added dataset: ${it.networkName} (PAN ${it.panId}, EXTPAN ${it.extendedPanId})")
+                }
+                isPreferred
+            } ?: false
         } catch (e: Exception) {
             Log.e(TAG, "Thread app added credentials preferred check failed", e)
             false
