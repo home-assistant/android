@@ -65,7 +65,9 @@ class ThreadManagerImpl @Inject constructor(
         return if (deviceThreadIntent == null && coreThreadDataset != null) {
             try {
                 importDatasetFromServer(context, coreThreadDataset.datasetId, coreThreadDataset.preferredBorderAgentId, serverId)
-                serverManager.integrationRepository(serverId).setThreadBorderAgentIds(listOf((coreThreadDataset.preferredBorderAgentId ?: BORDER_AGENT_ID)))
+                coreThreadDataset.preferredBorderAgentId?.let {
+                    serverManager.integrationRepository(serverId).setThreadBorderAgentIds(listOf(it))
+                } // else added using placeholder, will be removed when core is updated
                 Log.d(TAG, "Thread import to device completed")
                 ThreadManager.SyncResult.OnlyOnServer(imported = true)
             } catch (e: Exception) {
@@ -93,11 +95,7 @@ class ThreadManagerImpl @Inject constructor(
                         try {
                             val localIds = serverManager.defaultServers.flatMap {
                                 serverManager.integrationRepository(it.id).getThreadBorderAgentIds()
-                            }.toMutableList()
-                            if (localIds.isEmpty()) { // Prefers something from HA, must've been added before BA ID logic
-                                localIds += BORDER_AGENT_ID
                             }
-
                             updated = if (coreThreadDataset.source != "Google") { // Credential from HA, update
                                 localIds.filter { it != coreThreadDataset.preferredBorderAgentId }.forEach { baId ->
                                     try {
@@ -109,8 +107,8 @@ class ThreadManagerImpl @Inject constructor(
                                 importDatasetFromServer(context, coreThreadDataset.datasetId, coreThreadDataset.preferredBorderAgentId, serverId)
                                 serverManager.defaultServers.forEach {
                                     serverManager.integrationRepository(it.id).setThreadBorderAgentIds(
-                                        if (it.id == serverId) {
-                                            listOf(coreThreadDataset.preferredBorderAgentId ?: BORDER_AGENT_ID)
+                                        if (it.id == serverId && coreThreadDataset.preferredBorderAgentId != null) {
+                                            listOf(coreThreadDataset.preferredBorderAgentId!!)
                                         } else {
                                             emptyList()
                                         }
@@ -245,6 +243,14 @@ class ThreadManagerImpl @Inject constructor(
     }
 
     private suspend fun deleteOrphanedThreadCredentials(context: Context, serverId: Int) {
+        if (serverManager.defaultServers.all { it.version?.isAtLeast(2023, 9) == true }) {
+            try {
+                deleteThreadCredential(context, BORDER_AGENT_ID)
+            } catch (e: Exception) {
+                // Expected, it may not exist
+            }
+        }
+
         val orphanedCredentials = serverManager.integrationRepository(serverId).getOrphanedThreadBorderAgentIds()
         if (orphanedCredentials.isEmpty()) return
 
