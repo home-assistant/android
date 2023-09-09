@@ -17,6 +17,14 @@ jobs:
           ruby-version: '3.2'
           bundler-cache: true
 
+      - uses: ./.github/actions/inflate-secrets
+        name: Inflate Secrets
+        with:
+          keystore: ${{ secrets.ORIGINAL_KEYSTORE_FILE }}
+          google-services: ${{ secrets.GOOGLESERVICES }}
+          firebase-creds: ${{ secrets.FIREBASECREDS }}
+          playstore-creds: ${{ secrets.PLAYSTORECREDS }}
+
       - name: Promote to Beta to Production Play Store
         run: bundle exec fastlane promote_to_production
 
