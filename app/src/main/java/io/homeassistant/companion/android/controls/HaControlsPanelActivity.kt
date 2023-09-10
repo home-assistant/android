@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.controls
 
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
@@ -19,13 +20,19 @@ class HaControlsPanelActivity : AppCompatActivity() {
     @Inject
     lateinit var prefsRepository: PrefsRepository
 
+    private var launched = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (!serverManager.isRegistered()) return
+        if (!serverManager.isRegistered()) {
+            finish()
+            return
+        }
 
         lifecycleScope.launch {
             val serverId = prefsRepository.getControlsPanelServer() ?: serverManager.getServer()?.id
             val path = prefsRepository.getControlsPanelPath()
+            Log.d("HaControlsPanel", "Launching WebView…")
             startActivity(
                 WebViewActivity.newInstance(
                     context = this@HaControlsPanelActivity,
@@ -35,7 +42,16 @@ class HaControlsPanelActivity : AppCompatActivity() {
                     putExtra(WebViewActivity.EXTRA_SHOW_WHEN_LOCKED, true)
                 }
             )
-            finish()
+            overridePendingTransition(0, 0) // Disable activity start/stop animation
+
+            // The device controls panel can flicker if this activity finishes to quickly, so handle
+            // it in onPause instead to reduce this
+            launched = true
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        if (launched) finish()
     }
 }

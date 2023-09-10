@@ -172,8 +172,7 @@ class SettingsFragment(
         }
 
         val isAutomotive =
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                requireContext().packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && requireContext().packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
 
         if (Build.MODEL != "Quest") {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
