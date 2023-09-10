@@ -22,6 +22,8 @@ class PrefsRepositoryImpl @Inject constructor(
         private const val PREF_SCREEN_ORIENTATION = "screen_orientation"
         private const val PREF_CONTROLS_AUTH_REQUIRED = "controls_auth_required"
         private const val PREF_CONTROLS_AUTH_ENTITIES = "controls_auth_entities"
+        private const val CONTROLS_PANEL_SERVER = "controls_panel_server"
+        private const val CONTROLS_PANEL_PATH = "controls_panel_path"
         private const val PREF_FULLSCREEN_ENABLED = "fullscreen_enabled"
         private const val PREF_KEEP_SCREEN_ON_ENABLED = "keep_screen_on_enabled"
         private const val PREF_PINCH_TO_ZOOM_ENABLED = "pinch_to_zoom_enabled"
@@ -127,6 +129,24 @@ class PrefsRepositoryImpl @Inject constructor(
         localStorage.putStringSet(PREF_CONTROLS_AUTH_ENTITIES, entities.toSet())
     }
 
+    override suspend fun getControlsPanelServer(): Int? =
+        localStorage.getInt(CONTROLS_PANEL_SERVER)
+
+    override suspend fun setControlsPanelServer(serverId: Int) {
+        localStorage.putInt(CONTROLS_PANEL_SERVER, serverId)
+    }
+
+    override suspend fun getControlsPanelPath(): String? =
+        localStorage.getString(CONTROLS_PANEL_PATH)
+
+    override suspend fun setControlsPanelPath(path: String?) {
+        if (path.isNullOrBlank()) {
+            localStorage.remove(CONTROLS_PANEL_PATH)
+        } else {
+            localStorage.putString(CONTROLS_PANEL_PATH, path)
+        }
+    }
+
     override suspend fun isFullScreenEnabled(): Boolean {
         return localStorage.getBoolean(PREF_FULLSCREEN_ENABLED)
     }
@@ -213,5 +233,10 @@ class PrefsRepositoryImpl @Inject constructor(
 
         val autoFavorites = getAutoFavorites().filter { it.split("-")[0].toIntOrNull() != serverId }
         setAutoFavorites(autoFavorites)
+
+        if (getControlsPanelServer() == serverId) {
+            localStorage.remove(CONTROLS_PANEL_SERVER)
+            setControlsPanelPath(null)
+        }
     }
 }

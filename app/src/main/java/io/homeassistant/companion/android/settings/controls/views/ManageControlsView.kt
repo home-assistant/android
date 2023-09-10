@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.Button
 import androidx.compose.material.Checkbox
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.ContentAlpha
@@ -26,11 +28,14 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.RadioButton
 import androidx.compose.material.Text
+import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,16 +43,20 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.util.compose.HaAlertWarning
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.getEntityDomainString
 import io.homeassistant.companion.android.common.R as commonR
@@ -59,14 +68,20 @@ fun ManageControlsView(
     authRequiredList: List<String>,
     entitiesLoaded: Boolean,
     entitiesList: Map<Int, List<Entity<*>>>,
+    panelSetting: Pair<String?, Int>?,
     serversList: List<Server>,
     defaultServer: Int,
     onSetPanelEnabled: (Boolean) -> Unit,
     onSelectAll: () -> Unit,
     onSelectNone: () -> Unit,
-    onSelectEntity: (String, Int) -> Unit
+    onSelectEntity: (String, Int) -> Unit,
+    onSetPanelSetting: (String, Int) -> Unit
 ) {
-    var selectedServer by remember { mutableStateOf(defaultServer) }
+    var selectedServer by remember { mutableIntStateOf(defaultServer) }
+    val initialPanelEnabled by rememberSaveable { mutableStateOf(panelEnabled) }
+    var panelServer by remember(panelSetting?.second) { mutableIntStateOf(panelSetting?.second ?: defaultServer) }
+    var panelPath by remember(panelSetting?.first) { mutableStateOf(panelSetting?.first ?: "") }
+
     LazyColumn(contentPadding = PaddingValues(vertical = 16.dp)) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             item {
@@ -89,7 +104,9 @@ fun ManageControlsView(
                         modifier = Modifier.weight(0.5f)
                     )
                     Divider(
-                        modifier = Modifier.fillMaxHeight().width(1.dp)
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .width(1.dp)
                     )
                     ManageControlsModeButton(
                         isPanel = true,
@@ -174,7 +191,69 @@ fun ManageControlsView(
                 }
             }
         } else {
-            // TODO path entry
+            if (!initialPanelEnabled) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .padding(bottom = 16.dp)
+                    ) {
+                        HaAlertWarning(
+                            message = stringResource(commonR.string.controls_setting_alert),
+                            action = null,
+                            onActionClicked = {}
+                        )
+                    }
+                }
+            }
+            item {
+                Text(
+                    text = stringResource(commonR.string.controls_setting_dashboard_setting),
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
+            if (serversList.size > 1) {
+                item {
+                    ServerExposedDropdownMenu(
+                        servers = serversList,
+                        current = panelServer,
+                        onSelected = { panelServer = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .padding(top = 16.dp)
+                    )
+                }
+            }
+            item {
+                TextField(
+                    value = panelPath,
+                    onValueChange = { panelPath = it },
+                    label = { Text(stringResource(id = R.string.lovelace_view_dashboard)) },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, autoCorrect = false, keyboardType = KeyboardType.Uri),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(all = 16.dp)
+                )
+            }
+            item {
+                Row(
+                    modifier = Modifier.padding(start = 16.dp, bottom = 16.dp)
+                ) {
+                    Button(
+                        enabled = (
+                            (
+                                panelPath != panelSetting?.first &&
+                                    !(panelPath == "" && panelSetting != null && panelSetting.first == null)
+                                ) ||
+                                panelServer != panelSetting.second
+                            ),
+                        onClick = { onSetPanelSetting(panelPath, panelServer) }
+                    ) {
+                        Text(stringResource(commonR.string.save))
+                    }
+                }
+            }
         }
     }
 }

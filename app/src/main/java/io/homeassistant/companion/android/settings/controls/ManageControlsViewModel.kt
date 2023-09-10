@@ -46,6 +46,9 @@ class ManageControlsViewModel @Inject constructor(
 
     val entitiesList = mutableStateMapOf<Int, List<Entity<*>>>()
 
+    var panelSetting by mutableStateOf<Pair<String?, Int>?>(null)
+        private set
+
     init {
         viewModelScope.launch {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -53,6 +56,14 @@ class ManageControlsViewModel @Inject constructor(
                     application.packageManager.getComponentEnabledSetting(
                     ComponentName(application, HaControlsPanelActivity::class.java)
                 ) == PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+
+                val panelServer = prefsRepository.getControlsPanelServer()
+                val panelPath = prefsRepository.getControlsPanelPath()
+                panelSetting = if (panelServer != null) {
+                    Pair(panelPath, panelServer)
+                } else {
+                    null
+                }
             }
 
             authRequired = prefsRepository.getControlsAuthRequired()
@@ -145,5 +156,15 @@ class ManageControlsViewModel @Inject constructor(
             PackageManager.DONT_KILL_APP
         )
         panelEnabled = enabled
+        if (panelSetting?.second == null) {
+            serverManager.getServer()?.id?.let { setPanelConfig("", it) }
+        }
+    }
+
+    fun setPanelConfig(path: String, serverId: Int) = viewModelScope.launch {
+        val cleanedPath = path.trim().takeIf { it.isNotBlank() }
+        prefsRepository.setControlsPanelServer(serverId)
+        prefsRepository.setControlsPanelPath(cleanedPath)
+        panelSetting = Pair(cleanedPath, serverId)
     }
 }

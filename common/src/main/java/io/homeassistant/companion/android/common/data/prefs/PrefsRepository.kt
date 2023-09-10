@@ -27,6 +27,14 @@ interface PrefsRepository {
 
     suspend fun setControlsAuthEntities(entities: List<String>)
 
+    suspend fun getControlsPanelServer(): Int?
+
+    suspend fun setControlsPanelServer(serverId: Int)
+
+    suspend fun getControlsPanelPath(): String?
+
+    suspend fun setControlsPanelPath(path: String?)
+
     suspend fun isFullScreenEnabled(): Boolean
 
     suspend fun setFullScreenEnabled(enabled: Boolean)
