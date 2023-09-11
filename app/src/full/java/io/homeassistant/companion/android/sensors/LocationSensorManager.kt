@@ -650,10 +650,14 @@ class LocationSensorManager : LocationSensorManagerBase() {
             geofencingClient = LocationServices.getGeofencingClient(latestContext)
             val intent = getLocationUpdateIntent(true)
             val geofencingRequest = createGeofencingRequest()
-            geofencingClient?.addGeofences(
-                geofencingRequest,
-                intent
-            )
+            if (geofencingRequest != null) {
+                geofencingClient?.addGeofences(
+                    geofencingRequest,
+                    intent
+                )
+            } else {
+                Log.w(TAG, "No zones, skipping zone based location updates")
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Issue requesting zone updates.", e)
         }
@@ -934,26 +938,29 @@ class LocationSensorManager : LocationSensorManagerBase() {
         return zones[serverId] ?: emptyArray()
     }
 
-    private suspend fun createGeofencingRequest(): GeofencingRequest {
+    private suspend fun createGeofencingRequest(): GeofencingRequest? {
         val geofencingRequestBuilder = GeofencingRequest.Builder()
             .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
 
         val highAccuracyTriggerRange = getHighAccuracyModeTriggerRange()
         val highAccuracyZones = getHighAccuracyModeZones(false)
 
+        var geofenceCount = 0
         getEnabledServers(latestContext, zoneLocation).map { serverId ->
             ioScope.async {
                 val configuredZones = getZones(serverId, forceRefresh = true)
                 configuredZones.forEach {
                     addGeofenceToBuilder(geofencingRequestBuilder, serverId, it)
+                    geofenceCount++
                     if (highAccuracyTriggerRange > 0 && highAccuracyZones.contains("${serverId}_${it.entityId}")) {
                         addGeofenceToBuilder(geofencingRequestBuilder, serverId, it, highAccuracyTriggerRange)
+                        geofenceCount++
                     }
                 }
                 geofenceRegistered.add(serverId)
             }
         }.awaitAll()
-        return geofencingRequestBuilder.build()
+        return if (geofenceCount > 0) geofencingRequestBuilder.build() else null
     }
 
     private fun addGeofenceToBuilder(
