@@ -122,6 +122,9 @@
     <string name="calendar">Calendar</string>
     <string name="camera_widgets">Camera widgets</string>
     <string name="camera_widget_desc">Displays the latest image from the camera</string>
+    <string name="camera_snapshot">Camera snapshot</string>
+    <string name="camera_snapshot_tile_desc">See what\'s on your camera</string>
+    <string name="camera_snapshot_tile_log_in">Log in to Home Assistant to add a camera snapshot</string>
     <string name="cancel">Cancel</string>
     <string name="changelog">View full change log</string>
     <string name="checking_with_home_assistant">Checking with Home Assistant</string>

@@ -167,6 +167,27 @@
             <meta-data android:name="androidx.wear.tiles.PREVIEW"
                 android:resource="@drawable/conversation_tile_example" />
         </service>
+        <service
+            android:name=".tiles.CameraSnapshotTile"
+            android:label="@string/camera_snapshot"
+            android:description="@string/camera_snapshot_tile_desc"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+
+            <meta-data android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/camera_snapshot_tile_example" />
+
+            <meta-data
+                android:name="com.google.android.clockwork.tiles.MULTI_INSTANCES_SUPPORTED"
+                android:value="true" /> <!-- This is supported starting from Wear OS 3 -->
+
+            <meta-data
+                android:name="com.google.android.clockwork.tiles.PROVIDER_CONFIG_ACTION"
+                android:value="ConfigShortcutsTile" /> <!-- TODO -->
+        </service>
         <receiver android:name=".tiles.TileActionReceiver"
             android:exported="false">
             <intent-filter>
