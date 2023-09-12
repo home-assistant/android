@@ -11,6 +11,7 @@ import androidx.wear.protolayout.ResourceBuilders.ImageResource
 import androidx.wear.protolayout.ResourceBuilders.InlineImageResource
 import androidx.wear.protolayout.ResourceBuilders.Resources
 import androidx.wear.protolayout.TimelineBuilders.Timeline
+import androidx.wear.tiles.EventBuilders
 import androidx.wear.tiles.RequestBuilders
 import androidx.wear.tiles.TileBuilders.Tile
 import androidx.wear.tiles.TileService
@@ -18,15 +19,19 @@ import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.wear.CameraSnapshotTile
 import io.homeassistant.companion.android.util.UrlUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.guava.future
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -51,12 +56,22 @@ class CameraSnapshotTile : TileService() {
     override fun onTileRequest(requestParams: RequestBuilders.TileRequest): ListenableFuture<Tile> =
         serviceScope.future {
             val tileId = requestParams.tileId
-            val entityId = "camera.buienradar" // TODO
+            val tileConfig = AppDatabase.getInstance(this@CameraSnapshotTile)
+                .cameraSnapshotTileDao()
+                .get(tileId)
 
             Tile.Builder()
-                .setResourcesVersion("$entityId${System.currentTimeMillis()}")
+                .setResourcesVersion("$TAG$tileId.${System.currentTimeMillis()}")
+                .setFreshnessIntervalMillis(
+                    TimeUnit.SECONDS.toMillis(tileConfig?.refreshInterval ?: 3600L)
+                )
                 .setTileTimeline(
-                    if (serverManager.isRegistered()) {
+                    if (serverManager.isRegistered() && tileConfig != null) {
+                        timeline(
+                            requestParams.deviceConfiguration.screenWidthDp,
+                            requestParams.deviceConfiguration.screenHeightDp
+                        )
+                    } else if (serverManager.isRegistered()) {
                         // TODO emptystate
                         timeline(
                             requestParams.deviceConfiguration.screenWidthDp,
@@ -78,12 +93,16 @@ class CameraSnapshotTile : TileService() {
         serviceScope.future {
             var imageWidth = 0
             var imageHeight = 0
-            val image = if (serverManager.isRegistered()) {
+            val imageData = if (serverManager.isRegistered()) {
                 val tileId = requestParams.tileId
-                val entityId = "camera.buienradar" // TODO
+                val tileConfig = AppDatabase.getInstance(this@CameraSnapshotTile)
+                    .cameraSnapshotTileDao()
+                    .get(tileId)
 
                 try {
-                    val entity = serverManager.integrationRepository().getEntity(entityId)
+                    val entity = tileConfig?.entityId?.let {
+                        serverManager.integrationRepository().getEntity(it)
+                    }
                     val picture = entity?.attributes?.get("entity_picture")?.toString()
                     val url = UrlUtil.handle(serverManager.getServer()?.connection?.getUrl(), picture ?: "")
                     if (picture != null && url != null) {
@@ -105,7 +124,7 @@ class CameraSnapshotTile : TileService() {
                         null
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "Unable to fetch entity $entityId", e)
+                    Log.e(TAG, "Unable to fetch entity ${tileConfig?.entityId}", e)
                     null
                 }
             } else {
@@ -123,13 +142,13 @@ class CameraSnapshotTile : TileService() {
                                 .build()
                         ).build()
                 )
-            if (image != null) {
+            if (imageData != null) {
                 builder.addIdToImageMapping(
                     RESOURCE_SNAPSHOT,
                     ImageResource.Builder()
                         .setInlineResource(
                             InlineImageResource.Builder()
-                                .setData(image)
+                                .setData(imageData)
                                 .setWidthPx(imageWidth)
                                 .setHeightPx(imageHeight)
                                 .setFormat(ResourceBuilders.IMAGE_FORMAT_UNDEFINED)
@@ -141,6 +160,22 @@ class CameraSnapshotTile : TileService() {
 
             builder.build()
         }
+
+    override fun onTileAddEvent(requestParams: EventBuilders.TileAddEvent) {
+        serviceScope.launch {
+            AppDatabase.getInstance(this@CameraSnapshotTile)
+                .cameraSnapshotTileDao()
+                .add(CameraSnapshotTile(id = requestParams.tileId))
+        }
+    }
+
+    override fun onTileRemoveEvent(requestParams: EventBuilders.TileRemoveEvent) {
+        serviceScope.launch {
+            AppDatabase.getInstance(this@CameraSnapshotTile)
+                .cameraSnapshotTileDao()
+                .delete(requestParams.tileId)
+        }
+    }
 
     override fun onDestroy() {
         super.onDestroy()
