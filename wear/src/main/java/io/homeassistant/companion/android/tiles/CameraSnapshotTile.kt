@@ -3,11 +3,9 @@ package io.homeassistant.companion.android.tiles
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Log
-import androidx.wear.protolayout.ActionBuilders
 import androidx.wear.protolayout.DimensionBuilders
 import androidx.wear.protolayout.LayoutElementBuilders
 import androidx.wear.protolayout.LayoutElementBuilders.CONTENT_SCALE_MODE_FIT
-import androidx.wear.protolayout.ModifiersBuilders
 import androidx.wear.protolayout.ResourceBuilders
 import androidx.wear.protolayout.ResourceBuilders.ImageResource
 import androidx.wear.protolayout.ResourceBuilders.InlineImageResource
@@ -39,7 +37,6 @@ class CameraSnapshotTile : TileService() {
         private const val TAG = "CameraSnapshotTile"
 
         private const val RESOURCE_SNAPSHOT = "snapshot"
-        private const val RESOURCE_REFRESH = "refresh"
     }
 
     private val serviceJob = Job()
@@ -162,41 +159,9 @@ class CameraSnapshotTile : TileService() {
                     .build()
             )
             // Refresh button
-            addContent(
-                LayoutElementBuilders.Arc.Builder()
-                    .setAnchorAngle(
-                        DimensionBuilders.DegreesProp.Builder(180f).build()
-                    )
-                    .addContent(
-                        LayoutElementBuilders.ArcAdapter.Builder()
-                            .setContent(
-                                LayoutElementBuilders.Image.Builder()
-                                    .setResourceId(RESOURCE_REFRESH)
-                                    .setWidth(DimensionBuilders.dp(24f))
-                                    .setHeight(DimensionBuilders.dp(24f))
-                                    .setModifiers(getRefreshModifiers())
-                                    .build()
-                            )
-                            .setRotateContents(false)
-                            .build()
-                    )
-                    .build()
-            )
+            addContent(getRefreshButton())
             // Click: refresh
             setModifiers(getRefreshModifiers())
         }.build()
     )
-
-    private fun getRefreshModifiers(): ModifiersBuilders.Modifiers {
-        return ModifiersBuilders.Modifiers.Builder()
-            .setClickable(
-                ModifiersBuilders.Clickable.Builder()
-                    .setOnClick(
-                        ActionBuilders.LoadAction.Builder().build()
-                    )
-                    .setId("refresh")
-                    .build()
-            )
-            .build()
-    }
 }

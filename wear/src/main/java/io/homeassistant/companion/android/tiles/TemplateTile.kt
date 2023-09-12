@@ -15,15 +15,12 @@ import android.util.Log
 import androidx.core.content.getSystemService
 import androidx.core.text.HtmlCompat.FROM_HTML_MODE_LEGACY
 import androidx.core.text.HtmlCompat.fromHtml
-import androidx.wear.protolayout.ActionBuilders
 import androidx.wear.protolayout.ColorBuilders
 import androidx.wear.protolayout.DimensionBuilders
-import androidx.wear.protolayout.DimensionBuilders.dp
 import androidx.wear.protolayout.LayoutElementBuilders
 import androidx.wear.protolayout.LayoutElementBuilders.Box
 import androidx.wear.protolayout.LayoutElementBuilders.FONT_WEIGHT_BOLD
 import androidx.wear.protolayout.LayoutElementBuilders.LayoutElement
-import androidx.wear.protolayout.ModifiersBuilders
 import androidx.wear.protolayout.ResourceBuilders
 import androidx.wear.protolayout.ResourceBuilders.Resources
 import androidx.wear.protolayout.TimelineBuilders.Timeline
@@ -58,7 +55,7 @@ class TemplateTile : TileService() {
     override fun onTileRequest(requestParams: TileRequest): ListenableFuture<Tile> =
         serviceScope.future {
             val state = requestParams.currentState
-            if (state.lastClickableId == "refresh") {
+            if (state.lastClickableId == MODIFIER_CLICK_REFRESH) {
                 if (wearPrefsRepository.getWearHapticFeedback()) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                         val vibratorManager = applicationContext.getSystemService<VibratorManager>()
@@ -96,7 +93,7 @@ class TemplateTile : TileService() {
             Resources.Builder()
                 .setVersion("1")
                 .addIdToImageMapping(
-                    "refresh",
+                    RESOURCE_REFRESH,
                     ResourceBuilders.ImageResource.Builder()
                         .setAndroidResourceByResId(
                             ResourceBuilders.AndroidImageResourceByResId.Builder()
@@ -147,42 +144,10 @@ class TemplateTile : TileService() {
                 parseHtml(renderedText)
             )
         }
-        addContent(
-            LayoutElementBuilders.Arc.Builder()
-                .setAnchorAngle(
-                    DimensionBuilders.DegreesProp.Builder(180f).build()
-                )
-                .addContent(
-                    LayoutElementBuilders.ArcAdapter.Builder()
-                        .setContent(
-                            LayoutElementBuilders.Image.Builder()
-                                .setResourceId("refresh")
-                                .setWidth(dp(24f))
-                                .setHeight(dp(24f))
-                                .setModifiers(getRefreshModifiers())
-                                .build()
-                        )
-                        .setRotateContents(false)
-                        .build()
-                )
-                .build()
-        )
+        addContent(getRefreshButton())
         setModifiers(getRefreshModifiers())
     }
         .build()
-
-    private fun getRefreshModifiers(): ModifiersBuilders.Modifiers {
-        return ModifiersBuilders.Modifiers.Builder()
-            .setClickable(
-                ModifiersBuilders.Clickable.Builder()
-                    .setOnClick(
-                        ActionBuilders.LoadAction.Builder().build()
-                    )
-                    .setId("refresh")
-                    .build()
-            )
-            .build()
-    }
 
     private fun parseHtml(renderedText: String): LayoutElementBuilders.Spannable {
         // Replace control char \r\n, \r, \n and also \r\n, \r, \n as text literals in strings to <br>
