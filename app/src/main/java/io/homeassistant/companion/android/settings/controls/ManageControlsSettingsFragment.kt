@@ -36,15 +36,19 @@ class ManageControlsSettingsFragment : Fragment() {
             setContent {
                 MdcTheme {
                     ManageControlsView(
+                        panelEnabled = viewModel.panelEnabled,
                         authSetting = viewModel.authRequired,
                         authRequiredList = viewModel.authRequiredList,
                         entitiesLoaded = viewModel.entitiesLoaded,
                         entitiesList = viewModel.entitiesList,
+                        panelSetting = viewModel.panelSetting,
                         serversList = serverManager.defaultServers,
                         defaultServer = serverManager.getServer()?.id ?: 0,
+                        onSetPanelEnabled = viewModel::enablePanelForControls,
                         onSelectAll = { viewModel.setAuthSetting(ControlsAuthRequiredSetting.NONE) },
                         onSelectNone = { viewModel.setAuthSetting(ControlsAuthRequiredSetting.ALL) },
-                        onSelectEntity = { entityId, serverId -> viewModel.toggleAuthForEntity(entityId, serverId) }
+                        onSelectEntity = { entityId, serverId -> viewModel.toggleAuthForEntity(entityId, serverId) },
+                        onSetPanelSetting = { path, serverId -> viewModel.setPanelConfig(path, serverId) }
                     )
                 }
             }

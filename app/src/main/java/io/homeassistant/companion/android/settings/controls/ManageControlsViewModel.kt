@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.settings.controls
 
 import android.app.Application
+import android.content.ComponentName
+import android.content.pm.PackageManager
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
@@ -16,6 +18,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.controls.HaControlsPanelActivity
 import io.homeassistant.companion.android.controls.HaControlsProviderService
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -27,8 +30,11 @@ import javax.inject.Inject
 class ManageControlsViewModel @Inject constructor(
     private val serverManager: ServerManager,
     private val prefsRepository: PrefsRepository,
-    application: Application
+    private val application: Application
 ) : AndroidViewModel(application) {
+
+    var panelEnabled by mutableStateOf(false)
+        private set
 
     var authRequired by mutableStateOf(ControlsAuthRequiredSetting.NONE)
         private set
@@ -40,8 +46,26 @@ class ManageControlsViewModel @Inject constructor(
 
     val entitiesList = mutableStateMapOf<Int, List<Entity<*>>>()
 
+    var panelSetting by mutableStateOf<Pair<String?, Int>?>(null)
+        private set
+
     init {
         viewModelScope.launch {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                panelEnabled =
+                    application.packageManager.getComponentEnabledSetting(
+                    ComponentName(application, HaControlsPanelActivity::class.java)
+                ) == PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+
+                val panelServer = prefsRepository.getControlsPanelServer()
+                val panelPath = prefsRepository.getControlsPanelPath()
+                panelSetting = if (panelServer != null) {
+                    Pair(panelPath, panelServer)
+                } else {
+                    null
+                }
+            }
+
             authRequired = prefsRepository.getControlsAuthRequired()
             authRequiredList.addAll(prefsRepository.getControlsAuthEntities())
 
@@ -117,5 +141,30 @@ class ManageControlsViewModel @Inject constructor(
             prefsRepository.setControlsAuthRequired(newAuthRequired)
             prefsRepository.setControlsAuthEntities(authRequiredList.toList())
         }
+    }
+
+    fun enablePanelForControls(enabled: Boolean) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) return
+
+        application.packageManager.setComponentEnabledSetting(
+            ComponentName(application, HaControlsPanelActivity::class.java),
+            if (enabled) {
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+            } else {
+                PackageManager.COMPONENT_ENABLED_STATE_DEFAULT // Default is disabled
+            },
+            PackageManager.DONT_KILL_APP
+        )
+        panelEnabled = enabled
+        if (panelSetting?.second == null) {
+            serverManager.getServer()?.id?.let { setPanelConfig("", it) }
+        }
+    }
+
+    fun setPanelConfig(path: String, serverId: Int) = viewModelScope.launch {
+        val cleanedPath = path.trim().takeIf { it.isNotBlank() }
+        prefsRepository.setControlsPanelServer(serverId)
+        prefsRepository.setControlsPanelPath(cleanedPath)
+        panelSetting = Pair(cleanedPath, serverId)
     }
 }
