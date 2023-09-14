@@ -168,7 +168,7 @@ class AuthenticationFragment : Fragment() {
     private fun buildAuthUrl(base: String): String {
         return try {
             val url = base.toHttpUrl()
-            if (url.toString().contains("ui.nabu.casa", true)) {
+            if (url.host.endsWith("ui.nabu.casa", true)) {
                 HttpUrl.Builder()
                     .scheme(url.scheme)
                     .host(url.host)
