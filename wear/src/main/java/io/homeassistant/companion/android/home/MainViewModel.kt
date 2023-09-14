@@ -26,6 +26,8 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.En
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.database.sensor.SensorDao
+import io.homeassistant.companion.android.database.wear.CameraSnapshotTile
+import io.homeassistant.companion.android.database.wear.CameraSnapshotTileDao
 import io.homeassistant.companion.android.database.wear.FavoriteCaches
 import io.homeassistant.companion.android.database.wear.FavoriteCachesDao
 import io.homeassistant.companion.android.database.wear.FavoritesDao
@@ -48,6 +50,7 @@ class MainViewModel @Inject constructor(
     private val favoritesDao: FavoritesDao,
     private val favoriteCachesDao: FavoriteCachesDao,
     private val sensorsDao: SensorDao,
+    private val cameraSnapshotTileDao: CameraSnapshotTileDao,
     application: Application
 ) : AndroidViewModel(application) {
 
@@ -87,6 +90,8 @@ class MainViewModel @Inject constructor(
     private val favoriteCaches = favoriteCachesDao.getAll()
 
     val shortcutEntitiesMap = mutableStateMapOf<Int?, SnapshotStateList<SimplifiedEntity>>()
+
+    val cameraSnapshotTiles = cameraSnapshotTileDao.getAllFlow().collectAsState()
 
     var areas = mutableListOf<AreaRegistryResponse>()
         private set
@@ -410,6 +415,18 @@ class MainViewModel @Inject constructor(
             favoritesDao.deleteAll()
             setWearFavoritesOnly(false)
         }
+    }
+
+    fun setCameraSnapshotTileEntity(tileId: Int, entityId: String) = viewModelScope.launch {
+        val current = cameraSnapshotTileDao.get(tileId)
+        val updated = current?.copy(entityId = entityId) ?: CameraSnapshotTile(id = tileId, entityId = entityId)
+        cameraSnapshotTileDao.add(updated)
+    }
+
+    fun setCameraSnapshotTileRefreshInterval(tileId: Int, interval: Long) = viewModelScope.launch {
+        val current = cameraSnapshotTileDao.get(tileId)
+        val updated = current?.copy(refreshInterval = interval) ?: CameraSnapshotTile(id = tileId, refreshInterval = interval)
+        cameraSnapshotTileDao.add(updated)
     }
 
     fun setTileShortcut(tileId: Int?, index: Int, entity: SimplifiedEntity) {

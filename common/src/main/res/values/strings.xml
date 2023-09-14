@@ -125,6 +125,9 @@
     <string name="camera_snapshot">Camera snapshot</string>
     <string name="camera_snapshot_tile_desc">See what\'s on your camera</string>
     <string name="camera_snapshot_tile_log_in">Log in to Home Assistant to add a camera snapshot</string>
+    <string name="camera_snapshot_tile_no_tiles_yet">There are no camera snapshot tiles added yet - add one from the watch face to set it up</string>
+    <string name="camera_snapshot_tile_n">Camera tile #%d</string>
+    <string name="camera_snapshot_tiles">Camera snapshot tiles</string>
     <string name="cancel">Cancel</string>
     <string name="changelog">View full change log</string>
     <string name="checking_with_home_assistant">Checking with Home Assistant</string>

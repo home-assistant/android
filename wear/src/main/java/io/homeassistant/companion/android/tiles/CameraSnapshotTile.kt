@@ -42,6 +42,8 @@ class CameraSnapshotTile : TileService() {
     companion object {
         private const val TAG = "CameraSnapshotTile"
 
+        const val DEFAULT_REFRESH_INTERVAL = 3600L // 1 hour, matching phone widget
+
         private const val RESOURCE_SNAPSHOT = "snapshot"
     }
 
@@ -71,7 +73,7 @@ class CameraSnapshotTile : TileService() {
             Tile.Builder()
                 .setResourcesVersion("$TAG$tileId.${System.currentTimeMillis()}")
                 .setFreshnessIntervalMillis(
-                    TimeUnit.SECONDS.toMillis(tileConfig?.refreshInterval ?: 3600L)
+                    TimeUnit.SECONDS.toMillis(tileConfig?.refreshInterval ?: DEFAULT_REFRESH_INTERVAL)
                 )
                 .setTileTimeline(
                     if (serverManager.isRegistered() && tileConfig != null) {

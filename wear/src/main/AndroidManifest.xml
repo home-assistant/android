@@ -84,11 +84,16 @@
         </activity>
 
         <activity
-            android:name=".tiles.OpenShortcutTileSettingsActivity"
+            android:name=".tiles.OpenTileSettingsActivity"
             android:exported="true"
             android:excludeFromRecents="true">
             <intent-filter>
                 <action android:name="ConfigShortcutsTile" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="com.google.android.clockwork.tiles.category.PROVIDER_CONFIG" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="ConfigCameraSnapshotTile" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="com.google.android.clockwork.tiles.category.PROVIDER_CONFIG" />
             </intent-filter>
@@ -186,7 +191,7 @@
 
             <meta-data
                 android:name="com.google.android.clockwork.tiles.PROVIDER_CONFIG_ACTION"
-                android:value="ConfigShortcutsTile" /> <!-- TODO -->
+                android:value="ConfigCameraSnapshotTile" />
         </service>
         <receiver android:name=".tiles.TileActionReceiver"
             android:exported="false">

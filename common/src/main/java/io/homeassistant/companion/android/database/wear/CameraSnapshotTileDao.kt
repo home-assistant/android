@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface CameraSnapshotTileDao {
@@ -12,7 +13,7 @@ interface CameraSnapshotTileDao {
     suspend fun get(id: Int): CameraSnapshotTile?
 
     @Query("SELECT * FROM camera_snapshot_tiles ORDER BY id ASC")
-    fun getAll(): List<CameraSnapshotTile>
+    fun getAllFlow(): Flow<List<CameraSnapshotTile>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun add(tile: CameraSnapshotTile)
