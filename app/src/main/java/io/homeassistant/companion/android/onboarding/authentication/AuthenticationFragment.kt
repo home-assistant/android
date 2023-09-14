@@ -168,16 +168,27 @@ class AuthenticationFragment : Fragment() {
     private fun buildAuthUrl(base: String): String {
         return try {
             val url = base.toHttpUrl()
-            HttpUrl.Builder()
-                .scheme(url.scheme)
-                .host(url.host)
-                .port(url.port)
-                .addPathSegments("auth/authorize")
-                .addEncodedQueryParameter("response_type", "code")
-                .addEncodedQueryParameter("client_id", AuthenticationService.CLIENT_ID)
-                .addEncodedQueryParameter("redirect_uri", AUTH_CALLBACK)
-                .build()
-                .toString()
+            if (url.toString().contains("ui.nabu.casa", true)) {
+                HttpUrl.Builder()
+                    .scheme(url.scheme)
+                    .host(url.host)
+                    .port(url.port)
+                    .addPathSegments("auth/authorize")
+                    .addEncodedQueryParameter("response_type", "code")
+                    .addEncodedQueryParameter("client_id", AuthenticationService.CLIENT_ID)
+                    .addEncodedQueryParameter("redirect_uri", AUTH_CALLBACK)
+                    .build()
+                    .toString()
+            } else {
+                url
+                    .newBuilder()
+                    .addPathSegments("auth/authorize")
+                    .addEncodedQueryParameter("response_type", "code")
+                    .addEncodedQueryParameter("client_id", AuthenticationService.CLIENT_ID)
+                    .addEncodedQueryParameter("redirect_uri", AUTH_CALLBACK)
+                    .build()
+                    .toString()
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Unable to build authentication URL", e)
             Toast.makeText(context, commonR.string.error_connection_failed, Toast.LENGTH_LONG).show()
