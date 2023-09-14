@@ -1,8 +1,13 @@
 package io.homeassistant.companion.android.tiles
 
 import android.content.Context
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
+import androidx.core.content.getSystemService
 import androidx.wear.protolayout.ActionBuilders
 import androidx.wear.protolayout.ColorBuilders.argb
 import androidx.wear.protolayout.DimensionBuilders
@@ -22,6 +27,19 @@ import io.homeassistant.companion.android.common.R as commonR
 
 const val RESOURCE_REFRESH = "refresh"
 const val MODIFIER_CLICK_REFRESH = "refresh"
+
+/** Performs a [VibrationEffect.EFFECT_CLICK] or equivalent on older Android versions */
+fun hapticClick(context: Context) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val vibratorManager = context.getSystemService<VibratorManager>()
+        val vibrator = vibratorManager?.defaultVibrator
+        vibrator?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
+    } else {
+        val vibrator = context.getSystemService<Vibrator>()
+        @Suppress("DEPRECATION")
+        vibrator?.vibrate(200)
+    }
+}
 
 /**
  * A [Timeline] with a single entry, asking the user to log in to the app to start using the tile

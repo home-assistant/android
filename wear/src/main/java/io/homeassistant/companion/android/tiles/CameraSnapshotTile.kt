@@ -18,6 +18,7 @@ import androidx.wear.tiles.TileService
 import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.wear.CameraSnapshotTile
@@ -51,6 +52,9 @@ class CameraSnapshotTile : TileService() {
     lateinit var serverManager: ServerManager
 
     @Inject
+    lateinit var wearPrefsRepository: WearPrefsRepository
+
+    @Inject
     lateinit var okHttpClient: OkHttpClient
 
     override fun onTileRequest(requestParams: RequestBuilders.TileRequest): ListenableFuture<Tile> =
@@ -59,6 +63,10 @@ class CameraSnapshotTile : TileService() {
             val tileConfig = AppDatabase.getInstance(this@CameraSnapshotTile)
                 .cameraSnapshotTileDao()
                 .get(tileId)
+
+            if (requestParams.currentState.lastClickableId == MODIFIER_CLICK_REFRESH) {
+                if (wearPrefsRepository.getWearHapticFeedback()) hapticClick(applicationContext)
+            }
 
             Tile.Builder()
                 .setResourcesVersion("$TAG$tileId.${System.currentTimeMillis()}")
