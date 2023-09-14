@@ -829,7 +829,7 @@ fun <T> Entity<T>.isActive() = when {
     (domain == "cover") -> state != "closed"
     (domain in listOf("device_tracker", "person")) -> state != "not_home"
     (domain == "lawn_mower") -> state in listOf("mowing", "error")
-    (domain == "lock") -> state != "locked"
+    (domain == "lock") -> state == "locked"
     (domain == "media_player") -> state != "standby"
     (domain == "vacuum") -> state !in listOf("idle", "docked", "paused")
     (domain == "plant") -> state == "problem"
