@@ -32,6 +32,7 @@ import io.homeassistant.companion.android.database.wear.replaceAll
 import io.homeassistant.companion.android.home.HomeActivity
 import io.homeassistant.companion.android.home.HomePresenterImpl
 import io.homeassistant.companion.android.onboarding.getMessagingToken
+import io.homeassistant.companion.android.tiles.CameraTile
 import io.homeassistant.companion.android.tiles.ConversationTile
 import io.homeassistant.companion.android.tiles.ShortcutsTile
 import io.homeassistant.companion.android.tiles.TemplateTile
@@ -223,6 +224,7 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
     private fun updateTiles() = mainScope.launch {
         try {
             val updater = TileService.getUpdater(applicationContext)
+            updater.requestUpdate(CameraTile::class.java)
             updater.requestUpdate(ConversationTile::class.java)
             updater.requestUpdate(ShortcutsTile::class.java)
             updater.requestUpdate(TemplateTile::class.java)
