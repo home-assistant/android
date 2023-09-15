@@ -76,11 +76,11 @@ class CameraTile : TileService() {
                     TimeUnit.SECONDS.toMillis(tileConfig?.refreshInterval ?: DEFAULT_REFRESH_INTERVAL)
                 )
                 .setTileTimeline(
-                    if (serverManager.isRegistered() && tileConfig != null) {
+                    if (serverManager.isRegistered()) {
                         timeline(
                             requestParams.deviceConfiguration.screenWidthDp,
                             requestParams.deviceConfiguration.screenHeightDp,
-                            tileConfig.entityId.isNullOrBlank()
+                            tileConfig?.entityId.isNullOrBlank()
                         )
                     } else {
                         loggedOutTimeline(
