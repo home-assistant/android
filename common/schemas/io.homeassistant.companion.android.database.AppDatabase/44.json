@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 44,
-    "identityHash": "851ffd8a5c12488fc1112538639b07c9",
+    "identityHash": "3201b89ecfb5c51a8600de7386008f21",
     "entities": [
       {
         "tableName": "sensor_attributes",
@@ -769,7 +769,7 @@
         "foreignKeys": []
       },
       {
-        "tableName": "camera_snapshot_tiles",
+        "tableName": "camera_tiles",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `entity_id` TEXT, `refresh_interval` INTEGER, PRIMARY KEY(`id`))",
         "fields": [
           {
@@ -1034,7 +1034,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '851ffd8a5c12488fc1112538639b07c9')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3201b89ecfb5c51a8600de7386008f21')"
     ]
   }
 }

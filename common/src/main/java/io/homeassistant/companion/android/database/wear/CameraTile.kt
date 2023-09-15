@@ -5,11 +5,11 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 /**
- * Represents the configuration of a camera snapshot tile.
+ * Represents the configuration of a camera tile.
  * If the tile was added but not configured, everything except the tile ID will be `null`.
  */
-@Entity(tableName = "camera_snapshot_tiles")
-data class CameraSnapshotTile(
+@Entity(tableName = "camera_tiles")
+data class CameraTile(
     /** The system's tile ID */
     @PrimaryKey
     @ColumnInfo(name = "id")

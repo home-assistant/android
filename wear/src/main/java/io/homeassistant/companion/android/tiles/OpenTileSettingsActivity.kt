@@ -20,8 +20,8 @@ class OpenTileSettingsActivity : AppCompatActivity() {
         val tileId = intent.extras?.getInt("com.google.android.clockwork.EXTRA_PROVIDER_CONFIG_TILE_ID")
         tileId?.takeIf { it != 0 }?.let {
             val settingsIntent = when (intent.action) {
-                "ConfigCameraSnapshotTile" ->
-                    HomeActivity.getCameraSnapshotTileSettingsIntent(
+                "ConfigCameraTile" ->
+                    HomeActivity.getCameraTileSettingsIntent(
                         context = this,
                         tileId = it
                     )

@@ -73,7 +73,7 @@ fun SettingsView(
     onHapticEnabled: (Boolean) -> Unit,
     onToastEnabled: (Boolean) -> Unit,
     setFavoritesOnly: (Boolean) -> Unit,
-    onClickCameraSnapshotTile: () -> Unit,
+    onClickCameraTile: () -> Unit,
     onClickTemplateTile: () -> Unit,
     onAssistantAppAllowed: (Boolean) -> Unit
 ) {
@@ -215,9 +215,9 @@ fun SettingsView(
                 }
                 item {
                     SecondarySettingsChip(
-                        icon = CommunityMaterial.Icon.cmd_camera,
-                        label = stringResource(commonR.string.camera_snapshot_tiles),
-                        onClick = onClickCameraSnapshotTile
+                        icon = CommunityMaterial.Icon3.cmd_video_box,
+                        label = stringResource(commonR.string.camera_tiles),
+                        onClick = onClickCameraTile
                     )
                 }
                 item {
@@ -331,7 +331,7 @@ private fun PreviewSettingsView() {
         onHapticEnabled = {},
         onToastEnabled = {},
         setFavoritesOnly = {},
-        onClickCameraSnapshotTile = {},
+        onClickCameraTile = {},
         onClickTemplateTile = {},
         onAssistantAppAllowed = {}
     )

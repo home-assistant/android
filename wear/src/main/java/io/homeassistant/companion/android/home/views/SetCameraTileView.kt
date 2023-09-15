@@ -15,18 +15,18 @@ import androidx.wear.compose.material.Text
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.database.wear.CameraSnapshotTile
+import io.homeassistant.companion.android.database.wear.CameraTile
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.wearColorPalette
-import io.homeassistant.companion.android.tiles.CameraSnapshotTile.Companion.DEFAULT_REFRESH_INTERVAL
+import io.homeassistant.companion.android.tiles.CameraTile.Companion.DEFAULT_REFRESH_INTERVAL
 import io.homeassistant.companion.android.util.intervalToString
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
 import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
-fun SetCameraSnapshotTileView(
-    tile: CameraSnapshotTile,
+fun SetCameraTileView(
+    tile: CameraTile?,
     onSelectEntity: () -> Unit,
     onSelectRefreshInterval: () -> Unit
 ) {
@@ -42,14 +42,14 @@ fun SetCameraSnapshotTileView(
         ) {
             ThemeLazyColumn(state = scalingLazyListState) {
                 item {
-                    ListHeader(commonR.string.camera_snapshot)
+                    ListHeader(commonR.string.camera_tile)
                 }
                 item {
                     Chip(
                         modifier = Modifier.fillMaxWidth(),
                         icon = {
                             Image(
-                                asset = CommunityMaterial.Icon.cmd_camera, // TODO
+                                asset = CommunityMaterial.Icon3.cmd_video, // TODO
                                 colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
                             )
                         },
@@ -60,7 +60,7 @@ fun SetCameraSnapshotTileView(
                             )
                         },
                         secondaryLabel = {
-                            Text(tile.entityId ?: "")
+                            Text(tile?.entityId ?: "")
                         },
                         onClick = onSelectEntity
                     )
@@ -83,7 +83,7 @@ fun SetCameraSnapshotTileView(
                         },
                         secondaryLabel = {
                             Text(
-                                intervalToString(LocalContext.current, (tile.refreshInterval ?: DEFAULT_REFRESH_INTERVAL).toInt())
+                                intervalToString(LocalContext.current, (tile?.refreshInterval ?: DEFAULT_REFRESH_INTERVAL).toInt())
                             )
                         },
                         onClick = onSelectRefreshInterval

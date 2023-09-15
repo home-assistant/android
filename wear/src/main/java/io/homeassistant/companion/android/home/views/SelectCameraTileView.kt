@@ -14,15 +14,15 @@ import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
-import io.homeassistant.companion.android.database.wear.CameraSnapshotTile
+import io.homeassistant.companion.android.database.wear.CameraTile
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
 import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
-fun SelectCameraSnapshotTileView(
-    tiles: List<CameraSnapshotTile>,
+fun SelectCameraTileView(
+    tiles: List<CameraTile>,
     onSelectTile: (tileId: Int) -> Unit
 ) {
     val scalingLazyListState = rememberScalingLazyListState()
@@ -37,12 +37,12 @@ fun SelectCameraSnapshotTileView(
         ) {
             ThemeLazyColumn(state = scalingLazyListState) {
                 item {
-                    ListHeader(id = commonR.string.camera_snapshot_tiles)
+                    ListHeader(id = commonR.string.camera_tiles)
                 }
                 if (tiles.isEmpty()) {
                     item {
                         Text(
-                            text = stringResource(commonR.string.camera_snapshot_tile_no_tiles_yet),
+                            text = stringResource(commonR.string.camera_tile_no_tiles_yet),
                             textAlign = TextAlign.Center
                         )
                     }
@@ -51,7 +51,7 @@ fun SelectCameraSnapshotTileView(
                         Chip(
                             modifier = Modifier.fillMaxWidth(),
                             label = {
-                                Text(stringResource(commonR.string.camera_snapshot_tile_n, index + 1))
+                                Text(stringResource(commonR.string.camera_tile_n, index + 1))
                             },
                             secondaryLabel = if (tile.entityId != null) {
                                 { Text(tile.entityId!!) }
@@ -70,10 +70,10 @@ fun SelectCameraSnapshotTileView(
 
 @Preview(device = Devices.WEAR_OS_LARGE_ROUND)
 @Composable
-private fun PreviewSelectCameraSnapshotTileViewOne() {
-    SelectCameraSnapshotTileView(
+private fun PreviewSelectCameraTileViewOne() {
+    SelectCameraTileView(
         tiles = listOf(
-            CameraSnapshotTile(id = 1, entityId = "camera.buienradar", refreshInterval = 300)
+            CameraTile(id = 1, entityId = "camera.buienradar", refreshInterval = 300)
         ),
         onSelectTile = {}
     )
@@ -81,6 +81,6 @@ private fun PreviewSelectCameraSnapshotTileViewOne() {
 
 @Preview(device = Devices.WEAR_OS_LARGE_ROUND)
 @Composable
-private fun PreviewSelectCameraSnapshotTileViewEmpty() {
-    SelectCameraSnapshotTileView(tiles = emptyList(), onSelectTile = {})
+private fun PreviewSelectCameraTileViewEmpty() {
+    SelectCameraTileView(tiles = emptyList(), onSelectTile = {})
 }

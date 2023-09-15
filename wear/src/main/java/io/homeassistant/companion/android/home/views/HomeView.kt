@@ -16,13 +16,13 @@ import androidx.wear.tiles.TileService
 import io.homeassistant.companion.android.common.sensors.id
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
-import io.homeassistant.companion.android.tiles.CameraSnapshotTile
+import io.homeassistant.companion.android.tiles.CameraTile
 import io.homeassistant.companion.android.tiles.ShortcutsTile
 import io.homeassistant.companion.android.tiles.TemplateTile
 import io.homeassistant.companion.android.views.ChooseEntityView
 
 private const val ARG_SCREEN_SENSOR_MANAGER_ID = "sensorManagerId"
-private const val ARG_SCREEN_CAMERA_SNAPSHOT_TILE_ID = "cameraSnapshotTileId"
+private const val ARG_SCREEN_CAMERA_TILE_ID = "cameraTileId"
 private const val ARG_SCREEN_SHORTCUTS_TILE_ID = "shortcutsTileId"
 private const val ARG_SCREEN_SHORTCUTS_TILE_ENTITY_INDEX = "shortcutsTileEntityIndex"
 
@@ -33,11 +33,11 @@ private const val SCREEN_MANAGE_SENSORS = "manage_all_sensors"
 private const val SCREEN_SINGLE_SENSOR_MANAGER = "sensor_manager"
 private const val SCREEN_SETTINGS = "settings"
 private const val SCREEN_SET_FAVORITES = "set_favorites"
-private const val ROUTE_CAMERA_SNAPSHOT_TILE = "camera_snapshot_tile"
-private const val SCREEN_SELECT_CAMERA_SNAPSHOT_TILE = "list"
-private const val SCREEN_SET_CAMERA_SNAPSHOT_TILE = "set_camera_snapshot_tile"
-private const val SCREEN_SET_CAMERA_SNAPSHOT_TILE_ENTITY = "entity"
-private const val SCREEN_SET_CAMERA_SNAPSHOT_TILE_REFRESH_INTERVAL = "refresh_interval"
+private const val ROUTE_CAMERA_TILE = "camera_tile"
+private const val SCREEN_SELECT_CAMERA_TILE = "select_camera_tile"
+private const val SCREEN_SET_CAMERA_TILE = "set_camera_tile"
+private const val SCREEN_SET_CAMERA_TILE_ENTITY = "entity"
+private const val SCREEN_SET_CAMERA_TILE_REFRESH_INTERVAL = "refresh_interval"
 private const val ROUTE_SHORTCUTS_TILE = "shortcuts_tile"
 private const val SCREEN_SELECT_SHORTCUTS_TILE = "select_shortcuts_tile"
 private const val SCREEN_SET_SHORTCUTS_TILE = "set_shortcuts_tile"
@@ -46,7 +46,7 @@ private const val SCREEN_SET_TILE_TEMPLATE = "set_tile_template"
 private const val SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL = "set_tile_template_refresh_interval"
 
 const val DEEPLINK_SENSOR_MANAGER = "ha_wear://$SCREEN_SINGLE_SENSOR_MANAGER"
-const val DEEPLINK_PREFIX_SET_CAMERA_SNAPSHOT_TILE = "ha_wear://$SCREEN_SET_CAMERA_SNAPSHOT_TILE"
+const val DEEPLINK_PREFIX_SET_CAMERA_TILE = "ha_wear://$SCREEN_SET_CAMERA_TILE"
 const val DEEPLINK_PREFIX_SET_SHORTCUT_TILE = "ha_wear://$SCREEN_SET_SHORTCUTS_TILE"
 
 @Composable
@@ -159,8 +159,8 @@ fun LoadHomePage(
                     onHapticEnabled = { mainViewModel.setHapticEnabled(it) },
                     onToastEnabled = { mainViewModel.setToastEnabled(it) },
                     setFavoritesOnly = { mainViewModel.setWearFavoritesOnly(it) },
-                    onClickCameraSnapshotTile = {
-                        swipeDismissableNavController.navigate("$ROUTE_CAMERA_SNAPSHOT_TILE/$SCREEN_SELECT_CAMERA_SNAPSHOT_TILE")
+                    onClickCameraTile = {
+                        swipeDismissableNavController.navigate("$ROUTE_CAMERA_TILE/$SCREEN_SELECT_CAMERA_TILE")
                     },
                     onClickTemplateTile = { swipeDismissableNavController.navigate(SCREEN_SET_TILE_TEMPLATE) },
                     onAssistantAppAllowed = mainViewModel::setAssistantApp
@@ -178,48 +178,45 @@ fun LoadHomePage(
                     }
                 }
             }
-            composable("$ROUTE_CAMERA_SNAPSHOT_TILE/$SCREEN_SELECT_CAMERA_SNAPSHOT_TILE") {
-                SelectCameraSnapshotTileView(
-                    tiles = mainViewModel.cameraSnapshotTiles.value,
+            composable("$ROUTE_CAMERA_TILE/$SCREEN_SELECT_CAMERA_TILE") {
+                SelectCameraTileView(
+                    tiles = mainViewModel.cameraTiles.value,
                     onSelectTile = { tileId ->
-                        swipeDismissableNavController.navigate("$ROUTE_CAMERA_SNAPSHOT_TILE/$tileId/$SCREEN_SET_CAMERA_SNAPSHOT_TILE")
+                        swipeDismissableNavController.navigate("$ROUTE_CAMERA_TILE/$tileId/$SCREEN_SET_CAMERA_TILE")
                     }
                 )
             }
             composable(
-                route = "$ROUTE_CAMERA_SNAPSHOT_TILE/{$ARG_SCREEN_CAMERA_SNAPSHOT_TILE_ID}/$SCREEN_SET_CAMERA_SNAPSHOT_TILE",
+                route = "$ROUTE_CAMERA_TILE/{$ARG_SCREEN_CAMERA_TILE_ID}/$SCREEN_SET_CAMERA_TILE",
                 arguments = listOf(
-                    navArgument(name = ARG_SCREEN_CAMERA_SNAPSHOT_TILE_ID) {
+                    navArgument(name = ARG_SCREEN_CAMERA_TILE_ID) {
                         type = NavType.IntType
                     }
                 ),
                 deepLinks = listOf(
-                    navDeepLink { uriPattern = "$DEEPLINK_PREFIX_SET_CAMERA_SNAPSHOT_TILE/{$ARG_SCREEN_CAMERA_SNAPSHOT_TILE_ID}" }
+                    navDeepLink { uriPattern = "$DEEPLINK_PREFIX_SET_CAMERA_TILE/{$ARG_SCREEN_CAMERA_TILE_ID}" }
                 )
             ) { backStackEntry ->
-                val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_CAMERA_SNAPSHOT_TILE_ID)
-                SetCameraSnapshotTileView(
-                    tile = mainViewModel.cameraSnapshotTiles.value.first { it.id == tileId },
+                val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_CAMERA_TILE_ID)
+                SetCameraTileView(
+                    tile = mainViewModel.cameraTiles.value.firstOrNull { it.id == tileId },
                     onSelectEntity = {
-                        swipeDismissableNavController.navigate("$ROUTE_CAMERA_SNAPSHOT_TILE/$tileId/$SCREEN_SET_CAMERA_SNAPSHOT_TILE_ENTITY")
+                        swipeDismissableNavController.navigate("$ROUTE_CAMERA_TILE/$tileId/$SCREEN_SET_CAMERA_TILE_ENTITY")
                     },
                     onSelectRefreshInterval = {
-                        swipeDismissableNavController.navigate("$ROUTE_CAMERA_SNAPSHOT_TILE/$tileId/$SCREEN_SET_CAMERA_SNAPSHOT_TILE_REFRESH_INTERVAL")
+                        swipeDismissableNavController.navigate("$ROUTE_CAMERA_TILE/$tileId/$SCREEN_SET_CAMERA_TILE_REFRESH_INTERVAL")
                     }
                 )
-                BackHandler {
-                    TileService.getUpdater(context).requestUpdate(CameraSnapshotTile::class.java)
-                }
             }
             composable(
-                route = "$ROUTE_CAMERA_SNAPSHOT_TILE/{$ARG_SCREEN_CAMERA_SNAPSHOT_TILE_ID}/$SCREEN_SET_CAMERA_SNAPSHOT_TILE_ENTITY",
+                route = "$ROUTE_CAMERA_TILE/{$ARG_SCREEN_CAMERA_TILE_ID}/$SCREEN_SET_CAMERA_TILE_ENTITY",
                 arguments = listOf(
-                    navArgument(name = ARG_SCREEN_CAMERA_SNAPSHOT_TILE_ID) {
+                    navArgument(name = ARG_SCREEN_CAMERA_TILE_ID) {
                         type = NavType.IntType
                     }
                 )
             ) { backStackEntry ->
-                val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_CAMERA_SNAPSHOT_TILE_ID)
+                val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_CAMERA_TILE_ID)
                 val cameraDomains = remember { mutableStateListOf("camera") }
                 val cameraFavorites = remember { mutableStateOf(emptyList<String>()) } // There are no camera favorites
                 ChooseEntityView(
@@ -229,7 +226,8 @@ fun LoadHomePage(
                     onNoneClicked = {},
                     onEntitySelected = { entity ->
                         tileId?.let {
-                            mainViewModel.setCameraSnapshotTileEntity(it, entity.entityId)
+                            mainViewModel.setCameraTileEntity(it, entity.entityId)
+                            TileService.getUpdater(context).requestUpdate(CameraTile::class.java)
                         }
                         swipeDismissableNavController.navigateUp()
                     },
@@ -237,23 +235,23 @@ fun LoadHomePage(
                 )
             }
             composable(
-                route = "$ROUTE_CAMERA_SNAPSHOT_TILE/{$ARG_SCREEN_CAMERA_SNAPSHOT_TILE_ID}/$SCREEN_SET_CAMERA_SNAPSHOT_TILE_REFRESH_INTERVAL",
+                route = "$ROUTE_CAMERA_TILE/{$ARG_SCREEN_CAMERA_TILE_ID}/$SCREEN_SET_CAMERA_TILE_REFRESH_INTERVAL",
                 arguments = listOf(
-                    navArgument(name = ARG_SCREEN_CAMERA_SNAPSHOT_TILE_ID) {
+                    navArgument(name = ARG_SCREEN_CAMERA_TILE_ID) {
                         type = NavType.IntType
                     }
                 )
             ) { backStackEntry ->
-                val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_CAMERA_SNAPSHOT_TILE_ID)
+                val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_CAMERA_TILE_ID)
                 RefreshIntervalPickerView(
                     currentInterval = (
-                        mainViewModel.cameraSnapshotTiles.value
-                            .first { it.id == tileId }.refreshInterval
-                            ?: CameraSnapshotTile.DEFAULT_REFRESH_INTERVAL
+                        mainViewModel.cameraTiles.value
+                            .firstOrNull { it.id == tileId }?.refreshInterval
+                            ?: CameraTile.DEFAULT_REFRESH_INTERVAL
                         ).toInt()
                 ) { interval ->
                     tileId?.let {
-                        mainViewModel.setCameraSnapshotTileRefreshInterval(it, interval.toLong())
+                        mainViewModel.setCameraTileRefreshInterval(it, interval.toLong())
                     }
                     swipeDismissableNavController.navigateUp()
                 }

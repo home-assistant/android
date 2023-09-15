@@ -50,8 +50,8 @@ import io.homeassistant.companion.android.database.settings.LocalNotificationSet
 import io.homeassistant.companion.android.database.settings.LocalSensorSettingConverter
 import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
-import io.homeassistant.companion.android.database.wear.CameraSnapshotTile
-import io.homeassistant.companion.android.database.wear.CameraSnapshotTileDao
+import io.homeassistant.companion.android.database.wear.CameraTile
+import io.homeassistant.companion.android.database.wear.CameraTileDao
 import io.homeassistant.companion.android.database.wear.EntityStateComplications
 import io.homeassistant.companion.android.database.wear.EntityStateComplicationsDao
 import io.homeassistant.companion.android.database.wear.FavoriteCaches
@@ -89,7 +89,7 @@ import io.homeassistant.companion.android.common.R as commonR
         TileEntity::class,
         Favorites::class,
         FavoriteCaches::class,
-        CameraSnapshotTile::class,
+        CameraTile::class,
         EntityStateComplications::class,
         Server::class,
         Setting::class
@@ -137,7 +137,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun tileDao(): TileDao
     abstract fun favoritesDao(): FavoritesDao
     abstract fun favoriteCachesDao(): FavoriteCachesDao
-    abstract fun cameraSnapshotTileDao(): CameraSnapshotTileDao
+    abstract fun cameraTileDao(): CameraTileDao
     abstract fun entityStateComplicationsDao(): EntityStateComplicationsDao
     abstract fun serverDao(): ServerDao
     abstract fun settingsDao(): SettingsDao

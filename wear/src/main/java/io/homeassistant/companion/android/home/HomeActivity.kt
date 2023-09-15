@@ -11,7 +11,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_CAMERA_SNAPSHOT_TILE
+import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_CAMERA_TILE
 import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_SHORTCUT_TILE
 import io.homeassistant.companion.android.home.views.LoadHomePage
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
@@ -38,12 +38,12 @@ class HomeActivity : ComponentActivity(), HomeView {
             return Intent(context, HomeActivity::class.java)
         }
 
-        fun getCameraSnapshotTileSettingsIntent(
+        fun getCameraTileSettingsIntent(
             context: Context,
             tileId: Int
         ) = Intent(
             Intent.ACTION_VIEW,
-            "$DEEPLINK_PREFIX_SET_CAMERA_SNAPSHOT_TILE/$tileId".toUri(),
+            "$DEEPLINK_PREFIX_SET_CAMERA_TILE/$tileId".toUri(),
             context,
             HomeActivity::class.java
         )

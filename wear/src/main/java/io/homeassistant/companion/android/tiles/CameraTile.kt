@@ -21,7 +21,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.database.wear.CameraSnapshotTile
+import io.homeassistant.companion.android.database.wear.CameraTile
 import io.homeassistant.companion.android.util.UrlUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -37,10 +37,10 @@ import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
-class CameraSnapshotTile : TileService() {
+class CameraTile : TileService() {
 
     companion object {
-        private const val TAG = "CameraSnapshotTile"
+        private const val TAG = "CameraTile"
 
         const val DEFAULT_REFRESH_INTERVAL = 3600L // 1 hour, matching phone widget
 
@@ -62,8 +62,8 @@ class CameraSnapshotTile : TileService() {
     override fun onTileRequest(requestParams: RequestBuilders.TileRequest): ListenableFuture<Tile> =
         serviceScope.future {
             val tileId = requestParams.tileId
-            val tileConfig = AppDatabase.getInstance(this@CameraSnapshotTile)
-                .cameraSnapshotTileDao()
+            val tileConfig = AppDatabase.getInstance(this@CameraTile)
+                .cameraTileDao()
                 .get(tileId)
 
             if (requestParams.currentState.lastClickableId == MODIFIER_CLICK_REFRESH) {
@@ -89,10 +89,10 @@ class CameraSnapshotTile : TileService() {
                         )
                     } else {
                         loggedOutTimeline(
-                            this@CameraSnapshotTile,
+                            this@CameraTile,
                             requestParams,
-                            commonR.string.camera_snapshot,
-                            commonR.string.camera_snapshot_tile_log_in
+                            commonR.string.camera,
+                            commonR.string.camera_tile_log_in
                         )
                     }
                 )
@@ -105,8 +105,8 @@ class CameraSnapshotTile : TileService() {
             var imageHeight = 0
             val imageData = if (serverManager.isRegistered()) {
                 val tileId = requestParams.tileId
-                val tileConfig = AppDatabase.getInstance(this@CameraSnapshotTile)
-                    .cameraSnapshotTileDao()
+                val tileConfig = AppDatabase.getInstance(this@CameraTile)
+                    .cameraTileDao()
                     .get(tileId)
 
                 try {
@@ -173,16 +173,16 @@ class CameraSnapshotTile : TileService() {
 
     override fun onTileAddEvent(requestParams: EventBuilders.TileAddEvent) {
         serviceScope.launch {
-            AppDatabase.getInstance(this@CameraSnapshotTile)
-                .cameraSnapshotTileDao()
-                .add(CameraSnapshotTile(id = requestParams.tileId))
+            AppDatabase.getInstance(this@CameraTile)
+                .cameraTileDao()
+                .add(CameraTile(id = requestParams.tileId))
         }
     }
 
     override fun onTileRemoveEvent(requestParams: EventBuilders.TileRemoveEvent) {
         serviceScope.launch {
-            AppDatabase.getInstance(this@CameraSnapshotTile)
-                .cameraSnapshotTileDao()
+            AppDatabase.getInstance(this@CameraTile)
+                .cameraTileDao()
                 .delete(requestParams.tileId)
         }
     }
