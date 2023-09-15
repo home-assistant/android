@@ -48,7 +48,7 @@ object LockControl : HaControl {
     ): Boolean {
         integrationRepository.callService(
             action.templateId.split(".")[0],
-            if ((action as? BooleanAction)?.newState == true) "lock" else "unlock",
+            if ((action as? BooleanAction)?.newState == true) "unlock" else "lock",
             hashMapOf("entity_id" to action.templateId)
         )
         return true
