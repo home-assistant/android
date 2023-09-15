@@ -79,13 +79,8 @@ class CameraTile : TileService() {
                     if (serverManager.isRegistered() && tileConfig != null) {
                         timeline(
                             requestParams.deviceConfiguration.screenWidthDp,
-                            requestParams.deviceConfiguration.screenHeightDp
-                        )
-                    } else if (serverManager.isRegistered()) {
-                        // TODO emptystate
-                        timeline(
-                            requestParams.deviceConfiguration.screenWidthDp,
-                            requestParams.deviceConfiguration.screenHeightDp
+                            requestParams.deviceConfiguration.screenHeightDp,
+                            tileConfig.entityId.isNullOrBlank()
                         )
                     } else {
                         loggedOutTimeline(
@@ -192,17 +187,26 @@ class CameraTile : TileService() {
         serviceScope.cancel()
     }
 
-    private fun timeline(width: Int, height: Int): Timeline = Timeline.fromLayoutElement(
+    private fun timeline(width: Int, height: Int, requiresSetup: Boolean): Timeline = Timeline.fromLayoutElement(
         LayoutElementBuilders.Box.Builder().apply {
             // Camera image
-            addContent(
-                LayoutElementBuilders.Image.Builder()
-                    .setResourceId(RESOURCE_SNAPSHOT)
-                    .setWidth(DimensionBuilders.dp(width.toFloat()))
-                    .setHeight(DimensionBuilders.dp(height.toFloat()))
-                    .setContentScaleMode(CONTENT_SCALE_MODE_FIT)
-                    .build()
-            )
+            if (requiresSetup) {
+                addContent(
+                    LayoutElementBuilders.Text.Builder()
+                        .setText(getString(commonR.string.camera_tile_no_entity_yet))
+                        .setMaxLines(10)
+                        .build()
+                )
+            } else {
+                addContent(
+                    LayoutElementBuilders.Image.Builder()
+                        .setResourceId(RESOURCE_SNAPSHOT)
+                        .setWidth(DimensionBuilders.dp(width.toFloat()))
+                        .setHeight(DimensionBuilders.dp(height.toFloat()))
+                        .setContentScaleMode(CONTENT_SCALE_MODE_FIT)
+                        .build()
+                )
+            }
             // Refresh button
             addContent(getRefreshButton())
             // Click: refresh

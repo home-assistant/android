@@ -125,6 +125,7 @@
     <string name="camera_tile_desc">See what\'s on your camera</string>
     <string name="camera_tile_log_in">Log in to Home Assistant to add a camera tile</string>
     <string name="camera_tile_no_tiles_yet">There are no camera tiles added yet - add one from the watch face to set it up</string>
+    <string name="camera_tile_no_entity_yet">Edit the tile settings and select a camera to show</string>
     <string name="camera_tile_n">Camera tile #%d</string>
     <string name="camera_tiles">Camera tiles</string>
     <string name="camera_widgets">Camera widgets</string>

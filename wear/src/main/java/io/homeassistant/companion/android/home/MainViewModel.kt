@@ -92,6 +92,8 @@ class MainViewModel @Inject constructor(
     val shortcutEntitiesMap = mutableStateMapOf<Int?, SnapshotStateList<SimplifiedEntity>>()
 
     val cameraTiles = cameraTileDao.getAllFlow().collectAsState()
+    var cameraEntitiesMap = mutableStateMapOf<String, SnapshotStateList<Entity<*>>>()
+        private set
 
     var areas = mutableListOf<AreaRegistryResponse>()
         private set
@@ -226,6 +228,10 @@ class MainViewModel @Inject constructor(
         getEntities.await()?.also {
             entities.clear()
             it.forEach { state -> updateEntityStates(state) }
+
+            // Special list: camera entities
+            val cameraEntities = it.filter { entity -> entity.domain == "camera" }
+            cameraEntitiesMap["camera"] = mutableStateListOf<Entity<*>>().apply { addAll(cameraEntities) }
         }
         if (!isFavoritesOnly) {
             updateEntityDomains()

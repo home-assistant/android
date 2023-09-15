@@ -15,6 +15,9 @@ import androidx.wear.compose.material.Text
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.friendlyName
+import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.database.wear.CameraTile
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.wearColorPalette
@@ -27,6 +30,7 @@ import io.homeassistant.companion.android.common.R as commonR
 @Composable
 fun SetCameraTileView(
     tile: CameraTile?,
+    entities: List<Entity<*>>?,
     onSelectEntity: () -> Unit,
     onSelectRefreshInterval: () -> Unit
 ) {
@@ -45,11 +49,15 @@ fun SetCameraTileView(
                     ListHeader(commonR.string.camera_tile)
                 }
                 item {
+                    val entity = tile?.entityId?.let { tileEntityId ->
+                        entities?.firstOrNull { it.entityId == tileEntityId }
+                    }
+                    val icon = entity?.getIcon(LocalContext.current) ?: CommunityMaterial.Icon3.cmd_video
                     Chip(
                         modifier = Modifier.fillMaxWidth(),
                         icon = {
                             Image(
-                                asset = CommunityMaterial.Icon3.cmd_video, // TODO
+                                asset = icon,
                                 colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
                             )
                         },
@@ -60,7 +68,7 @@ fun SetCameraTileView(
                             )
                         },
                         secondaryLabel = {
-                            Text(tile?.entityId ?: "")
+                            Text(entity?.friendlyName ?: tile?.entityId ?: "")
                         },
                         onClick = onSelectEntity
                     )

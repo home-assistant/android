@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.home.views
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -200,6 +199,7 @@ fun LoadHomePage(
                 val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_CAMERA_TILE_ID)
                 SetCameraTileView(
                     tile = mainViewModel.cameraTiles.value.firstOrNull { it.id == tileId },
+                    entities = mainViewModel.cameraEntitiesMap["camera"],
                     onSelectEntity = {
                         swipeDismissableNavController.navigate("$ROUTE_CAMERA_TILE/$tileId/$SCREEN_SET_CAMERA_TILE_ENTITY")
                     },
@@ -221,7 +221,7 @@ fun LoadHomePage(
                 val cameraFavorites = remember { mutableStateOf(emptyList<String>()) } // There are no camera favorites
                 ChooseEntityView(
                     entitiesByDomainOrder = cameraDomains,
-                    entitiesByDomain = mainViewModel.entitiesByDomain,
+                    entitiesByDomain = mainViewModel.cameraEntitiesMap,
                     favoriteEntityIds = cameraFavorites,
                     onNoneClicked = {},
                     onEntitySelected = { entity ->

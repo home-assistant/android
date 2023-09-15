@@ -50,6 +50,31 @@ fun loggedOutTimeline(
     requestParams: RequestBuilders.TileRequest,
     @StringRes title: Int,
     @StringRes text: Int
+): Timeline = primaryLayoutTimeline(
+    context = context,
+    requestParams = requestParams,
+    title = title,
+    text = text,
+    actionText = commonR.string.login,
+    action = ActionBuilders.LaunchAction.Builder()
+        .setAndroidActivity(
+            ActionBuilders.AndroidActivity.Builder()
+                .setClassName(SplashActivity::class.java.name)
+                .setPackageName(context.packageName)
+                .build()
+        ).build()
+)
+
+/**
+ * A [Timeline] with a single entry using the Material `PrimaryLayout`. The title is optional.
+ */
+fun primaryLayoutTimeline(
+    context: Context,
+    requestParams: RequestBuilders.TileRequest,
+    @StringRes title: Int?,
+    @StringRes text: Int,
+    @StringRes actionText: Int,
+    action: ActionBuilders.Action
 ): Timeline {
     val theme = Colors(
         ContextCompat.getColor(context, R.color.colorPrimary), // Primary
@@ -59,43 +84,36 @@ fun loggedOutTimeline(
     )
     val chipColors = ChipColors.primaryChipColors(theme)
     val chipAction = ModifiersBuilders.Clickable.Builder()
-        .setId("login")
-        .setOnClick(
-            ActionBuilders.LaunchAction.Builder()
-                .setAndroidActivity(
-                    ActionBuilders.AndroidActivity.Builder()
-                        .setClassName(SplashActivity::class.java.name)
-                        .setPackageName(context.packageName)
-                        .build()
-                ).build()
-        ).build()
-    return Timeline.fromLayoutElement(
-        PrimaryLayout.Builder(requestParams.deviceConfiguration)
-            .setPrimaryLabelTextContent(
-                Text.Builder(context, context.getString(title))
-                    .setTypography(Typography.TYPOGRAPHY_CAPTION1)
-                    .setColor(argb(theme.primary))
-                    .build()
-            )
-            .setContent(
-                Text.Builder(context, context.getString(text))
-                    .setTypography(Typography.TYPOGRAPHY_BODY1)
-                    .setMaxLines(10)
-                    .setColor(argb(theme.onSurface))
-                    .build()
-            )
-            .setPrimaryChipContent(
-                CompactChip.Builder(
-                    context,
-                    context.getString(commonR.string.login),
-                    chipAction,
-                    requestParams.deviceConfiguration
-                )
-                    .setChipColors(chipColors)
-                    .build()
-            )
+        .setId("action")
+        .setOnClick(action)
+        .build()
+    val builder = PrimaryLayout.Builder(requestParams.deviceConfiguration)
+    if (title != null) {
+        builder.setPrimaryLabelTextContent(
+            Text.Builder(context, context.getString(title))
+                .setTypography(Typography.TYPOGRAPHY_CAPTION1)
+                .setColor(argb(theme.primary))
+                .build()
+        )
+    }
+    builder.setContent(
+        Text.Builder(context, context.getString(text))
+            .setTypography(Typography.TYPOGRAPHY_BODY1)
+            .setMaxLines(10)
+            .setColor(argb(theme.onSurface))
             .build()
     )
+    builder.setPrimaryChipContent(
+        CompactChip.Builder(
+            context,
+            context.getString(actionText),
+            chipAction,
+            requestParams.deviceConfiguration
+        )
+            .setChipColors(chipColors)
+            .build()
+    )
+    return Timeline.fromLayoutElement(builder.build())
 }
 
 /**
