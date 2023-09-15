@@ -32,6 +32,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.io.ByteArrayOutputStream
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
@@ -112,18 +113,36 @@ class CameraTile : TileService() {
                     val url = UrlUtil.handle(serverManager.getServer()?.connection?.getUrl(), picture ?: "")
                     if (picture != null && url != null) {
                         var byteArray: ByteArray?
-                        var bitmap: Bitmap? = null
+                        val maxWidth = requestParams.deviceConfiguration.screenWidthDp * requestParams.deviceConfiguration.screenDensity
+                        val maxHeight = requestParams.deviceConfiguration.screenHeightDp * requestParams.deviceConfiguration.screenDensity
                         withContext(Dispatchers.IO) {
                             val response = okHttpClient.newCall(Request.Builder().url(url).build()).execute()
                             byteArray = response.body?.byteStream()?.readBytes()
                             byteArray?.let {
-                                bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
+                                var bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
+                                if (bitmap.width > maxWidth || bitmap.height > maxHeight) {
+                                    Log.d(TAG, "Scaling camera snapshot to fit screen (${bitmap.width}x${bitmap.height} to ${maxWidth.toInt()}x${maxHeight.toInt()} max)")
+                                    val currentRatio = (bitmap.width.toFloat() / bitmap.height.toFloat())
+                                    val screenRatio = (requestParams.deviceConfiguration.screenWidthDp.toFloat() / requestParams.deviceConfiguration.screenHeightDp.toFloat())
+                                    imageWidth = maxWidth.toInt()
+                                    imageHeight = maxHeight.toInt()
+                                    if (currentRatio > screenRatio) {
+                                        imageWidth = (maxHeight * currentRatio).toInt()
+                                    } else {
+                                        imageHeight = (maxWidth / currentRatio).toInt()
+                                    }
+                                    bitmap = Bitmap.createScaledBitmap(bitmap, imageWidth, imageHeight, true)
+                                    ByteArrayOutputStream().use { stream ->
+                                        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
+                                        byteArray = stream.toByteArray()
+                                    }
+                                } else {
+                                    imageWidth = bitmap.width
+                                    imageHeight = bitmap.height
+                                }
                             }
                             response.close()
                         }
-                        imageWidth = bitmap?.width ?: 0
-                        imageHeight = bitmap?.height ?: 0
-                        bitmap = null
                         byteArray
                     } else {
                         null
