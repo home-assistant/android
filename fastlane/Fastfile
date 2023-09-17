@@ -60,6 +60,7 @@ platform :android do
       track: 'beta',
       track_promote_to: 'production',
       skip_upload_changelogs: true,
+      sync_image_upload: true,
     )
     supply(
       track: 'wear:beta',
