@@ -213,7 +213,7 @@ class ThreadManagerImpl @Inject constructor(
             appCredentials?.any {
                 val isPreferred = isPreferredCredentials(context, it)
                 if (isPreferred) {
-                    Log.d(TAG, "Thread device prefers app added dataset: ${it.networkName} (PAN ${it.panId}, EXTPAN ${it.extendedPanId})")
+                    Log.d(TAG, "Thread device prefers app added dataset: ${it.networkName} (PAN ${it.panId}, EXTPAN ${String(it.extendedPanId)})")
                 }
                 isPreferred
             } ?: false
