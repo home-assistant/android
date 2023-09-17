@@ -5,6 +5,9 @@ on:
   release:
     types: [ released ]
 
+env:
+  SUPPLY_UPLOAD_MAX_RETRIES: 5
+
 jobs:
   play_promote_production:
     name: Play Publish Production
