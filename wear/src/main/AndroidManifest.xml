@@ -84,11 +84,16 @@
         </activity>
 
         <activity
-            android:name=".tiles.OpenShortcutTileSettingsActivity"
+            android:name=".tiles.OpenTileSettingsActivity"
             android:exported="true"
             android:excludeFromRecents="true">
             <intent-filter>
                 <action android:name="ConfigShortcutsTile" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="com.google.android.clockwork.tiles.category.PROVIDER_CONFIG" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="ConfigCameraTile" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="com.google.android.clockwork.tiles.category.PROVIDER_CONFIG" />
             </intent-filter>
@@ -166,6 +171,27 @@
 
             <meta-data android:name="androidx.wear.tiles.PREVIEW"
                 android:resource="@drawable/conversation_tile_example" />
+        </service>
+        <service
+            android:name=".tiles.CameraTile"
+            android:label="@string/camera"
+            android:description="@string/camera_tile_desc"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+
+            <meta-data android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/camera_tile_example" />
+
+            <meta-data
+                android:name="com.google.android.clockwork.tiles.MULTI_INSTANCES_SUPPORTED"
+                android:value="true" /> <!-- This is supported starting from Wear OS 3 -->
+
+            <meta-data
+                android:name="com.google.android.clockwork.tiles.PROVIDER_CONFIG_ACTION"
+                android:value="ConfigCameraTile" />
         </service>
         <receiver android:name=".tiles.TileActionReceiver"
             android:exported="false">

@@ -26,6 +26,8 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.En
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.database.sensor.SensorDao
+import io.homeassistant.companion.android.database.wear.CameraTile
+import io.homeassistant.companion.android.database.wear.CameraTileDao
 import io.homeassistant.companion.android.database.wear.FavoriteCaches
 import io.homeassistant.companion.android.database.wear.FavoriteCachesDao
 import io.homeassistant.companion.android.database.wear.FavoritesDao
@@ -48,6 +50,7 @@ class MainViewModel @Inject constructor(
     private val favoritesDao: FavoritesDao,
     private val favoriteCachesDao: FavoriteCachesDao,
     private val sensorsDao: SensorDao,
+    private val cameraTileDao: CameraTileDao,
     application: Application
 ) : AndroidViewModel(application) {
 
@@ -87,6 +90,10 @@ class MainViewModel @Inject constructor(
     private val favoriteCaches = favoriteCachesDao.getAll()
 
     val shortcutEntitiesMap = mutableStateMapOf<Int?, SnapshotStateList<SimplifiedEntity>>()
+
+    val cameraTiles = cameraTileDao.getAllFlow().collectAsState()
+    var cameraEntitiesMap = mutableStateMapOf<String, SnapshotStateList<Entity<*>>>()
+        private set
 
     var areas = mutableListOf<AreaRegistryResponse>()
         private set
@@ -221,6 +228,10 @@ class MainViewModel @Inject constructor(
         getEntities.await()?.also {
             entities.clear()
             it.forEach { state -> updateEntityStates(state) }
+
+            // Special list: camera entities
+            val cameraEntities = it.filter { entity -> entity.domain == "camera" }
+            cameraEntitiesMap["camera"] = mutableStateListOf<Entity<*>>().apply { addAll(cameraEntities) }
         }
         if (!isFavoritesOnly) {
             updateEntityDomains()
@@ -410,6 +421,18 @@ class MainViewModel @Inject constructor(
             favoritesDao.deleteAll()
             setWearFavoritesOnly(false)
         }
+    }
+
+    fun setCameraTileEntity(tileId: Int, entityId: String) = viewModelScope.launch {
+        val current = cameraTileDao.get(tileId)
+        val updated = current?.copy(entityId = entityId) ?: CameraTile(id = tileId, entityId = entityId)
+        cameraTileDao.add(updated)
+    }
+
+    fun setCameraTileRefreshInterval(tileId: Int, interval: Long) = viewModelScope.launch {
+        val current = cameraTileDao.get(tileId)
+        val updated = current?.copy(refreshInterval = interval) ?: CameraTile(id = tileId, refreshInterval = interval)
+        cameraTileDao.add(updated)
     }
 
     fun setTileShortcut(tileId: Int?, index: Int, entity: SimplifiedEntity) {

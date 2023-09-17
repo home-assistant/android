@@ -10,7 +10,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class OpenShortcutTileSettingsActivity : AppCompatActivity() {
+class OpenTileSettingsActivity : AppCompatActivity() {
 
     @Inject
     lateinit var wearPrefsRepository: WearPrefsRepositoryImpl
@@ -19,14 +19,25 @@ class OpenShortcutTileSettingsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         val tileId = intent.extras?.getInt("com.google.android.clockwork.EXTRA_PROVIDER_CONFIG_TILE_ID")
         tileId?.takeIf { it != 0 }?.let {
-            lifecycleScope.launch {
-                wearPrefsRepository.getTileShortcutsAndSaveTileId(tileId)
+            val settingsIntent = when (intent.action) {
+                "ConfigCameraTile" ->
+                    HomeActivity.getCameraTileSettingsIntent(
+                        context = this,
+                        tileId = it
+                    )
+                "ConfigShortcutsTile" -> {
+                    lifecycleScope.launch {
+                        wearPrefsRepository.getTileShortcutsAndSaveTileId(tileId)
+                    }
+                    HomeActivity.getShortcutsTileSettingsIntent(
+                        context = this,
+                        tileId = it
+                    )
+                }
+                else -> null
             }
-            val intent = HomeActivity.getShortcutsTileSettingsIntent(
-                context = this,
-                tileId = it
-            )
-            startActivity(intent)
+
+            settingsIntent?.let { startActivity(settingsIntent) }
         }
         finish()
     }

@@ -50,6 +50,8 @@ import io.homeassistant.companion.android.database.settings.LocalNotificationSet
 import io.homeassistant.companion.android.database.settings.LocalSensorSettingConverter
 import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
+import io.homeassistant.companion.android.database.wear.CameraTile
+import io.homeassistant.companion.android.database.wear.CameraTileDao
 import io.homeassistant.companion.android.database.wear.EntityStateComplications
 import io.homeassistant.companion.android.database.wear.EntityStateComplicationsDao
 import io.homeassistant.companion.android.database.wear.FavoriteCaches
@@ -87,11 +89,12 @@ import io.homeassistant.companion.android.common.R as commonR
         TileEntity::class,
         Favorites::class,
         FavoriteCaches::class,
+        CameraTile::class,
         EntityStateComplications::class,
         Server::class,
         Setting::class
     ],
-    version = 43,
+    version = 44,
     autoMigrations = [
         AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
@@ -110,7 +113,8 @@ import io.homeassistant.companion.android.common.R as commonR
         AutoMigration(from = 38, to = 39),
         AutoMigration(from = 39, to = 40),
         AutoMigration(from = 41, to = 42),
-        AutoMigration(from = 42, to = 43)
+        AutoMigration(from = 42, to = 43),
+        AutoMigration(from = 43, to = 44)
     ]
 )
 @TypeConverters(
@@ -133,6 +137,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun tileDao(): TileDao
     abstract fun favoritesDao(): FavoritesDao
     abstract fun favoriteCachesDao(): FavoriteCachesDao
+    abstract fun cameraTileDao(): CameraTileDao
     abstract fun entityStateComplicationsDao(): EntityStateComplicationsDao
     abstract fun serverDao(): ServerDao
     abstract fun settingsDao(): SettingsDao

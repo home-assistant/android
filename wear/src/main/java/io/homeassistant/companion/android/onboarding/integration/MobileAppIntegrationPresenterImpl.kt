@@ -8,6 +8,7 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.onboarding.getMessagingToken
+import io.homeassistant.companion.android.tiles.CameraTile
 import io.homeassistant.companion.android.tiles.ConversationTile
 import io.homeassistant.companion.android.tiles.ShortcutsTile
 import io.homeassistant.companion.android.tiles.TemplateTile
@@ -60,6 +61,7 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
         try {
             val context = view as Context
             val updater = TileService.getUpdater(context)
+            updater.requestUpdate(CameraTile::class.java)
             updater.requestUpdate(ConversationTile::class.java)
             updater.requestUpdate(ShortcutsTile::class.java)
             updater.requestUpdate(TemplateTile::class.java)
