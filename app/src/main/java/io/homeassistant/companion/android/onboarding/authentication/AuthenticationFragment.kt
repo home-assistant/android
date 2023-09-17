@@ -33,6 +33,7 @@ import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegr
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.TLSWebViewClient
 import io.homeassistant.companion.android.util.isStarted
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
@@ -166,8 +167,16 @@ class AuthenticationFragment : Fragment() {
 
     private fun buildAuthUrl(base: String): String {
         return try {
-            base.toHttpUrl()
-                .newBuilder()
+            val url = base.toHttpUrl()
+            val builder = if (url.host.endsWith("ui.nabu.casa", true)) {
+                HttpUrl.Builder()
+                    .scheme(url.scheme)
+                    .host(url.host)
+                    .port(url.port)
+            } else {
+                url.newBuilder()
+            }
+            builder
                 .addPathSegments("auth/authorize")
                 .addEncodedQueryParameter("response_type", "code")
                 .addEncodedQueryParameter("client_id", AuthenticationService.CLIENT_ID)
