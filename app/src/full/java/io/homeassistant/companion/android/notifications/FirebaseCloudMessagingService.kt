@@ -49,9 +49,8 @@ class FirebaseCloudMessagingService : FirebaseMessagingService() {
                 launch {
                     try {
                         serverManager.integrationRepository(it.id).updateRegistration(
-                            DeviceRegistration(
-                                pushToken = token
-                            )
+                            deviceRegistration = DeviceRegistration(pushToken = token),
+                            allowReregistration = false
                         )
                     } catch (e: Exception) {
                         Log.e(TAG, "Issue updating token", e)
