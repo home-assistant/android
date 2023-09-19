@@ -117,7 +117,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         }
     }
 
-    override suspend fun updateRegistration(deviceRegistration: DeviceRegistration) {
+    override suspend fun updateRegistration(deviceRegistration: DeviceRegistration, allowReregistration: Boolean) {
         val request =
             IntegrationRequest(
                 "update_registration",
@@ -126,9 +126,20 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         var causeException: Exception? = null
         for (it in server.connection.getApiUrls()) {
             try {
-                if (integrationService.callWebhook(it.toHttpUrlOrNull()!!, request).isSuccessful) {
-                    persistDeviceRegistration(deviceRegistration)
-                    return
+                val response = integrationService.callWebhook(it.toHttpUrlOrNull()!!, request)
+                // The server should return a body with the registration, but might return:
+                // 200 with empty body for broken direct webhook
+                // 404 for broken cloudhook
+                // 410 for missing config entry
+                if (response.isSuccessful) {
+                    if (response.code() == 200 && (response.body()?.contentLength() ?: 0) == 0L) {
+                        throw IllegalStateException("update_registration returned empty body")
+                    } else {
+                        persistDeviceRegistration(deviceRegistration)
+                        return
+                    }
+                } else if (response.code() == 404 || response.code() == 410) {
+                    throw IllegalStateException("update_registration returned code ${response.code()}")
                 }
             } catch (e: Exception) {
                 if (causeException == null) causeException = e
@@ -137,7 +148,16 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         }
 
         if (causeException != null) {
-            throw IntegrationException(causeException)
+            if (allowReregistration && (causeException is IllegalStateException)) {
+                Log.w(TAG, "Device registration broken, reregistering", causeException)
+                try {
+                    registerDevice(deviceRegistration)
+                } catch (e: Exception) {
+                    throw IntegrationException(e)
+                }
+            } else {
+                throw IntegrationException(causeException)
+            }
         } else {
             throw IntegrationException("Error calling integration request update_registration")
         }
