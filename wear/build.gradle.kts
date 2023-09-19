@@ -108,6 +108,8 @@ dependencies {
     implementation(libs.wear.compose.material)
     implementation(libs.wear.compose.navigation)
 
+    implementation(libs.horologist.layout)
+
     implementation(libs.guava)
     implementation(libs.bundles.wear.tiles)
 
