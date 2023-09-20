@@ -64,7 +64,7 @@ wearInput = "1.2.0-alpha02"
 webkit = "1.8.0"
 wear-remote-interactions = "1.0.0"
 workRuntimeKtx = "2.8.1"
-horologist = "0.5.5"
+horologist = "0.5.7"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidPlugin" }
@@ -121,6 +121,7 @@ constraintlayout = { module = "androidx.constraintlayout:constraintlayout", vers
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
 hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hilt" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
+horologist-composables = { module = "com.google.android.horologist:horologist-composables", version.ref = "horologist" }
 horologist-layout = { module = "com.google.android.horologist:horologist-compose-layout", version.ref = "horologist" }
 iconics-compose = { module = "com.mikepenz:iconics-compose", version.ref = "iconics" }
 iconics-core = { module = "com.mikepenz:iconics-core", version.ref = "iconics" }
@@ -163,5 +164,6 @@ wear-tiles = { module = "androidx.wear.tiles:tiles", version.ref = "wear-tiles" 
 webkit = { module = "androidx.webkit:webkit", version.ref = "webkit" }
 
 [bundles]
+horologist = ["horologist-layout", "horologist-composables"]
 media3 = ["media3-exoplayer", "media3-exoplayer-hls", "media3-ui"]
 wear-tiles = ["wear-tiles", "wear-protolayout-main", "wear-protolayout-expression", "wear-protolayout-material"]
