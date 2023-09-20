@@ -1,19 +1,12 @@
 package io.homeassistant.companion.android.home.views
 
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.input.rotary.onRotaryScrollEvent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Devices
@@ -25,15 +18,17 @@ import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Picker
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.rememberPickerState
+import com.google.android.horologist.annotations.ExperimentalHorologistApi
+import com.google.android.horologist.composables.picker.toRotaryScrollAdapter
+import com.google.android.horologist.compose.rotaryinput.rotaryWithSnap
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.intervalToString
 import io.homeassistant.companion.android.views.ListHeader
-import kotlinx.coroutines.launch
-import kotlin.math.sign
 import io.homeassistant.companion.android.common.R as R
 
+@OptIn(ExperimentalHorologistApi::class)
 @Composable
 fun RefreshIntervalPickerView(
     currentInterval: Int,
@@ -46,8 +41,6 @@ fun RefreshIntervalPickerView(
         initiallySelectedOption = if (initialIndex != -1) initialIndex else 0,
         repeatItems = true
     )
-    val coroutineScope = rememberCoroutineScope()
-    val focusRequester = remember { FocusRequester() }
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -60,16 +53,7 @@ fun RefreshIntervalPickerView(
             modifier = Modifier
                 .weight(1f)
                 .padding(all = 8.dp)
-                .onRotaryScrollEvent {
-                    coroutineScope.launch {
-                        state.scrollToOption(
-                            state.selectedOption + it.verticalScrollPixels.sign.toInt()
-                        )
-                    }
-                    true
-                }
-                .focusRequester(focusRequester)
-                .focusable()
+                .rotaryWithSnap(state.toRotaryScrollAdapter())
         ) {
             Text(
                 intervalToString(LocalContext.current, options[it]),
@@ -86,10 +70,6 @@ fun RefreshIntervalPickerView(
                 CommunityMaterial.Icon.cmd_check
             )
         }
-    }
-
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
     }
 }
 

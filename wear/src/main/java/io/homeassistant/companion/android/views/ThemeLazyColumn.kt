@@ -4,12 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.ScalingLazyListScope
@@ -24,12 +20,10 @@ fun ThemeLazyColumn(
     state: ScalingLazyListState = rememberScalingLazyListState(),
     content: ScalingLazyListScope.() -> Unit
 ) {
-    val coroutineScope = rememberCoroutineScope()
-    val focusRequester = remember { FocusRequester() }
     ScalingLazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .rotaryWithScroll(state, focusRequester),
+            .rotaryWithScroll(state),
         contentPadding = PaddingValues(
             start = 8.dp,
             end = 8.dp
@@ -39,8 +33,4 @@ fun ThemeLazyColumn(
         state = state,
         content = content
     )
-
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-    }
 }
