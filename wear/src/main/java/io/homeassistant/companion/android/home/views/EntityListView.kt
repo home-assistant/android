@@ -14,6 +14,8 @@ import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.data.OrderedMap
+import io.homeassistant.companion.android.data.orderedMapOf
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.util.playPreviewEntityScene1
 import io.homeassistant.companion.android.util.playPreviewEntityScene2
@@ -28,8 +30,7 @@ import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun EntityViewList(
-    entityLists: Map<String, List<Entity<*>>>,
-    entityListsOrder: List<String>,
+    entityLists: OrderedMap<String, List<Entity<*>>>,
     entityListFilter: (Entity<*>) -> Boolean,
     onEntityClicked: (String, String) -> Unit,
     onEntityLongClicked: (String) -> Unit,
@@ -50,10 +51,10 @@ fun EntityViewList(
             timeText = { TimeText(scalingLazyListState = scalingLazyListState) }
         ) {
             ThemeLazyColumn(state = scalingLazyListState) {
-                for (header in entityListsOrder) {
+                for (header in entityLists.orderedKeys) {
                     val entities = entityLists[header].orEmpty()
                     if (entities.isNotEmpty()) {
-                        item {
+                        item(header) {
                             if (entityLists.size > 1) {
                                 ExpandableListHeader(
                                     string = header,
@@ -103,8 +104,7 @@ fun EntityViewList(
 @Composable
 private fun PreviewEntityListView() {
     EntityViewList(
-        entityLists = mapOf(stringResource(commonR.string.lights) to listOf(previewEntity1, previewEntity2)),
-        entityListsOrder = listOf(stringResource(commonR.string.lights)),
+        entityLists = orderedMapOf(stringResource(commonR.string.lights) to listOf(previewEntity1, previewEntity2)),
         entityListFilter = { true },
         onEntityClicked = { _, _ -> },
         onEntityLongClicked = { },
@@ -117,8 +117,7 @@ private fun PreviewEntityListView() {
 @Composable
 private fun PreviewEntityListScenes() {
     EntityViewList(
-        entityLists = mapOf(stringResource(commonR.string.scenes) to listOf(playPreviewEntityScene1, playPreviewEntityScene2, playPreviewEntityScene3)),
-        entityListsOrder = listOf(stringResource(commonR.string.scenes)),
+        entityLists = orderedMapOf(stringResource(commonR.string.scenes) to listOf(playPreviewEntityScene1, playPreviewEntityScene2, playPreviewEntityScene3)),
         entityListFilter = { true },
         onEntityClicked = { _, _ -> },
         onEntityLongClicked = { },

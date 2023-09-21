@@ -5,8 +5,8 @@ import android.content.ComponentName
 import android.content.pm.PackageManager
 import android.util.Log
 import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -24,7 +24,10 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ar
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.data.OrderedMap
 import io.homeassistant.companion.android.data.SimplifiedEntity
+import io.homeassistant.companion.android.data.emptyOrderedMap
+import io.homeassistant.companion.android.data.orderedMapOf
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.wear.CameraTile
 import io.homeassistant.companion.android.database.wear.CameraTileDao
@@ -77,8 +80,8 @@ class MainViewModel @Inject constructor(
     }
 
     // entities
-    var entities = mutableStateMapOf<String, Entity<*>>()
-        private set
+    private val _entities = mutableStateMapOf<String, Entity<*>>()
+    val entities: Map<String, Entity<*>> get() = _entities
 
     private val _supportedEntities = MutableStateFlow(emptyList<String>())
     val supportedEntities = _supportedEntities.asStateFlow()
@@ -92,25 +95,24 @@ class MainViewModel @Inject constructor(
     val shortcutEntitiesMap = mutableStateMapOf<Int?, SnapshotStateList<SimplifiedEntity>>()
 
     val cameraTiles = cameraTileDao.getAllFlow().collectAsState()
-    var cameraEntitiesMap = mutableStateMapOf<String, SnapshotStateList<Entity<*>>>()
+    private val cameraEntities = mutableStateOf(emptyList<Entity<*>>())
+    val cameraEntitiesMap by derivedStateOf {
+        orderedMapOf("camera" to cameraEntities.value)
+    }
+
+    var areas = emptyList<AreaRegistryResponse>()
         private set
 
-    var areas = mutableListOf<AreaRegistryResponse>()
+    var entitiesByArea by mutableStateOf(emptyOrderedMap<String, List<Entity<*>>>())
         private set
-
-    var entitiesByArea = mutableStateMapOf<String, SnapshotStateList<Entity<*>>>()
-        private set
-    var entitiesByDomain = mutableStateMapOf<String, SnapshotStateList<Entity<*>>>()
-        private set
-    var entitiesByAreaOrder = mutableStateListOf<String>()
-        private set
-    var entitiesByDomainOrder = mutableStateListOf<String>()
+    var entitiesByDomain by mutableStateOf(emptyOrderedMap<String, List<Entity<*>>>())
         private set
 
     // Content of EntityListView
-    var entityLists = mutableStateMapOf<String, List<Entity<*>>>()
-    var entityListsOrder = mutableStateListOf<String>()
+    var entityLists by mutableStateOf(emptyOrderedMap<String, List<Entity<*>>>())
+        private set
     var entityListFilter: (Entity<*>) -> Boolean = { true }
+        private set
 
     // settings
     var loadingState = mutableStateOf(LoadingState.LOADING)
@@ -199,7 +201,7 @@ class MainViewModel @Inject constructor(
 
     private fun updateEntityStates(entity: Entity<*>) {
         if (supportedDomains().contains(entity.domain)) {
-            entities[entity.entityId] = entity
+            _entities[entity.entityId] = entity
             // add to cache if part of favorites
             if (favoriteEntityIds.value.contains(entity.entityId)) {
                 addCachedFavorite(entity.entityId)
@@ -216,8 +218,7 @@ class MainViewModel @Inject constructor(
 
         if (!isFavoritesOnly) {
             areaRegistry = getAreaRegistry.await()?.also {
-                areas.clear()
-                areas.addAll(it)
+                areas = it
             }
             deviceRegistry = getDeviceRegistry.await()
         }
@@ -225,13 +226,12 @@ class MainViewModel @Inject constructor(
 
         _supportedEntities.value = getSupportedEntities()
 
-        getEntities.await()?.also {
-            entities.clear()
-            it.forEach { state -> updateEntityStates(state) }
+        getEntities.await()?.also { entities ->
+            _entities.clear()
+            entities.forEach { state -> updateEntityStates(state) }
 
             // Special list: camera entities
-            val cameraEntities = it.filter { entity -> entity.domain == "camera" }
-            cameraEntitiesMap["camera"] = mutableStateListOf<Entity<*>>().apply { addAll(cameraEntities) }
+            cameraEntities.value = entities.filter { entity -> entity.domain == "camera" }
         }
         if (!isFavoritesOnly) {
             updateEntityDomains()
@@ -256,10 +256,7 @@ class MainViewModel @Inject constructor(
         }
         homePresenter.getAreaRegistryUpdates()?.throttleLatest(1000)?.collect {
             areaRegistry = homePresenter.getAreaRegistry()
-            areas.clear()
-            areaRegistry?.let {
-                areas.addAll(it)
-            }
+            areas = areaRegistry.orEmpty()
             updateEntityDomains()
         }
     }
@@ -297,43 +294,21 @@ class MainViewModel @Inject constructor(
         val domainsList = entitiesList.map { it.domain }.distinct()
 
         // Create a list with all areas + their entities
-        areasList.forEach { area ->
-            val entitiesInArea = mutableStateListOf<Entity<*>>()
-            entitiesInArea.addAll(
-                entitiesList
-                    .filter { getAreaForEntity(it.entityId)?.areaId == area.areaId }
-                    .map { it as Entity<Map<String, Any>> }
-                    .sortedBy { (it.attributes["friendly_name"] ?: it.entityId) as String }
-            )
-            entitiesByArea[area.areaId]?.let {
-                it.clear()
-                it.addAll(entitiesInArea)
-            } ?: run {
-                entitiesByArea[area.areaId] = entitiesInArea
-            }
+        var newEntitiesByArea = entitiesByArea + areasList.associate { area ->
+            area.areaId to entitiesList
+                .filter { getAreaForEntity(it.entityId)?.areaId == area.areaId }
+                .map { it as Entity<Map<String, Any>> }
+                .sortedBy { (it.attributes["friendly_name"] as String? ?: it.entityId) }
         }
-        entitiesByAreaOrder.clear()
-        entitiesByAreaOrder.addAll(areasList.map { it.areaId })
         // Quick check: are there any areas in the list that no longer exist?
-        entitiesByArea.forEach {
-            if (!areasList.any { item -> item.areaId == it.key }) {
-                entitiesByArea.remove(it.key)
-            }
-        }
+        newEntitiesByArea = newEntitiesByArea.filterKeys { areaId -> areasList.any { item -> item.areaId == areaId } }
+        entitiesByArea = OrderedMap(newEntitiesByArea, orderedKeys = areasList.map { it.areaId })
 
         // Create a list with all discovered domains + their entities
-        domainsList.forEach { domain ->
-            val entitiesInDomain = mutableStateListOf<Entity<*>>()
-            entitiesInDomain.addAll(entitiesList.filter { it.domain == domain })
-            entitiesByDomain[domain]?.let {
-                it.clear()
-                it.addAll(entitiesInDomain)
-            } ?: run {
-                entitiesByDomain[domain] = entitiesInDomain
-            }
-        }
-        entitiesByDomainOrder.clear()
-        entitiesByDomainOrder.addAll(domainsList)
+        entitiesByDomain = OrderedMap(
+            domainsList.associateWith { domain -> entitiesList.filter { it.domain == domain } },
+            orderedKeys = domainsList
+        )
     }
 
     fun toggleEntity(entityId: String, state: String) {
@@ -541,6 +516,15 @@ class MainViewModel @Inject constructor(
 
         // also clear cache when logging out
         clearCache()
+    }
+
+    fun prepareToNavigateToEntityListScreen(
+        entityLists: Map<String, List<Entity<*>>>,
+        listOrder: List<String>,
+        filter: (Entity<*>) -> Boolean
+    ) {
+        this.entityLists = OrderedMap(entityLists, orderedKeys = listOrder)
+        entityListFilter = filter
     }
 
     private fun clearCache() {

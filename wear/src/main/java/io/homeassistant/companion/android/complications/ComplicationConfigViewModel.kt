@@ -3,12 +3,10 @@ package io.homeassistant.companion.android.complications
 import android.app.Application
 import android.util.Log
 import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,6 +16,7 @@ import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
+import io.homeassistant.companion.android.data.OrderedMap
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.database.wear.EntityStateComplications
 import io.homeassistant.companion.android.database.wear.EntityStateComplicationsDao
@@ -44,12 +43,18 @@ class ComplicationConfigViewModel @Inject constructor(
 
     val app = getApplication<HomeAssistantApplication>()
 
-    var entities = mutableStateMapOf<String, Entity<*>>()
-        private set
-    var entitiesByDomain = mutableStateMapOf<String, SnapshotStateList<Entity<*>>>()
-        private set
-    var entitiesByDomainOrder = mutableStateListOf<String>()
-        private set
+    private var entities by mutableStateOf(emptyMap<String, Entity<*>>())
+    val entitiesByDomain: OrderedMap<String, List<Entity<*>>> by derivedStateOf {
+        // List is automatically sorted by entityId, as entities is a SortedMap
+        val entitiesList = entities.values.toList()
+        val domainsList = entitiesList.map { it.domain }.distinct()
+
+        // Create a list with all discovered domains + their entities
+        OrderedMap(
+            domainsList.associateWith { domain -> entitiesList.filter { it.domain == domain } },
+            orderedKeys = domainsList
+        )
+    }
     val favoriteEntityIds = favoritesDao.getAllFlow().collectAsState()
 
     var loadingState by mutableStateOf(LoadingState.LOADING)
@@ -90,10 +95,11 @@ class ComplicationConfigViewModel @Inject constructor(
             try {
                 // Load initial state
                 loadingState = LoadingState.LOADING
-                serverManager.integrationRepository().getEntities()?.forEach {
-                    entities[it.entityId] = it
-                }
-                updateEntityDomains()
+                entities = serverManager.integrationRepository()
+                    .getEntities()
+                    .orEmpty()
+                    .associateBy { it.entityId }
+                    .toSortedMap()
                 updateSelectedEntity()
 
                 // Finished initial load, update state
@@ -114,32 +120,11 @@ class ComplicationConfigViewModel @Inject constructor(
         }
     }
 
-    private fun updateEntityDomains() {
-        val entitiesList = entities.values.toList().sortedBy { it.entityId }
-        val domainsList = entitiesList.map { it.domain }.distinct()
-
-        // Create a list with all discovered domains + their entities
-        domainsList.forEach { domain ->
-            val entitiesInDomain = mutableStateListOf<Entity<*>>()
-            entitiesInDomain.addAll(entitiesList.filter { it.domain == domain })
-            entitiesByDomain[domain]?.let {
-                it.clear()
-                it.addAll(entitiesInDomain)
-            } ?: run {
-                entitiesByDomain[domain] = entitiesInDomain
-            }
-        }
-        entitiesByDomainOrder.clear()
-        entitiesByDomainOrder.addAll(domainsList)
-    }
-
     private fun updateSelectedEntity() {
-        if (selectedEntity == null) return
-        val fullEntity = entities[selectedEntity!!.entityId]
+        val selected = selectedEntity ?: return
+        val fullEntity = entities[selected.entityId]
 
-        selectedEntity = if (fullEntity == null) {
-            null // Clear invalid value
-        } else {
+        selectedEntity = fullEntity?.let {
             SimplifiedEntity(
                 entityId = fullEntity.entityId,
                 friendlyName = fullEntity.friendlyName,

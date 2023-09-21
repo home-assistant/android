@@ -64,7 +64,6 @@ fun LoadConfigView(
             }
             composable(SCREEN_CHOOSE_ENTITY) {
                 ChooseEntityView(
-                    entitiesByDomainOrder = complicationConfigViewModel.entitiesByDomainOrder,
                     entitiesByDomain = complicationConfigViewModel.entitiesByDomain,
                     favoriteEntityIds = complicationConfigViewModel.favoriteEntityIds,
                     onNoneClicked = {},

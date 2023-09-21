@@ -8,8 +8,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -26,6 +24,7 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.util.capitalize
+import io.homeassistant.companion.android.data.OrderedMap
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.util.stringForDomain
@@ -34,15 +33,14 @@ import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun ChooseEntityView(
-    entitiesByDomainOrder: SnapshotStateList<String>,
-    entitiesByDomain: SnapshotStateMap<String, SnapshotStateList<Entity<*>>>,
+    entitiesByDomain: OrderedMap<String, List<Entity<*>>>,
     favoriteEntityIds: State<List<String>>,
     onNoneClicked: () -> Unit,
     onEntitySelected: (entity: SimplifiedEntity) -> Unit,
     allowNone: Boolean = true
 ) {
     // Remember expanded state of each header
-    val expandedStates = rememberExpandedStates(entitiesByDomainOrder)
+    val expandedStates = rememberExpandedStates(entitiesByDomain.orderedKeys)
     var expandedFavorites: Boolean by rememberSaveable { mutableStateOf(false) }
 
     WearAppTheme {
@@ -51,7 +49,7 @@ fun ChooseEntityView(
                 ListHeader(id = commonR.string.choose_entity)
             }
             if (allowNone) {
-                item {
+                item("key-none") {
                     Chip(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -67,7 +65,7 @@ fun ChooseEntityView(
             }
 
             if (favoriteEntityIds.value.isNotEmpty()) {
-                item {
+                item("key-favorites") {
                     ExpandableListHeader(
                         string = stringResource(commonR.string.favorites),
                         expanded = expandedFavorites,
@@ -75,9 +73,9 @@ fun ChooseEntityView(
                     )
                 }
                 if (expandedFavorites) {
-                    items(favoriteEntityIds.value.size) { index ->
-                        val favoriteEntityID = favoriteEntityIds.value[index].split(",")[0]
-                        entitiesByDomain.flatMap { (_, values) -> values }
+                    items(favoriteEntityIds.value, key = { id -> "favorite-${id}" }) { id ->
+                        val favoriteEntityID = id.split(",")[0]
+                        entitiesByDomain.values.flatten()
                             .firstOrNull { it.entityId == favoriteEntityID }
                             ?.let {
                                 ChooseEntityChip(
@@ -89,10 +87,10 @@ fun ChooseEntityView(
                 }
             }
 
-            for (domain in entitiesByDomainOrder) {
+            for (domain in entitiesByDomain.orderedKeys) {
                 val entities = entitiesByDomain[domain]
                 if (!entities.isNullOrEmpty()) {
-                    item {
+                    item(domain) {
                         ExpandableListHeader(
                             string = stringForDomain(domain, LocalContext.current)
                                 ?: domain.replace('_', ' ').capitalize(Locale.getDefault()),
@@ -101,7 +99,7 @@ fun ChooseEntityView(
                         )
                     }
                     if (expandedStates[domain] == true) {
-                        items(entities, key = { it.entityId }) { entity ->
+                        items(entities, key = { "${domain}-${it.entityId}" }) { entity ->
                             ChooseEntityChip(
                                 entity = entity,
                                 onEntitySelected = onEntitySelected
