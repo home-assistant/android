@@ -110,9 +110,7 @@ class MainViewModel @Inject constructor(
 
     // Content of EntityListView
     var entityLists by mutableStateOf(emptyOrderedMap<String, List<Entity<*>>>())
-        private set
     var entityListFilter: (Entity<*>) -> Boolean = { true }
-        private set
 
     // settings
     var loadingState = mutableStateOf(LoadingState.LOADING)
@@ -516,15 +514,6 @@ class MainViewModel @Inject constructor(
 
         // also clear cache when logging out
         clearCache()
-    }
-
-    fun prepareToNavigateToEntityListScreen(
-        entityLists: Map<String, List<Entity<*>>>,
-        listOrder: List<String>,
-        filter: (Entity<*>) -> Boolean
-    ) {
-        this.entityLists = OrderedMap(entityLists, orderedKeys = listOrder)
-        entityListFilter = filter
     }
 
     private fun clearCache() {

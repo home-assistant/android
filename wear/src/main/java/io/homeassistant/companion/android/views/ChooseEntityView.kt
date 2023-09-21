@@ -73,7 +73,7 @@ fun ChooseEntityView(
                     )
                 }
                 if (expandedFavorites) {
-                    items(favoriteEntityIds.value, key = { id -> "favorite-${id}" }) { id ->
+                    items(favoriteEntityIds.value, key = { id -> "favorite-$id" }) { id ->
                         val favoriteEntityID = id.split(",")[0]
                         entitiesByDomain.values.flatten()
                             .firstOrNull { it.entityId == favoriteEntityID }
@@ -99,7 +99,7 @@ fun ChooseEntityView(
                         )
                     }
                     if (expandedStates[domain] == true) {
-                        items(entities, key = { "${domain}-${it.entityId}" }) { entity ->
+                        items(entities, key = { "$domain-${it.entityId}" }) { entity ->
                             ChooseEntityChip(
                                 entity = entity,
                                 onEntitySelected = onEntitySelected

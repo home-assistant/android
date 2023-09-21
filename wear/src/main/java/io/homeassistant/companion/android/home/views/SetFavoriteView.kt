@@ -53,10 +53,10 @@ fun SetFavoritesView(
                 item {
                     ListHeader(id = commonR.string.set_favorite)
                 }
-                for (domain in mainViewModel.entitiesByDomainOrder) {
+                for (domain in mainViewModel.entitiesByDomain.orderedKeys) {
                     val entities = mainViewModel.entitiesByDomain[domain].orEmpty()
                     if (entities.isNotEmpty()) {
-                        item {
+                        item(domain) {
                             ExpandableListHeader(
                                 string = mainViewModel.stringForDomain(domain)!!,
                                 key = domain,

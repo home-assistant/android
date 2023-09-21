@@ -18,12 +18,17 @@ private val emptyOrderedMap = OrderedMap<Any, Nothing>(emptyMap(), emptyList())
  * Returns an empty read-only ordered map of specified type.
  * @see [emptyMap]
  */
-fun <K : Any, V> emptyOrderedMap(): OrderedMap<K, V> = @Suppress("UNCHECKED_CAST") (emptyOrderedMap as OrderedMap<K, V>)
+fun <K : Any, V> emptyOrderedMap(): OrderedMap<K, V> =
+    @Suppress("UNCHECKED_CAST")
+    (emptyOrderedMap as OrderedMap<K, V>)
 
 /**
  * Returns a new read-only ordered map, mapping only the specified key to the specified value.
  */
-fun <K : Any, V> orderedMapOf(pair: Pair<K, V>): OrderedMap<K, V> = OrderedMap(mapOf(pair), listOf(pair.first))
+fun <K : Any, V> orderedMapOf(pair: Pair<K, V>): OrderedMap<K, V> = OrderedMap(
+    mapOf(pair),
+    orderedKeys = listOf(pair.first)
+)
 
 /**
  * Adds an [OrderedMap] of items to the view.

@@ -69,8 +69,9 @@ fun LoadHomePage(
                     },
                     onRetryLoadEntitiesClicked = mainViewModel::loadEntities,
                     onSettingsClicked = { swipeDismissableNavController.navigate(SCREEN_SETTINGS) },
-                    onNavigationClicked = { lists, order, filter ->
-                        mainViewModel.prepareToNavigateToEntityListScreen(lists, order, filter)
+                    onNavigationClicked = { entityLists, filter ->
+                        mainViewModel.entityLists = entityLists
+                        mainViewModel.entityListFilter = filter
                         swipeDismissableNavController.navigate(SCREEN_ENTITY_LIST)
                     },
                     isHapticEnabled = mainViewModel.isHapticEnabled.value,
@@ -211,7 +212,10 @@ fun LoadHomePage(
                 )
             ) { backStackEntry ->
                 val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_CAMERA_TILE_ID)
-                val cameraFavorites = remember { mutableStateOf(emptyList<String>()) } // There are no camera favorites
+                // There are no camera favorites
+                val cameraFavorites = remember {
+                    mutableStateOf(emptyList<String>())
+                }
                 ChooseEntityView(
                     entitiesByDomain = mainViewModel.cameraEntitiesMap,
                     favoriteEntityIds = cameraFavorites,

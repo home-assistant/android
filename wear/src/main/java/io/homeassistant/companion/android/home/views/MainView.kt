@@ -37,7 +37,9 @@ import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
+import io.homeassistant.companion.android.data.OrderedMap
 import io.homeassistant.companion.android.data.items
+import io.homeassistant.companion.android.data.orderedMapOf
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.wearColorPalette
@@ -56,7 +58,10 @@ fun MainView(
     onEntityLongClicked: (String) -> Unit,
     onRetryLoadEntitiesClicked: () -> Unit,
     onSettingsClicked: () -> Unit,
-    onNavigationClicked: (entityLists: Map<String, List<Entity<*>>>, listOrder: List<String>, filter: (Entity<*>) -> Boolean) -> Unit,
+    onNavigationClicked: (
+        entityLists: OrderedMap<String, List<Entity<*>>>,
+        filter: (Entity<*>) -> Boolean
+    ) -> Unit,
     isHapticEnabled: Boolean,
     isToastEnabled: Boolean
 ) {
@@ -66,6 +71,11 @@ fun MainView(
 
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
+
+    val noCategoryEntitiesFilter: (entity: Entity<*>) -> Boolean = {
+        mainViewModel.getCategoryForEntity(it.entityId) == null &&
+            mainViewModel.getHiddenByForEntity(it.entityId) == null
+    }
 
     WearAppTheme {
         Scaffold(
@@ -88,7 +98,7 @@ fun MainView(
                         )
                     }
                     if (expandedFavorites) {
-                        items(favoriteEntityIds, key = { "favorite-${it}" }) { id ->
+                        items(favoriteEntityIds, key = { "favorite-$it" }) { id ->
                             val favoriteEntityID = id.split(",")[0]
                             if (mainViewModel.entities.isEmpty()) {
                                 // when we don't have the state of the entity, create a Chip from cache as we don't have the state yet
@@ -209,19 +219,19 @@ fun MainView(
 
                             if (
                                 mainViewModel.entitiesByArea.values.any {
-                                    it.isNotEmpty() && it.any { entity ->
-                                        mainViewModel.getCategoryForEntity(entity.entityId) == null &&
-                                            mainViewModel.getHiddenByForEntity(entity.entityId) == null
-                                    }
+                                    it.any(noCategoryEntitiesFilter)
                                 }
                             ) {
                                 item {
                                     ListHeader(id = commonR.string.areas)
                                 }
-                                items(mainViewModel.entitiesByArea, key = { "area-${it}" }) { (id, entities) ->
+                                items(
+                                    mainViewModel.entitiesByArea,
+                                    key = { "area-$it" }
+                                ) { (id, entities) ->
                                     val entitiesToShow = entities.filter {
                                         mainViewModel.getCategoryForEntity(it.entityId) == null &&
-                                                mainViewModel.getHiddenByForEntity(it.entityId) == null
+                                            mainViewModel.getHiddenByForEntity(it.entityId) == null
                                     }
                                     if (entitiesToShow.isNotEmpty()) {
                                         val area = mainViewModel.areas.first { it.areaId == id }
@@ -232,14 +242,9 @@ fun MainView(
                                             },
                                             onClick = {
                                                 onNavigationClicked(
-                                                    mapOf(area.name to entities),
-                                                    listOf(area.name)
-                                                ) {
-                                                    mainViewModel.getCategoryForEntity(it.entityId) == null &&
-                                                            mainViewModel.getHiddenByForEntity(
-                                                                it.entityId
-                                                            ) == null
-                                                }
+                                                    orderedMapOf(area.name to entities),
+                                                    noCategoryEntitiesFilter
+                                                )
                                             },
                                             colors = ChipDefaults.primaryChipColors()
                                         )
@@ -247,21 +252,23 @@ fun MainView(
                                 }
                             }
 
-                            val domainEntitiesFilter: (entity: Entity<*>) -> Boolean =
-                                {
-                                    mainViewModel.getAreaForEntity(it.entityId) == null &&
-                                        mainViewModel.getCategoryForEntity(it.entityId) == null &&
-                                        mainViewModel.getHiddenByForEntity(it.entityId) == null
-                                }
+                            val domainEntitiesFilter: (entity: Entity<*>) -> Boolean = {
+                                mainViewModel.getAreaForEntity(it.entityId) == null &&
+                                    noCategoryEntitiesFilter(it)
+                            }
                             if (mainViewModel.entities.values.any(domainEntitiesFilter)) {
                                 item {
                                     ListHeader(id = commonR.string.more_entities)
                                 }
                             }
                             // Buttons for each existing category
-                            items(mainViewModel.entitiesByDomain, key = { "domain-${it}" }) { (domain, domainEntities) ->
+                            items(
+                                mainViewModel.entitiesByDomain,
+                                key = { "domain-$it" }
+                            ) { (domain, domainEntities) ->
                                 val domainEntitiesToShow = domainEntities.filter(domainEntitiesFilter)
                                 if (domainEntitiesToShow.isNotEmpty()) {
+                                    val domainName = mainViewModel.stringForDomain(domain)!!
                                     Chip(
                                         modifier = Modifier.fillMaxWidth(),
                                         icon = {
@@ -272,14 +279,11 @@ fun MainView(
                                             ).let { Image(asset = it) }
                                         },
                                         label = {
-                                            Text(text = mainViewModel.stringForDomain(domain)!!)
+                                            Text(text = domainName)
                                         },
                                         onClick = {
                                             onNavigationClicked(
-                                                mapOf(
-                                                    mainViewModel.stringForDomain(domain)!! to domainEntities
-                                                ),
-                                                listOf(mainViewModel.stringForDomain(domain)!!),
+                                                orderedMapOf(domainName to domainEntities),
                                                 domainEntitiesFilter
                                             )
                                         },
@@ -307,17 +311,16 @@ fun MainView(
                                             Text(text = stringResource(commonR.string.all_entities))
                                         },
                                         onClick = {
+                                            val entitiesByDomainName = mainViewModel
+                                                .entitiesByDomain
+                                                .mapKeys {
+                                                    mainViewModel.stringForDomain(it.key)!!
+                                                }
                                             onNavigationClicked(
-                                                mainViewModel.entitiesByDomain.mapKeys {
-                                                    mainViewModel.stringForDomain(
-                                                        it.key
-                                                    )!!
-                                                },
-                                                mainViewModel.entitiesByDomain.keys.map {
-                                                    mainViewModel.stringForDomain(
-                                                        it
-                                                    )!!
-                                                }.sorted()
+                                                OrderedMap(
+                                                    entitiesByDomainName,
+                                                    orderedKeys = entitiesByDomainName.keys.sorted()
+                                                )
                                             ) { true }
                                         },
                                         colors = ChipDefaults.secondaryChipColors()
