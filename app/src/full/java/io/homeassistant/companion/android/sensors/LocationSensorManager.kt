@@ -33,6 +33,9 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.location.LocationHistoryItem
+import io.homeassistant.companion.android.database.location.LocationHistoryItemResult
+import io.homeassistant.companion.android.database.location.LocationHistoryItemTrigger
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
@@ -161,6 +164,15 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
         private var lastHighAccuracyTriggerRange: Int = 0
         private var lastHighAccuracyZones: List<String> = ArrayList()
+
+        enum class LocationUpdateTrigger(val isGeofence: Boolean = false) {
+            HIGH_ACCURACY_LOCATION,
+            BACKGROUND_LOCATION,
+            GEOFENCE_ENTER(isGeofence = true),
+            GEOFENCE_EXIT(isGeofence = true),
+            GEOFENCE_DWELL(isGeofence = true),
+            SINGLE_ACCURATE_LOCATION
+        }
 
         fun setHighAccuracyModeSetting(context: Context, enabled: Boolean) {
             val sensorDao = AppDatabase.getInstance(context).sensorDao()
@@ -676,13 +688,20 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
                 ?: DEFAULT_MINIMUM_ACCURACY
             sensorDao.add(SensorSetting(backgroundLocation.id, SETTING_ACCURACY, minAccuracy.toString(), SensorSettingType.NUMBER))
+            val trigger =
+                if (intent.action == ACTION_PROCESS_HIGH_ACCURACY_LOCATION) {
+                    LocationUpdateTrigger.HIGH_ACCURACY_LOCATION
+                } else {
+                    LocationUpdateTrigger.BACKGROUND_LOCATION
+                }
             if (location.accuracy > minAccuracy) {
                 Log.w(TAG, "Location accuracy didn't meet requirements, disregarding: $location")
+                logLocationUpdate(location, null, null, trigger, LocationHistoryItemResult.SKIPPED_ACCURACY)
             } else {
                 HighAccuracyLocationService.updateNotificationAddress(latestContext, location)
                 // Send new location to Home Assistant
                 serverIds.forEach {
-                    ioScope.launch { sendLocationUpdate(location, it) }
+                    ioScope.launch { sendLocationUpdate(location, it, trigger) }
                 }
             }
         }
@@ -770,16 +789,20 @@ class LocationSensorManager : LocationSensorManagerBase() {
             ?: DEFAULT_MINIMUM_ACCURACY
         sensorDao.add(SensorSetting(zoneLocation.id, SETTING_ACCURACY, minAccuracy.toString(), SensorSettingType.NUMBER))
 
+        val trigger = when (geofencingEvent.geofenceTransition) {
+            Geofence.GEOFENCE_TRANSITION_ENTER -> LocationUpdateTrigger.GEOFENCE_ENTER
+            Geofence.GEOFENCE_TRANSITION_EXIT -> LocationUpdateTrigger.GEOFENCE_EXIT
+            Geofence.GEOFENCE_TRANSITION_DWELL -> LocationUpdateTrigger.GEOFENCE_DWELL
+            else -> null
+        }
         if (geofencingEvent.triggeringLocation!!.accuracy > minAccuracy) {
-            Log.w(
-                TAG,
-                "Geofence location accuracy didn't meet requirements, requesting new location."
-            )
+            Log.w(TAG, "Geofence location accuracy didn't meet requirements, requesting new location.")
+            logLocationUpdate(geofencingEvent.triggeringLocation, null, null, trigger, LocationHistoryItemResult.SKIPPED_ACCURACY)
             requestSingleAccurateLocation()
         } else {
             getEnabledServers(latestContext, zoneLocation).forEach {
                 ioScope.launch {
-                    sendLocationUpdate(geofencingEvent.triggeringLocation!!, it, true)
+                    sendLocationUpdate(geofencingEvent.triggeringLocation!!, it, trigger)
                 }
             }
         }
@@ -789,13 +812,14 @@ class LocationSensorManager : LocationSensorManagerBase() {
         }
     }
 
-    private fun sendLocationUpdate(location: Location, serverId: Int, geofenceUpdate: Boolean = false) {
+    private fun sendLocationUpdate(location: Location, serverId: Int, trigger: LocationUpdateTrigger?) {
         Log.d(
             TAG,
             "Last Location: " +
                 "\nCoords:(${location.latitude}, ${location.longitude})" +
                 "\nAccuracy: ${location.accuracy}" +
-                "\nBearing: ${location.bearing}"
+                "\nBearing: ${location.bearing}" +
+                "\nProvider: ${location.provider}"
         )
         var accuracy = 0
         if (location.accuracy.toInt() >= 0) {
@@ -840,6 +864,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
         Log.d(TAG, "Begin evaluating if location update should be skipped")
         if (now + 5000 < location.time && !highAccuracyModeEnabled) {
             Log.d(TAG, "Skipping location update that came from the future. ${now + 5000} should always be greater than ${location.time}")
+            logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.SKIPPED_FUTURE)
             return
         }
 
@@ -848,6 +873,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 TAG,
                 "Skipping old location update since time is before the last one we sent, received: ${location.time} last sent: $lastLocationSend"
             )
+            logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.SKIPPED_NOT_LATEST)
             return
         }
 
@@ -859,23 +885,27 @@ class LocationSensorManager : LocationSensorManagerBase() {
             if (lastUpdateLocation[serverId] == updateLocationString) {
                 if (now < (lastLocationSend[serverId] ?: 0) + 900000) {
                     Log.d(TAG, "Duplicate location received, not sending to HA")
+                    logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.SKIPPED_DUPLICATE)
                     return
                 }
             } else {
-                if (now < (lastLocationSend[serverId] ?: 0) + 5000 && !geofenceUpdate && !highAccuracyModeEnabled) {
+                if (now < (lastLocationSend[serverId] ?: 0) + 5000 && trigger?.isGeofence != true && !highAccuracyModeEnabled) {
                     Log.d(
                         TAG,
                         "New location update not possible within 5 seconds, not sending to HA"
                     )
+                    logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.SKIPPED_DEBOUNCE)
                     return
                 }
             }
         } else {
             Log.d(TAG, "Skipping location update due to old timestamp ${location.time} compared to $now")
+            logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.SKIPPED_OLD)
             return
         }
         lastLocationSend[serverId] = now
         lastUpdateLocation[serverId] = updateLocationString
+        logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.SENT)
 
         val geocodeIncludeLocation = getSetting(
             latestContext,
@@ -1096,7 +1126,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                                 runBlocking {
                                     locationResult.lastLocation?.let {
                                         getEnabledServers(latestContext, singleAccurateLocation).forEach { serverId ->
-                                            sendLocationUpdate(it, serverId)
+                                            sendLocationUpdate(it, serverId, LocationUpdateTrigger.SINGLE_ACCURATE_LOCATION)
                                         }
                                     }
                                 }
@@ -1110,7 +1140,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                                 if (locationResult.lastLocation!!.accuracy <= minAccuracy * 2) {
                                     runBlocking {
                                         getEnabledServers(latestContext, singleAccurateLocation).forEach { serverId ->
-                                            sendLocationUpdate(locationResult.lastLocation!!, serverId)
+                                            sendLocationUpdate(locationResult.lastLocation!!, serverId, LocationUpdateTrigger.SINGLE_ACCURATE_LOCATION)
                                         }
                                     }
                                 }
@@ -1184,6 +1214,46 @@ class LocationSensorManager : LocationSensorManagerBase() {
             }
         } else {
             sensorDao.add(SensorSetting(singleAccurateLocation.id, SETTING_INCLUDE_SENSOR_UPDATE, "false", SensorSettingType.TOGGLE))
+        }
+    }
+
+    private fun logLocationUpdate(
+        location: Location?,
+        updateLocation: UpdateLocation?,
+        serverId: Int?,
+        trigger: LocationUpdateTrigger?,
+        result: LocationHistoryItemResult
+    ) = ioScope.launch {
+        if (location == null) return@launch
+
+        // TODO check if history is enabled
+
+        val historyTrigger = when (trigger) {
+            LocationUpdateTrigger.HIGH_ACCURACY_LOCATION -> LocationHistoryItemTrigger.FLP_FOREGROUND
+            LocationUpdateTrigger.BACKGROUND_LOCATION -> LocationHistoryItemTrigger.FLP_BACKGROUND
+            LocationUpdateTrigger.GEOFENCE_ENTER -> LocationHistoryItemTrigger.GEOFENCE_ENTER
+            LocationUpdateTrigger.GEOFENCE_EXIT -> LocationHistoryItemTrigger.GEOFENCE_EXIT
+            LocationUpdateTrigger.GEOFENCE_DWELL -> LocationHistoryItemTrigger.GEOFENCE_DWELL
+            LocationUpdateTrigger.SINGLE_ACCURATE_LOCATION -> LocationHistoryItemTrigger.SINGLE_ACCURATE_LOCATION
+            else -> LocationHistoryItemTrigger.UNKNOWN
+        }
+
+        try {
+            // Use updateLocation to preserve the 'send location as' setting
+            AppDatabase.getInstance(latestContext).locationHistoryDao().add(
+                LocationHistoryItem(
+                    trigger = historyTrigger,
+                    result = result,
+                    latitude = if (updateLocation != null) updateLocation.gps?.getOrNull(0) else location.latitude,
+                    longitude = if (updateLocation != null) updateLocation.gps?.getOrNull(1) else location.longitude,
+                    locationName = updateLocation?.locationName,
+                    accuracy = updateLocation?.gpsAccuracy ?: location.accuracy.toInt(),
+                    data = updateLocation?.toString(),
+                    serverId = serverId
+                )
+            )
+        } catch (e: Exception) {
+            // Context is null? Shouldn't happen but don't let the app crash.
         }
     }
 }
