@@ -10,11 +10,16 @@ import androidx.fragment.app.viewModels
 import com.google.accompanist.themeadapter.material.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.settings.developer.location.views.LocationTrackingView
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class LocationTrackingFragment : Fragment() {
+
+    @Inject
+    lateinit var serverManager: ServerManager
 
     val viewModel: LocationTrackingViewModel by viewModels()
 
@@ -29,7 +34,8 @@ class LocationTrackingFragment : Fragment() {
                     LocationTrackingView(
                         useHistory = viewModel.historyEnabled,
                         onSetHistory = viewModel::enableHistory,
-                        history = viewModel.historyPagerFlow
+                        history = viewModel.historyPagerFlow,
+                        serversList = serverManager.defaultServers
                     )
                 }
             }

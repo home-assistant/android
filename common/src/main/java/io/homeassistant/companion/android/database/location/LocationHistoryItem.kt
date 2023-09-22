@@ -3,6 +3,8 @@ package io.homeassistant.companion.android.database.location
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @Entity(tableName = "location_history")
 data class LocationHistoryItem(
@@ -26,7 +28,19 @@ data class LocationHistoryItem(
     val data: String?,
     @ColumnInfo(name = "server_id")
     val serverId: Int?
-)
+) {
+    fun forSharing(serverName: String?): String {
+        val createdString = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault()).format(created)
+
+        return "Created: $createdString\n" +
+            "Trigger: $trigger\n" +
+            "Result: $result\n" +
+            "Data: $data\n\n" +
+            "Location: ${locationName ?: "$latitude, $longitude"}\n" +
+            "Accuracy: $accuracy\n" +
+            "Server: ${if (serverId != null) serverName?.ifBlank { serverId } ?: serverId else "null"}"
+    }
+}
 
 enum class LocationHistoryItemTrigger {
     FLP_BACKGROUND,
