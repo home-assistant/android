@@ -34,6 +34,7 @@ class PrefsRepositoryImpl @Inject constructor(
         private const val PREF_CRASH_REPORTING_DISABLED = "crash_reporting"
         private const val PREF_IGNORED_SUGGESTIONS = "ignored_suggestions"
         private const val PREF_AUTO_FAVORITES = "auto_favorites"
+        private const val PREF_LOCATION_HISTORY_DISABLED = "location_history"
     }
 
     init {
@@ -225,6 +226,13 @@ class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setAutoFavorites(favorites: List<String>) {
         localStorage.putString(PREF_AUTO_FAVORITES, favorites.toString())
+    }
+
+    override suspend fun isLocationHistoryEnabled(): Boolean =
+        !localStorage.getBoolean(PREF_LOCATION_HISTORY_DISABLED)
+
+    override suspend fun setLocationHistoryEnabled(enabled: Boolean) {
+        localStorage.putBoolean(PREF_LOCATION_HISTORY_DISABLED, !enabled)
     }
 
     override suspend fun removeServer(serverId: Int) {

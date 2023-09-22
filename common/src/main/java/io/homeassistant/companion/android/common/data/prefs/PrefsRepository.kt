@@ -79,6 +79,10 @@ interface PrefsRepository {
 
     suspend fun setAutoFavorites(favorites: List<String>)
 
+    suspend fun isLocationHistoryEnabled(): Boolean
+
+    suspend fun setLocationHistoryEnabled(enabled: Boolean)
+
     /** Clean up any app-level preferences that might reference servers */
     suspend fun removeServer(serverId: Int)
 }

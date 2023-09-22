@@ -5,6 +5,11 @@
         android:icon="@drawable/ic_notes"
         android:title="@string/show_share_logs"
         android:summary="@string/show_share_logs_summary" />
+    <Preference
+        android:key="location_tracking"
+        android:icon="@drawable/ic_notes"
+        android:title="@string/location_tracking"
+        android:summary="@string/show_share_logs_summary" />
     <SwitchPreference
         android:key="webview_debug"
         android:icon="@drawable/ic_android_debug_bridge"
