@@ -78,4 +78,10 @@ dependencies {
     implementation(libs.emojiJava) {
         exclude(group = "org.json", module = "json")
     }
+
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.junit)
+    testImplementation(libs.test.core)
+    testImplementation(libs.test.ext.junit)
+    testImplementation(libs.mockk)
 }
