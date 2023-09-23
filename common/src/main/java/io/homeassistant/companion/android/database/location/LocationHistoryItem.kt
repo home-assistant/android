@@ -10,26 +10,19 @@ import java.util.Locale
 data class LocationHistoryItem(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    @ColumnInfo(name = "created")
     val created: Long = System.currentTimeMillis(),
-    @ColumnInfo(name = "trigger")
     val trigger: LocationHistoryItemTrigger,
-    @ColumnInfo(name = "result")
     val result: LocationHistoryItemResult,
-    @ColumnInfo(name = "latitude")
     val latitude: Double?,
-    @ColumnInfo(name = "longitude")
     val longitude: Double?,
     @ColumnInfo(name = "location_name")
     val locationName: String?,
-    @ColumnInfo(name = "accuracy")
     val accuracy: Int?,
-    @ColumnInfo(name = "data")
     val data: String?,
     @ColumnInfo(name = "server_id")
     val serverId: Int?
 ) {
-    fun forSharing(serverName: String?): String {
+    fun toSharingString(serverName: String?): String {
         val createdString = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault()).format(created)
 
         return "Created: $createdString\n" +

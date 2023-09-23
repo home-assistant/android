@@ -21,6 +21,7 @@
     <string name="add_widget">Add widget</string>
     <string name="advanced">Advanced</string>
     <string name="all_entities">All entities</string>
+    <string name="all_results">All results</string>
     <string name="allow">Allow</string>
     <string name="always_show_first_view_on_app_start">Always show first view on app start</string>
     <string name="always_show_first_view_on_app_start_summary">The first view of the default dashboard is shown as soon as the app is opened</string>
@@ -270,6 +271,7 @@
     <string name="filter_sensors_all">All sensors</string>
     <string name="filter_sensors_enabled">Enabled sensors</string>
     <string name="filter_sensors_disabled">Disabled sensors</string>
+    <string name="filter_updates">Filter updates</string>
     <string name="finish">Finish</string>
     <string name="firebase_error_message">This means you will be unable to receive cloud notifications.\n\nLocal notifications will still be available via persistent connection settings in companion app settings</string>
     <string name="firebase_error_title">Firebase error</string>
@@ -357,7 +359,7 @@
     <string name="location_history_geofence_exit">Zone exited</string>
     <string name="location_history_geofence_dwell">Zone dwell</string>
     <string name="location_history_sent">Sent</string>
-    <string name="location_history_skipped">Ignored</string>
+    <string name="location_history_skipped">Skipped</string>
     <string name="location_history_skipped_accuracy">Not accurate enough</string>
     <string name="location_history_skipped_debounce">Too many updates</string>
     <string name="location_history_skipped_duplicate">Duplicate</string>

@@ -1,19 +1,27 @@
 package io.homeassistant.companion.android.settings.developer.location
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
+import androidx.core.net.toUri
+import androidx.core.view.MenuHost
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import com.google.accompanist.themeadapter.material.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.settings.developer.location.views.LocationTrackingView
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class LocationTrackingFragment : Fragment() {
@@ -43,11 +51,43 @@ class LocationTrackingFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        addHelpMenuProvider("https://companion.home-assistant.io/docs/troubleshooting/faqs#device-tracker-is-not-updating-in-android-app")
+        super.onViewCreated(view, savedInstanceState)
+
+        val menuHost: MenuHost = requireActivity()
+        menuHost.addMenuProvider(
+            object : MenuProvider {
+                override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                    menuInflater.inflate(R.menu.menu_fragment_locationtracking, menu)
+                }
+
+                override fun onPrepareMenu(menu: Menu) {
+                    menu.findItem(R.id.get_help).apply {
+                        intent = Intent(Intent.ACTION_VIEW, "https://companion.home-assistant.io/docs/troubleshooting/faqs#device-tracker-is-not-updating-in-android-app".toUri())
+                    }
+                }
+
+                override fun onMenuItemSelected(menuItem: MenuItem): Boolean = when (menuItem.itemId) {
+                    R.id.history_all, R.id.history_sent, R.id.history_skipped -> {
+                        viewModel.setHistoryFilter(
+                            when (menuItem.itemId) {
+                                R.id.history_sent -> true
+                                R.id.history_skipped -> false
+                                else -> null
+                            }
+                        )
+                        menuItem.isChecked = true
+                        true
+                    }
+                    else -> false
+                }
+            },
+            viewLifecycleOwner,
+            Lifecycle.State.RESUMED
+        )
     }
 
     override fun onResume() {
         super.onResume()
-        activity?.title = getString(R.string.location_tracking)
+        activity?.title = getString(commonR.string.location_tracking)
     }
 }

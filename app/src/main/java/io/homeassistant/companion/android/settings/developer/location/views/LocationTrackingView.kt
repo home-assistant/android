@@ -241,7 +241,7 @@ fun LocationTrackingHistoryRow(item: LocationHistoryItem?, servers: List<Server>
                             }
                             IconButton(onClick = {
                                 ShareCompat.IntentBuilder(context)
-                                    .setText(item?.forSharing(serverName) ?: "")
+                                    .setText(item?.toSharingString(serverName) ?: "")
                                     .setType("text/plain")
                                     .startChooser()
                             }) {
