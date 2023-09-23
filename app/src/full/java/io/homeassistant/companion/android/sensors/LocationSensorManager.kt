@@ -829,8 +829,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             "Last Location: " +
                 "\nCoords:(${location.latitude}, ${location.longitude})" +
                 "\nAccuracy: ${location.accuracy}" +
-                "\nBearing: ${location.bearing}" +
-                "\nProvider: ${location.provider}"
+                "\nBearing: ${location.bearing}"
         )
         var accuracy = 0
         if (location.accuracy.toInt() >= 0) {
