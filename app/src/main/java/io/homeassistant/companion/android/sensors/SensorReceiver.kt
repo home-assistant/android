@@ -72,6 +72,7 @@ class SensorReceiver : SensorReceiverBase() {
             LocationSensorManager(),
             MobileDataManager(),
             NetworkSensorManager(),
+            NfcSensorManager(),
             NextAlarmManager(),
             NotificationSensorManager(),
             PhoneStateSensorManager(),
