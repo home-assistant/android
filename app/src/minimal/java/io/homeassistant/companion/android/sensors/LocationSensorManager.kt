@@ -1,12 +1,12 @@
 package io.homeassistant.companion.android.sensors
 
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import io.homeassistant.companion.android.common.sensors.LocationSensorManagerBase
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.R as commonR
 
-class LocationSensorManager : LocationSensorManagerBase(), SensorManager {
+class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
     companion object {
         const val MINIMUM_ACCURACY = 200
