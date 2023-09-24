@@ -27,6 +27,7 @@ import io.homeassistant.companion.android.common.sensors.LightSensorManager
 import io.homeassistant.companion.android.common.sensors.MobileDataManager
 import io.homeassistant.companion.android.common.sensors.NetworkSensorManager
 import io.homeassistant.companion.android.common.sensors.NextAlarmManager
+import io.homeassistant.companion.android.common.sensors.NfcSensorManager
 import io.homeassistant.companion.android.common.sensors.PhoneStateSensorManager
 import io.homeassistant.companion.android.common.sensors.PowerSensorManager
 import io.homeassistant.companion.android.common.sensors.PressureSensorManager
@@ -71,6 +72,7 @@ class SensorReceiver : SensorReceiverBase() {
             MobileDataManager(),
             NetworkSensorManager(),
             NextAlarmManager(),
+            NfcSensorManager(),
             OnBodySensorManager(),
             PhoneStateSensorManager(),
             PowerSensorManager(),

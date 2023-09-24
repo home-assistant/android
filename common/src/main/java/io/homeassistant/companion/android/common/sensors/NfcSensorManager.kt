@@ -1,8 +1,7 @@
-package io.homeassistant.companion.android.sensors
+package io.homeassistant.companion.android.common.sensors
 
 import android.content.Context
 import android.nfc.NfcAdapter
-import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.R as commonR
 
 // TODO move to common
