@@ -10,7 +10,7 @@ class NfcSensorManager : SensorManager {
     companion object {
         private const val TAG = "NfcSensor"
 
-        val nfcSensor = SensorManager.BasicSensor(
+        val nfcStateSensor = SensorManager.BasicSensor(
             "nfc_state",
             "binary_sensor",
             commonR.string.sensor_name_nfc_sensor,
@@ -27,7 +27,7 @@ class NfcSensorManager : SensorManager {
         get() = commonR.string.sensor_name_nfc_sensor
 
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        return listOf(nfcSensor)
+        return listOf(nfcStateSensor)
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
@@ -43,7 +43,7 @@ class NfcSensorManager : SensorManager {
     }
 
     private fun updateNfcState(context: Context) {
-        if (!isEnabled(context, nfcSensor)) {
+        if (!isEnabled(context, nfcStateSensor)) {
             return
         }
 
@@ -52,9 +52,9 @@ class NfcSensorManager : SensorManager {
 
         onSensorUpdated(
             context,
-            nfcSensor,
+            nfcStateSensor,
             nfcEnabled,
-            nfcSensor.statelessIcon,
+            nfcStateSensor.statelessIcon,
             emptyMap() // TODO
         )
     }
