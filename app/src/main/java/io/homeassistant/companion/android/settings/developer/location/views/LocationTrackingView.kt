@@ -167,22 +167,27 @@ fun LocationTrackingHistoryRow(item: LocationHistoryItem?, servers: List<Server>
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             item?.let {
                                 val sent = it.result == LocationHistoryItemResult.SENT
+                                val failed = it.result == LocationHistoryItemResult.FAILED_SEND
                                 Text(
                                     text = "${stringResource(item.trigger.toStringResource())} • ${stringResource(it.result.toStringResource())}",
                                     style = MaterialTheme.typography.body2,
                                     modifier = Modifier.padding(end = 4.dp)
                                 )
                                 Image(
-                                    asset = if (sent) CommunityMaterial.Icon.cmd_check else CommunityMaterial.Icon.cmd_debug_step_over,
-                                    contentDescription = if (sent) null else stringResource(commonR.string.location_history_skipped),
+                                    asset = when {
+                                        sent -> CommunityMaterial.Icon.cmd_check
+                                        failed -> CommunityMaterial.Icon.cmd_alert_outline
+                                        else -> CommunityMaterial.Icon.cmd_debug_step_over
+                                    },
+                                    contentDescription = if (sent || failed) null else stringResource(commonR.string.location_history_skipped),
                                     colorFilter = ColorFilter.tint(
-                                        if (sent) {
-                                            colorResource(commonR.color.colorOnAlertSuccess)
-                                        } else {
-                                            LocalContentColor.current
+                                        when {
+                                            sent -> colorResource(commonR.color.colorOnAlertSuccess)
+                                            failed -> colorResource(commonR.color.colorOnAlertWarning)
+                                            else -> LocalContentColor.current
                                         }
                                     ),
-                                    alpha = if (sent) 1.0f else LocalContentAlpha.current,
+                                    alpha = if (sent || failed) 1.0f else LocalContentAlpha.current,
                                     modifier = Modifier.size(with(LocalDensity.current) { 16.sp.toDp() })
                                 )
                             }
@@ -301,6 +306,7 @@ private fun LocationHistoryItemResult.toStringResource() = when (this) {
     LocationHistoryItemResult.SKIPPED_DUPLICATE -> commonR.string.location_history_skipped_duplicate
     LocationHistoryItemResult.SKIPPED_DEBOUNCE -> commonR.string.location_history_skipped_debounce
     LocationHistoryItemResult.SKIPPED_OLD -> commonR.string.location_history_skipped_old
+    LocationHistoryItemResult.FAILED_SEND -> commonR.string.location_history_failed_send
     LocationHistoryItemResult.SENT -> commonR.string.location_history_sent
 }
 

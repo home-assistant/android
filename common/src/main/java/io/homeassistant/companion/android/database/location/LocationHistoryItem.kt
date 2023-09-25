@@ -52,5 +52,6 @@ enum class LocationHistoryItemResult {
     SKIPPED_DUPLICATE,
     SKIPPED_DEBOUNCE,
     SKIPPED_OLD,
+    FAILED_SEND,
     SENT
 }

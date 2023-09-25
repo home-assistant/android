@@ -915,7 +915,6 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         }
         lastLocationSend[serverId] = now
         lastUpdateLocation[serverId] = updateLocationString
-        logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.SENT)
 
         val geocodeIncludeLocation = getSetting(
             latestContext,
@@ -929,6 +928,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             try {
                 serverManager(latestContext).integrationRepository(serverId).updateLocation(updateLocation)
                 Log.d(TAG, "Location update sent successfully for $serverId as $updateLocationAs")
+                logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.SENT)
 
                 // Update Geocoded Location Sensor
                 if (geocodeIncludeLocation) {
@@ -942,6 +942,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Could not update location for $serverId.", e)
+                logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.FAILED_SEND)
             }
         }
     }

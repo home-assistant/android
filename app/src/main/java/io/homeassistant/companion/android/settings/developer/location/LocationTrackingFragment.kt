@@ -67,14 +67,8 @@ class LocationTrackingFragment : Fragment() {
                 }
 
                 override fun onMenuItemSelected(menuItem: MenuItem): Boolean = when (menuItem.itemId) {
-                    R.id.history_all, R.id.history_sent, R.id.history_skipped -> {
-                        viewModel.setHistoryFilter(
-                            when (menuItem.itemId) {
-                                R.id.history_sent -> true
-                                R.id.history_skipped -> false
-                                else -> null
-                            }
-                        )
+                    R.id.history_all, R.id.history_sent, R.id.history_skipped, R.id.history_failed -> {
+                        viewModel.setHistoryFilter(menuItem.itemId)
                         menuItem.isChecked = true
                         true
                     }

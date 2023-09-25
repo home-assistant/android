@@ -355,6 +355,7 @@
     <string name="location_history_empty_summary">Location updates received by the app will appear here</string>
     <string name="location_history_off_title">Location history is off</string>
     <string name="location_history_off_summary">Turn on location history to see and review all location updates received by the app</string>
+    <string name="location_history_failed_send">Failed to send</string>
     <string name="location_history_geofence_enter">Zone entered</string>
     <string name="location_history_geofence_exit">Zone exited</string>
     <string name="location_history_geofence_dwell">Zone dwell</string>

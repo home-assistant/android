@@ -20,6 +20,9 @@
                 <item
                     android:id="@+id/history_skipped"
                     android:title="@string/location_history_skipped"/>
+                <item
+                    android:id="@+id/history_failed"
+                    android:title="@string/location_history_failed_send"/>
             </group>
         </menu>
     </item>
