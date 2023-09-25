@@ -14,9 +14,9 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
-import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.integration.friendlyName
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.database.wear.EntityStateComplications
@@ -30,9 +30,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ComplicationConfigViewModel @Inject constructor(
     application: Application,
-    private val favoritesDao: FavoritesDao,
-    private val integrationUseCase: IntegrationRepository,
-    private val webSocketUseCase: WebSocketRepository,
+    favoritesDao: FavoritesDao,
+    private val serverManager: ServerManager,
     private val entityStateComplicationsDao: EntityStateComplicationsDao
 ) : AndroidViewModel(application) {
     companion object {
@@ -57,27 +56,48 @@ class ComplicationConfigViewModel @Inject constructor(
         private set
     var selectedEntity: SimplifiedEntity? by mutableStateOf(null)
         private set
+    var entityShowTitle by mutableStateOf(true)
+        private set
+    var entityShowUnit by mutableStateOf(true)
+        private set
 
     init {
         loadEntities()
     }
 
+    fun setDataFromIntent(id: Int) {
+        viewModelScope.launch {
+            if (!serverManager.isRegistered() || id <= 0) return@launch
+
+            val stored = entityStateComplicationsDao.get(id)
+            stored?.let {
+                selectedEntity = SimplifiedEntity(entityId = it.entityId)
+                entityShowTitle = it.showTitle
+                entityShowUnit = it.showUnit
+                if (loadingState == LoadingState.READY) {
+                    updateSelectedEntity()
+                }
+            }
+        }
+    }
+
     private fun loadEntities() {
         viewModelScope.launch {
-            if (!integrationUseCase.isRegistered()) {
+            if (!serverManager.isRegistered()) {
                 loadingState = LoadingState.ERROR
                 return@launch
             }
             try {
                 // Load initial state
                 loadingState = LoadingState.LOADING
-                integrationUseCase.getEntities()?.forEach {
+                serverManager.integrationRepository().getEntities()?.forEach {
                     entities[it.entityId] = it
                 }
                 updateEntityDomains()
+                updateSelectedEntity()
 
                 // Finished initial load, update state
-                val webSocketState = webSocketUseCase.getConnectionState()
+                val webSocketState = serverManager.webSocketRepository().getConnectionState()
                 if (webSocketState == WebSocketState.CLOSED_AUTH) {
                     loadingState = LoadingState.ERROR
                     return@launch
@@ -113,13 +133,36 @@ class ComplicationConfigViewModel @Inject constructor(
         entitiesByDomainOrder.addAll(domainsList)
     }
 
+    private fun updateSelectedEntity() {
+        if (selectedEntity == null) return
+        val fullEntity = entities[selectedEntity!!.entityId]
+
+        selectedEntity = if (fullEntity == null) {
+            null // Clear invalid value
+        } else {
+            SimplifiedEntity(
+                entityId = fullEntity.entityId,
+                friendlyName = fullEntity.friendlyName,
+                icon = (fullEntity.attributes as? Map<*, *>)?.get("icon") as? String ?: ""
+            )
+        }
+    }
+
     fun setEntity(entity: SimplifiedEntity) {
         selectedEntity = entity
     }
 
+    fun setShowTitle(show: Boolean) {
+        entityShowTitle = show
+    }
+
+    fun setShowUnit(show: Boolean) {
+        entityShowUnit = show
+    }
+
     fun addEntityStateComplication(id: Int, entity: SimplifiedEntity) {
         viewModelScope.launch {
-            entityStateComplicationsDao.add(EntityStateComplications(id, entity.entityId))
+            entityStateComplicationsDao.add(EntityStateComplications(id, entity.entityId, entityShowTitle, entityShowUnit))
         }
     }
 

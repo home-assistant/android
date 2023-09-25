@@ -4,10 +4,8 @@ import android.util.Log
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
-import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -22,10 +20,7 @@ class FirebaseCloudMessagingService : FirebaseMessagingService() {
     }
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
-
-    @Inject
-    lateinit var authenticationUseCase: AuthenticationRepository
+    lateinit var serverManager: ServerManager
 
     @Inject
     lateinit var messagingManager: MessagingManager
@@ -46,19 +41,21 @@ class FirebaseCloudMessagingService : FirebaseMessagingService() {
     override fun onNewToken(token: String) {
         mainScope.launch {
             Log.d(TAG, "Refreshed token: $token")
-            if (authenticationUseCase.getSessionState() == SessionState.ANONYMOUS) {
+            if (!serverManager.isRegistered()) {
                 Log.d(TAG, "Not trying to update registration since we aren't authenticated.")
                 return@launch
             }
-            try {
-                integrationUseCase.updateRegistration(
-                    DeviceRegistration(
-                        pushToken = token
-                    )
-                )
-            } catch (e: Exception) {
-                // TODO: Store for update later
-                Log.e(TAG, "Issue updating token", e)
+            serverManager.defaultServers.forEach {
+                launch {
+                    try {
+                        serverManager.integrationRepository(it.id).updateRegistration(
+                            deviceRegistration = DeviceRegistration(pushToken = token),
+                            allowReregistration = false
+                        )
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Issue updating token", e)
+                    }
+                }
             }
         }
     }

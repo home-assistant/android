@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.webview
 
 import android.content.Context
 import android.content.IntentSender
+import androidx.activity.result.ActivityResult
 import io.homeassistant.companion.android.matter.MatterFrontendCommissioningStatus
 import kotlinx.coroutines.flow.Flow
 
@@ -9,15 +10,22 @@ interface WebViewPresenter {
 
     fun onViewReady(path: String?)
 
+    fun getActiveServer(): Int
+    fun updateActiveServer()
+    fun setActiveServer(id: Int)
+    fun switchActiveServer(id: Int)
+    fun nextServer()
+    fun previousServer()
+
     fun onGetExternalAuth(context: Context, callback: String, force: Boolean)
 
     fun checkSecurityVersion()
 
     fun onRevokeExternalAuth(callback: String)
 
-    fun clearKnownUrls()
-
     fun isFullScreen(): Boolean
+
+    fun getScreenOrientation(): String?
 
     fun isKeepScreenOnEnabled(): Boolean
 
@@ -45,5 +53,6 @@ interface WebViewPresenter {
     fun startCommissioningMatterDevice(context: Context)
     fun getMatterCommissioningStatusFlow(): Flow<MatterFrontendCommissioningStatus>
     fun getMatterCommissioningIntent(): IntentSender?
+    fun onMatterCommissioningIntentResult(context: Context, result: ActivityResult)
     fun confirmMatterCommissioningError()
 }

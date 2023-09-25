@@ -8,21 +8,24 @@ import androidx.room.PrimaryKey
 data class TileEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    @ColumnInfo(name = "tileId")
+    @ColumnInfo(name = "tile_id")
     val tileId: String,
     @ColumnInfo(name = "added", defaultValue = "1")
     val added: Boolean,
-    @ColumnInfo(name = "icon_id")
-    val iconId: Int?,
-    @ColumnInfo(name = "entityId")
+    @ColumnInfo(name = "server_id", defaultValue = "0")
+    val serverId: Int,
+    /** Icon name, such as "mdi:account-alert" */
+    @ColumnInfo(name = "icon_name")
+    val iconName: String?,
+    @ColumnInfo(name = "entity_id")
     val entityId: String,
     @ColumnInfo(name = "label")
     val label: String,
     @ColumnInfo(name = "subtitle")
     val subtitle: String?,
-    @ColumnInfo(name = "shouldVibrate", defaultValue = "0")
+    @ColumnInfo(name = "should_vibrate", defaultValue = "0")
     val shouldVibrate: Boolean,
-    @ColumnInfo(name = "authRequired", defaultValue = "0")
+    @ColumnInfo(name = "auth_required", defaultValue = "0")
     val authRequired: Boolean
 )
 

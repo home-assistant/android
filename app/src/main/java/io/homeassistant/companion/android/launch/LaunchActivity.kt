@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.launch
 
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.compose.setContent
@@ -11,20 +13,24 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.fragment.app.viewModels
 import com.google.accompanist.themeadapter.material.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
-import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.sensor.SensorDao
+import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.database.server.ServerConnectionInfo
+import io.homeassistant.companion.android.database.server.ServerSessionInfo
+import io.homeassistant.companion.android.database.server.ServerType
+import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.onboarding.getMessagingToken
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.settings.SettingViewModel
+import io.homeassistant.companion.android.settings.server.ServerChooserFragment
+import io.homeassistant.companion.android.util.UrlUtil
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -47,13 +53,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
     lateinit var presenter: LaunchPresenter
 
     @Inject
-    lateinit var urlRepository: UrlRepository
-
-    @Inject
-    lateinit var authenticationRepository: AuthenticationRepository
-
-    @Inject
-    lateinit var integrationRepository: IntegrationRepository
+    lateinit var serverManager: ServerManager
 
     @Inject
     lateinit var sensorDao: SensorDao
@@ -84,7 +84,29 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
     override fun displayWebview() {
         presenter.setSessionExpireMillis(0)
 
-        startActivity(WebViewActivity.newInstance(this, intent.data?.path))
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) && BuildConfig.FLAVOR == "full") {
+            val carIntent = Intent(
+                this,
+                Class.forName("androidx.car.app.activity.CarAppActivity")
+            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(carIntent)
+        } else if (presenter.hasMultipleServers() && intent.data?.path?.isNotBlank() == true) {
+            supportFragmentManager.setFragmentResultListener(ServerChooserFragment.RESULT_KEY, this) { _, bundle ->
+                val serverId = if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
+                    bundle.getInt(ServerChooserFragment.RESULT_SERVER)
+                } else {
+                    null
+                }
+                supportFragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)
+                startActivity(WebViewActivity.newInstance(this, intent.data?.path, serverId))
+                finish()
+                overridePendingTransition(0, 0) // Disable activity start/stop animation
+            }
+            ServerChooserFragment().show(supportFragmentManager, ServerChooserFragment.TAG)
+            return
+        } else {
+            startActivity(WebViewActivity.newInstance(this, intent.data?.path))
+        }
         finish()
         overridePendingTransition(0, 0) // Disable activity start/stop animation
     }
@@ -130,8 +152,9 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                         notificationsEnabled
                     )
                 }
-            } else
+            } else {
                 Log.e(TAG, "onOnboardingComplete: Activity result returned null intent data")
+            }
         }
     }
 
@@ -143,16 +166,28 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
         deviceTrackingEnabled: Boolean,
         notificationsEnabled: Boolean
     ) {
+        var serverId: Int? = null
         try {
-            urlRepository.saveUrl(url)
-            authenticationRepository.registerAuthorizationCode(authCode)
-            integrationRepository.registerDevice(
+            val formattedUrl = UrlUtil.formattedUrlString(url)
+            val server = Server(
+                _name = "",
+                type = ServerType.TEMPORARY,
+                connection = ServerConnectionInfo(
+                    externalUrl = formattedUrl
+                ),
+                session = ServerSessionInfo(),
+                user = ServerUserInfo()
+            )
+            serverId = serverManager.addServer(server)
+            serverManager.authenticationRepository(serverId).registerAuthorizationCode(authCode)
+            serverManager.integrationRepository(serverId).registerDevice(
                 DeviceRegistration(
                     "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
                     deviceName,
                     messagingToken
                 )
             )
+            serverId = serverManager.convertTemporaryServer(serverId)
         } catch (e: Exception) {
             // Fatal errors: if one of these calls fail, the app cannot proceed.
             // Show an error, clean up the session and require new registration.
@@ -162,7 +197,10 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
             // - general connection issues (offline/unknown)
             Log.e(TAG, "Exception while registering", e)
             try {
-                authenticationRepository.revokeSession()
+                if (serverId != null) {
+                    serverManager.authenticationRepository(serverId).revokeSession()
+                    serverManager.removeServer(serverId)
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Can't revoke session", e)
             }
@@ -184,29 +222,32 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                 .show()
             return
         }
-        setLocationTracking(deviceTrackingEnabled)
-        setNotifications(notificationsEnabled)
+        serverId?.let {
+            setLocationTracking(serverId, deviceTrackingEnabled)
+            setNotifications(serverId, notificationsEnabled)
+        }
         displayWebview()
     }
 
-    private suspend fun setLocationTracking(enabled: Boolean) {
+    private suspend fun setLocationTracking(serverId: Int, enabled: Boolean) {
         sensorDao.setSensorsEnabled(
             sensorIds = listOf(
                 LocationSensorManager.backgroundLocation.id,
                 LocationSensorManager.zoneLocation.id,
                 LocationSensorManager.singleAccurateLocation.id
             ),
+            serverId = serverId,
             enabled = enabled
         )
     }
 
-    private fun setNotifications(enabled: Boolean) {
+    private fun setNotifications(serverId: Int, enabled: Boolean) {
         // Full: this only refers to the system permission on Android 13+ so no changes are necessary.
         // Minimal: change persistent connection setting to reflect preference.
         if (BuildConfig.FLAVOR != "full") {
-            settingViewModel.getSetting(0) // Required to create initial value
+            settingViewModel.getSetting(serverId) // Required to create initial value
             settingViewModel.updateWebsocketSetting(
-                0,
+                serverId,
                 if (enabled) WebsocketSetting.ALWAYS else WebsocketSetting.NEVER
             )
         }

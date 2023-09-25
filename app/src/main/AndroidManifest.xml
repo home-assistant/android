@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-sdk tools:overrideLibrary="androidx.wear.remote.interactions" />
+    <uses-sdk tools:overrideLibrary="androidx.wear.remote.interactions,androidx.car.app.projected" />
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
@@ -142,7 +142,7 @@
                 android:resource="@xml/entity_widget_info" />
         </receiver>
 
-        <receiver android:name=".widgets.media_player_controls.MediaPlayerControlsWidget" android:label="@string/widget_media_player_description"
+        <receiver android:name=".widgets.mediaplayer.MediaPlayerControlsWidget" android:label="@string/widget_media_player_description"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -205,7 +205,7 @@
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>
         </activity>
-        <activity android:name=".widgets.media_player_controls.MediaPlayerControlsWidgetConfigureActivity"
+        <activity android:name=".widgets.mediaplayer.MediaPlayerControlsWidgetConfigureActivity"
             android:configChanges="orientation|screenSize"
             android:exported="true">
             <intent-filter>
@@ -230,10 +230,20 @@
         <service android:name=".controls.HaControlsProviderService"
             android:permission="android.permission.BIND_CONTROLS"
             android:exported="true">
+            <meta-data
+                android:name="android.service.controls.META_DATA_PANEL_ACTIVITY"
+                android:value="${applicationId}/io.homeassistant.companion.android.controls.HaControlsPanelActivity" />
             <intent-filter>
                 <action android:name="android.service.controls.ControlsProviderService"/>
             </intent-filter>
         </service>
+
+        <activity android:name=".controls.HaControlsPanelActivity"
+            android:permission="android.permission.BIND_CONTROLS"
+            android:exported="true"
+            android:resizeableActivity="true"
+            android:taskAffinity="io.homeassistant.companion.android.controls"
+            android:enabled="false" />
 
         <receiver
             android:name=".sensors.LocationSensorManager"
@@ -380,6 +390,31 @@
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/*" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".assist.AssistActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize"
+            android:launchMode="singleTask"
+            android:taskAffinity="io.homeassistant.companion.android.assist"
+            android:autoRemoveFromRecents="true"
+            android:showWhenLocked="true"
+            android:theme="@style/Theme.HomeAssistant.Assist">
+            <intent-filter>
+                <action android:name="android.intent.action.ASSIST" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".widgets.assist.AssistShortcutActivity"
+            android:label="@string/assist_shortcut"
+            android:icon="@mipmap/ic_assist_launcher"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:theme="@style/Theme.HomeAssistant.Config">
+            <intent-filter>
+                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
             </intent-filter>
         </activity>
 

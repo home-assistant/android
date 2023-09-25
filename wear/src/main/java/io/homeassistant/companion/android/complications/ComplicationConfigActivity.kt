@@ -9,6 +9,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.core.content.IntentCompat
 import androidx.wear.watchface.complications.datasource.ComplicationDataSourceService.Companion.EXTRA_CONFIG_COMPLICATION_ID
 import androidx.wear.watchface.complications.datasource.ComplicationDataSourceService.Companion.EXTRA_CONFIG_COMPLICATION_TYPE
 import androidx.wear.watchface.complications.datasource.ComplicationDataSourceService.Companion.EXTRA_CONFIG_DATA_SOURCE_COMPONENT
@@ -33,8 +34,10 @@ class ComplicationConfigActivity : ComponentActivity() {
 
         val id = intent.getIntExtra(EXTRA_CONFIG_COMPLICATION_ID, -1)
         val type = intent.getIntExtra(EXTRA_CONFIG_COMPLICATION_TYPE, -1)
-        val component = intent.getParcelableExtra<ComponentName>(EXTRA_CONFIG_DATA_SOURCE_COMPONENT)
+        val component = IntentCompat.getParcelableExtra(intent, EXTRA_CONFIG_DATA_SOURCE_COMPONENT, ComponentName::class.java)
         Log.i(TAG, "Config for id $id of type $type for component ${component?.className}")
+
+        complicationConfigViewModel.setDataFromIntent(id)
 
         setContent {
             LoadConfigView(

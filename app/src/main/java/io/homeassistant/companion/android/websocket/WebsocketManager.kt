@@ -5,7 +5,6 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.net.ConnectivityManager
 import android.os.Build
 import android.os.PowerManager
 import android.util.Log
@@ -24,17 +23,19 @@ import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.common.data.url.UrlRepository
-import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.websocketChannel
 import io.homeassistant.companion.android.common.util.websocketIssuesChannel
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.notifications.MessagingManager
 import io.homeassistant.companion.android.settings.SettingsActivity
+import io.homeassistant.companion.android.util.hasActiveConnection
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -65,7 +66,7 @@ class WebsocketManager(
             if (workInfo == null || workInfo.state.isFinished || workInfo.state == WorkInfo.State.ENQUEUED) {
                 workManager.enqueueUniquePeriodicWork(
                     TAG,
-                    ExistingPeriodicWorkPolicy.REPLACE,
+                    ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
                     websocketNotifications
                 )
             } else {
@@ -83,17 +84,15 @@ class WebsocketManager(
     private val entryPoint = EntryPointAccessors
         .fromApplication(applicationContext, WebsocketManagerEntryPoint::class.java)
 
-    private val websocketRepository: WebSocketRepository = entryPoint.websocketRepository()
+    private val serverManager: ServerManager = entryPoint.serverManager()
     private val messagingManager: MessagingManager = entryPoint.messagingManager()
-    private val urlRepository: UrlRepository = entryPoint.urlRepository()
     private val settingsDao: SettingsDao = entryPoint.settingsDao()
 
     @EntryPoint
     @InstallIn(SingletonComponent::class)
     interface WebsocketManagerEntryPoint {
-        fun websocketRepository(): WebSocketRepository
+        fun serverManager(): ServerManager
         fun messagingManager(): MessagingManager
-        fun urlRepository(): UrlRepository
         fun settingsDao(): SettingsDao
     }
 
@@ -108,42 +107,76 @@ class WebsocketManager(
 
         // Start listening for notifications
         Log.d(TAG, "Starting to listen to Websocket")
-        val job = launch { collectNotifications() }
+        val jobs = mutableMapOf<Int, Job>()
+        manageServerJobs(jobs, this)
 
-        // play ping pong to ensure we have a connection.
+        // play ping pong to ensure we have a connection and server changes are handled.
         do {
             delay(30000)
-        } while (job.isActive && isActive && shouldWeRun() && websocketRepository.sendPing())
+        } while (jobs.values.any { it.isActive } && isActive && shouldWeRun() && manageServerJobs(jobs, this))
 
-        job.cancel()
+        jobs.forEach { it.value.cancel() }
+        jobs.clear()
 
         Log.d(TAG, "Done listening to Websocket")
 
         return@withContext Result.success()
     }
 
-    @Suppress("DEPRECATION")
-    private suspend fun shouldWeRun(): Boolean {
+    private fun shouldWeRun(): Boolean = serverManager.defaultServers.any { shouldRunForServer(it.id) }
+
+    private fun shouldRunForServer(serverId: Int): Boolean {
+        val server = serverManager.getServer(serverId) ?: return false
+        val setting = settingsDao.get(serverId)?.websocketSetting ?: DEFAULT_WEBSOCKET_SETTING
+        val isHome = server.connection.isInternal()
+
         // Check for connectivity but not internet access, based on WorkManager's NetworkConnectedController API <26
-        val connectivityManager = applicationContext.getSystemService<ConnectivityManager>()
-        val networkInfo = connectivityManager?.activeNetworkInfo
         val powerManager = applicationContext.getSystemService<PowerManager>()!!
         val displayOff = !powerManager.isInteractive
-        val setting = settingsDao.get(0)?.websocketSetting ?: DEFAULT_WEBSOCKET_SETTING
-        val isHome = urlRepository.isInternal()
+
         return when {
             (setting == WebsocketSetting.NEVER) -> false
-            (networkInfo != null && !networkInfo.isConnected) -> false
+            (!applicationContext.hasActiveConnection()) -> false
+            !serverManager.isRegistered() -> false
             (displayOff && setting == WebsocketSetting.SCREEN_ON) -> false
             (!isHome && setting == WebsocketSetting.HOME_WIFI) -> false
             else -> true
         }
     }
 
-    private suspend fun collectNotifications() {
-        websocketRepository.getNotifications()?.collect {
-            if (it.containsKey("hass_confirm_id"))
-                websocketRepository.ackNotification(it["hass_confirm_id"].toString())
+    private suspend fun manageServerJobs(jobs: MutableMap<Int, Job>, coroutineScope: CoroutineScope): Boolean {
+        val servers = serverManager.defaultServers
+
+        // Clean up...
+        jobs.filter { (serverId, _) ->
+            servers.none { it.id == serverId } || !shouldRunForServer(serverId)
+        }
+            .forEach { (serverId, job) ->
+                job.cancel()
+                jobs.remove(serverId)
+            }
+        // Keep up existing connections...
+        jobs.forEach { (serverId, _) ->
+            coroutineScope.launch { serverManager.webSocketRepository(serverId).sendPing() }
+        }
+        // Start new connections...
+        servers.filter { it.id !in jobs.keys && shouldRunForServer(it.id) }
+            .forEach {
+                jobs[it.id] = coroutineScope.launch { collectNotifications(it.id) }
+            }
+
+        return true // for while
+    }
+
+    private suspend fun collectNotifications(serverId: Int) {
+        serverManager.webSocketRepository(serverId).getNotifications()?.collect {
+            if (it.containsKey("hass_confirm_id")) {
+                try {
+                    serverManager.webSocketRepository(serverId).ackNotification(it["hass_confirm_id"].toString())
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unable to confirm received notification", e)
+                }
+            }
             val flattened = mutableMapOf<String, String>()
             if (it.containsKey("data")) {
                 for ((key, value) in it["data"] as Map<*, *>) {
@@ -162,8 +195,12 @@ class WebsocketManager(
             }
             // Message and title are in the root unlike all the others.
             listOf("message", "title").forEach { key ->
-                if (it.containsKey(key))
+                if (it.containsKey(key)) {
                     flattened[key] = it[key].toString()
+                }
+            }
+            serverManager.getServer(serverId)?.let { server ->
+                flattened["webhook_id"] = server.connection.webhookId.toString()
             }
             messagingManager.handleMessage(flattened, SOURCE)
         }

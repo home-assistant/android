@@ -2,10 +2,12 @@ package io.homeassistant.companion.android.common.sensors
 
 import android.app.NotificationManager
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
 import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
+import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.M)
@@ -27,8 +29,6 @@ class DNDSensorManager : SensorManager {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#do-not-disturb-sensor"
     }
-    override val enabledByDefault: Boolean
-        get() = false
     override val name: Int
         get() = commonR.string.sensor_name_dnd
 
@@ -41,19 +41,24 @@ class DNDSensorManager : SensorManager {
     }
 
     override fun requestSensorUpdate(context: Context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             updateDNDState(context)
+        }
     }
 
     @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.M)
     override fun hasSensor(context: Context): Boolean {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+        return if (context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            false
+        } else {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+        }
     }
 
     private fun updateDNDState(context: Context) {
-
-        if (!isEnabled(context, dndSensor.id))
+        if (!isEnabled(context, dndSensor)) {
             return
+        }
 
         val notificationManager =
             context.getSystemService<NotificationManager>()
@@ -63,8 +68,8 @@ class DNDSensorManager : SensorManager {
             NotificationManager.INTERRUPTION_FILTER_ALL -> "off"
             NotificationManager.INTERRUPTION_FILTER_NONE -> "total_silence"
             NotificationManager.INTERRUPTION_FILTER_PRIORITY -> "priority_only"
-            NotificationManager.INTERRUPTION_FILTER_UNKNOWN -> "unknown"
-            else -> "unknown"
+            NotificationManager.INTERRUPTION_FILTER_UNKNOWN -> STATE_UNKNOWN
+            else -> STATE_UNKNOWN
         }
 
         onSensorUpdated(

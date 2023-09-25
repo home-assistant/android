@@ -18,7 +18,7 @@ object LogcatReader {
         val process = pb.start()
 
         val reader = BufferedReader(InputStreamReader(process.inputStream))
-        var line: String? = ""
+        var line: String?
         while (reader.readLine().also { line = it } != null) {
             log.append(line + "\n")
         }

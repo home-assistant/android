@@ -1,47 +1,48 @@
 package io.homeassistant.companion.android.tiles
 
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Color
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
-import androidx.wear.tiles.ActionBuilders
-import androidx.wear.tiles.ColorBuilders.argb
-import androidx.wear.tiles.DimensionBuilders.dp
-import androidx.wear.tiles.DimensionBuilders.sp
-import androidx.wear.tiles.LayoutElementBuilders
-import androidx.wear.tiles.LayoutElementBuilders.Box
-import androidx.wear.tiles.LayoutElementBuilders.Column
-import androidx.wear.tiles.LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER
-import androidx.wear.tiles.LayoutElementBuilders.Layout
-import androidx.wear.tiles.LayoutElementBuilders.LayoutElement
-import androidx.wear.tiles.LayoutElementBuilders.Row
-import androidx.wear.tiles.LayoutElementBuilders.Spacer
-import androidx.wear.tiles.ModifiersBuilders
+import androidx.wear.protolayout.ActionBuilders
+import androidx.wear.protolayout.ColorBuilders.argb
+import androidx.wear.protolayout.DimensionBuilders.dp
+import androidx.wear.protolayout.DimensionBuilders.sp
+import androidx.wear.protolayout.LayoutElementBuilders
+import androidx.wear.protolayout.LayoutElementBuilders.Box
+import androidx.wear.protolayout.LayoutElementBuilders.Column
+import androidx.wear.protolayout.LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER
+import androidx.wear.protolayout.LayoutElementBuilders.LayoutElement
+import androidx.wear.protolayout.LayoutElementBuilders.Row
+import androidx.wear.protolayout.LayoutElementBuilders.Spacer
+import androidx.wear.protolayout.ModifiersBuilders
+import androidx.wear.protolayout.ResourceBuilders
+import androidx.wear.protolayout.ResourceBuilders.Resources
+import androidx.wear.protolayout.TimelineBuilders.Timeline
+import androidx.wear.tiles.EventBuilders
 import androidx.wear.tiles.RequestBuilders.ResourcesRequest
 import androidx.wear.tiles.RequestBuilders.TileRequest
-import androidx.wear.tiles.ResourceBuilders
-import androidx.wear.tiles.ResourceBuilders.Resources
 import androidx.wear.tiles.TileBuilders.Tile
 import androidx.wear.tiles.TileService
-import androidx.wear.tiles.TimelineBuilders.Timeline
-import androidx.wear.tiles.TimelineBuilders.TimelineEntry
 import com.google.common.util.concurrent.ListenableFuture
 import com.mikepenz.iconics.IconicsColor
 import com.mikepenz.iconics.IconicsDrawable
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import com.mikepenz.iconics.utils.backgroundColor
 import com.mikepenz.iconics.utils.colorInt
 import com.mikepenz.iconics.utils.sizeDp
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.util.getIcon
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.guava.future
+import kotlinx.coroutines.launch
 import java.nio.ByteBuffer
 import javax.inject.Inject
 import kotlin.math.min
@@ -62,12 +63,15 @@ class ShortcutsTile : TileService() {
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
+    lateinit var serverManager: ServerManager
+
+    @Inject
+    lateinit var wearPrefsRepository: WearPrefsRepository
 
     override fun onTileRequest(requestParams: TileRequest): ListenableFuture<Tile> =
         serviceScope.future {
-            val state = requestParams.state
-            if (state != null && state.lastClickableId.isNotEmpty()) {
+            val state = requestParams.currentState
+            if (state.lastClickableId.isNotEmpty()) {
                 Intent().also { intent ->
                     intent.action = "io.homeassistant.companion.android.TILE_ACTION"
                     intent.putExtra("entity_id", state.lastClickableId)
@@ -76,29 +80,32 @@ class ShortcutsTile : TileService() {
                 }
             }
 
-            val entities = getEntities()
-            val showLabels = integrationUseCase.getShowShortcutText()
+            val tileId = requestParams.tileId
+            val entities = getEntities(tileId)
 
             Tile.Builder()
                 .setResourcesVersion(entities.toString())
-                .setTimeline(
-                    Timeline.Builder().addTimelineEntry(
-                        TimelineEntry.Builder().setLayout(
-                            Layout.Builder().setRoot(
-                                layout(entities, showLabels)
-                            ).build()
-                        ).build()
-                    ).build()
+                .setTileTimeline(
+                    if (serverManager.isRegistered()) {
+                        timeline(tileId)
+                    } else {
+                        loggedOutTimeline(
+                            this@ShortcutsTile,
+                            requestParams,
+                            commonR.string.shortcuts,
+                            commonR.string.shortcuts_tile_log_in
+                        )
+                    }
                 ).build()
         }
 
-    override fun onResourcesRequest(requestParams: ResourcesRequest): ListenableFuture<Resources> =
+    override fun onTileResourcesRequest(requestParams: ResourcesRequest): ListenableFuture<Resources> =
         serviceScope.future {
-            val showLabels = integrationUseCase.getShowShortcutText()
+            val showLabels = wearPrefsRepository.getShowShortcutText()
             val iconSize = if (showLabels) ICON_SIZE_SMALL else ICON_SIZE_FULL
-            val density = requestParams.deviceParameters!!.screenDensity
+            val density = requestParams.deviceConfiguration.screenDensity
             val iconSizePx = (iconSize * density).roundToInt()
-            val entities = getEntities()
+            val entities = getEntities(requestParams.tileId)
 
             Resources.Builder()
                 .setVersion(entities.toString())
@@ -109,7 +116,7 @@ class ShortcutsTile : TileService() {
                             entity.icon,
                             entity.domain,
                             this@ShortcutsTile
-                        ) ?: CommunityMaterial.Icon.cmd_bookmark
+                        )
                         val iconBitmap = IconicsDrawable(this@ShortcutsTile, iconIIcon).apply {
                             colorInt = Color.WHITE
                             sizeDp = iconSize.roundToInt()
@@ -139,14 +146,48 @@ class ShortcutsTile : TileService() {
                 .build()
         }
 
+    override fun onTileAddEvent(requestParams: EventBuilders.TileAddEvent) {
+        serviceScope.launch {
+            /**
+             * When the app is updated from an older version (which only supported a single Shortcut Tile),
+             * and the user is adding a new Shortcuts Tile, we can't tell for sure if it's the 1st or 2nd Tile.
+             * Even though we may have the shortcut list stored in the prefs, it doesn't guarantee that
+             *   the tile was actually added to the Tiles carousel.
+             * The [WearPrefsRepositoryImpl::getTileShortcutsAndSaveTileId] method will handle both of the following cases:
+             * 1. There was no Tile added, but there were shortcuts stored in the prefs.
+             *    In this case, the stored shortcuts will be associated to the new tileId.
+             * 2. There was a single Tile added, and there were shortcuts stored in the prefs.
+             *    If there was a Tile update since updating the app, the tileId will be already
+             *    associated to the shortcuts, because it also calls [getTileShortcutsAndSaveTileId].
+             *    If there was no Tile update yet, the new Tile will "steal" the shortcuts from the existing Tile,
+             *    and the old Tile will behave as it is the new Tile. This is needed because
+             *    we don't know if it's the 1st or 2nd Tile.
+             */
+            wearPrefsRepository.getTileShortcutsAndSaveTileId(requestParams.tileId)
+        }
+    }
+
+    override fun onTileRemoveEvent(requestParams: EventBuilders.TileRemoveEvent) {
+        serviceScope.launch {
+            wearPrefsRepository.removeTileShortcuts(requestParams.tileId)
+        }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         // Cleans up the coroutine
         serviceJob.cancel()
     }
 
-    private suspend fun getEntities(): List<SimplifiedEntity> {
-        return integrationUseCase.getTileShortcuts().map { SimplifiedEntity(it) }
+    private suspend fun getEntities(tileId: Int): List<SimplifiedEntity> {
+        return wearPrefsRepository.getTileShortcutsAndSaveTileId(tileId).map { SimplifiedEntity(it) }
+    }
+
+    private suspend fun timeline(tileId: Int): Timeline {
+        val entities = getEntities(tileId)
+        val showLabels = wearPrefsRepository.getShowShortcutText()
+
+        return Timeline.fromLayoutElement(layout(entities, showLabels))
     }
 
     fun layout(entities: List<SimplifiedEntity>, showLabels: Boolean): LayoutElement = Column.Builder().apply {
@@ -242,4 +283,10 @@ class ShortcutsTile : TileService() {
         }
     }
         .build()
+
+    companion object {
+        fun requestUpdate(context: Context) {
+            getUpdater(context).requestUpdate(ShortcutsTile::class.java)
+        }
+    }
 }

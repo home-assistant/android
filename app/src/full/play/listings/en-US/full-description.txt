@@ -1,9 +1,0 @@
-The official app for Home Assistant. Home Assistant for Android lets you control all your devices in your Home Assistant instance. 
-
-Home Assistant is an open-source home automation platform that focuses on privacy and local control.
-
-Home Assistant for Android requires that you have access to a Home Assistant instance.
-
-For documentation around the application please see https://companion.home-assistant.io/
-
-We are also working on supporting Wear OS.  If interested be sure to check out the beta!

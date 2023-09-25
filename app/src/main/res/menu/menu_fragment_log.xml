@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <group android:id="@+id/log_toolbar_group">
+        <item
+            android:id="@+id/share_log"
+            android:icon="@drawable/ic_share_toolbar"
+            android:title="@string/share_logs"
+            app:showAsAction="ifRoom" />
+
+        <item
+            android:id="@+id/refresh_log"
+            android:icon="@drawable/ic_refresh_toolbar"
+            android:title="@string/refresh_log"
+            app:showAsAction="ifRoom" />
+    </group>
+
+    <item
+        android:id="@+id/get_help"
+        android:title="@string/get_help"
+        android:icon="@drawable/ic_question_toolbar"
+        app:showAsAction="always"/>
+</menu>

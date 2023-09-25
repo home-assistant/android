@@ -56,8 +56,6 @@ class LocationSensorManager : LocationSensorManagerBase(), SensorManager {
         // Noop
     }
 
-    override val enabledByDefault: Boolean
-        get() = false
     override val name: Int
         get() = commonR.string.sensor_name_location
 

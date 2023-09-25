@@ -15,6 +15,7 @@ import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.getFanSpeed
+import io.homeassistant.companion.android.common.data.integration.isActive
 import io.homeassistant.companion.android.common.data.integration.supportsFanSetSpeed
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.R as commonR
@@ -33,7 +34,7 @@ object FanControl : HaControl {
             control.setControlTemplate(
                 ToggleRangeTemplate(
                     entity.entityId,
-                    entity.state == "on",
+                    entity.isActive(),
                     "",
                     RangeTemplate(
                         entity.entityId,
@@ -50,7 +51,7 @@ object FanControl : HaControl {
                 ToggleTemplate(
                     entity.entityId,
                     ControlButton(
-                        entity.state == "on",
+                        entity.isActive(),
                         ""
                     )
                 )

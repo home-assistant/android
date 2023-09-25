@@ -56,4 +56,14 @@
                 android:maxLines="2" />
         </LinearLayout>
     </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/widgetProgressBar"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:visibility="invisible"
+        android:indeterminate="true"
+        android:indeterminateTint="@color/colorAccent"
+        android:layout_gravity="center"
+        />
 </FrameLayout>

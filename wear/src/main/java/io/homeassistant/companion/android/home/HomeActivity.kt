@@ -6,13 +6,15 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_CAMERA_TILE
+import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_SHORTCUT_TILE
 import io.homeassistant.companion.android.home.views.LoadHomePage
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
-import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationActivity
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
 import kotlinx.coroutines.Job
@@ -35,6 +37,26 @@ class HomeActivity : ComponentActivity(), HomeView {
         fun newInstance(context: Context): Intent {
             return Intent(context, HomeActivity::class.java)
         }
+
+        fun getCameraTileSettingsIntent(
+            context: Context,
+            tileId: Int
+        ) = Intent(
+            Intent.ACTION_VIEW,
+            "$DEEPLINK_PREFIX_SET_CAMERA_TILE/$tileId".toUri(),
+            context,
+            HomeActivity::class.java
+        )
+
+        fun getShortcutsTileSettingsIntent(
+            context: Context,
+            tileId: Int
+        ) = Intent(
+            Intent.ACTION_VIEW,
+            "$DEEPLINK_PREFIX_SET_SHORTCUT_TILE/$tileId".toUri(),
+            context,
+            HomeActivity::class.java
+        )
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,9 +79,11 @@ class HomeActivity : ComponentActivity(), HomeView {
                         entityUpdateJob = launch { mainViewModel.entityUpdates() }
                     }
                 }
-                launch { mainViewModel.areaUpdates() }
-                launch { mainViewModel.deviceUpdates() }
                 launch { mainViewModel.entityRegistryUpdates() }
+                if (!mainViewModel.isFavoritesOnly) {
+                    launch { mainViewModel.areaUpdates() }
+                    launch { mainViewModel.deviceUpdates() }
+                }
             }
         }
     }
@@ -71,8 +95,9 @@ class HomeActivity : ComponentActivity(), HomeView {
         mainViewModel.initAllSensors()
 
         lifecycleScope.launch {
-            if (mainViewModel.loadingState.value == MainViewModel.LoadingState.READY)
+            if (mainViewModel.loadingState.value == MainViewModel.LoadingState.READY) {
                 mainViewModel.updateUI()
+            }
         }
     }
 
@@ -88,12 +113,6 @@ class HomeActivity : ComponentActivity(), HomeView {
 
     override fun displayOnBoarding() {
         val intent = OnboardingActivity.newInstance(this)
-        startActivity(intent)
-        finish()
-    }
-
-    override fun displayMobileAppIntegration() {
-        val intent = MobileAppIntegrationActivity.newInstance(this)
         startActivity(intent)
         finish()
     }

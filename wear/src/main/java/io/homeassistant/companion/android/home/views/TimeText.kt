@@ -1,31 +1,28 @@
 package io.homeassistant.companion.android.home.views
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.wear.compose.foundation.lazy.ScalingLazyListState
+import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.TimeText
+import androidx.wear.compose.material.scrollAway
 
 @Composable
 fun TimeText(
-    visible: Boolean
+    scalingLazyListState: ScalingLazyListState
 ) {
-    AnimatedVisibility(
-        visible = visible,
-        enter = slideInVertically(),
-        exit = slideOutVertically(),
-    ) {
-        TimeText()
-    }
+    TimeText(
+        modifier = Modifier.scrollAway(scrollState = scalingLazyListState)
+    )
 }
 
 @Preview(device = Devices.WEAR_OS_LARGE_ROUND)
 @Composable
 private fun PreviewTimeText() {
     CompositionLocalProvider {
-        TimeText(visible = true)
+        TimeText(scalingLazyListState = rememberScalingLazyListState())
     }
 }

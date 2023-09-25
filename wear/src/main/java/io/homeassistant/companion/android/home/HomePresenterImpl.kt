@@ -2,12 +2,12 @@ package io.homeassistant.companion.android.home
 
 import android.util.Log
 import io.homeassistant.companion.android.BuildConfig
-import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.integration.EntityExt
+import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.De
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryUpdatedEvent
 import io.homeassistant.companion.android.data.SimplifiedEntity
+import io.homeassistant.companion.android.onboarding.getMessagingToken
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -26,16 +27,11 @@ import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
 class HomePresenterImpl @Inject constructor(
-    private val authenticationUseCase: AuthenticationRepository,
-    private val integrationUseCase: IntegrationRepository,
-    private val webSocketUseCase: WebSocketRepository
+    private val serverManager: ServerManager,
+    private val wearPrefsRepository: WearPrefsRepository
 ) : HomePresenter {
 
     companion object {
-        val toggleDomains = listOf(
-            "cover", "fan", "humidifier", "input_boolean", "light", "lock",
-            "media_player", "remote", "siren", "switch"
-        )
         val domainsWithNames = mapOf(
             "button" to commonR.string.buttons,
             "cover" to commonR.string.covers,
@@ -62,11 +58,16 @@ class HomePresenterImpl @Inject constructor(
 
     override fun onViewReady() {
         mainScope.launch {
-            val sessionValid = authenticationUseCase.getSessionState() == SessionState.CONNECTED
-            if (sessionValid && integrationUseCase.isRegistered()) {
+            // Remove any invalid servers (incomplete, partly migrated from another device)
+            serverManager.defaultServers
+                .filter { serverManager.authenticationRepository(it.id).getSessionState() == SessionState.ANONYMOUS }
+                .forEach { serverManager.removeServer(it.id) }
+
+            if (
+                serverManager.isRegistered() &&
+                serverManager.authenticationRepository().getSessionState() == SessionState.CONNECTED
+            ) {
                 resyncRegistration()
-            } else if (sessionValid) {
-                view.displayMobileAppIntegration()
             } else {
                 view.displayOnBoarding()
             }
@@ -74,11 +75,11 @@ class HomePresenterImpl @Inject constructor(
     }
 
     override suspend fun getEntities(): List<Entity<*>>? {
-        return integrationUseCase.getEntities()
+        return serverManager.integrationRepository().getEntities()
     }
 
     override suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity<*>>? {
-        return integrationUseCase.getEntityUpdates(entityIds)
+        return serverManager.integrationRepository().getEntityUpdates(entityIds)
     }
 
     override suspend fun onEntityClicked(entityId: String, state: String) {
@@ -87,16 +88,17 @@ class HomePresenterImpl @Inject constructor(
             "button", "input_button" -> "press"
             "lock" -> {
                 // Defaults to locking, to be save
-                if (state == "locked")
+                if (state == "locked") {
                     "unlock"
-                else
+                } else {
                     "lock"
+                }
             }
-            in toggleDomains -> "toggle"
+            in EntityExt.DOMAINS_TOGGLE -> "toggle"
             else -> "turn_on"
         }
         try {
-            integrationUseCase.callService(
+            serverManager.integrationRepository().callService(
                 domain,
                 serviceName,
                 hashMapOf("entity_id" to entityId)
@@ -108,7 +110,7 @@ class HomePresenterImpl @Inject constructor(
 
     override suspend fun onFanSpeedChanged(entityId: String, speed: Float) {
         try {
-            integrationUseCase.callService(
+            serverManager.integrationRepository().callService(
                 entityId.split(".")[0],
                 "set_percentage",
                 hashMapOf(
@@ -123,7 +125,7 @@ class HomePresenterImpl @Inject constructor(
 
     override suspend fun onBrightnessChanged(entityId: String, brightness: Float) {
         try {
-            integrationUseCase.callService(
+            serverManager.integrationRepository().callService(
                 entityId.split(".")[0],
                 "turn_on",
                 hashMapOf(
@@ -136,14 +138,15 @@ class HomePresenterImpl @Inject constructor(
         }
     }
 
-    override suspend fun onColorTempChanged(entityId: String, colorTemp: Float) {
+    override suspend fun onColorTempChanged(entityId: String, colorTemp: Float, isKelvin: Boolean) {
         try {
-            integrationUseCase.callService(
+            val colorTempKey = if (isKelvin) "color_temp_kelvin" else "color_temp"
+            serverManager.integrationRepository().callService(
                 entityId.split(".")[0],
                 "turn_on",
                 hashMapOf(
                     "entity_id" to entityId,
-                    "color_temp" to colorTemp.toInt()
+                    colorTempKey to colorTemp.toInt()
                 )
             )
         } catch (e: Exception) {
@@ -157,12 +160,15 @@ class HomePresenterImpl @Inject constructor(
 
     private fun finishSession() {
         mainScope.launch {
-            try {
-                authenticationUseCase.revokeSession()
-            } catch (e: Exception) {
-                Log.e(TAG, "Exception while revoking session", e)
-                // Remove local data anyway, the user wants to sign out and we don't need the server for that
-                authenticationUseCase.removeSessionData()
+            serverManager.getServer()?.let {
+                try {
+                    serverManager.authenticationRepository(it.id).revokeSession()
+                    serverManager.removeServer(it.id)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Exception while revoking session", e)
+                    // Remove local data anyway, the user wants to sign out and we don't need the server for that
+                    serverManager.removeServer(it.id)
+                }
             }
             view.displayOnBoarding()
         }
@@ -173,98 +179,114 @@ class HomePresenterImpl @Inject constructor(
     }
 
     private fun resyncRegistration() {
-        mainScope.launch {
-            try {
-                integrationUseCase.updateRegistration(
-                    DeviceRegistration(
-                        "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-                        null,
-                        null
+        serverManager.defaultServers.forEach {
+            mainScope.launch {
+                try {
+                    serverManager.integrationRepository(it.id).updateRegistration(
+                        DeviceRegistration(
+                            "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                            null,
+                            getMessagingToken(),
+                            false
+                        )
                     )
-                )
-            } catch (e: Exception) {
-                Log.e(TAG, "Issue updating Registration", e)
+                    serverManager.webSocketRepository(it.id).getCurrentUser() // Update cached data
+                } catch (e: Exception) {
+                    Log.e(TAG, "Issue updating Registration", e)
+                }
             }
         }
     }
 
-    override suspend fun isConnected(): Boolean {
-        return integrationUseCase.isRegistered()
-    }
+    override fun isConnected(): Boolean = serverManager.isRegistered()
+
+    override fun getServerId(): Int? = serverManager.getServer()?.id
 
     override fun getWebSocketState(): WebSocketState? {
-        return webSocketUseCase.getConnectionState()
+        return serverManager.webSocketRepository().getConnectionState()
     }
 
     override suspend fun getAreaRegistry(): List<AreaRegistryResponse>? {
-        return webSocketUseCase.getAreaRegistry()
+        return serverManager.webSocketRepository().getAreaRegistry()
     }
 
     override suspend fun getDeviceRegistry(): List<DeviceRegistryResponse>? {
-        return webSocketUseCase.getDeviceRegistry()
+        return serverManager.webSocketRepository().getDeviceRegistry()
     }
 
     override suspend fun getEntityRegistry(): List<EntityRegistryResponse>? {
-        return webSocketUseCase.getEntityRegistry()
+        return serverManager.webSocketRepository().getEntityRegistry()
     }
 
     override suspend fun getAreaRegistryUpdates(): Flow<AreaRegistryUpdatedEvent>? {
-        return webSocketUseCase.getAreaRegistryUpdates()
+        return serverManager.webSocketRepository().getAreaRegistryUpdates()
     }
 
     override suspend fun getDeviceRegistryUpdates(): Flow<DeviceRegistryUpdatedEvent>? {
-        return webSocketUseCase.getDeviceRegistryUpdates()
+        return serverManager.webSocketRepository().getDeviceRegistryUpdates()
     }
 
     override suspend fun getEntityRegistryUpdates(): Flow<EntityRegistryUpdatedEvent>? {
-        return webSocketUseCase.getEntityRegistryUpdates()
+        return serverManager.webSocketRepository().getEntityRegistryUpdates()
     }
 
-    override suspend fun getTileShortcuts(): List<SimplifiedEntity> {
-        return integrationUseCase.getTileShortcuts().map { SimplifiedEntity(it) }
+    override suspend fun getAllTileShortcuts(): Map<Int?, List<SimplifiedEntity>> {
+        return wearPrefsRepository.getAllTileShortcuts().mapValues { (_, entities) ->
+            entities.map {
+                SimplifiedEntity(it)
+            }
+        }
     }
 
-    override suspend fun setTileShortcuts(entities: List<SimplifiedEntity>) {
-        integrationUseCase.setTileShortcuts(entities.map { it.entityString })
+    override suspend fun getTileShortcuts(tileId: Int): List<SimplifiedEntity> {
+        return wearPrefsRepository.getTileShortcutsAndSaveTileId(tileId).map { SimplifiedEntity(it) }
+    }
+
+    override suspend fun setTileShortcuts(tileId: Int?, entities: List<SimplifiedEntity>) {
+        wearPrefsRepository.setTileShortcuts(tileId, entities.map { it.entityString })
     }
 
     override suspend fun getWearHapticFeedback(): Boolean {
-        return integrationUseCase.getWearHapticFeedback()
+        return wearPrefsRepository.getWearHapticFeedback()
     }
 
     override suspend fun setWearHapticFeedback(enabled: Boolean) {
-        integrationUseCase.setWearHapticFeedback(enabled)
+        wearPrefsRepository.setWearHapticFeedback(enabled)
     }
 
     override suspend fun getWearToastConfirmation(): Boolean {
-        return integrationUseCase.getWearToastConfirmation()
+        return wearPrefsRepository.getWearToastConfirmation()
     }
 
     override suspend fun setWearToastConfirmation(enabled: Boolean) {
-        integrationUseCase.setWearToastConfirmation(enabled)
+        wearPrefsRepository.setWearToastConfirmation(enabled)
     }
 
     override suspend fun getShowShortcutText(): Boolean {
-        return integrationUseCase.getShowShortcutText()
+        return wearPrefsRepository.getShowShortcutText()
     }
 
     override suspend fun setShowShortcutTextEnabled(enabled: Boolean) {
-        integrationUseCase.setShowShortcutTextEnabled(enabled)
+        wearPrefsRepository.setShowShortcutTextEnabled(enabled)
     }
 
     override suspend fun getTemplateTileContent(): String {
-        return integrationUseCase.getTemplateTileContent()
-    }
-
-    override suspend fun setTemplateTileContent(content: String) {
-        integrationUseCase.setTemplateTileContent(content)
+        return wearPrefsRepository.getTemplateTileContent()
     }
 
     override suspend fun getTemplateTileRefreshInterval(): Int {
-        return integrationUseCase.getTemplateTileRefreshInterval()
+        return wearPrefsRepository.getTemplateTileRefreshInterval()
     }
 
     override suspend fun setTemplateTileRefreshInterval(interval: Int) {
-        integrationUseCase.setTemplateTileRefreshInterval(interval)
+        wearPrefsRepository.setTemplateTileRefreshInterval(interval)
+    }
+
+    override suspend fun getWearFavoritesOnly(): Boolean {
+        return wearPrefsRepository.getWearFavoritesOnly()
+    }
+
+    override suspend fun setWearFavoritesOnly(enabled: Boolean) {
+        wearPrefsRepository.setWearFavoritesOnly(enabled)
     }
 }

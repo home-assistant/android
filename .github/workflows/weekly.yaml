@@ -1,52 +1,39 @@
-name: Weekly Playstore Beta
+name: Tag Weekly Release
 
 on:
   workflow_dispatch:
   schedule:
     - cron: '0 4 * * 0'
 jobs:
-  play_promote:
-    name: Playstore Promote
+  tag:
+    name: Tag Weekly Release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up JDK 11
-        uses: actions/setup-java@v3.9.0
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3.13.0
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '17'
 
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - uses: ./.github/actions/create-release-number
-        name: Create Release Number
-        id: rel_number
-        with:
-          beta: true
-
-      - uses: ./.github/actions/inflate-secrets
-        name: Inflate Secrets
-        with:
-          keystore: ${{ secrets.UPLOAD_KEYSTORE_FILE }}
-          google-services: ${{ secrets.GOOGLESERVICES }}
-          firebase-creds: ${{ secrets.FIREBASECREDS }}
-          playstore-creds: ${{ secrets.PLAYSTORECREDS }}
-
-      - name: Build Release
+      - name: Tag Weekly Release
         env:
-          KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
-          KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
-          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
-          VERSION: ${{ steps.rel_number.outputs.version }}
-          VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
-        run: ./gradlew promoteArtifact --from-track internal --promote-track beta
+          GITHUB_TOKEN: ${{ secrets.TAG_PUSH_TOKEN }}
+        run: ./gradlew :reckonTagPush -Preckon.stage=final
+
+      - name: Trigger Workflow
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'onPush.yml',
+              ref: 'master',
+              inputs: {
+                "beta": "true",
+              },
+            })

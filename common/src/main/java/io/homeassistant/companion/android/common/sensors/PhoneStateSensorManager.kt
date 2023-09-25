@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.sensors
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
@@ -9,6 +10,8 @@ import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
 import android.util.Log
 import androidx.core.content.getSystemService
+import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
+import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.R as commonR
 
 class PhoneStateSensorManager : SensorManager {
@@ -49,17 +52,17 @@ class PhoneStateSensorManager : SensorManager {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#cellular-provider-sensor"
     }
-    override val enabledByDefault: Boolean
-        get() = false
     override val name: Int
         get() = commonR.string.sensor_name_phone
     override fun hasSensor(context: Context): Boolean {
         return context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
     }
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1)
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
             listOf(phoneState, sim_1, sim_2)
-        else listOf(phoneState)
+        } else {
+            listOf(phoneState)
+        }
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
@@ -74,19 +77,22 @@ class PhoneStateSensorManager : SensorManager {
         updateSimSensor(context, 1)
     }
 
+    @SuppressLint("MissingPermission")
     private fun checkPhoneState(context: Context) {
-        if (isEnabled(context, phoneState.id)) {
-            var currentPhoneState = "unknown"
+        if (isEnabled(context, phoneState)) {
+            var currentPhoneState = STATE_UNKNOWN
 
             if (checkPermission(context, phoneState.id)) {
                 val telephonyManager =
                     context.applicationContext.getSystemService<TelephonyManager>()!!
 
+                // Deprecated function provides state for any call, not for a specific subscription only
+                @Suppress("DEPRECATION")
                 currentPhoneState = when (telephonyManager.callState) {
                     TelephonyManager.CALL_STATE_IDLE -> "idle"
                     TelephonyManager.CALL_STATE_RINGING -> "ringing"
                     TelephonyManager.CALL_STATE_OFFHOOK -> "offhook"
-                    else -> "unknown"
+                    else -> STATE_UNKNOWN
                 }
             }
 
@@ -96,8 +102,9 @@ class PhoneStateSensorManager : SensorManager {
 
     private fun updatePhoneStateSensor(context: Context, state: String) {
         var phoneIcon = "mdi:phone"
-        if (state == "ringing" || state == "offhook")
+        if (state == "ringing" || state == "offhook") {
             phoneIcon += "-in-talk"
+        }
 
         onSensorUpdated(
             context,
@@ -108,16 +115,18 @@ class PhoneStateSensorManager : SensorManager {
         )
     }
 
+    @SuppressLint("MissingPermission")
     private fun updateSimSensor(context: Context, slotIndex: Int) {
         val basicSimSensor = when (slotIndex) {
             0 -> sim_1
             1 -> sim_2
             else -> throw IllegalArgumentException("Invalid sim slot: $slotIndex")
         }
-        if (!isEnabled(context, basicSimSensor.id))
+        if (!isEnabled(context, basicSimSensor)) {
             return
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-            var displayName = "Unavailable"
+            var displayName = STATE_UNAVAILABLE
             val attrs = mutableMapOf<String, Any>()
 
             if (checkPermission(context, basicSimSensor.id)) {
@@ -128,7 +137,7 @@ class PhoneStateSensorManager : SensorManager {
 
                 if (info != null) {
                     try {
-                        displayName = info.displayName?.toString() ?: displayName
+                        displayName = info.displayName?.toString() ?: info.carrierName.toString()
                         attrs["carrier name"] = info.carrierName
                         attrs["iso country code"] = info.countryIso
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {

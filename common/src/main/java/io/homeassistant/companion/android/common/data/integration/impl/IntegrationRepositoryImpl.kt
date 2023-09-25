@@ -1,11 +1,11 @@
 package io.homeassistant.companion.android.common.data.integration.impl
 
 import android.util.Log
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
 import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.LocalStorage
-import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
-import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationException
@@ -24,23 +24,23 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.integration.impl.entities.ServiceCallRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.Template
 import io.homeassistant.companion.android.common.data.integration.impl.entities.UpdateLocationRequest
-import io.homeassistant.companion.android.common.data.url.UrlRepository
-import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEventType
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineIntentEnd
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import org.json.JSONArray
 import java.util.concurrent.TimeUnit
-import javax.inject.Inject
 import javax.inject.Named
 
-class IntegrationRepositoryImpl @Inject constructor(
+class IntegrationRepositoryImpl @AssistedInject constructor(
     private val integrationService: IntegrationService,
-    private val authenticationRepository: AuthenticationRepository,
-    private val urlRepository: UrlRepository,
-    private val webSocketRepository: WebSocketRepository,
+    private val serverManager: ServerManager,
+    @Assisted private val serverId: Int,
     @Named("integration") private val localStorage: LocalStorage,
     @Named("manufacturer") private val manufacturer: String,
     @Named("model") private val model: String,
@@ -54,36 +54,27 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val OS_NAME = "Android"
         private const val PUSH_URL = BuildConfig.PUSH_URL
 
-        private const val PREF_APP_VERSION = "app_version"
-        private const val PREF_DEVICE_NAME = "device_name"
-        private const val PREF_PUSH_TOKEN = "push_token"
-
-        private const val PREF_SECRET = "secret"
+        private const val PREF_APP_VERSION = "app_version" // Note: _not_ server-specific
+        private const val PREF_PUSH_TOKEN = "push_token" // Note: _not_ server-specific
+        private const val PREF_ORPHANED_THREAD_BORDER_AGENT_IDS = "orphaned_thread_border_agent_ids" // Note: _not_ server-specific
 
         private const val PREF_CHECK_SENSOR_REGISTRATION_NEXT = "sensor_reg_last"
-        private const val PREF_TILE_SHORTCUTS = "tile_shortcuts_list"
-        private const val PREF_SHOW_TILE_SHORTCUTS_TEXT = "show_tile_shortcuts_text"
-        private const val PREF_TILE_TEMPLATE = "tile_template"
-        private const val PREF_TILE_TEMPLATE_REFRESH_INTERVAL = "tile_template_refresh_interval"
-        private const val PREF_WEAR_HAPTIC_FEEDBACK = "wear_haptic_feedback"
-        private const val PREF_WEAR_TOAST_CONFIRMATION = "wear_toast_confirmation"
-        private const val PREF_HA_VERSION = "ha_version"
-        private const val PREF_AUTOPLAY_VIDEO = "autoplay_video"
-        private const val PREF_ALWAYS_SHOW_FIRST_VIEW_ON_APP_START = "always_show_first_view_on_app_start"
-        private const val PREF_FULLSCREEN_ENABLED = "fullscreen_enabled"
-        private const val PREF_KEEP_SCREEN_ON_ENABLED = "keep_screen_on_enabled"
-        private const val PREF_PINCH_TO_ZOOM_ENABLED = "pinch_to_zoom_enabled"
-        private const val PREF_WEBVIEW_DEBUG_ENABLED = "webview_debug_enabled"
         private const val PREF_SESSION_TIMEOUT = "session_timeout"
         private const val PREF_SESSION_EXPIRE = "session_expire"
-        private const val PREF_CONTROLS_AUTH_REQUIRED = "controls_auth_required"
-        private const val PREF_CONTROLS_AUTH_ENTITIES = "controls_auth_entities"
+        private const val PREF_TRUSTED = "trusted"
         private const val PREF_SEC_WARNING_NEXT = "sec_warning_last"
+        private const val PREF_LAST_USED_PIPELINE_ID = "last_used_pipeline"
+        private const val PREF_LAST_USED_PIPELINE_STT = "last_used_pipeline_stt"
+        private const val PREF_THREAD_BORDER_AGENT_IDS = "thread_border_agent_ids"
         private const val TAG = "IntegrationRepository"
         private const val RATE_LIMIT_URL = BuildConfig.RATE_LIMIT_URL
 
         private const val APPLOCK_TIMEOUT_GRACE_MS = 1000
     }
+
+    private val server get() = serverManager.getServer(serverId)!!
+
+    private val webSocketRepository get() = serverManager.webSocketRepository(serverId)
 
     private var appActive = false
 
@@ -95,7 +86,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         request.supportsEncryption = false
         request.deviceId = deviceId
 
-        val url = urlRepository.getUrl()?.toHttpUrlOrNull()
+        val url = server.connection.getUrl()?.toHttpUrlOrNull()
         if (url == null) {
             Log.e(TAG, "Unable to register device due to missing URL")
             return
@@ -103,34 +94,52 @@ class IntegrationRepositoryImpl @Inject constructor(
         val response =
             integrationService.registerDevice(
                 url.newBuilder().addPathSegments("api/mobile_app/registrations").build(),
-                authenticationRepository.buildBearerToken(),
+                serverManager.authenticationRepository(serverId).buildBearerToken(),
                 request
             )
         try {
             persistDeviceRegistration(deviceRegistration)
-            urlRepository.saveRegistrationUrls(
-                response.cloudhookUrl,
-                response.remoteUiUrl,
-                response.webhookId
+            serverManager.updateServer(
+                server.copy(
+                    connection = server.connection.copy(
+                        webhookId = response.webhookId,
+                        cloudhookUrl = response.cloudhookUrl,
+                        cloudUrl = response.remoteUiUrl,
+                        useCloud = response.remoteUiUrl != null,
+                        secret = response.secret
+                    )
+                )
             )
-            localStorage.putString(PREF_SECRET, response.secret)
+            getConfig() // To get version, name, etc stored
+            webSocketRepository.getCurrentUser() // To get user info stored
         } catch (e: Exception) {
             Log.e(TAG, "Unable to save device registration", e)
         }
     }
 
-    override suspend fun updateRegistration(deviceRegistration: DeviceRegistration) {
+    override suspend fun updateRegistration(deviceRegistration: DeviceRegistration, allowReregistration: Boolean) {
         val request =
             IntegrationRequest(
                 "update_registration",
                 createUpdateRegistrationRequest(deviceRegistration)
             )
         var causeException: Exception? = null
-        for (it in urlRepository.getApiUrls()) {
+        for (it in server.connection.getApiUrls()) {
             try {
-                if (integrationService.callWebhook(it.toHttpUrlOrNull()!!, request).isSuccessful) {
-                    persistDeviceRegistration(deviceRegistration)
-                    return
+                val response = integrationService.callWebhook(it.toHttpUrlOrNull()!!, request)
+                // The server should return a body with the registration, but might return:
+                // 200 with empty body for broken direct webhook
+                // 404 for broken cloudhook
+                // 410 for missing config entry
+                if (response.isSuccessful) {
+                    if (response.code() == 200 && (response.body()?.contentLength() ?: 0) == 0L) {
+                        throw IllegalStateException("update_registration returned empty body")
+                    } else {
+                        persistDeviceRegistration(deviceRegistration)
+                        return
+                    }
+                } else if (response.code() == 404 || response.code() == 410) {
+                    throw IllegalStateException("update_registration returned code ${response.code()}")
                 }
             } catch (e: Exception) {
                 if (causeException == null) causeException = e
@@ -138,34 +147,69 @@ class IntegrationRepositoryImpl @Inject constructor(
             }
         }
 
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration request update_registration")
+        if (causeException != null) {
+            if (allowReregistration && (causeException is IllegalStateException)) {
+                Log.w(TAG, "Device registration broken, reregistering", causeException)
+                try {
+                    registerDevice(deviceRegistration)
+                } catch (e: Exception) {
+                    throw IntegrationException(e)
+                }
+            } else {
+                throw IntegrationException(causeException)
+            }
+        } else {
+            throw IntegrationException("Error calling integration request update_registration")
+        }
     }
 
     override suspend fun getRegistration(): DeviceRegistration {
         return DeviceRegistration(
             localStorage.getString(PREF_APP_VERSION),
-            localStorage.getString(PREF_DEVICE_NAME),
+            server.deviceName,
             localStorage.getString(PREF_PUSH_TOKEN)
         )
     }
 
     private suspend fun persistDeviceRegistration(deviceRegistration: DeviceRegistration) {
-        if (deviceRegistration.appVersion != null)
+        if (deviceRegistration.appVersion != null) {
             localStorage.putString(PREF_APP_VERSION, deviceRegistration.appVersion)
-        if (deviceRegistration.deviceName != null)
-            localStorage.putString(PREF_DEVICE_NAME, deviceRegistration.deviceName)
-        if (deviceRegistration.pushToken != null)
+        }
+        if (deviceRegistration.deviceName != null) {
+            serverManager.updateServer(server.copy(deviceName = deviceRegistration.deviceName))
+        }
+        if (deviceRegistration.pushToken != null) {
             localStorage.putString(PREF_PUSH_TOKEN, deviceRegistration.pushToken)
+        }
     }
 
-    override suspend fun isRegistered(): Boolean {
-        return urlRepository.getApiUrls().isNotEmpty()
+    override suspend fun deletePreferences() {
+        localStorage.remove("${serverId}_$PREF_CHECK_SENSOR_REGISTRATION_NEXT")
+        localStorage.remove("${serverId}_$PREF_SESSION_TIMEOUT")
+        localStorage.remove("${serverId}_$PREF_SESSION_EXPIRE")
+        localStorage.remove("${serverId}_$PREF_TRUSTED")
+        localStorage.remove("${serverId}_$PREF_SEC_WARNING_NEXT")
+        localStorage.remove("${serverId}_$PREF_LAST_USED_PIPELINE_ID")
+        localStorage.remove("${serverId}_$PREF_LAST_USED_PIPELINE_STT")
+
+        // Thread credentials are managed in the app module and can't be deleted now, so store them
+        val threadBorderAgentIds = getThreadBorderAgentIds()
+        if (threadBorderAgentIds.any()) {
+            val orphanedBorderAgentIds = localStorage.getStringSet(PREF_ORPHANED_THREAD_BORDER_AGENT_IDS).orEmpty()
+            localStorage.putStringSet(PREF_ORPHANED_THREAD_BORDER_AGENT_IDS, orphanedBorderAgentIds + threadBorderAgentIds.toSet())
+        }
+        localStorage.remove("${serverId}_$PREF_THREAD_BORDER_AGENT_IDS")
+
+        // app version and push token is device-specific
+    }
+
+    private fun isRegistered(): Boolean {
+        return server.connection.getApiUrls().isNotEmpty()
     }
 
     override suspend fun renderTemplate(template: String, variables: Map<String, String>): String? {
         var causeException: Exception? = null
-        for (it in urlRepository.getApiUrls()) {
+        for (it in server.connection.getApiUrls()) {
             try {
                 return integrationService.getTemplate(
                     it.toHttpUrlOrNull()!!,
@@ -180,8 +224,11 @@ class IntegrationRepositoryImpl @Inject constructor(
             }
         }
 
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration request render_template")
+        if (causeException != null) {
+            throw IntegrationException(causeException)
+        } else {
+            throw IntegrationException("Error calling integration request render_template")
+        }
     }
 
     override suspend fun getTemplateUpdates(template: String): Flow<String?>? {
@@ -195,7 +242,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         val updateLocationRequest = createUpdateLocation(updateLocation)
 
         var causeException: Exception? = null
-        for (it in urlRepository.getApiUrls()) {
+        for (it in server.connection.getApiUrls()) {
             var wasSuccess = false
             try {
                 wasSuccess =
@@ -208,12 +255,16 @@ class IntegrationRepositoryImpl @Inject constructor(
                 // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
             }
             // if we had a successful call we can return
-            if (wasSuccess)
+            if (wasSuccess) {
                 return
+            }
         }
 
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration request update_location")
+        if (causeException != null) {
+            throw IntegrationException(causeException)
+        } else {
+            throw IntegrationException("Error calling integration request update_location")
+        }
     }
 
     override suspend fun callService(
@@ -231,7 +282,7 @@ class IntegrationRepositoryImpl @Inject constructor(
             )
 
         var causeException: Exception? = null
-        for (it in urlRepository.getApiUrls()) {
+        for (it in server.connection.getApiUrls()) {
             try {
                 wasSuccess =
                     integrationService.callWebhook(
@@ -246,19 +297,23 @@ class IntegrationRepositoryImpl @Inject constructor(
                 // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
             }
             // if we had a successful call we can return
-            if (wasSuccess)
+            if (wasSuccess) {
                 return
+            }
         }
 
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration request call_service")
+        if (causeException != null) {
+            throw IntegrationException(causeException)
+        } else {
+            throw IntegrationException("Error calling integration request call_service")
+        }
     }
 
     override suspend fun scanTag(data: HashMap<String, Any>) {
         var wasSuccess = false
 
         var causeException: Exception? = null
-        for (it in urlRepository.getApiUrls()) {
+        for (it in server.connection.getApiUrls()) {
             try {
                 wasSuccess =
                     integrationService.callWebhook(
@@ -273,12 +328,16 @@ class IntegrationRepositoryImpl @Inject constructor(
                 // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
             }
             // if we had a successful call we can return
-            if (wasSuccess)
+            if (wasSuccess) {
                 return
+            }
         }
 
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration request scan_tag")
+        if (causeException != null) {
+            throw IntegrationException(causeException)
+        } else {
+            throw IntegrationException("Error calling integration request scan_tag")
+        }
     }
 
     override suspend fun fireEvent(eventType: String, eventData: Map<String, Any>) {
@@ -290,7 +349,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         )
 
         var causeException: Exception? = null
-        for (it in urlRepository.getApiUrls()) {
+        for (it in server.connection.getApiUrls()) {
             try {
                 wasSuccess =
                     integrationService.callWebhook(
@@ -305,12 +364,16 @@ class IntegrationRepositoryImpl @Inject constructor(
                 // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
             }
             // if we had a successful call we can return
-            if (wasSuccess)
+            if (wasSuccess) {
                 return
+            }
         }
 
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration request fire_event")
+        if (causeException != null) {
+            throw IntegrationException(causeException)
+        } else {
+            throw IntegrationException("Error calling integration request fire_event")
+        }
     }
 
     override suspend fun getZones(): Array<Entity<ZoneAttributes>> {
@@ -321,7 +384,7 @@ class IntegrationRepositoryImpl @Inject constructor(
             )
         var causeException: Exception? = null
         var zones: Array<EntityResponse<ZoneAttributes>>? = null
-        for (it in urlRepository.getApiUrls()) {
+        for (it in server.connection.getApiUrls()) {
             try {
                 zones = integrationService.getZones(it.toHttpUrlOrNull()!!, getZonesRequest)
             } catch (e: Exception) {
@@ -334,60 +397,15 @@ class IntegrationRepositoryImpl @Inject constructor(
             }
         }
 
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration request get_zones")
-    }
-
-    override suspend fun setFullScreenEnabled(enabled: Boolean) {
-        localStorage.putBoolean(PREF_FULLSCREEN_ENABLED, enabled)
-    }
-
-    override suspend fun isFullScreenEnabled(): Boolean {
-        return localStorage.getBoolean(PREF_FULLSCREEN_ENABLED)
-    }
-
-    override suspend fun setKeepScreenOnEnabled(enabled: Boolean) {
-        localStorage.putBoolean(PREF_KEEP_SCREEN_ON_ENABLED, enabled)
-    }
-
-    override suspend fun isKeepScreenOnEnabled(): Boolean {
-        return localStorage.getBoolean(PREF_KEEP_SCREEN_ON_ENABLED)
-    }
-
-    override suspend fun setPinchToZoomEnabled(enabled: Boolean) {
-        localStorage.putBoolean(PREF_PINCH_TO_ZOOM_ENABLED, enabled)
-    }
-
-    override suspend fun isPinchToZoomEnabled(): Boolean {
-        return localStorage.getBoolean(PREF_PINCH_TO_ZOOM_ENABLED)
-    }
-
-    override suspend fun setWebViewDebugEnabled(enabled: Boolean) {
-        localStorage.putBoolean(PREF_WEBVIEW_DEBUG_ENABLED, enabled)
-    }
-
-    override suspend fun isWebViewDebugEnabled(): Boolean {
-        return localStorage.getBoolean(PREF_WEBVIEW_DEBUG_ENABLED)
-    }
-
-    override suspend fun isAutoPlayVideoEnabled(): Boolean {
-        return localStorage.getBoolean(PREF_AUTOPLAY_VIDEO)
-    }
-
-    override suspend fun setAlwaysShowFirstViewOnAppStart(enabled: Boolean) {
-        localStorage.putBoolean(PREF_ALWAYS_SHOW_FIRST_VIEW_ON_APP_START, enabled)
-    }
-
-    override suspend fun isAlwaysShowFirstViewOnAppStartEnabled(): Boolean {
-        return localStorage.getBoolean(PREF_ALWAYS_SHOW_FIRST_VIEW_ON_APP_START)
-    }
-
-    override suspend fun setAutoPlayVideo(enabled: Boolean) {
-        localStorage.putBoolean(PREF_AUTOPLAY_VIDEO, enabled)
+        if (causeException != null) {
+            throw IntegrationException(causeException)
+        } else {
+            throw IntegrationException("Error calling integration request get_zones")
+        }
     }
 
     override suspend fun isAppLocked(): Boolean {
-        val lockEnabled = authenticationRepository.isLockEnabled()
+        val lockEnabled = serverManager.authenticationRepository(serverId).isLockEnabled()
         val sessionExpireMillis = getSessionExpireMillis()
         val currentMillis = System.currentTimeMillis()
         val sessionExpired = currentMillis > sessionExpireMillis
@@ -398,99 +416,30 @@ class IntegrationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun setAppActive(active: Boolean) {
-        if (!active) {
+        if (!active && appActive) {
             setSessionExpireMillis(System.currentTimeMillis() + (getSessionTimeOut() * 1000) + APPLOCK_TIMEOUT_GRACE_MS)
         }
         Log.d(TAG, "setAppActive(): $active")
         appActive = active
     }
 
-    override suspend fun sessionTimeOut(value: Int) {
-        localStorage.putInt(PREF_SESSION_TIMEOUT, value)
-    }
+    override suspend fun sessionTimeOut(value: Int) =
+        localStorage.putInt("${serverId}_$PREF_SESSION_TIMEOUT", value)
 
-    override suspend fun getSessionTimeOut(): Int {
-        return localStorage.getInt(PREF_SESSION_TIMEOUT) ?: 0
-    }
+    override suspend fun getSessionTimeOut(): Int =
+        localStorage.getInt("${serverId}_$PREF_SESSION_TIMEOUT") ?: 0
 
-    override suspend fun setSessionExpireMillis(value: Long) {
-        Log.d(TAG, "setSessionExpireMillis(): $value")
-        localStorage.putLong(PREF_SESSION_EXPIRE, value)
-    }
+    override suspend fun setSessionExpireMillis(value: Long) =
+        localStorage.putLong("${serverId}_$PREF_SESSION_EXPIRE", value)
 
-    private suspend fun getSessionExpireMillis(): Long {
-        return localStorage.getLong(PREF_SESSION_EXPIRE) ?: 0
-    }
+    private suspend fun getSessionExpireMillis(): Long =
+        localStorage.getLong("${serverId}_$PREF_SESSION_EXPIRE") ?: 0
 
-    override suspend fun setControlsAuthRequired(setting: ControlsAuthRequiredSetting) {
-        localStorage.putString(PREF_CONTROLS_AUTH_REQUIRED, setting.name)
-    }
+    override suspend fun isTrusted(): Boolean =
+        localStorage.getBooleanOrNull("${serverId}_$PREF_TRUSTED") ?: true
 
-    override suspend fun getControlsAuthRequired(): ControlsAuthRequiredSetting {
-        val current = localStorage.getString(PREF_CONTROLS_AUTH_REQUIRED)
-        return ControlsAuthRequiredSetting.values().firstOrNull {
-            it.name == current
-        } ?: ControlsAuthRequiredSetting.NONE
-    }
-
-    override suspend fun setControlsAuthEntities(entities: List<String>) {
-        localStorage.putStringSet(PREF_CONTROLS_AUTH_ENTITIES, entities.toSet())
-    }
-
-    override suspend fun getControlsAuthEntities(): List<String> {
-        return localStorage.getStringSet(PREF_CONTROLS_AUTH_ENTITIES)?.toList() ?: emptyList()
-    }
-
-    override suspend fun getTileShortcuts(): List<String> {
-        val jsonArray = JSONArray(localStorage.getString(PREF_TILE_SHORTCUTS) ?: "[]")
-        return List(jsonArray.length()) {
-            jsonArray.getString(it)
-        }
-    }
-
-    override suspend fun setTileShortcuts(entities: List<String>) {
-        localStorage.putString(PREF_TILE_SHORTCUTS, JSONArray(entities).toString())
-    }
-
-    override suspend fun getTemplateTileContent(): String {
-        return localStorage.getString(PREF_TILE_TEMPLATE) ?: ""
-    }
-
-    override suspend fun setTemplateTileContent(content: String) {
-        localStorage.putString(PREF_TILE_TEMPLATE, content)
-    }
-
-    override suspend fun getTemplateTileRefreshInterval(): Int {
-        return localStorage.getInt(PREF_TILE_TEMPLATE_REFRESH_INTERVAL) ?: 0
-    }
-
-    override suspend fun setTemplateTileRefreshInterval(interval: Int) {
-        localStorage.putInt(PREF_TILE_TEMPLATE_REFRESH_INTERVAL, interval)
-    }
-
-    override suspend fun setWearHapticFeedback(enabled: Boolean) {
-        localStorage.putBoolean(PREF_WEAR_HAPTIC_FEEDBACK, enabled)
-    }
-
-    override suspend fun getWearHapticFeedback(): Boolean {
-        return localStorage.getBoolean(PREF_WEAR_HAPTIC_FEEDBACK)
-    }
-
-    override suspend fun setWearToastConfirmation(enabled: Boolean) {
-        localStorage.putBoolean(PREF_WEAR_TOAST_CONFIRMATION, enabled)
-    }
-
-    override suspend fun getWearToastConfirmation(): Boolean {
-        return localStorage.getBoolean(PREF_WEAR_TOAST_CONFIRMATION)
-    }
-
-    override suspend fun setShowShortcutTextEnabled(enabled: Boolean) {
-        localStorage.putBoolean(PREF_SHOW_TILE_SHORTCUTS_TEXT, enabled)
-    }
-
-    override suspend fun getShowShortcutText(): Boolean {
-        return localStorage.getBoolean(PREF_SHOW_TILE_SHORTCUTS_TEXT)
-    }
+    override suspend fun setTrusted(trusted: Boolean) =
+        localStorage.putBoolean("${serverId}_$PREF_TRUSTED", trusted)
 
     override suspend fun getNotificationRateLimits(): RateLimitResponse {
         val pushToken = localStorage.getString(PREF_PUSH_TOKEN) ?: ""
@@ -506,35 +455,37 @@ class IntegrationRepositoryImpl @Inject constructor(
             causeException = e
             Log.e(TAG, "Unable to get notification rate limits", e)
         }
-        if (checkRateLimits != null)
+        if (checkRateLimits != null) {
             return checkRateLimits
+        }
 
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling checkRateLimits")
+        if (causeException != null) {
+            throw IntegrationException(causeException)
+        } else {
+            throw IntegrationException("Error calling checkRateLimits")
+        }
     }
 
     override suspend fun getHomeAssistantVersion(): String {
         val current = System.currentTimeMillis()
-        val next = localStorage.getLong(PREF_CHECK_SENSOR_REGISTRATION_NEXT) ?: 0
-        if (current <= next)
-            return localStorage.getString(PREF_HA_VERSION)
+        val next = localStorage.getLong("${serverId}_$PREF_CHECK_SENSOR_REGISTRATION_NEXT") ?: 0
+        if (current <= next) {
+            return server._version
                 ?: "" // Skip checking HA version as it has not been 4 hours yet
+        }
 
         return try {
-            webSocketRepository.getConfig()?.let { response ->
-                localStorage.putString(PREF_HA_VERSION, response.version)
+            getConfig().let { response ->
+                updateServerWithConfig(response)
                 localStorage.putLong(
-                    PREF_CHECK_SENSOR_REGISTRATION_NEXT,
+                    "${serverId}_$PREF_CHECK_SENSOR_REGISTRATION_NEXT",
                     current + TimeUnit.HOURS.toMillis(4)
                 )
                 response.version
-            } ?: run {
-                Log.e(TAG, "Issue getting config from core.")
-                localStorage.getString(PREF_HA_VERSION) ?: ""
             }
         } catch (e: Exception) {
             Log.e(TAG, "Issue getting new version from core.", e)
-            localStorage.getString(PREF_HA_VERSION) ?: ""
+            server._version ?: ""
         }
     }
 
@@ -558,7 +509,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         var response: GetConfigResponse? = null
         var causeException: Exception? = null
 
-        for (it in urlRepository.getApiUrls()) {
+        for (it in server.connection.getApiUrls()) {
             try {
                 response = integrationService.getConfig(it.toHttpUrlOrNull()!!, getConfigRequest)
             } catch (e: Exception) {
@@ -568,18 +519,37 @@ class IntegrationRepositoryImpl @Inject constructor(
 
             if (response != null) {
                 // If we have a valid response, also update the cached version
-                localStorage.putString(PREF_HA_VERSION, response.version)
+                updateServerWithConfig(response)
                 localStorage.putLong(
-                    PREF_CHECK_SENSOR_REGISTRATION_NEXT,
+                    "${serverId}_$PREF_CHECK_SENSOR_REGISTRATION_NEXT",
                     System.currentTimeMillis() + TimeUnit.HOURS.toMillis(4)
                 )
-                urlRepository.updateCloudUrls(response.cloudhookUrl, response.remoteUiUrl)
                 return response
             }
         }
 
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration request get_config")
+        if (causeException != null) {
+            throw IntegrationException(causeException)
+        } else {
+            throw IntegrationException("Error calling integration request get_config")
+        }
+    }
+
+    /**
+     * Update this repository's [server] with information from a [GetConfigResponse] like original
+     * name and core version.
+     */
+    private fun updateServerWithConfig(config: GetConfigResponse) {
+        serverManager.updateServer(
+            server.copy(
+                _name = config.locationName,
+                _version = config.version,
+                connection = server.connection.copy(
+                    cloudUrl = config.remoteUiUrl,
+                    cloudhookUrl = config.cloudhookUrl
+                )
+            )
+        )
     }
 
     override suspend fun getServices(): List<Service>? {
@@ -592,11 +562,52 @@ class IntegrationRepositoryImpl @Inject constructor(
         }?.toList()
     }
 
-    override suspend fun getConversation(speech: String): String? {
-        // TODO: Also send back conversation ID for dialogue
-        val response = webSocketRepository.getConversation(speech)
+    override suspend fun getAssistResponse(text: String, pipelineId: String?, conversationId: String?): Flow<AssistPipelineEvent>? {
+        return if (server.version?.isAtLeast(2023, 5, 0) == true) {
+            webSocketRepository.runAssistPipelineForText(text, pipelineId, conversationId)
+        } else {
+            flow {
+                emit(AssistPipelineEvent(type = AssistPipelineEventType.RUN_START, data = null))
+                emit(AssistPipelineEvent(type = AssistPipelineEventType.INTENT_START, data = null))
+                val response = webSocketRepository.getConversation(text)
+                if (response != null) {
+                    emit(
+                        AssistPipelineEvent(
+                            type = AssistPipelineEventType.INTENT_END,
+                            data = AssistPipelineIntentEnd(response)
+                        )
+                    )
+                } else {
+                    emit(AssistPipelineEvent(type = AssistPipelineEventType.ERROR, data = null))
+                }
+                emit(AssistPipelineEvent(type = AssistPipelineEventType.RUN_END, data = null))
+            }
+        }
+    }
 
-        return response?.response?.speech?.plain?.get("speech")
+    override suspend fun getLastUsedPipelineId(): String? =
+        localStorage.getString("${serverId}_$PREF_LAST_USED_PIPELINE_ID")
+
+    override suspend fun getLastUsedPipelineSttSupport(): Boolean =
+        localStorage.getBoolean("${serverId}_$PREF_LAST_USED_PIPELINE_STT")
+
+    override suspend fun setLastUsedPipeline(pipelineId: String, supportsStt: Boolean) {
+        localStorage.putString("${serverId}_$PREF_LAST_USED_PIPELINE_ID", pipelineId)
+        localStorage.putBoolean("${serverId}_$PREF_LAST_USED_PIPELINE_STT", supportsStt)
+    }
+
+    override suspend fun getThreadBorderAgentIds(): List<String> =
+        localStorage.getStringSet("${serverId}_$PREF_THREAD_BORDER_AGENT_IDS").orEmpty().toList()
+
+    override suspend fun setThreadBorderAgentIds(ids: List<String>) {
+        localStorage.putStringSet("${serverId}_$PREF_THREAD_BORDER_AGENT_IDS", ids.toSet())
+    }
+
+    override suspend fun getOrphanedThreadBorderAgentIds(): List<String> =
+        localStorage.getStringSet(PREF_ORPHANED_THREAD_BORDER_AGENT_IDS).orEmpty().toList()
+
+    override suspend fun clearOrphanedThreadBorderAgentIds() {
+        localStorage.remove(PREF_ORPHANED_THREAD_BORDER_AGENT_IDS)
     }
 
     override suspend fun getEntities(): List<Entity<Any>>? {
@@ -617,7 +628,7 @@ class IntegrationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getEntity(entityId: String): Entity<Map<String, Any>>? {
-        val url = urlRepository.getUrl()?.toHttpUrlOrNull()
+        val url = server.connection.getUrl()?.toHttpUrlOrNull()
         if (url == null) {
             Log.e(TAG, "Unable to register device due to missing URL")
             return null
@@ -625,7 +636,7 @@ class IntegrationRepositoryImpl @Inject constructor(
 
         val response = integrationService.getState(
             url.newBuilder().addPathSegments("api/states/$entityId").build(),
-            authenticationRepository.buildBearerToken()
+            serverManager.authenticationRepository(serverId).buildBearerToken()
         )
         return Entity(
             response.entityId,
@@ -653,29 +664,53 @@ class IntegrationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity<*>>? {
-        return webSocketRepository.getStateChanges(entityIds)
-            ?.filter { it.toState != null }
-            ?.map {
-                Entity(
-                    it.toState!!.entityId,
-                    it.toState.state,
-                    it.toState.attributes,
-                    it.toState.lastChanged,
-                    it.toState.lastUpdated,
-                    it.toState.context
-                )
-            }
+        return if (server.user.isAdmin == true) {
+            webSocketRepository.getStateChanges(entityIds)
+                ?.filter { it.toState != null }
+                ?.map {
+                    Entity(
+                        it.toState!!.entityId,
+                        it.toState.state,
+                        it.toState.attributes,
+                        it.toState.lastChanged,
+                        it.toState.lastUpdated,
+                        it.toState.context
+                    )
+                }
+        } else {
+            webSocketRepository.getStateChanges()
+                ?.filter { it.newState != null && entityIds.contains(it.entityId) }
+                ?.map {
+                    Entity(
+                        it.newState!!.entityId,
+                        it.newState.state,
+                        it.newState.attributes,
+                        it.newState.lastChanged,
+                        it.newState.lastUpdated,
+                        it.newState.context
+                    )
+                }
+        }
     }
 
     override suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>) {
-        val canRegisterCategoryStateClass = isHomeAssistantVersionAtLeast(2021, 11, 0)
-        val canRegisterEntityDisabledState = isHomeAssistantVersionAtLeast(2022, 6, 0)
-        val canRegisterDeviceClassDistance = isHomeAssistantVersionAtLeast(2022, 10, 0)
+        // Version is read from server variable (cached) to prevent multiple failed requests in a
+        // row and very long suspend if server is offline for a longer period of time. This function
+        // will only be called from other places which already refresh the config + version.
+        val canRegisterCategoryStateClass = server.version?.isAtLeast(2021, 11, 0) == true
+        val canRegisterEntityDisabledState = server.version?.isAtLeast(2022, 6, 0) == true
+        val canRegisterDeviceClassDistance = server.version?.isAtLeast(2022, 10, 0) == true
         val integrationRequest = IntegrationRequest(
             "register_sensor",
             SensorRequest(
                 sensorRegistration.uniqueId,
-                if (canRegisterEntityDisabledState && sensorRegistration.disabled) null else sensorRegistration.state,
+                if (canRegisterEntityDisabledState && sensorRegistration.disabled) {
+                    null
+                } else if (sensorRegistration.state is String) {
+                    sensorRegistration.state.ifBlank { null }
+                } else {
+                    sensorRegistration.state
+                },
                 sensorRegistration.type,
                 sensorRegistration.icon,
                 sensorRegistration.attributes,
@@ -692,7 +727,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         )
 
         var causeException: Exception? = null
-        for (it in urlRepository.getApiUrls()) {
+        for (it in server.connection.getApiUrls()) {
             try {
                 integrationService.callWebhook(it.toHttpUrlOrNull()!!, integrationRequest).let {
                     // If we created sensor or it already exists
@@ -705,8 +740,11 @@ class IntegrationRepositoryImpl @Inject constructor(
                 // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
             }
         }
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration request register_sensor")
+        if (causeException != null) {
+            throw IntegrationException(causeException)
+        } else {
+            throw IntegrationException("Error calling integration request register_sensor")
+        }
     }
 
     override suspend fun updateSensors(sensors: Array<SensorRegistration<Any>>): Boolean {
@@ -715,7 +753,7 @@ class IntegrationRepositoryImpl @Inject constructor(
             sensors.map {
                 SensorRequest(
                     it.uniqueId,
-                    it.state,
+                    if (it.state is String) it.state.ifBlank { null } else it.state,
                     it.type,
                     it.icon,
                     it.attributes
@@ -724,7 +762,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         )
 
         var causeException: Exception? = null
-        for (it in urlRepository.getApiUrls()) {
+        for (it in server.connection.getApiUrls()) {
             try {
                 integrationService.updateSensors(it.toHttpUrlOrNull()!!, integrationRequest).let {
                     it.forEach { (_, response) ->
@@ -740,15 +778,18 @@ class IntegrationRepositoryImpl @Inject constructor(
             }
         }
 
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration update_sensor_states")
+        if (causeException != null) {
+            throw IntegrationException(causeException)
+        } else {
+            throw IntegrationException("Error calling integration update_sensor_states")
+        }
     }
 
     override suspend fun shouldNotifySecurityWarning(): Boolean {
         val current = System.currentTimeMillis()
-        val next = localStorage.getLong(PREF_SEC_WARNING_NEXT) ?: 0
+        val next = localStorage.getLong("${serverId}_$PREF_SEC_WARNING_NEXT") ?: 0
         return if (current > next) {
-            localStorage.putLong(PREF_SEC_WARNING_NEXT, current + (86400000)) // 24 hours
+            localStorage.putLong("${serverId}_$PREF_SEC_WARNING_NEXT", current + (86400000)) // 24 hours
             true
         } else {
             false
@@ -759,7 +800,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         val oldDeviceRegistration = getRegistration()
         val pushToken = deviceRegistration.pushToken ?: oldDeviceRegistration.pushToken
 
-        val appData = mutableMapOf<String, Any>("push_websocket_channel" to true)
+        val appData = mutableMapOf<String, Any>("push_websocket_channel" to deviceRegistration.pushWebsocket)
         if (!pushToken.isNullOrBlank()) {
             appData["push_url"] = PUSH_URL
             appData["push_token"] = pushToken

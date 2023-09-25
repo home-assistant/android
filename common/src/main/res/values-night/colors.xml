@@ -5,6 +5,7 @@
     <color name="colorDialogTitle">@android:color/white</color>
     <color name="colorBackground">#1c1c1c</color>
     <color name="colorOnBackground">#e1e1e1</color>
+    <color name="colorSurface">#121212</color>
     <color name="colorPrimary">#03A9F4</color>
     <color name="colorPrimaryDark">#111111</color>
     <color name="colorAccent">#03A9F4</color>
@@ -22,4 +23,6 @@
     <color name="colorActionBarPopupBackground">#2B2B2B</color>
     <color name="colorLaunchScreenBackground">#111111</color>
     <color name="colorCodeBackground">#282828</color>
+    <color name="colorOnSurfaceVariant">#CAC4D0</color> <!-- M3 On Surface Variant -->
+    <color name="colorBottomSheetHandle">#66CAC4D0</color> <!-- M3 On Surface Variant 40% opacity -->
 </resources>

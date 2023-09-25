@@ -1,24 +1,33 @@
 package io.homeassistant.companion.android.settings.sensor
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.ComposeView
+import androidx.core.net.toUri
+import androidx.core.view.MenuHost
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.accompanist.themeadapter.material.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.LocationPermissionInfoHandler
 import io.homeassistant.companion.android.settings.sensor.views.SensorDetailView
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class SensorDetailFragment : Fragment() {
@@ -33,28 +42,25 @@ class SensorDetailFragment : Fragment() {
 
     val viewModel: SensorDetailViewModel by viewModels()
 
+    private var requestForServer: Int? = null
     private val activityResultRequest = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        viewModel.onActivityResult()
+        viewModel.onActivityResult(requestForServer)
     }
     private val permissionsRequest = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-        viewModel.onPermissionsResult(it)
+        viewModel.onPermissionsResult(it, requestForServer)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setHasOptionsMenu(true)
-    }
-
-    override fun onPrepareOptionsMenu(menu: Menu) {
-        super.onPrepareOptionsMenu(menu)
-        menu.setGroupVisible(R.id.senor_detail_toolbar_group, true)
-        menu.removeItem(R.id.action_filter)
-        menu.removeItem(R.id.action_search)
-
-        menu.findItem(R.id.get_help)?.let {
-            val docsLink = viewModel.basicSensor?.docsLink ?: viewModel.sensorManager?.docsLink()
-            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(docsLink))
-            it.isVisible = docsLink != null // should always be true
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                launch {
+                    viewModel.serversShowExpand.collect { activity?.invalidateMenu() }
+                }
+                launch {
+                    viewModel.serversDoExpand.collect { activity?.invalidateMenu() }
+                }
+            }
         }
     }
 
@@ -68,7 +74,7 @@ class SensorDetailFragment : Fragment() {
                 MdcTheme {
                     SensorDetailView(
                         viewModel = viewModel,
-                        onSetEnabled = { enable -> viewModel.setEnabled(enable) },
+                        onSetEnabled = { enable, serverId -> viewModel.setEnabled(enable, serverId) },
                         onToggleSettingSubmitted = { setting -> viewModel.setSetting(setting) },
                         onDialogSettingClicked = { setting -> viewModel.onSettingWithDialogPressed(setting) },
                         onDialogSettingSubmitted = { state -> viewModel.submitSettingWithDialog(state) }
@@ -78,23 +84,58 @@ class SensorDetailFragment : Fragment() {
         }
     }
 
+    @SuppressLint("InlinedApi")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+        val menuHost: MenuHost = requireActivity()
+        menuHost.addMenuProvider(
+            object : MenuProvider {
+                override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                    menuInflater.inflate(R.menu.menu_fragment_sensordetail, menu)
+                }
 
-        viewModel.permissionRequests.observe(viewLifecycleOwner) { permissions ->
-            if (permissions.isEmpty()) return@observe
+                override fun onPrepareMenu(menu: Menu) {
+                    menu.findItem(R.id.action_sensor_expand)?.let {
+                        it.isVisible = viewModel.serversShowExpand.value && !viewModel.serversDoExpand.value
+                    }
+                    menu.findItem(R.id.action_sensor_collapse)?.let {
+                        it.isVisible = viewModel.serversShowExpand.value && viewModel.serversDoExpand.value
+                    }
+                    menu.findItem(R.id.get_help)?.let {
+                        val docsLink = viewModel.basicSensor?.docsLink ?: viewModel.sensorManager?.docsLink()
+                        it.isVisible = docsLink != null
+                        if (docsLink != null) {
+                            it.intent = Intent(Intent.ACTION_VIEW, docsLink.toUri())
+                        }
+                    }
+                }
+
+                override fun onMenuItemSelected(menuItem: MenuItem) = when (menuItem.itemId) {
+                    R.id.action_sensor_expand, R.id.action_sensor_collapse -> {
+                        viewModel.setServersExpanded(menuItem.itemId == R.id.action_sensor_expand)
+                        true
+                    }
+                    else -> false
+                }
+            },
+            viewLifecycleOwner,
+            Lifecycle.State.RESUMED
+        )
+
+        viewModel.permissionRequests.observe(viewLifecycleOwner) {
+            if (it == null || it.permissions.isNullOrEmpty()) return@observe
+            requestForServer = it.serverId
             when {
-                permissions.any { perm -> perm == Manifest.permission.BIND_NOTIFICATION_LISTENER_SERVICE } ->
+                it.permissions.any { perm -> perm == Manifest.permission.BIND_NOTIFICATION_LISTENER_SERVICE } ->
                     activityResultRequest.launch(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
-                permissions.any { perm -> perm == Manifest.permission.PACKAGE_USAGE_STATS } ->
+                it.permissions.any { perm -> perm == Manifest.permission.PACKAGE_USAGE_STATS } ->
                     activityResultRequest.launch(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
                 android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R ->
-                    if (permissions.size == 1 && permissions[0] == Manifest.permission.ACCESS_BACKGROUND_LOCATION) {
-                        permissionsRequest.launch(permissions)
+                    if (it.permissions.size == 1 && it.permissions[0] == Manifest.permission.ACCESS_BACKGROUND_LOCATION) {
+                        permissionsRequest.launch(it.permissions)
                     } else {
-                        permissionsRequest.launch(permissions.toSet().minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION).toTypedArray())
+                        permissionsRequest.launch(it.permissions.toSet().minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION).toTypedArray())
                     }
-                else -> permissionsRequest.launch(permissions)
+                else -> permissionsRequest.launch(it.permissions)
             }
         }
         viewModel.locationPermissionRequests.observe(viewLifecycleOwner) {
@@ -103,12 +144,16 @@ class SensorDetailFragment : Fragment() {
                     DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), it.sensors)
                 } else {
                     LocationPermissionInfoHandler.showLocationPermInfoDialogIfNeeded(
-                        requireContext(), it.permissions!!,
+                        requireContext(),
+                        it.permissions!!,
                         continueYesCallback = {
+                            requestForServer = it.serverId
                             permissionsRequest.launch(
                                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
                                     it.permissions.toSet().minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION).toTypedArray()
-                                } else it.permissions
+                                } else {
+                                    it.permissions
+                                }
                             )
                         }
                     )

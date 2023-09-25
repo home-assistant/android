@@ -46,7 +46,7 @@ import io.homeassistant.companion.android.util.compose.MdcAlertDialog
 import io.homeassistant.companion.android.widgets.button.ButtonWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.camera.CameraWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureActivity
-import io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidgetConfigureActivity
+import io.homeassistant.companion.android.widgets.mediaplayer.MediaPlayerControlsWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.template.TemplateWidgetConfigureActivity
 
 enum class WidgetType(val widgetIcon: IIcon) {
@@ -80,7 +80,7 @@ fun ManageWidgetsView(
                 onClick = { expandedAddWidget = true }
             )
         }
-    }) {
+    }) { contentPadding ->
         if (expandedAddWidget) {
             val availableWidgets = listOf(
                 stringResource(R.string.widget_button_image_description) to WidgetType.BUTTON,
@@ -108,7 +108,7 @@ fun ManageWidgetsView(
         }
         LazyColumn(
             contentPadding = PaddingValues(all = 16.dp),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.padding(contentPadding).fillMaxWidth()
         ) {
             if (viewModel.buttonWidgetList.value.isEmpty() && viewModel.staticWidgetList.value.isEmpty() &&
                 viewModel.mediaWidgetList.value.isEmpty() && viewModel.templateWidgetList.value.isEmpty() &&
@@ -150,13 +150,13 @@ fun ManageWidgetsView(
                 widgetLabel = { item ->
                     val label = item.label
                     if (!label.isNullOrEmpty()) label else "${item.domain}.${item.service}"
-                },
+                }
             )
             widgetItems(
                 viewModel.cameraWidgetList.value,
                 widgetType = WidgetType.CAMERA,
                 title = R.string.camera_widgets,
-                widgetLabel = { item -> item.entityId },
+                widgetLabel = { item -> item.entityId }
             )
             widgetItems(
                 viewModel.staticWidgetList.value,
@@ -165,7 +165,7 @@ fun ManageWidgetsView(
                 widgetLabel = { item ->
                     val label = item.label
                     if (!label.isNullOrEmpty()) label else "${item.entityId} ${item.stateSeparator} ${item.attributeIds.orEmpty()}"
-                },
+                }
             )
             widgetItems(
                 viewModel.mediaWidgetList.value,
@@ -174,13 +174,13 @@ fun ManageWidgetsView(
                 widgetLabel = { item ->
                     val label = item.label
                     if (!label.isNullOrEmpty()) label else item.entityId
-                },
+                }
             )
             widgetItems(
                 viewModel.templateWidgetList.value,
                 widgetType = WidgetType.TEMPLATE,
                 title = R.string.template_widgets,
-                widgetLabel = { item -> item.template },
+                widgetLabel = { item -> item.template }
             )
         }
     }
@@ -239,7 +239,7 @@ private fun PopupWidgetRow(
 private fun WidgetRow(
     widgetLabel: String,
     widgetId: Int,
-    widgetType: WidgetType,
+    widgetType: WidgetType
 ) {
     val context = LocalContext.current
     Row {

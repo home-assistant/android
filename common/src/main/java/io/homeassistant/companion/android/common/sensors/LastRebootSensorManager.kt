@@ -4,9 +4,11 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.os.SystemClock
 import android.util.Log
+import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
+import io.homeassistant.companion.android.database.sensor.toSensorWithAttributes
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -36,8 +38,6 @@ class LastRebootSensorManager : SensorManager {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#last-reboot-sensor"
     }
-    override val enabledByDefault: Boolean
-        get() = false
     override val name: Int
         get() = commonR.string.sensor_name_last_reboot
 
@@ -57,15 +57,16 @@ class LastRebootSensorManager : SensorManager {
 
     @SuppressLint("SimpleDateFormat")
     private fun updateLastReboot(context: Context) {
-        if (!isEnabled(context, lastRebootSensor.id))
+        if (!isEnabled(context, lastRebootSensor)) {
             return
+        }
 
         var timeInMillis = 0L
         var local = ""
-        var utc = "unavailable"
+        var utc = STATE_UNAVAILABLE
 
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
-        val fullSensor = sensorDao.getFull(lastRebootSensor.id)
+        val fullSensor = sensorDao.getFull(lastRebootSensor.id).toSensorWithAttributes()
         val sensorSetting = sensorDao.getSettings(lastRebootSensor.id)
         val lastTimeMillis = fullSensor?.attributes?.firstOrNull { it.name == TIME_MILLISECONDS }?.value?.toLongOrNull() ?: 0L
         val settingDeadband = sensorSetting.firstOrNull { it.name == SETTING_DEADBAND }?.value?.toIntOrNull() ?: 60000
@@ -73,8 +74,9 @@ class LastRebootSensorManager : SensorManager {
         try {
             timeInMillis = System.currentTimeMillis() - SystemClock.elapsedRealtime()
             val diffMillis = (timeInMillis - lastTimeMillis).absoluteValue
-            if (lastTimeMillis != 0L && settingDeadband > diffMillis)
+            if (lastTimeMillis != 0L && settingDeadband > diffMillis) {
                 return
+            }
             val cal: Calendar = GregorianCalendar()
             cal.timeInMillis = timeInMillis
             local = cal.time.toString()

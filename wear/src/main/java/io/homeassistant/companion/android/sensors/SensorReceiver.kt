@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.sensors
 import android.annotation.SuppressLint
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.content.Intent
 import android.media.AudioManager
@@ -13,6 +14,7 @@ import androidx.core.app.TaskStackBuilder
 import androidx.core.net.toUri
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.common.sensors.AndroidOsSensorManager
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.sensors.BatterySensorManager
 import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
@@ -53,6 +55,7 @@ class SensorReceiver : SensorReceiverBase() {
     companion object {
         const val TAG = "SensorReceiver"
         private val allManager = listOf(
+            AndroidOsSensorManager(),
             AppSensorManager(),
             AudioSensorManager(),
             BatterySensorManager(),
@@ -80,10 +83,11 @@ class SensorReceiver : SensorReceiverBase() {
             TrafficStatsManager(),
             WetModeSensorManager()
         )
-        val MANAGERS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
+        val MANAGERS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             allManager.plus(HealthServicesSensorManager())
-        else
+        } else {
             allManager
+        }
 
         const val ACTION_REQUEST_SENSORS_UPDATE =
             "io.homeassistant.companion.android.background.REQUEST_SENSORS_UPDATE"
@@ -109,7 +113,10 @@ class SensorReceiver : SensorReceiverBase() {
         AudioManager.ACTION_SPEAKERPHONE_STATE_CHANGED to AudioSensorManager.speakerphoneState.id,
         AudioManager.RINGER_MODE_CHANGED_ACTION to AudioSensorManager.audioSensor.id,
         "com.google.android.clockwork.actions.WET_MODE_STARTED" to WetModeSensorManager.wetModeSensor.id,
-        "com.google.android.clockwork.actions.WET_MODE_ENDED" to WetModeSensorManager.wetModeSensor.id
+        "com.google.android.clockwork.actions.WET_MODE_ENDED" to WetModeSensorManager.wetModeSensor.id,
+        "android.bluetooth.device.action.ACL_CONNECTED" to BluetoothSensorManager.bluetoothConnection.id,
+        "android.bluetooth.device.action.ACL_DISCONNECTED" to BluetoothSensorManager.bluetoothConnection.id,
+        BluetoothAdapter.ACTION_STATE_CHANGED to BluetoothSensorManager.bluetoothState.id
     )
 
     override fun getSensorSettingsIntent(

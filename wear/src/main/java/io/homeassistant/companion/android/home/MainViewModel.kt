@@ -1,15 +1,21 @@
 package io.homeassistant.companion.android.home
 
 import android.app.Application
+import android.content.ComponentName
+import android.content.pm.PackageManager
 import android.util.Log
 import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
@@ -20,12 +26,16 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.En
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.database.sensor.SensorDao
+import io.homeassistant.companion.android.database.wear.CameraTile
+import io.homeassistant.companion.android.database.wear.CameraTileDao
 import io.homeassistant.companion.android.database.wear.FavoriteCaches
 import io.homeassistant.companion.android.database.wear.FavoriteCachesDao
 import io.homeassistant.companion.android.database.wear.FavoritesDao
+import io.homeassistant.companion.android.database.wear.getAll
 import io.homeassistant.companion.android.database.wear.getAllFlow
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.util.RegistriesDataHandler
+import io.homeassistant.companion.android.util.throttleLatest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
@@ -40,6 +50,7 @@ class MainViewModel @Inject constructor(
     private val favoritesDao: FavoritesDao,
     private val favoriteCachesDao: FavoriteCachesDao,
     private val sensorsDao: SensorDao,
+    private val cameraTileDao: CameraTileDao,
     application: Application
 ) : AndroidViewModel(application) {
 
@@ -50,6 +61,8 @@ class MainViewModel @Inject constructor(
     enum class LoadingState {
         LOADING, READY, ERROR
     }
+
+    private val app = application
 
     private lateinit var homePresenter: HomePresenter
     private var areaRegistry: List<AreaRegistryResponse>? = null
@@ -76,8 +89,12 @@ class MainViewModel @Inject constructor(
     val favoriteEntityIds = favoritesDao.getAllFlow().collectAsState()
     private val favoriteCaches = favoriteCachesDao.getAll()
 
-    var shortcutEntities = mutableStateListOf<SimplifiedEntity>()
+    val shortcutEntitiesMap = mutableStateMapOf<Int?, SnapshotStateList<SimplifiedEntity>>()
+
+    val cameraTiles = cameraTileDao.getAllFlow().collectAsState()
+    var cameraEntitiesMap = mutableStateMapOf<String, SnapshotStateList<Entity<*>>>()
         private set
+
     var areas = mutableListOf<AreaRegistryResponse>()
         private set
 
@@ -108,6 +125,10 @@ class MainViewModel @Inject constructor(
         private set
     var templateTileRefreshInterval = mutableStateOf(0)
         private set
+    var isFavoritesOnly by mutableStateOf(false)
+        private set
+    var isAssistantAppAllowed by mutableStateOf(true)
+        private set
 
     fun supportedDomains(): List<String> = HomePresenterImpl.supportedDomains
 
@@ -123,20 +144,36 @@ class MainViewModel @Inject constructor(
             if (!homePresenter.isConnected()) {
                 return@launch
             }
-            shortcutEntities.addAll(homePresenter.getTileShortcuts())
+            loadShortcutTileEntities()
             isHapticEnabled.value = homePresenter.getWearHapticFeedback()
             isToastEnabled.value = homePresenter.getWearToastConfirmation()
             isShowShortcutTextEnabled.value = homePresenter.getShowShortcutText()
             templateTileContent.value = homePresenter.getTemplateTileContent()
             templateTileRefreshInterval.value = homePresenter.getTemplateTileRefreshInterval()
+            isFavoritesOnly = homePresenter.getWearFavoritesOnly()
+
+            val assistantAppComponent = ComponentName(
+                BuildConfig.APPLICATION_ID,
+                "io.homeassistant.companion.android.conversation.AssistantActivity"
+            )
+            isAssistantAppAllowed =
+                app.packageManager.getComponentEnabledSetting(assistantAppComponent) != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+        }
+    }
+
+    fun loadShortcutTileEntities() {
+        viewModelScope.launch {
+            val map = homePresenter.getAllTileShortcuts().mapValues { (_, entities) ->
+                entities.toMutableStateList()
+            }
+            shortcutEntitiesMap.clear()
+            shortcutEntitiesMap.putAll(map)
         }
     }
 
     fun loadEntities() {
+        if (!homePresenter.isConnected()) return
         viewModelScope.launch {
-            if (!homePresenter.isConnected()) {
-                return@launch
-            }
             try {
                 // Load initial state
                 loadingState.value = LoadingState.LOADING
@@ -171,16 +208,19 @@ class MainViewModel @Inject constructor(
     }
 
     suspend fun updateUI() = withContext(Dispatchers.IO) {
+        if (!homePresenter.isConnected()) return@withContext
         val getAreaRegistry = async { homePresenter.getAreaRegistry() }
         val getDeviceRegistry = async { homePresenter.getDeviceRegistry() }
         val getEntityRegistry = async { homePresenter.getEntityRegistry() }
         val getEntities = async { homePresenter.getEntities() }
 
-        areaRegistry = getAreaRegistry.await()?.also {
-            areas.clear()
-            areas.addAll(it)
+        if (!isFavoritesOnly) {
+            areaRegistry = getAreaRegistry.await()?.also {
+                areas.clear()
+                areas.addAll(it)
+            }
+            deviceRegistry = getDeviceRegistry.await()
         }
-        deviceRegistry = getDeviceRegistry.await()
         entityRegistry = getEntityRegistry.await()
 
         _supportedEntities.value = getSupportedEntities()
@@ -188,23 +228,33 @@ class MainViewModel @Inject constructor(
         getEntities.await()?.also {
             entities.clear()
             it.forEach { state -> updateEntityStates(state) }
-        }
-        updateEntityDomains()
-    }
 
-    suspend fun entityUpdates() {
-        if (!homePresenter.isConnected())
-            return
-        homePresenter.getEntityUpdates(supportedEntities.value)?.collect {
-            updateEntityStates(it)
+            // Special list: camera entities
+            val cameraEntities = it.filter { entity -> entity.domain == "camera" }
+            cameraEntitiesMap["camera"] = mutableStateListOf<Entity<*>>().apply { addAll(cameraEntities) }
+        }
+        if (!isFavoritesOnly) {
             updateEntityDomains()
         }
     }
 
-    suspend fun areaUpdates() {
-        if (!homePresenter.isConnected())
+    suspend fun entityUpdates() {
+        if (!homePresenter.isConnected()) {
             return
-        homePresenter.getAreaRegistryUpdates()?.collect {
+        }
+        homePresenter.getEntityUpdates(supportedEntities.value)?.collect {
+            updateEntityStates(it)
+            if (!isFavoritesOnly) {
+                updateEntityDomains()
+            }
+        }
+    }
+
+    suspend fun areaUpdates() {
+        if (!homePresenter.isConnected() || isFavoritesOnly) {
+            return
+        }
+        homePresenter.getAreaRegistryUpdates()?.throttleLatest(1000)?.collect {
             areaRegistry = homePresenter.getAreaRegistry()
             areas.clear()
             areaRegistry?.let {
@@ -215,18 +265,20 @@ class MainViewModel @Inject constructor(
     }
 
     suspend fun deviceUpdates() {
-        if (!homePresenter.isConnected())
+        if (!homePresenter.isConnected() || isFavoritesOnly) {
             return
-        homePresenter.getDeviceRegistryUpdates()?.collect {
+        }
+        homePresenter.getDeviceRegistryUpdates()?.throttleLatest(1000)?.collect {
             deviceRegistry = homePresenter.getDeviceRegistry()
             updateEntityDomains()
         }
     }
 
     suspend fun entityRegistryUpdates() {
-        if (!homePresenter.isConnected())
+        if (!homePresenter.isConnected()) {
             return
-        homePresenter.getEntityRegistryUpdates()?.collect {
+        }
+        homePresenter.getEntityRegistryUpdates()?.throttleLatest(1000)?.collect {
             entityRegistry = homePresenter.getEntityRegistry()
             _supportedEntities.value = getSupportedEntities()
             updateEntityDomains()
@@ -299,9 +351,9 @@ class MainViewModel @Inject constructor(
             homePresenter.onBrightnessChanged(entityId, brightness)
         }
     }
-    fun setColorTemp(entityId: String, colorTemp: Float) {
+    fun setColorTemp(entityId: String, colorTemp: Float, isKelvin: Boolean) {
         viewModelScope.launch {
-            homePresenter.onColorTempChanged(entityId, colorTemp)
+            homePresenter.onColorTempChanged(entityId, colorTemp, isKelvin)
         }
     }
 
@@ -311,10 +363,12 @@ class MainViewModel @Inject constructor(
                 .first { basicSensor -> basicSensor.id == sensorId }
             updateSensorEntity(sensorsDao, basicSensor, isEnabled)
 
-            if (isEnabled) try {
-                sensorManager.requestSensorUpdate(getApplication())
-            } catch (e: Exception) {
-                Log.e(TAG, "Exception while requesting update for sensor $sensorId", e)
+            if (isEnabled) {
+                try {
+                    sensorManager.requestSensorUpdate(getApplication())
+                } catch (e: Exception) {
+                    Log.e(TAG, "Exception while requesting update for sensor $sensorId", e)
+                }
             }
         }
     }
@@ -324,8 +378,10 @@ class MainViewModel @Inject constructor(
         basicSensor: SensorManager.BasicSensor,
         isEnabled: Boolean
     ) {
-        sensorDao.setSensorsEnabled(listOf(basicSensor.id), isEnabled)
-        SensorReceiver.updateAllSensors(getApplication())
+        homePresenter.getServerId()?.let { serverId ->
+            sensorDao.setSensorsEnabled(listOf(basicSensor.id), serverId, isEnabled)
+            SensorReceiver.updateAllSensors(getApplication())
+        }
     }
 
     fun updateAllSensors(sensorManager: SensorManager) {
@@ -342,7 +398,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             for (manager in SensorReceiver.MANAGERS) {
                 for (basicSensor in manager.getAvailableSensors(getApplication())) {
-                    manager.isEnabled(getApplication(), basicSensor.id)
+                    manager.isEnabled(getApplication(), basicSensor)
                 }
             }
         }
@@ -363,25 +419,40 @@ class MainViewModel @Inject constructor(
     fun clearFavorites() {
         viewModelScope.launch {
             favoritesDao.deleteAll()
+            setWearFavoritesOnly(false)
         }
     }
 
-    fun setTileShortcut(index: Int, entity: SimplifiedEntity) {
+    fun setCameraTileEntity(tileId: Int, entityId: String) = viewModelScope.launch {
+        val current = cameraTileDao.get(tileId)
+        val updated = current?.copy(entityId = entityId) ?: CameraTile(id = tileId, entityId = entityId)
+        cameraTileDao.add(updated)
+    }
+
+    fun setCameraTileRefreshInterval(tileId: Int, interval: Long) = viewModelScope.launch {
+        val current = cameraTileDao.get(tileId)
+        val updated = current?.copy(refreshInterval = interval) ?: CameraTile(id = tileId, refreshInterval = interval)
+        cameraTileDao.add(updated)
+    }
+
+    fun setTileShortcut(tileId: Int?, index: Int, entity: SimplifiedEntity) {
         viewModelScope.launch {
+            val shortcutEntities = shortcutEntitiesMap[tileId]!!
             if (index < shortcutEntities.size) {
                 shortcutEntities[index] = entity
             } else {
                 shortcutEntities.add(entity)
             }
-            homePresenter.setTileShortcuts(shortcutEntities)
+            homePresenter.setTileShortcuts(tileId, entities = shortcutEntities)
         }
     }
 
-    fun clearTileShortcut(index: Int) {
+    fun clearTileShortcut(tileId: Int?, index: Int) {
         viewModelScope.launch {
+            val shortcutEntities = shortcutEntitiesMap[tileId]!!
             if (index < shortcutEntities.size) {
                 shortcutEntities.removeAt(index)
-                homePresenter.setTileShortcuts(shortcutEntities)
+                homePresenter.setTileShortcuts(tileId, entities = shortcutEntities)
             }
         }
     }
@@ -407,10 +478,10 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun setTemplateTileContent(content: String) {
+    fun setWearFavoritesOnly(enabled: Boolean) {
         viewModelScope.launch {
-            homePresenter.setTemplateTileContent(content)
-            templateTileContent.value = content
+            homePresenter.setWearFavoritesOnly(enabled)
+            isFavoritesOnly = enabled
         }
     }
 
@@ -432,6 +503,10 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             favoritesDao.delete(entityId)
             favoriteCachesDao.delete(entityId)
+
+            if (favoritesDao.getAll().isEmpty() && isFavoritesOnly) {
+                setWearFavoritesOnly(false)
+            }
         }
     }
 
@@ -446,6 +521,19 @@ class MainViewModel @Inject constructor(
             val name = attributes["friendly_name"]?.toString() ?: entityId
             favoriteCachesDao.add(FavoriteCaches(entityId, name, icon))
         }
+    }
+
+    fun setAssistantApp(allowed: Boolean) {
+        val assistantAppComponent = ComponentName(
+            BuildConfig.APPLICATION_ID,
+            "io.homeassistant.companion.android.conversation.AssistantActivity"
+        )
+        app.packageManager.setComponentEnabledSetting(
+            assistantAppComponent,
+            if (allowed) PackageManager.COMPONENT_ENABLED_STATE_DEFAULT else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+            PackageManager.DONT_KILL_APP
+        )
+        isAssistantAppAllowed = allowed
     }
 
     fun logout() {

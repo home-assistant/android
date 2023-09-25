@@ -7,17 +7,15 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.wear.compose.foundation.lazy.items
+import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
-import androidx.wear.compose.material.ScalingLazyListState
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.ToggleChipDefaults
-import androidx.wear.compose.material.items
-import androidx.wear.compose.material.rememberScalingLazyListState
 import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.home.MainViewModel
@@ -38,15 +36,16 @@ fun SetFavoritesView(
     // Remember expanded state of each header
     val expandedStates = rememberExpandedStates(mainViewModel.supportedDomains())
 
-    val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
+    val scalingLazyListState = rememberScalingLazyListState()
 
     WearAppTheme {
         Scaffold(
             positionIndicator = {
-                if (scalingLazyListState.isScrollInProgress)
+                if (scalingLazyListState.isScrollInProgress) {
                     PositionIndicator(scalingLazyListState = scalingLazyListState)
+                }
             },
-            timeText = { TimeText(!scalingLazyListState.isScrollInProgress) }
+            timeText = { TimeText(scalingLazyListState = scalingLazyListState) }
         ) {
             ThemeLazyColumn(
                 state = scalingLazyListState
@@ -100,7 +99,7 @@ private fun FavoriteToggleChip(
             .fillMaxWidth(),
         appIcon = {
             Image(
-                asset = iconBitmap ?: CommunityMaterial.Icon.cmd_bookmark,
+                asset = iconBitmap,
                 colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
             )
         },
@@ -114,10 +113,11 @@ private fun FavoriteToggleChip(
         toggleControl = {
             Icon(
                 imageVector = ToggleChipDefaults.switchIcon(checked),
-                contentDescription = if (checked)
+                contentDescription = if (checked) {
                     stringResource(commonR.string.enabled)
-                else
+                } else {
                     stringResource(commonR.string.disabled)
+                }
             )
         }
     )

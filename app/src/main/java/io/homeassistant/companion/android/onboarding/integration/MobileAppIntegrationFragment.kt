@@ -4,7 +4,6 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -13,6 +12,7 @@ import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.content.getSystemService
@@ -30,10 +30,8 @@ import io.homeassistant.companion.android.common.R as commonR
 @AndroidEntryPoint
 class MobileAppIntegrationFragment : Fragment() {
 
-    companion object {
-        private const val BACKGROUND_REQUEST = 99
-
-        private const val LOCATION_REQUEST_CODE = 0
+    private val requestLocationPermissions = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+        onLocationPermissionResult(it)
     }
 
     private var dialog: AlertDialog? = null
@@ -61,7 +59,6 @@ class MobileAppIntegrationFragment : Fragment() {
     private fun onLocationTrackingChanged(isChecked: Boolean) {
         var checked = isChecked
         if (isChecked) {
-
             val locationEnabled = DisabledLocationHandler.isLocationEnabled(requireContext())
             val permissionOk = LocationSensorManager().checkPermission(
                 requireContext(),
@@ -93,54 +90,43 @@ class MobileAppIntegrationFragment : Fragment() {
 
     private fun requestPermissions(sensorId: String) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            this@MobileAppIntegrationFragment.requestPermissions(
+            requestLocationPermissions.launch(
                 LocationSensorManager().requiredPermissions(sensorId)
                     .toList().minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-                    .toTypedArray(),
-                LOCATION_REQUEST_CODE
+                    .toTypedArray()
             )
         } else {
-            this@MobileAppIntegrationFragment.requestPermissions(
-                LocationSensorManager().requiredPermissions(sensorId),
-                LOCATION_REQUEST_CODE
-            )
+            requestLocationPermissions.launch(LocationSensorManager().requiredPermissions(sensorId))
         }
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
+    private fun onLocationPermissionResult(
+        results: Map<String, Boolean>
     ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
         dialog?.dismiss()
 
-        if (permissions.contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
+        if (
+            results[Manifest.permission.ACCESS_FINE_LOCATION] == true &&
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
         ) {
-            requestPermissions(
-                arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
-                LOCATION_REQUEST_CODE
-            )
+            requestLocationPermissions.launch(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION))
+            return
         }
 
-        if (requestCode == LOCATION_REQUEST_CODE) {
-            val hasPermission = grantResults.all { it == PackageManager.PERMISSION_GRANTED }
-            viewModel.setLocationTracking(hasPermission)
-            requestBackgroundAccess()
-        }
+        val hasPermission = results.values.all { it }
+        viewModel.setLocationTracking(hasPermission)
+        requestBackgroundAccess()
     }
 
     @SuppressLint("BatteryLife")
     private fun requestBackgroundAccess() {
-        val intent: Intent
         if (!isIgnoringBatteryOptimizations()) {
-            intent = Intent(
-                Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                Uri.parse("package:${activity?.packageName}")
+            startActivity(
+                Intent(
+                    Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                    Uri.parse("package:${activity?.packageName}")
+                )
             )
-            startActivityForResult(intent, BACKGROUND_REQUEST)
         }
     }
 

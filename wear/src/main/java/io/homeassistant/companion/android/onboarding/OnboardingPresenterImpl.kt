@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.onboarding
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.util.Log
@@ -13,9 +14,13 @@ import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.DataMapItem
 import dagger.hilt.android.qualifiers.ActivityContext
-import io.homeassistant.companion.android.BuildConfig
-import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
-import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.database.server.ServerConnectionInfo
+import io.homeassistant.companion.android.database.server.ServerSessionInfo
+import io.homeassistant.companion.android.database.server.ServerType
+import io.homeassistant.companion.android.database.server.ServerUserInfo
+import io.homeassistant.companion.android.util.UrlUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -26,10 +31,10 @@ import java.util.concurrent.Executors
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
+@SuppressLint("VisibleForTests") // https://issuetracker.google.com/issues/239451111
 class OnboardingPresenterImpl @Inject constructor(
     @ActivityContext context: Context,
-    private val authenticationUseCase: AuthenticationRepository,
-    private val urlUseCase: UrlRepository
+    private val serverManager: ServerManager
 ) : OnboardingPresenter {
     companion object {
         private const val TAG = "OnboardingPresenter"
@@ -47,17 +52,19 @@ class OnboardingPresenterImpl @Inject constructor(
         // ManualSetupPresenterImpl. Also a good starting point for manual URL if it is possible to
         // enter this on the device without the app in the future.
         mainScope.launch {
-            val request = OAuthRequest.Builder(context)
-                .setAuthProviderUrl(
-                    Uri.parse(
-                        authenticationUseCase.buildAuthenticationUrl(
-                            url,
-                            OAuthRequest.WEAR_REDIRECT_URL_PREFIX + BuildConfig.APPLICATION_ID
-                        )
+            val request: OAuthRequest
+            try {
+                request = OAuthRequest.Builder(context)
+                    .setAuthProviderUrl(
+                        Uri.parse(UrlUtil.buildAuthenticationUrl(url))
                     )
-                )
-                .setCodeChallenge(CodeChallenge(codeVerifier))
-                .build()
+                    .setCodeChallenge(CodeChallenge(codeVerifier))
+                    .build()
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to build OAuthRequest", e)
+                view.showError(commonR.string.failed_unsupported)
+                return@launch
+            }
 
             authClient = RemoteAuthClient.create(context)
             authClient?.let {
@@ -129,17 +136,36 @@ class OnboardingPresenterImpl @Inject constructor(
     fun register(url: String, code: String) {
         mainScope.launch {
             view.showLoading()
+            var serverId: Int? = null
 
             try {
-                urlUseCase.saveUrl(url)
-                authenticationUseCase.registerAuthorizationCode(code)
+                val formattedUrl = UrlUtil.formattedUrlString(url)
+                val server = Server(
+                    _name = "",
+                    type = ServerType.TEMPORARY,
+                    connection = ServerConnectionInfo(
+                        externalUrl = formattedUrl
+                    ),
+                    session = ServerSessionInfo(),
+                    user = ServerUserInfo()
+                )
+                serverId = serverManager.addServer(server)
+                serverManager.authenticationRepository(serverId).registerAuthorizationCode(code)
             } catch (e: Exception) {
                 Log.e(TAG, "Exception during registration", e)
+                try {
+                    if (serverId != null) {
+                        serverManager.authenticationRepository(serverId).revokeSession()
+                        serverManager.removeServer(serverId)
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Can't revoke session", e)
+                }
                 view.showError(commonR.string.failed_registration)
                 return@launch
             }
 
-            view.startIntegration()
+            view.startIntegration(serverId)
         }
     }
 

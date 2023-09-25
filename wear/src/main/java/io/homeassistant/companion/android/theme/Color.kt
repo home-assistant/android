@@ -5,7 +5,7 @@ import androidx.wear.compose.material.Colors
 
 val Blue = Color(0xFF03A9F4)
 val BlueDark = Color(0xFF0288D1)
-val Yellow = Color(0xFFFDD835)
+val Yellow = Color(0xFFF6C344)
 val Orange = Color(0xFFFF9800)
 val Red = Color(0xFFD32F2F)
 

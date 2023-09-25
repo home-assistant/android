@@ -30,7 +30,7 @@ fun stringForDomain(domain: String, context: Context): String? =
         )
         )[domain]?.let { context.getString(it) }
 
-fun getIcon(icon: String?, domain: String, context: Context): IIcon? {
+fun getIcon(icon: String?, domain: String, context: Context): IIcon {
     val simpleEntity = Entity(
         "$domain.ha_android_placeholder",
         "",
@@ -48,8 +48,10 @@ fun onEntityClickedFeedback(isToastEnabled: Boolean, isHapticEnabled: Boolean, c
 }
 
 fun onEntityFeedback(isToastEnabled: Boolean, isHapticEnabled: Boolean, message: String, context: Context, haptic: HapticFeedback) {
-    if (isToastEnabled)
+    if (isToastEnabled) {
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-    if (isHapticEnabled)
+    }
+    if (isHapticEnabled) {
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+    }
 }

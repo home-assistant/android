@@ -24,9 +24,9 @@ class CookieJarCookieManagerShim : CookieJar {
     override fun loadForRequest(url: HttpUrl): List<Cookie> {
         val cookies: String = CookieManager.getInstance()
             ?.getCookie(url.toString()) ?: return emptyList()
-        return cookies.split("; ").map {
+        return cookies.split("; ").mapNotNull {
             Cookie.parse(url, it)
-        }.filterNotNull()
+        }
     }
 
     override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {

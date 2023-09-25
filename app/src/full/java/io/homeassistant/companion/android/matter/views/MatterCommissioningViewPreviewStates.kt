@@ -8,6 +8,7 @@ class MatterCommissioningViewPreviewStates :
     override val values = sequenceOf(
         MatterCommissioningViewModel.CommissioningFlowStep.NotRegistered,
         MatterCommissioningViewModel.CommissioningFlowStep.CheckingCore,
+        MatterCommissioningViewModel.CommissioningFlowStep.SelectServer,
         MatterCommissioningViewModel.CommissioningFlowStep.NotSupported,
         MatterCommissioningViewModel.CommissioningFlowStep.Confirmation,
         MatterCommissioningViewModel.CommissioningFlowStep.Working,

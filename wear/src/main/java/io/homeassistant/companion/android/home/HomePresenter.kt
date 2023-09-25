@@ -19,12 +19,13 @@ interface HomePresenter {
     suspend fun onEntityClicked(entityId: String, state: String)
     suspend fun onFanSpeedChanged(entityId: String, speed: Float)
     suspend fun onBrightnessChanged(entityId: String, brightness: Float)
-    suspend fun onColorTempChanged(entityId: String, colorTemp: Float)
+    suspend fun onColorTempChanged(entityId: String, colorTemp: Float, isKelvin: Boolean)
     fun onLogoutClicked()
     fun onInvalidAuthorization()
     fun onFinish()
 
-    suspend fun isConnected(): Boolean
+    fun isConnected(): Boolean
+    fun getServerId(): Int?
     fun getWebSocketState(): WebSocketState?
 
     suspend fun getEntities(): List<Entity<*>>?
@@ -37,8 +38,9 @@ interface HomePresenter {
     suspend fun getDeviceRegistryUpdates(): Flow<DeviceRegistryUpdatedEvent>?
     suspend fun getEntityRegistryUpdates(): Flow<EntityRegistryUpdatedEvent>?
 
-    suspend fun getTileShortcuts(): List<SimplifiedEntity>
-    suspend fun setTileShortcuts(entities: List<SimplifiedEntity>)
+    suspend fun getAllTileShortcuts(): Map<Int?, List<SimplifiedEntity>>
+    suspend fun getTileShortcuts(tileId: Int): List<SimplifiedEntity>
+    suspend fun setTileShortcuts(tileId: Int?, entities: List<SimplifiedEntity>)
 
     suspend fun getWearHapticFeedback(): Boolean
     suspend fun setWearHapticFeedback(enabled: Boolean)
@@ -47,7 +49,8 @@ interface HomePresenter {
     suspend fun getShowShortcutText(): Boolean
     suspend fun setShowShortcutTextEnabled(enabled: Boolean)
     suspend fun getTemplateTileContent(): String
-    suspend fun setTemplateTileContent(content: String)
     suspend fun getTemplateTileRefreshInterval(): Int
     suspend fun setTemplateTileRefreshInterval(interval: Int)
+    suspend fun getWearFavoritesOnly(): Boolean
+    suspend fun setWearFavoritesOnly(enabled: Boolean)
 }

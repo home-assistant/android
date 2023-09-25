@@ -5,9 +5,9 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
-import android.view.Menu
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.net.toUri
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
@@ -19,8 +19,8 @@ import com.google.android.gms.wearable.CapabilityInfo
 import com.google.android.gms.wearable.Node
 import com.google.android.gms.wearable.NodeClient
 import com.google.android.gms.wearable.Wearable
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.databinding.ActivitySettingsWearBinding
+import io.homeassistant.companion.android.settings.HelpMenuProvider
 import io.homeassistant.companion.android.settings.wear.views.SettingsWearMainView
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -41,19 +41,6 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
     private var wearNodesWithApp: Set<Node>? = null
     private var allConnectedNodes: List<Node>? = null
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.menu_activity_settings_wear, menu)
-        return true
-    }
-
-    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
-        menu?.findItem(R.id.get_help)?.let {
-            it.isVisible = true
-            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://companion.home-assistant.io/docs/wear-os/wear-os"))
-        }
-        return true
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -69,6 +56,8 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
         binding.remoteOpenButton.setOnClickListener {
             openPlayStoreOnWearDevicesWithoutApp()
         }
+
+        addMenuProvider(HelpMenuProvider("https://companion.home-assistant.io/docs/wear-os/wear-os".toUri()))
 
         // Perform the initial update of the UI
         updateUI()
@@ -115,7 +104,6 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
     }
 
     private suspend fun findWearDevicesWithApp() {
-
         try {
             val capabilityInfo = capabilityClient
                 .getCapability(CAPABILITY_WEAR_APP, CapabilityClient.FILTER_ALL)
@@ -135,7 +123,6 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
     }
 
     private suspend fun findAllWearDevices() {
-
         try {
             val connectedNodes = nodeClient.connectedNodes.await()
 
@@ -151,7 +138,6 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
     }
 
     private fun updateUI() {
-
         val wearNodesWithApp = wearNodesWithApp
         val allConnectedNodes = allConnectedNodes
 
@@ -185,7 +171,6 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
     }
 
     private fun openPlayStoreOnWearDevicesWithoutApp() {
-
         val wearNodesWithApp = wearNodesWithApp ?: return
         val allConnectedNodes = allConnectedNodes ?: return
 

@@ -1,31 +1,24 @@
 plugins {
-    id("com.android.application")
-    id("kotlin-android")
-    id("kotlin-kapt")
-    id("com.github.triplet.play")
-    kotlin("kapt")
-    id("dagger.hilt.android.plugin")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.kapt)
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.google.services)
 }
 
 android {
     namespace = "io.homeassistant.companion.android"
 
-    compileSdk = 33
+    compileSdk = libs.versions.androidSdk.compile.get().toInt()
 
     defaultConfig {
         applicationId = "io.homeassistant.companion.android"
-        minSdk = 26
-        targetSdk = 32
+        minSdk = libs.versions.androidSdk.wear.min.get().toInt()
+        targetSdk = libs.versions.androidSdk.wear.target.get().toInt()
 
-        versionName = System.getenv("VERSION") ?: "LOCAL"
+        versionName = project.version.toString()
         // We add 1 because the app and wear versions need to have different version codes.
         versionCode = (System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1) + 1
-
-        javaCompileOptions {
-            annotationProcessorOptions {
-                arguments(mapOf("room.incremental" to "true"))
-            }
-        }
     }
 
     buildFeatures {
@@ -34,12 +27,7 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.3.2"
-    }
-
-    compileOptions {
-        sourceCompatibility(JavaVersion.VERSION_11)
-        targetCompatibility(JavaVersion.VERSION_11)
+        kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
     }
 
     signingConfigs {
@@ -65,7 +53,12 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = libs.versions.javaVersion.get()
+    }
+
+    compileOptions {
+        sourceCompatibility(libs.versions.javaVersion.get())
+        targetCompatibility(libs.versions.javaVersion.get())
     }
 
     lint {
@@ -77,54 +70,60 @@ android {
     }
 }
 
-play {
-    serviceAccountCredentials.set(file("playStorePublishServiceCredentialsFile.json"))
-    track.set("internal")
-    resolutionStrategy.set(com.github.triplet.gradle.androidpublisher.ResolutionStrategy.IGNORE)
-    commit.set(false)
-}
-
 dependencies {
     implementation(project(":common"))
 
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.20")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.6.4")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
+    implementation(libs.kotlin.stdlib)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.coroutines.guava)
+    implementation(libs.kotlinx.coroutines.play.services)
 
-    implementation("com.google.android.material:material:1.7.0")
+    implementation(libs.material)
 
-    implementation("androidx.wear:wear:1.2.0")
-    implementation("com.google.android.gms:play-services-wearable:18.0.0")
-    implementation("androidx.wear:wear-input:1.2.0-alpha02")
-    implementation("androidx.wear:wear-remote-interactions:1.0.0")
-    implementation("androidx.wear:wear-phone-interactions:1.0.1")
+    implementation(libs.wear)
+    implementation(libs.core.ktx)
+    implementation(libs.play.services.wearable)
+    implementation(libs.wear.input)
+    implementation(libs.wear.remote.interactions)
+    implementation(libs.wear.phone.interactions)
 
-    implementation("com.google.dagger:hilt-android:2.44.2")
-    kapt("com.google.dagger:hilt-android-compiler:2.44.2")
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.android.compiler)
 
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.4")
-    implementation("com.squareup.okhttp3:okhttp:4.10.0")
+    implementation(libs.jackson.module.kotlin)
+    implementation(libs.okhttp)
 
-    implementation("com.mikepenz:iconics-core:5.4.0")
-    implementation("androidx.appcompat:appcompat:1.5.1")
-    implementation("com.mikepenz:community-material-typeface:7.0.96.0-kotlin@aar")
-    implementation("com.mikepenz:iconics-compose:5.4.0")
+    implementation(libs.iconics.core)
+    implementation(libs.appcompat)
+    implementation(libs.community.material.typeface)
+    implementation(libs.iconics.compose)
 
-    implementation("androidx.activity:activity-ktx:1.6.1")
-    implementation("androidx.activity:activity-compose:1.6.1")
-    implementation("androidx.compose.compiler:compiler:1.3.2")
-    implementation(platform("androidx.compose:compose-bom:2022.10.00"))
-    implementation("androidx.compose.foundation:foundation")
-    implementation("androidx.compose.ui:ui-tooling")
-    implementation("androidx.wear.compose:compose-foundation:1.1.1")
-    implementation("androidx.wear.compose:compose-material:1.1.1")
-    implementation("androidx.wear.compose:compose-navigation:1.1.1")
+    implementation(libs.activity.ktx)
+    implementation(libs.activity.compose)
+    implementation(libs.compose.compiler)
+    implementation(platform(libs.compose.bom))
+    implementation(libs.compose.foundation)
+    implementation(libs.compose.uiTooling)
+    implementation(libs.wear.compose.foundation)
+    implementation(libs.wear.compose.material)
+    implementation(libs.wear.compose.navigation)
 
-    implementation("com.google.guava:guava:31.1-android")
-    implementation("androidx.wear.tiles:tiles:1.1.0")
+    implementation(libs.bundles.horologist)
 
-    implementation("androidx.wear.watchface:watchface-complications-data-source-ktx:1.1.1")
+    implementation(libs.guava)
+    implementation(libs.bundles.wear.tiles)
 
-    implementation("androidx.health:health-services-client:1.0.0-beta02")
+    implementation(libs.androidx.watchface.complications.data.source.ktx)
+
+    implementation(libs.androidx.health.services.client)
+
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
+}
+
+// https://github.com/google/guava/releases/tag/v32.1.0: Reporting dependencies that overlap with Guava
+configurations.all {
+    resolutionStrategy.capabilitiesResolution.withCapability("com.google.guava:listenablefuture") {
+        select("com.google.guava:guava:0")
+    }
 }

@@ -8,6 +8,8 @@ import androidx.room.PrimaryKey
 data class CameraWidgetEntity(
     @PrimaryKey
     override val id: Int,
-    @ColumnInfo(name = "entityId")
+    @ColumnInfo(name = "server_id", defaultValue = "0")
+    override val serverId: Int,
+    @ColumnInfo(name = "entity_id")
     val entityId: String
 ) : WidgetEntity

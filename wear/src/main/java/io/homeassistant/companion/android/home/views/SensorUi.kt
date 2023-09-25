@@ -28,7 +28,7 @@ fun SensorUi(
     sensor: Sensor?,
     manager: SensorManager,
     basicSensor: SensorManager.BasicSensor,
-    onSensorClicked: (String, Boolean) -> Unit,
+    onSensorClicked: (String, Boolean) -> Unit
 ) {
     val checked = sensor?.enabled == true
 
@@ -50,28 +50,31 @@ fun SensorUi(
                 backgroundRequest.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
                 return@forEach
             }
-            if (!it.value)
+            if (!it.value) {
                 allGranted = false
+            }
         }
         onSensorClicked(basicSensor.id, allGranted)
     }
 
     val perm = manager.checkPermission(LocalContext.current, basicSensor.id)
     ToggleChip(
-        checked = (sensor == null && manager.enabledByDefault) ||
+        checked = (sensor == null && basicSensor.enabledByDefault) ||
             (sensor?.enabled == true && perm),
         onCheckedChange = { enabled ->
             val permissions = manager.requiredPermissions(basicSensor.id)
-            if (perm || !enabled)
+            if (perm || !enabled) {
                 onSensorClicked(basicSensor.id, enabled)
-            else
+            } else {
                 permissionLaunch.launch(
-                    if (permissions.size == 1 && permissions[0] == Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                    if (permissions.size == 1 && permissions[0] == Manifest.permission.ACCESS_BACKGROUND_LOCATION) {
                         permissions
-                    else
+                    } else {
                         permissions.toSet().minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
                             .toTypedArray()
+                    }
                 )
+            }
         },
         modifier = Modifier
             .fillMaxWidth(),
@@ -85,10 +88,11 @@ fun SensorUi(
         toggleControl = {
             Icon(
                 imageVector = ToggleChipDefaults.switchIcon(checked),
-                contentDescription = if (checked)
+                contentDescription = if (checked) {
                     stringResource(R.string.enabled)
-                else
+                } else {
                     stringResource(R.string.disabled)
+                }
             )
         }
     )

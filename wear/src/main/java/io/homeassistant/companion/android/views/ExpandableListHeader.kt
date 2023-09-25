@@ -13,12 +13,10 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.LocalContentColor
 import androidx.wear.compose.material.Text
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import org.checkerframework.checker.units.qual.K
 import io.homeassistant.companion.android.common.R as commonR
 
 /**
@@ -30,7 +28,9 @@ fun <K> rememberExpandedStates(
 ): SnapshotStateMap<K, Boolean> {
     val defaultExpanded = if (initialKeys is Collection) {
         initialKeys.size == 1
-    } else false
+    } else {
+        false
+    }
     return remember {
         mutableStateMapOf<K, Boolean>().apply {
             initialKeys.forEach { key ->

@@ -15,7 +15,7 @@ import com.google.accompanist.themeadapter.material.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.nfc.views.LoadNfcView
-import io.homeassistant.companion.android.util.UrlHandler
+import io.homeassistant.companion.android.util.UrlUtil
 import kotlinx.coroutines.launch
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -46,8 +46,9 @@ class NfcSetupActivity : BaseActivity() {
         fun newInstance(context: Context, tagId: String? = null, messageId: Int = -1): Intent {
             return Intent(context, NfcSetupActivity::class.java).apply {
                 putExtra(EXTRA_MESSAGE_ID, messageId)
-                if (tagId != null)
+                if (tagId != null) {
                     putExtra(EXTRA_TAG_VALUE, tagId)
+                }
             }
         }
     }
@@ -105,7 +106,7 @@ class NfcSetupActivity : BaseActivity() {
                 // Create new nfc tag
                 if (!viewModel.nfcEventShouldWrite) {
                     val url = NFCUtil.extractUrlFromNFCIntent(intent)
-                    val nfcTagId = UrlHandler.splitNfcTagId(url)
+                    val nfcTagId = UrlUtil.splitNfcTagId(url)
                     if (nfcTagId == null) {
                         viewModel.onNfcReadEmpty()
                     } else {

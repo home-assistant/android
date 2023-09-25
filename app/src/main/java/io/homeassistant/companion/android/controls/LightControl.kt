@@ -15,6 +15,7 @@ import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.getLightBrightness
+import io.homeassistant.companion.android.common.data.integration.isActive
 import io.homeassistant.companion.android.common.data.integration.supportsLightBrightness
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.R as commonR
@@ -30,10 +31,10 @@ object LightControl : HaControl {
     ): Control.StatefulBuilder {
         val position = entity.getLightBrightness()
         control.setControlTemplate(
-            if (entity.supportsLightBrightness())
+            if (entity.supportsLightBrightness()) {
                 ToggleRangeTemplate(
                     entity.entityId,
-                    entity.state == "on",
+                    entity.isActive(),
                     "",
                     RangeTemplate(
                         entity.entityId,
@@ -44,14 +45,15 @@ object LightControl : HaControl {
                         "%.0f%%"
                     )
                 )
-            else
+            } else {
                 ToggleTemplate(
                     entity.entityId,
                     ControlButton(
-                        entity.state == "on",
+                        entity.isActive(),
                         "Description"
                     )
                 )
+            }
         )
         return control
     }

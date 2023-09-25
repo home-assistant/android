@@ -30,8 +30,11 @@ class NotificationPermissionFragment : Fragment() {
         Log.i(TAG, "Notification permission was ${if (isGranted) "granted" else "not granted"}")
         viewModel.setNotifications(isGranted)
 
-        if (isGranted) onComplete()
-        else showPermissionDeniedDialog()
+        if (isGranted) {
+            onComplete()
+        } else {
+            showPermissionDeniedDialog()
+        }
     }
 
     override fun onCreateView(

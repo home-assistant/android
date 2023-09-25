@@ -3,14 +3,16 @@ package io.homeassistant.companion.android.notifications
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Handler
 import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.cancel
+import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.notifications.MessagingManager.Companion.KEY_TEXT_REPLY
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,15 +36,21 @@ class NotificationActionReceiver : BroadcastReceiver() {
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
+    lateinit var serverManager: ServerManager
 
     @Inject
     lateinit var messagingManager: MessagingManager
 
-    override fun onReceive(context: Context, intent: Intent) {
+    @Inject
+    lateinit var notificationDao: NotificationDao
 
-        val notificationAction =
-            intent.getParcelableExtra<NotificationAction>(EXTRA_NOTIFICATION_ACTION)
+    override fun onReceive(context: Context, intent: Intent) {
+        val notificationAction = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getParcelableExtra(EXTRA_NOTIFICATION_ACTION, NotificationAction::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            intent.getParcelableExtra(EXTRA_NOTIFICATION_ACTION)
+        }
 
         if (notificationAction == null) {
             Log.e(TAG, "Failed to get notification action.")
@@ -92,18 +100,22 @@ class NotificationActionReceiver : BroadcastReceiver() {
         }
 
         when (intent.action) {
-            FIRE_EVENT -> fireEvent(notificationAction, onComplete, onFailure)
+            FIRE_EVENT -> {
+                val serverId = notificationDao.get(databaseId.toInt())?.serverId ?: ServerManager.SERVER_ID_ACTIVE
+                fireEvent(notificationAction, serverId, onComplete, onFailure)
+            }
         }
     }
 
     private fun fireEvent(
         action: NotificationAction,
+        serverId: Int,
         onComplete: () -> Unit,
         onFailure: () -> Unit
     ) {
         ioScope.launch {
             try {
-                integrationUseCase.fireEvent(
+                serverManager.integrationRepository(serverId).fireEvent(
                     "mobile_app_notification_action",
                     action.data
                         .filter { !it.key.startsWith(MessagingManager.SOURCE_REPLY_HISTORY) }

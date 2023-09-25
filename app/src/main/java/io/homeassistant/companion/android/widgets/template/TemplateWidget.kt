@@ -8,18 +8,19 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
-import android.text.Html.fromHtml
 import android.util.Log
 import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
+import androidx.core.text.HtmlCompat
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -43,6 +44,7 @@ class TemplateWidget : AppWidgetProvider() {
         const val RECEIVE_DATA =
             "io.homeassistant.companion.android.widgets.template.TemplateWidget.RECEIVE_DATA"
 
+        internal const val EXTRA_SERVER_ID = "EXTRA_SERVER_ID"
         internal const val EXTRA_TEMPLATE = "extra_template"
         internal const val EXTRA_TEXT_SIZE = "EXTRA_TEXT_SIZE"
         internal const val EXTRA_BACKGROUND_TYPE = "EXTRA_BACKGROUND_TYPE"
@@ -54,7 +56,7 @@ class TemplateWidget : AppWidgetProvider() {
     }
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
+    lateinit var serverManager: ServerManager
 
     @Inject
     lateinit var templateWidgetDao: TemplateWidgetDao
@@ -121,10 +123,8 @@ class TemplateWidget : AppWidgetProvider() {
 
     private fun onScreenOn(context: Context) {
         setupWidgetScope()
+        if (!serverManager.isRegistered()) return
         widgetScope!!.launch {
-            if (!integrationUseCase.isRegistered()) {
-                return@launch
-            }
             updateAllWidgets(context)
 
             val allWidgets = templateWidgetDao.getAll()
@@ -140,7 +140,12 @@ class TemplateWidget : AppWidgetProvider() {
                 widgetsWithDifferentTemplate.forEach { widget ->
                     widgetJobs[widget.id]?.cancel()
 
-                    val templateUpdates = integrationUseCase.getTemplateUpdates(widget.template)
+                    val templateUpdates =
+                        if (serverManager.getServer(widget.serverId) != null) {
+                            serverManager.integrationRepository(widget.serverId).getTemplateUpdates(widget.template)
+                        } else {
+                            null
+                        }
                     if (templateUpdates != null) {
                         widgetTemplates[widget.id] = widget.template
                         widgetJobs[widget.id] = widgetScope!!.launch {
@@ -233,7 +238,7 @@ class TemplateWidget : AppWidgetProvider() {
                 // Content
                 var renderedTemplate: String? = templateWidgetDao.get(appWidgetId)?.lastUpdate ?: context.getString(commonR.string.loading)
                 try {
-                    renderedTemplate = suggestedTemplate ?: integrationUseCase.renderTemplate(widget.template, mapOf()).toString()
+                    renderedTemplate = suggestedTemplate ?: serverManager.integrationRepository(widget.serverId).renderTemplate(widget.template, mapOf()).toString()
                     templateWidgetDao.updateTemplateWidgetLastUpdate(
                         appWidgetId,
                         renderedTemplate
@@ -245,7 +250,7 @@ class TemplateWidget : AppWidgetProvider() {
                 }
                 setTextViewText(
                     R.id.widgetTemplateText,
-                    fromHtml(renderedTemplate)
+                    renderedTemplate?.let { HtmlCompat.fromHtml(it, HtmlCompat.FROM_HTML_MODE_LEGACY) }
                 )
                 setTextViewTextSize(
                     R.id.widgetTemplateText,
@@ -261,12 +266,18 @@ class TemplateWidget : AppWidgetProvider() {
     private fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
         if (extras == null) return
 
+        val serverId = if (extras.containsKey(EXTRA_SERVER_ID)) extras.getInt(EXTRA_SERVER_ID) else null
         val template: String? = extras.getString(EXTRA_TEMPLATE)
         val textSize: Float = extras.getFloat(EXTRA_TEXT_SIZE)
-        val backgroundTypeSelection: WidgetBackgroundType = extras.getSerializable(EXTRA_BACKGROUND_TYPE) as WidgetBackgroundType
+        val backgroundTypeSelection: WidgetBackgroundType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            extras.getSerializable(EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            extras.getSerializable(EXTRA_BACKGROUND_TYPE) as? WidgetBackgroundType
+        } ?: WidgetBackgroundType.DAYNIGHT
         val textColorSelection: String? = extras.getString(EXTRA_TEXT_COLOR)
 
-        if (template == null) {
+        if (serverId == null || template == null) {
             Log.e(TAG, "Did not receive complete widget data")
             return
         }
@@ -275,6 +286,7 @@ class TemplateWidget : AppWidgetProvider() {
             templateWidgetDao.add(
                 TemplateWidgetEntity(
                     appWidgetId,
+                    serverId,
                     template,
                     textSize,
                     templateWidgetDao.get(appWidgetId)?.lastUpdate ?: "Loading",

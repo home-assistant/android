@@ -4,9 +4,12 @@ import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
@@ -15,11 +18,13 @@ import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.widget.Toolbar
 import androidx.core.content.FileProvider
+import androidx.core.view.MenuHost
+import androidx.core.view.MenuProvider
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.tabs.TabLayout
 import dagger.hilt.android.AndroidEntryPoint
@@ -48,38 +53,54 @@ class LogFragment : Fragment() {
     private var crashLog: String? = null
     private var currentLog = ""
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.share_log -> {
-                shareLog()
-                return true
-            }
-            R.id.refresh_log -> {
-                refreshLog()
-            }
+    private var toolbarGroupVisible = false
+        set(value) {
+            field = value
+            activity?.invalidateMenu()
         }
-        return super.onOptionsItemSelected(item)
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+        val menuHost: MenuHost = requireActivity()
+        menuHost.addMenuProvider(
+            object : MenuProvider {
+                override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                    menuInflater.inflate(R.menu.menu_fragment_log, menu)
+                }
 
-        setHasOptionsMenu(true)
+                override fun onPrepareMenu(menu: Menu) {
+                    menu.setGroupVisible(R.id.log_toolbar_group, toolbarGroupVisible)
+                }
+
+                override fun onMenuItemSelected(menuItem: MenuItem) = when (menuItem.itemId) {
+                    R.id.share_log -> {
+                        shareLog()
+                        true
+                    }
+                    R.id.refresh_log -> {
+                        refreshLog()
+                        true
+                    }
+                    else -> false
+                }
+            },
+            viewLifecycleOwner,
+            Lifecycle.State.RESUMED
+        )
 
         requireView().findViewById<TabLayout>(R.id.logTabLayout)
             .addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
-                override fun onTabSelected(tab: TabLayout.Tab?) {
-                    showLog()
-                }
+                override fun onTabSelected(tab: TabLayout.Tab?) = showLog()
 
-                override fun onTabUnselected(tab: TabLayout.Tab?) {
-                }
+                override fun onTabUnselected(tab: TabLayout.Tab?) {}
 
                 override fun onTabReselected(tab: TabLayout.Tab?) {
                     (requireView().findViewById<ScrollView>(R.id.logScrollview))?.apply {
                         post {
-                            if (tab?.id == R.id.logTabCrash) fullScroll(ScrollView.FOCUS_UP)
-                            else fullScroll(ScrollView.FOCUS_DOWN)
+                            if (tab?.id == R.id.logTabCrash) {
+                                fullScroll(ScrollView.FOCUS_UP)
+                            } else {
+                                fullScroll(ScrollView.FOCUS_DOWN)
+                            }
                         }
                     }
                 }
@@ -90,9 +111,6 @@ class LogFragment : Fragment() {
 
     private fun refreshLog() = lifecycleScope.launch(Dispatchers.Main) {
         if (view != null && activity != null) {
-            val toolbar = requireActivity().findViewById<Toolbar>(R.id.toolbar)
-
-            toolbar.menu.setGroupVisible(R.id.log_toolbar_group, false)
             showHideLogLoader(true)
 
             // Runs with Dispatcher IO
@@ -100,7 +118,6 @@ class LogFragment : Fragment() {
             crashLog = getLatestFatalCrash(requireContext(), prefsRepository.isCrashReporting())
 
             showLog()
-            toolbar.menu.setGroupVisible(R.id.log_toolbar_group, true)
             showHideLogLoader(false)
         }
     }
@@ -160,7 +177,6 @@ class LogFragment : Fragment() {
                 fLogFile.appendText(currentLog)
 
                 if (fLogFile.exists()) {
-
                     val uriToLog: Uri = FileProvider.getUriForFile(requireContext(), requireContext().packageName + ".provider", fLogFile)
 
                     val sendIntent: Intent = Intent().apply {
@@ -176,7 +192,7 @@ class LogFragment : Fragment() {
                         // Lets exclude github app, because github doesn't support sharing text files (only images)
                         // Also no issue template will be used
                         val excludedComponents = getExcludedComponentsForPackageName(sendIntent, arrayOf("com.github.android"))
-                        if (excludedComponents.size > 0) {
+                        if (excludedComponents.size > 0 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                             putExtra(Intent.EXTRA_EXCLUDE_COMPONENTS, excludedComponents.toTypedArray())
                         }
                     }
@@ -206,7 +222,12 @@ class LogFragment : Fragment() {
 
     private fun getExcludedComponentsForPackageName(sendIntent: Intent, packageNames: Array<String>): ArrayList<ComponentName> {
         val excludedComponents = ArrayList<ComponentName>()
-        val resInfos = requireContext().packageManager.queryIntentActivities(sendIntent, 0)
+        val resInfos = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requireContext().packageManager.queryIntentActivities(sendIntent, PackageManager.ResolveInfoFlags.of(0))
+        } else {
+            @Suppress("DEPRECATION")
+            requireContext().packageManager.queryIntentActivities(sendIntent, 0)
+        }
         for (resInfo in resInfos) {
             val packageName = resInfo.activityInfo.packageName
             val name = resInfo.activityInfo.name
@@ -218,6 +239,7 @@ class LogFragment : Fragment() {
     }
 
     private fun showHideLogLoader(show: Boolean) {
+        toolbarGroupVisible = !show
         if (view != null) {
             val logLoader = requireView().findViewById<LinearLayout>(R.id.logLoader)
             val logContents = requireView().findViewById<LinearLayout>(R.id.logContents)

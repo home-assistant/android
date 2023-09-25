@@ -14,4 +14,9 @@
         <item name="android:windowLightStatusBar">@bool/isLightMode</item>
         <item name="android:windowLightNavigationBar">@bool/isLightMode</item>
     </style>
+
+    <style name="ThemeOverlay.HomeAssistant.BottomSheetDialog" parent="ThemeOverlay.HomeAssistant.BottomSheetDialog.Base">
+        <item name="android:navigationBarColor">@color/colorSurface</item>
+        <item name="android:windowLightNavigationBar">@bool/isLightMode</item>
+    </style>
 </resources>

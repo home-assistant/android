@@ -11,9 +11,11 @@ import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.themeadapter.material.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.nfc.views.TagReaderView
-import io.homeassistant.companion.android.util.UrlHandler
+import io.homeassistant.companion.android.util.UrlUtil
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
@@ -26,7 +28,7 @@ class TagReaderActivity : BaseActivity() {
     }
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
+    lateinit var serverManager: ServerManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,8 +44,11 @@ class TagReaderActivity : BaseActivity() {
                 val isNfcTag = intent.action == NfcAdapter.ACTION_NDEF_DISCOVERED
 
                 val url =
-                    if (isNfcTag) NFCUtil.extractUrlFromNFCIntent(intent)
-                    else intent.data
+                    if (isNfcTag) {
+                        NFCUtil.extractUrlFromNFCIntent(intent)
+                    } else {
+                        intent.data
+                    }
                 try {
                     handleTag(url, isNfcTag)
                 } catch (e: Exception) {
@@ -58,11 +63,19 @@ class TagReaderActivity : BaseActivity() {
     private suspend fun handleTag(url: Uri?, isNfcTag: Boolean) {
         // https://www.home-assistant.io/tag/5f0ba733-172f-430d-a7f8-e4ad940c88d7
 
-        val nfcTagId = UrlHandler.splitNfcTagId(url)
+        val nfcTagId = UrlUtil.splitNfcTagId(url)
         Log.d(TAG, "Tag ID: $nfcTagId")
-        if (nfcTagId != null) {
-            integrationUseCase.scanTag(hashMapOf("tag_id" to nfcTagId))
-            Log.d(TAG, "Tag scanned to HA successfully")
+        if (nfcTagId != null && serverManager.isRegistered()) {
+            serverManager.defaultServers.map {
+                lifecycleScope.async {
+                    try {
+                        serverManager.integrationRepository(it.id).scanTag(hashMapOf("tag_id" to nfcTagId))
+                        Log.d(TAG, "Tag scanned to HA successfully")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Tag not scanned to HA", e)
+                    }
+                }
+            }.awaitAll()
         } else {
             showProcessingError(isNfcTag)
         }

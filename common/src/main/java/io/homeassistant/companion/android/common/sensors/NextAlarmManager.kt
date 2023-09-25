@@ -2,8 +2,12 @@ package io.homeassistant.companion.android.common.sensors
 
 import android.app.AlarmManager
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import android.util.Log
 import androidx.core.content.getSystemService
+import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
+import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
@@ -11,6 +15,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.GregorianCalendar
+import java.util.Locale
 import java.util.TimeZone
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -33,13 +38,19 @@ class NextAlarmManager : SensorManager {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#next-alarm-sensor"
     }
-    override val enabledByDefault: Boolean
-        get() = false
     override val name: Int
         get() = commonR.string.sensor_name_alarm
 
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(nextAlarm)
+    }
+
+    override fun hasSensor(context: Context): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            !context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+        } else {
+            true
+        }
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
@@ -53,13 +64,13 @@ class NextAlarmManager : SensorManager {
     }
 
     private fun updateNextAlarm(context: Context) {
-
-        if (!isEnabled(context, nextAlarm.id))
+        if (!isEnabled(context, nextAlarm)) {
             return
+        }
 
         var triggerTime = 0L
         var local = ""
-        var utc = "unavailable"
+        var utc = STATE_UNAVAILABLE
         var pendingIntent = ""
 
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
@@ -72,7 +83,7 @@ class NextAlarmManager : SensorManager {
             val alarmClockInfo = alarmManager.nextAlarmClock
 
             if (alarmClockInfo != null) {
-                pendingIntent = alarmClockInfo.showIntent?.creatorPackage ?: "Unknown"
+                pendingIntent = alarmClockInfo.showIntent?.creatorPackage ?: STATE_UNKNOWN
                 triggerTime = alarmClockInfo.triggerTime
 
                 Log.d(TAG, "Next alarm is scheduled by $pendingIntent with trigger time $triggerTime")
@@ -91,11 +102,12 @@ class NextAlarmManager : SensorManager {
                 local = cal.time.toString()
 
                 val dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
-                val sdf = SimpleDateFormat(dateFormat)
+                val sdf = SimpleDateFormat(dateFormat, Locale.getDefault())
                 sdf.timeZone = TimeZone.getTimeZone("UTC")
                 utc = sdf.format(Date(triggerTime))
-            } else
+            } else {
                 Log.d(TAG, "No alarm is scheduled, sending unavailable")
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Error getting the next alarm info", e)
         }

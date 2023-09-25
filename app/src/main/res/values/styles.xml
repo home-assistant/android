@@ -18,9 +18,19 @@
         <item name="android:navigationBarColor">@color/colorPrimaryDark</item>
         <item name="alertDialogTheme">@style/Theme.HomeAssistant.Dialog.Alert</item>
         <item name="actionBarPopupTheme">@style/ThemeOverlay.MaterialComponents.Dark</item>
+        <item name="bottomSheetDialogTheme">@style/ThemeOverlay.HomeAssistant.BottomSheetDialog</item>
     </style>
 
     <style name="Theme.HomeAssistant.Config" parent="Theme.HomeAssistant" />
+
+    <style name="Theme.HomeAssistant.Assist" parent="Theme.HomeAssistant" >
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:backgroundDimAmount">0.1</item>
+    </style>
 
     <style name="TextAppearance.HomeAssistant.Headline" parent="TextAppearance.MaterialComponents.Headline1">
         <item name="android:textSize">20sp</item>
@@ -53,6 +63,12 @@
         <item name="android:textColorPrimary">@color/colorOnPrimary</item>
         <item name="colorControlNormal">@color/colorOnPrimary</item>
         <item name="popupTheme">@style/Theme.HomeAssistant.PopupTheme</item>
+    </style>
+
+    <style name="ThemeOverlay.HomeAssistant.BottomSheetDialog" parent="ThemeOverlay.HomeAssistant.BottomSheetDialog.Base"/>
+
+    <style name="ThemeOverlay.HomeAssistant.BottomSheetDialog.Base" parent="ThemeOverlay.MaterialComponents.BottomSheetDialog">
+        <item name="android:backgroundTint">@android:color/transparent</item>
     </style>
 
     <style name="ThemeOverlay.HomeAssistant.ConfigActionBar" parent="ThemeOverlay.MaterialComponents.ActionBar">
@@ -114,5 +130,10 @@
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowIsFloating">true</item>
         <item name="android:backgroundDimEnabled">false</item>
+    </style>
+
+    <style name="ExoStyledControls.Button.Bottom.HaMute">
+        <item name="android:src">@drawable/ic_baseline_volume_up_24</item>
+        <item name="android:contentDescription">@string/mute_unmute</item>
     </style>
 </resources>

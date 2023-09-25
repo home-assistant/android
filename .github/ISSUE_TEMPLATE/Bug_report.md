@@ -15,24 +15,30 @@ assignees: ''
   DO NOT DELETE ANY TEXT from this template! All requested information is important.
 -->
 
-**Home Assistant Android version:**
+<!-- If you are reporting an issue for Wear OS please list both devices for the below 3 fields -->
+**Home Assistant Android app version(s):**
 
-**Android version:**
+**Android version(s):**
 
-**Phone model:**
+**Device model(s):**
 
 **Home Assistant version:**
 
 **Last working Home Assistant release (if known):**
 
-**Description of problem:**
+**Description of problem, include YAML if issue is related to notifications:**
 
-**Traceback (if applicable, to get the logs you may refer to: https://companion.home-assistant.io/docs/troubleshooting/faqs/#android-crash-logs):**
+<!--
+- For Wear OS devices we will need the LogCat logs from the device.
+- For Android Auto the logs can be retrieved from the connected device.
+- Logs from the device can be taken from Settings > Companion App Troubleshooting > Show and Share Logs
+-->
+**Companion App Logs:**
 
 ```
 
 ```
 
-**Screenshot of problem:**
+**Screenshot or video of problem:**
 
 **Additional information:**

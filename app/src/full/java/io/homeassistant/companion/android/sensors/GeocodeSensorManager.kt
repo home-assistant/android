@@ -9,6 +9,7 @@ import android.os.Build.VERSION.SDK_INT
 import android.util.Log
 import com.google.android.gms.location.LocationServices
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
@@ -40,8 +41,6 @@ class GeocodeSensorManager : SensorManager {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#geocoded-location-sensor"
     }
-    override val enabledByDefault: Boolean
-        get() = false
     override val name: Int
         get() = commonR.string.sensor_name_geolocation
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
@@ -72,7 +71,7 @@ class GeocodeSensorManager : SensorManager {
     }
 
     private suspend fun updateGeocodedLocation(context: Context) {
-        if (!isEnabled(context, geocodedLocation.id) || !checkPermission(context, geocodedLocation.id)) {
+        if (!isEnabled(context, geocodedLocation) || !checkPermission(context, geocodedLocation.id)) {
             return
         }
 
@@ -134,7 +133,7 @@ class GeocodeSensorManager : SensorManager {
         onSensorUpdated(
             context,
             geocodedLocation,
-            if (!prettyAddress.isNullOrEmpty()) prettyAddress else "Unknown",
+            if (!prettyAddress.isNullOrEmpty()) prettyAddress else STATE_UNKNOWN,
             geocodedLocation.statelessIcon,
             attributes
         )
@@ -164,6 +163,7 @@ class GeocodeSensorManager : SensorManager {
                 )
             }
         } else {
+            @Suppress("DEPRECATION")
             getFromLocation(latitude, longitude, maxResults).orEmpty()
         }
     }

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <Preference
+        android:key="show_share_logs"
+        android:icon="@drawable/ic_notes"
+        android:title="@string/show_share_logs"
+        android:summary="@string/show_share_logs_summary" />
+    <SwitchPreference
+        android:key="webview_debug"
+        android:icon="@drawable/ic_android_debug_bridge"
+        android:title="@string/remote_debugging"
+        android:summary="@string/remote_debugging_summary" />
+    <Preference
+        android:key="thread_debug"
+        android:icon="@drawable/ic_thread"
+        android:title="@string/thread_debug"
+        android:summary="@string/thread_debug_summary"/>
+</PreferenceScreen>

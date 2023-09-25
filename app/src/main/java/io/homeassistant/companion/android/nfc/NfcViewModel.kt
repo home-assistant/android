@@ -9,8 +9,10 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.util.Navigator
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
@@ -20,7 +22,7 @@ import io.homeassistant.companion.android.common.R as commonR
 
 @HiltViewModel
 class NfcViewModel @Inject constructor(
-    private val integrationUseCase: IntegrationRepository,
+    private val serverManager: ServerManager,
     application: Application
 ) : AndroidViewModel(application) {
 
@@ -46,7 +48,7 @@ class NfcViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            usesAndroidDeviceId = !integrationUseCase.isHomeAssistantVersionAtLeast(2022, 12, 0)
+            usesAndroidDeviceId = serverManager.getServer()?.version?.isAtLeast(2022, 12, 0) == false
         }
     }
 
@@ -109,13 +111,20 @@ class NfcViewModel @Inject constructor(
     fun fireNfcTagEvent() {
         viewModelScope.launch {
             nfcTagIdentifier?.let {
-                try {
-                    integrationUseCase.scanTag(
-                        hashMapOf("tag_id" to it)
-                    )
+                val results = serverManager.defaultServers.map { server ->
+                    async {
+                        try {
+                            serverManager.integrationRepository(server.id).scanTag(hashMapOf("tag_id" to it))
+                            true
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Unable to send tag to Home Assistant.", e)
+                            false
+                        }
+                    }
+                }
+                if (results.awaitAll().any { it }) {
                     _nfcResultSnackbar.emit(commonR.string.nfc_event_fired_success)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Unable to send tag to Home Assistant.", e)
+                } else {
                     _nfcResultSnackbar.emit(commonR.string.nfc_event_fired_fail)
                 }
             } ?: _nfcResultSnackbar.emit(commonR.string.nfc_event_fired_fail)

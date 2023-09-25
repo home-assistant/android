@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <item android:drawable="@color/colorAccent" />
+    <item android:drawable="@android:color/black" />
 
     <item
-        android:drawable="@drawable/ic_launcher_foreground"
-        android:width="315px"
-        android:height="315px"
+        android:drawable="@drawable/app_icon"
+        android:width="48dp"
+        android:height="48dp"
         android:gravity="center"/>
 
 </layer-list>

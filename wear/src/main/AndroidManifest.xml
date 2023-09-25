@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.BODY_SENSORS" />
@@ -21,6 +22,7 @@
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
 
     <uses-feature android:name="android.hardware.type.watch" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
 
     <uses-sdk tools:overrideLibrary="androidx.health.services.client" />
 
@@ -55,7 +57,6 @@
             android:name="com.google.android.wearable"
             android:required="true" />
 
-        <!-- The app can run without a connected phone -->
         <meta-data
             android:name="com.google.android.wearable.standalone"
             android:value="false" />
@@ -63,7 +64,6 @@
         <activity android:name=".home.HomeActivity" />
         <activity android:name=".splash.SplashActivity"
             android:theme="@style/SplashTheme"
-            android:label="@string/app_name"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -72,7 +72,8 @@
         </activity>
         <activity android:name=".onboarding.OnboardingActivity" />
         <activity android:name=".onboarding.integration.MobileAppIntegrationActivity" />
-        <activity android:name=".onboarding.manual_setup.ManualSetupActivity" />
+        <activity android:name=".onboarding.manual.ManualSetupActivity" />
+        <activity android:name=".onboarding.phoneinstall.PhoneInstallActivity" />
         <activity android:name=".complications.ComplicationConfigActivity"
             android:exported="true">
             <intent-filter>
@@ -82,12 +83,48 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".tiles.OpenTileSettingsActivity"
+            android:exported="true"
+            android:excludeFromRecents="true">
+            <intent-filter>
+                <action android:name="ConfigShortcutsTile" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="com.google.android.clockwork.tiles.category.PROVIDER_CONFIG" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="ConfigCameraTile" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="com.google.android.clockwork.tiles.category.PROVIDER_CONFIG" />
+            </intent-filter>
+        </activity>
+
         <!-- To show confirmations and failures -->
         <activity android:name="androidx.wear.activity.ConfirmationActivity" />
 
         <activity
             android:name=".conversation.ConversationActivity"
-            android:exported="true" />
+            android:icon="@mipmap/ic_assist_launcher"
+            android:label="@string/ha_assist"
+            android:launchMode="singleTask"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity-alias
+            android:name=".conversation.AssistantActivity"
+            android:targetActivity=".conversation.ConversationActivity"
+            android:label="@string/ha_assist"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.ASSIST" />
+                <action android:name="android.intent.action.VOICE_ASSIST"/>
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
+
         <!-- Tiles -->
         <service
             android:name=".tiles.ShortcutsTile"
@@ -101,10 +138,18 @@
 
             <meta-data android:name="androidx.wear.tiles.PREVIEW"
                 android:resource="@drawable/favorite_entities_tile_example" />
+
+            <meta-data
+                android:name="com.google.android.clockwork.tiles.MULTI_INSTANCES_SUPPORTED"
+                android:value="true" /> <!-- This is supported starting from Wear OS 3 -->
+
+            <meta-data
+                android:name="com.google.android.clockwork.tiles.PROVIDER_CONFIG_ACTION"
+                android:value="ConfigShortcutsTile" />
         </service>
         <service
             android:name=".tiles.TemplateTile"
-            android:label="@string/template_tile"
+            android:label="@string/template"
             android:description="@string/template_tile_desc"
             android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER"
             android:exported="true">
@@ -117,7 +162,7 @@
         </service>
         <service
             android:name=".tiles.ConversationTile"
-            android:label="@string/conversation"
+            android:label="@string/assist"
             android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER"
             android:exported="true">
             <intent-filter>
@@ -126,6 +171,27 @@
 
             <meta-data android:name="androidx.wear.tiles.PREVIEW"
                 android:resource="@drawable/conversation_tile_example" />
+        </service>
+        <service
+            android:name=".tiles.CameraTile"
+            android:label="@string/camera"
+            android:description="@string/camera_tile_desc"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+
+            <meta-data android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/camera_tile_example" />
+
+            <meta-data
+                android:name="com.google.android.clockwork.tiles.MULTI_INSTANCES_SUPPORTED"
+                android:value="true" /> <!-- This is supported starting from Wear OS 3 -->
+
+            <meta-data
+                android:name="com.google.android.clockwork.tiles.PROVIDER_CONFIG_ACTION"
+                android:value="ConfigCameraTile" />
         </service>
         <receiver android:name=".tiles.TileActionReceiver"
             android:exported="false">
@@ -146,7 +212,7 @@
 
             <meta-data
                 android:name="android.support.wearable.complications.SUPPORTED_TYPES"
-                android:value="SHORT_TEXT" />
+                android:value="SHORT_TEXT,LONG_TEXT" />
             <meta-data
                 android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
                 android:value="900" />
@@ -154,6 +220,24 @@
                 android:name="android.support.wearable.complications.PROVIDER_CONFIG_ACTION"
                 android:value="io.homeassistant.companion.android.ENTITY_STATE_COMPLICATION_CONFIG" />
         </service>
+
+        <service android:name=".complications.AssistDataSourceService"
+            android:exported="true"
+            android:icon="@mipmap/ic_assist_launcher"
+            android:label="@string/assist"
+            android:permission="com.google.android.wearable.permission.BIND_COMPLICATION_PROVIDER">
+            <intent-filter>
+                <action android:name="android.support.wearable.complications.ACTION_COMPLICATION_UPDATE_REQUEST" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.support.wearable.complications.SUPPORTED_TYPES"
+                android:value="ICON" />
+            <meta-data
+                android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
+                android:value="0" />
+        </service>
+
         <receiver android:name=".complications.ComplicationReceiver" />
 
         <service android:name=".phone.PhoneSettingsListener" android:exported="true">
@@ -168,6 +252,14 @@
                     android:path="/updateFavorites" />
                 <data android:scheme="wear" android:host="*"
                     android:path="/updateTemplateTile" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".notifications.FirebaseCloudMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
     </application>

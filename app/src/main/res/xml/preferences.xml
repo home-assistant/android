@@ -2,29 +2,25 @@
 <androidx.preference.PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+    <io.homeassistant.companion.android.settings.SettingsSuggestionPreference
+        android:key="settings_suggestion"
+        app:isPreferenceVisible="false" />
     <PreferenceCategory
-        android:title="@string/pref_connection_title">
+        android:key="servers_devices_category"
+        android:title="@string/servers_devices_category">
+        <!-- Servers will be added at runtime -->
         <Preference
-            android:key="connection_external"
-            android:icon="@drawable/ic_globe"
-            android:title="@string/pref_connection_url"/>
+            android:key="server_add"
+            android:icon="@drawable/ic_plus"
+            android:order="998"
+            android:title="@string/server_add" />
         <Preference
-            android:key="connection_internal_ssids"
-            android:icon="@drawable/ic_wifi"
-            android:title="@string/pref_connection_wifi"
-            android:summary="@string/pref_connection_ssids_empty" />
-        <EditTextPreference
-            android:key="connection_internal"
-            android:title="@string/pref_connection_internal"
-            app:useSimpleSummaryProvider="true"/>
-    </PreferenceCategory>
-    <PreferenceCategory
-        android:title="@string/device_registration">
-        <EditTextPreference
-            android:key="registration_name"
-            android:icon="@drawable/ic_edit"
-            android:title="@string/device_name"
-            app:useSimpleSummaryProvider="true"/>
+            android:key="wear_settings"
+            app:isPreferenceVisible="false"
+            android:title="@string/wear_os_settings_title"
+            android:icon="@drawable/ic_baseline_watch_24"
+            android:order="999"
+            android:summary="@string/wear_os_settings_summary" />
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/sensors">
@@ -40,42 +36,20 @@
             android:summary="@string/sensor_update_frequency_summary" />
     </PreferenceCategory>
     <PreferenceCategory
-        android:key="security_category"
-        android:title="@string/security">
-        <SwitchPreference
-            android:key="app_lock"
-            android:icon="@drawable/ic_lock"
-            android:title="@string/lock_title"
-            android:summary="@string/lock_summary"/>
-        <SwitchPreference
-            android:key="app_lock_home_bypass"
-            android:icon="@drawable/ic_wifi"
-            android:title="@string/lock_home_bypass_title"
-            android:summary="@string/lock_home_bypass_summary"/>
-        <EditTextPreference
-            android:key="session_timeout"
-            android:icon="@drawable/ic_timeout"
-            android:title="@string/session_timeout_title"
-            app:isPreferenceVisible="false"
-            app:useSimpleSummaryProvider="true"/>
-    </PreferenceCategory>
-    <PreferenceCategory
-        android:key="wear_category"
-        app:isPreferenceVisible="false"
-        android:title="@string/wear_os_category">
-        <Preference
-            android:key="wear_settings"
-            android:title="@string/wear_os_settings_title"
-            android:icon="@drawable/ic_baseline_watch_24"
-            android:summary="@string/wear_os_settings_summary" />
-    </PreferenceCategory>
-    <PreferenceCategory
         android:title="@string/other_settings">
         <SwitchPreference
             android:key="fullscreen"
             android:icon="@drawable/ic_fullscreen"
             android:title="@string/fullscreen"
             android:summary="@string/fullscreen_def"/>
+        <ListPreference
+            android:key="screen_orientation"
+            android:defaultValue="@string/screen_orientation_option_value_system"
+            android:entries="@array/pref_screen_orientation_option_labels"
+            android:entryValues="@array/pref_screen_orientation_option_values"
+            android:icon="@drawable/ic_screen_orientation"
+            android:title="@string/screen_orientation_title_settings"
+            app:useSimpleSummaryProvider="true"/>
         <SwitchPreference
             android:key="keep_screen_on"
             android:icon="@drawable/ic_phone_check"
@@ -96,11 +70,6 @@
             android:icon="@drawable/ic_home_variant_outline"
             android:title="@string/always_show_first_view_on_app_start"
             android:summary="@string/always_show_first_view_on_app_start_summary" />
-        <SwitchPreference
-            android:key="webview_debug"
-            android:icon="@drawable/ic_android_debug_bridge"
-            android:title="@string/remote_debugging"
-            android:summary="@string/remote_debugging_summary" />
         <Preference
             android:key="nfc_tags"
             android:icon="@drawable/ic_nfc"
@@ -123,11 +92,6 @@
         <Preference
             android:key="background"
             android:title="@string/background_access_title"/>
-        <Preference
-            android:key="websocket"
-            android:icon="@drawable/ic_websocket"
-            android:title="@string/websocket_setting_name"
-            android:summary="@string/websocket_setting_summary" />
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/notifications"
@@ -158,6 +122,15 @@
             app:enableCopying="true"
             android:icon="@drawable/ic_notifications"
             android:summary="@string/rate_limit_summary"/>
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="@string/basic_sensor_name_android_auto"
+        android:key="android_auto">
+        <Preference
+            android:key="auto_favorites"
+            android:icon="@drawable/ic_car"
+            android:title="@string/aa_favorites"
+            android:summary="@string/aa_favorites_summary" />
     </PreferenceCategory>
     <PreferenceCategory
         android:key="device_controls"
@@ -210,10 +183,10 @@
                 android:data="https://companion.home-assistant.io" />
         </Preference>
         <Preference
-            android:key="show_share_logs"
-            android:icon="@drawable/ic_notes"
-            android:title="@string/show_share_logs"
-            android:summary="@string/show_share_logs_summary" />
+            android:key="developer"
+            android:icon="@drawable/ic_bug_report"
+            android:title="@string/troubleshooting"
+            android:summary="@string/troubleshooting_summary"/>
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/app_version_info">

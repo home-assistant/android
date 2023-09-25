@@ -15,7 +15,7 @@ data class IBeacon(
     override val minor: String,
     val distance: Double,
     val rssi: Double,
-    var skippedUpdated: Int,
+    var skippedUpdated: Int
 ) : IBeaconNameFormat
 
 class IBeaconMonitor {
@@ -31,10 +31,15 @@ class IBeaconMonitor {
 
     private fun ignoreBeacon(uuid: String): Boolean {
         val inList = uuidFilter.contains(uuid)
-        return if (uuidFilterExclude)
+        return if (uuidFilterExclude) {
             inList // exclude filter, keep those not in list
-        else
+        } else {
             !(inList || uuidFilter.isEmpty()) // include filter, keep those in list (or all if the list is empty)
+        }
+    }
+
+    fun clearBeacons() {
+        beacons = listOf()
     }
 
     fun setBeacons(context: Context, newBeacons: Collection<Beacon>) {

@@ -15,12 +15,11 @@ import io.homeassistant.companion.android.common.R as commonR
 @AndroidEntryPoint
 class ExternalUrlFragment : Fragment() {
 
-    val viewModel by viewModels<ExternalUrlViewModel>()
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setHasOptionsMenu(false)
+    companion object {
+        const val EXTRA_SERVER = "server"
     }
+
+    val viewModel by viewModels<ExternalUrlViewModel>()
 
     override fun onCreateView(
         inflater: LayoutInflater,

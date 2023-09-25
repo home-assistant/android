@@ -42,7 +42,7 @@ import androidx.core.text.HtmlCompat.FROM_HTML_MODE_LEGACY
 import androidx.core.text.HtmlCompat.fromHtml
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import io.homeassistant.companion.android.util.IntervalToString
+import io.homeassistant.companion.android.util.intervalToString
 import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
@@ -81,19 +81,19 @@ fun SettingsWearTemplateTile(
                     OutlinedButton(
                         onClick = { dropdownExpanded = true }
                     ) {
-                        Text(IntervalToString(LocalContext.current, refreshInterval))
+                        Text(intervalToString(LocalContext.current, refreshInterval))
                     }
                     DropdownMenu(
                         expanded = dropdownExpanded,
                         onDismissRequest = { dropdownExpanded = false }
                     ) {
-                        val options = listOf(0, 60, 2 * 60, 5 * 60, 10 * 60, 15 * 60, 30 * 60, 60 * 60, 5 * 60 * 60, 10 * 60 * 60, 24 * 60 * 60)
+                        val options = listOf(0, 60, 2 * 60, 5 * 60, 10 * 60, 15 * 60, 30 * 60, 60 * 60, 2 * 60 * 60, 5 * 60 * 60, 10 * 60 * 60, 24 * 60 * 60)
                         for (option in options) {
                             DropdownMenuItem(onClick = {
                                 onRefreshIntervalChanged(option)
                                 dropdownExpanded = false
                             }) {
-                                Text(IntervalToString(LocalContext.current, option))
+                                Text(intervalToString(LocalContext.current, option))
                             }
                         }
                     }

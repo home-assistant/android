@@ -11,7 +11,7 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
 import io.homeassistant.companion.android.common.sensors.SensorWorkerBase
 import java.util.concurrent.TimeUnit
@@ -32,23 +32,23 @@ class SensorWorker(
                     .build()
 
             WorkManager.getInstance(context)
-                .enqueueUniquePeriodicWork(TAG, ExistingPeriodicWorkPolicy.REPLACE, sensorWorker)
+                .enqueueUniquePeriodicWork(TAG, ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE, sensorWorker)
         }
     }
 
     @EntryPoint
     @InstallIn(SingletonComponent::class)
     interface SensorWorkerEntryPoint {
-        fun integrationRepository(): IntegrationRepository
+        fun serverManager(): ServerManager
     }
 
-    override val integrationUseCase: IntegrationRepository
+    override val serverManager: ServerManager
         get() {
             return EntryPointAccessors.fromApplication(
                 appContext,
                 SensorWorkerEntryPoint::class.java
             )
-                .integrationRepository()
+                .serverManager()
         }
 
     override val sensorReceiver: SensorReceiverBase

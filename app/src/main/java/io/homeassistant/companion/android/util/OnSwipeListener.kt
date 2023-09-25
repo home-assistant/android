@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.util
 
+import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.view.MotionEvent
@@ -11,15 +12,28 @@ import kotlin.math.abs
 // Adapted from the system GestureDetector/GestureListener and https://stackoverflow.com/a/26387629
 // We need to keep track of (pointer) down, move, (pointer) up and cancel events to be able to detect flings
 // (or swipes) and send the direction + number of pointers for that fling to the app
-abstract class OnSwipeListener : View.OnTouchListener {
-    var handler = Handler(Looper.getMainLooper())
+abstract class OnSwipeListener(context: Context?) : View.OnTouchListener {
+    private var handler = Handler(Looper.getMainLooper())
 
-    var velocityTracker: VelocityTracker? = null
-    var downEvent: MotionEvent? = null
-    var numberOfPointers = 0
+    private var velocityTracker: VelocityTracker? = null
+    private var downEvent: MotionEvent? = null
+    private var numberOfPointers = 0
 
-    var minimumFlingVelocity = ViewConfiguration.getMinimumFlingVelocity()
-    var maximumFlingVelocity = ViewConfiguration.getMaximumFlingVelocity()
+    private var minimumFlingVelocity = 0
+    private var maximumFlingVelocity = 0
+
+    init {
+        if (context != null) {
+            val configuration = ViewConfiguration.get(context)
+            minimumFlingVelocity = configuration.scaledMinimumFlingVelocity
+            maximumFlingVelocity = configuration.scaledMaximumFlingVelocity
+        } else {
+            @Suppress("DEPRECATION")
+            minimumFlingVelocity = ViewConfiguration.getMinimumFlingVelocity()
+            @Suppress("DEPRECATION")
+            maximumFlingVelocity = ViewConfiguration.getMaximumFlingVelocity()
+        }
+    }
 
     override fun onTouch(v: View?, event: MotionEvent?): Boolean {
         event?.let { motionEvent ->
@@ -148,11 +162,17 @@ abstract class OnSwipeListener : View.OnTouchListener {
         companion object {
             fun fromVelocity(velocityX: Float, velocityY: Float): SwipeDirection {
                 return if (abs(velocityX) > abs(velocityY)) {
-                    if (velocityX > 0) RIGHT
-                    else LEFT
+                    if (velocityX > 0) {
+                        RIGHT
+                    } else {
+                        LEFT
+                    }
                 } else {
-                    if (velocityY > 0) DOWN
-                    else UP
+                    if (velocityY > 0) {
+                        DOWN
+                    } else {
+                        UP
+                    }
                 }
             }
         }

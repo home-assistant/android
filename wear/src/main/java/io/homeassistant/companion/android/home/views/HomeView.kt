@@ -1,10 +1,9 @@
 package io.homeassistant.companion.android.home.views
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
@@ -16,11 +15,15 @@ import androidx.wear.tiles.TileService
 import io.homeassistant.companion.android.common.sensors.id
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
+import io.homeassistant.companion.android.tiles.CameraTile
 import io.homeassistant.companion.android.tiles.ShortcutsTile
 import io.homeassistant.companion.android.tiles.TemplateTile
 import io.homeassistant.companion.android.views.ChooseEntityView
 
 private const val ARG_SCREEN_SENSOR_MANAGER_ID = "sensorManagerId"
+private const val ARG_SCREEN_CAMERA_TILE_ID = "cameraTileId"
+private const val ARG_SCREEN_SHORTCUTS_TILE_ID = "shortcutsTileId"
+private const val ARG_SCREEN_SHORTCUTS_TILE_ENTITY_INDEX = "shortcutsTileEntityIndex"
 
 private const val SCREEN_LANDING = "landing"
 private const val SCREEN_ENTITY_DETAIL = "entity_detail"
@@ -29,18 +32,26 @@ private const val SCREEN_MANAGE_SENSORS = "manage_all_sensors"
 private const val SCREEN_SINGLE_SENSOR_MANAGER = "sensor_manager"
 private const val SCREEN_SETTINGS = "settings"
 private const val SCREEN_SET_FAVORITES = "set_favorites"
-private const val SCREEN_SET_TILE_SHORTCUTS = "set_tile_shortcuts"
-private const val SCREEN_SELECT_TILE_SHORTCUT = "select_tile_shortcut"
+private const val ROUTE_CAMERA_TILE = "camera_tile"
+private const val SCREEN_SELECT_CAMERA_TILE = "select_camera_tile"
+private const val SCREEN_SET_CAMERA_TILE = "set_camera_tile"
+private const val SCREEN_SET_CAMERA_TILE_ENTITY = "entity"
+private const val SCREEN_SET_CAMERA_TILE_REFRESH_INTERVAL = "refresh_interval"
+private const val ROUTE_SHORTCUTS_TILE = "shortcuts_tile"
+private const val SCREEN_SELECT_SHORTCUTS_TILE = "select_shortcuts_tile"
+private const val SCREEN_SET_SHORTCUTS_TILE = "set_shortcuts_tile"
+private const val SCREEN_SHORTCUTS_TILE_CHOOSE_ENTITY = "shortcuts_tile_choose_entity"
 private const val SCREEN_SET_TILE_TEMPLATE = "set_tile_template"
 private const val SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL = "set_tile_template_refresh_interval"
 
 const val DEEPLINK_SENSOR_MANAGER = "ha_wear://$SCREEN_SINGLE_SENSOR_MANAGER"
+const val DEEPLINK_PREFIX_SET_CAMERA_TILE = "ha_wear://$SCREEN_SET_CAMERA_TILE"
+const val DEEPLINK_PREFIX_SET_SHORTCUT_TILE = "ha_wear://$SCREEN_SET_SHORTCUTS_TILE"
 
 @Composable
 fun LoadHomePage(
     mainViewModel: MainViewModel
 ) {
-    var shortcutEntitySelectionIndex: Int by remember { mutableStateOf(0) }
     val context = LocalContext.current
 
     WearAppTheme {
@@ -59,7 +70,7 @@ fun LoadHomePage(
                     },
                     onRetryLoadEntitiesClicked = mainViewModel::loadEntities,
                     onSettingsClicked = { swipeDismissableNavController.navigate(SCREEN_SETTINGS) },
-                    onTestClicked = { lists, order, filter ->
+                    onNavigationClicked = { lists, order, filter ->
                         mainViewModel.entityLists.clear()
                         mainViewModel.entityLists.putAll(lists)
                         mainViewModel.entityListsOrder.clear()
@@ -68,8 +79,7 @@ fun LoadHomePage(
                         swipeDismissableNavController.navigate(SCREEN_ENTITY_LIST)
                     },
                     isHapticEnabled = mainViewModel.isHapticEnabled.value,
-                    isToastEnabled = mainViewModel.isToastEnabled.value,
-                    deleteFavorite = { id -> mainViewModel.removeFavoriteEntity(id) }
+                    isToastEnabled = mainViewModel.isToastEnabled.value
                 )
             }
             composable("$SCREEN_ENTITY_DETAIL/{entityId}") {
@@ -92,10 +102,11 @@ fun LoadHomePage(
                                 brightness
                             )
                         },
-                        onColorTempChanged = { colorTemp ->
+                        onColorTempChanged = { colorTemp, isKelvin ->
                             mainViewModel.setColorTemp(
                                 entity.entityId,
-                                colorTemp
+                                colorTemp,
+                                isKelvin
                             )
                         },
                         isToastEnabled = mainViewModel.isToastEnabled.value,
@@ -129,8 +140,9 @@ fun LoadHomePage(
                     },
                     onClearFavorites = { mainViewModel.clearFavorites() },
                     onClickSetShortcuts = {
+                        mainViewModel.loadShortcutTileEntities()
                         swipeDismissableNavController.navigate(
-                            SCREEN_SET_TILE_SHORTCUTS
+                            "$ROUTE_SHORTCUTS_TILE/$SCREEN_SELECT_SHORTCUTS_TILE"
                         )
                     },
                     onClickSensors = {
@@ -141,9 +153,17 @@ fun LoadHomePage(
                     onClickLogout = { mainViewModel.logout() },
                     isHapticEnabled = mainViewModel.isHapticEnabled.value,
                     isToastEnabled = mainViewModel.isToastEnabled.value,
+                    isFavoritesOnly = mainViewModel.isFavoritesOnly,
+                    isAssistantAppAllowed = mainViewModel.isAssistantAppAllowed,
                     onHapticEnabled = { mainViewModel.setHapticEnabled(it) },
-                    onToastEnabled = { mainViewModel.setToastEnabled(it) }
-                ) { swipeDismissableNavController.navigate(SCREEN_SET_TILE_TEMPLATE) }
+                    onToastEnabled = { mainViewModel.setToastEnabled(it) },
+                    setFavoritesOnly = { mainViewModel.setWearFavoritesOnly(it) },
+                    onClickCameraTile = {
+                        swipeDismissableNavController.navigate("$ROUTE_CAMERA_TILE/$SCREEN_SELECT_CAMERA_TILE")
+                    },
+                    onClickTemplateTile = { swipeDismissableNavController.navigate(SCREEN_SET_TILE_TEMPLATE) },
+                    onAssistantAppAllowed = mainViewModel::setAssistantApp
+                )
             }
             composable(SCREEN_SET_FAVORITES) {
                 SetFavoritesView(
@@ -157,33 +177,142 @@ fun LoadHomePage(
                     }
                 }
             }
-            composable(SCREEN_SET_TILE_SHORTCUTS) {
-                SetTileShortcutsView(
-                    shortcutEntities = mainViewModel.shortcutEntities,
-                    onShortcutEntitySelectionChange = {
-                        shortcutEntitySelectionIndex = it
-                        swipeDismissableNavController.navigate(SCREEN_SELECT_TILE_SHORTCUT)
+            composable("$ROUTE_CAMERA_TILE/$SCREEN_SELECT_CAMERA_TILE") {
+                SelectCameraTileView(
+                    tiles = mainViewModel.cameraTiles.value,
+                    onSelectTile = { tileId ->
+                        swipeDismissableNavController.navigate("$ROUTE_CAMERA_TILE/$tileId/$SCREEN_SET_CAMERA_TILE")
+                    }
+                )
+            }
+            composable(
+                route = "$ROUTE_CAMERA_TILE/{$ARG_SCREEN_CAMERA_TILE_ID}/$SCREEN_SET_CAMERA_TILE",
+                arguments = listOf(
+                    navArgument(name = ARG_SCREEN_CAMERA_TILE_ID) {
+                        type = NavType.IntType
+                    }
+                ),
+                deepLinks = listOf(
+                    navDeepLink { uriPattern = "$DEEPLINK_PREFIX_SET_CAMERA_TILE/{$ARG_SCREEN_CAMERA_TILE_ID}" }
+                )
+            ) { backStackEntry ->
+                val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_CAMERA_TILE_ID)
+                SetCameraTileView(
+                    tile = mainViewModel.cameraTiles.value.firstOrNull { it.id == tileId },
+                    entities = mainViewModel.cameraEntitiesMap["camera"],
+                    onSelectEntity = {
+                        swipeDismissableNavController.navigate("$ROUTE_CAMERA_TILE/$tileId/$SCREEN_SET_CAMERA_TILE_ENTITY")
+                    },
+                    onSelectRefreshInterval = {
+                        swipeDismissableNavController.navigate("$ROUTE_CAMERA_TILE/$tileId/$SCREEN_SET_CAMERA_TILE_REFRESH_INTERVAL")
+                    }
+                )
+            }
+            composable(
+                route = "$ROUTE_CAMERA_TILE/{$ARG_SCREEN_CAMERA_TILE_ID}/$SCREEN_SET_CAMERA_TILE_ENTITY",
+                arguments = listOf(
+                    navArgument(name = ARG_SCREEN_CAMERA_TILE_ID) {
+                        type = NavType.IntType
+                    }
+                )
+            ) { backStackEntry ->
+                val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_CAMERA_TILE_ID)
+                val cameraDomains = remember { mutableStateListOf("camera") }
+                val cameraFavorites = remember { mutableStateOf(emptyList<String>()) } // There are no camera favorites
+                ChooseEntityView(
+                    entitiesByDomainOrder = cameraDomains,
+                    entitiesByDomain = mainViewModel.cameraEntitiesMap,
+                    favoriteEntityIds = cameraFavorites,
+                    onNoneClicked = {},
+                    onEntitySelected = { entity ->
+                        tileId?.let {
+                            mainViewModel.setCameraTileEntity(it, entity.entityId)
+                            TileService.getUpdater(context).requestUpdate(CameraTile::class.java)
+                        }
+                        swipeDismissableNavController.navigateUp()
+                    },
+                    allowNone = false
+                )
+            }
+            composable(
+                route = "$ROUTE_CAMERA_TILE/{$ARG_SCREEN_CAMERA_TILE_ID}/$SCREEN_SET_CAMERA_TILE_REFRESH_INTERVAL",
+                arguments = listOf(
+                    navArgument(name = ARG_SCREEN_CAMERA_TILE_ID) {
+                        type = NavType.IntType
+                    }
+                )
+            ) { backStackEntry ->
+                val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_CAMERA_TILE_ID)
+                RefreshIntervalPickerView(
+                    currentInterval = (
+                        mainViewModel.cameraTiles.value
+                            .firstOrNull { it.id == tileId }?.refreshInterval
+                            ?: CameraTile.DEFAULT_REFRESH_INTERVAL
+                        ).toInt()
+                ) { interval ->
+                    tileId?.let {
+                        mainViewModel.setCameraTileRefreshInterval(it, interval.toLong())
+                    }
+                    swipeDismissableNavController.navigateUp()
+                }
+            }
+            composable("$ROUTE_SHORTCUTS_TILE/$SCREEN_SELECT_SHORTCUTS_TILE") {
+                SelectShortcutsTileView(
+                    shortcutTileEntitiesCountById = mainViewModel.shortcutEntitiesMap.mapValues { (_, entities) -> entities.size },
+                    onSelectShortcutsTile = { tileId ->
+                        swipeDismissableNavController.navigate("$ROUTE_SHORTCUTS_TILE/$tileId/$SCREEN_SET_SHORTCUTS_TILE")
                     },
                     isShowShortcutTextEnabled = mainViewModel.isShowShortcutTextEnabled.value,
                     onShowShortcutTextEnabled = {
                         mainViewModel.setShowShortcutTextEnabled(it)
-                        TileService.getUpdater(context).requestUpdate(ShortcutsTile::class.java)
+                        ShortcutsTile.requestUpdate(context)
                     }
                 )
             }
-            composable(SCREEN_SELECT_TILE_SHORTCUT) {
+            composable(
+                route = "$ROUTE_SHORTCUTS_TILE/{$ARG_SCREEN_SHORTCUTS_TILE_ID}/$SCREEN_SET_SHORTCUTS_TILE",
+                arguments = listOf(
+                    navArgument(name = ARG_SCREEN_SHORTCUTS_TILE_ID) {
+                        type = NavType.StringType
+                    }
+                ),
+                deepLinks = listOf(
+                    navDeepLink { uriPattern = "$DEEPLINK_PREFIX_SET_SHORTCUT_TILE/{$ARG_SCREEN_SHORTCUTS_TILE_ID}" }
+                )
+            ) { backStackEntry ->
+                val tileId = backStackEntry.arguments!!.getString(ARG_SCREEN_SHORTCUTS_TILE_ID)!!.toIntOrNull()
+                SetShortcutsTileView(
+                    shortcutEntities = mainViewModel.shortcutEntitiesMap[tileId] ?: emptyList(),
+                    onShortcutEntitySelectionChange = { entityIndex ->
+                        swipeDismissableNavController.navigate("$ROUTE_SHORTCUTS_TILE/$tileId/$SCREEN_SHORTCUTS_TILE_CHOOSE_ENTITY/$entityIndex")
+                    }
+                )
+            }
+            composable(
+                route = "$ROUTE_SHORTCUTS_TILE/{$ARG_SCREEN_SHORTCUTS_TILE_ID}/$SCREEN_SHORTCUTS_TILE_CHOOSE_ENTITY/{$ARG_SCREEN_SHORTCUTS_TILE_ENTITY_INDEX}",
+                arguments = listOf(
+                    navArgument(name = ARG_SCREEN_SHORTCUTS_TILE_ID) {
+                        type = NavType.StringType
+                    },
+                    navArgument(name = ARG_SCREEN_SHORTCUTS_TILE_ENTITY_INDEX) {
+                        type = NavType.IntType
+                    }
+                )
+            ) { backStackEntry ->
+                val entityIndex = backStackEntry.arguments!!.getInt(ARG_SCREEN_SHORTCUTS_TILE_ENTITY_INDEX)
+                val tileId = backStackEntry.arguments!!.getString(ARG_SCREEN_SHORTCUTS_TILE_ID)!!.toIntOrNull()
                 ChooseEntityView(
                     entitiesByDomainOrder = mainViewModel.entitiesByDomainOrder,
                     entitiesByDomain = mainViewModel.entitiesByDomain,
                     favoriteEntityIds = mainViewModel.favoriteEntityIds,
                     onNoneClicked = {
-                        mainViewModel.clearTileShortcut(shortcutEntitySelectionIndex)
-                        TileService.getUpdater(context).requestUpdate(ShortcutsTile::class.java)
+                        mainViewModel.clearTileShortcut(tileId, entityIndex)
+                        ShortcutsTile.requestUpdate(context)
                         swipeDismissableNavController.navigateUp()
                     },
                     onEntitySelected = { entity ->
-                        mainViewModel.setTileShortcut(shortcutEntitySelectionIndex, entity)
-                        TileService.getUpdater(context).requestUpdate(ShortcutsTile::class.java)
+                        mainViewModel.setTileShortcut(tileId, entityIndex, entity)
+                        ShortcutsTile.requestUpdate(context)
                         swipeDismissableNavController.navigateUp()
                     }
                 )
@@ -232,7 +361,7 @@ fun LoadHomePage(
                 SensorManagerUi(
                     allSensors = mainViewModel.sensors.value,
                     allAvailSensors = mainViewModel.availableSensors,
-                    sensorManager = sensorManager,
+                    sensorManager = sensorManager
                 ) { sensorId, isEnabled ->
                     mainViewModel.enableDisableSensor(sensorManager, sensorId, isEnabled)
                 }

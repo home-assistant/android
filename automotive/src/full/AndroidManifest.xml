@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-sdk tools:overrideLibrary="com.google.android.gms.threadnetwork" />
+
+    <queries>
+        <!-- For GMS Core/Play service -->
+        <package android:name="com.google.android.gms" />
+        <package android:name="com.android.vending" />
+        <!-- End of GMS Core/Play service-->
+    </queries>
+
+    <application
+        android:name="io.homeassistant.companion.android.HomeAssistantApplication" >
+        <meta-data android:name="io.sentry.auto-init" android:value="false" />
+        <meta-data android:name="io.sentry.release" android:value="${sentryRelease}" />
+        <meta-data android:name="io.sentry.dsn" android:value="${sentryDsn}" />
+
+        <activity
+            android:name=".matter.MatterCommissioningActivity"
+            android:configChanges="orientation|screenSize"
+            android:exported="true"
+            android:theme="@style/Theme.HomeAssistant.Config">
+            <intent-filter>
+                <action android:name="com.google.android.gms.home.matter.ACTION_COMMISSION_DEVICE"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
+
+        <receiver android:name=".location.HighAccuracyLocationReceiver"
+            android:enabled="true"
+            android:exported="true" />
+
+        <service
+            android:name=".notifications.FirebaseCloudMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".location.HighAccuracyLocationService"
+            android:enabled="true"
+            android:exported="true"/>
+
+        <service
+            android:name=".matter.MatterCommissioningService"
+            android:exported="true" />
+
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_stat_ic_notification" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/colorPrimary" />
+
+    </application>
+
+</manifest>

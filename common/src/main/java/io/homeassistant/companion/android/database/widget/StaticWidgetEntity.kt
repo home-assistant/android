@@ -8,6 +8,8 @@ import androidx.room.PrimaryKey
 data class StaticWidgetEntity(
     @PrimaryKey
     override val id: Int,
+    @ColumnInfo(name = "server_id", defaultValue = "0")
+    override val serverId: Int,
     @ColumnInfo(name = "entity_id")
     val entityId: String,
     @ColumnInfo(name = "attribute_ids")
@@ -20,6 +22,8 @@ data class StaticWidgetEntity(
     val stateSeparator: String = "",
     @ColumnInfo(name = "attribute_separator")
     val attributeSeparator: String = "",
+    @ColumnInfo(name = "tap_action", defaultValue = "REFRESH")
+    val tapAction: WidgetTapAction,
     @ColumnInfo(name = "last_update")
     val lastUpdate: String,
     @ColumnInfo(name = "background_type", defaultValue = "DAYNIGHT")

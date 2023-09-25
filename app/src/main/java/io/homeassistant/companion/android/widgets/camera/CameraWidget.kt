@@ -6,22 +6,21 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.net.ConnectivityManager
+import android.content.res.Resources
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
-import androidx.core.content.getSystemService
 import com.squareup.picasso.Picasso
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
+import io.homeassistant.companion.android.util.hasActiveConnection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -38,15 +37,13 @@ class CameraWidget : AppWidgetProvider() {
         internal const val UPDATE_IMAGE =
             "io.homeassistant.companion.android.widgets.camera.CameraWidget.UPDATE_IMAGE"
 
+        internal const val EXTRA_SERVER_ID = "EXTRA_SERVER_ID"
         internal const val EXTRA_ENTITY_ID = "EXTRA_ENTITY_ID"
         private var lastIntent = ""
     }
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
-
-    @Inject
-    lateinit var urlUseCase: UrlRepository
+    lateinit var serverManager: ServerManager
 
     @Inject
     lateinit var cameraWidgetDao: CameraWidgetDao
@@ -73,7 +70,7 @@ class CameraWidget : AppWidgetProvider() {
         appWidgetId: Int,
         appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context)
     ) {
-        if (!isConnectionActive(context)) {
+        if (!context.hasActiveConnection()) {
             Log.d(TAG, "Skipping widget update since network connection is not active")
             return
         }
@@ -118,14 +115,14 @@ class CameraWidget : AppWidgetProvider() {
             if (widget != null) {
                 var entityPictureUrl: String?
                 try {
-                    entityPictureUrl = retrieveCameraImageUrl(widget.entityId)
+                    entityPictureUrl = retrieveCameraImageUrl(widget.serverId, widget.entityId)
                     setViewVisibility(R.id.widgetCameraError, View.GONE)
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed to fetch entity or entity does not exist", e)
                     setViewVisibility(R.id.widgetCameraError, View.VISIBLE)
                     entityPictureUrl = null
                 }
-                val baseUrl = urlUseCase.getUrl().toString().removeSuffix("/")
+                val baseUrl = serverManager.getServer(widget.serverId)?.connection?.getUrl().toString().removeSuffix("/")
                 val url = "$baseUrl$entityPictureUrl"
                 if (entityPictureUrl == null) {
                     setImageViewResource(
@@ -151,10 +148,13 @@ class CameraWidget : AppWidgetProvider() {
                     )
                     Log.d(TAG, "Fetching camera image")
                     Handler(Looper.getMainLooper()).post {
-                        if (BuildConfig.DEBUG)
-                            Picasso.get().isLoggingEnabled = true
+                        val picasso = Picasso.get()
+                        if (BuildConfig.DEBUG) {
+                            picasso.isLoggingEnabled = true
+                        }
                         try {
-                            Picasso.get().load(url).resize(1024, 600).into(
+                            picasso.invalidate(url)
+                            picasso.load(url).resize(getScreenWidth(), 0).onlyScaleDown().into(
                                 this,
                                 R.id.widgetCameraImage,
                                 intArrayOf(appWidgetId)
@@ -188,8 +188,8 @@ class CameraWidget : AppWidgetProvider() {
         }
     }
 
-    private suspend fun retrieveCameraImageUrl(entityId: String): String? {
-        val entity = integrationUseCase.getEntity(entityId)
+    private suspend fun retrieveCameraImageUrl(serverId: Int, entityId: String): String? {
+        val entity = serverManager.integrationRepository(serverId).getEntity(entityId)
         return entity?.attributes?.get("entity_picture")?.toString()
     }
 
@@ -215,9 +215,10 @@ class CameraWidget : AppWidgetProvider() {
     private fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
         if (extras == null) return
 
+        val serverSelection = if (extras.containsKey(EXTRA_SERVER_ID)) extras.getInt(EXTRA_SERVER_ID) else null
         val entitySelection: String? = extras.getString(EXTRA_ENTITY_ID)
 
-        if (entitySelection == null) {
+        if (serverSelection == null || entitySelection == null) {
             Log.e(TAG, "Did not receive complete configuration data")
             return
         }
@@ -231,6 +232,7 @@ class CameraWidget : AppWidgetProvider() {
             cameraWidgetDao.add(
                 CameraWidgetEntity(
                     appWidgetId,
+                    serverSelection,
                     entitySelection
                 )
             )
@@ -254,9 +256,7 @@ class CameraWidget : AppWidgetProvider() {
         // Enter relevant functionality for when the last widget is disabled
     }
 
-    private fun isConnectionActive(context: Context): Boolean {
-        val connectivityManager = context.getSystemService<ConnectivityManager>()
-        val activeNetworkInfo = connectivityManager?.activeNetworkInfo
-        return activeNetworkInfo?.isConnected ?: false
+    private fun getScreenWidth(): Int {
+        return Resources.getSystem().displayMetrics.widthPixels
     }
 }

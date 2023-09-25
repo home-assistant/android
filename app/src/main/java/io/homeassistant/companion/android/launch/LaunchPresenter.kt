@@ -6,5 +6,7 @@ interface LaunchPresenter {
 
     fun setSessionExpireMillis(value: Long)
 
+    fun hasMultipleServers(): Boolean
+
     fun onFinish()
 }

@@ -2,4 +2,5 @@
 <resources>
     <dimen name="activity_margin">16dp</dimen>
     <dimen name="widget_corner_radius">8dp</dimen>
+    <dimen name="bottom_sheet_corner_radius">28dp</dimen>
 </resources>

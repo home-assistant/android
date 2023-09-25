@@ -7,6 +7,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -21,16 +22,19 @@ import androidx.core.graphics.toColorInt
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.google.android.material.color.DynamicColors
-import com.maltaisn.icondialog.pack.IconPack
-import com.maltaisn.icondialog.pack.IconPackLoader
-import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
+import com.mikepenz.iconics.IconicsDrawable
+import com.mikepenz.iconics.IconicsSize
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import com.mikepenz.iconics.utils.padding
+import com.mikepenz.iconics.utils.size
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.util.getAttribute
+import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import io.homeassistant.companion.android.widgets.common.WidgetAuthenticationActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -44,18 +48,19 @@ import io.homeassistant.companion.android.common.R as commonR
 class ButtonWidget : AppWidgetProvider() {
     companion object {
         private const val TAG = "ButtonWidget"
-        public const val CALL_SERVICE =
+        const val CALL_SERVICE =
             "io.homeassistant.companion.android.widgets.button.ButtonWidget.CALL_SERVICE"
         private const val CALL_SERVICE_AUTH =
             "io.homeassistant.companion.android.widgets.button.ButtonWidget.CALL_SERVICE_AUTH"
         internal const val RECEIVE_DATA =
             "io.homeassistant.companion.android.widgets.button.ButtonWidget.RECEIVE_DATA"
 
+        internal const val EXTRA_SERVER_ID = "EXTRA_SERVER_ID"
         internal const val EXTRA_DOMAIN = "EXTRA_DOMAIN"
         internal const val EXTRA_SERVICE = "EXTRA_SERVICE"
         internal const val EXTRA_SERVICE_DATA = "EXTRA_SERVICE_DATA"
         internal const val EXTRA_LABEL = "EXTRA_LABEL"
-        internal const val EXTRA_ICON = "EXTRA_ICON"
+        internal const val EXTRA_ICON_NAME = "EXTRA_ICON_NAME"
         internal const val EXTRA_BACKGROUND_TYPE = "EXTRA_BACKGROUND_TYPE"
         internal const val EXTRA_TEXT_COLOR = "EXTRA_TEXT_COLOR"
         internal const val EXTRA_REQUIRE_AUTHENTICATION = "EXTRA_REQUIRE_AUTHENTICATION"
@@ -65,12 +70,10 @@ class ButtonWidget : AppWidgetProvider() {
     }
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
+    lateinit var serverManager: ServerManager
 
     @Inject
     lateinit var buttonWidgetDao: ButtonWidgetDao
-
-    private var iconPack: IconPack? = null
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -175,12 +178,6 @@ class ButtonWidget : AppWidgetProvider() {
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         }
 
-        // Create an icon pack and load all drawables.
-        if (iconPack == null) {
-            val loader = IconPackLoader(context)
-            iconPack = createMaterialDesignIconPack(loader)
-            iconPack!!.loadDrawables(loader.drawableLoader)
-        }
         val useDynamicColors = widget?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
         return RemoteViews(context.packageName, if (useDynamicColors) R.layout.widget_button_wrapper_dynamiccolor else R.layout.widget_button_wrapper_default).apply {
             // Theming
@@ -195,39 +192,41 @@ class ButtonWidget : AppWidgetProvider() {
             setLabelVisibility(this, widget)
 
             // Content
-            val iconId = widget?.iconId ?: 988171 // Lightning bolt
+            val iconData = widget?.iconName?.let { CommunityMaterial.getIconByMdiName(it) }
+                ?: CommunityMaterial.Icon2.cmd_flash // Lightning bolt
 
-            val iconDrawable = iconPack?.icons?.get(iconId)?.drawable
-            if (iconDrawable != null) {
-                val icon = DrawableCompat.wrap(iconDrawable)
-                if (widget?.backgroundType == WidgetBackgroundType.TRANSPARENT) {
-                    setInt(R.id.widgetImageButton, "setColorFilter", textColor)
-                }
-
-                // Determine reasonable dimensions for drawing vector icon as a bitmap
-                val aspectRatio = iconDrawable.intrinsicWidth / iconDrawable.intrinsicHeight.toDouble()
-                val awo = if (widget != null) AppWidgetManager.getInstance(context).getAppWidgetOptions(widget.id) else null
-                val maxWidth = (
-                    awo?.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, DEFAULT_MAX_ICON_SIZE)
-                        ?: DEFAULT_MAX_ICON_SIZE
-                    ).coerceAtLeast(16)
-                val maxHeight = (
-                    awo?.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, DEFAULT_MAX_ICON_SIZE)
-                        ?: DEFAULT_MAX_ICON_SIZE
-                    ).coerceAtLeast(16)
-                val width: Int
-                val height: Int
-                if (maxWidth > maxHeight) {
-                    width = maxWidth
-                    height = (maxWidth * (1 / aspectRatio)).toInt()
-                } else {
-                    width = (maxHeight * aspectRatio).toInt()
-                    height = maxHeight
-                }
-
-                // Render the icon into the Button's ImageView
-                setImageViewBitmap(R.id.widgetImageButton, icon.toBitmap(width, height))
+            val iconDrawable = IconicsDrawable(context, iconData).apply {
+                padding = IconicsSize.dp(2)
+                size = IconicsSize.dp(24)
             }
+            val icon = DrawableCompat.wrap(iconDrawable)
+            if (widget?.backgroundType == WidgetBackgroundType.TRANSPARENT) {
+                setInt(R.id.widgetImageButton, "setColorFilter", textColor)
+            }
+
+            // Determine reasonable dimensions for drawing vector icon as a bitmap
+            val aspectRatio = iconDrawable.intrinsicWidth / iconDrawable.intrinsicHeight.toDouble()
+            val awo = if (widget != null) AppWidgetManager.getInstance(context).getAppWidgetOptions(widget.id) else null
+            val maxWidth = (
+                awo?.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, DEFAULT_MAX_ICON_SIZE)
+                    ?: DEFAULT_MAX_ICON_SIZE
+                ).coerceAtLeast(16)
+            val maxHeight = (
+                awo?.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, DEFAULT_MAX_ICON_SIZE)
+                    ?: DEFAULT_MAX_ICON_SIZE
+                ).coerceAtLeast(16)
+            val width: Int
+            val height: Int
+            if (maxWidth > maxHeight) {
+                width = maxWidth
+                height = (maxWidth * (1 / aspectRatio)).toInt()
+            } else {
+                width = (maxHeight * aspectRatio).toInt()
+                height = maxHeight
+            }
+
+            // Render the icon into the Button's ImageView
+            setImageViewBitmap(R.id.widgetImageButton, icon.toBitmap(width, height))
 
             setOnClickPendingIntent(
                 R.id.widgetImageButtonLayout,
@@ -298,7 +297,6 @@ class ButtonWidget : AppWidgetProvider() {
             } else {
                 // If everything loaded correctly, package the service data and attempt the call
                 try {
-
                     // Convert JSON to HashMap
                     val serviceDataMap: HashMap<String, Any> =
                         jacksonObjectMapper().readValue(serviceDataJson)
@@ -319,7 +317,7 @@ class ButtonWidget : AppWidgetProvider() {
                     }
 
                     Log.d(TAG, "Sending service call to Home Assistant")
-                    integrationUseCase.callService(domain, service, serviceDataMap)
+                    serverManager.integrationRepository(widget.serverId).callService(domain, service, serviceDataMap)
                     Log.d(TAG, "Service call sent successfully")
 
                     // If service call does not throw an exception, send positive feedback
@@ -358,16 +356,22 @@ class ButtonWidget : AppWidgetProvider() {
     private fun saveServiceCallConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
         if (extras == null) return
 
+        val serverId = if (extras.containsKey(EXTRA_SERVER_ID)) extras.getInt(EXTRA_SERVER_ID) else null
         val domain: String? = extras.getString(EXTRA_DOMAIN)
         val service: String? = extras.getString(EXTRA_SERVICE)
         val serviceData: String? = extras.getString(EXTRA_SERVICE_DATA)
         val label: String? = extras.getString(EXTRA_LABEL)
         val requireAuthentication: Boolean = extras.getBoolean(EXTRA_REQUIRE_AUTHENTICATION)
-        val icon: Int = extras.getInt(EXTRA_ICON)
-        val backgroundType: WidgetBackgroundType = extras.getSerializable(EXTRA_BACKGROUND_TYPE) as WidgetBackgroundType
+        val icon: String = extras.getString(EXTRA_ICON_NAME) ?: "mdi:flash"
+        val backgroundType: WidgetBackgroundType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            extras.getSerializable(EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            extras.getSerializable(EXTRA_BACKGROUND_TYPE) as? WidgetBackgroundType
+        } ?: WidgetBackgroundType.DAYNIGHT
         val textColor: String? = extras.getString(EXTRA_TEXT_COLOR)
 
-        if (domain == null || service == null || serviceData == null) {
+        if (serverId == null || domain == null || service == null || serviceData == null) {
             Log.e(TAG, "Did not receive complete service call data")
             return
         }
@@ -383,7 +387,7 @@ class ButtonWidget : AppWidgetProvider() {
                     "label: " + label
             )
 
-            val widget = ButtonWidgetEntity(appWidgetId, icon, domain, service, serviceData, label, backgroundType, textColor, requireAuthentication)
+            val widget = ButtonWidgetEntity(appWidgetId, serverId, icon, domain, service, serviceData, label, backgroundType, textColor, requireAuthentication)
             buttonWidgetDao.add(widget)
 
             // It is the responsibility of the configuration activity to update the app widget

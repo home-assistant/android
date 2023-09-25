@@ -51,7 +51,6 @@ class HighAccuracyLocationService : Service() {
 
         @Synchronized
         fun stopService(context: Context) {
-
             Log.d(TAG, "Try stopping high accuracy location service...")
             LAUNCHER.stopService(context)
         }
@@ -65,7 +64,7 @@ class HighAccuracyLocationService : Service() {
 
         fun updateNotificationAddress(context: Context, location: Location, geocodedAddress: String = "") {
             var locationReadable = geocodedAddress
-            if (locationReadable.isNullOrEmpty()) {
+            if (locationReadable.isEmpty()) {
                 locationReadable = getFormattedLocationInDegree(location.latitude, location.longitude)
             }
             locationReadable = "$locationReadable (~${location.accuracy}m)"
@@ -189,12 +188,11 @@ class HighAccuracyLocationService : Service() {
 
     @SuppressLint("MissingPermission")
     private fun requestLocationUpdates(intervalInSeconds: Int) {
-        val request = LocationRequest.create()
-
         val intervalInMS = (intervalInSeconds * 1000).toLong()
-        request.interval = intervalInMS
-        request.fastestInterval = intervalInMS / 2
-        request.priority = Priority.PRIORITY_HIGH_ACCURACY
+        val request = LocationRequest.Builder(intervalInMS)
+            .setMinUpdateIntervalMillis(intervalInMS / 2)
+            .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+            .build()
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
         fusedLocationProviderClient?.requestLocationUpdates(request, getLocationUpdateIntent())

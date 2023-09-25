@@ -20,7 +20,7 @@ import io.homeassistant.companion.android.common.R as commonR
 fun NfcWelcomeView(
     isNfcEnabled: Boolean,
     onReadClicked: () -> Unit,
-    onWriteClicked: () -> Unit,
+    onWriteClicked: () -> Unit
 ) {
     LazyColumn(contentPadding = PaddingValues(all = 16.dp)) {
         item {
