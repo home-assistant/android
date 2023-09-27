@@ -159,7 +159,7 @@ fun MainView(
                         MainViewModel.LoadingState.ERROR -> {
                             item {
                                 Column(
-                                    modifier = Modifier.fillMaxSize(),
+                                    modifier = Modifier.fillMaxSize().padding(vertical = 16.dp),
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.Center
                                 ) {

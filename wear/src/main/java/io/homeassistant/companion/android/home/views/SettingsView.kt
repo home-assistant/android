@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.home.views
 
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -10,6 +12,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
@@ -92,7 +95,13 @@ fun SettingsView(
                 state = scalingLazyListState
             ) {
                 item {
+                    Spacer(modifier = Modifier.fillMaxWidth())
+                }
+                item {
                     ListHeader(id = commonR.string.favorite_settings)
+                }
+                item {
+                    Spacer(modifier = Modifier.height(8.dp).fillMaxWidth())
                 }
                 item {
                     SecondarySettingsChip(

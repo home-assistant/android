@@ -2,13 +2,12 @@ package io.homeassistant.companion.android.home.views
 
 import android.content.Context
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -75,41 +74,42 @@ fun DetailsPanelView(
         ) {
             ThemeLazyColumn(state = scalingLazyListState) {
                 val attributes = entity.attributes as Map<*, *>
+                val friendlyName = attributes["friendly_name"].toString()
 
                 item {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        val friendlyName = attributes["friendly_name"].toString()
-                        Text(friendlyName)
+                    Spacer(modifier = Modifier.fillMaxWidth())
+                }
+                item {
+                    Text(friendlyName)
+                }
 
-                        if (entity.domain in EntityExt.DOMAINS_TOGGLE) {
-                            val isChecked = entity.state in listOf("on", "locked", "open", "opening")
-                            ToggleButton(
-                                checked = isChecked,
-                                onCheckedChange = {
-                                    onEntityToggled(entity.entityId, entity.state)
-                                    onEntityClickedFeedback(
-                                        isToastEnabled,
-                                        isHapticEnabled,
-                                        context,
-                                        friendlyName,
-                                        haptic
-                                    )
-                                },
-                                modifier = Modifier
-                                    .padding(start = 16.dp)
-                                    .size(ToggleButtonDefaults.SmallToggleButtonSize)
-                            ) {
-                                Icon(
-                                    imageVector = ToggleChipDefaults.switchIcon(isChecked),
-                                    contentDescription = if (isChecked) {
-                                        stringResource(R.string.enabled)
-                                    } else {
-                                        stringResource(R.string.disabled)
-                                    }
+                if (entity.domain in EntityExt.DOMAINS_TOGGLE) {
+                    item {
+                        val isChecked = entity.state in listOf("on", "locked", "open", "opening")
+                        ToggleButton(
+                            checked = isChecked,
+                            onCheckedChange = {
+                                onEntityToggled(entity.entityId, entity.state)
+                                onEntityClickedFeedback(
+                                    isToastEnabled,
+                                    isHapticEnabled,
+                                    context,
+                                    friendlyName,
+                                    haptic
                                 )
-                            }
+                            },
+                            modifier = Modifier
+                                .padding(start = 16.dp)
+                                .size(ToggleButtonDefaults.SmallToggleButtonSize)
+                        ) {
+                            Icon(
+                                imageVector = ToggleChipDefaults.switchIcon(isChecked),
+                                contentDescription = if (isChecked) {
+                                    stringResource(R.string.enabled)
+                                } else {
+                                    stringResource(R.string.disabled)
+                                }
+                            )
                         }
                     }
                 }
