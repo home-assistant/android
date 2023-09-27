@@ -13,8 +13,6 @@ import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.Icon
-import androidx.wear.compose.material.PositionIndicator
-import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.ToggleChipDefaults
@@ -35,74 +33,65 @@ fun SelectShortcutsTileView(
 ) {
     val scalingLazyListState = rememberScalingLazyListState()
     WearAppTheme {
-        Scaffold(
-            positionIndicator = {
-                if (scalingLazyListState.isScrollInProgress) {
-                    PositionIndicator(scalingLazyListState = scalingLazyListState)
-                }
-            },
-            timeText = { TimeText(scalingLazyListState = scalingLazyListState) }
-        ) {
-            ThemeLazyColumn(state = scalingLazyListState) {
-                item {
-                    ListHeader(id = commonR.string.shortcut_tiles)
-                }
-                item {
-                    ToggleChip(
-                        modifier = Modifier.fillMaxWidth(),
-                        checked = isShowShortcutTextEnabled,
-                        onCheckedChange = { onShowShortcutTextEnabled(it) },
-                        label = {
-                            Text(stringResource(commonR.string.shortcuts_tile_text_setting))
-                        },
-                        appIcon = {
-                            Image(
-                                asset =
-                                if (isShowShortcutTextEnabled) {
-                                    CommunityMaterial.Icon.cmd_alphabetical
-                                } else {
-                                    CommunityMaterial.Icon.cmd_alphabetical_off
-                                },
-                                colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
-                            )
-                        },
-                        toggleControl = {
-                            Icon(
-                                imageVector = ToggleChipDefaults.checkboxIcon(isShowShortcutTextEnabled),
-                                contentDescription = if (isShowShortcutTextEnabled) {
-                                    stringResource(commonR.string.show)
-                                } else {
-                                    stringResource(commonR.string.hide)
-                                }
-                            )
-                        }
-                    )
-                }
-                item {
-                    ListHeader(id = commonR.string.shortcuts_tile_select)
-                }
-                if (shortcutTileEntitiesCountById.isEmpty()) {
-                    item {
-                        Text(stringResource(commonR.string.shortcuts_tile_no_tiles_yet))
-                    }
-                } else {
-                    itemsIndexed(shortcutTileEntitiesCountById.keys.toList()) { index, shortcutsTileId ->
-                        Chip(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            label = {
-                                Text(stringResource(commonR.string.shortcuts_tile_n, index + 1))
+        ThemeLazyColumn(state = scalingLazyListState) {
+            item {
+                ListHeader(id = commonR.string.shortcut_tiles)
+            }
+            item {
+                ToggleChip(
+                    modifier = Modifier.fillMaxWidth(),
+                    checked = isShowShortcutTextEnabled,
+                    onCheckedChange = { onShowShortcutTextEnabled(it) },
+                    label = {
+                        Text(stringResource(commonR.string.shortcuts_tile_text_setting))
+                    },
+                    appIcon = {
+                        Image(
+                            asset =
+                            if (isShowShortcutTextEnabled) {
+                                CommunityMaterial.Icon.cmd_alphabetical
+                            } else {
+                                CommunityMaterial.Icon.cmd_alphabetical_off
                             },
-                            secondaryLabel = {
-                                val entityCount = shortcutTileEntitiesCountById[shortcutsTileId] ?: 0
-                                if (entityCount > 0) {
-                                    Text(pluralStringResource(commonR.plurals.n_entities, entityCount, entityCount))
-                                }
-                            },
-                            onClick = { onSelectShortcutsTile(shortcutsTileId) },
-                            colors = ChipDefaults.secondaryChipColors()
+                            colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                        )
+                    },
+                    toggleControl = {
+                        Icon(
+                            imageVector = ToggleChipDefaults.checkboxIcon(isShowShortcutTextEnabled),
+                            contentDescription = if (isShowShortcutTextEnabled) {
+                                stringResource(commonR.string.show)
+                            } else {
+                                stringResource(commonR.string.hide)
+                            }
                         )
                     }
+                )
+            }
+            item {
+                ListHeader(id = commonR.string.shortcuts_tile_select)
+            }
+            if (shortcutTileEntitiesCountById.isEmpty()) {
+                item {
+                    Text(stringResource(commonR.string.shortcuts_tile_no_tiles_yet))
+                }
+            } else {
+                itemsIndexed(shortcutTileEntitiesCountById.keys.toList()) { index, shortcutsTileId ->
+                    Chip(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        label = {
+                            Text(stringResource(commonR.string.shortcuts_tile_n, index + 1))
+                        },
+                        secondaryLabel = {
+                            val entityCount = shortcutTileEntitiesCountById[shortcutsTileId] ?: 0
+                            if (entityCount > 0) {
+                                Text(pluralStringResource(commonR.plurals.n_entities, entityCount, entityCount))
+                            }
+                        },
+                        onClick = { onSelectShortcutsTile(shortcutsTileId) },
+                        colors = ChipDefaults.secondaryChipColors()
+                    )
                 }
             }
         }

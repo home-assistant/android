@@ -12,8 +12,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
-import androidx.wear.compose.material.PositionIndicator
-import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
@@ -29,36 +27,27 @@ fun SensorsView(
     val scalingLazyListState = rememberScalingLazyListState()
 
     WearAppTheme {
-        Scaffold(
-            positionIndicator = {
-                if (scalingLazyListState.isScrollInProgress) {
-                    PositionIndicator(scalingLazyListState = scalingLazyListState)
-                }
-            },
-            timeText = { TimeText(scalingLazyListState = scalingLazyListState) }
+        val sensorManagers = getSensorManagers()
+        ThemeLazyColumn(
+            state = scalingLazyListState
         ) {
-            val sensorManagers = getSensorManagers()
-            ThemeLazyColumn(
-                state = scalingLazyListState
-            ) {
-                item {
-                    ListHeader(id = commonR.string.sensors)
-                }
-                items(sensorManagers.size, { sensorManagers[it].name }) { index ->
-                    val manager = sensorManagers[index]
-                    Row {
-                        Chip(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            colors = ChipDefaults.secondaryChipColors(),
-                            label = {
-                                Text(
-                                    text = stringResource(manager.name)
-                                )
-                            },
-                            onClick = { onClickSensorManager(manager) }
-                        )
-                    }
+            item {
+                ListHeader(id = commonR.string.sensors)
+            }
+            items(sensorManagers.size, { sensorManagers[it].name }) { index ->
+                val manager = sensorManagers[index]
+                Row {
+                    Chip(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        colors = ChipDefaults.secondaryChipColors(),
+                        label = {
+                            Text(
+                                text = stringResource(manager.name)
+                            )
+                        },
+                        onClick = { onClickSensorManager(manager) }
+                    )
                 }
             }
         }

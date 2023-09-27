@@ -23,8 +23,6 @@ import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.InlineSlider
 import androidx.wear.compose.material.InlineSliderDefaults
-import androidx.wear.compose.material.PositionIndicator
-import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleButton
 import androidx.wear.compose.material.ToggleButtonDefaults
@@ -65,113 +63,104 @@ fun DetailsPanelView(
     val scalingLazyListState = rememberScalingLazyListState()
 
     WearAppTheme {
-        Scaffold(
-            positionIndicator = {
-                if (scalingLazyListState.isScrollInProgress) {
-                    PositionIndicator(scalingLazyListState = scalingLazyListState)
-                }
-            },
-            timeText = { TimeText(scalingLazyListState = scalingLazyListState) }
-        ) {
-            ThemeLazyColumn(state = scalingLazyListState) {
-                val attributes = entity.attributes as Map<*, *>
+        ThemeLazyColumn(state = scalingLazyListState) {
+            val attributes = entity.attributes as Map<*, *>
 
-                item {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        val friendlyName = attributes["friendly_name"].toString()
-                        Text(friendlyName)
+            item {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val friendlyName = attributes["friendly_name"].toString()
+                    Text(friendlyName)
 
-                        if (entity.domain in EntityExt.DOMAINS_TOGGLE) {
-                            val isChecked = entity.state in listOf("on", "locked", "open", "opening")
-                            ToggleButton(
-                                checked = isChecked,
-                                onCheckedChange = {
-                                    onEntityToggled(entity.entityId, entity.state)
-                                    onEntityClickedFeedback(
-                                        isToastEnabled,
-                                        isHapticEnabled,
-                                        context,
-                                        friendlyName,
-                                        haptic
-                                    )
-                                },
-                                modifier = Modifier
-                                    .padding(start = 16.dp)
-                                    .size(ToggleButtonDefaults.SmallToggleButtonSize)
-                            ) {
-                                Icon(
-                                    imageVector = ToggleChipDefaults.switchIcon(isChecked),
-                                    contentDescription = if (isChecked) {
-                                        stringResource(R.string.enabled)
-                                    } else {
-                                        stringResource(R.string.disabled)
-                                    }
+                    if (entity.domain in EntityExt.DOMAINS_TOGGLE) {
+                        val isChecked = entity.state in listOf("on", "locked", "open", "opening")
+                        ToggleButton(
+                            checked = isChecked,
+                            onCheckedChange = {
+                                onEntityToggled(entity.entityId, entity.state)
+                                onEntityClickedFeedback(
+                                    isToastEnabled,
+                                    isHapticEnabled,
+                                    context,
+                                    friendlyName,
+                                    haptic
                                 )
-                            }
+                            },
+                            modifier = Modifier
+                                .padding(start = 16.dp)
+                                .size(ToggleButtonDefaults.SmallToggleButtonSize)
+                        ) {
+                            Icon(
+                                imageVector = ToggleChipDefaults.switchIcon(isChecked),
+                                contentDescription = if (isChecked) {
+                                    stringResource(R.string.enabled)
+                                } else {
+                                    stringResource(R.string.disabled)
+                                }
+                            )
                         }
+                    }
+                }
+            }
+
+            if (entity.domain == "fan") {
+                if (entity.supportsFanSetSpeed()) {
+                    item {
+                        FanSpeedSlider(entity, onFanSpeedChanged, isToastEnabled, isHapticEnabled)
+                    }
+                }
+            }
+            if (entity.domain == "light") {
+                if (entity.supportsLightBrightness()) {
+                    item {
+                        BrightnessSlider(entity, onBrightnessChanged, isToastEnabled, isHapticEnabled)
                     }
                 }
 
-                if (entity.domain == "fan") {
-                    if (entity.supportsFanSetSpeed()) {
-                        item {
-                            FanSpeedSlider(entity, onFanSpeedChanged, isToastEnabled, isHapticEnabled)
-                        }
+                if (entity.supportsLightColorTemperature() && attributes["color_mode"] == EntityExt.LIGHT_MODE_COLOR_TEMP) {
+                    item {
+                        ColorTempSlider(attributes, onColorTempChanged, isToastEnabled, isHapticEnabled)
                     }
                 }
-                if (entity.domain == "light") {
-                    if (entity.supportsLightBrightness()) {
-                        item {
-                            BrightnessSlider(entity, onBrightnessChanged, isToastEnabled, isHapticEnabled)
-                        }
-                    }
+            }
 
-                    if (entity.supportsLightColorTemperature() && attributes["color_mode"] == EntityExt.LIGHT_MODE_COLOR_TEMP) {
-                        item {
-                            ColorTempSlider(attributes, onColorTempChanged, isToastEnabled, isHapticEnabled)
-                        }
-                    }
-                }
-
-                item {
-                    ListHeader(R.string.details)
-                }
-                item {
-                    Text(
-                        stringResource(R.string.state_name, entity.state),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp)
-                    )
-                }
-                item {
-                    val lastChanged = DateFormat.getDateTimeInstance().format(entity.lastChanged.time)
-                    Text(
-                        stringResource(R.string.last_changed, lastChanged),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp)
-                    )
-                }
-                item {
-                    val lastUpdated = DateFormat.getDateTimeInstance().format(entity.lastUpdated.time)
-                    Text(
-                        stringResource(R.string.last_updated, lastUpdated),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp)
-                    )
-                }
-                item {
-                    Text(
-                        stringResource(R.string.entity_id_name, entity.entityId),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp)
-                    )
-                }
+            item {
+                ListHeader(R.string.details)
+            }
+            item {
+                Text(
+                    stringResource(R.string.state_name, entity.state),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp)
+                )
+            }
+            item {
+                val lastChanged = DateFormat.getDateTimeInstance().format(entity.lastChanged.time)
+                Text(
+                    stringResource(R.string.last_changed, lastChanged),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp)
+                )
+            }
+            item {
+                val lastUpdated = DateFormat.getDateTimeInstance().format(entity.lastUpdated.time)
+                Text(
+                    stringResource(R.string.last_updated, lastUpdated),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp)
+                )
+            }
+            item {
+                Text(
+                    stringResource(R.string.entity_id_name, entity.entityId),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp)
+                )
             }
         }
     }

@@ -13,8 +13,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.CircularProgressIndicator
-import androidx.wear.compose.material.PositionIndicator
-import androidx.wear.compose.material.Scaffold
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.sensor.Sensor
@@ -33,52 +31,43 @@ fun SensorManagerUi(
 ) {
     val scalingLazyListState = rememberScalingLazyListState()
     WearAppTheme {
-        Scaffold(
-            positionIndicator = {
-                if (scalingLazyListState.isScrollInProgress) {
-                    PositionIndicator(scalingLazyListState = scalingLazyListState)
-                }
-            },
-            timeText = { TimeText(scalingLazyListState = scalingLazyListState) }
+        ThemeLazyColumn(
+            state = scalingLazyListState
         ) {
-            ThemeLazyColumn(
-                state = scalingLazyListState
-            ) {
-                item {
-                    ListHeader(id = sensorManager.name)
-                }
-                val currentSensors = allSensors?.filter { sensor ->
-                    allAvailSensors?.firstOrNull { availableSensor ->
-                        sensor.id == availableSensor.id
-                    } != null
-                }
+            item {
+                ListHeader(id = sensorManager.name)
+            }
+            val currentSensors = allSensors?.filter { sensor ->
+                allAvailSensors?.firstOrNull { availableSensor ->
+                    sensor.id == availableSensor.id
+                } != null
+            }
 
-                if (allAvailSensors?.isEmpty() == true) {
-                    item {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(vertical = 32.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            ListHeader(id = R.string.loading)
-                            CircularProgressIndicator()
-                        }
+            if (allAvailSensors?.isEmpty() == true) {
+                item {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(vertical = 32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        ListHeader(id = R.string.loading)
+                        CircularProgressIndicator()
                     }
-                } else {
-                    allAvailSensors?.size?.let { int ->
-                        items(int, { allAvailSensors[it].id }) { index ->
-                            val basicSensor = allAvailSensors[index]
-                            val sensor = currentSensors?.firstOrNull { sensor ->
-                                sensor.id == basicSensor.id
-                            }
-                            SensorUi(
-                                sensor = sensor,
-                                manager = sensorManager,
-                                basicSensor = basicSensor
-                            ) { sensorId, enabled -> onSensorClicked(sensorId, enabled) }
+                }
+            } else {
+                allAvailSensors?.size?.let { int ->
+                    items(int, { allAvailSensors[it].id }) { index ->
+                        val basicSensor = allAvailSensors[index]
+                        val sensor = currentSensors?.firstOrNull { sensor ->
+                            sensor.id == basicSensor.id
                         }
+                        SensorUi(
+                            sensor = sensor,
+                            manager = sensorManager,
+                            basicSensor = basicSensor
+                        ) { sensorId, enabled -> onSensorClicked(sensorId, enabled) }
                     }
                 }
             }

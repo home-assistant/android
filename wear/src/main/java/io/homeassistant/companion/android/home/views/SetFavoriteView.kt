@@ -10,8 +10,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Icon
-import androidx.wear.compose.material.PositionIndicator
-import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.ToggleChipDefaults
@@ -39,38 +37,29 @@ fun SetFavoritesView(
     val scalingLazyListState = rememberScalingLazyListState()
 
     WearAppTheme {
-        Scaffold(
-            positionIndicator = {
-                if (scalingLazyListState.isScrollInProgress) {
-                    PositionIndicator(scalingLazyListState = scalingLazyListState)
-                }
-            },
-            timeText = { TimeText(scalingLazyListState = scalingLazyListState) }
+        ThemeLazyColumn(
+            state = scalingLazyListState
         ) {
-            ThemeLazyColumn(
-                state = scalingLazyListState
-            ) {
-                item {
-                    ListHeader(id = commonR.string.set_favorite)
-                }
-                for (domain in mainViewModel.entitiesByDomainOrder) {
-                    val entities = mainViewModel.entitiesByDomain[domain].orEmpty()
-                    if (entities.isNotEmpty()) {
-                        item {
-                            ExpandableListHeader(
-                                string = mainViewModel.stringForDomain(domain)!!,
-                                key = domain,
-                                expandedStates = expandedStates
+            item {
+                ListHeader(id = commonR.string.set_favorite)
+            }
+            for (domain in mainViewModel.entitiesByDomainOrder) {
+                val entities = mainViewModel.entitiesByDomain[domain].orEmpty()
+                if (entities.isNotEmpty()) {
+                    item {
+                        ExpandableListHeader(
+                            string = mainViewModel.stringForDomain(domain)!!,
+                            key = domain,
+                            expandedStates = expandedStates
+                        )
+                    }
+                    if (expandedStates[domain] == true) {
+                        items(entities, key = { it.entityId }) { entity ->
+                            FavoriteToggleChip(
+                                entity = entity,
+                                favoriteEntityIds = favoriteEntityIds,
+                                onFavoriteSelected = onFavoriteSelected
                             )
-                        }
-                        if (expandedStates[domain] == true) {
-                            items(entities, key = { it.entityId }) { entity ->
-                                FavoriteToggleChip(
-                                    entity = entity,
-                                    favoriteEntityIds = favoriteEntityIds,
-                                    onFavoriteSelected = onFavoriteSelected
-                                )
-                            }
                         }
                     }
                 }

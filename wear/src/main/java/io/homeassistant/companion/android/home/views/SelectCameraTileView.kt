@@ -11,8 +11,6 @@ import androidx.wear.compose.foundation.lazy.itemsIndexed
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
-import androidx.wear.compose.material.PositionIndicator
-import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
 import io.homeassistant.companion.android.database.wear.CameraTile
 import io.homeassistant.companion.android.theme.WearAppTheme
@@ -27,41 +25,32 @@ fun SelectCameraTileView(
 ) {
     val scalingLazyListState = rememberScalingLazyListState()
     WearAppTheme {
-        Scaffold(
-            positionIndicator = {
-                if (scalingLazyListState.isScrollInProgress) {
-                    PositionIndicator(scalingLazyListState = scalingLazyListState)
-                }
-            },
-            timeText = { TimeText(scalingLazyListState = scalingLazyListState) }
-        ) {
-            ThemeLazyColumn(state = scalingLazyListState) {
+        ThemeLazyColumn(state = scalingLazyListState) {
+            item {
+                ListHeader(id = commonR.string.camera_tiles)
+            }
+            if (tiles.isEmpty()) {
                 item {
-                    ListHeader(id = commonR.string.camera_tiles)
+                    Text(
+                        text = stringResource(commonR.string.camera_tile_no_tiles_yet),
+                        textAlign = TextAlign.Center
+                    )
                 }
-                if (tiles.isEmpty()) {
-                    item {
-                        Text(
-                            text = stringResource(commonR.string.camera_tile_no_tiles_yet),
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                } else {
-                    itemsIndexed(tiles, key = { _, item -> "tile.${item.id}" }) { index, tile ->
-                        Chip(
-                            modifier = Modifier.fillMaxWidth(),
-                            label = {
-                                Text(stringResource(commonR.string.camera_tile_n, index + 1))
-                            },
-                            secondaryLabel = if (tile.entityId != null) {
-                                { Text(tile.entityId!!) }
-                            } else {
-                                null
-                            },
-                            onClick = { onSelectTile(tile.id) },
-                            colors = ChipDefaults.secondaryChipColors()
-                        )
-                    }
+            } else {
+                itemsIndexed(tiles, key = { _, item -> "tile.${item.id}" }) { index, tile ->
+                    Chip(
+                        modifier = Modifier.fillMaxWidth(),
+                        label = {
+                            Text(stringResource(commonR.string.camera_tile_n, index + 1))
+                        },
+                        secondaryLabel = if (tile.entityId != null) {
+                            { Text(tile.entityId!!) }
+                        } else {
+                            null
+                        },
+                        onClick = { onSelectTile(tile.id) },
+                        colors = ChipDefaults.secondaryChipColors()
+                    )
                 }
             }
         }

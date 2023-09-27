@@ -43,7 +43,6 @@ import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.LocalContentColor
-import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
@@ -55,7 +54,6 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
 import io.homeassistant.companion.android.conversation.ConversationViewModel
-import io.homeassistant.companion.android.home.views.TimeText
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.util.KeepScreenOn
 import io.homeassistant.companion.android.views.ListHeader
@@ -118,14 +116,7 @@ fun ConversationResultView(
 ) {
     val scrollState = rememberScalingLazyListState()
 
-    Scaffold(
-        positionIndicator = {
-            if (scrollState.isScrollInProgress) {
-                PositionIndicator(scalingLazyListState = scrollState)
-            }
-        },
-        timeText = { TimeText(scalingLazyListState = scrollState) }
-    ) {
+    Scaffold {
         LaunchedEffect(conversation.size) {
             scrollState.scrollToItem(
                 if (inputMode != AssistViewModelBase.AssistInputMode.BLOCKED) conversation.size else (conversation.size - 1)
@@ -272,28 +263,19 @@ fun ConversationPipelinesView(
 ) {
     WearAppTheme {
         val scrollState = rememberScalingLazyListState()
-        Scaffold(
-            positionIndicator = {
-                if (scrollState.isScrollInProgress) {
-                    PositionIndicator(scalingLazyListState = scrollState)
-                }
-            },
-            timeText = { TimeText(scalingLazyListState = scrollState) }
+        ThemeLazyColumn(
+            state = scrollState
         ) {
-            ThemeLazyColumn(
-                state = scrollState
-            ) {
-                item {
-                    ListHeader(stringResource(R.string.assist_change_pipeline))
-                }
-                items(items = pipelines, key = { it.id }) {
-                    Chip(
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text(it.name) },
-                        onClick = { onSelectPipeline(it.id) },
-                        colors = ChipDefaults.secondaryChipColors()
-                    )
-                }
+            item {
+                ListHeader(stringResource(R.string.assist_change_pipeline))
+            }
+            items(items = pipelines, key = { it.id }) {
+                Chip(
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(it.name) },
+                    onClick = { onSelectPipeline(it.id) },
+                    colors = ChipDefaults.secondaryChipColors()
+                )
             }
         }
     }
