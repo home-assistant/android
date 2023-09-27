@@ -271,17 +271,29 @@ fun ConversationPipelinesView(
     onSelectPipeline: (String) -> Unit
 ) {
     WearAppTheme {
-        ThemeLazyColumn {
-            item {
-                ListHeader(stringResource(R.string.assist_change_pipeline))
-            }
-            items(items = pipelines, key = { it.id }) {
-                Chip(
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text(it.name) },
-                    onClick = { onSelectPipeline(it.id) },
-                    colors = ChipDefaults.secondaryChipColors()
-                )
+        val scrollState = rememberScalingLazyListState()
+        Scaffold(
+            positionIndicator = {
+                if (scrollState.isScrollInProgress) {
+                    PositionIndicator(scalingLazyListState = scrollState)
+                }
+            },
+            timeText = { TimeText(scalingLazyListState = scrollState) }
+        ) {
+            ThemeLazyColumn(
+                state = scrollState
+            ) {
+                item {
+                    ListHeader(stringResource(R.string.assist_change_pipeline))
+                }
+                items(items = pipelines, key = { it.id }) {
+                    Chip(
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text(it.name) },
+                        onClick = { onSelectPipeline(it.id) },
+                        colors = ChipDefaults.secondaryChipColors()
+                    )
+                }
             }
         }
     }
