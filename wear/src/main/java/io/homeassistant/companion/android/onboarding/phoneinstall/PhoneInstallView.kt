@@ -12,7 +12,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.MaterialTheme
@@ -27,8 +26,7 @@ fun PhoneInstallView(
     onRefresh: () -> Unit,
     onAdvanced: () -> Unit
 ) {
-    val scrollState = rememberScalingLazyListState()
-    ThemeLazyColumn(state = scrollState) {
+    ThemeLazyColumn {
         item {
             Image(
                 painter = painterResource(R.drawable.app_icon),

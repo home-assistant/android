@@ -8,7 +8,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.foundation.lazy.itemsIndexed
-import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.Text
@@ -23,9 +22,8 @@ fun SelectCameraTileView(
     tiles: List<CameraTile>,
     onSelectTile: (tileId: Int) -> Unit
 ) {
-    val scalingLazyListState = rememberScalingLazyListState()
     WearAppTheme {
-        ThemeLazyColumn(state = scalingLazyListState) {
+        ThemeLazyColumn {
             item {
                 ListHeader(id = commonR.string.camera_tiles)
             }

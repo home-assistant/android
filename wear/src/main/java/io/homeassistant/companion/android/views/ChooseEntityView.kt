@@ -18,7 +18,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.lazy.items
-import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.Text
@@ -45,12 +44,9 @@ fun ChooseEntityView(
     // Remember expanded state of each header
     val expandedStates = rememberExpandedStates(entitiesByDomainOrder)
     var expandedFavorites: Boolean by rememberSaveable { mutableStateOf(false) }
-    val scrollState = rememberScalingLazyListState()
 
     WearAppTheme {
-        ThemeLazyColumn(
-            state = scrollState
-        ) {
+        ThemeLazyColumn {
             item {
                 ListHeader(id = commonR.string.choose_entity)
             }

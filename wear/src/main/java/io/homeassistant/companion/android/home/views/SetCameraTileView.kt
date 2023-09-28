@@ -6,7 +6,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.Text
@@ -32,9 +31,8 @@ fun SetCameraTileView(
     onSelectEntity: () -> Unit,
     onSelectRefreshInterval: () -> Unit
 ) {
-    val scalingLazyListState = rememberScalingLazyListState()
     WearAppTheme {
-        ThemeLazyColumn(state = scalingLazyListState) {
+        ThemeLazyColumn {
             item {
                 ListHeader(commonR.string.camera_tile)
             }

@@ -10,7 +10,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Chip
@@ -91,106 +90,101 @@ fun MainConfigView(
     onShowUnitClicked: (Boolean) -> Unit,
     onAcceptClicked: () -> Unit
 ) {
-    val scrollState = rememberScalingLazyListState()
-    WearAppTheme {
-        ThemeLazyColumn(
-            state = scrollState
-        ) {
+    ThemeLazyColumn {
+        item {
+            ListHeader(id = R.string.complication_entity_state_label)
+        }
+        if (loadingState != ComplicationConfigViewModel.LoadingState.ERROR) {
+            val loaded = loadingState == ComplicationConfigViewModel.LoadingState.READY
             item {
-                ListHeader(id = R.string.complication_entity_state_label)
-            }
-            if (loadingState != ComplicationConfigViewModel.LoadingState.ERROR) {
-                val loaded = loadingState == ComplicationConfigViewModel.LoadingState.READY
-                item {
-                    val iconBitmap = getIcon(
-                        entity?.icon,
-                        entity?.domain ?: "light",
-                        LocalContext.current
-                    )
-                    Chip(
-                        modifier = Modifier.fillMaxWidth(),
-                        icon = {
-                            Image(
-                                asset = iconBitmap,
-                                colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
-                            )
-                        },
-                        colors = ChipDefaults.secondaryChipColors(),
-                        label = {
-                            Text(
-                                text = stringResource(id = R.string.choose_entity)
-                            )
-                        },
-                        secondaryLabel = {
-                            Text(
-                                if (loaded) {
-                                    entity?.friendlyName ?: ""
-                                } else {
-                                    stringResource(R.string.loading)
-                                }
-                            )
-                        },
-                        enabled = loaded,
-                        onClick = onChooseEntityClicked
-                    )
-                }
-                item {
-                    val isChecked = !loaded || showTitle
-                    ToggleChip(
-                        checked = isChecked,
-                        onCheckedChange = onShowTitleClicked,
-                        label = { Text(stringResource(R.string.show_entity_title)) },
-                        toggleControl = {
-                            Icon(
-                                imageVector = ToggleChipDefaults.switchIcon(isChecked),
-                                contentDescription = if (isChecked) {
-                                    stringResource(R.string.enabled)
-                                } else {
-                                    stringResource(R.string.disabled)
-                                }
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = loaded && entity != null
-                    )
-                }
-                item {
-                    val isChecked = !loaded || showUnit
-                    ToggleChip(
-                        checked = isChecked,
-                        onCheckedChange = onShowUnitClicked,
-                        label = { Text(stringResource(R.string.show_unit_title)) },
-                        toggleControl = {
-                            Icon(
-                                imageVector = ToggleChipDefaults.switchIcon(isChecked),
-                                contentDescription = if (isChecked) {
-                                    stringResource(R.string.enabled)
-                                } else {
-                                    stringResource(R.string.disabled)
-                                }
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = loaded && entity != null
-                    )
-                }
-
-                item {
-                    Button(
-                        modifier = Modifier.padding(top = 8.dp),
-                        onClick = { onAcceptClicked() },
-                        colors = ButtonDefaults.primaryButtonColors(),
-                        enabled = loaded && entity != null
-                    ) {
+                val iconBitmap = getIcon(
+                    entity?.icon,
+                    entity?.domain ?: "light",
+                    LocalContext.current
+                )
+                Chip(
+                    modifier = Modifier.fillMaxWidth(),
+                    icon = {
                         Image(
-                            CommunityMaterial.Icon.cmd_check
+                            asset = iconBitmap,
+                            colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
                         )
-                    }
+                    },
+                    colors = ChipDefaults.secondaryChipColors(),
+                    label = {
+                        Text(
+                            text = stringResource(id = R.string.choose_entity)
+                        )
+                    },
+                    secondaryLabel = {
+                        Text(
+                            if (loaded) {
+                                entity?.friendlyName ?: ""
+                            } else {
+                                stringResource(R.string.loading)
+                            }
+                        )
+                    },
+                    enabled = loaded,
+                    onClick = onChooseEntityClicked
+                )
+            }
+            item {
+                val isChecked = !loaded || showTitle
+                ToggleChip(
+                    checked = isChecked,
+                    onCheckedChange = onShowTitleClicked,
+                    label = { Text(stringResource(R.string.show_entity_title)) },
+                    toggleControl = {
+                        Icon(
+                            imageVector = ToggleChipDefaults.switchIcon(isChecked),
+                            contentDescription = if (isChecked) {
+                                stringResource(R.string.enabled)
+                            } else {
+                                stringResource(R.string.disabled)
+                            }
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = loaded && entity != null
+                )
+            }
+            item {
+                val isChecked = !loaded || showUnit
+                ToggleChip(
+                    checked = isChecked,
+                    onCheckedChange = onShowUnitClicked,
+                    label = { Text(stringResource(R.string.show_unit_title)) },
+                    toggleControl = {
+                        Icon(
+                            imageVector = ToggleChipDefaults.switchIcon(isChecked),
+                            contentDescription = if (isChecked) {
+                                stringResource(R.string.enabled)
+                            } else {
+                                stringResource(R.string.disabled)
+                            }
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = loaded && entity != null
+                )
+            }
+
+            item {
+                Button(
+                    modifier = Modifier.padding(top = 8.dp),
+                    onClick = { onAcceptClicked() },
+                    colors = ButtonDefaults.primaryButtonColors(),
+                    enabled = loaded && entity != null
+                ) {
+                    Image(
+                        CommunityMaterial.Icon.cmd_check
+                    )
                 }
-            } else {
-                item {
-                    Text(text = stringResource(R.string.error_connection_failed))
-                }
+            }
+        } else {
+            item {
+                Text(text = stringResource(R.string.error_connection_failed))
             }
         }
     }

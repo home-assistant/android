@@ -262,10 +262,7 @@ fun ConversationPipelinesView(
     onSelectPipeline: (String) -> Unit
 ) {
     WearAppTheme {
-        val scrollState = rememberScalingLazyListState()
-        ThemeLazyColumn(
-            state = scrollState
-        ) {
+        ThemeLazyColumn {
             item {
                 ListHeader(stringResource(R.string.assist_change_pipeline))
             }

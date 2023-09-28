@@ -19,7 +19,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.InlineSlider
 import androidx.wear.compose.material.InlineSliderDefaults
@@ -60,10 +59,9 @@ fun DetailsPanelView(
 ) {
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
-    val scalingLazyListState = rememberScalingLazyListState()
 
     WearAppTheme {
-        ThemeLazyColumn(state = scalingLazyListState) {
+        ThemeLazyColumn {
             val attributes = entity.attributes as Map<*, *>
 
             item {

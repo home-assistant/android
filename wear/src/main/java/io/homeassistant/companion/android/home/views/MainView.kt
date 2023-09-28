@@ -24,7 +24,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.CircularProgressIndicator
@@ -56,17 +55,13 @@ fun MainView(
     isHapticEnabled: Boolean,
     isToastEnabled: Boolean
 ) {
-    val scalingLazyListState = rememberScalingLazyListState()
-
     var expandedFavorites: Boolean by rememberSaveable { mutableStateOf(true) }
 
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
 
     WearAppTheme {
-        ThemeLazyColumn(
-            state = scalingLazyListState
-        ) {
+        ThemeLazyColumn {
             if (favoriteEntityIds.isNotEmpty()) {
                 item {
                     ExpandableListHeader(

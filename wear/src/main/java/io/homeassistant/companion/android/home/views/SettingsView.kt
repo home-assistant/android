@@ -10,7 +10,6 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.Icon
@@ -75,12 +74,8 @@ fun SettingsView(
     onClickTemplateTile: () -> Unit,
     onAssistantAppAllowed: (Boolean) -> Unit
 ) {
-    val scalingLazyListState = rememberScalingLazyListState()
-
     WearAppTheme {
-        ThemeLazyColumn(
-            state = scalingLazyListState
-        ) {
+        ThemeLazyColumn {
             item {
                 ListHeader(id = commonR.string.favorite_settings)
             }

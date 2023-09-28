@@ -11,7 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.CircularProgressIndicator
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
@@ -29,11 +28,8 @@ fun SensorManagerUi(
     sensorManager: SensorManager,
     onSensorClicked: (String, Boolean) -> Unit
 ) {
-    val scalingLazyListState = rememberScalingLazyListState()
     WearAppTheme {
-        ThemeLazyColumn(
-            state = scalingLazyListState
-        ) {
+        ThemeLazyColumn {
             item {
                 ListHeader(id = sensorManager.name)
             }

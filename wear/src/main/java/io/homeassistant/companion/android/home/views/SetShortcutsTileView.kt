@@ -12,7 +12,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Chip
@@ -33,9 +32,8 @@ fun SetShortcutsTileView(
     shortcutEntities: List<SimplifiedEntity>,
     onShortcutEntitySelectionChange: (Int) -> Unit
 ) {
-    val scalingLazyListState = rememberScalingLazyListState()
     WearAppTheme {
-        ThemeLazyColumn(state = scalingLazyListState) {
+        ThemeLazyColumn {
             item {
                 ListHeader(id = commonR.string.shortcuts_choose)
             }

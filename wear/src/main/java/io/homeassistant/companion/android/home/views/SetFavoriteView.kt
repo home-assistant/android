@@ -8,7 +8,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.wear.compose.foundation.lazy.items
-import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
@@ -34,12 +33,8 @@ fun SetFavoritesView(
     // Remember expanded state of each header
     val expandedStates = rememberExpandedStates(mainViewModel.supportedDomains())
 
-    val scalingLazyListState = rememberScalingLazyListState()
-
     WearAppTheme {
-        ThemeLazyColumn(
-            state = scalingLazyListState
-        ) {
+        ThemeLazyColumn {
             item {
                 ListHeader(id = commonR.string.set_favorite)
             }
