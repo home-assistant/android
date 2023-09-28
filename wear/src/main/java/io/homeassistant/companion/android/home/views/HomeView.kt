@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.home.views
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
@@ -70,11 +69,8 @@ fun LoadHomePage(
                     },
                     onRetryLoadEntitiesClicked = mainViewModel::loadEntities,
                     onSettingsClicked = { swipeDismissableNavController.navigate(SCREEN_SETTINGS) },
-                    onNavigationClicked = { lists, order, filter ->
-                        mainViewModel.entityLists.clear()
-                        mainViewModel.entityLists.putAll(lists)
-                        mainViewModel.entityListsOrder.clear()
-                        mainViewModel.entityListsOrder.addAll(order)
+                    onNavigationClicked = { entityLists, filter ->
+                        mainViewModel.entityLists = entityLists
                         mainViewModel.entityListFilter = filter
                         swipeDismissableNavController.navigate(SCREEN_ENTITY_LIST)
                     },
@@ -117,7 +113,6 @@ fun LoadHomePage(
             composable(SCREEN_ENTITY_LIST) {
                 EntityViewList(
                     entityLists = mainViewModel.entityLists,
-                    entityListsOrder = mainViewModel.entityListsOrder,
                     entityListFilter = mainViewModel.entityListFilter,
                     onEntityClicked = { entityId, state ->
                         mainViewModel.toggleEntity(entityId, state)
@@ -217,10 +212,11 @@ fun LoadHomePage(
                 )
             ) { backStackEntry ->
                 val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_CAMERA_TILE_ID)
-                val cameraDomains = remember { mutableStateListOf("camera") }
-                val cameraFavorites = remember { mutableStateOf(emptyList<String>()) } // There are no camera favorites
+                // There are no camera favorites
+                val cameraFavorites = remember {
+                    mutableStateOf(emptyList<String>())
+                }
                 ChooseEntityView(
-                    entitiesByDomainOrder = cameraDomains,
                     entitiesByDomain = mainViewModel.cameraEntitiesMap,
                     favoriteEntityIds = cameraFavorites,
                     onNoneClicked = {},
@@ -302,7 +298,6 @@ fun LoadHomePage(
                 val entityIndex = backStackEntry.arguments!!.getInt(ARG_SCREEN_SHORTCUTS_TILE_ENTITY_INDEX)
                 val tileId = backStackEntry.arguments!!.getString(ARG_SCREEN_SHORTCUTS_TILE_ID)!!.toIntOrNull()
                 ChooseEntityView(
-                    entitiesByDomainOrder = mainViewModel.entitiesByDomainOrder,
                     entitiesByDomain = mainViewModel.entitiesByDomain,
                     favoriteEntityIds = mainViewModel.favoriteEntityIds,
                     onNoneClicked = {
