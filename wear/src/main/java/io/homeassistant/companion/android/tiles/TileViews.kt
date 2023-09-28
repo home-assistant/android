@@ -77,8 +77,8 @@ fun primaryLayoutTimeline(
     action: ActionBuilders.Action
 ): Timeline {
     val theme = Colors(
-        ContextCompat.getColor(context, R.color.colorPrimary), // Primary
-        ContextCompat.getColor(context, R.color.colorOnPrimary), // On primary
+        ContextCompat.getColor(context, commonR.color.colorPrimary), // Primary
+        ContextCompat.getColor(context, commonR.color.colorOnPrimary), // On primary
         ContextCompat.getColor(context, R.color.colorOverlay), // Surface
         ContextCompat.getColor(context, android.R.color.white) // On surface
     )
