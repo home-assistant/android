@@ -2,13 +2,11 @@ package io.homeassistant.companion.android.home.views
 
 import android.content.Context
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -23,25 +21,29 @@ import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.InlineSlider
 import androidx.wear.compose.material.InlineSliderDefaults
+import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleButton
 import androidx.wear.compose.material.ToggleButtonDefaults
-import androidx.wear.compose.material.ToggleChipDefaults
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.domain
+import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.getFanSpeed
 import io.homeassistant.companion.android.common.data.integration.getFanSteps
+import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.integration.getLightBrightness
+import io.homeassistant.companion.android.common.data.integration.isActive
 import io.homeassistant.companion.android.common.data.integration.supportsFanSetSpeed
 import io.homeassistant.companion.android.common.data.integration.supportsLightBrightness
 import io.homeassistant.companion.android.common.data.integration.supportsLightColorTemperature
 import io.homeassistant.companion.android.theme.WearAppTheme
+import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.getColorTemperature
 import io.homeassistant.companion.android.util.onEntityClickedFeedback
 import io.homeassistant.companion.android.util.onEntityFeedback
@@ -77,41 +79,41 @@ fun DetailsPanelView(
                 val attributes = entity.attributes as Map<*, *>
 
                 item {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        val friendlyName = attributes["friendly_name"].toString()
-                        Text(friendlyName)
-
-                        if (entity.domain in EntityExt.DOMAINS_TOGGLE) {
-                            val isChecked = entity.state in listOf("on", "locked", "open", "opening")
-                            ToggleButton(
-                                checked = isChecked,
-                                onCheckedChange = {
-                                    onEntityToggled(entity.entityId, entity.state)
-                                    onEntityClickedFeedback(
-                                        isToastEnabled,
-                                        isHapticEnabled,
-                                        context,
-                                        friendlyName,
-                                        haptic
-                                    )
-                                },
-                                modifier = Modifier
-                                    .padding(start = 16.dp)
-                                    .size(ToggleButtonDefaults.SmallToggleButtonSize)
-                            ) {
-                                Icon(
-                                    imageVector = ToggleChipDefaults.switchIcon(isChecked),
-                                    contentDescription = if (isChecked) {
-                                        stringResource(R.string.enabled)
-                                    } else {
-                                        stringResource(R.string.disabled)
-                                    }
+                    // Style similar to icon on frontend tile card
+                    val isChecked = entity.isActive()
+                    if (entity.domain in EntityExt.DOMAINS_TOGGLE) {
+                        ToggleButton(
+                            checked = isChecked,
+                            onCheckedChange = {
+                                onEntityToggled(entity.entityId, entity.state)
+                                onEntityClickedFeedback(
+                                    isToastEnabled,
+                                    isHapticEnabled,
+                                    context,
+                                    entity.friendlyName,
+                                    haptic
                                 )
-                            }
+                            },
+                            colors = ToggleButtonDefaults.toggleButtonColors(checkedBackgroundColor = MaterialTheme.colors.secondary.copy(alpha = 0.2f)),
+                            modifier = Modifier.size(ToggleButtonDefaults.SmallToggleButtonSize)
+                        ) {
+                            Image(
+                                asset = entity.getIcon(LocalContext.current),
+                                colorFilter = ColorFilter.tint(
+                                    if (isChecked) MaterialTheme.colors.secondary else wearColorPalette.onSurface
+                                ),
+                                contentDescription = stringResource(if (isChecked) R.string.enabled else R.string.disabled)
+                            )
                         }
+                    } else {
+                        Image(
+                            asset = entity.getIcon(LocalContext.current),
+                            colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                        )
                     }
+                }
+                item {
+                    ListHeader(entity.friendlyName)
                 }
 
                 if (entity.domain == "fan") {
