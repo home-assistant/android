@@ -43,7 +43,6 @@ import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.LocalContentColor
-import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
@@ -115,96 +114,93 @@ fun ConversationResultView(
     onMicrophoneInput: () -> Unit
 ) {
     val scrollState = rememberScalingLazyListState()
-
-    Scaffold {
-        LaunchedEffect(conversation.size) {
-            scrollState.scrollToItem(
-                if (inputMode != AssistViewModelBase.AssistInputMode.BLOCKED) conversation.size else (conversation.size - 1)
-            )
-        }
-        if (hapticFeedback) {
-            val haptic = LocalHapticFeedback.current
-            LaunchedEffect("${conversation.size}.${conversation.lastOrNull()?.message?.length}") {
-                val message = conversation.lastOrNull() ?: return@LaunchedEffect
-                if (conversation.size > 1 && !message.isInput && message.message != "…") {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                }
+    LaunchedEffect(conversation.size) {
+        scrollState.scrollToItem(
+            if (inputMode != AssistViewModelBase.AssistInputMode.BLOCKED) conversation.size else (conversation.size - 1)
+        )
+    }
+    if (hapticFeedback) {
+        val haptic = LocalHapticFeedback.current
+        LaunchedEffect("${conversation.size}.${conversation.lastOrNull()?.message?.length}") {
+            val message = conversation.lastOrNull() ?: return@LaunchedEffect
+            if (conversation.size > 1 && !message.isInput && message.message != "…") {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
             }
         }
+    }
 
-        ThemeLazyColumn(state = scrollState) {
-            item {
-                if (currentPipeline != null) {
-                    val textColor = LocalContentColor.current.copy(alpha = 0.38f) // disabled/hint alpha
-                    Row(
-                        modifier = Modifier
-                            .clickable(
-                                onClick = { onChangePipeline() },
-                                onClickLabel = stringResource(R.string.assist_change_pipeline)
-                            )
-                            .padding(bottom = 4.dp)
-                    ) {
-                        Text(
-                            text = currentPipeline.name,
-                            fontSize = 11.sp,
-                            color = textColor
+    ThemeLazyColumn(state = scrollState) {
+        item {
+            if (currentPipeline != null) {
+                val textColor = LocalContentColor.current.copy(alpha = 0.38f) // disabled/hint alpha
+                Row(
+                    modifier = Modifier
+                        .clickable(
+                            onClick = { onChangePipeline() },
+                            onClickLabel = stringResource(R.string.assist_change_pipeline)
                         )
-                        Image(
-                            asset = CommunityMaterial.Icon.cmd_chevron_right,
+                        .padding(bottom = 4.dp)
+                ) {
+                    Text(
+                        text = currentPipeline.name,
+                        fontSize = 11.sp,
+                        color = textColor
+                    )
+                    Image(
+                        asset = CommunityMaterial.Icon.cmd_chevron_right,
+                        modifier = Modifier
+                            .size(16.dp)
+                            .padding(start = 4.dp),
+                        colorFilter = ColorFilter.tint(textColor)
+                    )
+                }
+            } else {
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
+        items(conversation) {
+            SpeechBubble(text = it.message, isResponse = !it.isInput)
+        }
+        if (inputMode != AssistViewModelBase.AssistInputMode.BLOCKED) {
+            item {
+                Box(
+                    modifier = Modifier.size(64.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    val inputIsActive = inputMode == AssistViewModelBase.AssistInputMode.VOICE_ACTIVE
+                    if (inputIsActive) {
+                        KeepScreenOn()
+                        val transition = rememberInfiniteTransition()
+                        val scale by transition.animateFloat(
+                            initialValue = 1f,
+                            targetValue = 1.2f,
+                            animationSpec = infiniteRepeatable(
+                                animation = tween(600, easing = LinearEasing),
+                                repeatMode = RepeatMode.Reverse
+                            )
+                        )
+                        Box(
                             modifier = Modifier
-                                .size(16.dp)
-                                .padding(start = 4.dp),
-                            colorFilter = ColorFilter.tint(textColor)
+                                .size(48.dp)
+                                .scale(scale)
+                                .background(color = colorResource(R.color.colorSpeechText), shape = CircleShape)
+                                .clip(CircleShape)
                         )
                     }
-                } else {
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
-            }
-            items(conversation) {
-                SpeechBubble(text = it.message, isResponse = !it.isInput)
-            }
-            if (inputMode != AssistViewModelBase.AssistInputMode.BLOCKED) {
-                item {
-                    Box(
-                        modifier = Modifier.size(64.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        val inputIsActive = inputMode == AssistViewModelBase.AssistInputMode.VOICE_ACTIVE
+                    Button(
+                        onClick = { onMicrophoneInput() },
+                        colors =
                         if (inputIsActive) {
-                            KeepScreenOn()
-                            val transition = rememberInfiniteTransition()
-                            val scale by transition.animateFloat(
-                                initialValue = 1f,
-                                targetValue = 1.2f,
-                                animationSpec = infiniteRepeatable(
-                                    animation = tween(600, easing = LinearEasing),
-                                    repeatMode = RepeatMode.Reverse
-                                )
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .scale(scale)
-                                    .background(color = colorResource(R.color.colorSpeechText), shape = CircleShape)
-                                    .clip(CircleShape)
-                            )
+                            ButtonDefaults.secondaryButtonColors(backgroundColor = Color.Transparent, contentColor = Color.Black)
+                        } else {
+                            ButtonDefaults.secondaryButtonColors()
                         }
-                        Button(
-                            onClick = { onMicrophoneInput() },
-                            colors =
-                            if (inputIsActive) {
-                                ButtonDefaults.secondaryButtonColors(backgroundColor = Color.Transparent, contentColor = Color.Black)
-                            } else {
-                                ButtonDefaults.secondaryButtonColors()
-                            }
-                        ) {
-                            Image(
-                                asset = CommunityMaterial.Icon3.cmd_microphone,
-                                contentDescription = stringResource(R.string.assist_start_listening),
-                                colorFilter = ColorFilter.tint(LocalContentColor.current)
-                            )
-                        }
+                    ) {
+                        Image(
+                            asset = CommunityMaterial.Icon3.cmd_microphone,
+                            contentDescription = stringResource(R.string.assist_start_listening),
+                            colorFilter = ColorFilter.tint(LocalContentColor.current)
+                        )
                     }
                 }
             }
