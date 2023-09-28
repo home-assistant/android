@@ -34,6 +34,8 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.common.util.databaseChannel
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
+import io.homeassistant.companion.android.database.location.LocationHistoryDao
+import io.homeassistant.companion.android.database.location.LocationHistoryItem
 import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.database.qs.TileDao
@@ -86,6 +88,7 @@ import io.homeassistant.companion.android.common.R as commonR
         StaticWidgetEntity::class,
         TemplateWidgetEntity::class,
         NotificationItem::class,
+        LocationHistoryItem::class,
         TileEntity::class,
         Favorites::class,
         FavoriteCaches::class,
@@ -94,7 +97,7 @@ import io.homeassistant.companion.android.common.R as commonR
         Server::class,
         Setting::class
     ],
-    version = 44,
+    version = 45,
     autoMigrations = [
         AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
@@ -114,7 +117,8 @@ import io.homeassistant.companion.android.common.R as commonR
         AutoMigration(from = 39, to = 40),
         AutoMigration(from = 41, to = 42),
         AutoMigration(from = 42, to = 43),
-        AutoMigration(from = 43, to = 44)
+        AutoMigration(from = 43, to = 44),
+        AutoMigration(from = 44, to = 45)
     ]
 )
 @TypeConverters(
@@ -134,6 +138,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun staticWidgetDao(): StaticWidgetDao
     abstract fun templateWidgetDao(): TemplateWidgetDao
     abstract fun notificationDao(): NotificationDao
+    abstract fun locationHistoryDao(): LocationHistoryDao
     abstract fun tileDao(): TileDao
     abstract fun favoritesDao(): FavoritesDao
     abstract fun favoriteCachesDao(): FavoriteCachesDao

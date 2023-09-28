@@ -9,8 +9,10 @@ import androidx.fragment.app.commit
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.settings.developer.location.LocationTrackingFragment
 import io.homeassistant.companion.android.settings.log.LogFragment
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
 import javax.inject.Inject
@@ -43,6 +45,17 @@ class DeveloperSettingsFragment : DeveloperSettingsView, PreferenceFragmentCompa
                 addToBackStack(getString(io.homeassistant.companion.android.common.R.string.log))
             }
             return@setOnPreferenceClickListener true
+        }
+
+        findPreference<Preference>("location_tracking")?.let {
+            it.isVisible = BuildConfig.FLAVOR == "full"
+            it.setOnPreferenceClickListener {
+                parentFragmentManager.commit {
+                    replace(R.id.content, LocationTrackingFragment::class.java, null)
+                    addToBackStack(getString(io.homeassistant.companion.android.common.R.string.location_tracking))
+                }
+                return@setOnPreferenceClickListener true
+            }
         }
 
         findPreference<Preference>("thread_debug")?.let {

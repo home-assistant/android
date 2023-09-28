@@ -28,6 +28,7 @@
     <color name="colorCodeBackground">#f5f5f5</color>
     <color name="colorAlertWarning">#1fffa600</color>
     <color name="colorOnAlertWarning">#ffa600</color>
+    <color name="colorOnAlertSuccess">#43a047</color>
     <color name="colorDeviceControlsLightOn">#FDD663</color>
     <color name="colorYellow">#F6C344</color>
     <color name="colorDeviceControlsOff">#9AA0A6</color>

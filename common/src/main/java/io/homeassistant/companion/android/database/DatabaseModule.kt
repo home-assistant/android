@@ -7,6 +7,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
+import io.homeassistant.companion.android.database.location.LocationHistoryDao
 import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.sensor.SensorDao
@@ -54,6 +55,9 @@ object DatabaseModule {
     @Provides
     fun provideTemplateWidgetDao(database: AppDatabase): TemplateWidgetDao =
         database.templateWidgetDao()
+
+    @Provides
+    fun provideLocationHistoryDao(database: AppDatabase): LocationHistoryDao = database.locationHistoryDao()
 
     @Provides
     fun provideNotificationDao(database: AppDatabase): NotificationDao = database.notificationDao()

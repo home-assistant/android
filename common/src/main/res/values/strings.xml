@@ -7,6 +7,7 @@
     <string name="aa_no_entities_with_locations">No entities with locations found</string>
     <string name="aa_change_server">Change server</string>
     <string name="account">Account</string>
+    <string name="accuracy">Accuracy</string>
     <string name="action_reply">Reply</string>
     <string name="activate">Activate</string>
     <string name="activity_intent_error">Unable to send activity intent, please check command format</string>
@@ -20,6 +21,7 @@
     <string name="add_widget">Add widget</string>
     <string name="advanced">Advanced</string>
     <string name="all_entities">All entities</string>
+    <string name="all_results">All results</string>
     <string name="allow">Allow</string>
     <string name="always_show_first_view_on_app_start">Always show first view on app start</string>
     <string name="always_show_first_view_on_app_start_summary">The first view of the default dashboard is shown as soon as the app is opened</string>
@@ -269,6 +271,7 @@
     <string name="filter_sensors_all">All sensors</string>
     <string name="filter_sensors_enabled">Enabled sensors</string>
     <string name="filter_sensors_disabled">Disabled sensors</string>
+    <string name="filter_updates">Filter updates</string>
     <string name="finish">Finish</string>
     <string name="firebase_error_message">This means you will be unable to receive cloud notifications.\n\nLocal notifications will still be available via persistent connection settings in companion app settings</string>
     <string name="firebase_error_title">Firebase error</string>
@@ -348,8 +351,27 @@
     <string name="location_disabled_notification_short_message">Some setting(s) do not work. Click to enable location.</string>
     <string name="location_disabled_option_disable">Disable option</string>
     <string name="location_disabled_title">Location is disabled</string>
+    <string name="location_history_empty_title">No recent locations</string>
+    <string name="location_history_empty_summary">Location updates received by the app will appear here</string>
+    <string name="location_history_off_title">Location history is off</string>
+    <string name="location_history_off_summary">Turn on location history to see and review all location updates received by the app</string>
+    <string name="location_history_failed_send">Failed to send</string>
+    <string name="location_history_geofence_enter">Zone entered</string>
+    <string name="location_history_geofence_exit">Zone exited</string>
+    <string name="location_history_geofence_dwell">Zone dwell</string>
+    <string name="location_history_sent">Sent</string>
+    <string name="location_history_skipped">Skipped</string>
+    <string name="location_history_skipped_accuracy">Not accurate enough</string>
+    <string name="location_history_skipped_debounce">Too many updates</string>
+    <string name="location_history_skipped_duplicate">Duplicate</string>
+    <string name="location_history_skipped_future">Future location</string>
+    <string name="location_history_skipped_not_latest">Old location</string>
+    <string name="location_history_skipped_old">Very old location</string>
+    <string name="location_history_use">Use location history</string>
     <string name="location_perm_info_message">Android set up restrictions for apps which want to use your WiFi, because WiFi can be theoretically used to determine your location.\n\nAlso to ensure the app can access WiFi in background (URL decision making, sensors) you need to allow location access all the time.\n\nTherefore, to use this option location access all the time is needed.\n\nContinue granting location access?</string>
     <string name="location_perm_info_title">Location access</string>
+    <string name="location_tracking">Location tracking</string>
+    <string name="location_tracking_summary">View a history of location tracking updates to troubleshoot the device tracker(s)</string>
     <string name="location_warn_channel">Location disabled</string>
     <string name="location">Location</string>
     <string name="lock_summary">Use biometric or screen lock credential to unlock app</string>
@@ -709,6 +731,7 @@
     <string name="sensor">Sensor</string>
     <string name="sensors_with_settings">The following sensors offer custom settings: %1$s</string>
     <string name="sensors">Sensors</string>
+    <string name="server">Server</string>
     <string name="server_settings">Server settings</string>
     <string name="servers_devices_category">Servers &amp; devices</string>
     <string name="server_activate">Activate</string>
@@ -761,6 +784,7 @@
     <string name="shortcuts_tile_no_tiles_yet">There are no shortcut tiles added yet</string>
     <string name="shortcuts">Shortcuts</string>
     <string name="show">Show</string>
+    <string name="show_on_map">Show on map</string>
     <string name="show_share_logs_summary">Sharing logs with the Home Assistant team will help to solve issues. Please share the logs only if you have been asked to do so by a Home Assistant developer</string>
     <string name="show_share_logs">Show and share logs</string>
     <string name="show_entity_title">Show entity name</string>

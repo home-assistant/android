@@ -176,12 +176,6 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         }
 
         managers.forEach { manager ->
-            // Since we don't have this manager injected it doesn't fulfil its injects, manually
-            // inject for now I guess?
-            if (manager is LocationSensorManagerBase) {
-                manager.serverManager = serverManager
-            }
-
             val hasSensor = manager.hasSensor(context)
             if (hasSensor) {
                 try {
