@@ -39,4 +39,5 @@
     <color name="colorPreferenceSuggestion">#1F03A9F4</color> <!-- colorAccent 12% opacity -->
     <color name="colorOnSurfaceVariant">#49454E</color> <!-- M3 On Surface Variant -->
     <color name="colorBottomSheetHandle">#6649454E</color> <!-- M3 On Surface Variant 40% opacity -->
+    <color name="colorLauncherBackground">#18BCF2</color>
 </resources>
