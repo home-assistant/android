@@ -1,13 +1,17 @@
 package io.homeassistant.companion.android.views
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.material.ListHeader
+import androidx.wear.compose.material.LocalTextStyle
 import androidx.wear.compose.material.Text
+import kotlin.math.floor
 import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
@@ -18,12 +22,20 @@ fun ListHeader(@StringRes id: Int, modifier: Modifier = Modifier) {
 @Composable
 fun ListHeader(string: String, modifier: Modifier = Modifier) {
     ListHeader {
-        Row {
-            Text(
-                text = string,
-                modifier = modifier
-            )
+        val maxLines = with(LocalDensity.current) {
+            if (LocalTextStyle.current.fontSize.isSp) {
+                floor(48 / LocalTextStyle.current.fontSize.toDp().value).toInt() // A ListHeader is 48dp
+            } else {
+                1 // Fallback as em cannot be converted
+            }
         }
+        Text(
+            text = string,
+            modifier = modifier,
+            textAlign = TextAlign.Center,
+            maxLines = maxLines,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
