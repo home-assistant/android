@@ -7,11 +7,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.foundation.lazy.items
-import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
-import androidx.wear.compose.material.PositionIndicator
-import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.theme.WearAppTheme
@@ -38,57 +35,47 @@ fun EntityViewList(
 ) {
     // Remember expanded state of each header
     val expandedStates = rememberExpandedStates(entityLists.keys.map { it.hashCode() })
-    val scalingLazyListState = rememberScalingLazyListState()
 
     WearAppTheme {
-        Scaffold(
-            positionIndicator = {
-                if (scalingLazyListState.isScrollInProgress) {
-                    PositionIndicator(scalingLazyListState = scalingLazyListState)
-                }
-            },
-            timeText = { TimeText(scalingLazyListState = scalingLazyListState) }
-        ) {
-            ThemeLazyColumn(state = scalingLazyListState) {
-                for (header in entityListsOrder) {
-                    val entities = entityLists[header].orEmpty()
-                    if (entities.isNotEmpty()) {
-                        item {
-                            if (entityLists.size > 1) {
-                                ExpandableListHeader(
-                                    string = header,
-                                    key = header.hashCode(),
-                                    expandedStates = expandedStates
-                                )
-                            } else {
-                                ListHeader(header)
-                            }
+        ThemeLazyColumn {
+            for (header in entityListsOrder) {
+                val entities = entityLists[header].orEmpty()
+                if (entities.isNotEmpty()) {
+                    item {
+                        if (entityLists.size > 1) {
+                            ExpandableListHeader(
+                                string = header,
+                                key = header.hashCode(),
+                                expandedStates = expandedStates
+                            )
+                        } else {
+                            ListHeader(header)
                         }
-                        if (expandedStates[header.hashCode()]!!) {
-                            val filtered = entities.filter { entityListFilter(it) }
-                            items(filtered, key = { it.entityId }) { entity ->
-                                EntityUi(
-                                    entity,
-                                    onEntityClicked,
-                                    isHapticEnabled,
-                                    isToastEnabled
-                                ) { entityId -> onEntityLongClicked(entityId) }
-                            }
+                    }
+                    if (expandedStates[header.hashCode()]!!) {
+                        val filtered = entities.filter { entityListFilter(it) }
+                        items(filtered, key = { it.entityId }) { entity ->
+                            EntityUi(
+                                entity,
+                                onEntityClicked,
+                                isHapticEnabled,
+                                isToastEnabled
+                            ) { entityId -> onEntityLongClicked(entityId) }
+                        }
 
-                            if (filtered.isEmpty()) {
-                                item {
-                                    Column {
-                                        Chip(
-                                            label = {
-                                                Text(
-                                                    text = stringResource(commonR.string.loading_entities),
-                                                    textAlign = TextAlign.Center
-                                                )
-                                            },
-                                            onClick = { /* No op */ },
-                                            colors = ChipDefaults.primaryChipColors()
-                                        )
-                                    }
+                        if (filtered.isEmpty()) {
+                            item {
+                                Column {
+                                    Chip(
+                                        label = {
+                                            Text(
+                                                text = stringResource(commonR.string.loading_entities),
+                                                textAlign = TextAlign.Center
+                                            )
+                                        },
+                                        onClick = { /* No op */ },
+                                        colors = ChipDefaults.primaryChipColors()
+                                    )
                                 }
                             }
                         }

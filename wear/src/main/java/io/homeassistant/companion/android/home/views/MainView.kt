@@ -24,13 +24,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.CircularProgressIndicator
 import androidx.wear.compose.material.MaterialTheme
-import androidx.wear.compose.material.PositionIndicator
-import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
@@ -58,307 +55,294 @@ fun MainView(
     isHapticEnabled: Boolean,
     isToastEnabled: Boolean
 ) {
-    val scalingLazyListState = rememberScalingLazyListState()
-
     var expandedFavorites: Boolean by rememberSaveable { mutableStateOf(true) }
 
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
 
     WearAppTheme {
-        Scaffold(
-            positionIndicator = {
-                if (scalingLazyListState.isScrollInProgress) {
-                    PositionIndicator(scalingLazyListState = scalingLazyListState)
+        ThemeLazyColumn {
+            if (favoriteEntityIds.isNotEmpty()) {
+                item {
+                    ExpandableListHeader(
+                        string = stringResource(commonR.string.favorites),
+                        expanded = expandedFavorites,
+                        onExpandChanged = { expandedFavorites = it }
+                    )
                 }
-            },
-            timeText = { TimeText(scalingLazyListState = scalingLazyListState) }
-        ) {
-            ThemeLazyColumn(
-                state = scalingLazyListState
-            ) {
-                if (favoriteEntityIds.isNotEmpty()) {
-                    item {
-                        ExpandableListHeader(
-                            string = stringResource(commonR.string.favorites),
-                            expanded = expandedFavorites,
-                            onExpandChanged = { expandedFavorites = it }
-                        )
+                if (expandedFavorites) {
+                    items(favoriteEntityIds.size) { index ->
+                        val favoriteEntityID = favoriteEntityIds[index].split(",")[0]
+                        if (mainViewModel.entities.isEmpty()) {
+                            // when we don't have the state of the entity, create a Chip from cache as we don't have the state yet
+                            val cached = mainViewModel.getCachedEntity(favoriteEntityID)
+                            Chip(
+                                modifier = Modifier
+                                    .fillMaxWidth(),
+                                icon = {
+                                    Image(
+                                        asset = getIcon(cached?.icon, favoriteEntityID.split(".")[0], context),
+                                        colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                                    )
+                                },
+                                label = {
+                                    Text(
+                                        text = cached?.friendlyName ?: favoriteEntityID,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                },
+                                onClick = {
+                                    onEntityClicked(favoriteEntityID, STATE_UNKNOWN)
+                                    onEntityClickedFeedback(isToastEnabled, isHapticEnabled, context, favoriteEntityID, haptic)
+                                },
+                                colors = ChipDefaults.secondaryChipColors()
+                            )
+                        } else {
+                            mainViewModel.entities.values.toList()
+                                .firstOrNull { it.entityId == favoriteEntityID }
+                                ?.let {
+                                    EntityUi(
+                                        mainViewModel.entities[favoriteEntityID]!!,
+                                        onEntityClicked,
+                                        isHapticEnabled,
+                                        isToastEnabled
+                                    ) { entityId -> onEntityLongClicked(entityId) }
+                                }
+                        }
                     }
-                    if (expandedFavorites) {
-                        items(favoriteEntityIds.size) { index ->
-                            val favoriteEntityID = favoriteEntityIds[index].split(",")[0]
-                            if (mainViewModel.entities.isEmpty()) {
-                                // when we don't have the state of the entity, create a Chip from cache as we don't have the state yet
-                                val cached = mainViewModel.getCachedEntity(favoriteEntityID)
+                }
+            }
+
+            if (!mainViewModel.isFavoritesOnly) {
+                when (mainViewModel.loadingState.value) {
+                    MainViewModel.LoadingState.LOADING -> {
+                        if (favoriteEntityIds.isEmpty()) {
+                            // Add a Spacer to prevent settings being pushed to the screen center
+                            item { Spacer(modifier = Modifier.fillMaxWidth()) }
+                        }
+                        item {
+                            val minHeight =
+                                if (favoriteEntityIds.isEmpty()) {
+                                    LocalConfiguration.current.screenHeightDp - 64
+                                } else {
+                                    0
+                                }
+                            Column(
+                                modifier = Modifier
+                                    .heightIn(min = minHeight.dp)
+                                    .fillMaxSize()
+                                    .padding(vertical = if (favoriteEntityIds.isEmpty()) 0.dp else 32.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                ListHeader(id = commonR.string.loading)
+                                CircularProgressIndicator()
+                            }
+                        }
+                    }
+                    MainViewModel.LoadingState.ERROR -> {
+                        item {
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                ListHeader(id = commonR.string.error_loading_entities)
                                 Chip(
-                                    modifier = Modifier
-                                        .fillMaxWidth(),
-                                    icon = {
-                                        Image(
-                                            asset = getIcon(cached?.icon, favoriteEntityID.split(".")[0], context),
-                                            colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
-                                        )
-                                    },
                                     label = {
                                         Text(
-                                            text = cached?.friendlyName ?: favoriteEntityID,
-                                            maxLines = 2,
-                                            overflow = TextOverflow.Ellipsis
+                                            text = stringResource(commonR.string.retry),
+                                            textAlign = TextAlign.Center,
+                                            modifier = Modifier.fillMaxWidth()
                                         )
                                     },
-                                    onClick = {
-                                        onEntityClicked(favoriteEntityID, STATE_UNKNOWN)
-                                        onEntityClickedFeedback(isToastEnabled, isHapticEnabled, context, favoriteEntityID, haptic)
-                                    },
-                                    colors = ChipDefaults.secondaryChipColors()
+                                    onClick = onRetryLoadEntitiesClicked,
+                                    colors = ChipDefaults.primaryChipColors()
                                 )
-                            } else {
-                                mainViewModel.entities.values.toList()
-                                    .firstOrNull { it.entityId == favoriteEntityID }
-                                    ?.let {
-                                        EntityUi(
-                                            mainViewModel.entities[favoriteEntityID]!!,
-                                            onEntityClicked,
-                                            isHapticEnabled,
-                                            isToastEnabled
-                                        ) { entityId -> onEntityLongClicked(entityId) }
-                                    }
+                                Spacer(modifier = Modifier.height(32.dp))
                             }
                         }
                     }
-                }
-
-                if (!mainViewModel.isFavoritesOnly) {
-                    when (mainViewModel.loadingState.value) {
-                        MainViewModel.LoadingState.LOADING -> {
-                            if (favoriteEntityIds.isEmpty()) {
-                                // Add a Spacer to prevent settings being pushed to the screen center
-                                item { Spacer(modifier = Modifier.fillMaxWidth()) }
-                            }
-                            item {
-                                val minHeight =
-                                    if (favoriteEntityIds.isEmpty()) {
-                                        LocalConfiguration.current.screenHeightDp - 64
-                                    } else {
-                                        0
-                                    }
-                                Column(
-                                    modifier = Modifier
-                                        .heightIn(min = minHeight.dp)
-                                        .fillMaxSize()
-                                        .padding(vertical = if (favoriteEntityIds.isEmpty()) 0.dp else 32.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.Center
-                                ) {
-                                    ListHeader(id = commonR.string.loading)
-                                    CircularProgressIndicator()
-                                }
-                            }
-                        }
-                        MainViewModel.LoadingState.ERROR -> {
+                    MainViewModel.LoadingState.READY -> {
+                        if (mainViewModel.entities.isEmpty()) {
                             item {
                                 Column(
                                     modifier = Modifier.fillMaxSize(),
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.Center
                                 ) {
-                                    ListHeader(id = commonR.string.error_loading_entities)
-                                    Chip(
-                                        label = {
-                                            Text(
-                                                text = stringResource(commonR.string.retry),
-                                                textAlign = TextAlign.Center,
-                                                modifier = Modifier.fillMaxWidth()
-                                            )
-                                        },
-                                        onClick = onRetryLoadEntitiesClicked,
-                                        colors = ChipDefaults.primaryChipColors()
+                                    Text(
+                                        text = stringResource(commonR.string.no_supported_entities),
+                                        textAlign = TextAlign.Center,
+                                        style = MaterialTheme.typography.title3,
+                                        modifier = Modifier.fillMaxWidth()
+                                            .padding(top = 32.dp)
                                     )
-                                    Spacer(modifier = Modifier.height(32.dp))
+                                    Text(
+                                        text = stringResource(commonR.string.no_supported_entities_summary),
+                                        textAlign = TextAlign.Center,
+                                        style = MaterialTheme.typography.body2,
+                                        modifier = Modifier.fillMaxWidth()
+                                            .padding(top = 8.dp)
+                                    )
                                 }
                             }
                         }
-                        MainViewModel.LoadingState.READY -> {
-                            if (mainViewModel.entities.isEmpty()) {
-                                item {
-                                    Column(
-                                        modifier = Modifier.fillMaxSize(),
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.Center
-                                    ) {
-                                        Text(
-                                            text = stringResource(commonR.string.no_supported_entities),
-                                            textAlign = TextAlign.Center,
-                                            style = MaterialTheme.typography.title3,
-                                            modifier = Modifier.fillMaxWidth()
-                                                .padding(top = 32.dp)
-                                        )
-                                        Text(
-                                            text = stringResource(commonR.string.no_supported_entities_summary),
-                                            textAlign = TextAlign.Center,
-                                            style = MaterialTheme.typography.body2,
-                                            modifier = Modifier.fillMaxWidth()
-                                                .padding(top = 8.dp)
-                                        )
-                                    }
+
+                        if (
+                            mainViewModel.entitiesByArea.values.any {
+                                it.isNotEmpty() && it.any { entity ->
+                                    mainViewModel.getCategoryForEntity(entity.entityId) == null &&
+                                        mainViewModel.getHiddenByForEntity(entity.entityId) == null
                                 }
                             }
-
-                            if (
-                                mainViewModel.entitiesByArea.values.any {
-                                    it.isNotEmpty() && it.any { entity ->
-                                        mainViewModel.getCategoryForEntity(entity.entityId) == null &&
-                                            mainViewModel.getHiddenByForEntity(entity.entityId) == null
-                                    }
-                                }
-                            ) {
-                                item {
-                                    ListHeader(id = commonR.string.areas)
-                                }
-                                for (id in mainViewModel.entitiesByAreaOrder) {
-                                    val entities = mainViewModel.entitiesByArea[id]
-                                    val entitiesToShow = entities?.filter {
-                                        mainViewModel.getCategoryForEntity(it.entityId) == null &&
-                                            mainViewModel.getHiddenByForEntity(it.entityId) == null
-                                    }
-                                    if (!entitiesToShow.isNullOrEmpty()) {
-                                        val area = mainViewModel.areas.first { it.areaId == id }
-                                        item {
-                                            Chip(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                label = {
-                                                    Text(text = area.name)
-                                                },
-                                                onClick = {
-                                                    onNavigationClicked(
-                                                        mapOf(area.name to entities),
-                                                        listOf(area.name)
-                                                    ) {
-                                                        mainViewModel.getCategoryForEntity(it.entityId) == null &&
-                                                            mainViewModel.getHiddenByForEntity(
-                                                            it.entityId
-                                                        ) == null
-                                                    }
-                                                },
-                                                colors = ChipDefaults.primaryChipColors()
-                                            )
-                                        }
-                                    }
-                                }
+                        ) {
+                            item {
+                                ListHeader(id = commonR.string.areas)
                             }
-
-                            val domainEntitiesFilter: (entity: Entity<*>) -> Boolean =
-                                {
-                                    mainViewModel.getAreaForEntity(it.entityId) == null &&
-                                        mainViewModel.getCategoryForEntity(it.entityId) == null &&
+                            for (id in mainViewModel.entitiesByAreaOrder) {
+                                val entities = mainViewModel.entitiesByArea[id]
+                                val entitiesToShow = entities?.filter {
+                                    mainViewModel.getCategoryForEntity(it.entityId) == null &&
                                         mainViewModel.getHiddenByForEntity(it.entityId) == null
                                 }
-                            if (mainViewModel.entities.values.any(domainEntitiesFilter)) {
-                                item {
-                                    ListHeader(id = commonR.string.more_entities)
-                                }
-                            }
-                            // Buttons for each existing category
-                            for (domain in mainViewModel.entitiesByDomainOrder) {
-                                val domainEntities = mainViewModel.entitiesByDomain[domain]!!
-                                val domainEntitiesToShow =
-                                    domainEntities.filter(domainEntitiesFilter)
-                                if (domainEntitiesToShow.isNotEmpty()) {
+                                if (!entitiesToShow.isNullOrEmpty()) {
+                                    val area = mainViewModel.areas.first { it.areaId == id }
                                     item {
                                         Chip(
                                             modifier = Modifier.fillMaxWidth(),
-                                            icon = {
-                                                getIcon(
-                                                    "",
-                                                    domain,
-                                                    context
-                                                ).let { Image(asset = it) }
-                                            },
                                             label = {
-                                                Text(text = mainViewModel.stringForDomain(domain)!!)
+                                                Text(text = area.name)
                                             },
                                             onClick = {
                                                 onNavigationClicked(
-                                                    mapOf(
-                                                        mainViewModel.stringForDomain(domain)!! to domainEntities
-                                                    ),
-                                                    listOf(mainViewModel.stringForDomain(domain)!!),
-                                                    domainEntitiesFilter
-                                                )
+                                                    mapOf(area.name to entities),
+                                                    listOf(area.name)
+                                                ) {
+                                                    mainViewModel.getCategoryForEntity(it.entityId) == null &&
+                                                        mainViewModel.getHiddenByForEntity(
+                                                        it.entityId
+                                                    ) == null
+                                                }
                                             },
                                             colors = ChipDefaults.primaryChipColors()
                                         )
                                     }
                                 }
                             }
+                        }
 
-                            item {
-                                Spacer(modifier = Modifier.height(32.dp))
+                        val domainEntitiesFilter: (entity: Entity<*>) -> Boolean =
+                            {
+                                mainViewModel.getAreaForEntity(it.entityId) == null &&
+                                    mainViewModel.getCategoryForEntity(it.entityId) == null &&
+                                    mainViewModel.getHiddenByForEntity(it.entityId) == null
                             }
-                            // All entities regardless of area
-                            if (mainViewModel.entities.isNotEmpty()) {
+                        if (mainViewModel.entities.values.any(domainEntitiesFilter)) {
+                            item {
+                                ListHeader(id = commonR.string.more_entities)
+                            }
+                        }
+                        // Buttons for each existing category
+                        for (domain in mainViewModel.entitiesByDomainOrder) {
+                            val domainEntities = mainViewModel.entitiesByDomain[domain]!!
+                            val domainEntitiesToShow =
+                                domainEntities.filter(domainEntitiesFilter)
+                            if (domainEntitiesToShow.isNotEmpty()) {
                                 item {
                                     Chip(
-                                        modifier = Modifier
-                                            .fillMaxWidth(),
+                                        modifier = Modifier.fillMaxWidth(),
                                         icon = {
-                                            Image(
-                                                asset = CommunityMaterial.Icon.cmd_animation,
-                                                colorFilter = ColorFilter.tint(Color.White)
-                                            )
+                                            getIcon(
+                                                "",
+                                                domain,
+                                                context
+                                            ).let { Image(asset = it) }
                                         },
                                         label = {
-                                            Text(text = stringResource(commonR.string.all_entities))
+                                            Text(text = mainViewModel.stringForDomain(domain)!!)
                                         },
                                         onClick = {
                                             onNavigationClicked(
-                                                mainViewModel.entitiesByDomain.mapKeys {
-                                                    mainViewModel.stringForDomain(
-                                                        it.key
-                                                    )!!
-                                                },
-                                                mainViewModel.entitiesByDomain.keys.map {
-                                                    mainViewModel.stringForDomain(
-                                                        it
-                                                    )!!
-                                                }.sorted()
-                                            ) { true }
+                                                mapOf(
+                                                    mainViewModel.stringForDomain(domain)!! to domainEntities
+                                                ),
+                                                listOf(mainViewModel.stringForDomain(domain)!!),
+                                                domainEntitiesFilter
+                                            )
                                         },
-                                        colors = ChipDefaults.secondaryChipColors()
+                                        colors = ChipDefaults.primaryChipColors()
                                     )
                                 }
                             }
                         }
+
+                        item {
+                            Spacer(modifier = Modifier.height(32.dp))
+                        }
+                        // All entities regardless of area
+                        if (mainViewModel.entities.isNotEmpty()) {
+                            item {
+                                Chip(
+                                    modifier = Modifier
+                                        .fillMaxWidth(),
+                                    icon = {
+                                        Image(
+                                            asset = CommunityMaterial.Icon.cmd_animation,
+                                            colorFilter = ColorFilter.tint(Color.White)
+                                        )
+                                    },
+                                    label = {
+                                        Text(text = stringResource(commonR.string.all_entities))
+                                    },
+                                    onClick = {
+                                        onNavigationClicked(
+                                            mainViewModel.entitiesByDomain.mapKeys {
+                                                mainViewModel.stringForDomain(
+                                                    it.key
+                                                )!!
+                                            },
+                                            mainViewModel.entitiesByDomain.keys.map {
+                                                mainViewModel.stringForDomain(
+                                                    it
+                                                )!!
+                                            }.sorted()
+                                        ) { true }
+                                    },
+                                    colors = ChipDefaults.secondaryChipColors()
+                                )
+                            }
+                        }
                     }
                 }
+            }
 
-                if (mainViewModel.isFavoritesOnly) {
-                    item {
-                        Spacer(Modifier.padding(32.dp))
-                    }
-                }
-
-                // Settings
+            if (mainViewModel.isFavoritesOnly) {
                 item {
-                    Chip(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        icon = {
-                            Image(
-                                asset = CommunityMaterial.Icon.cmd_cog,
-                                colorFilter = ColorFilter.tint(Color.White)
-                            )
-                        },
-                        label = {
-                            Text(
-                                text = stringResource(id = commonR.string.settings)
-                            )
-                        },
-                        onClick = onSettingsClicked,
-                        colors = ChipDefaults.secondaryChipColors()
-                    )
+                    Spacer(Modifier.padding(32.dp))
                 }
+            }
+
+            // Settings
+            item {
+                Chip(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    icon = {
+                        Image(
+                            asset = CommunityMaterial.Icon.cmd_cog,
+                            colorFilter = ColorFilter.tint(Color.White)
+                        )
+                    },
+                    label = {
+                        Text(
+                            text = stringResource(id = commonR.string.settings)
+                        )
+                    },
+                    onClick = onSettingsClicked,
+                    colors = ChipDefaults.secondaryChipColors()
+                )
             }
         }
     }

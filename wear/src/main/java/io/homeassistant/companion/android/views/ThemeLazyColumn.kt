@@ -11,8 +11,11 @@ import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.ScalingLazyListScope
 import androidx.wear.compose.foundation.lazy.ScalingLazyListState
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
+import androidx.wear.compose.material.PositionIndicator
+import androidx.wear.compose.material.Scaffold
 import com.google.android.horologist.annotations.ExperimentalHorologistApi
 import com.google.android.horologist.compose.rotaryinput.rotaryWithScroll
+import io.homeassistant.companion.android.home.views.TimeText
 
 @OptIn(ExperimentalHorologistApi::class)
 @Composable
@@ -20,17 +23,26 @@ fun ThemeLazyColumn(
     state: ScalingLazyListState = rememberScalingLazyListState(),
     content: ScalingLazyListScope.() -> Unit
 ) {
-    ScalingLazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .rotaryWithScroll(state),
-        contentPadding = PaddingValues(
-            start = 8.dp,
-            end = 8.dp
-        ),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        state = state,
-        content = content
-    )
+    Scaffold(
+        positionIndicator = {
+            if (state.isScrollInProgress) {
+                PositionIndicator(scalingLazyListState = state)
+            }
+        },
+        timeText = { TimeText(scalingLazyListState = state) }
+    ) {
+        ScalingLazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .rotaryWithScroll(state),
+            contentPadding = PaddingValues(
+                start = 8.dp,
+                end = 8.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            state = state,
+            content = content
+        )
+    }
 }
