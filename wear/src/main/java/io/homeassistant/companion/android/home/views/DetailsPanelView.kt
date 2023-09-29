@@ -17,13 +17,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.InlineSlider
 import androidx.wear.compose.material.InlineSliderDefaults
 import androidx.wear.compose.material.MaterialTheme
-import androidx.wear.compose.material.PositionIndicator
-import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleButton
 import androidx.wear.compose.material.ToggleButtonDefaults
@@ -64,116 +61,106 @@ fun DetailsPanelView(
 ) {
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
-    val scalingLazyListState = rememberScalingLazyListState()
 
     WearAppTheme {
-        Scaffold(
-            positionIndicator = {
-                if (scalingLazyListState.isScrollInProgress) {
-                    PositionIndicator(scalingLazyListState = scalingLazyListState)
-                }
-            },
-            timeText = { TimeText(scalingLazyListState = scalingLazyListState) }
-        ) {
-            ThemeLazyColumn(state = scalingLazyListState) {
-                val attributes = entity.attributes as Map<*, *>
+        ThemeLazyColumn {
+            val attributes = entity.attributes as Map<*, *>
 
-                item {
-                    // Style similar to icon on frontend tile card
-                    val isChecked = entity.isActive()
-                    if (entity.domain in EntityExt.DOMAINS_TOGGLE) {
-                        ToggleButton(
-                            checked = isChecked,
-                            onCheckedChange = {
-                                onEntityToggled(entity.entityId, entity.state)
-                                onEntityClickedFeedback(
-                                    isToastEnabled,
-                                    isHapticEnabled,
-                                    context,
-                                    entity.friendlyName,
-                                    haptic
-                                )
-                            },
-                            colors = ToggleButtonDefaults.toggleButtonColors(checkedBackgroundColor = MaterialTheme.colors.secondary.copy(alpha = 0.2f)),
-                            modifier = Modifier.size(ToggleButtonDefaults.SmallToggleButtonSize)
-                        ) {
-                            Image(
-                                asset = entity.getIcon(LocalContext.current),
-                                colorFilter = ColorFilter.tint(
-                                    if (isChecked) MaterialTheme.colors.secondary else wearColorPalette.onSurface
-                                ),
-                                contentDescription = stringResource(if (isChecked) R.string.enabled else R.string.disabled)
+            item {
+                // Style similar to icon on frontend tile card
+                val isChecked = entity.isActive()
+                if (entity.domain in EntityExt.DOMAINS_TOGGLE) {
+                    ToggleButton(
+                        checked = isChecked,
+                        onCheckedChange = {
+                            onEntityToggled(entity.entityId, entity.state)
+                            onEntityClickedFeedback(
+                                isToastEnabled,
+                                isHapticEnabled,
+                                context,
+                                entity.friendlyName,
+                                haptic
                             )
-                        }
-                    } else {
+                        },
+                        colors = ToggleButtonDefaults.toggleButtonColors(checkedBackgroundColor = MaterialTheme.colors.secondary.copy(alpha = 0.2f)),
+                        modifier = Modifier.size(ToggleButtonDefaults.SmallToggleButtonSize)
+                    ) {
                         Image(
                             asset = entity.getIcon(LocalContext.current),
-                            colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                            colorFilter = ColorFilter.tint(
+                                if (isChecked) MaterialTheme.colors.secondary else wearColorPalette.onSurface
+                            ),
+                            contentDescription = stringResource(if (isChecked) R.string.enabled else R.string.disabled)
                         )
                     }
+                } else {
+                    Image(
+                        asset = entity.getIcon(LocalContext.current),
+                        colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                    )
                 }
-                item {
-                    ListHeader(entity.friendlyName)
-                }
+            }
+            item {
+                ListHeader(entity.friendlyName)
+            }
 
-                if (entity.domain == "fan") {
-                    if (entity.supportsFanSetSpeed()) {
-                        item {
-                            FanSpeedSlider(entity, onFanSpeedChanged, isToastEnabled, isHapticEnabled)
-                        }
+            if (entity.domain == "fan") {
+                if (entity.supportsFanSetSpeed()) {
+                    item {
+                        FanSpeedSlider(entity, onFanSpeedChanged, isToastEnabled, isHapticEnabled)
                     }
                 }
-                if (entity.domain == "light") {
-                    if (entity.supportsLightBrightness()) {
-                        item {
-                            BrightnessSlider(entity, onBrightnessChanged, isToastEnabled, isHapticEnabled)
-                        }
-                    }
-
-                    if (entity.supportsLightColorTemperature() && attributes["color_mode"] == EntityExt.LIGHT_MODE_COLOR_TEMP) {
-                        item {
-                            ColorTempSlider(attributes, onColorTempChanged, isToastEnabled, isHapticEnabled)
-                        }
+            }
+            if (entity.domain == "light") {
+                if (entity.supportsLightBrightness()) {
+                    item {
+                        BrightnessSlider(entity, onBrightnessChanged, isToastEnabled, isHapticEnabled)
                     }
                 }
 
-                item {
-                    ListHeader(R.string.details)
+                if (entity.supportsLightColorTemperature() && attributes["color_mode"] == EntityExt.LIGHT_MODE_COLOR_TEMP) {
+                    item {
+                        ColorTempSlider(attributes, onColorTempChanged, isToastEnabled, isHapticEnabled)
+                    }
                 }
-                item {
-                    Text(
-                        stringResource(R.string.state_name, entity.state),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp)
-                    )
-                }
-                item {
-                    val lastChanged = DateFormat.getDateTimeInstance().format(entity.lastChanged.time)
-                    Text(
-                        stringResource(R.string.last_changed, lastChanged),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp)
-                    )
-                }
-                item {
-                    val lastUpdated = DateFormat.getDateTimeInstance().format(entity.lastUpdated.time)
-                    Text(
-                        stringResource(R.string.last_updated, lastUpdated),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp)
-                    )
-                }
-                item {
-                    Text(
-                        stringResource(R.string.entity_id_name, entity.entityId),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp)
-                    )
-                }
+            }
+
+            item {
+                ListHeader(R.string.details)
+            }
+            item {
+                Text(
+                    stringResource(R.string.state_name, entity.state),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp)
+                )
+            }
+            item {
+                val lastChanged = DateFormat.getDateTimeInstance().format(entity.lastChanged.time)
+                Text(
+                    stringResource(R.string.last_changed, lastChanged),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp)
+                )
+            }
+            item {
+                val lastUpdated = DateFormat.getDateTimeInstance().format(entity.lastUpdated.time)
+                Text(
+                    stringResource(R.string.last_updated, lastUpdated),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp)
+                )
+            }
+            item {
+                Text(
+                    stringResource(R.string.entity_id_name, entity.entityId),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp)
+                )
             }
         }
     }

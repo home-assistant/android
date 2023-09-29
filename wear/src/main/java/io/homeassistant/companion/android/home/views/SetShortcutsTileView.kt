@@ -12,13 +12,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
-import androidx.wear.compose.material.PositionIndicator
-import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
@@ -35,64 +32,54 @@ fun SetShortcutsTileView(
     shortcutEntities: List<SimplifiedEntity>,
     onShortcutEntitySelectionChange: (Int) -> Unit
 ) {
-    val scalingLazyListState = rememberScalingLazyListState()
     WearAppTheme {
-        Scaffold(
-            positionIndicator = {
-                if (scalingLazyListState.isScrollInProgress) {
-                    PositionIndicator(scalingLazyListState = scalingLazyListState)
-                }
-            },
-            timeText = { TimeText(scalingLazyListState = scalingLazyListState) }
-        ) {
-            ThemeLazyColumn(state = scalingLazyListState) {
+        ThemeLazyColumn {
+            item {
+                ListHeader(id = commonR.string.shortcuts_choose)
+            }
+            items(shortcutEntities.size) { index ->
+
+                val iconBitmap = getIcon(
+                    shortcutEntities[index].icon,
+                    shortcutEntities[index].domain,
+                    LocalContext.current
+                )
+
+                Chip(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    icon = {
+                        Image(
+                            iconBitmap,
+                            colorFilter = ColorFilter.tint(Color.White)
+                        )
+                    },
+                    label = {
+                        Text(
+                            text = stringResource(commonR.string.shortcut_n, index + 1)
+                        )
+                    },
+                    secondaryLabel = {
+                        Text(
+                            text = shortcutEntities[index].friendlyName,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    },
+                    onClick = { onShortcutEntitySelectionChange(index) },
+                    colors = ChipDefaults.secondaryChipColors()
+                )
+            }
+            if (shortcutEntities.size < 7) {
                 item {
-                    ListHeader(id = commonR.string.shortcuts_choose)
-                }
-                items(shortcutEntities.size) { index ->
-
-                    val iconBitmap = getIcon(
-                        shortcutEntities[index].icon,
-                        shortcutEntities[index].domain,
-                        LocalContext.current
-                    )
-
-                    Chip(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        icon = {
-                            Image(
-                                iconBitmap,
-                                colorFilter = ColorFilter.tint(Color.White)
-                            )
-                        },
-                        label = {
-                            Text(
-                                text = stringResource(commonR.string.shortcut_n, index + 1)
-                            )
-                        },
-                        secondaryLabel = {
-                            Text(
-                                text = shortcutEntities[index].friendlyName,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        },
-                        onClick = { onShortcutEntitySelectionChange(index) },
-                        colors = ChipDefaults.secondaryChipColors()
-                    )
-                }
-                if (shortcutEntities.size < 7) {
-                    item {
-                        Button(
-                            modifier = Modifier.padding(top = 16.dp),
-                            onClick = { onShortcutEntitySelectionChange(shortcutEntities.size) },
-                            colors = ButtonDefaults.primaryButtonColors()
-                        ) {
-                            Image(
-                                CommunityMaterial.Icon3.cmd_plus_thick
-                            )
-                        }
+                    Button(
+                        modifier = Modifier.padding(top = 16.dp),
+                        onClick = { onShortcutEntitySelectionChange(shortcutEntities.size) },
+                        colors = ButtonDefaults.primaryButtonColors()
+                    ) {
+                        Image(
+                            CommunityMaterial.Icon3.cmd_plus_thick
+                        )
                     }
                 }
             }
