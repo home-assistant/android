@@ -1,19 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2023.9.4 - Main" versioncode="3">
+    <release version="2023.9.5 - Main" versioncode="3">
         <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Tiles and Device Controls: Lock domain will show as active when state is locked to better match Android behavior</change>
+        <change>Add new location tracking history to troubleshooting section, history items are kept for 48 hours only</change>
         <change>Android 14: Add setting to show dashboard in Device Controls instead of tile controls</change>
+        <change>New icon</change>
         <change>Bug fixes, design improvements and dependency updates</change>
     </release>
     <release version="2023.9.4 - Wear" versioncode="2">
         <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Home screen: Lock domain will show as active when state is locked to better match Android behavior</change>
         <change>Add Camera Tile with multiple tile support, add the new tile before setting them up in Wear OS app settings</change>
         <change>Add smooth scrolling for rotary input</change>
+        <change>New icon</change>
         <change>Bug fixes, design improvements and dependency updates</change>
     </release>
     <release version="2023.9.4 - Automotive" versioncode="1">
         <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Driving Interface: Lock domain will show as active when state is locked to better match Android behavior</change>
+        <change>Add new location tracking history to troubleshooting section, history items are kept for 48 hours only</change>
+        <change>New icon</change>
         <change>Bug fixes, design improvements and dependency updates</change>
     </release>
 </changelog>
