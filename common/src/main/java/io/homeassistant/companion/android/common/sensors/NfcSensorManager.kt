@@ -14,7 +14,8 @@ class NfcSensorManager : SensorManager {
             commonR.string.sensor_name_nfc_sensor,
             commonR.string.sensor_description_nfc_sensor,
             "mdi:nfc",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
     }
 
