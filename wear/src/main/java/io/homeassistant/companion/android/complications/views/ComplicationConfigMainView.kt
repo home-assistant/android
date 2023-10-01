@@ -2,6 +2,8 @@ package io.homeassistant.companion.android.complications.views
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
@@ -9,20 +11,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.material.Button
-import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
-import androidx.wear.compose.material.Icon
-import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.ToggleChipDefaults
+import androidx.wear.compose.material3.Button
+import androidx.wear.compose.material3.Icon
+import androidx.wear.compose.material3.Text
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.complications.ComplicationConfigViewModel
 import io.homeassistant.companion.android.data.SimplifiedEntity
@@ -174,13 +174,9 @@ fun MainConfigView(
                 Button(
                     modifier = Modifier.padding(top = 8.dp),
                     onClick = { onAcceptClicked() },
-                    colors = ButtonDefaults.primaryButtonColors(),
-                    enabled = loaded && entity != null
-                ) {
-                    Image(
-                        CommunityMaterial.Icon.cmd_check
-                    )
-                }
+                    enabled = loaded && entity != null,
+                    icon = { Icon(Icons.Filled.Check, "") }
+                ) { }
             }
         } else {
             item {

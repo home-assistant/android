@@ -9,7 +9,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.foundation.lazy.itemsIndexed
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
-import androidx.wear.compose.material.Text
+import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
 import io.homeassistant.companion.android.database.wear.CameraTile
 import io.homeassistant.companion.android.theme.WearAppTheme

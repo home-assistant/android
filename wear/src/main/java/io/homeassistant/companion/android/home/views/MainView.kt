@@ -21,14 +21,15 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.CircularProgressIndicator
-import androidx.wear.compose.material.MaterialTheme
-import androidx.wear.compose.material.Text
+import androidx.wear.compose.material3.MaterialTheme
+import androidx.wear.compose.material3.Text
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -89,7 +90,8 @@ fun MainView(
                                     Text(
                                         text = cached?.friendlyName ?: favoriteEntityID,
                                         maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis
+                                        overflow = TextOverflow.Ellipsis,
+                                        fontWeight = FontWeight.Bold
                                     )
                                 },
                                 onClick = {
@@ -175,14 +177,14 @@ fun MainView(
                                     Text(
                                         text = stringResource(commonR.string.no_supported_entities),
                                         textAlign = TextAlign.Center,
-                                        style = MaterialTheme.typography.title3,
+                                        style = MaterialTheme.typography.titleMedium,
                                         modifier = Modifier.fillMaxWidth()
                                             .padding(top = 32.dp)
                                     )
                                     Text(
                                         text = stringResource(commonR.string.no_supported_entities_summary),
                                         textAlign = TextAlign.Center,
-                                        style = MaterialTheme.typography.body2,
+                                        style = MaterialTheme.typography.bodyMedium,
                                         modifier = Modifier.fillMaxWidth()
                                             .padding(top = 8.dp)
                                     )
@@ -213,7 +215,11 @@ fun MainView(
                                         Chip(
                                             modifier = Modifier.fillMaxWidth(),
                                             label = {
-                                                Text(text = area.name)
+                                                Text(
+                                                    text = area.name,
+                                                    color = Color.Black,
+                                                    fontWeight = FontWeight.Bold
+                                                )
                                             },
                                             onClick = {
                                                 onNavigationClicked(
@@ -226,7 +232,7 @@ fun MainView(
                                                     ) == null
                                                 }
                                             },
-                                            colors = ChipDefaults.primaryChipColors()
+                                            colors = ChipDefaults.primaryChipColors(backgroundColor = wearColorPalette.primary)
                                         )
                                     }
                                 }
@@ -261,7 +267,11 @@ fun MainView(
                                             ).let { Image(asset = it) }
                                         },
                                         label = {
-                                            Text(text = mainViewModel.stringForDomain(domain)!!)
+                                            Text(
+                                                text = mainViewModel.stringForDomain(domain)!!,
+                                                color = Color.Black,
+                                                fontWeight = FontWeight.Bold
+                                            )
                                         },
                                         onClick = {
                                             onNavigationClicked(
@@ -272,7 +282,7 @@ fun MainView(
                                                 domainEntitiesFilter
                                             )
                                         },
-                                        colors = ChipDefaults.primaryChipColors()
+                                        colors = ChipDefaults.primaryChipColors(backgroundColor = wearColorPalette.primary)
                                     )
                                 }
                             }
@@ -337,7 +347,8 @@ fun MainView(
                     },
                     label = {
                         Text(
-                            text = stringResource(id = commonR.string.settings)
+                            text = stringResource(id = commonR.string.settings),
+                            fontWeight = FontWeight.Bold
                         )
                     },
                     onClick = onSettingsClicked,

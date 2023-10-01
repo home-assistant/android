@@ -16,12 +16,13 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.material.InlineSlider
-import androidx.wear.compose.material.InlineSliderDefaults
-import androidx.wear.compose.material.MaterialTheme
-import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleButton
 import androidx.wear.compose.material.ToggleButtonDefaults
+import androidx.wear.compose.material3.ExperimentalWearMaterial3Api
+import androidx.wear.compose.material3.InlineSlider
+import androidx.wear.compose.material3.InlineSliderDefaults
+import androidx.wear.compose.material3.MaterialTheme
+import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
@@ -81,13 +82,13 @@ fun DetailsPanelView(
                                 haptic
                             )
                         },
-                        colors = ToggleButtonDefaults.toggleButtonColors(checkedBackgroundColor = MaterialTheme.colors.secondary.copy(alpha = 0.2f)),
+                        colors = ToggleButtonDefaults.toggleButtonColors(checkedBackgroundColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)),
                         modifier = Modifier.size(ToggleButtonDefaults.SmallToggleButtonSize)
                     ) {
                         Image(
                             asset = entity.getIcon(LocalContext.current),
                             colorFilter = ColorFilter.tint(
-                                if (isChecked) MaterialTheme.colors.secondary else wearColorPalette.onSurface
+                                if (isChecked) MaterialTheme.colorScheme.secondary else wearColorPalette.onSurface
                             ),
                             contentDescription = stringResource(if (isChecked) R.string.enabled else R.string.disabled)
                         )
@@ -165,6 +166,7 @@ fun DetailsPanelView(
     }
 }
 
+@OptIn(ExperimentalWearMaterial3Api::class)
 @Composable
 fun FanSpeedSlider(
     entity: Entity<*>,
@@ -216,6 +218,7 @@ fun FanSpeedSlider(
     }
 }
 
+@OptIn(ExperimentalWearMaterial3Api::class)
 @Composable
 fun BrightnessSlider(
     entity: Entity<*>,
@@ -266,6 +269,7 @@ fun BrightnessSlider(
     }
 }
 
+@OptIn(ExperimentalWearMaterial3Api::class)
 @Composable
 fun ColorTempSlider(
     attributes: Map<*, *>,

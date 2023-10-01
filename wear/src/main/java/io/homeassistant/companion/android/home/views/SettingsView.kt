@@ -8,13 +8,14 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
-import androidx.wear.compose.material.Icon
-import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.ToggleChipDefaults
+import androidx.wear.compose.material3.Icon
+import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.IIcon
@@ -45,7 +46,12 @@ fun SecondarySettingsChip(
             )
         },
         colors = ChipDefaults.secondaryChipColors(),
-        label = { Text(text = label) },
+        label = {
+            Text(
+                text = label,
+                fontWeight = FontWeight.Bold
+            )
+        },
         secondaryLabel = secondaryLabel?.let {
             { Text(text = secondaryLabel) }
         },
@@ -136,7 +142,10 @@ fun SettingsView(
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     },
                     label = {
-                        Text(stringResource(commonR.string.setting_haptic_label))
+                        Text(
+                            stringResource(commonR.string.setting_haptic_label),
+                            fontWeight = FontWeight.Bold
+                        )
                     },
                     appIcon = {
                         Image(
@@ -167,7 +176,10 @@ fun SettingsView(
                     checked = isToastEnabled,
                     onCheckedChange = onToastEnabled,
                     label = {
-                        Text(stringResource(commonR.string.setting_toast_label))
+                        Text(
+                            stringResource(commonR.string.setting_toast_label),
+                            fontWeight = FontWeight.Bold
+                        )
                     },
                     appIcon = {
                         Image(
@@ -275,7 +287,9 @@ fun SettingsView(
                     },
                     label = {
                         Text(
-                            text = stringResource(id = commonR.string.logout)
+                            text = stringResource(id = commonR.string.logout),
+                            color = Color.Black,
+                            fontWeight = FontWeight.Bold
                         )
                     },
                     onClick = onClickLogout,
