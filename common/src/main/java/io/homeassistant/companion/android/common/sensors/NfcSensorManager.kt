@@ -19,23 +19,14 @@ class NfcSensorManager : SensorManager {
         )
     }
 
-    override fun docsLink(): String {
-        return "https://companion.home-assistant.io/docs/core/sensors#nfc-sensor"
-    }
-    override val name: Int
-        get() = commonR.string.sensor_name_nfc_sensor
+    override fun docsLink() = "https://companion.home-assistant.io/docs/core/sensors#nfc-sensor"
+    override val name = commonR.string.sensor_name_nfc_sensor
 
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        return listOf(nfcStateSensor)
-    }
+    override suspend fun getAvailableSensors(context: Context) = listOf(nfcStateSensor)
 
-    override fun requiredPermissions(sensorId: String): Array<String> {
-        return emptyArray()
-    }
+    override fun requiredPermissions(sensorId: String) = emptyArray<String>()
 
-    override fun requestSensorUpdate(context: Context) {
-        updateNfcState(context)
-    }
+    override fun requestSensorUpdate(context: Context) = updateNfcState(context)
 
     override fun hasSensor(context: Context): Boolean {
         return NfcAdapter.getDefaultAdapter(context) != null
