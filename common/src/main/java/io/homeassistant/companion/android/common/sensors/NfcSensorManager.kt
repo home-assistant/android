@@ -4,7 +4,6 @@ import android.content.Context
 import android.nfc.NfcAdapter
 import io.homeassistant.companion.android.common.R as commonR
 
-// TODO move to common
 class NfcSensorManager : SensorManager {
     companion object {
         private const val TAG = "NfcSensor"
@@ -20,7 +19,7 @@ class NfcSensorManager : SensorManager {
     }
 
     override fun docsLink(): String {
-        return "https://companion.home-assistant.io/docs/core/sensors#nfc-sensor" // TODO
+        return "https://companion.home-assistant.io/docs/core/sensors#nfc-sensor"
     }
     override val name: Int
         get() = commonR.string.sensor_name_nfc_sensor
@@ -30,7 +29,7 @@ class NfcSensorManager : SensorManager {
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
-        return emptyArray() // TODO ?
+        return emptyArray()
     }
 
     override fun requestSensorUpdate(context: Context) {
@@ -54,7 +53,7 @@ class NfcSensorManager : SensorManager {
             nfcStateSensor,
             nfcEnabled,
             nfcStateSensor.statelessIcon,
-            emptyMap() // TODO
+            emptyMap()
         )
     }
 }
