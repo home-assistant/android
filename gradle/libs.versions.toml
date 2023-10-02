@@ -21,6 +21,7 @@ compose-compiler = "1.5.3"
 constraintlayout = "2.1.4"
 converterJackson = "2.9.0"
 coreKtx = "1.12.0"
+core-splashscreen = "1.1.0-alpha02"
 cronet-embedded = "113.5672.61"
 emojiJava = "5.1.1"
 firebase-bom = "32.2.3"
@@ -114,6 +115,7 @@ compose-uiTooling = { module = "androidx.compose.ui:ui-tooling" }
 compose-compiler = { module = "androidx.compose.compiler:compiler", version.ref = "compose-compiler" }
 converter-jackson = { module = "com.squareup.retrofit2:converter-jackson", version.ref = "converterJackson" }
 core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
+core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "core-splashscreen" }
 cronet-embedded = { module = "org.chromium.net:cronet-embedded", version.ref = "cronet-embedded" }
 emojiJava = { module = "com.vdurmont:emoji-java", version.ref = "emojiJava" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
