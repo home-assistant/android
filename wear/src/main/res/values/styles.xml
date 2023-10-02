@@ -30,9 +30,9 @@
         <item name="android:fontFamily">sans-serif-medium</item>
     </style>
 
-    <style name="SplashTheme" parent="Theme.SplashScreen">
+    <style name="Theme.HomeAssistant.SplashTheme" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@android:color/black</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/app_icon</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_background</item>
         <item name="postSplashScreenTheme">@style/Theme.HomeAssistant</item>
     </style>
 </resources>

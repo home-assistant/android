@@ -12,4 +12,9 @@
     inner_frame_layout_padding (below variable) on round screens.
     -->
     <dimen name="inner_frame_layout_padding">5dp</dimen>
+    
+    <!--
+    Dimensions for splash screen icon size.
+    -->
+    <dimen name="splash_screen_icon_size">48dp</dimen>
 </resources>
