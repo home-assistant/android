@@ -82,6 +82,7 @@ dependencies {
 
     implementation(libs.wear)
     implementation(libs.core.ktx)
+    implementation(libs.core.splashscreen)
     implementation(libs.play.services.wearable)
     implementation(libs.wear.input)
     implementation(libs.wear.remote.interactions)

@@ -63,7 +63,7 @@
 
         <activity android:name=".home.HomeActivity" />
         <activity android:name=".splash.SplashActivity"
-            android:theme="@style/SplashTheme"
+            android:theme="@style/Theme.HomeAssistant.SplashTheme"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -107,6 +107,7 @@
             android:icon="@mipmap/ic_assist_launcher"
             android:label="@string/ha_assist"
             android:launchMode="singleTask"
+            android:theme="@style/Theme.HomeAssistant.SplashThemeAssist"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
