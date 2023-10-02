@@ -11,8 +11,8 @@ class NfcSensorManager : SensorManager {
         val nfcStateSensor = SensorManager.BasicSensor(
             "nfc_state",
             "binary_sensor",
-            commonR.string.sensor_name_nfc_sensor,
-            commonR.string.sensor_description_nfc_sensor,
+            commonR.string.basic_sensor_name_nfc_state,
+            commonR.string.sensor_description_nfc_state,
             "mdi:nfc-variant",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT
@@ -20,7 +20,7 @@ class NfcSensorManager : SensorManager {
     }
 
     override fun docsLink() = "https://companion.home-assistant.io/docs/core/sensors#nfc-state-sensor"
-    override val name = commonR.string.sensor_name_nfc_sensor
+    override val name = commonR.string.sensor_name_nfc
 
     override suspend fun getAvailableSensors(context: Context) = listOf(nfcStateSensor)
 
