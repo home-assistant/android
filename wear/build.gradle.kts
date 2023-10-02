@@ -107,6 +107,7 @@ dependencies {
     implementation(libs.wear.compose.foundation)
     implementation(libs.wear.compose.material)
     implementation(libs.wear.compose.navigation)
+    implementation(libs.wear.tooling)
 
     implementation(libs.bundles.horologist)
 
