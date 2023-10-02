@@ -7,11 +7,11 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.Text
+import androidx.wear.tooling.preview.devices.WearDevices
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.theme.WearAppTheme
@@ -55,7 +55,7 @@ fun getSensorManagers(): List<SensorManager> {
     return SensorReceiver.MANAGERS.sortedBy { context.getString(it.name) }.filter { it.hasSensor(context) }
 }
 
-@Preview(device = Devices.WEAR_OS_LARGE_ROUND)
+@Preview(device = WearDevices.LARGE_ROUND)
 @Composable
 private fun PreviewSensorsView() {
     CompositionLocalProvider {

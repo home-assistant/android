@@ -9,7 +9,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -18,6 +17,7 @@ import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Picker
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.rememberPickerState
+import androidx.wear.tooling.preview.devices.WearDevices
 import com.google.android.horologist.annotations.ExperimentalHorologistApi
 import com.google.android.horologist.composables.picker.toRotaryScrollAdapter
 import com.google.android.horologist.compose.rotaryinput.rotaryWithSnap
@@ -73,7 +73,7 @@ fun RefreshIntervalPickerView(
     }
 }
 
-@Preview(device = Devices.WEAR_OS_LARGE_ROUND)
+@Preview(device = WearDevices.LARGE_ROUND)
 @Composable
 private fun PreviewRefreshIntervalPickerView() {
     CompositionLocalProvider {

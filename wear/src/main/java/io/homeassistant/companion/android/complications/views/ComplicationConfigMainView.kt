@@ -7,7 +7,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Button
@@ -21,6 +20,7 @@ import androidx.wear.compose.material.ToggleChipDefaults
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
+import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
@@ -190,7 +190,7 @@ fun MainConfigView(
     }
 }
 
-@Preview(device = Devices.WEAR_OS_LARGE_ROUND)
+@Preview(device = WearDevices.LARGE_ROUND)
 @Composable
 fun PreviewMainConfigView() {
     MainConfigView(

@@ -31,7 +31,6 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -47,6 +46,7 @@ import androidx.wear.compose.material.Text
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
+import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
@@ -274,7 +274,7 @@ fun ConversationPipelinesView(
     }
 }
 
-@Preview(device = Devices.WEAR_OS_SMALL_ROUND)
+@Preview(device = WearDevices.SMALL_ROUND)
 @Composable
 fun PreviewSpeechBubble() {
     ScalingLazyColumn(horizontalAlignment = Alignment.Start) {

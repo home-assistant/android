@@ -14,16 +14,15 @@ import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.InlineSlider
 import androidx.wear.compose.material.InlineSliderDefaults
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleButton
 import androidx.wear.compose.material.ToggleButtonDefaults
+import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
@@ -360,7 +359,7 @@ private fun onSliderChangedFeedback(
     )
 }
 
-@Preview(device = Devices.WEAR_OS_LARGE_ROUND)
+@Preview(device = WearDevices.LARGE_ROUND)
 @Composable
 private fun PreviewDetailsPaneView() {
     CompositionLocalProvider {
