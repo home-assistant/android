@@ -35,4 +35,10 @@
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_background</item>
         <item name="postSplashScreenTheme">@style/Theme.HomeAssistant</item>
     </style>
+
+    <style name="Theme.HomeAssistant.SplashThemeAssist" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@android:color/black</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_background_assist</item>
+        <item name="postSplashScreenTheme">@style/Theme.HomeAssistant</item>
+    </style>
 </resources>
