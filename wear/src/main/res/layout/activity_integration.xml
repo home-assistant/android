@@ -1,64 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.wear.widget.BoxInsetLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="@dimen/box_inset_layout_padding"
-    tools:context=".onboarding.integration.MobileAppIntegrationActivity"
-    tools:deviceIds="wear">
+    android:padding="8dp">
+    <requestFocus />
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:paddingTop="@dimen/inner_frame_layout_padding"
-        android:paddingStart="@dimen/inner_frame_layout_padding"
-        android:paddingEnd="@dimen/inner_frame_layout_padding"
-        app:layout_boxedEdges="top|left|right">
-        <requestFocus />
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        tools:context=".onboarding.integration.MobileAppIntegrationActivity"
+        tools:deviceIds="wear"
+        android:orientation="vertical">
 
-        <EditText
-            android:id="@+id/server_url"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:ems="10"
-            android:hint="@string/device_name"
-            android:inputType="textPersonName"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView"
-            android:importantForAutofill="no" />
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="@dimen/inner_frame_layout_padding"
+            app:layout_boxedEdges="all">
 
-        <TextView
-            android:id="@+id/textView"
-            style="@style/HeaderText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/registerDevice"
-            android:maxLines="2"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            <EditText
+                android:id="@+id/device_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:ems="10"
+                android:minHeight="48dp"
+                android:hint="@string/device_name"
+                android:inputType="textPersonName"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textView"
+                android:importantForAutofill="no" />
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/finish"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="4dp"
-            android:contentDescription="@string/button_forward"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/server_url"
-            app:srcCompat="@drawable/ic_button_check" />
+            <TextView
+                android:id="@+id/textView"
+                style="@style/HeaderText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/registerDevice"
+                android:textAlignment="center"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/finish"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                android:contentDescription="@string/button_forward"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/device_name"
+                app:srcCompat="@drawable/ic_button_check" />
 
-    <io.homeassistant.companion.android.util.LoadingView
-        android:id="@+id/loading_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:loading_text="@string/attempting_registration"
-        android:visibility="gone" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
-</androidx.wear.widget.BoxInsetLayout>
+        <io.homeassistant.companion.android.util.LoadingView
+            android:id="@+id/loading_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:loading_text="@string/attempting_registration"
+            android:visibility="gone" />
+
+    </LinearLayout>
+</ScrollView>

@@ -39,10 +39,10 @@ class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationVi
         binding = ActivityIntegrationBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.serverUrl.setText(Build.MODEL)
+        binding.deviceName.setText(Build.MODEL)
 
         binding.finish.setOnClickListener {
-            presenter.onRegistrationAttempt(serverId, binding.serverUrl.text.toString())
+            presenter.onRegistrationAttempt(serverId, binding.deviceName.text.toString())
         }
     }
 

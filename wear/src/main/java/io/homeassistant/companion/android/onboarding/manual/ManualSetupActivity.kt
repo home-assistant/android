@@ -36,7 +36,7 @@ class ManualSetupActivity : AppCompatActivity(), ManualSetupView {
         setContentView(binding.root)
 
         binding.buttonNext.setOnClickListener {
-            presenter.onNextClicked(this, findViewById<EditText>(R.id.server_url).text.toString())
+            presenter.onNextClicked(this, findViewById<EditText>(R.id.device_name).text.toString())
         }
     }
 
