@@ -1,7 +1,7 @@
 [versions]
 accompanist = "0.32.0"
 activity-compose = "1.7.2"
-androidBeaconLibrary = "2.19.6"
+androidBeaconLibrary = "2.20-1-g0488d78"
 androidJunit5 = "1.9.3.0"
 androidPlugin = "8.1.1"
 androidSdk-compile = "34"
