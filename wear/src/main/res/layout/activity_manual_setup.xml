@@ -10,8 +10,11 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="@dimen/inner_frame_layout_padding"
-        app:layout_boxedEdges="all">
+        android:paddingTop="@dimen/inner_frame_layout_padding"
+        android:paddingStart="@dimen/inner_frame_layout_padding"
+        android:paddingEnd="@dimen/inner_frame_layout_padding"
+        app:layout_boxedEdges="top|left|right">
+        <requestFocus />
 
         <EditText
             android:id="@+id/server_url"
@@ -40,10 +43,11 @@
             android:id="@+id/button_next"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
             android:contentDescription="@string/button_forward"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/server_url"
             app:srcCompat="@drawable/ic_button_arrow_forward" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
