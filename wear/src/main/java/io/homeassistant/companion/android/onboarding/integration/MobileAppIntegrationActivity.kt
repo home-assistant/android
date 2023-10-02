@@ -10,6 +10,7 @@ import androidx.wear.activity.ConfirmationActivity
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.databinding.ActivityIntegrationBinding
 import io.homeassistant.companion.android.home.HomeActivity
+import io.homeassistant.companion.android.util.adjustInset
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -44,6 +45,8 @@ class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationVi
         binding.finish.setOnClickListener {
             presenter.onRegistrationAttempt(serverId, binding.deviceName.text.toString())
         }
+
+        adjustInset(applicationContext, binding, null)
     }
 
     override fun onResume() {

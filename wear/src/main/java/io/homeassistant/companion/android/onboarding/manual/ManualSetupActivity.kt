@@ -12,6 +12,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.databinding.ActivityManualSetupBinding
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationActivity
+import io.homeassistant.companion.android.util.adjustInset
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -38,6 +39,8 @@ class ManualSetupActivity : AppCompatActivity(), ManualSetupView {
         binding.buttonNext.setOnClickListener {
             presenter.onNextClicked(this, findViewById<EditText>(R.id.device_name).text.toString())
         }
+
+        adjustInset(applicationContext, null, binding)
     }
 
     override fun startIntegration(serverId: Int) {
