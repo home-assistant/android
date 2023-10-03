@@ -7,6 +7,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
@@ -38,7 +39,8 @@ fun SensorsView(
                         colors = ChipDefaults.secondaryChipColors(),
                         label = {
                             Text(
-                                text = stringResource(manager.name)
+                                text = stringResource(manager.name),
+                                fontWeight = FontWeight.Bold
                             )
                         },
                         onClick = { onClickSensorManager(manager) }

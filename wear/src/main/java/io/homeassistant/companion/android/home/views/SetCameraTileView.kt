@@ -17,7 +17,7 @@ import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.database.wear.CameraTile
 import io.homeassistant.companion.android.theme.WearAppTheme
-import io.homeassistant.companion.android.theme.wearColorPalette
+import io.homeassistant.companion.android.theme.wearColorScheme
 import io.homeassistant.companion.android.tiles.CameraTile.Companion.DEFAULT_REFRESH_INTERVAL
 import io.homeassistant.companion.android.util.intervalToString
 import io.homeassistant.companion.android.views.ListHeader
@@ -46,7 +46,7 @@ fun SetCameraTileView(
                     icon = {
                         Image(
                             asset = icon,
-                            colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     },
                     colors = ChipDefaults.secondaryChipColors(),
@@ -68,7 +68,7 @@ fun SetCameraTileView(
                     icon = {
                         Image(
                             asset = CommunityMaterial.Icon3.cmd_timer_cog,
-                            colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     },
                     colors = ChipDefaults.secondaryChipColors(),

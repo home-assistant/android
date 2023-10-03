@@ -17,6 +17,7 @@ import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.ToggleChipDefaults
 import androidx.wear.compose.material3.Icon
+import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
@@ -95,7 +96,8 @@ fun EntityUi(
                         stringResource(R.string.enabled)
                     } else {
                         stringResource(R.string.disabled)
-                    }
+                    },
+                    tint = if (isChecked) MaterialTheme.colorScheme.tertiary else wearColorPalette.onSurface
                 )
             },
             colors = WearToggleChip.entityToggleChipBackgroundColors(entity, isChecked)

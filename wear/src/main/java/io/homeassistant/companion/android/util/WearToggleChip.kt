@@ -61,10 +61,10 @@ object WearToggleChip {
         return when {
             (hasPosition || hasColor) -> {
                 val checkedStartBackgroundColor = contentBackgroundColor.copy(alpha = 0.5f)
-                    .compositeOver(MaterialTheme.colorScheme.surface)
-                val checkedEndBackgroundColor = MaterialTheme.colorScheme.surface.copy(alpha = 0f)
-                    .compositeOver(MaterialTheme.colorScheme.surface)
-                val uncheckedBackgroundColor = MaterialTheme.colorScheme.surface
+                    .compositeOver(MaterialTheme.colorScheme.outlineVariant)
+                val checkedEndBackgroundColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0f)
+                    .compositeOver(MaterialTheme.colorScheme.outlineVariant)
+                val uncheckedBackgroundColor = MaterialTheme.colorScheme.outlineVariant
 
                 var checkedBackgroundColors = listOf(
                     checkedStartBackgroundColor,
@@ -175,15 +175,15 @@ object WearToggleChip {
     @Composable
     private fun defaultChipColors(
         checkedStartBackgroundColor: Color =
-            MaterialTheme.colorScheme.surface.copy(alpha = 0f)
-                .compositeOver(MaterialTheme.colorScheme.surface),
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0f)
+                .compositeOver(MaterialTheme.colorScheme.tertiary),
         checkedEndBackgroundColor: Color =
             MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                .compositeOver(MaterialTheme.colorScheme.surface),
-        checkedContentColor: Color = MaterialTheme.colorScheme.onSurface,
-        checkedSecondaryContentColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
-        checkedToggleControlColor: Color = MaterialTheme.colorScheme.secondary,
-        uncheckedStartBackgroundColor: Color = MaterialTheme.colorScheme.surface,
+                .compositeOver(MaterialTheme.colorScheme.tertiary),
+        checkedContentColor: Color = MaterialTheme.colorScheme.onTertiary,
+        checkedSecondaryContentColor: Color = MaterialTheme.colorScheme.tertiary,
+        checkedToggleControlColor: Color = MaterialTheme.colorScheme.tertiary,
+        uncheckedStartBackgroundColor: Color = MaterialTheme.colorScheme.outlineVariant,
         uncheckedEndBackgroundColor: Color = uncheckedStartBackgroundColor,
         uncheckedContentColor: Color = contentColorFor(checkedEndBackgroundColor),
         uncheckedSecondaryContentColor: Color = uncheckedContentColor,

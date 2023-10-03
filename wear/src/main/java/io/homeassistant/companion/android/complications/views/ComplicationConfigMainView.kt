@@ -27,7 +27,7 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.complications.ComplicationConfigViewModel
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.theme.WearAppTheme
-import io.homeassistant.companion.android.theme.wearColorPalette
+import io.homeassistant.companion.android.theme.wearColorScheme
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.simplifiedEntity
 import io.homeassistant.companion.android.views.ChooseEntityView
@@ -107,7 +107,7 @@ fun MainConfigView(
                     icon = {
                         Image(
                             asset = iconBitmap,
-                            colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     },
                     colors = ChipDefaults.secondaryChipColors(),

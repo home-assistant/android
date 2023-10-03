@@ -156,7 +156,8 @@ fun MainView(
                                         Text(
                                             text = stringResource(commonR.string.retry),
                                             textAlign = TextAlign.Center,
-                                            modifier = Modifier.fillMaxWidth()
+                                            modifier = Modifier.fillMaxWidth(),
+                                            fontWeight = FontWeight.Bold
                                         )
                                     },
                                     onClick = onRetryLoadEntitiesClicked,

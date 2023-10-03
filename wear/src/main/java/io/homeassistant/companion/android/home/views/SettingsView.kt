@@ -15,6 +15,7 @@ import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.ToggleChipDefaults
 import androidx.wear.compose.material3.Icon
+import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
@@ -107,7 +108,12 @@ fun SettingsView(
                     modifier = Modifier.fillMaxWidth(),
                     checked = isFavoritesOnly,
                     onCheckedChange = { setFavoritesOnly(it) },
-                    label = { Text(stringResource(commonR.string.only_favorites)) },
+                    label = {
+                        Text(
+                            stringResource(commonR.string.only_favorites),
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
                     enabled = favorites.isNotEmpty(),
                     toggleControl = {
                         Icon(
@@ -116,7 +122,8 @@ fun SettingsView(
                                 stringResource(commonR.string.enabled)
                             } else {
                                 stringResource(commonR.string.disabled)
-                            }
+                            },
+                            tint = if (isFavoritesOnly) MaterialTheme.colorScheme.tertiary else wearColorPalette.onSurface
                         )
                     },
                     appIcon = {
@@ -160,12 +167,13 @@ fun SettingsView(
                     },
                     toggleControl = {
                         Icon(
-                            imageVector = ToggleChipDefaults.checkboxIcon(isHapticEnabled),
+                            imageVector = ToggleChipDefaults.switchIcon(isHapticEnabled),
                             contentDescription = if (isHapticEnabled) {
                                 stringResource(commonR.string.enabled)
                             } else {
                                 stringResource(commonR.string.disabled)
-                            }
+                            },
+                            tint = if (isHapticEnabled) MaterialTheme.colorScheme.tertiary else wearColorPalette.onSurface
                         )
                     }
                 )
@@ -194,12 +202,13 @@ fun SettingsView(
                     },
                     toggleControl = {
                         Icon(
-                            imageVector = ToggleChipDefaults.checkboxIcon(isToastEnabled),
-                            contentDescription = if (isHapticEnabled) {
+                            imageVector = ToggleChipDefaults.switchIcon(isToastEnabled),
+                            contentDescription = if (isToastEnabled) {
                                 stringResource(commonR.string.enabled)
                             } else {
                                 stringResource(commonR.string.disabled)
-                            }
+                            },
+                            tint = if (isToastEnabled) MaterialTheme.colorScheme.tertiary else wearColorPalette.onSurface
                         )
                     }
                 )
@@ -254,7 +263,10 @@ fun SettingsView(
                     checked = isAssistantAppAllowed,
                     onCheckedChange = onAssistantAppAllowed,
                     label = {
-                        Text(stringResource(commonR.string.available_as_assistant_app))
+                        Text(
+                            stringResource(commonR.string.available_as_assistant_app),
+                            fontWeight = FontWeight.Bold
+                        )
                     },
                     appIcon = {
                         Image(
@@ -265,11 +277,12 @@ fun SettingsView(
                     toggleControl = {
                         Icon(
                             imageVector = ToggleChipDefaults.switchIcon(isAssistantAppAllowed),
-                            contentDescription = if (isFavoritesOnly) {
+                            contentDescription = if (isAssistantAppAllowed) {
                                 stringResource(commonR.string.enabled)
                             } else {
                                 stringResource(commonR.string.disabled)
-                            }
+                            },
+                            tint = if (isAssistantAppAllowed) MaterialTheme.colorScheme.tertiary else wearColorPalette.onSurface
                         )
                     }
                 )

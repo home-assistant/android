@@ -40,7 +40,7 @@ import io.homeassistant.companion.android.common.data.integration.supportsFanSet
 import io.homeassistant.companion.android.common.data.integration.supportsLightBrightness
 import io.homeassistant.companion.android.common.data.integration.supportsLightColorTemperature
 import io.homeassistant.companion.android.theme.WearAppTheme
-import io.homeassistant.companion.android.theme.wearColorPalette
+import io.homeassistant.companion.android.theme.wearColorScheme
 import io.homeassistant.companion.android.util.getColorTemperature
 import io.homeassistant.companion.android.util.onEntityClickedFeedback
 import io.homeassistant.companion.android.util.onEntityFeedback
@@ -82,13 +82,13 @@ fun DetailsPanelView(
                                 haptic
                             )
                         },
-                        colors = ToggleButtonDefaults.toggleButtonColors(checkedBackgroundColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)),
+                        colors = ToggleButtonDefaults.toggleButtonColors(checkedBackgroundColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f)),
                         modifier = Modifier.size(ToggleButtonDefaults.SmallToggleButtonSize)
                     ) {
                         Image(
                             asset = entity.getIcon(LocalContext.current),
                             colorFilter = ColorFilter.tint(
-                                if (isChecked) MaterialTheme.colorScheme.secondary else wearColorPalette.onSurface
+                                if (isChecked) MaterialTheme.colorScheme.tertiary else wearColorScheme.onSurface
                             ),
                             contentDescription = stringResource(if (isChecked) R.string.enabled else R.string.disabled)
                         )
@@ -96,7 +96,7 @@ fun DetailsPanelView(
                 } else {
                     Image(
                         asset = entity.getIcon(LocalContext.current),
-                        colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                        colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                     )
                 }
             }

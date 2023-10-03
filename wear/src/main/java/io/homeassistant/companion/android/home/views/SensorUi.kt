@@ -11,16 +11,19 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.ToggleChipDefaults
 import androidx.wear.compose.material3.Icon
+import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.sensor.Sensor
+import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.batterySensorManager
 import kotlinx.coroutines.runBlocking
 
@@ -84,7 +87,8 @@ fun SensorUi(
             Text(
                 text = stringResource(basicSensor.name),
                 maxLines = 2,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                fontWeight = FontWeight.Bold
             )
         },
         toggleControl = {
@@ -94,7 +98,8 @@ fun SensorUi(
                     stringResource(R.string.enabled)
                 } else {
                     stringResource(R.string.disabled)
-                }
+                },
+                tint = if (checked) MaterialTheme.colorScheme.tertiary else wearColorPalette.onSurface
             )
         }
     )

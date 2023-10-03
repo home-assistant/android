@@ -6,6 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.foundation.lazy.itemsIndexed
 import androidx.wear.compose.material.Chip
@@ -13,6 +14,7 @@ import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.ToggleChipDefaults
 import androidx.wear.compose.material3.Icon
+import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
@@ -41,7 +43,10 @@ fun SelectShortcutsTileView(
                     checked = isShowShortcutTextEnabled,
                     onCheckedChange = { onShowShortcutTextEnabled(it) },
                     label = {
-                        Text(stringResource(commonR.string.shortcuts_tile_text_setting))
+                        Text(
+                            stringResource(commonR.string.shortcuts_tile_text_setting),
+                            fontWeight = FontWeight.Bold
+                        )
                     },
                     appIcon = {
                         Image(
@@ -61,7 +66,8 @@ fun SelectShortcutsTileView(
                                 stringResource(commonR.string.show)
                             } else {
                                 stringResource(commonR.string.hide)
-                            }
+                            },
+                            tint = if (isShowShortcutTextEnabled) MaterialTheme.colorScheme.tertiary else wearColorPalette.onSurface
                         )
                     }
                 )
@@ -79,7 +85,10 @@ fun SelectShortcutsTileView(
                         modifier = Modifier
                             .fillMaxWidth(),
                         label = {
-                            Text(stringResource(commonR.string.shortcuts_tile_n, index + 1))
+                            Text(
+                                stringResource(commonR.string.shortcuts_tile_n, index + 1),
+                                fontWeight = FontWeight.Bold
+                            )
                         },
                         secondaryLabel = {
                             val entityCount = shortcutTileEntitiesCountById[shortcutsTileId] ?: 0

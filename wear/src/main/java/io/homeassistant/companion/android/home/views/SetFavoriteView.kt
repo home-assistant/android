@@ -6,11 +6,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.ToggleChipDefaults
 import androidx.wear.compose.material3.Icon
+import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 import com.mikepenz.iconics.compose.Image
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -91,7 +93,8 @@ private fun FavoriteToggleChip(
             Text(
                 text = attributes["friendly_name"].toString(),
                 maxLines = 2,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                fontWeight = FontWeight.Bold
             )
         },
         toggleControl = {
@@ -101,7 +104,8 @@ private fun FavoriteToggleChip(
                     stringResource(commonR.string.enabled)
                 } else {
                     stringResource(commonR.string.disabled)
-                }
+                },
+                tint = if (checked) MaterialTheme.colorScheme.tertiary else wearColorPalette.onSurface
             )
         }
     )
