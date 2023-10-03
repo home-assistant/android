@@ -173,7 +173,7 @@ fun ConversationResultView(
                     val inputIsActive = inputMode == AssistViewModelBase.AssistInputMode.VOICE_ACTIVE
                     if (inputIsActive) {
                         KeepScreenOn()
-                        val transition = rememberInfiniteTransition(label = "")
+                        val transition = rememberInfiniteTransition(label = "conversationTransition")
                         val scale by transition.animateFloat(
                             initialValue = 1f,
                             targetValue = 1.2f,
@@ -181,16 +181,13 @@ fun ConversationResultView(
                                 animation = tween(600, easing = LinearEasing),
                                 repeatMode = RepeatMode.Reverse
                             ),
-                            label = ""
+                            label = "conversationAnimationFloat"
                         )
                         Box(
                             modifier = Modifier
                                 .size(48.dp)
                                 .scale(scale)
-                                .background(
-                                    color = colorResource(R.color.colorSpeechText),
-                                    shape = CircleShape
-                                )
+                                .background(color = colorResource(R.color.colorSpeechText), shape = CircleShape)
                                 .clip(CircleShape)
                         )
                     }

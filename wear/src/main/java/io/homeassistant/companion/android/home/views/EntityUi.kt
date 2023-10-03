@@ -17,7 +17,6 @@ import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.ToggleChipDefaults
 import androidx.wear.compose.material3.Icon
-import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
@@ -28,7 +27,7 @@ import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.integration.isActive
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
-import io.homeassistant.companion.android.theme.wearColorPalette
+import io.homeassistant.companion.android.theme.wearColorScheme
 import io.homeassistant.companion.android.util.WearToggleChip
 import io.homeassistant.companion.android.util.onEntityClickedFeedback
 import io.homeassistant.companion.android.util.previewEntity1
@@ -61,7 +60,7 @@ fun EntityUi(
             appIcon = {
                 Image(
                     asset = iconBitmap,
-                    colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                    colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                 )
             },
             label = {
@@ -97,7 +96,7 @@ fun EntityUi(
                     } else {
                         stringResource(R.string.disabled)
                     },
-                    tint = if (isChecked) MaterialTheme.colorScheme.tertiary else wearColorPalette.onSurface
+                    tint = if (isChecked) wearColorScheme.tertiary else wearColorScheme.onSurface
                 )
             },
             colors = WearToggleChip.entityToggleChipBackgroundColors(entity, isChecked)
@@ -109,7 +108,7 @@ fun EntityUi(
             icon = {
                 Image(
                     asset = iconBitmap,
-                    colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                    colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                 )
             },
             label = {

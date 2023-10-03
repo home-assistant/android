@@ -29,18 +29,18 @@ val md_theme_dark_onSurfaceVariant = Color(0xFFC1C7CE)
 val md_theme_dark_outline = Color(0xFF8B9198)
 val md_theme_dark_outlineVariant = Color(0xFF41474D)
 
-internal val wearColorPalette: ColorScheme = ColorScheme(
-    primary = Blue,
-    secondary = BlueDark,
-    tertiary = Yellow,
-    tertiaryDim = Orange,
-    tertiaryContainer = Color(0xffffdf9b),
-    error = Red,
-    onPrimary = Color.Black,
-    onSecondary = Color.Black,
-    onError = Color.Black,
-    background = Color.Black
-)
+// internal val wearColorPalette: ColorScheme = ColorScheme(
+//    primary = Blue,
+//    secondary = BlueDark,
+//    tertiary = Yellow,
+//    tertiaryDim = Orange,
+//    tertiaryContainer = Color(0xffffdf9b),
+//    error = Red,
+//    onPrimary = Color.Black,
+//    onSecondary = Color.Black,
+//    onError = Color.Black,
+//    background = Color.Black
+// )
 
 internal val wearColorScheme: ColorScheme = ColorScheme(
     primary = md_theme_dark_primary,
@@ -60,7 +60,7 @@ internal val wearColorScheme: ColorScheme = ColorScheme(
     background = Color.Black,
     onBackground = md_theme_dark_onBackground,
     surface = Color.Black,
-    onSurface = md_theme_dark_onSurface,
+    //  onSurface = md_theme_dark_onSurface,
     onSurfaceVariant = md_theme_dark_onSurfaceVariant,
     outline = md_theme_dark_outline,
     outlineVariant = md_theme_dark_outlineVariant

@@ -12,14 +12,13 @@ import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.ToggleChipDefaults
 import androidx.wear.compose.material3.Icon
-import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 import com.mikepenz.iconics.compose.Image
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
-import io.homeassistant.companion.android.theme.wearColorPalette
+import io.homeassistant.companion.android.theme.wearColorScheme
 import io.homeassistant.companion.android.views.ExpandableListHeader
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
@@ -86,7 +85,7 @@ private fun FavoriteToggleChip(
         appIcon = {
             Image(
                 asset = iconBitmap,
-                colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
             )
         },
         label = {
@@ -105,7 +104,7 @@ private fun FavoriteToggleChip(
                 } else {
                     stringResource(commonR.string.disabled)
                 },
-                tint = if (checked) MaterialTheme.colorScheme.tertiary else wearColorPalette.onSurface
+                tint = if (checked) wearColorScheme.tertiary else wearColorScheme.onSurface
             )
         }
     )

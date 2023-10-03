@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Chip
@@ -113,7 +114,8 @@ fun MainConfigView(
                     colors = ChipDefaults.secondaryChipColors(),
                     label = {
                         Text(
-                            text = stringResource(id = R.string.choose_entity)
+                            text = stringResource(id = R.string.choose_entity),
+                            fontWeight = FontWeight.Bold
                         )
                     },
                     secondaryLabel = {
@@ -134,7 +136,12 @@ fun MainConfigView(
                 ToggleChip(
                     checked = isChecked,
                     onCheckedChange = onShowTitleClicked,
-                    label = { Text(stringResource(R.string.show_entity_title)) },
+                    label = {
+                        Text(
+                            stringResource(R.string.show_entity_title),
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
                     toggleControl = {
                         Icon(
                             imageVector = ToggleChipDefaults.switchIcon(isChecked),
@@ -142,7 +149,8 @@ fun MainConfigView(
                                 stringResource(R.string.enabled)
                             } else {
                                 stringResource(R.string.disabled)
-                            }
+                            },
+                            tint = if (isChecked) wearColorScheme.tertiary else wearColorScheme.onSurface
                         )
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -154,7 +162,12 @@ fun MainConfigView(
                 ToggleChip(
                     checked = isChecked,
                     onCheckedChange = onShowUnitClicked,
-                    label = { Text(stringResource(R.string.show_unit_title)) },
+                    label = {
+                        Text(
+                            stringResource(R.string.show_unit_title),
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
                     toggleControl = {
                         Icon(
                             imageVector = ToggleChipDefaults.switchIcon(isChecked),
@@ -162,7 +175,8 @@ fun MainConfigView(
                                 stringResource(R.string.enabled)
                             } else {
                                 stringResource(R.string.disabled)
-                            }
+                            },
+                            tint = if (isChecked) wearColorScheme.tertiary else wearColorScheme.onSurface
                         )
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -175,7 +189,7 @@ fun MainConfigView(
                     modifier = Modifier.padding(top = 8.dp),
                     onClick = { onAcceptClicked() },
                     enabled = loaded && entity != null,
-                    icon = { Icon(Icons.Filled.Check, "") }
+                    icon = { Icon(Icons.Filled.Check, stringResource(id = R.string.save)) }
                 ) { }
             }
         } else {

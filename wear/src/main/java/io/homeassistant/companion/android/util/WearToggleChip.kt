@@ -15,7 +15,6 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.wear.compose.material.ToggleChipColors
 import androidx.wear.compose.material.ToggleChipDefaults
 import androidx.wear.compose.material3.ContentAlpha
-import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.contentColorFor
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityPosition
@@ -24,6 +23,7 @@ import io.homeassistant.companion.android.common.data.integration.getCoverPositi
 import io.homeassistant.companion.android.common.data.integration.getFanSpeed
 import io.homeassistant.companion.android.common.data.integration.getLightBrightness
 import io.homeassistant.companion.android.common.data.integration.getLightColor
+import io.homeassistant.companion.android.theme.wearColorScheme
 
 object WearToggleChip {
     /**
@@ -53,18 +53,18 @@ object WearToggleChip {
 
         val contentBackgroundColor = if (hasColor) {
             val entityColor = entity.getLightColor()
-            if (entityColor != null) Color(entityColor) else MaterialTheme.colorScheme.primary
+            if (entityColor != null) Color(entityColor) else wearColorScheme.primary
         } else {
-            MaterialTheme.colorScheme.primary
+            wearColorScheme.primary
         }
 
         return when {
             (hasPosition || hasColor) -> {
                 val checkedStartBackgroundColor = contentBackgroundColor.copy(alpha = 0.5f)
-                    .compositeOver(MaterialTheme.colorScheme.outlineVariant)
-                val checkedEndBackgroundColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0f)
-                    .compositeOver(MaterialTheme.colorScheme.outlineVariant)
-                val uncheckedBackgroundColor = MaterialTheme.colorScheme.outlineVariant
+                    .compositeOver(wearColorScheme.outlineVariant)
+                val checkedEndBackgroundColor = wearColorScheme.outlineVariant.copy(alpha = 0f)
+                    .compositeOver(wearColorScheme.outlineVariant)
+                val uncheckedBackgroundColor = wearColorScheme.outlineVariant
 
                 var checkedBackgroundColors = listOf(
                     checkedStartBackgroundColor,
@@ -175,15 +175,15 @@ object WearToggleChip {
     @Composable
     private fun defaultChipColors(
         checkedStartBackgroundColor: Color =
-            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0f)
-                .compositeOver(MaterialTheme.colorScheme.tertiary),
+            wearColorScheme.primary.copy(alpha = 0f)
+                .compositeOver(wearColorScheme.tertiary),
         checkedEndBackgroundColor: Color =
-            MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                .compositeOver(MaterialTheme.colorScheme.tertiary),
-        checkedContentColor: Color = MaterialTheme.colorScheme.onTertiary,
-        checkedSecondaryContentColor: Color = MaterialTheme.colorScheme.tertiary,
-        checkedToggleControlColor: Color = MaterialTheme.colorScheme.tertiary,
-        uncheckedStartBackgroundColor: Color = MaterialTheme.colorScheme.outlineVariant,
+            wearColorScheme.primary.copy(alpha = 0.5f)
+                .compositeOver(wearColorScheme.tertiary),
+        checkedContentColor: Color = wearColorScheme.onTertiary,
+        checkedSecondaryContentColor: Color = wearColorScheme.tertiary,
+        checkedToggleControlColor: Color = wearColorScheme.tertiary,
+        uncheckedStartBackgroundColor: Color = wearColorScheme.outlineVariant,
         uncheckedEndBackgroundColor: Color = uncheckedStartBackgroundColor,
         uncheckedContentColor: Color = contentColorFor(checkedEndBackgroundColor),
         uncheckedSecondaryContentColor: Color = uncheckedContentColor,

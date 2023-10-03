@@ -79,7 +79,7 @@ fun SetShortcutsTileView(
                         onClick = { onShortcutEntitySelectionChange(shortcutEntities.size) },
                         colors = ButtonDefaults.buttonColors(),
                         icon = {
-                            Icon(Icons.Filled.Add, "")
+                            Icon(Icons.Filled.Add, stringResource(id = commonR.string.add_shortcut))
                         }
                     ) { }
                 }

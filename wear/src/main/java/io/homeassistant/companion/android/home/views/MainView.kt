@@ -36,7 +36,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
-import io.homeassistant.companion.android.theme.wearColorPalette
+import io.homeassistant.companion.android.theme.wearColorScheme
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.onEntityClickedFeedback
 import io.homeassistant.companion.android.views.ExpandableListHeader
@@ -83,7 +83,7 @@ fun MainView(
                                 icon = {
                                     Image(
                                         asset = getIcon(cached?.icon, favoriteEntityID.split(".")[0], context),
-                                        colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                                        colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                                     )
                                 },
                                 label = {
@@ -233,7 +233,7 @@ fun MainView(
                                                     ) == null
                                                 }
                                             },
-                                            colors = ChipDefaults.primaryChipColors(backgroundColor = wearColorPalette.primary)
+                                            colors = ChipDefaults.primaryChipColors(backgroundColor = wearColorScheme.primary)
                                         )
                                     }
                                 }
@@ -283,7 +283,7 @@ fun MainView(
                                                 domainEntitiesFilter
                                             )
                                         },
-                                        colors = ChipDefaults.primaryChipColors(backgroundColor = wearColorPalette.primary)
+                                        colors = ChipDefaults.primaryChipColors(backgroundColor = wearColorScheme.primary)
                                     )
                                 }
                             }

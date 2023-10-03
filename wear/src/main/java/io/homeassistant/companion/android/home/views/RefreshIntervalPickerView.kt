@@ -24,7 +24,7 @@ import androidx.wear.tooling.preview.devices.WearDevices
 import com.google.android.horologist.annotations.ExperimentalHorologistApi
 import com.google.android.horologist.composables.picker.toRotaryScrollAdapter
 import com.google.android.horologist.compose.rotaryinput.rotaryWithSnap
-import io.homeassistant.companion.android.theme.wearColorPalette
+import io.homeassistant.companion.android.theme.wearColorScheme
 import io.homeassistant.companion.android.util.intervalToString
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.common.R as R
@@ -59,7 +59,7 @@ fun RefreshIntervalPickerView(
             Text(
                 intervalToString(LocalContext.current, options[it]),
                 fontSize = 24.sp,
-                color = if (it != this.selectedOption) wearColorPalette.onBackground else wearColorPalette.primary
+                color = if (it != this.selectedOption) wearColorScheme.onBackground else wearColorScheme.primary
             )
         }
         Button(
@@ -67,7 +67,7 @@ fun RefreshIntervalPickerView(
             colors = ButtonDefaults.buttonColors(),
             modifier = Modifier,
             icon = {
-                Icon(Icons.Filled.Check, "")
+                Icon(Icons.Filled.Check, stringResource(id = R.string.save))
             }
         ) { }
     }

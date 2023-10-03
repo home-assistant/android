@@ -15,7 +15,6 @@ import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.ToggleChipDefaults
 import androidx.wear.compose.material3.Icon
-import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
@@ -24,7 +23,7 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
-import io.homeassistant.companion.android.theme.wearColorPalette
+import io.homeassistant.companion.android.theme.wearColorScheme
 import io.homeassistant.companion.android.util.previewFavoritesList
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
@@ -43,7 +42,7 @@ fun SecondarySettingsChip(
         icon = {
             Image(
                 asset = icon,
-                colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
             )
         },
         colors = ChipDefaults.secondaryChipColors(),
@@ -123,13 +122,13 @@ fun SettingsView(
                             } else {
                                 stringResource(commonR.string.disabled)
                             },
-                            tint = if (isFavoritesOnly) MaterialTheme.colorScheme.tertiary else wearColorPalette.onSurface
+                            tint = if (isFavoritesOnly) wearColorScheme.tertiary else wearColorScheme.onSurface
                         )
                     },
                     appIcon = {
                         Image(
                             asset = CommunityMaterial.Icon2.cmd_home_heart,
-                            colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     }
                 )
@@ -162,7 +161,7 @@ fun SettingsView(
                             } else {
                                 CommunityMaterial.Icon3.cmd_watch_vibrate_off
                             },
-                            colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     },
                     toggleControl = {
@@ -173,7 +172,7 @@ fun SettingsView(
                             } else {
                                 stringResource(commonR.string.disabled)
                             },
-                            tint = if (isHapticEnabled) MaterialTheme.colorScheme.tertiary else wearColorPalette.onSurface
+                            tint = if (isHapticEnabled) wearColorScheme.tertiary else wearColorScheme.onSurface
                         )
                     }
                 )
@@ -197,7 +196,7 @@ fun SettingsView(
                             } else {
                                 CommunityMaterial.Icon3.cmd_message_off
                             },
-                            colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     },
                     toggleControl = {
@@ -208,7 +207,7 @@ fun SettingsView(
                             } else {
                                 stringResource(commonR.string.disabled)
                             },
-                            tint = if (isToastEnabled) MaterialTheme.colorScheme.tertiary else wearColorPalette.onSurface
+                            tint = if (isToastEnabled) wearColorScheme.tertiary else wearColorScheme.onSurface
                         )
                     }
                 )
@@ -271,7 +270,7 @@ fun SettingsView(
                     appIcon = {
                         Image(
                             asset = CommunityMaterial.Icon.cmd_comment_processing_outline,
-                            colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     },
                     toggleControl = {
@@ -282,7 +281,7 @@ fun SettingsView(
                             } else {
                                 stringResource(commonR.string.disabled)
                             },
-                            tint = if (isAssistantAppAllowed) MaterialTheme.colorScheme.tertiary else wearColorPalette.onSurface
+                            tint = if (isAssistantAppAllowed) wearColorScheme.tertiary else wearColorScheme.onSurface
                         )
                     }
                 )
