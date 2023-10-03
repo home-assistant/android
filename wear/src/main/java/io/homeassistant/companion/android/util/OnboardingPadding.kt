@@ -14,7 +14,10 @@ fun adjustInset(
 ) {
     if (context.resources.configuration.isScreenRound) {
         val inset = (FACTOR * Resources.getSystem().displayMetrics.widthPixels).toInt()
-        val binding = integrationBinding ?: manualSetupBinding
-        binding?.root?.setPadding(inset, inset, inset, inset)
+        if (integrationBinding != null) {
+            integrationBinding.linearLayout.setPadding(inset, inset, inset, inset)
+        } else {
+            manualSetupBinding?.linearLayout?.setPadding(inset, inset, inset, inset)
+        }
     }
 }

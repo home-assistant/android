@@ -53,6 +53,7 @@ class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationVi
         super.onResume()
 
         binding.loadingView.visibility = View.GONE
+        binding.constraintLayout.visibility = View.VISIBLE
     }
 
     override fun deviceRegistered() {
@@ -64,6 +65,7 @@ class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationVi
 
     override fun showLoading() {
         binding.loadingView.visibility = View.VISIBLE
+        binding.constraintLayout.visibility = View.GONE
     }
 
     override fun showError() {
@@ -77,6 +79,7 @@ class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationVi
         }
         startActivity(intent)
         binding.loadingView.visibility = View.GONE
+        binding.constraintLayout.visibility = View.VISIBLE
     }
 
     override fun onDestroy() {
