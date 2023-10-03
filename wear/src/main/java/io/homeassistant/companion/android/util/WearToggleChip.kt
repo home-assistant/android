@@ -175,7 +175,7 @@ object WearToggleChip {
     @Composable
     private fun defaultChipColors(
         checkedStartBackgroundColor: Color =
-            wearColorScheme.primary.copy(alpha = 0f)
+            wearColorScheme.outlineVariant.copy(alpha = 0f)
                 .compositeOver(wearColorScheme.tertiary),
         checkedEndBackgroundColor: Color =
             wearColorScheme.primary.copy(alpha = 0.5f)
