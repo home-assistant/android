@@ -3,12 +3,6 @@ package io.homeassistant.companion.android.theme
 import androidx.compose.ui.graphics.Color
 import androidx.wear.compose.material3.ColorScheme
 
-val Blue = Color(0xFF03A9F4)
-val BlueDark = Color(0xFF0288D1)
-val Yellow = Color(0xFFF6C344)
-val Orange = Color(0xFFFF9800)
-val Red = Color(0xFFD32F2F)
-
 val md_theme_dark_primary = Color(0xFF03A9F4)
 val md_theme_dark_onPrimary = Color(0xFF00344F)
 val md_theme_dark_primaryContainer = Color(0xFF004B70)
@@ -24,23 +18,9 @@ val md_theme_dark_onTertiaryContainer = Color(0xFFFFDF9B)
 val md_theme_dark_error = Color(0xFFFFB4AB)
 val md_theme_dark_onError = Color(0xFF690005)
 val md_theme_dark_onBackground = Color(0xFFA6EEFF)
-val md_theme_dark_onSurface = Color(0xFFA6EEFF)
 val md_theme_dark_onSurfaceVariant = Color(0xFFC1C7CE)
 val md_theme_dark_outline = Color(0xFF8B9198)
 val md_theme_dark_outlineVariant = Color(0xFF41474D)
-
-// internal val wearColorPalette: ColorScheme = ColorScheme(
-//    primary = Blue,
-//    secondary = BlueDark,
-//    tertiary = Yellow,
-//    tertiaryDim = Orange,
-//    tertiaryContainer = Color(0xffffdf9b),
-//    error = Red,
-//    onPrimary = Color.Black,
-//    onSecondary = Color.Black,
-//    onError = Color.Black,
-//    background = Color.Black
-// )
 
 internal val wearColorScheme: ColorScheme = ColorScheme(
     primary = md_theme_dark_primary,
@@ -60,7 +40,6 @@ internal val wearColorScheme: ColorScheme = ColorScheme(
     background = Color.Black,
     onBackground = md_theme_dark_onBackground,
     surface = Color.Black,
-    //  onSurface = md_theme_dark_onSurface,
     onSurfaceVariant = md_theme_dark_onSurfaceVariant,
     outline = md_theme_dark_outline,
     outlineVariant = md_theme_dark_outlineVariant
