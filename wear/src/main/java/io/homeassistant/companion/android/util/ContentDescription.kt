@@ -5,7 +5,7 @@ import androidx.compose.ui.res.stringResource
 import io.homeassistant.companion.android.common.R
 
 @Composable
-fun getDescription(isChecked: Boolean): String {
+fun getSwitchDescription(isChecked: Boolean): String {
     return if (isChecked) {
         stringResource(R.string.enabled)
     } else {

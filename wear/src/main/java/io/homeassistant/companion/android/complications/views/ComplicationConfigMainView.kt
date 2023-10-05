@@ -9,17 +9,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.Icon
-import androidx.wear.compose.material3.Switch
 import androidx.wear.compose.material3.Text
 import androidx.wear.compose.material3.ToggleButton
-import androidx.wear.compose.material3.ToggleButtonDefaults
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
@@ -29,10 +25,11 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.complications.ComplicationConfigViewModel
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.theme.WearAppTheme
-import io.homeassistant.companion.android.theme.switchColors
+import io.homeassistant.companion.android.theme.getToggleButtonColors
 import io.homeassistant.companion.android.theme.wearColorScheme
-import io.homeassistant.companion.android.util.getDescription
 import io.homeassistant.companion.android.util.getIcon
+import io.homeassistant.companion.android.util.getSwitchDescription
+import io.homeassistant.companion.android.util.getToggleSwitch
 import io.homeassistant.companion.android.util.simplifiedEntity
 import io.homeassistant.companion.android.views.ChooseEntityView
 import io.homeassistant.companion.android.views.ListHeader
@@ -131,44 +128,28 @@ fun MainConfigView(
             }
             item {
                 val isChecked = !loaded || showTitle
-                val description = getDescription(isChecked)
+                val description = getSwitchDescription(isChecked)
                 ToggleButton(
                     checked = isChecked,
                     onCheckedChange = onShowTitleClicked,
                     label = { Text(stringResource(R.string.show_entity_title)) },
-                    selectionControl = {
-                        Switch(
-                            checked = isChecked,
-                            modifier = Modifier.semantics {
-                                this.contentDescription = description
-                            },
-                            colors = switchColors()
-                        )
-                    },
+                    selectionControl = { getToggleSwitch(isChecked, description) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = loaded && entity != null,
-                    colors = ToggleButtonDefaults.toggleButtonColors(checkedContainerColor = wearColorScheme.outlineVariant)
+                    colors = getToggleButtonColors()
                 )
             }
             item {
                 val isChecked = !loaded || showUnit
-                val description = getDescription(isChecked)
+                val description = getSwitchDescription(isChecked)
                 ToggleButton(
                     checked = isChecked,
                     onCheckedChange = onShowUnitClicked,
                     label = { Text(stringResource(R.string.show_unit_title)) },
-                    selectionControl = {
-                        Switch(
-                            checked = isChecked,
-                            modifier = Modifier.semantics {
-                                this.contentDescription = description
-                            },
-                            colors = switchColors()
-                        )
-                    },
+                    selectionControl = { getToggleSwitch(isChecked, description) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = loaded && entity != null,
-                    colors = ToggleButtonDefaults.toggleButtonColors(checkedContainerColor = wearColorScheme.outlineVariant)
+                    colors = getToggleButtonColors()
                 )
             }
 

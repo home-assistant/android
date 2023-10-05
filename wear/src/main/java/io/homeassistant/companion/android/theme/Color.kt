@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.wear.compose.material3.ColorScheme
 import androidx.wear.compose.material3.SwitchDefaults
+import androidx.wear.compose.material3.ToggleButtonDefaults
 
 val md_theme_dark_primary = Color(0xFF03A9F4)
 val md_theme_dark_onPrimary = Color(0xFF00344F)
@@ -48,9 +49,12 @@ internal val wearColorScheme: ColorScheme = ColorScheme(
 )
 
 @Composable
-fun switchColors() = SwitchDefaults.colors(
+fun getSwitchColors() = SwitchDefaults.colors(
     checkedThumbColor = wearColorScheme.tertiary,
     checkedTrackColor = wearColorScheme.onTertiary,
     checkedTrackBorderColor = wearColorScheme.tertiary,
     checkedThumbIconColor = wearColorScheme.tertiary
 )
+
+@Composable
+fun getToggleButtonColors() = ToggleButtonDefaults.toggleButtonColors(checkedContainerColor = wearColorScheme.outlineVariant)
