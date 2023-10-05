@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.CheckboxDefaults
 import androidx.wear.compose.material3.ColorScheme
+import androidx.wear.compose.material3.ContentAlpha
 import androidx.wear.compose.material3.SwitchDefaults
 import androidx.wear.compose.material3.ToggleButtonDefaults
 
@@ -65,7 +66,10 @@ fun getToggleButtonColors() = ToggleButtonDefaults.toggleButtonColors(
 )
 
 @Composable
-fun getFilledTonalButtonColors() = ButtonDefaults.filledTonalButtonColors(containerColor = wearColorScheme.surfaceDim)
+fun getFilledTonalButtonColors() = ButtonDefaults.filledTonalButtonColors(
+    containerColor = wearColorScheme.surfaceDim,
+    disabledContainerColor = wearColorScheme.surfaceDim.copy(alpha = ContentAlpha.disabled)
+)
 
 @Composable
 fun getPrimaryButtonColors() = ButtonDefaults.buttonColors(containerColor = wearColorScheme.primary)
