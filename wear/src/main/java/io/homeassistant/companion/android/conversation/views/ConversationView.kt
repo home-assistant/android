@@ -41,11 +41,12 @@ import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
-import androidx.wear.compose.material3.Button
-import androidx.wear.compose.material3.ButtonDefaults
+import androidx.wear.compose.material3.FilledIconButton
 import androidx.wear.compose.material3.Icon
+import androidx.wear.compose.material3.IconButtonDefaults
 import androidx.wear.compose.material3.LocalContentColor
 import androidx.wear.compose.material3.Text
+import androidx.wear.compose.material3.touchTargetAwareSize
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
@@ -57,6 +58,7 @@ import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
 import io.homeassistant.companion.android.conversation.ConversationViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
+import io.homeassistant.companion.android.theme.wearColorScheme
 import io.homeassistant.companion.android.util.KeepScreenOn
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
@@ -191,22 +193,23 @@ fun ConversationResultView(
                                 .clip(CircleShape)
                         )
                     }
-                    Button(
+                    FilledIconButton(
                         onClick = { onMicrophoneInput() },
                         colors =
                         if (inputIsActive) {
-                            ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = Color.Black)
+                            IconButtonDefaults.filledIconButtonColors(containerColor = Color.Transparent, contentColor = Color.Black)
                         } else {
-                            ButtonDefaults.buttonColors()
+                            IconButtonDefaults.filledIconButtonColors(containerColor = wearColorScheme.outlineVariant, contentColor = Color.White)
                         },
-                        icon = {
-                            Icon(
-                                Icons.Filled.Mic,
-                                contentDescription = stringResource(R.string.assist_start_listening),
-                                tint = LocalContentColor.current
-                            )
-                        }
-                    ) { }
+                        modifier = Modifier.touchTargetAwareSize(IconButtonDefaults.SmallButtonSize)
+                    ) {
+                        Icon(
+                            Icons.Filled.Mic,
+                            contentDescription = stringResource(R.string.assist_start_listening),
+                            modifier = Modifier.size(IconButtonDefaults.iconSizeFor(IconButtonDefaults.SmallButtonSize)),
+                            tint = LocalContentColor.current
+                        )
+                    }
                 }
             }
         }

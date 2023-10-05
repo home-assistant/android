@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.home.views
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.Composable
@@ -16,10 +17,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material.Picker
 import androidx.wear.compose.material.rememberPickerState
-import androidx.wear.compose.material3.Button
-import androidx.wear.compose.material3.ButtonDefaults
+import androidx.wear.compose.material3.FilledIconButton
 import androidx.wear.compose.material3.Icon
+import androidx.wear.compose.material3.IconButtonDefaults
 import androidx.wear.compose.material3.Text
+import androidx.wear.compose.material3.touchTargetAwareSize
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.google.android.horologist.annotations.ExperimentalHorologistApi
 import com.google.android.horologist.composables.picker.toRotaryScrollAdapter
@@ -62,14 +64,16 @@ fun RefreshIntervalPickerView(
                 color = if (it != this.selectedOption) wearColorScheme.onBackground else wearColorScheme.primary
             )
         }
-        Button(
+        FilledIconButton(
             onClick = { onSelectInterval(options[state.selectedOption]) },
-            colors = ButtonDefaults.buttonColors(),
-            modifier = Modifier,
-            icon = {
-                Icon(Icons.Filled.Check, stringResource(id = R.string.save))
-            }
-        ) { }
+            modifier = Modifier.touchTargetAwareSize(IconButtonDefaults.SmallButtonSize)
+        ) {
+            Icon(
+                Icons.Filled.Check,
+                contentDescription = stringResource(id = R.string.save),
+                modifier = Modifier.size(IconButtonDefaults.iconSizeFor(IconButtonDefaults.SmallButtonSize))
+            )
+        }
     }
 }
 
