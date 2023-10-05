@@ -96,6 +96,7 @@
     <string name="basic_sensor_name_mobile_data">Mobile data</string>
     <string name="basic_sensor_name_mobile_rx_gb">Mobile Rx GB</string>
     <string name="basic_sensor_name_mobile_tx_gb">Mobile Tx GB</string>
+    <string name="basic_sensor_name_nfc_state">NFC state</string>
     <string name="basic_sensor_name_phone">Phone state</string>
     <string name="basic_sensor_name_power_save">Power save</string>
     <string name="basic_sensor_name_public_ip">Public IP address</string>
@@ -611,6 +612,7 @@
     <string name="sensor_description_mobile_tx_gb">Total Tx GB on cellular data since last device reboot</string>
     <string name="sensor_description_music_active">Whether music is actively playing on the device</string>
     <string name="sensor_description_next_alarm">The date and time of the next scheduled alarm, any app or manufacturer can override the default behavior. The package attribute will tell you which app set the next scheduled alarm. The setting below will create an Allow List so you can specify what packages you want the alarm event from. This will ignore alarm events for packages not selected and the state will not update until the next scheduled alarm matches one of the selected packages.</string>
+    <string name="sensor_description_nfc_state">Whether NFC is enabled on the device</string>
     <string name="sensor_description_none">No description</string>
     <string name="sensor_description_phone_state">Whether the phone is ringing or in a call, no other caller information is stored</string>
     <string name="sensor_description_power_save">Whether the device is in Power Save mode</string>
@@ -1124,6 +1126,7 @@
     <string name="sensor_description_daily_calories">The total number of calories over a day (including both BMR and active calories), where the previous day ends and a new day begins at 12:00 AM local time.</string>
     <string name="sensor_name_daily_steps">Daily steps</string>
     <string name="sensor_description_daily_steps">The total step count over a day, where the previous day ends and a new day begins at 12:00 AM local time.</string>
+    <string name="sensor_name_nfc">NFC sensor</string>
     <string name="thread_debug">Sync Thread credentials</string>
     <string name="thread_debug_active">Syncing…</string>
     <string name="thread_debug_result_error">An unexpected error occurred while syncing</string>

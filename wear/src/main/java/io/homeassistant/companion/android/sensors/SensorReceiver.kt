@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.media.AudioManager
 import android.net.wifi.WifiManager
+import android.nfc.NfcAdapter
 import android.os.Build
 import android.os.PowerManager
 import androidx.core.app.TaskStackBuilder
@@ -27,6 +28,7 @@ import io.homeassistant.companion.android.common.sensors.LightSensorManager
 import io.homeassistant.companion.android.common.sensors.MobileDataManager
 import io.homeassistant.companion.android.common.sensors.NetworkSensorManager
 import io.homeassistant.companion.android.common.sensors.NextAlarmManager
+import io.homeassistant.companion.android.common.sensors.NfcSensorManager
 import io.homeassistant.companion.android.common.sensors.PhoneStateSensorManager
 import io.homeassistant.companion.android.common.sensors.PowerSensorManager
 import io.homeassistant.companion.android.common.sensors.PressureSensorManager
@@ -71,6 +73,7 @@ class SensorReceiver : SensorReceiverBase() {
             MobileDataManager(),
             NetworkSensorManager(),
             NextAlarmManager(),
+            NfcSensorManager(),
             OnBodySensorManager(),
             PhoneStateSensorManager(),
             PowerSensorManager(),
@@ -116,7 +119,8 @@ class SensorReceiver : SensorReceiverBase() {
         "com.google.android.clockwork.actions.WET_MODE_ENDED" to WetModeSensorManager.wetModeSensor.id,
         "android.bluetooth.device.action.ACL_CONNECTED" to BluetoothSensorManager.bluetoothConnection.id,
         "android.bluetooth.device.action.ACL_DISCONNECTED" to BluetoothSensorManager.bluetoothConnection.id,
-        BluetoothAdapter.ACTION_STATE_CHANGED to BluetoothSensorManager.bluetoothState.id
+        BluetoothAdapter.ACTION_STATE_CHANGED to BluetoothSensorManager.bluetoothState.id,
+        NfcAdapter.ACTION_ADAPTER_STATE_CHANGED to NfcSensorManager.nfcStateSensor.id
     )
 
     override fun getSensorSettingsIntent(

@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.media.AudioManager
 import android.net.wifi.WifiManager
+import android.nfc.NfcAdapter
 import android.os.Build
 import android.os.PowerManager
 import dagger.hilt.android.HiltAndroidApp
@@ -98,6 +99,12 @@ open class HomeAssistantApplication : Application() {
         registerReceiver(
             sensorReceiver,
             IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
+        )
+
+        // Listen for NFC state changes
+        registerReceiver(
+            sensorReceiver,
+            IntentFilter(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED)
         )
 
         // Update complications when the screen is on
