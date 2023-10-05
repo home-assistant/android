@@ -11,10 +11,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.material.Button
-import androidx.wear.compose.material.ButtonDefaults
-import androidx.wear.compose.material.MaterialTheme
-import androidx.wear.compose.material.Text
+import androidx.wear.compose.material3.Button
+import androidx.wear.compose.material3.ButtonDefaults
+import androidx.wear.compose.material3.MaterialTheme
+import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.views.ThemeLazyColumn
@@ -37,27 +37,39 @@ fun PhoneInstallView(
         item {
             Text(
                 text = stringResource(commonR.string.install_phone_to_continue),
-                style = MaterialTheme.typography.title3,
+                style = MaterialTheme.typography.titleMedium,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp)
             )
         }
         item {
             Button(
                 onClick = onInstall,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(stringResource(commonR.string.install))
-            }
+                modifier = Modifier.fillMaxWidth(),
+                label = {
+                    Text(
+                        stringResource(commonR.string.install),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            )
         }
         item {
             Button(
                 onClick = onRefresh,
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.secondaryButtonColors()
-            ) {
-                Text(stringResource(commonR.string.refresh))
-            }
+                colors = ButtonDefaults.filledTonalButtonColors(),
+                label = {
+                    Text(
+                        stringResource(commonR.string.refresh),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            )
         }
         item {
             Button(
@@ -65,10 +77,15 @@ fun PhoneInstallView(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 16.dp),
-                colors = ButtonDefaults.secondaryButtonColors()
-            ) {
-                Text(stringResource(commonR.string.advanced))
-            }
+                colors = ButtonDefaults.filledTonalButtonColors(),
+                label = {
+                    Text(
+                        stringResource(commonR.string.advanced),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            )
         }
     }
 }

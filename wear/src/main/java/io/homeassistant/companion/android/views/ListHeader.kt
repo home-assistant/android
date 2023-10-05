@@ -8,9 +8,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.wear.compose.material.ListHeader
-import androidx.wear.compose.material.LocalTextStyle
-import androidx.wear.compose.material.Text
+import androidx.wear.compose.material3.ListHeader
+import androidx.wear.compose.material3.LocalTextStyle
+import androidx.wear.compose.material3.Text
 import kotlin.math.floor
 import io.homeassistant.companion.android.common.R as commonR
 

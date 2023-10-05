@@ -104,6 +104,8 @@ dependencies {
     implementation(libs.compose.compiler)
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.foundation)
+    implementation(libs.compose.material.icons.core)
+    implementation(libs.compose.material.icons.extended)
     implementation(libs.compose.uiTooling)
     implementation(libs.wear.compose.foundation)
     implementation(libs.wear.compose.material)

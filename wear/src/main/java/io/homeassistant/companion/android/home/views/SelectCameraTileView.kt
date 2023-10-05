@@ -4,12 +4,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.foundation.lazy.itemsIndexed
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
-import androidx.wear.compose.material.Text
+import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
 import io.homeassistant.companion.android.database.wear.CameraTile
 import io.homeassistant.companion.android.theme.WearAppTheme
@@ -39,7 +40,10 @@ fun SelectCameraTileView(
                     Chip(
                         modifier = Modifier.fillMaxWidth(),
                         label = {
-                            Text(stringResource(commonR.string.camera_tile_n, index + 1))
+                            Text(
+                                stringResource(commonR.string.camera_tile_n, index + 1),
+                                fontWeight = FontWeight.Bold
+                            )
                         },
                         secondaryLabel = if (tile.entityId != null) {
                             { Text(tile.entityId!!) }

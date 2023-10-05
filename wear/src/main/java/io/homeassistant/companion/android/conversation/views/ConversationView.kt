@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,12 +39,13 @@ import androidx.compose.ui.unit.sp
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
-import androidx.wear.compose.material.Button
-import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
-import androidx.wear.compose.material.LocalContentColor
-import androidx.wear.compose.material.Text
+import androidx.wear.compose.material3.Button
+import androidx.wear.compose.material3.ButtonDefaults
+import androidx.wear.compose.material3.Icon
+import androidx.wear.compose.material3.LocalContentColor
+import androidx.wear.compose.material3.Text
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
@@ -170,14 +173,15 @@ fun ConversationResultView(
                     val inputIsActive = inputMode == AssistViewModelBase.AssistInputMode.VOICE_ACTIVE
                     if (inputIsActive) {
                         KeepScreenOn()
-                        val transition = rememberInfiniteTransition()
+                        val transition = rememberInfiniteTransition(label = "conversationTransition")
                         val scale by transition.animateFloat(
                             initialValue = 1f,
                             targetValue = 1.2f,
                             animationSpec = infiniteRepeatable(
                                 animation = tween(600, easing = LinearEasing),
                                 repeatMode = RepeatMode.Reverse
-                            )
+                            ),
+                            label = "conversationAnimationFloat"
                         )
                         Box(
                             modifier = Modifier
@@ -191,17 +195,18 @@ fun ConversationResultView(
                         onClick = { onMicrophoneInput() },
                         colors =
                         if (inputIsActive) {
-                            ButtonDefaults.secondaryButtonColors(backgroundColor = Color.Transparent, contentColor = Color.Black)
+                            ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = Color.Black)
                         } else {
-                            ButtonDefaults.secondaryButtonColors()
+                            ButtonDefaults.buttonColors()
+                        },
+                        icon = {
+                            Icon(
+                                Icons.Filled.Mic,
+                                contentDescription = stringResource(R.string.assist_start_listening),
+                                tint = LocalContentColor.current
+                            )
                         }
-                    ) {
-                        Image(
-                            asset = CommunityMaterial.Icon3.cmd_microphone,
-                            contentDescription = stringResource(R.string.assist_start_listening),
-                            colorFilter = ColorFilter.tint(LocalContentColor.current)
-                        )
-                    }
+                    ) { }
                 }
             }
         }

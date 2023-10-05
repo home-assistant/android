@@ -2,32 +2,33 @@ package io.homeassistant.companion.android.complications.views
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.material.Button
-import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
-import androidx.wear.compose.material.Icon
-import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.ToggleChipDefaults
+import androidx.wear.compose.material3.Button
+import androidx.wear.compose.material3.Icon
+import androidx.wear.compose.material3.Text
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.complications.ComplicationConfigViewModel
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.theme.WearAppTheme
-import io.homeassistant.companion.android.theme.wearColorPalette
+import io.homeassistant.companion.android.theme.wearColorScheme
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.simplifiedEntity
 import io.homeassistant.companion.android.views.ChooseEntityView
@@ -107,13 +108,14 @@ fun MainConfigView(
                     icon = {
                         Image(
                             asset = iconBitmap,
-                            colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     },
                     colors = ChipDefaults.secondaryChipColors(),
                     label = {
                         Text(
-                            text = stringResource(id = R.string.choose_entity)
+                            text = stringResource(id = R.string.choose_entity),
+                            fontWeight = FontWeight.Bold
                         )
                     },
                     secondaryLabel = {
@@ -134,7 +136,12 @@ fun MainConfigView(
                 ToggleChip(
                     checked = isChecked,
                     onCheckedChange = onShowTitleClicked,
-                    label = { Text(stringResource(R.string.show_entity_title)) },
+                    label = {
+                        Text(
+                            stringResource(R.string.show_entity_title),
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
                     toggleControl = {
                         Icon(
                             imageVector = ToggleChipDefaults.switchIcon(isChecked),
@@ -142,7 +149,8 @@ fun MainConfigView(
                                 stringResource(R.string.enabled)
                             } else {
                                 stringResource(R.string.disabled)
-                            }
+                            },
+                            tint = if (isChecked) wearColorScheme.tertiary else wearColorScheme.onSurface
                         )
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -154,7 +162,12 @@ fun MainConfigView(
                 ToggleChip(
                     checked = isChecked,
                     onCheckedChange = onShowUnitClicked,
-                    label = { Text(stringResource(R.string.show_unit_title)) },
+                    label = {
+                        Text(
+                            stringResource(R.string.show_unit_title),
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
                     toggleControl = {
                         Icon(
                             imageVector = ToggleChipDefaults.switchIcon(isChecked),
@@ -162,7 +175,8 @@ fun MainConfigView(
                                 stringResource(R.string.enabled)
                             } else {
                                 stringResource(R.string.disabled)
-                            }
+                            },
+                            tint = if (isChecked) wearColorScheme.tertiary else wearColorScheme.onSurface
                         )
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -174,13 +188,9 @@ fun MainConfigView(
                 Button(
                     modifier = Modifier.padding(top = 8.dp),
                     onClick = { onAcceptClicked() },
-                    colors = ButtonDefaults.primaryButtonColors(),
-                    enabled = loaded && entity != null
-                ) {
-                    Image(
-                        CommunityMaterial.Icon.cmd_check
-                    )
-                }
+                    enabled = loaded && entity != null,
+                    icon = { Icon(Icons.Filled.Check, stringResource(id = R.string.save)) }
+                ) { }
             }
         } else {
             item {

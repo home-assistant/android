@@ -3,6 +3,8 @@ package io.homeassistant.companion.android.home.views
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
@@ -12,18 +14,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.wear.compose.material.Button
-import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Picker
-import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.rememberPickerState
+import androidx.wear.compose.material3.Button
+import androidx.wear.compose.material3.ButtonDefaults
+import androidx.wear.compose.material3.Icon
+import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.google.android.horologist.annotations.ExperimentalHorologistApi
 import com.google.android.horologist.composables.picker.toRotaryScrollAdapter
 import com.google.android.horologist.compose.rotaryinput.rotaryWithSnap
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import io.homeassistant.companion.android.theme.wearColorPalette
+import io.homeassistant.companion.android.theme.wearColorScheme
 import io.homeassistant.companion.android.util.intervalToString
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.common.R as R
@@ -58,18 +59,17 @@ fun RefreshIntervalPickerView(
             Text(
                 intervalToString(LocalContext.current, options[it]),
                 fontSize = 24.sp,
-                color = if (it != this.selectedOption) wearColorPalette.onBackground else wearColorPalette.primary
+                color = if (it != this.selectedOption) wearColorScheme.onBackground else wearColorScheme.primary
             )
         }
         Button(
             onClick = { onSelectInterval(options[state.selectedOption]) },
-            colors = ButtonDefaults.primaryButtonColors(),
-            modifier = Modifier
-        ) {
-            Image(
-                CommunityMaterial.Icon.cmd_check
-            )
-        }
+            colors = ButtonDefaults.buttonColors(),
+            modifier = Modifier,
+            icon = {
+                Icon(Icons.Filled.Check, stringResource(id = R.string.save))
+            }
+        ) { }
     }
 }
 

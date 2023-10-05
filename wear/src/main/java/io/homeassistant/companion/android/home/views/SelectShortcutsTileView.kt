@@ -6,19 +6,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.foundation.lazy.itemsIndexed
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
-import androidx.wear.compose.material.Icon
-import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.ToggleChipDefaults
+import androidx.wear.compose.material3.Icon
+import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.theme.WearAppTheme
-import io.homeassistant.companion.android.theme.wearColorPalette
+import io.homeassistant.companion.android.theme.wearColorScheme
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
 import io.homeassistant.companion.android.common.R as commonR
@@ -41,7 +42,10 @@ fun SelectShortcutsTileView(
                     checked = isShowShortcutTextEnabled,
                     onCheckedChange = { onShowShortcutTextEnabled(it) },
                     label = {
-                        Text(stringResource(commonR.string.shortcuts_tile_text_setting))
+                        Text(
+                            stringResource(commonR.string.shortcuts_tile_text_setting),
+                            fontWeight = FontWeight.Bold
+                        )
                     },
                     appIcon = {
                         Image(
@@ -51,7 +55,7 @@ fun SelectShortcutsTileView(
                             } else {
                                 CommunityMaterial.Icon.cmd_alphabetical_off
                             },
-                            colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     },
                     toggleControl = {
@@ -61,7 +65,8 @@ fun SelectShortcutsTileView(
                                 stringResource(commonR.string.show)
                             } else {
                                 stringResource(commonR.string.hide)
-                            }
+                            },
+                            tint = if (isShowShortcutTextEnabled) wearColorScheme.tertiary else wearColorScheme.onSurface
                         )
                     }
                 )
@@ -79,7 +84,10 @@ fun SelectShortcutsTileView(
                         modifier = Modifier
                             .fillMaxWidth(),
                         label = {
-                            Text(stringResource(commonR.string.shortcuts_tile_n, index + 1))
+                            Text(
+                                stringResource(commonR.string.shortcuts_tile_n, index + 1),
+                                fontWeight = FontWeight.Bold
+                            )
                         },
                         secondaryLabel = {
                             val entityCount = shortcutTileEntitiesCountById[shortcutsTileId] ?: 0

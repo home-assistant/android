@@ -8,13 +8,14 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
-import androidx.wear.compose.material.Icon
-import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.ToggleChipDefaults
+import androidx.wear.compose.material3.Icon
+import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.IIcon
@@ -22,7 +23,7 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
-import io.homeassistant.companion.android.theme.wearColorPalette
+import io.homeassistant.companion.android.theme.wearColorScheme
 import io.homeassistant.companion.android.util.previewFavoritesList
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
@@ -41,11 +42,16 @@ fun SecondarySettingsChip(
         icon = {
             Image(
                 asset = icon,
-                colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
             )
         },
         colors = ChipDefaults.secondaryChipColors(),
-        label = { Text(text = label) },
+        label = {
+            Text(
+                text = label,
+                fontWeight = FontWeight.Bold
+            )
+        },
         secondaryLabel = secondaryLabel?.let {
             { Text(text = secondaryLabel) }
         },
@@ -101,7 +107,12 @@ fun SettingsView(
                     modifier = Modifier.fillMaxWidth(),
                     checked = isFavoritesOnly,
                     onCheckedChange = { setFavoritesOnly(it) },
-                    label = { Text(stringResource(commonR.string.only_favorites)) },
+                    label = {
+                        Text(
+                            stringResource(commonR.string.only_favorites),
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
                     enabled = favorites.isNotEmpty(),
                     toggleControl = {
                         Icon(
@@ -110,13 +121,14 @@ fun SettingsView(
                                 stringResource(commonR.string.enabled)
                             } else {
                                 stringResource(commonR.string.disabled)
-                            }
+                            },
+                            tint = if (isFavoritesOnly) wearColorScheme.tertiary else wearColorScheme.onSurface
                         )
                     },
                     appIcon = {
                         Image(
                             asset = CommunityMaterial.Icon2.cmd_home_heart,
-                            colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     }
                 )
@@ -136,7 +148,10 @@ fun SettingsView(
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     },
                     label = {
-                        Text(stringResource(commonR.string.setting_haptic_label))
+                        Text(
+                            stringResource(commonR.string.setting_haptic_label),
+                            fontWeight = FontWeight.Bold
+                        )
                     },
                     appIcon = {
                         Image(
@@ -146,17 +161,18 @@ fun SettingsView(
                             } else {
                                 CommunityMaterial.Icon3.cmd_watch_vibrate_off
                             },
-                            colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     },
                     toggleControl = {
                         Icon(
-                            imageVector = ToggleChipDefaults.checkboxIcon(isHapticEnabled),
+                            imageVector = ToggleChipDefaults.switchIcon(isHapticEnabled),
                             contentDescription = if (isHapticEnabled) {
                                 stringResource(commonR.string.enabled)
                             } else {
                                 stringResource(commonR.string.disabled)
-                            }
+                            },
+                            tint = if (isHapticEnabled) wearColorScheme.tertiary else wearColorScheme.onSurface
                         )
                     }
                 )
@@ -167,7 +183,10 @@ fun SettingsView(
                     checked = isToastEnabled,
                     onCheckedChange = onToastEnabled,
                     label = {
-                        Text(stringResource(commonR.string.setting_toast_label))
+                        Text(
+                            stringResource(commonR.string.setting_toast_label),
+                            fontWeight = FontWeight.Bold
+                        )
                     },
                     appIcon = {
                         Image(
@@ -177,17 +196,18 @@ fun SettingsView(
                             } else {
                                 CommunityMaterial.Icon3.cmd_message_off
                             },
-                            colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     },
                     toggleControl = {
                         Icon(
-                            imageVector = ToggleChipDefaults.checkboxIcon(isToastEnabled),
-                            contentDescription = if (isHapticEnabled) {
+                            imageVector = ToggleChipDefaults.switchIcon(isToastEnabled),
+                            contentDescription = if (isToastEnabled) {
                                 stringResource(commonR.string.enabled)
                             } else {
                                 stringResource(commonR.string.disabled)
-                            }
+                            },
+                            tint = if (isToastEnabled) wearColorScheme.tertiary else wearColorScheme.onSurface
                         )
                     }
                 )
@@ -242,22 +262,26 @@ fun SettingsView(
                     checked = isAssistantAppAllowed,
                     onCheckedChange = onAssistantAppAllowed,
                     label = {
-                        Text(stringResource(commonR.string.available_as_assistant_app))
+                        Text(
+                            stringResource(commonR.string.available_as_assistant_app),
+                            fontWeight = FontWeight.Bold
+                        )
                     },
                     appIcon = {
                         Image(
                             asset = CommunityMaterial.Icon.cmd_comment_processing_outline,
-                            colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     },
                     toggleControl = {
                         Icon(
                             imageVector = ToggleChipDefaults.switchIcon(isAssistantAppAllowed),
-                            contentDescription = if (isFavoritesOnly) {
+                            contentDescription = if (isAssistantAppAllowed) {
                                 stringResource(commonR.string.enabled)
                             } else {
                                 stringResource(commonR.string.disabled)
-                            }
+                            },
+                            tint = if (isAssistantAppAllowed) wearColorScheme.tertiary else wearColorScheme.onSurface
                         )
                     }
                 )
@@ -275,7 +299,9 @@ fun SettingsView(
                     },
                     label = {
                         Text(
-                            text = stringResource(id = commonR.string.logout)
+                            text = stringResource(id = commonR.string.logout),
+                            color = Color.Black,
+                            fontWeight = FontWeight.Bold
                         )
                     },
                     onClick = onClickLogout,
