@@ -10,6 +10,7 @@ import androidx.wear.activity.ConfirmationActivity
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.databinding.ActivityIntegrationBinding
 import io.homeassistant.companion.android.home.HomeActivity
+import io.homeassistant.companion.android.util.adjustInset
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -39,17 +40,20 @@ class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationVi
         binding = ActivityIntegrationBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.serverUrl.setText(Build.MODEL)
+        binding.deviceName.setText(Build.MODEL)
 
         binding.finish.setOnClickListener {
-            presenter.onRegistrationAttempt(serverId, binding.serverUrl.text.toString())
+            presenter.onRegistrationAttempt(serverId, binding.deviceName.text.toString())
         }
+
+        adjustInset(applicationContext, binding, null)
     }
 
     override fun onResume() {
         super.onResume()
 
         binding.loadingView.visibility = View.GONE
+        binding.constraintLayout.visibility = View.VISIBLE
     }
 
     override fun deviceRegistered() {
@@ -61,6 +65,7 @@ class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationVi
 
     override fun showLoading() {
         binding.loadingView.visibility = View.VISIBLE
+        binding.constraintLayout.visibility = View.GONE
     }
 
     override fun showError() {
@@ -74,6 +79,7 @@ class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationVi
         }
         startActivity(intent)
         binding.loadingView.visibility = View.GONE
+        binding.constraintLayout.visibility = View.VISIBLE
     }
 
     override fun onDestroy() {

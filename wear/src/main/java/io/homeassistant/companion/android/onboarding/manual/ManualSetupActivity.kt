@@ -12,6 +12,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.databinding.ActivityManualSetupBinding
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationActivity
+import io.homeassistant.companion.android.util.adjustInset
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -36,8 +37,10 @@ class ManualSetupActivity : AppCompatActivity(), ManualSetupView {
         setContentView(binding.root)
 
         binding.buttonNext.setOnClickListener {
-            presenter.onNextClicked(this, findViewById<EditText>(R.id.server_url).text.toString())
+            presenter.onNextClicked(this, findViewById<EditText>(R.id.device_name).text.toString())
         }
+
+        adjustInset(applicationContext, null, binding)
     }
 
     override fun startIntegration(serverId: Int) {
@@ -46,6 +49,7 @@ class ManualSetupActivity : AppCompatActivity(), ManualSetupView {
 
     override fun showLoading() {
         binding.loadingView.visibility = View.VISIBLE
+        binding.constraintLayout.visibility = View.GONE
     }
 
     override fun showContinueOnPhone() {
@@ -59,6 +63,7 @@ class ManualSetupActivity : AppCompatActivity(), ManualSetupView {
         }
         startActivity(confirmation)
         binding.loadingView.visibility = View.GONE
+        binding.constraintLayout.visibility = View.VISIBLE
     }
 
     override fun showError(@StringRes message: Int) {
@@ -72,12 +77,14 @@ class ManualSetupActivity : AppCompatActivity(), ManualSetupView {
         }
         startActivity(intent)
         binding.loadingView.visibility = View.GONE
+        binding.constraintLayout.visibility = View.VISIBLE
     }
 
     override fun onResume() {
         super.onResume()
 
         binding.loadingView.visibility = View.GONE
+        binding.constraintLayout.visibility = View.VISIBLE
     }
 
     override fun onDestroy() {
