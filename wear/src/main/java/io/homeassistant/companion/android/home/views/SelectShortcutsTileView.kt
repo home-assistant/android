@@ -9,13 +9,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.foundation.lazy.itemsIndexed
 import androidx.wear.compose.material3.Button
-import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.Text
 import androidx.wear.compose.material3.ToggleButton
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.theme.WearAppTheme
+import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
 import io.homeassistant.companion.android.theme.getToggleButtonColors
 import io.homeassistant.companion.android.theme.wearColorScheme
 import io.homeassistant.companion.android.util.ToggleCheckbox
@@ -76,7 +76,7 @@ fun SelectShortcutsTileView(
                             }
                         },
                         onClick = { onSelectShortcutsTile(shortcutsTileId) },
-                        colors = ButtonDefaults.filledTonalButtonColors(containerColor = wearColorScheme.outlineVariant)
+                        colors = getFilledTonalButtonColors()
                     )
                 }
             }

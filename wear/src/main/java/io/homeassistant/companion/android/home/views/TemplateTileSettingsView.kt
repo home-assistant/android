@@ -10,13 +10,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.material3.Button
-import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.theme.WearAppTheme
+import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
 import io.homeassistant.companion.android.theme.wearColorScheme
 import io.homeassistant.companion.android.util.intervalToString
 import io.homeassistant.companion.android.views.ListHeader
@@ -43,7 +43,7 @@ fun TemplateTileSettingsView(
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     },
-                    colors = ButtonDefaults.filledTonalButtonColors(containerColor = wearColorScheme.outlineVariant),
+                    colors = getFilledTonalButtonColors(),
                     label = { Text(stringResource(R.string.refresh_interval)) },
                     secondaryLabel = { Text(intervalToString(LocalContext.current, refreshInterval)) },
                     onClick = onClickRefreshInterval

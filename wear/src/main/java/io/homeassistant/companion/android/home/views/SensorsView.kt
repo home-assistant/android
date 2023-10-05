@@ -9,12 +9,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.material3.Button
-import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.theme.WearAppTheme
+import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
 import io.homeassistant.companion.android.common.R as commonR
@@ -35,7 +35,7 @@ fun SensorsView(
                     Button(
                         modifier = Modifier
                             .fillMaxWidth(),
-                        colors = ButtonDefaults.filledTonalButtonColors(),
+                        colors = getFilledTonalButtonColors(),
                         label = { Text(stringResource(manager.name)) },
                         onClick = { onClickSensorManager(manager) }
                     )

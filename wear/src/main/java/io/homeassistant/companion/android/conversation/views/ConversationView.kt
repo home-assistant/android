@@ -55,6 +55,7 @@ import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
 import io.homeassistant.companion.android.conversation.ConversationViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
+import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
 import io.homeassistant.companion.android.util.KeepScreenOn
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
@@ -273,7 +274,7 @@ fun ConversationPipelinesView(
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text(it.name) },
                     onClick = { onSelectPipeline(it.id) },
-                    colors = ButtonDefaults.filledTonalButtonColors()
+                    colors = getFilledTonalButtonColors()
                 )
             }
         }

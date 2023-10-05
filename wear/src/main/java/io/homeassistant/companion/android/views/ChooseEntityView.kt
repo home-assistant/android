@@ -28,7 +28,7 @@ import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.util.capitalize
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.theme.WearAppTheme
-import io.homeassistant.companion.android.theme.wearColorScheme
+import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
 import io.homeassistant.companion.android.util.stringForDomain
 import java.util.Locale
 import io.homeassistant.companion.android.common.R as commonR
@@ -147,6 +147,6 @@ private fun ChooseEntityChip(
                 )
             )
         },
-        colors = ButtonDefaults.filledTonalButtonColors(containerColor = wearColorScheme.outlineVariant)
+        colors = getFilledTonalButtonColors()
     )
 }

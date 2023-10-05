@@ -65,7 +65,7 @@ fun getToggleButtonColors() = ToggleButtonDefaults.toggleButtonColors(
 )
 
 @Composable
-fun getFilledTonalButtonColors() = ButtonDefaults.filledTonalButtonColors(containerColor = wearColorScheme.outlineVariant)
+fun getFilledTonalButtonColors() = ButtonDefaults.filledTonalButtonColors(containerColor = wearColorScheme.surfaceDim)
 
 @Composable
 fun getPrimaryButtonColors() = ButtonDefaults.buttonColors(containerColor = wearColorScheme.primary)
