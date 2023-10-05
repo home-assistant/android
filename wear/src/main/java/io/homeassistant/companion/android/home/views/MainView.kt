@@ -216,12 +216,7 @@ fun MainView(
                                     item {
                                         Button(
                                             modifier = Modifier.fillMaxWidth(),
-                                            label = {
-                                                Text(
-                                                    text = area.name,
-                                                    color = Color.Black
-                                                )
-                                            },
+                                            label = { Text(area.name) },
                                             onClick = {
                                                 onNavigationClicked(
                                                     mapOf(area.name to entities),
@@ -267,12 +262,7 @@ fun MainView(
                                                 context
                                             ).let { Image(asset = it) }
                                         },
-                                        label = {
-                                            Text(
-                                                text = mainViewModel.stringForDomain(domain)!!,
-                                                color = Color.Black
-                                            )
-                                        },
+                                        label = { Text(mainViewModel.stringForDomain(domain)!!) },
                                         onClick = {
                                             onNavigationClicked(
                                                 mapOf(
