@@ -1,7 +1,9 @@
 package io.homeassistant.companion.android.theme
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.wear.compose.material3.ColorScheme
+import androidx.wear.compose.material3.SwitchDefaults
 
 val md_theme_dark_primary = Color(0xFF03A9F4)
 val md_theme_dark_onPrimary = Color(0xFF00344F)
@@ -43,4 +45,12 @@ internal val wearColorScheme: ColorScheme = ColorScheme(
     onSurfaceVariant = md_theme_dark_onSurfaceVariant,
     outline = md_theme_dark_outline,
     outlineVariant = md_theme_dark_outlineVariant
+)
+
+@Composable
+fun switchColors() = SwitchDefaults.colors(
+    checkedThumbColor = wearColorScheme.tertiary,
+    checkedTrackColor = wearColorScheme.onTertiary,
+    checkedTrackBorderColor = wearColorScheme.tertiary,
+    checkedThumbIconColor = wearColorScheme.tertiary
 )

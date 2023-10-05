@@ -17,7 +17,6 @@ import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.Icon
 import androidx.wear.compose.material3.Switch
-import androidx.wear.compose.material3.SwitchDefaults
 import androidx.wear.compose.material3.Text
 import androidx.wear.compose.material3.ToggleButton
 import androidx.wear.compose.material3.ToggleButtonDefaults
@@ -30,7 +29,9 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.complications.ComplicationConfigViewModel
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.theme.WearAppTheme
+import io.homeassistant.companion.android.theme.switchColors
 import io.homeassistant.companion.android.theme.wearColorScheme
+import io.homeassistant.companion.android.util.getDescription
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.simplifiedEntity
 import io.homeassistant.companion.android.views.ChooseEntityView
@@ -141,12 +142,7 @@ fun MainConfigView(
                             modifier = Modifier.semantics {
                                 this.contentDescription = description
                             },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = wearColorScheme.tertiary,
-                                checkedTrackColor = wearColorScheme.onTertiary,
-                                checkedTrackBorderColor = wearColorScheme.tertiary,
-                                checkedThumbIconColor = wearColorScheme.tertiary
-                            )
+                            colors = switchColors()
                         )
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -167,12 +163,7 @@ fun MainConfigView(
                             modifier = Modifier.semantics {
                                 this.contentDescription = description
                             },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = wearColorScheme.tertiary,
-                                checkedTrackColor = wearColorScheme.onTertiary,
-                                checkedTrackBorderColor = wearColorScheme.tertiary,
-                                checkedThumbIconColor = wearColorScheme.tertiary
-                            )
+                            colors = switchColors()
                         )
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -194,15 +185,6 @@ fun MainConfigView(
                 Text(text = stringResource(R.string.error_connection_failed))
             }
         }
-    }
-}
-
-@Composable
-private fun getDescription(isChecked: Boolean): String {
-    return if (isChecked) {
-        stringResource(R.string.enabled)
-    } else {
-        stringResource(R.string.disabled)
     }
 }
 
