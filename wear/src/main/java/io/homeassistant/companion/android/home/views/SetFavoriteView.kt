@@ -5,20 +5,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.wear.compose.foundation.lazy.items
-import androidx.wear.compose.material.ToggleChip
-import androidx.wear.compose.material.ToggleChipDefaults
-import androidx.wear.compose.material3.Icon
 import androidx.wear.compose.material3.Text
+import androidx.wear.compose.material3.ToggleButton
 import com.mikepenz.iconics.compose.Image
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
+import io.homeassistant.companion.android.theme.getToggleButtonColors
 import io.homeassistant.companion.android.theme.wearColorScheme
+import io.homeassistant.companion.android.util.GetToggleSwitch
+import io.homeassistant.companion.android.util.getSwitchDescription
 import io.homeassistant.companion.android.views.ExpandableListHeader
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
@@ -75,14 +74,15 @@ private fun FavoriteToggleChip(
 
     val entityId = entity.entityId
     val checked = favoriteEntityIds.contains(entityId)
-    ToggleChip(
+    val description = getSwitchDescription(checked)
+    ToggleButton(
         checked = checked,
         onCheckedChange = {
             onFavoriteSelected(entityId, it)
         },
         modifier = Modifier
             .fillMaxWidth(),
-        appIcon = {
+        icon = {
             Image(
                 asset = iconBitmap,
                 colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
@@ -92,20 +92,10 @@ private fun FavoriteToggleChip(
             Text(
                 text = attributes["friendly_name"].toString(),
                 maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                fontWeight = FontWeight.Bold
+                overflow = TextOverflow.Ellipsis
             )
         },
-        toggleControl = {
-            Icon(
-                imageVector = ToggleChipDefaults.switchIcon(checked),
-                contentDescription = if (checked) {
-                    stringResource(commonR.string.enabled)
-                } else {
-                    stringResource(commonR.string.disabled)
-                },
-                tint = if (checked) wearColorScheme.tertiary else wearColorScheme.onSurface
-            )
-        }
+        selectionControl = { GetToggleSwitch(checked, description) },
+        colors = getToggleButtonColors()
     )
 }

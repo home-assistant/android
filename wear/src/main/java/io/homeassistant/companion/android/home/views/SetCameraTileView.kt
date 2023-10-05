@@ -6,8 +6,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.wear.compose.material.Chip
-import androidx.wear.compose.material.ChipDefaults
+import androidx.wear.compose.material3.Button
+import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.Text
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
@@ -41,7 +41,7 @@ fun SetCameraTileView(
                     entities?.firstOrNull { it.entityId == tileEntityId }
                 }
                 val icon = entity?.getIcon(LocalContext.current) ?: CommunityMaterial.Icon3.cmd_video
-                Chip(
+                Button(
                     modifier = Modifier.fillMaxWidth(),
                     icon = {
                         Image(
@@ -49,7 +49,7 @@ fun SetCameraTileView(
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     },
-                    colors = ChipDefaults.secondaryChipColors(),
+                    colors = ButtonDefaults.filledTonalButtonColors(),
                     label = {
                         Text(
                             text = stringResource(id = R.string.choose_entity)
@@ -63,7 +63,7 @@ fun SetCameraTileView(
             }
 
             item {
-                Chip(
+                Button(
                     modifier = Modifier.fillMaxWidth(),
                     icon = {
                         Image(
@@ -71,7 +71,7 @@ fun SetCameraTileView(
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     },
-                    colors = ChipDefaults.secondaryChipColors(),
+                    colors = ButtonDefaults.filledTonalButtonColors(),
                     label = {
                         Text(
                             text = stringResource(id = R.string.refresh_interval)

@@ -39,8 +39,6 @@ import androidx.compose.ui.unit.sp
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
-import androidx.wear.compose.material.Chip
-import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.Icon
@@ -187,7 +185,10 @@ fun ConversationResultView(
                             modifier = Modifier
                                 .size(48.dp)
                                 .scale(scale)
-                                .background(color = colorResource(R.color.colorSpeechText), shape = CircleShape)
+                                .background(
+                                    color = colorResource(R.color.colorSpeechText),
+                                    shape = CircleShape
+                                )
                                 .clip(CircleShape)
                         )
                     }
@@ -268,11 +269,11 @@ fun ConversationPipelinesView(
                 ListHeader(stringResource(R.string.assist_change_pipeline))
             }
             items(items = pipelines, key = { it.id }) {
-                Chip(
+                Button(
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text(it.name) },
                     onClick = { onSelectPipeline(it.id) },
-                    colors = ChipDefaults.secondaryChipColors()
+                    colors = ButtonDefaults.filledTonalButtonColors()
                 )
             }
         }

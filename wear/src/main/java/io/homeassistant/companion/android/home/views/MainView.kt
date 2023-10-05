@@ -21,13 +21,12 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.material.Chip
-import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.CircularProgressIndicator
+import androidx.wear.compose.material3.Button
+import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 import com.mikepenz.iconics.compose.Image
@@ -77,7 +76,7 @@ fun MainView(
                         if (mainViewModel.entities.isEmpty()) {
                             // when we don't have the state of the entity, create a Chip from cache as we don't have the state yet
                             val cached = mainViewModel.getCachedEntity(favoriteEntityID)
-                            Chip(
+                            Button(
                                 modifier = Modifier
                                     .fillMaxWidth(),
                                 icon = {
@@ -90,15 +89,14 @@ fun MainView(
                                     Text(
                                         text = cached?.friendlyName ?: favoriteEntityID,
                                         maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
-                                        fontWeight = FontWeight.Bold
+                                        overflow = TextOverflow.Ellipsis
                                     )
                                 },
                                 onClick = {
                                     onEntityClicked(favoriteEntityID, STATE_UNKNOWN)
                                     onEntityClickedFeedback(isToastEnabled, isHapticEnabled, context, favoriteEntityID, haptic)
                                 },
-                                colors = ChipDefaults.secondaryChipColors()
+                                colors = ButtonDefaults.filledTonalButtonColors()
                             )
                         } else {
                             mainViewModel.entities.values.toList()
@@ -151,17 +149,16 @@ fun MainView(
                                 verticalArrangement = Arrangement.Center
                             ) {
                                 ListHeader(id = commonR.string.error_loading_entities)
-                                Chip(
+                                Button(
                                     label = {
                                         Text(
                                             text = stringResource(commonR.string.retry),
                                             textAlign = TextAlign.Center,
-                                            modifier = Modifier.fillMaxWidth(),
-                                            fontWeight = FontWeight.Bold
+                                            modifier = Modifier.fillMaxWidth()
                                         )
                                     },
                                     onClick = onRetryLoadEntitiesClicked,
-                                    colors = ChipDefaults.primaryChipColors()
+                                    colors = ButtonDefaults.buttonColors()
                                 )
                                 Spacer(modifier = Modifier.height(32.dp))
                             }
@@ -179,14 +176,16 @@ fun MainView(
                                         text = stringResource(commonR.string.no_supported_entities),
                                         textAlign = TextAlign.Center,
                                         style = MaterialTheme.typography.titleMedium,
-                                        modifier = Modifier.fillMaxWidth()
+                                        modifier = Modifier
+                                            .fillMaxWidth()
                                             .padding(top = 32.dp)
                                     )
                                     Text(
                                         text = stringResource(commonR.string.no_supported_entities_summary),
                                         textAlign = TextAlign.Center,
                                         style = MaterialTheme.typography.bodyMedium,
-                                        modifier = Modifier.fillMaxWidth()
+                                        modifier = Modifier
+                                            .fillMaxWidth()
                                             .padding(top = 8.dp)
                                     )
                                 }
@@ -213,13 +212,12 @@ fun MainView(
                                 if (!entitiesToShow.isNullOrEmpty()) {
                                     val area = mainViewModel.areas.first { it.areaId == id }
                                     item {
-                                        Chip(
+                                        Button(
                                             modifier = Modifier.fillMaxWidth(),
                                             label = {
                                                 Text(
                                                     text = area.name,
-                                                    color = Color.Black,
-                                                    fontWeight = FontWeight.Bold
+                                                    color = Color.Black
                                                 )
                                             },
                                             onClick = {
@@ -233,7 +231,7 @@ fun MainView(
                                                     ) == null
                                                 }
                                             },
-                                            colors = ChipDefaults.primaryChipColors(backgroundColor = wearColorScheme.primary)
+                                            colors = ButtonDefaults.buttonColors(containerColor = wearColorScheme.primary)
                                         )
                                     }
                                 }
@@ -258,7 +256,7 @@ fun MainView(
                                 domainEntities.filter(domainEntitiesFilter)
                             if (domainEntitiesToShow.isNotEmpty()) {
                                 item {
-                                    Chip(
+                                    Button(
                                         modifier = Modifier.fillMaxWidth(),
                                         icon = {
                                             getIcon(
@@ -270,8 +268,7 @@ fun MainView(
                                         label = {
                                             Text(
                                                 text = mainViewModel.stringForDomain(domain)!!,
-                                                color = Color.Black,
-                                                fontWeight = FontWeight.Bold
+                                                color = Color.Black
                                             )
                                         },
                                         onClick = {
@@ -283,7 +280,7 @@ fun MainView(
                                                 domainEntitiesFilter
                                             )
                                         },
-                                        colors = ChipDefaults.primaryChipColors(backgroundColor = wearColorScheme.primary)
+                                        colors = ButtonDefaults.buttonColors(containerColor = wearColorScheme.primary)
                                     )
                                 }
                             }
@@ -295,7 +292,7 @@ fun MainView(
                         // All entities regardless of area
                         if (mainViewModel.entities.isNotEmpty()) {
                             item {
-                                Chip(
+                                Button(
                                     modifier = Modifier
                                         .fillMaxWidth(),
                                     icon = {
@@ -321,7 +318,7 @@ fun MainView(
                                             }.sorted()
                                         ) { true }
                                     },
-                                    colors = ChipDefaults.secondaryChipColors()
+                                    colors = ButtonDefaults.filledTonalButtonColors()
                                 )
                             }
                         }
@@ -337,7 +334,7 @@ fun MainView(
 
             // Settings
             item {
-                Chip(
+                Button(
                     modifier = Modifier
                         .fillMaxWidth(),
                     icon = {
@@ -346,14 +343,9 @@ fun MainView(
                             colorFilter = ColorFilter.tint(Color.White)
                         )
                     },
-                    label = {
-                        Text(
-                            text = stringResource(id = commonR.string.settings),
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
+                    label = { Text(stringResource(commonR.string.settings)) },
                     onClick = onSettingsClicked,
-                    colors = ChipDefaults.secondaryChipColors()
+                    colors = ButtonDefaults.filledTonalButtonColors()
                 )
             }
         }

@@ -7,10 +7,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.wear.compose.material.Chip
-import androidx.wear.compose.material.ChipDefaults
+import androidx.wear.compose.material3.Button
+import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
 import io.homeassistant.companion.android.common.sensors.SensorManager
@@ -33,16 +32,11 @@ fun SensorsView(
             items(sensorManagers.size, { sensorManagers[it].name }) { index ->
                 val manager = sensorManagers[index]
                 Row {
-                    Chip(
+                    Button(
                         modifier = Modifier
                             .fillMaxWidth(),
-                        colors = ChipDefaults.secondaryChipColors(),
-                        label = {
-                            Text(
-                                text = stringResource(manager.name),
-                                fontWeight = FontWeight.Bold
-                            )
-                        },
+                        colors = ButtonDefaults.filledTonalButtonColors(),
+                        label = { Text(stringResource(manager.name)) },
                         onClick = { onClickSensorManager(manager) }
                     )
                 }

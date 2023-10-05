@@ -12,3 +12,12 @@ fun getSwitchDescription(isChecked: Boolean): String {
         stringResource(R.string.disabled)
     }
 }
+
+@Composable
+fun getCheckboxDescription(isChecked: Boolean): String {
+    return if (isChecked) {
+        stringResource(R.string.show)
+    } else {
+        stringResource(R.string.hide)
+    }
+}

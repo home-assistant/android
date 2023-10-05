@@ -9,8 +9,8 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.wear.compose.material.Chip
-import androidx.wear.compose.material.ChipDefaults
+import androidx.wear.compose.material3.Button
+import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
@@ -34,7 +34,7 @@ fun TemplateTileSettingsView(
                 ListHeader(id = R.string.template_tile)
             }
             item {
-                Chip(
+                Button(
                     modifier = Modifier
                         .fillMaxWidth(),
                     icon = {
@@ -43,12 +43,8 @@ fun TemplateTileSettingsView(
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     },
-                    colors = ChipDefaults.secondaryChipColors(),
-                    label = {
-                        Text(
-                            text = stringResource(id = R.string.refresh_interval)
-                        )
-                    },
+                    colors = ButtonDefaults.filledTonalButtonColors(containerColor = wearColorScheme.outlineVariant),
+                    label = { Text(stringResource(R.string.refresh_interval)) },
                     secondaryLabel = { Text(intervalToString(LocalContext.current, refreshInterval)) },
                     onClick = onClickRefreshInterval
                 )

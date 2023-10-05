@@ -27,9 +27,9 @@ import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.getToggleButtonColors
 import io.homeassistant.companion.android.theme.wearColorScheme
+import io.homeassistant.companion.android.util.GetToggleSwitch
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.getSwitchDescription
-import io.homeassistant.companion.android.util.getToggleSwitch
 import io.homeassistant.companion.android.util.simplifiedEntity
 import io.homeassistant.companion.android.views.ChooseEntityView
 import io.homeassistant.companion.android.views.ListHeader
@@ -133,7 +133,7 @@ fun MainConfigView(
                     checked = isChecked,
                     onCheckedChange = onShowTitleClicked,
                     label = { Text(stringResource(R.string.show_entity_title)) },
-                    selectionControl = { getToggleSwitch(isChecked, description) },
+                    selectionControl = { GetToggleSwitch(isChecked, description) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = loaded && entity != null,
                     colors = getToggleButtonColors()
@@ -146,7 +146,7 @@ fun MainConfigView(
                     checked = isChecked,
                     onCheckedChange = onShowUnitClicked,
                     label = { Text(stringResource(R.string.show_unit_title)) },
-                    selectionControl = { getToggleSwitch(isChecked, description) },
+                    selectionControl = { GetToggleSwitch(isChecked, description) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = loaded && entity != null,
                     colors = getToggleButtonColors()
