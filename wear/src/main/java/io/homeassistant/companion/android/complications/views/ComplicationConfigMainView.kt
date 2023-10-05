@@ -9,16 +9,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.material.Chip
-import androidx.wear.compose.material.ChipDefaults
-import androidx.wear.compose.material.ToggleChip
-import androidx.wear.compose.material.ToggleChipDefaults
 import androidx.wear.compose.material3.Button
+import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.Icon
+import androidx.wear.compose.material3.Switch
+import androidx.wear.compose.material3.SwitchDefaults
 import androidx.wear.compose.material3.Text
+import androidx.wear.compose.material3.ToggleButton
+import androidx.wear.compose.material3.ToggleButtonDefaults
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
@@ -103,7 +105,7 @@ fun MainConfigView(
                     entity?.domain ?: "light",
                     LocalContext.current
                 )
-                Chip(
+                Button(
                     modifier = Modifier.fillMaxWidth(),
                     icon = {
                         Image(
@@ -111,13 +113,8 @@ fun MainConfigView(
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     },
-                    colors = ChipDefaults.secondaryChipColors(),
-                    label = {
-                        Text(
-                            text = stringResource(id = R.string.choose_entity),
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
+                    colors = ButtonDefaults.filledTonalButtonColors(),
+                    label = { Text(stringResource(id = R.string.choose_entity)) },
                     secondaryLabel = {
                         Text(
                             if (loaded) {
@@ -133,54 +130,54 @@ fun MainConfigView(
             }
             item {
                 val isChecked = !loaded || showTitle
-                ToggleChip(
+                val description = getDescription(isChecked)
+                ToggleButton(
                     checked = isChecked,
                     onCheckedChange = onShowTitleClicked,
-                    label = {
-                        Text(
-                            stringResource(R.string.show_entity_title),
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
-                    toggleControl = {
-                        Icon(
-                            imageVector = ToggleChipDefaults.switchIcon(isChecked),
-                            contentDescription = if (isChecked) {
-                                stringResource(R.string.enabled)
-                            } else {
-                                stringResource(R.string.disabled)
+                    label = { Text(stringResource(R.string.show_entity_title)) },
+                    selectionControl = {
+                        Switch(
+                            checked = isChecked,
+                            modifier = Modifier.semantics {
+                                this.contentDescription = description
                             },
-                            tint = if (isChecked) wearColorScheme.tertiary else wearColorScheme.onSurface
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = wearColorScheme.tertiary,
+                                checkedTrackColor = wearColorScheme.onTertiary,
+                                checkedTrackBorderColor = wearColorScheme.tertiary,
+                                checkedThumbIconColor = wearColorScheme.tertiary
+                            )
                         )
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = loaded && entity != null
+                    enabled = loaded && entity != null,
+                    colors = ToggleButtonDefaults.toggleButtonColors(checkedContainerColor = wearColorScheme.outlineVariant)
                 )
             }
             item {
                 val isChecked = !loaded || showUnit
-                ToggleChip(
+                val description = getDescription(isChecked)
+                ToggleButton(
                     checked = isChecked,
                     onCheckedChange = onShowUnitClicked,
-                    label = {
-                        Text(
-                            stringResource(R.string.show_unit_title),
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
-                    toggleControl = {
-                        Icon(
-                            imageVector = ToggleChipDefaults.switchIcon(isChecked),
-                            contentDescription = if (isChecked) {
-                                stringResource(R.string.enabled)
-                            } else {
-                                stringResource(R.string.disabled)
+                    label = { Text(stringResource(R.string.show_unit_title)) },
+                    selectionControl = {
+                        Switch(
+                            checked = isChecked,
+                            modifier = Modifier.semantics {
+                                this.contentDescription = description
                             },
-                            tint = if (isChecked) wearColorScheme.tertiary else wearColorScheme.onSurface
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = wearColorScheme.tertiary,
+                                checkedTrackColor = wearColorScheme.onTertiary,
+                                checkedTrackBorderColor = wearColorScheme.tertiary,
+                                checkedThumbIconColor = wearColorScheme.tertiary
+                            )
                         )
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = loaded && entity != null
+                    enabled = loaded && entity != null,
+                    colors = ToggleButtonDefaults.toggleButtonColors(checkedContainerColor = wearColorScheme.outlineVariant)
                 )
             }
 
@@ -200,13 +197,22 @@ fun MainConfigView(
     }
 }
 
+@Composable
+private fun getDescription(isChecked: Boolean): String {
+    return if (isChecked) {
+        stringResource(R.string.enabled)
+    } else {
+        stringResource(R.string.disabled)
+    }
+}
+
 @Preview(device = WearDevices.LARGE_ROUND)
 @Composable
 fun PreviewMainConfigView() {
     MainConfigView(
         entity = simplifiedEntity,
         showTitle = true,
-        showUnit = true,
+        showUnit = false,
         loadingState = ComplicationConfigViewModel.LoadingState.READY,
         onChooseEntityClicked = {},
         onShowTitleClicked = {},
