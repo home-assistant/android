@@ -35,6 +35,8 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
+import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
+import io.homeassistant.companion.android.theme.getPrimaryButtonColors
 import io.homeassistant.companion.android.theme.wearColorScheme
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.onEntityClickedFeedback
@@ -96,7 +98,7 @@ fun MainView(
                                     onEntityClicked(favoriteEntityID, STATE_UNKNOWN)
                                     onEntityClickedFeedback(isToastEnabled, isHapticEnabled, context, favoriteEntityID, haptic)
                                 },
-                                colors = ButtonDefaults.filledTonalButtonColors()
+                                colors = getFilledTonalButtonColors()
                             )
                         } else {
                             mainViewModel.entities.values.toList()
@@ -231,7 +233,7 @@ fun MainView(
                                                     ) == null
                                                 }
                                             },
-                                            colors = ButtonDefaults.buttonColors(containerColor = wearColorScheme.primary)
+                                            colors = getPrimaryButtonColors()
                                         )
                                     }
                                 }
@@ -280,7 +282,7 @@ fun MainView(
                                                 domainEntitiesFilter
                                             )
                                         },
-                                        colors = ButtonDefaults.buttonColors(containerColor = wearColorScheme.primary)
+                                        colors = getPrimaryButtonColors()
                                     )
                                 }
                             }
@@ -318,7 +320,7 @@ fun MainView(
                                             }.sorted()
                                         ) { true }
                                     },
-                                    colors = ButtonDefaults.filledTonalButtonColors()
+                                    colors = getFilledTonalButtonColors()
                                 )
                             }
                         }
@@ -345,7 +347,7 @@ fun MainView(
                     },
                     label = { Text(stringResource(commonR.string.settings)) },
                     onClick = onSettingsClicked,
-                    colors = ButtonDefaults.filledTonalButtonColors()
+                    colors = getFilledTonalButtonColors()
                 )
             }
         }

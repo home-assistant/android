@@ -20,10 +20,10 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
+import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
 import io.homeassistant.companion.android.theme.getToggleButtonColors
 import io.homeassistant.companion.android.theme.wearColorScheme
-import io.homeassistant.companion.android.util.GetToggleSwitch
-import io.homeassistant.companion.android.util.getSwitchDescription
+import io.homeassistant.companion.android.util.ToggleSwitch
 import io.homeassistant.companion.android.util.previewFavoritesList
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
@@ -45,7 +45,7 @@ fun SecondarySettingsChip(
                 colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
             )
         },
-        colors = ButtonDefaults.filledTonalButtonColors(containerColor = wearColorScheme.outlineVariant),
+        colors = getFilledTonalButtonColors(),
         label = { Text(label) },
         secondaryLabel = secondaryLabel?.let {
             { Text(text = secondaryLabel) }
@@ -98,14 +98,13 @@ fun SettingsView(
                 )
             }
             item {
-                val description = getSwitchDescription(isFavoritesOnly)
                 ToggleButton(
                     modifier = Modifier.fillMaxWidth(),
                     checked = isFavoritesOnly,
                     onCheckedChange = { setFavoritesOnly(it) },
                     label = { Text(stringResource(commonR.string.only_favorites)) },
                     enabled = favorites.isNotEmpty(),
-                    selectionControl = { GetToggleSwitch(isFavoritesOnly, description) },
+                    selectionControl = { ToggleSwitch(isFavoritesOnly) },
                     icon = {
                         Image(
                             asset = CommunityMaterial.Icon2.cmd_home_heart,
@@ -122,7 +121,6 @@ fun SettingsView(
             }
             item {
                 val haptic = LocalHapticFeedback.current
-                val description = getSwitchDescription(isHapticEnabled)
                 ToggleButton(
                     modifier = Modifier.fillMaxWidth(),
                     checked = isHapticEnabled,
@@ -142,12 +140,11 @@ fun SettingsView(
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     },
-                    selectionControl = { GetToggleSwitch(isHapticEnabled, description) },
+                    selectionControl = { ToggleSwitch(isHapticEnabled) },
                     colors = getToggleButtonColors()
                 )
             }
             item {
-                val description = getSwitchDescription(isToastEnabled)
                 ToggleButton(
                     modifier = Modifier.fillMaxWidth(),
                     checked = isToastEnabled,
@@ -164,7 +161,7 @@ fun SettingsView(
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     },
-                    selectionControl = { GetToggleSwitch(isToastEnabled, description) },
+                    selectionControl = { ToggleSwitch(isToastEnabled) },
                     colors = getToggleButtonColors()
                 )
             }
@@ -213,7 +210,6 @@ fun SettingsView(
                 )
             }
             item {
-                val description = getSwitchDescription(isAssistantAppAllowed)
                 ToggleButton(
                     modifier = Modifier.fillMaxWidth(),
                     checked = isAssistantAppAllowed,
@@ -225,7 +221,7 @@ fun SettingsView(
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     },
-                    selectionControl = { GetToggleSwitch(isAssistantAppAllowed, description) },
+                    selectionControl = { ToggleSwitch(isAssistantAppAllowed) },
                     colors = getToggleButtonColors()
                 )
             }

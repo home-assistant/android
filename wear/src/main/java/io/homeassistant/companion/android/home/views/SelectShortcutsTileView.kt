@@ -18,8 +18,7 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.getToggleButtonColors
 import io.homeassistant.companion.android.theme.wearColorScheme
-import io.homeassistant.companion.android.util.GetToggleCheckbox
-import io.homeassistant.companion.android.util.getCheckboxDescription
+import io.homeassistant.companion.android.util.ToggleCheckbox
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
 import io.homeassistant.companion.android.common.R as commonR
@@ -37,7 +36,6 @@ fun SelectShortcutsTileView(
                 ListHeader(id = commonR.string.shortcut_tiles)
             }
             item {
-                val description = getCheckboxDescription(isShowShortcutTextEnabled)
                 ToggleButton(
                     modifier = Modifier.fillMaxWidth(),
                     checked = isShowShortcutTextEnabled,
@@ -54,7 +52,7 @@ fun SelectShortcutsTileView(
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     },
-                    selectionControl = { GetToggleCheckbox(isShowShortcutTextEnabled, description) },
+                    selectionControl = { ToggleCheckbox(isShowShortcutTextEnabled) },
                     colors = getToggleButtonColors()
                 )
             }

@@ -19,9 +19,8 @@ import androidx.wear.tooling.preview.devices.WearDevices
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.theme.getToggleButtonColors
-import io.homeassistant.companion.android.util.GetToggleSwitch
+import io.homeassistant.companion.android.util.ToggleSwitch
 import io.homeassistant.companion.android.util.batterySensorManager
-import io.homeassistant.companion.android.util.getSwitchDescription
 import kotlinx.coroutines.runBlocking
 
 @SuppressLint("InlinedApi")
@@ -60,7 +59,6 @@ fun SensorUi(
     val perm = manager.checkPermission(LocalContext.current, basicSensor.id)
     val isChecked = (sensor == null && basicSensor.enabledByDefault) ||
         (sensor?.enabled == true && perm)
-    val description = getSwitchDescription(isChecked)
     ToggleButton(
         checked = isChecked,
         onCheckedChange = { enabled ->
@@ -87,7 +85,7 @@ fun SensorUi(
                 overflow = TextOverflow.Ellipsis
             )
         },
-        selectionControl = { GetToggleSwitch(isChecked, description) },
+        selectionControl = { ToggleSwitch(isChecked) },
         colors = getToggleButtonColors()
     )
 }

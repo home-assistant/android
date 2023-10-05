@@ -27,9 +27,8 @@ import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.getToggleButtonColors
 import io.homeassistant.companion.android.theme.wearColorScheme
-import io.homeassistant.companion.android.util.GetToggleSwitch
+import io.homeassistant.companion.android.util.ToggleSwitch
 import io.homeassistant.companion.android.util.getIcon
-import io.homeassistant.companion.android.util.getSwitchDescription
 import io.homeassistant.companion.android.util.simplifiedEntity
 import io.homeassistant.companion.android.views.ChooseEntityView
 import io.homeassistant.companion.android.views.ListHeader
@@ -128,12 +127,11 @@ fun MainConfigView(
             }
             item {
                 val isChecked = !loaded || showTitle
-                val description = getSwitchDescription(isChecked)
                 ToggleButton(
                     checked = isChecked,
                     onCheckedChange = onShowTitleClicked,
                     label = { Text(stringResource(R.string.show_entity_title)) },
-                    selectionControl = { GetToggleSwitch(isChecked, description) },
+                    selectionControl = { ToggleSwitch(isChecked) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = loaded && entity != null,
                     colors = getToggleButtonColors()
@@ -141,12 +139,11 @@ fun MainConfigView(
             }
             item {
                 val isChecked = !loaded || showUnit
-                val description = getSwitchDescription(isChecked)
                 ToggleButton(
                     checked = isChecked,
                     onCheckedChange = onShowUnitClicked,
                     label = { Text(stringResource(R.string.show_unit_title)) },
-                    selectionControl = { GetToggleSwitch(isChecked, description) },
+                    selectionControl = { ToggleSwitch(isChecked) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = loaded && entity != null,
                     colors = getToggleButtonColors()

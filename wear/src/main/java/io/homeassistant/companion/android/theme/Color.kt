@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.theme
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.CheckboxDefaults
 import androidx.wear.compose.material3.ColorScheme
 import androidx.wear.compose.material3.SwitchDefaults
@@ -59,6 +60,12 @@ fun getSwitchColors() = SwitchDefaults.colors(
 
 @Composable
 fun getToggleButtonColors() = ToggleButtonDefaults.toggleButtonColors(checkedContainerColor = wearColorScheme.outlineVariant, uncheckedContainerColor = wearColorScheme.outlineVariant)
+
+@Composable
+fun getFilledTonalButtonColors() = ButtonDefaults.filledTonalButtonColors(containerColor = wearColorScheme.outlineVariant)
+
+@Composable
+fun getPrimaryButtonColors() = ButtonDefaults.buttonColors(containerColor = wearColorScheme.primary)
 
 @Composable
 fun getCheckboxColors() = CheckboxDefaults.colors(

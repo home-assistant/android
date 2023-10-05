@@ -16,8 +16,7 @@ import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.getToggleButtonColors
 import io.homeassistant.companion.android.theme.wearColorScheme
-import io.homeassistant.companion.android.util.GetToggleSwitch
-import io.homeassistant.companion.android.util.getSwitchDescription
+import io.homeassistant.companion.android.util.ToggleSwitch
 import io.homeassistant.companion.android.views.ExpandableListHeader
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
@@ -74,7 +73,6 @@ private fun FavoriteToggleChip(
 
     val entityId = entity.entityId
     val checked = favoriteEntityIds.contains(entityId)
-    val description = getSwitchDescription(checked)
     ToggleButton(
         checked = checked,
         onCheckedChange = {
@@ -95,7 +93,7 @@ private fun FavoriteToggleChip(
                 overflow = TextOverflow.Ellipsis
             )
         },
-        selectionControl = { GetToggleSwitch(checked, description) },
+        selectionControl = { ToggleSwitch(checked) },
         colors = getToggleButtonColors()
     )
 }
