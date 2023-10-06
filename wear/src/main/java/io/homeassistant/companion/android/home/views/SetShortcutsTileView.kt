@@ -21,7 +21,7 @@ import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.theme.WearAppTheme
-import io.homeassistant.companion.android.theme.wearColorScheme
+import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.simplifiedEntity
 import io.homeassistant.companion.android.views.ListHeader
@@ -68,7 +68,7 @@ fun SetShortcutsTileView(
                         )
                     },
                     onClick = { onShortcutEntitySelectionChange(index) },
-                    colors = ButtonDefaults.filledTonalButtonColors(containerColor = wearColorScheme.outlineVariant)
+                    colors = getFilledTonalButtonColors()
                 )
             }
             if (shortcutEntities.size < 7) {
