@@ -6,20 +6,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.foundation.lazy.itemsIndexed
-import androidx.wear.compose.material.Chip
-import androidx.wear.compose.material.ChipDefaults
-import androidx.wear.compose.material.ToggleChip
-import androidx.wear.compose.material.ToggleChipDefaults
-import androidx.wear.compose.material3.Icon
+import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.Text
+import androidx.wear.compose.material3.ToggleButton
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.theme.WearAppTheme
+import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
+import io.homeassistant.companion.android.theme.getToggleButtonColors
 import io.homeassistant.companion.android.theme.wearColorScheme
+import io.homeassistant.companion.android.util.ToggleCheckbox
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
 import io.homeassistant.companion.android.common.R as commonR
@@ -37,17 +36,12 @@ fun SelectShortcutsTileView(
                 ListHeader(id = commonR.string.shortcut_tiles)
             }
             item {
-                ToggleChip(
+                ToggleButton(
                     modifier = Modifier.fillMaxWidth(),
                     checked = isShowShortcutTextEnabled,
                     onCheckedChange = { onShowShortcutTextEnabled(it) },
-                    label = {
-                        Text(
-                            stringResource(commonR.string.shortcuts_tile_text_setting),
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
-                    appIcon = {
+                    label = { Text(stringResource(commonR.string.shortcuts_tile_text_setting)) },
+                    icon = {
                         Image(
                             asset =
                             if (isShowShortcutTextEnabled) {
@@ -58,17 +52,8 @@ fun SelectShortcutsTileView(
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     },
-                    toggleControl = {
-                        Icon(
-                            imageVector = ToggleChipDefaults.checkboxIcon(isShowShortcutTextEnabled),
-                            contentDescription = if (isShowShortcutTextEnabled) {
-                                stringResource(commonR.string.show)
-                            } else {
-                                stringResource(commonR.string.hide)
-                            },
-                            tint = if (isShowShortcutTextEnabled) wearColorScheme.tertiary else wearColorScheme.onSurface
-                        )
-                    }
+                    selectionControl = { ToggleCheckbox(isShowShortcutTextEnabled) },
+                    colors = getToggleButtonColors()
                 )
             }
             item {
@@ -80,15 +65,10 @@ fun SelectShortcutsTileView(
                 }
             } else {
                 itemsIndexed(shortcutTileEntitiesCountById.keys.toList()) { index, shortcutsTileId ->
-                    Chip(
+                    Button(
                         modifier = Modifier
                             .fillMaxWidth(),
-                        label = {
-                            Text(
-                                stringResource(commonR.string.shortcuts_tile_n, index + 1),
-                                fontWeight = FontWeight.Bold
-                            )
-                        },
+                        label = { Text(stringResource(commonR.string.shortcuts_tile_n, index + 1)) },
                         secondaryLabel = {
                             val entityCount = shortcutTileEntitiesCountById[shortcutsTileId] ?: 0
                             if (entityCount > 0) {
@@ -96,7 +76,7 @@ fun SelectShortcutsTileView(
                             }
                         },
                         onClick = { onSelectShortcutsTile(shortcutsTileId) },
-                        colors = ChipDefaults.secondaryChipColors()
+                        colors = getFilledTonalButtonColors()
                     )
                 }
             }

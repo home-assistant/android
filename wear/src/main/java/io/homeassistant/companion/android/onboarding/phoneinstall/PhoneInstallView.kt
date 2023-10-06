@@ -12,11 +12,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material3.Button
-import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
 import io.homeassistant.companion.android.views.ThemeLazyColumn
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -61,7 +61,7 @@ fun PhoneInstallView(
             Button(
                 onClick = onRefresh,
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.filledTonalButtonColors(),
+                colors = getFilledTonalButtonColors(),
                 label = {
                     Text(
                         stringResource(commonR.string.refresh),
@@ -77,7 +77,7 @@ fun PhoneInstallView(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 16.dp),
-                colors = ButtonDefaults.filledTonalButtonColors(),
+                colors = getFilledTonalButtonColors(),
                 label = {
                     Text(
                         stringResource(commonR.string.advanced),

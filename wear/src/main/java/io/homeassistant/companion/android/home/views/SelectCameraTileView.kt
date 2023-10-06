@@ -4,16 +4,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.foundation.lazy.itemsIndexed
-import androidx.wear.compose.material.Chip
-import androidx.wear.compose.material.ChipDefaults
+import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
 import io.homeassistant.companion.android.database.wear.CameraTile
 import io.homeassistant.companion.android.theme.WearAppTheme
+import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
 import io.homeassistant.companion.android.common.R as commonR
@@ -37,21 +36,16 @@ fun SelectCameraTileView(
                 }
             } else {
                 itemsIndexed(tiles, key = { _, item -> "tile.${item.id}" }) { index, tile ->
-                    Chip(
+                    Button(
                         modifier = Modifier.fillMaxWidth(),
-                        label = {
-                            Text(
-                                stringResource(commonR.string.camera_tile_n, index + 1),
-                                fontWeight = FontWeight.Bold
-                            )
-                        },
+                        label = { Text(stringResource(commonR.string.camera_tile_n, index + 1)) },
                         secondaryLabel = if (tile.entityId != null) {
                             { Text(tile.entityId!!) }
                         } else {
                             null
                         },
                         onClick = { onSelectTile(tile.id) },
-                        colors = ChipDefaults.secondaryChipColors()
+                        colors = getFilledTonalButtonColors()
                     )
                 }
             }

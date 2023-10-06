@@ -18,8 +18,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.lazy.items
-import androidx.wear.compose.material.Chip
-import androidx.wear.compose.material.ChipDefaults
+import androidx.wear.compose.material3.Button
+import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.Text
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
@@ -28,6 +28,7 @@ import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.util.capitalize
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.theme.WearAppTheme
+import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
 import io.homeassistant.companion.android.util.stringForDomain
 import java.util.Locale
 import io.homeassistant.companion.android.common.R as commonR
@@ -52,14 +53,14 @@ fun ChooseEntityView(
             }
             if (allowNone) {
                 item {
-                    Chip(
+                    Button(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 16.dp),
                         icon = { Image(asset = CommunityMaterial.Icon.cmd_delete) },
                         label = { Text(stringResource(id = commonR.string.none)) },
                         onClick = onNoneClicked,
-                        colors = ChipDefaults.primaryChipColors(
+                        colors = ButtonDefaults.buttonColors(
                             contentColor = Color.Black
                         )
                     )
@@ -121,7 +122,7 @@ private fun ChooseEntityChip(
 ) {
     val attributes = entity.attributes as Map<*, *>
     val iconBitmap = entity.getIcon(LocalContext.current)
-    Chip(
+    Button(
         modifier = Modifier
             .fillMaxWidth(),
         icon = {
@@ -146,6 +147,6 @@ private fun ChooseEntityChip(
                 )
             )
         },
-        colors = ChipDefaults.secondaryChipColors()
+        colors = getFilledTonalButtonColors()
     )
 }

@@ -39,8 +39,6 @@ import androidx.compose.ui.unit.sp
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
-import androidx.wear.compose.material.Chip
-import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.Icon
@@ -57,6 +55,7 @@ import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
 import io.homeassistant.companion.android.conversation.ConversationViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
+import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
 import io.homeassistant.companion.android.util.KeepScreenOn
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
@@ -187,7 +186,10 @@ fun ConversationResultView(
                             modifier = Modifier
                                 .size(48.dp)
                                 .scale(scale)
-                                .background(color = colorResource(R.color.colorSpeechText), shape = CircleShape)
+                                .background(
+                                    color = colorResource(R.color.colorSpeechText),
+                                    shape = CircleShape
+                                )
                                 .clip(CircleShape)
                         )
                     }
@@ -268,11 +270,11 @@ fun ConversationPipelinesView(
                 ListHeader(stringResource(R.string.assist_change_pipeline))
             }
             items(items = pipelines, key = { it.id }) {
-                Chip(
+                Button(
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text(it.name) },
                     onClick = { onSelectPipeline(it.id) },
-                    colors = ChipDefaults.secondaryChipColors()
+                    colors = getFilledTonalButtonColors()
                 )
             }
         }

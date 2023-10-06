@@ -13,8 +13,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.material.Chip
-import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.Icon
@@ -23,6 +21,7 @@ import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.theme.WearAppTheme
+import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.simplifiedEntity
 import io.homeassistant.companion.android.views.ListHeader
@@ -47,7 +46,7 @@ fun SetShortcutsTileView(
                     LocalContext.current
                 )
 
-                Chip(
+                Button(
                     modifier = Modifier
                         .fillMaxWidth(),
                     icon = {
@@ -69,7 +68,7 @@ fun SetShortcutsTileView(
                         )
                     },
                     onClick = { onShortcutEntitySelectionChange(index) },
-                    colors = ChipDefaults.secondaryChipColors()
+                    colors = getFilledTonalButtonColors()
                 )
             }
             if (shortcutEntities.size < 7) {

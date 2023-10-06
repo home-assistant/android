@@ -6,12 +6,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.foundation.lazy.items
-import androidx.wear.compose.material.Chip
-import androidx.wear.compose.material.ChipDefaults
+import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.theme.WearAppTheme
+import io.homeassistant.companion.android.theme.getPrimaryButtonColors
 import io.homeassistant.companion.android.util.playPreviewEntityScene1
 import io.homeassistant.companion.android.util.playPreviewEntityScene2
 import io.homeassistant.companion.android.util.playPreviewEntityScene3
@@ -66,7 +66,7 @@ fun EntityViewList(
                         if (filtered.isEmpty()) {
                             item {
                                 Column {
-                                    Chip(
+                                    Button(
                                         label = {
                                             Text(
                                                 text = stringResource(commonR.string.loading_entities),
@@ -74,7 +74,7 @@ fun EntityViewList(
                                             )
                                         },
                                         onClick = { /* No op */ },
-                                        colors = ChipDefaults.primaryChipColors()
+                                        colors = getPrimaryButtonColors()
                                     )
                                 }
                             }
@@ -86,7 +86,7 @@ fun EntityViewList(
     }
 }
 
-@Preview
+@Preview(device = WearDevices.LARGE_ROUND)
 @Composable
 private fun PreviewEntityListView() {
     EntityViewList(
@@ -107,6 +107,20 @@ private fun PreviewEntityListScenes() {
         entityLists = mapOf(stringResource(commonR.string.scenes) to listOf(playPreviewEntityScene1, playPreviewEntityScene2, playPreviewEntityScene3)),
         entityListsOrder = listOf(stringResource(commonR.string.scenes)),
         entityListFilter = { true },
+        onEntityClicked = { _, _ -> },
+        onEntityLongClicked = { },
+        isHapticEnabled = false,
+        isToastEnabled = false
+    )
+}
+
+@Preview(device = WearDevices.LARGE_ROUND)
+@Composable
+private fun PreviewEntityListEmpty() {
+    EntityViewList(
+        entityLists = mapOf(stringResource(commonR.string.scenes) to listOf(playPreviewEntityScene1)),
+        entityListsOrder = listOf(stringResource(commonR.string.scenes)),
+        entityListFilter = { false },
         onEntityClicked = { _, _ -> },
         onEntityLongClicked = { },
         isHapticEnabled = false,
