@@ -264,9 +264,8 @@
     <string name="failure_send_favorites_wear">Failed to send favorites selection to watch</string>
     <string name="fans">Fans</string>
     <string name="favorite_settings">Favorite settings</string>
-    <string name="favorite">Set favorite entities</string>
+    <string name="favorite">Set favorites</string>
     <string name="favorites">Favorites</string>
-    <string name="feedback_settings">Feedback settings</string>
     <string name="filter_notifications">Filter notifications</string>
     <string name="filter_sensors">Filter sensors</string>
     <string name="filter_sensors_all">All sensors</string>
@@ -316,7 +315,6 @@
         <item quantity="one">%d second</item>
         <item quantity="other">%d seconds</item>
     </plurals>
-    <string name="irreversible">This action is irreversible</string>
     <string name="keep_screen_on_def">Do not lock screen when dashboard is active</string>
     <string name="keep_screen_on">Keep screen on</string>
     <string name="pinch_to_zoom_def">Allow pinch-to-zoom gesture to zoom app window</string>
@@ -752,8 +750,8 @@
     <string name="set_favorites_on_device">Set favorites on Wear OS device</string>
     <string name="set_lock_message">No biometric sensor or screen lock credential available</string>
     <string name="set_lock_title">App locking error</string>
-    <string name="setting_haptic_label">Enable haptic feedback</string>
-    <string name="setting_toast_label">Enable toast confirmation</string>
+    <string name="setting_haptic_label">Haptics</string>
+    <string name="setting_toast_label">Toast message</string>
     <string name="settings">Settings</string>
     <string name="share_failed">Sharing with Home Assistant failed!</string>
     <string name="share_logs_sens_message">Please note: by sharing the log, you could share sensitive data like location data or your Home Assistant URL.\n\nDo you want to continue?</string>
@@ -915,7 +913,6 @@
     <string name="tile_not_setup">Requires setup</string>
     <string name="tile_save">Update tile data</string>
     <string name="tile_server">Select a server (required)</string>
-    <string name="tile_settings">Tile settings</string>
     <string name="tile_subtitle">Tile subtitle</string>
     <string name="tile_updated">Tile data updated</string>
     <string name="tiles">Tiles</string>
@@ -1212,4 +1209,5 @@
     <string name="state_standby">Standby</string>
     <string name="state_sunny">Sunny</string>
     <string name="state_windy">Windy</string>
+    <string name="feedback">Feedback</string>
 </resources>

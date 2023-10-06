@@ -36,7 +36,7 @@ runs:
             target_commitish: 'master',
             previous_tag_name: '${{ steps.latest-release-tag.outputs.result }}',
           })
-          return data.body
+          return data.body.replaceAll('`', '\'')
     - name: Generate Release Notes
       id: version-generator
       shell: bash

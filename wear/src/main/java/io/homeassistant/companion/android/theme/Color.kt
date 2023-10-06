@@ -1,7 +1,15 @@
 package io.homeassistant.companion.android.theme
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.wear.compose.material3.ButtonDefaults
+import androidx.wear.compose.material3.CheckboxDefaults
 import androidx.wear.compose.material3.ColorScheme
+import androidx.wear.compose.material3.ContentAlpha
+import androidx.wear.compose.material3.ExperimentalWearMaterial3Api
+import androidx.wear.compose.material3.InlineSliderDefaults
+import androidx.wear.compose.material3.SwitchDefaults
+import androidx.wear.compose.material3.ToggleButtonDefaults
 
 val md_theme_dark_primary = Color(0xFF03A9F4)
 val md_theme_dark_onPrimary = Color(0xFF00344F)
@@ -43,4 +51,39 @@ internal val wearColorScheme: ColorScheme = ColorScheme(
     onSurfaceVariant = md_theme_dark_onSurfaceVariant,
     outline = md_theme_dark_outline,
     outlineVariant = md_theme_dark_outlineVariant
+)
+
+@Composable
+fun getSwitchColors() = SwitchDefaults.colors(
+    checkedThumbColor = wearColorScheme.tertiary,
+    checkedTrackColor = wearColorScheme.onTertiary,
+    checkedTrackBorderColor = wearColorScheme.tertiary,
+    checkedThumbIconColor = wearColorScheme.tertiary
+)
+
+@Composable
+fun getToggleButtonColors() = ToggleButtonDefaults.toggleButtonColors(
+    checkedContainerColor = wearColorScheme.surfaceBright,
+    uncheckedContainerColor = wearColorScheme.surfaceDim
+)
+
+@Composable
+fun getFilledTonalButtonColors() = ButtonDefaults.filledTonalButtonColors(
+    containerColor = wearColorScheme.surfaceDim,
+    disabledContainerColor = wearColorScheme.surfaceDim.copy(alpha = ContentAlpha.disabled)
+)
+
+@Composable
+fun getPrimaryButtonColors() = ButtonDefaults.buttonColors(containerColor = wearColorScheme.primary)
+
+@Composable
+fun getCheckboxColors() = CheckboxDefaults.colors(
+    checkedBoxColor = wearColorScheme.onTertiary,
+    checkedCheckmarkColor = wearColorScheme.tertiary
+)
+
+@OptIn(ExperimentalWearMaterial3Api::class)
+@Composable
+fun getInlineSliderDefaultColors() = InlineSliderDefaults.colors(
+    containerColor = wearColorScheme.surfaceDim
 )

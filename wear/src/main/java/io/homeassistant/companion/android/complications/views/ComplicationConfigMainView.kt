@@ -10,17 +10,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.material.Chip
-import androidx.wear.compose.material.ChipDefaults
-import androidx.wear.compose.material.ToggleChip
-import androidx.wear.compose.material.ToggleChipDefaults
 import androidx.wear.compose.material3.FilledIconButton
 import androidx.wear.compose.material3.Icon
 import androidx.wear.compose.material3.IconButtonDefaults
 import androidx.wear.compose.material3.Text
+import androidx.wear.compose.material3.ToggleButton
 import androidx.wear.compose.material3.touchTargetAwareSize
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
@@ -31,7 +27,10 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.complications.ComplicationConfigViewModel
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.theme.WearAppTheme
+import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
+import io.homeassistant.companion.android.theme.getToggleButtonColors
 import io.homeassistant.companion.android.theme.wearColorScheme
+import io.homeassistant.companion.android.util.ToggleSwitch
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.simplifiedEntity
 import io.homeassistant.companion.android.views.ChooseEntityView
@@ -106,7 +105,7 @@ fun MainConfigView(
                     entity?.domain ?: "light",
                     LocalContext.current
                 )
-                Chip(
+                Button(
                     modifier = Modifier.fillMaxWidth(),
                     icon = {
                         Image(
@@ -114,13 +113,8 @@ fun MainConfigView(
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     },
-                    colors = ChipDefaults.secondaryChipColors(),
-                    label = {
-                        Text(
-                            text = stringResource(id = R.string.choose_entity),
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
+                    colors = getFilledTonalButtonColors(),
+                    label = { Text(stringResource(id = R.string.choose_entity)) },
                     secondaryLabel = {
                         Text(
                             if (loaded) {
@@ -136,54 +130,26 @@ fun MainConfigView(
             }
             item {
                 val isChecked = !loaded || showTitle
-                ToggleChip(
+                ToggleButton(
                     checked = isChecked,
                     onCheckedChange = onShowTitleClicked,
-                    label = {
-                        Text(
-                            stringResource(R.string.show_entity_title),
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
-                    toggleControl = {
-                        Icon(
-                            imageVector = ToggleChipDefaults.switchIcon(isChecked),
-                            contentDescription = if (isChecked) {
-                                stringResource(R.string.enabled)
-                            } else {
-                                stringResource(R.string.disabled)
-                            },
-                            tint = if (isChecked) wearColorScheme.tertiary else wearColorScheme.onSurface
-                        )
-                    },
+                    label = { Text(stringResource(R.string.show_entity_title)) },
+                    selectionControl = { ToggleSwitch(isChecked) },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = loaded && entity != null
+                    enabled = loaded && entity != null,
+                    colors = getToggleButtonColors()
                 )
             }
             item {
                 val isChecked = !loaded || showUnit
-                ToggleChip(
+                ToggleButton(
                     checked = isChecked,
                     onCheckedChange = onShowUnitClicked,
-                    label = {
-                        Text(
-                            stringResource(R.string.show_unit_title),
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
-                    toggleControl = {
-                        Icon(
-                            imageVector = ToggleChipDefaults.switchIcon(isChecked),
-                            contentDescription = if (isChecked) {
-                                stringResource(R.string.enabled)
-                            } else {
-                                stringResource(R.string.disabled)
-                            },
-                            tint = if (isChecked) wearColorScheme.tertiary else wearColorScheme.onSurface
-                        )
-                    },
+                    label = { Text(stringResource(R.string.show_unit_title)) },
+                    selectionControl = { ToggleSwitch(isChecked) },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = loaded && entity != null
+                    enabled = loaded && entity != null,
+                    colors = getToggleButtonColors()
                 )
             }
 
@@ -214,7 +180,7 @@ fun PreviewMainConfigView() {
     MainConfigView(
         entity = simplifiedEntity,
         showTitle = true,
-        showUnit = true,
+        showUnit = false,
         loadingState = ComplicationConfigViewModel.LoadingState.READY,
         onChooseEntityClicked = {},
         onShowTitleClicked = {},

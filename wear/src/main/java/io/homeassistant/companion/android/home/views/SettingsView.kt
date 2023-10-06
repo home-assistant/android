@@ -8,14 +8,11 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.wear.compose.material.Chip
-import androidx.wear.compose.material.ChipDefaults
-import androidx.wear.compose.material.ToggleChip
-import androidx.wear.compose.material.ToggleChipDefaults
-import androidx.wear.compose.material3.Icon
+import androidx.wear.compose.material3.Button
+import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.Text
+import androidx.wear.compose.material3.ToggleButton
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.IIcon
@@ -23,7 +20,10 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
+import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
+import io.homeassistant.companion.android.theme.getToggleButtonColors
 import io.homeassistant.companion.android.theme.wearColorScheme
+import io.homeassistant.companion.android.util.ToggleSwitch
 import io.homeassistant.companion.android.util.previewFavoritesList
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
@@ -37,7 +37,7 @@ fun SecondarySettingsChip(
     enabled: Boolean = true,
     onClick: () -> Unit
 ) {
-    Chip(
+    Button(
         modifier = Modifier.fillMaxWidth(),
         icon = {
             Image(
@@ -45,13 +45,8 @@ fun SecondarySettingsChip(
                 colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
             )
         },
-        colors = ChipDefaults.secondaryChipColors(),
-        label = {
-            Text(
-                text = label,
-                fontWeight = FontWeight.Bold
-            )
-        },
+        colors = getFilledTonalButtonColors(),
+        label = { Text(label) },
         secondaryLabel = secondaryLabel?.let {
             { Text(text = secondaryLabel) }
         },
@@ -83,7 +78,7 @@ fun SettingsView(
     WearAppTheme {
         ThemeLazyColumn {
             item {
-                ListHeader(id = commonR.string.favorite_settings)
+                ListHeader(id = commonR.string.favorites)
             }
             item {
                 SecondarySettingsChip(
@@ -97,63 +92,43 @@ fun SettingsView(
                 SecondarySettingsChip(
                     icon = CommunityMaterial.Icon.cmd_delete,
                     label = stringResource(commonR.string.clear_favorites),
-                    secondaryLabel = stringResource(commonR.string.irreversible),
                     enabled = favorites.isNotEmpty(),
                     onClick = onClearFavorites
                 )
             }
             item {
-                ToggleChip(
+                ToggleButton(
                     modifier = Modifier.fillMaxWidth(),
                     checked = isFavoritesOnly,
                     onCheckedChange = { setFavoritesOnly(it) },
-                    label = {
-                        Text(
-                            stringResource(commonR.string.only_favorites),
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
+                    label = { Text(stringResource(commonR.string.only_favorites)) },
                     enabled = favorites.isNotEmpty(),
-                    toggleControl = {
-                        Icon(
-                            imageVector = ToggleChipDefaults.switchIcon(isFavoritesOnly),
-                            contentDescription = if (isFavoritesOnly) {
-                                stringResource(commonR.string.enabled)
-                            } else {
-                                stringResource(commonR.string.disabled)
-                            },
-                            tint = if (isFavoritesOnly) wearColorScheme.tertiary else wearColorScheme.onSurface
-                        )
-                    },
-                    appIcon = {
+                    selectionControl = { ToggleSwitch(isFavoritesOnly) },
+                    icon = {
                         Image(
                             asset = CommunityMaterial.Icon2.cmd_home_heart,
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
-                    }
+                    },
+                    colors = getToggleButtonColors()
                 )
             }
             item {
                 ListHeader(
-                    id = commonR.string.feedback_settings
+                    id = commonR.string.feedback
                 )
             }
             item {
                 val haptic = LocalHapticFeedback.current
-                ToggleChip(
+                ToggleButton(
                     modifier = Modifier.fillMaxWidth(),
                     checked = isHapticEnabled,
                     onCheckedChange = {
                         onHapticEnabled(it)
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     },
-                    label = {
-                        Text(
-                            stringResource(commonR.string.setting_haptic_label),
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
-                    appIcon = {
+                    label = { Text(stringResource(commonR.string.setting_haptic_label)) },
+                    icon = {
                         Image(
                             asset =
                             if (isHapticEnabled) {
@@ -164,31 +139,17 @@ fun SettingsView(
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     },
-                    toggleControl = {
-                        Icon(
-                            imageVector = ToggleChipDefaults.switchIcon(isHapticEnabled),
-                            contentDescription = if (isHapticEnabled) {
-                                stringResource(commonR.string.enabled)
-                            } else {
-                                stringResource(commonR.string.disabled)
-                            },
-                            tint = if (isHapticEnabled) wearColorScheme.tertiary else wearColorScheme.onSurface
-                        )
-                    }
+                    selectionControl = { ToggleSwitch(isHapticEnabled) },
+                    colors = getToggleButtonColors()
                 )
             }
             item {
-                ToggleChip(
+                ToggleButton(
                     modifier = Modifier.fillMaxWidth(),
                     checked = isToastEnabled,
                     onCheckedChange = onToastEnabled,
-                    label = {
-                        Text(
-                            stringResource(commonR.string.setting_toast_label),
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
-                    appIcon = {
+                    label = { Text(stringResource(commonR.string.setting_toast_label)) },
+                    icon = {
                         Image(
                             asset =
                             if (isToastEnabled) {
@@ -199,23 +160,14 @@ fun SettingsView(
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     },
-                    toggleControl = {
-                        Icon(
-                            imageVector = ToggleChipDefaults.switchIcon(isToastEnabled),
-                            contentDescription = if (isToastEnabled) {
-                                stringResource(commonR.string.enabled)
-                            } else {
-                                stringResource(commonR.string.disabled)
-                            },
-                            tint = if (isToastEnabled) wearColorScheme.tertiary else wearColorScheme.onSurface
-                        )
-                    }
+                    selectionControl = { ToggleSwitch(isToastEnabled) },
+                    colors = getToggleButtonColors()
                 )
             }
 
             item {
                 ListHeader(
-                    id = commonR.string.tile_settings
+                    id = commonR.string.tiles
                 )
             }
             item {
@@ -257,33 +209,19 @@ fun SettingsView(
                 )
             }
             item {
-                ToggleChip(
+                ToggleButton(
                     modifier = Modifier.fillMaxWidth(),
                     checked = isAssistantAppAllowed,
                     onCheckedChange = onAssistantAppAllowed,
-                    label = {
-                        Text(
-                            stringResource(commonR.string.available_as_assistant_app),
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
-                    appIcon = {
+                    label = { Text(stringResource(commonR.string.available_as_assistant_app)) },
+                    icon = {
                         Image(
                             asset = CommunityMaterial.Icon.cmd_comment_processing_outline,
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     },
-                    toggleControl = {
-                        Icon(
-                            imageVector = ToggleChipDefaults.switchIcon(isAssistantAppAllowed),
-                            contentDescription = if (isAssistantAppAllowed) {
-                                stringResource(commonR.string.enabled)
-                            } else {
-                                stringResource(commonR.string.disabled)
-                            },
-                            tint = if (isAssistantAppAllowed) wearColorScheme.tertiary else wearColorScheme.onSurface
-                        )
-                    }
+                    selectionControl = { ToggleSwitch(isAssistantAppAllowed) },
+                    colors = getToggleButtonColors()
                 )
             }
             item {
@@ -292,21 +230,13 @@ fun SettingsView(
                 )
             }
             item {
-                Chip(
+                Button(
                     modifier = Modifier.fillMaxWidth(),
-                    icon = {
-                        Image(asset = CommunityMaterial.Icon.cmd_exit_run)
-                    },
-                    label = {
-                        Text(
-                            text = stringResource(id = commonR.string.logout),
-                            color = Color.Black,
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
+                    icon = { Image(CommunityMaterial.Icon.cmd_exit_run) },
+                    label = { Text(stringResource(commonR.string.logout)) },
                     onClick = onClickLogout,
-                    colors = ChipDefaults.primaryChipColors(
-                        backgroundColor = Color.Red,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Red,
                         contentColor = Color.Black
                     )
                 )

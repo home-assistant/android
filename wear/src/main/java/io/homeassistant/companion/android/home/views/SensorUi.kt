@@ -11,18 +11,15 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.wear.compose.material.ToggleChip
-import androidx.wear.compose.material.ToggleChipDefaults
-import androidx.wear.compose.material3.Icon
 import androidx.wear.compose.material3.Text
+import androidx.wear.compose.material3.ToggleButton
 import androidx.wear.tooling.preview.devices.WearDevices
-import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.sensor.Sensor
-import io.homeassistant.companion.android.theme.wearColorScheme
+import io.homeassistant.companion.android.theme.getToggleButtonColors
+import io.homeassistant.companion.android.util.ToggleSwitch
 import io.homeassistant.companion.android.util.batterySensorManager
 import kotlinx.coroutines.runBlocking
 
@@ -34,8 +31,6 @@ fun SensorUi(
     basicSensor: SensorManager.BasicSensor,
     onSensorClicked: (String, Boolean) -> Unit
 ) {
-    val checked = sensor?.enabled == true
-
     val backgroundRequest =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
             onSensorClicked(basicSensor.id, it)
@@ -62,9 +57,10 @@ fun SensorUi(
     }
 
     val perm = manager.checkPermission(LocalContext.current, basicSensor.id)
-    ToggleChip(
-        checked = (sensor == null && basicSensor.enabledByDefault) ||
-            (sensor?.enabled == true && perm),
+    val isChecked = (sensor == null && basicSensor.enabledByDefault) ||
+        (sensor?.enabled == true && perm)
+    ToggleButton(
+        checked = isChecked,
         onCheckedChange = { enabled ->
             val permissions = manager.requiredPermissions(basicSensor.id)
             if (perm || !enabled) {
@@ -86,21 +82,11 @@ fun SensorUi(
             Text(
                 text = stringResource(basicSensor.name),
                 maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                fontWeight = FontWeight.Bold
+                overflow = TextOverflow.Ellipsis
             )
         },
-        toggleControl = {
-            Icon(
-                imageVector = ToggleChipDefaults.switchIcon(checked),
-                contentDescription = if (checked) {
-                    stringResource(R.string.enabled)
-                } else {
-                    stringResource(R.string.disabled)
-                },
-                tint = if (checked) wearColorScheme.tertiary else wearColorScheme.onSurface
-            )
-        }
+        selectionControl = { ToggleSwitch(isChecked) },
+        colors = getToggleButtonColors()
     )
 }
 

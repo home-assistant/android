@@ -16,13 +16,13 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.material.ToggleButton
-import androidx.wear.compose.material.ToggleButtonDefaults
 import androidx.wear.compose.material3.ExperimentalWearMaterial3Api
+import androidx.wear.compose.material3.IconButtonDefaults
+import androidx.wear.compose.material3.IconToggleButton
 import androidx.wear.compose.material3.InlineSlider
 import androidx.wear.compose.material3.InlineSliderDefaults
-import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
+import androidx.wear.compose.material3.touchTargetAwareSize
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
@@ -40,11 +40,14 @@ import io.homeassistant.companion.android.common.data.integration.supportsFanSet
 import io.homeassistant.companion.android.common.data.integration.supportsLightBrightness
 import io.homeassistant.companion.android.common.data.integration.supportsLightColorTemperature
 import io.homeassistant.companion.android.theme.WearAppTheme
+import io.homeassistant.companion.android.theme.getInlineSliderDefaultColors
 import io.homeassistant.companion.android.theme.wearColorScheme
 import io.homeassistant.companion.android.util.getColorTemperature
 import io.homeassistant.companion.android.util.onEntityClickedFeedback
 import io.homeassistant.companion.android.util.onEntityFeedback
 import io.homeassistant.companion.android.util.previewEntity1
+import io.homeassistant.companion.android.util.previewEntity2
+import io.homeassistant.companion.android.util.previewEntity4
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
 import java.text.DateFormat
@@ -70,7 +73,7 @@ fun DetailsPanelView(
                 // Style similar to icon on frontend tile card
                 val isChecked = entity.isActive()
                 if (entity.domain in EntityExt.DOMAINS_TOGGLE) {
-                    ToggleButton(
+                    IconToggleButton(
                         checked = isChecked,
                         onCheckedChange = {
                             onEntityToggled(entity.entityId, entity.state)
@@ -82,15 +85,19 @@ fun DetailsPanelView(
                                 haptic
                             )
                         },
-                        colors = ToggleButtonDefaults.toggleButtonColors(checkedBackgroundColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f)),
-                        modifier = Modifier.size(ToggleButtonDefaults.SmallToggleButtonSize)
+                        colors = IconButtonDefaults.iconToggleButtonColors(
+                            checkedContainerColor = wearColorScheme.tertiary.copy(alpha = 0.2f),
+                            uncheckedContainerColor = wearColorScheme.surfaceDim
+                        ),
+                        modifier = Modifier.touchTargetAwareSize(IconButtonDefaults.SmallButtonSize)
                     ) {
                         Image(
                             asset = entity.getIcon(LocalContext.current),
                             colorFilter = ColorFilter.tint(
-                                if (isChecked) MaterialTheme.colorScheme.tertiary else wearColorScheme.onSurface
+                                if (isChecked) wearColorScheme.tertiary else wearColorScheme.onSurface
                             ),
-                            contentDescription = stringResource(if (isChecked) R.string.enabled else R.string.disabled)
+                            contentDescription = stringResource(if (isChecked) R.string.enabled else R.string.disabled),
+                            modifier = Modifier.size(IconButtonDefaults.iconSizeFor(IconButtonDefaults.SmallButtonSize))
                         )
                     }
                 } else {
@@ -204,16 +211,19 @@ fun FanSpeedSlider(
             decreaseIcon = {
                 Image(
                     asset = CommunityMaterial.Icon2.cmd_fan_minus,
-                    colorFilter = ColorFilter.tint(Color.White)
+                    colorFilter = ColorFilter.tint(Color.White),
+                    modifier = Modifier.size(IconButtonDefaults.iconSizeFor(IconButtonDefaults.ExtraSmallButtonSize))
                 )
             },
             increaseIcon = {
                 Image(
                     asset = CommunityMaterial.Icon2.cmd_fan_plus,
-                    colorFilter = ColorFilter.tint(Color.White)
+                    colorFilter = ColorFilter.tint(Color.White),
+                    modifier = Modifier.size(IconButtonDefaults.iconSizeFor(IconButtonDefaults.ExtraSmallButtonSize))
                 )
             },
-            modifier = Modifier.padding(bottom = 8.dp, top = 2.dp)
+            modifier = Modifier.padding(bottom = 8.dp, top = 2.dp),
+            colors = getInlineSliderDefaultColors()
         )
     }
 }
@@ -255,16 +265,19 @@ fun BrightnessSlider(
             decreaseIcon = {
                 Image(
                     asset = CommunityMaterial.Icon.cmd_brightness_4,
-                    colorFilter = ColorFilter.tint(Color.White)
+                    colorFilter = ColorFilter.tint(Color.White),
+                    modifier = Modifier.size(IconButtonDefaults.iconSizeFor(IconButtonDefaults.ExtraSmallButtonSize))
                 )
             },
             increaseIcon = {
                 Image(
                     asset = CommunityMaterial.Icon.cmd_brightness_7,
-                    colorFilter = ColorFilter.tint(Color.White)
+                    colorFilter = ColorFilter.tint(Color.White),
+                    modifier = Modifier.size(IconButtonDefaults.iconSizeFor(IconButtonDefaults.ExtraSmallButtonSize))
                 )
             },
-            modifier = Modifier.padding(bottom = 8.dp, top = 2.dp)
+            modifier = Modifier.padding(bottom = 8.dp, top = 2.dp),
+            colors = getInlineSliderDefaultColors()
         )
     }
 }
@@ -320,20 +333,23 @@ fun ColorTempSlider(
             decreaseIcon = {
                 Image(
                     asset = CommunityMaterial.Icon3.cmd_thermometer_minus,
-                    colorFilter = ColorFilter.tint(Color.White)
+                    colorFilter = ColorFilter.tint(Color.White),
+                    modifier = Modifier.size(IconButtonDefaults.iconSizeFor(IconButtonDefaults.ExtraSmallButtonSize))
                 )
             },
             increaseIcon = {
                 Image(
                     asset = CommunityMaterial.Icon3.cmd_thermometer_plus,
-                    colorFilter = ColorFilter.tint(Color.White)
+                    colorFilter = ColorFilter.tint(Color.White),
+                    modifier = Modifier.size(IconButtonDefaults.iconSizeFor(IconButtonDefaults.ExtraSmallButtonSize))
                 )
             },
             colors = InlineSliderDefaults.colors(
                 selectedBarColor = getColorTemperature(
                     ratio = (currentValue - minValue).toDouble() / (maxValue - minValue).toDouble(),
                     isKelvin = useKelvin
-                )
+                ),
+                containerColor = wearColorScheme.surfaceDim
             ),
             modifier = Modifier.padding(bottom = 8.dp)
         )
@@ -365,10 +381,42 @@ private fun onSliderChangedFeedback(
 
 @Preview(device = WearDevices.LARGE_ROUND)
 @Composable
-private fun PreviewDetailsPaneView() {
+private fun PreviewDetailsPaneViewEntityFanOn() {
+    CompositionLocalProvider {
+        DetailsPanelView(
+            entity = previewEntity4,
+            onEntityToggled = { _, _ -> },
+            onFanSpeedChanged = {},
+            onBrightnessChanged = {},
+            onColorTempChanged = { _, _ -> },
+            isToastEnabled = false,
+            isHapticEnabled = false
+        )
+    }
+}
+
+@Preview(device = WearDevices.LARGE_ROUND)
+@Composable
+private fun PreviewDetailsPaneViewEntityLightOn() {
     CompositionLocalProvider {
         DetailsPanelView(
             entity = previewEntity1,
+            onEntityToggled = { _, _ -> },
+            onFanSpeedChanged = {},
+            onBrightnessChanged = {},
+            onColorTempChanged = { _, _ -> },
+            isToastEnabled = false,
+            isHapticEnabled = false
+        )
+    }
+}
+
+@Preview(device = WearDevices.LARGE_ROUND)
+@Composable
+private fun PreviewDetailsPaneViewEntityLightOff() {
+    CompositionLocalProvider {
+        DetailsPanelView(
+            entity = previewEntity2,
             onEntityToggled = { _, _ -> },
             onFanSpeedChanged = {},
             onBrightnessChanged = {},

@@ -11,15 +11,17 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material.Picker
 import androidx.wear.compose.material.rememberPickerState
 import androidx.wear.compose.material3.FilledIconButton
 import androidx.wear.compose.material3.Icon
 import androidx.wear.compose.material3.IconButtonDefaults
+import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 import androidx.wear.compose.material3.touchTargetAwareSize
 import androidx.wear.tooling.preview.devices.WearDevices
@@ -41,8 +43,7 @@ fun RefreshIntervalPickerView(
     val initialIndex = options.indexOf(currentInterval)
     val state = rememberPickerState(
         initialNumberOfOptions = options.size,
-        initiallySelectedOption = if (initialIndex != -1) initialIndex else 0,
-        repeatItems = true
+        initiallySelectedOption = if (initialIndex != -1) initialIndex else 0
     )
 
     Column(
@@ -55,13 +56,17 @@ fun RefreshIntervalPickerView(
             contentDescription = stringResource(R.string.refresh_interval),
             modifier = Modifier
                 .weight(1f)
-                .padding(all = 8.dp)
                 .rotaryWithSnap(state.toRotaryScrollAdapter())
         ) {
             Text(
-                intervalToString(LocalContext.current, options[it]),
-                fontSize = 24.sp,
-                color = if (it != this.selectedOption) wearColorScheme.onBackground else wearColorScheme.primary
+                text = intervalToString(LocalContext.current, options[it]),
+                style = with(LocalDensity.current) {
+                    MaterialTheme.typography.displayMedium.copy(
+                        fontWeight = FontWeight.Medium,
+                        fontSize = MaterialTheme.typography.displayMedium.fontSize.value.dp.toSp() // Ignore text scaling
+                    )
+                },
+                color = wearColorScheme.primary
             )
         }
         FilledIconButton(
