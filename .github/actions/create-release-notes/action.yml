@@ -36,7 +36,7 @@ runs:
             target_commitish: 'master',
             previous_tag_name: '${{ steps.latest-release-tag.outputs.result }}',
           })
-          return data.body
+          return data.body.replaceAll('`', '\'')
     - name: Generate Release Notes
       id: version-generator
       shell: bash
@@ -47,7 +47,7 @@ runs:
         echo "${{ steps.latest-release-tag.outputs.result }}"
         
         echo "Full Changelog:"
-        CHANGELOG='${{ steps.generate-notes.outputs.result }}'
+        CHANGELOG="${{ steps.generate-notes.outputs.result }}"
         echo -e "$CHANGELOG"
         printf "$CHANGELOG" > ./app/build/outputs/changelogGithub
 
