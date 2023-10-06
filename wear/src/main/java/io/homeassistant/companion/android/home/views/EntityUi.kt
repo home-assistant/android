@@ -12,10 +12,9 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.wear.compose.material.Chip
-import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.ToggleChipDefaults
+import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.Icon
 import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
@@ -27,6 +26,7 @@ import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.integration.isActive
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
+import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
 import io.homeassistant.companion.android.theme.wearColorScheme
 import io.homeassistant.companion.android.util.WearToggleChip
 import io.homeassistant.companion.android.util.onEntityClickedFeedback
@@ -102,7 +102,7 @@ fun EntityUi(
             colors = WearToggleChip.entityToggleChipBackgroundColors(entity, isChecked)
         )
     } else {
-        Chip(
+        Button(
             modifier = Modifier
                 .fillMaxWidth(),
             icon = {
@@ -140,7 +140,7 @@ fun EntityUi(
                 onEntityClicked(entity.entityId, entity.state)
                 onEntityClickedFeedback(isToastEnabled, isHapticEnabled, context, friendlyName, haptic)
             },
-            colors = ChipDefaults.secondaryChipColors()
+            colors = getFilledTonalButtonColors()
         )
     }
 }
