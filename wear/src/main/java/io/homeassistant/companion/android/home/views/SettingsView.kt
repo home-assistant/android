@@ -78,7 +78,7 @@ fun SettingsView(
     WearAppTheme {
         ThemeLazyColumn {
             item {
-                ListHeader(id = commonR.string.favorite_settings)
+                ListHeader(id = commonR.string.favorites)
             }
             item {
                 SecondarySettingsChip(
@@ -92,7 +92,6 @@ fun SettingsView(
                 SecondarySettingsChip(
                     icon = CommunityMaterial.Icon.cmd_delete,
                     label = stringResource(commonR.string.clear_favorites),
-                    secondaryLabel = stringResource(commonR.string.irreversible),
                     enabled = favorites.isNotEmpty(),
                     onClick = onClearFavorites
                 )
@@ -116,7 +115,7 @@ fun SettingsView(
             }
             item {
                 ListHeader(
-                    id = commonR.string.feedback_settings
+                    id = commonR.string.feedback
                 )
             }
             item {
@@ -168,7 +167,7 @@ fun SettingsView(
 
             item {
                 ListHeader(
-                    id = commonR.string.tile_settings
+                    id = commonR.string.tiles
                 )
             }
             item {
