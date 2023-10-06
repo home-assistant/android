@@ -10,11 +10,30 @@ val attributes: Map<*, *> = mapOf(
     "icon" to "mdi:cellphone"
 )
 
+val lightAttributes: Map<*, *> = mapOf(
+    "friendly_name" to "Light",
+    "icon" to "mdi:light-bulb",
+    "supported_color_modes" to listOf("color_temp", "hs"),
+    "supported_features" to 36,
+    "brightness" to 160,
+    "min_mireds" to 153,
+    "max_mireds" to 526,
+    "color_temp" to 300,
+    "color_mode" to "color_temp"
+)
+
+val fanAttributes: Map<*, *> = mapOf(
+    "friendly_name" to "Fan",
+    "icon" to "mdi:fan",
+    "supported_features" to 1,
+    "percentage" to 20
+)
 private val calendar: Calendar = Calendar.getInstance()
 
-val previewEntity1 = Entity("light.first", "on", attributes, calendar, calendar, mapOf())
+val previewEntity1 = Entity("light.first", "on", lightAttributes, calendar, calendar, mapOf())
 val previewEntity2 = Entity("light.second", "off", attributes, calendar, calendar, mapOf())
 val previewEntity3 = Entity("scene.first", "on", attributes, calendar, calendar, mapOf())
+val previewEntity4 = Entity("fan.first", "on", fanAttributes, calendar, calendar, mapOf())
 
 val previewEntityList = mapOf(
     previewEntity1.entityId to previewEntity1,

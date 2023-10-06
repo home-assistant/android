@@ -6,6 +6,8 @@ import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.CheckboxDefaults
 import androidx.wear.compose.material3.ColorScheme
 import androidx.wear.compose.material3.ContentAlpha
+import androidx.wear.compose.material3.ExperimentalWearMaterial3Api
+import androidx.wear.compose.material3.InlineSliderDefaults
 import androidx.wear.compose.material3.SwitchDefaults
 import androidx.wear.compose.material3.ToggleButtonDefaults
 
@@ -78,4 +80,10 @@ fun getPrimaryButtonColors() = ButtonDefaults.buttonColors(containerColor = wear
 fun getCheckboxColors() = CheckboxDefaults.colors(
     checkedBoxColor = wearColorScheme.onTertiary,
     checkedCheckmarkColor = wearColorScheme.tertiary
+)
+
+@OptIn(ExperimentalWearMaterial3Api::class)
+@Composable
+fun getInlineSliderDefaultColors() = InlineSliderDefaults.colors(
+    containerColor = wearColorScheme.surfaceDim
 )
