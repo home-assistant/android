@@ -225,7 +225,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var downloadFileUrl = ""
     private var downloadFileContentDisposition = ""
     private var downloadFileMimetype = ""
-    private var javascriptInterface = "externalApp"
+    private val javascriptInterface = "externalApp"
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
