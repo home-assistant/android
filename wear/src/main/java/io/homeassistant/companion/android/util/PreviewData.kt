@@ -19,6 +19,7 @@ val lightAttributes: Map<*, *> = mapOf(
     "min_mireds" to 153,
     "max_mireds" to 526,
     "color_temp" to 300,
+    "rgb_color" to listOf(255, 187, 130),
     "color_mode" to "color_temp"
 )
 
