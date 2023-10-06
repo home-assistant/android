@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.home.views
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
@@ -14,9 +15,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material3.Button
-import androidx.wear.compose.material3.ButtonDefaults
+import androidx.wear.compose.material3.FilledIconButton
 import androidx.wear.compose.material3.Icon
+import androidx.wear.compose.material3.IconButtonDefaults
 import androidx.wear.compose.material3.Text
+import androidx.wear.compose.material3.touchTargetAwareSize
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
 import io.homeassistant.companion.android.data.SimplifiedEntity
@@ -73,14 +76,16 @@ fun SetShortcutsTileView(
             }
             if (shortcutEntities.size < 7) {
                 item {
-                    Button(
-                        modifier = Modifier.padding(top = 16.dp),
-                        onClick = { onShortcutEntitySelectionChange(shortcutEntities.size) },
-                        colors = ButtonDefaults.buttonColors(),
-                        icon = {
-                            Icon(Icons.Filled.Add, stringResource(id = commonR.string.add_shortcut))
-                        }
-                    ) { }
+                    FilledIconButton(
+                        modifier = Modifier.padding(top = 16.dp).touchTargetAwareSize(IconButtonDefaults.SmallButtonSize),
+                        onClick = { onShortcutEntitySelectionChange(shortcutEntities.size) }
+                    ) {
+                        Icon(
+                            Icons.Filled.Add,
+                            contentDescription = stringResource(id = commonR.string.add_shortcut),
+                            modifier = Modifier.size(IconButtonDefaults.iconSizeFor(IconButtonDefaults.SmallButtonSize))
+                        )
+                    }
                 }
             }
         }

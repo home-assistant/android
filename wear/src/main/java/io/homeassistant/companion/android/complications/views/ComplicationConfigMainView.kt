@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.complications.views
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.Composable
@@ -12,9 +13,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material3.Button
+import androidx.wear.compose.material3.FilledIconButton
 import androidx.wear.compose.material3.Icon
+import androidx.wear.compose.material3.IconButtonDefaults
 import androidx.wear.compose.material3.Text
 import androidx.wear.compose.material3.ToggleButton
+import androidx.wear.compose.material3.touchTargetAwareSize
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
@@ -151,12 +155,17 @@ fun MainConfigView(
             }
 
             item {
-                Button(
-                    modifier = Modifier.padding(top = 8.dp),
+                FilledIconButton(
+                    modifier = Modifier.padding(top = 8.dp).touchTargetAwareSize(IconButtonDefaults.SmallButtonSize),
                     onClick = { onAcceptClicked() },
-                    enabled = loaded && entity != null,
-                    icon = { Icon(Icons.Filled.Check, stringResource(id = R.string.save)) }
-                ) { }
+                    enabled = loaded && entity != null
+                ) {
+                    Icon(
+                        Icons.Filled.Check,
+                        contentDescription = stringResource(id = R.string.save),
+                        modifier = Modifier.size(IconButtonDefaults.iconSizeFor(IconButtonDefaults.SmallButtonSize))
+                    )
+                }
             }
         } else {
             item {
