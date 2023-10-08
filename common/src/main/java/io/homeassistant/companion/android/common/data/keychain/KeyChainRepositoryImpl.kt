@@ -6,6 +6,7 @@ import android.util.Log
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.lang.UnsupportedOperationException
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import javax.inject.Inject
@@ -38,6 +39,10 @@ class KeyChainRepositoryImpl @Inject constructor(
         }
 
         doLoad(context)
+    }
+
+    override suspend fun setData(alias: String, privateKey: PrivateKey, certificateChain: Array<X509Certificate>) {
+        throw UnsupportedOperationException("setData not supported for KeyChainRepositoryImpl")
     }
 
     override fun getAlias(): String? {

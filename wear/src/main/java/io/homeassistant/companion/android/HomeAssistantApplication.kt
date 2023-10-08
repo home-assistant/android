@@ -11,13 +11,30 @@ import android.nfc.NfcAdapter
 import android.os.Build
 import android.os.PowerManager
 import dagger.hilt.android.HiltAndroidApp
+import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.complications.ComplicationReceiver
 import io.homeassistant.companion.android.sensors.SensorReceiver
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+import javax.inject.Named
 
 @HiltAndroidApp
 open class HomeAssistantApplication : Application() {
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
+
+    @Inject
+    @Named("keyStore")
+    lateinit var keyStore: KeyChainRepository
+
     override fun onCreate() {
         super.onCreate()
+
+        ioScope.launch {
+            keyStore.load(applicationContext, "TLSClientCertificate")
+        }
 
         val sensorReceiver = SensorReceiver()
         // This will cause the sensor to be updated every time the OS broadcasts that a cable was plugged/unplugged.

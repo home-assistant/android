@@ -36,6 +36,7 @@ import io.homeassistant.companion.android.util.isStarted
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import javax.inject.Inject
+import javax.inject.Named
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
@@ -54,6 +55,7 @@ class AuthenticationFragment : Fragment() {
     lateinit var themesManager: ThemesManager
 
     @Inject
+    @Named("keyChainRepository")
     lateinit var keyChainRepository: KeyChainRepository
 
     @SuppressLint("SetJavaScriptEnabled")

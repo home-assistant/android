@@ -116,6 +116,7 @@ import org.chromium.net.CronetEngine
 import org.json.JSONObject
 import java.util.concurrent.Executors
 import javax.inject.Inject
+import javax.inject.Named
 import io.homeassistant.companion.android.common.R as commonR
 
 @OptIn(androidx.media3.common.util.UnstableApi::class)
@@ -189,6 +190,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     lateinit var authenticationDao: AuthenticationDao
 
     @Inject
+    @Named("keyChainRepository")
     lateinit var keyChainRepository: KeyChainRepository
 
     private lateinit var binding: ActivityWebviewBinding

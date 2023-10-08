@@ -44,6 +44,7 @@ class OnboardingActivity : BaseActivity() {
         }
         viewModel.deviceIsWatch = input.isWatch
         viewModel.discoveryOptions = input.discoveryOptions
+        viewModel.mayRequireTlsClientCertificate = input.mayRequireTlsClientCertificate
 
         if (savedInstanceState == null) {
             supportFragmentManager.commit {

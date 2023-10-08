@@ -18,6 +18,7 @@ import com.google.android.gms.wearable.WearableListenerService
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
+import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.WearDataMessages
@@ -42,7 +43,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import java.io.IOException
+import java.security.KeyStore
+import java.security.PrivateKey
+import java.security.cert.X509Certificate
 import javax.inject.Inject
+import javax.inject.Named
 
 @AndroidEntryPoint
 @SuppressLint("VisibleForTests") // https://issuetracker.google.com/issues/239451111
@@ -56,6 +62,14 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
 
     @Inject
     lateinit var favoritesDao: FavoritesDao
+
+    @Inject
+    @Named("keyChainRepository")
+    lateinit var keyChainRepository: KeyChainRepository
+
+    @Inject
+    @Named("keyStore")
+    lateinit var keyStore: KeyChainRepository
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -135,6 +149,28 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
             val deviceName = dataMap.getString("DeviceName")
             val deviceTrackingEnabled = dataMap.getBoolean("LocationTracking")
             val notificationsEnabled = dataMap.getBoolean("Notifications")
+            val tlsClientCertificateData = dataMap.getByteArray("TLSClientCertificateData")
+            val tlsClientCertificatePassword = dataMap.getString("TLSClientCertificatePassword").orEmpty().toCharArray()
+
+            // load TLS key
+            if (tlsClientCertificateData != null && tlsClientCertificateData.isNotEmpty()) {
+                KeyStore.getInstance("PKCS12").apply {
+                    try {
+                        load(tlsClientCertificateData.inputStream(), tlsClientCertificatePassword)
+
+                        val alias = aliases().nextElement()
+                        val certificateChain = getCertificateChain(alias).filterIsInstance<X509Certificate>().toTypedArray()
+                        val privateKey = getKey(alias, tlsClientCertificatePassword) as PrivateKey
+
+                        // we store the TLS Client key under a static alias because there is currently
+                        // no way to ask the user for the correct alias
+                        keyStore.setData("TLSClientCertificate", privateKey, certificateChain)
+                        keyChainRepository.load(applicationContext)
+                    } catch (e: IOException) {
+                        Log.e(TAG, "Cannot load TLS client certificate", e)
+                    }
+                }
+            }
 
             val formattedUrl = UrlUtil.formattedUrlString(url)
             val server = Server(

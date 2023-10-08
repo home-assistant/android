@@ -18,6 +18,7 @@ import io.homeassistant.companion.android.common.data.authentication.impl.Authen
 import io.homeassistant.companion.android.common.data.integration.impl.IntegrationService
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepositoryImpl
+import io.homeassistant.companion.android.common.data.keychain.KeyStoreImpl
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepositoryImpl
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
@@ -159,7 +160,13 @@ abstract class DataModule {
 
     @Binds
     @Singleton
+    @Named("keyChainRepository")
     abstract fun bindKeyChainRepository(keyChainRepository: KeyChainRepositoryImpl): KeyChainRepository
+
+    @Binds
+    @Singleton
+    @Named("keyStore")
+    abstract fun bindKeyStore(keyStore: KeyStoreImpl): KeyChainRepository
 
     @Binds
     @Singleton

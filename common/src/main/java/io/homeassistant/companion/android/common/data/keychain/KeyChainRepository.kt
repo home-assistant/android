@@ -12,6 +12,8 @@ interface KeyChainRepository {
 
     suspend fun load(context: Context)
 
+    suspend fun setData(alias: String, privateKey: PrivateKey, certificateChain: Array<X509Certificate>)
+
     fun getAlias(): String?
 
     fun getPrivateKey(): PrivateKey?

@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.core.net.toUri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.fasterxml.jackson.databind.JsonMappingException
@@ -205,12 +206,21 @@ class SettingsWearViewModel @Inject constructor(
         }
     }
 
+    private fun readUriData(uri: String): ByteArray {
+        if (uri.isEmpty()) return ByteArray(0)
+        return getApplication<HomeAssistantApplication>().contentResolver.openInputStream(uri.toUri())!!.buffered().use {
+            it.readBytes()
+        }
+    }
+
     fun sendAuthToWear(
         url: String,
         authCode: String,
         deviceName: String,
         deviceTrackingEnabled: Boolean,
-        notificationsEnabled: Boolean
+        notificationsEnabled: Boolean,
+        tlsClientCertificateUri: String,
+        tlsClientCertificatePassword: String
     ) {
         _hasData.value = false // Show loading indicator
         val putDataRequest = PutDataMapRequest.create("/authenticate").run {
@@ -221,6 +231,8 @@ class SettingsWearViewModel @Inject constructor(
             dataMap.putString("DeviceName", deviceName)
             dataMap.putBoolean("LocationTracking", deviceTrackingEnabled)
             dataMap.putBoolean("Notifications", notificationsEnabled)
+            dataMap.putByteArray("TLSClientCertificateData", readUriData(tlsClientCertificateUri))
+            dataMap.putString("TLSClientCertificatePassword", tlsClientCertificatePassword)
             setUrgent()
             asPutDataRequest()
         }

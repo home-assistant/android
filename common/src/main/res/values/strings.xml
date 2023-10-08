@@ -551,6 +551,7 @@
     <string name="security">Security</string>
     <string name="select">Select</string>
     <string name="select_entity_to_display">Select entity to display</string>
+    <string name="select_file">Select file</string>
     <string name="select_instance">Select your Home Assistant server</string>
     <string name="sensor_description_active_notification_count">Total count of active notifications that are visible to the user including silent, persistent and the Sensor Worker notifications.</string>
     <string name="sensor_description_app_importance">If the app is in the foreground, background or any other state it can be</string>
@@ -1093,6 +1094,8 @@
     <string name="tls_cert_title">TLS client certificate error</string>
     <string name="tls_cert_not_found_message">The remote site requires a client certificate.\nPlease install the required credential on your phone and try again.</string>
     <string name="tls_cert_expired_message">The certificate is not yet or no longer valid.\nPlease install a new credential on your phone and try again.</string>
+    <string name="tls_cert_onboarding_description">If your Home Assistant instance requires TLS client certificate authentication, select a TLS client certificate file to install it on your Wear OS device.</string>
+    <string name="tls_cert_onboarding_title">TLS client certificate</string>
     <string name="basic_sensor_name_battery_power">Battery power</string>
     <string name="widget_checkbox_require_authentication">Require authentication</string>
     <string name="widget_error_authenticating">Error authenticating - is an authentication method configured?</string>

@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.wearable.Node
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.settings.wear.SettingsWearViewModel
 import kotlinx.coroutines.cancel
@@ -71,15 +72,16 @@ class SettingsWearMainView : AppCompatActivity() {
                 locationTrackingPossible = false,
                 notificationsPossible = false,
                 isWatch = true,
-                discoveryOptions = OnboardApp.DiscoveryOptions.ADD_EXISTING_EXTERNAL
+                discoveryOptions = OnboardApp.DiscoveryOptions.ADD_EXISTING_EXTERNAL,
+                mayRequireTlsClientCertificate = (application as HomeAssistantApplication).keyChainRepository.getPrivateKey() != null
             ) // While notifications are technically possible, the app can't handle this for the Wear device
         )
     }
 
     private fun onOnboardingComplete(result: OnboardApp.Output?) {
         if (result != null) {
-            val (url, authCode, deviceName, deviceTrackingEnabled, _) = result
-            settingsWearViewModel.sendAuthToWear(url, authCode, deviceName, deviceTrackingEnabled, true)
+            val (url, authCode, deviceName, deviceTrackingEnabled, _, tlsCertificateUri, tlsCertificatePassword) = result
+            settingsWearViewModel.sendAuthToWear(url, authCode, deviceName, deviceTrackingEnabled, true, tlsCertificateUri, tlsCertificatePassword)
         } else {
             Log.e(TAG, "onOnboardingComplete: Activity result returned null intent data")
         }
