@@ -1210,9 +1210,10 @@ class MessagingManager @Inject constructor(
         data: Map<String, String>
     ) {
         data[ICON_URL]?.let {
+            val dataIcon = it.trim().replace(" ", "%20")
             val serverId = data[THIS_SERVER_ID]!!.toInt()
-            val url = UrlUtil.handle(serverManager.getServer(serverId)?.connection?.getUrl(), it)
-            val bitmap = getImageBitmap(serverId, url, !UrlUtil.isAbsoluteUrl(it))
+            val url = UrlUtil.handle(serverManager.getServer(serverId)?.connection?.getUrl(), dataIcon)
+            val bitmap = getImageBitmap(serverId, url, !UrlUtil.isAbsoluteUrl(dataIcon))
             if (bitmap != null) {
                 builder.setLargeIcon(bitmap)
             }
@@ -1224,9 +1225,10 @@ class MessagingManager @Inject constructor(
         data: Map<String, String>
     ) {
         data[IMAGE_URL]?.let {
+            val dataImage = it.trim().replace(" ", "%20")
             val serverId = data[THIS_SERVER_ID]!!.toInt()
-            val url = UrlUtil.handle(serverManager.getServer(serverId)?.connection?.getUrl(), it)
-            val bitmap = getImageBitmap(serverId, url, !UrlUtil.isAbsoluteUrl(it))
+            val url = UrlUtil.handle(serverManager.getServer(serverId)?.connection?.getUrl(), dataImage)
+            val bitmap = getImageBitmap(serverId, url, !UrlUtil.isAbsoluteUrl(dataImage))
             if (bitmap != null) {
                 builder
                     .setLargeIcon(bitmap)
@@ -1270,9 +1272,10 @@ class MessagingManager @Inject constructor(
         data: Map<String, String>
     ) {
         data[VIDEO_URL]?.let {
+            val dataVideo = it.trim().replace(" ", "%20")
             val serverId = data[THIS_SERVER_ID]!!.toInt()
-            val url = UrlUtil.handle(serverManager.getServer(serverId)?.connection?.getUrl(), it)
-            getVideoFrames(serverId, url, !UrlUtil.isAbsoluteUrl(it))?.let { frames ->
+            val url = UrlUtil.handle(serverManager.getServer(serverId)?.connection?.getUrl(), dataVideo)
+            getVideoFrames(serverId, url, !UrlUtil.isAbsoluteUrl(dataVideo))?.let { frames ->
                 Log.d(TAG, "Found ${frames.size} frames for video notification")
                 RemoteViews(context.packageName, R.layout.view_image_flipper).let { remoteViewFlipper ->
                     if (frames.isNotEmpty()) {
