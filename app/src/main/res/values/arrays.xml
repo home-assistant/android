@@ -117,5 +117,7 @@
             com.google.android.apps.automotive.templates.host</item>
         <item>50e603d333c6049a37bd751375d08f3bd0abebd33facd30bd17b64b89658b421,
             com.google.android.apps.automotive.templates.host</item>
+        <item>8a5e57e998757cfc3b42ce1945b54e0cc14d79b525b7d9b6905a691053564e33,
+            com.harman.ignite.car.app.host.tml</item>
     </string-array>
 </resources>
