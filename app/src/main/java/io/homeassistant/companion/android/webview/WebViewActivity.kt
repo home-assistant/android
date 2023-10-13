@@ -34,6 +34,7 @@ import android.webkit.HttpAuthHandler
 import android.webkit.JavascriptInterface
 import android.webkit.JsResult
 import android.webkit.PermissionRequest
+import android.webkit.RenderProcessGoneDetail
 import android.webkit.SslErrorHandler
 import android.webkit.URLUtil
 import android.webkit.ValueCallback
@@ -224,6 +225,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var downloadFileUrl = ""
     private var downloadFileContentDisposition = ""
     private var downloadFileMimetype = ""
+    private val javascriptInterface = "externalApp"
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -394,6 +396,19 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                         error,
                         null
                     )
+                }
+
+                override fun onRenderProcessGone(
+                    view: WebView?,
+                    handler: RenderProcessGoneDetail?
+                ): Boolean {
+                    Log.e(TAG, "onRenderProcessGone: webView crashed")
+                    view?.let {
+                        reload()
+                        webViewAddJavascriptInterface()
+                    }
+
+                    return true
                 }
 
                 override fun onLoadResource(
@@ -580,6 +595,63 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 }
             }
 
+            webViewAddJavascriptInterface()
+        }
+
+        // Set WebView background color to transparent, so that the theme of the android activity has control over it.
+        // This enables the ability to have the launch screen behind the WebView until the web frontend gets rendered
+        binding.webview.setBackgroundColor(Color.TRANSPARENT)
+
+        themesManager.setThemeForWebView(this, webView.settings)
+
+        val cookieManager = CookieManager.getInstance()
+        cookieManager.setAcceptCookie(true)
+        cookieManager.setAcceptThirdPartyCookies(webView, true)
+
+        window.decorView.setOnSystemUiVisibilityChangeListener { visibility ->
+            if (visibility and View.SYSTEM_UI_FLAG_FULLSCREEN == 0) {
+                if (presenter.isFullScreen()) {
+                    hideSystemUI()
+                }
+            }
+        }
+
+        if (presenter.isKeepScreenOnEnabled()) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+
+        currentAutoplay = presenter.isAutoPlayVideoEnabled()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val webviewPackage = WebViewCompat.getCurrentWebViewPackage(this)
+            Log.d(TAG, "Current webview package ${webviewPackage?.packageName} and version ${webviewPackage?.versionName}")
+        }
+
+        lifecycleScope.launch {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                presenter.getMatterCommissioningStatusFlow().collect {
+                    Log.d(TAG, "Matter commissioning status changed to $it")
+                    when (it) {
+                        MatterFrontendCommissioningStatus.THREAD_EXPORT_TO_SERVER,
+                        MatterFrontendCommissioningStatus.IN_PROGRESS -> {
+                            presenter.getMatterCommissioningIntent()?.let { intentSender ->
+                                commissionMatterDevice.launch(IntentSenderRequest.Builder(intentSender).build())
+                            }
+                        }
+                        MatterFrontendCommissioningStatus.ERROR -> {
+                            Toast.makeText(this@WebViewActivity, commonR.string.matter_commissioning_unavailable, Toast.LENGTH_SHORT).show()
+                            presenter.confirmMatterCommissioningError()
+                        }
+                        else -> { } // Do nothing
+                    }
+                }
+            }
+        }
+    }
+
+    private fun webViewAddJavascriptInterface() {
+        webView.removeJavascriptInterface(javascriptInterface)
+        webView.apply {
             addJavascriptInterface(
                 object : Any() {
                     // TODO This feature is deprecated and should be removed after 2022.6
@@ -690,58 +762,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                         }
                     }
                 },
-                "externalApp"
+                javascriptInterface
             )
-        }
-
-        // Set WebView background color to transparent, so that the theme of the android activity has control over it.
-        // This enables the ability to have the launch screen behind the WebView until the web frontend gets rendered
-        binding.webview.setBackgroundColor(Color.TRANSPARENT)
-
-        themesManager.setThemeForWebView(this, webView.settings)
-
-        val cookieManager = CookieManager.getInstance()
-        cookieManager.setAcceptCookie(true)
-        cookieManager.setAcceptThirdPartyCookies(webView, true)
-
-        window.decorView.setOnSystemUiVisibilityChangeListener { visibility ->
-            if (visibility and View.SYSTEM_UI_FLAG_FULLSCREEN == 0) {
-                if (presenter.isFullScreen()) {
-                    hideSystemUI()
-                }
-            }
-        }
-
-        if (presenter.isKeepScreenOnEnabled()) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        }
-
-        currentAutoplay = presenter.isAutoPlayVideoEnabled()
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val webviewPackage = WebViewCompat.getCurrentWebViewPackage(this)
-            Log.d(TAG, "Current webview package ${webviewPackage?.packageName} and version ${webviewPackage?.versionName}")
-        }
-
-        lifecycleScope.launch {
-            lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                presenter.getMatterCommissioningStatusFlow().collect {
-                    Log.d(TAG, "Matter commissioning status changed to $it")
-                    when (it) {
-                        MatterFrontendCommissioningStatus.THREAD_EXPORT_TO_SERVER,
-                        MatterFrontendCommissioningStatus.IN_PROGRESS -> {
-                            presenter.getMatterCommissioningIntent()?.let { intentSender ->
-                                commissionMatterDevice.launch(IntentSenderRequest.Builder(intentSender).build())
-                            }
-                        }
-                        MatterFrontendCommissioningStatus.ERROR -> {
-                            Toast.makeText(this@WebViewActivity, commonR.string.matter_commissioning_unavailable, Toast.LENGTH_SHORT).show()
-                            presenter.confirmMatterCommissioningError()
-                        }
-                        else -> { } // Do nothing
-                    }
-                }
-            }
         }
     }
 
