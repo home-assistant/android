@@ -153,11 +153,19 @@ fun MobileAppIntegrationView(
                                 }
                             ),
                             trailingIcon = {
-                                Icon(
-                                    imageVector = if (onboardingViewModel.tlsClientCertificatePasswordCorrect) Icons.Filled.CheckCircle else Icons.Filled.Error,
-                                    tint = if (!onboardingViewModel.tlsClientCertificatePasswordCorrect) colorResource(commonR.color.colorWarning) else colorResource(commonR.color.colorOnBackground),
-                                    contentDescription = null
-                                )
+                                if (onboardingViewModel.tlsClientCertificatePasswordCorrect) {
+                                    Icon(
+                                        imageVector = Icons.Filled.CheckCircle,
+                                        tint = colorResource(commonR.color.colorOnBackground),
+                                        contentDescription = stringResource(id = commonR.string.password_correct)
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Filled.Error,
+                                        tint = colorResource(commonR.color.colorWarning),
+                                        contentDescription = stringResource(id = commonR.string.password_incorrect)
+                                    )
+                                }
                             },
                             isError = !onboardingViewModel.tlsClientCertificatePasswordCorrect,
                             modifier = Modifier
@@ -179,7 +187,7 @@ fun MobileAppIntegrationView(
         ) {
             Button(
                 onClick = onFinishClicked,
-                enabled = !onboardingViewModel.deviceIsWatch || !onboardingViewModel.mayRequireTlsClientCertificate || onboardingViewModel.mayRequireTlsClientCertificate && onboardingViewModel.tlsClientCertificatePasswordCorrect
+                enabled = !onboardingViewModel.deviceIsWatch || onboardingViewModel.tlsClientCertificateUri == null || onboardingViewModel.tlsClientCertificatePasswordCorrect
             ) {
                 Text(stringResource(id = commonR.string.continue_connect))
             }

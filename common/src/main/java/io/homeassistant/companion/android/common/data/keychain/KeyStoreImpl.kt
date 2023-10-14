@@ -13,6 +13,7 @@ import javax.inject.Inject
 class KeyStoreImpl @Inject constructor() : KeyChainRepository {
     companion object {
         private const val TAG = "KeyStoreRepository"
+        const val ALIAS = "TLSClientCertificate"
     }
 
     private var alias: String? = null

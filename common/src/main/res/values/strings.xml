@@ -490,6 +490,8 @@
     <string name="other_settings">Other settings</string>
     <string name="other">Other</string>
     <string name="password">Password</string>
+    <string name="password_correct">Correct password</string>
+    <string name="password_incorrect">Incorrect password</string>
     <string name="permission_explanation_calls">In order to track incoming and outgoing call\'s occurrence we need access to your phone state. No phone numbers or other call details will be stored.</string>
     <string name="permission_explanation">In order to use location tracking features or different connection urls based on WiFi SSID we need access to your location. If you want consistent background updates you will also need to allow background processing</string>
     <string name="persistent_notification">Persistent notification</string>
