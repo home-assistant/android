@@ -22,6 +22,7 @@ import com.mikepenz.iconics.utils.colorFilter
 import com.mikepenz.iconics.utils.toAndroidIconCompat
 import com.vdurmont.emoji.EmojiParser
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.util.cancel
 import io.homeassistant.companion.android.common.util.generalChannel
 import java.util.Locale
 
@@ -51,6 +52,9 @@ object NotificationData {
 
     const val MEDIA_STREAM = "media_stream"
     val ALARM_STREAMS = listOf(ALARM_STREAM, ALARM_STREAM_MAX)
+
+    // special action constants
+    const val CLEAR_NOTIFICATION = "clear_notification"
 }
 
 fun createChannelID(
@@ -278,4 +282,11 @@ fun handleText(
         builder.setContentText(text)
         builder.setStyle(NotificationCompat.BigTextStyle().bigText(text))
     }
+}
+
+fun clearNotification(context: Context, tag: String) {
+    Log.d(NotificationData.TAG, "Clearing notification with tag: $tag")
+    val notificationManagerCompat = NotificationManagerCompat.from(context)
+    val messageId = tag.hashCode()
+    notificationManagerCompat.cancel(tag, messageId, true)
 }

@@ -9,6 +9,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.notifications.DeviceCommandData
 import io.homeassistant.companion.android.common.notifications.NotificationData
+import io.homeassistant.companion.android.common.notifications.clearNotification
 import io.homeassistant.companion.android.common.notifications.commandBeaconMonitor
 import io.homeassistant.companion.android.common.notifications.commandBleTransmitter
 import io.homeassistant.companion.android.common.notifications.getGroupNotificationBuilder
@@ -64,6 +65,9 @@ class MessagingManager @Inject constructor(
             val allowCommands = serverManager.integrationRepository(serverId).isTrusted()
             val message = notificationData[NotificationData.MESSAGE]
             when {
+                message == NotificationData.CLEAR_NOTIFICATION && !notificationData["tag"].isNullOrBlank() -> {
+                    clearNotification(context, notificationData["tag"]!!)
+                }
                 message == DeviceCommandData.COMMAND_BEACON_MONITOR && allowCommands -> {
                     if (!commandBeaconMonitor(context, notificationData)) {
                         sendNotification(notificationData, now)
