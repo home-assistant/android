@@ -31,9 +31,9 @@ fun PhoneInstallView(
     ThemeLazyColumn {
         item {
             Image(
-                painter = painterResource(R.mipmap.ic_launcher_round),
+                painter = painterResource(R.drawable.launcher_icon_round),
                 contentDescription = null,
-                modifier = Modifier.size(48.dp).clip(CircleShape)
+                modifier = Modifier.size(width = 48.dp, height = 72.dp).padding(top = 24.dp)
             )
         }
         item {
