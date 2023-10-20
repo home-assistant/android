@@ -1,3 +1,4 @@
+<!-- This is the _default_ round Home Assistant icon, which has more padding than the Android launcher icon -->
 <vector android:height="200dp" android:viewportHeight="108"
     android:viewportWidth="108" android:width="200dp" xmlns:android="http://schemas.android.com/apk/res/android">
     <group>
