@@ -87,8 +87,10 @@ fun SensorUi(
             )
         },
         secondaryLabel = {
-            sensor?.state?.let {
-                Text(if (sensor.unitOfMeasurement != null) "$it ${sensor.unitOfMeasurement}" else it)
+            if (sensor?.enabled == true) {
+                sensor.state.let {
+                    Text(if (!basicSensor.unitOfMeasurement.isNullOrBlank() || sensor.state.toDoubleOrNull() != null) "$it ${sensor.unitOfMeasurement}" else it)
+                }
             }
         },
         selectionControl = { ToggleSwitch(isChecked) },
@@ -100,6 +102,7 @@ fun SensorUi(
 @Composable
 private fun PreviewSensorUI() {
     val context = LocalContext.current
+    val batterySensors = runBlocking { batterySensorManager.getAvailableSensors(context) }
     CompositionLocalProvider {
         ThemeLazyColumn {
             item {
@@ -112,9 +115,7 @@ private fun PreviewSensorUI() {
                         unitOfMeasurement = "%"
                     ),
                     manager = batterySensorManager,
-                    basicSensor = runBlocking {
-                        batterySensorManager.getAvailableSensors(context).first()
-                    }
+                    basicSensor = runBlocking { batterySensors.first { it.id == "battery_level" } }
                 ) { _, _ -> }
             }
 
@@ -127,10 +128,7 @@ private fun PreviewSensorUI() {
                         state = "true"
                     ),
                     manager = batterySensorManager,
-                    basicSensor = runBlocking {
-                        batterySensorManager.getAvailableSensors(context)
-                            .first { it.id == "is_charging" }
-                    }
+                    basicSensor = runBlocking { batterySensors.first { it.id == "is_charging" } }
                 ) { _, _ -> }
             }
 
@@ -138,9 +136,7 @@ private fun PreviewSensorUI() {
                 SensorUi(
                     sensor = null,
                     manager = batterySensorManager,
-                    basicSensor = runBlocking {
-                        batterySensorManager.getAvailableSensors(context).last()
-                    }
+                    basicSensor = runBlocking { batterySensors.first { it.id == "battery_power" } }
                 ) { _, _ -> }
             }
         }
