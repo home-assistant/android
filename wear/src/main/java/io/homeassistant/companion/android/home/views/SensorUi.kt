@@ -21,6 +21,7 @@ import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.theme.getToggleButtonColors
 import io.homeassistant.companion.android.util.ToggleSwitch
 import io.homeassistant.companion.android.util.batterySensorManager
+import io.homeassistant.companion.android.views.ThemeLazyColumn
 import kotlinx.coroutines.runBlocking
 
 @SuppressLint("InlinedApi")
@@ -85,6 +86,13 @@ fun SensorUi(
                 overflow = TextOverflow.Ellipsis
             )
         },
+        secondaryLabel = {
+            if (sensor?.enabled == true) {
+                sensor.state.let {
+                    Text(if (basicSensor.unitOfMeasurement.isNullOrBlank() || sensor.state.toDoubleOrNull() == null) it else "$it ${sensor.unitOfMeasurement}")
+                }
+            }
+        },
         selectionControl = { ToggleSwitch(isChecked) },
         colors = getToggleButtonColors()
     )
@@ -94,11 +102,43 @@ fun SensorUi(
 @Composable
 private fun PreviewSensorUI() {
     val context = LocalContext.current
+    val batterySensors = runBlocking { batterySensorManager.getAvailableSensors(context) }
     CompositionLocalProvider {
-        SensorUi(
-            sensor = null,
-            manager = batterySensorManager,
-            basicSensor = runBlocking { batterySensorManager.getAvailableSensors(context).first() }
-        ) { _, _ -> }
+        ThemeLazyColumn {
+            item {
+                SensorUi(
+                    sensor = Sensor(
+                        "battery_level",
+                        0,
+                        true,
+                        state = "80",
+                        unitOfMeasurement = "%"
+                    ),
+                    manager = batterySensorManager,
+                    basicSensor = batterySensors.first { it.id == "battery_level" }
+                ) { _, _ -> }
+            }
+
+            item {
+                SensorUi(
+                    sensor = Sensor(
+                        "is_charging",
+                        0,
+                        true,
+                        state = "true"
+                    ),
+                    manager = batterySensorManager,
+                    basicSensor = batterySensors.first { it.id == "is_charging" }
+                ) { _, _ -> }
+            }
+
+            item {
+                SensorUi(
+                    sensor = null,
+                    manager = batterySensorManager,
+                    basicSensor = batterySensors.first { it.id == "battery_power" }
+                ) { _, _ -> }
+            }
+        }
     }
 }
