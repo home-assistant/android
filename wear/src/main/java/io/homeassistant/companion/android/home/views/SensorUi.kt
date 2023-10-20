@@ -21,6 +21,7 @@ import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.theme.getToggleButtonColors
 import io.homeassistant.companion.android.util.ToggleSwitch
 import io.homeassistant.companion.android.util.batterySensorManager
+import io.homeassistant.companion.android.views.ThemeLazyColumn
 import kotlinx.coroutines.runBlocking
 
 @SuppressLint("InlinedApi")
@@ -85,6 +86,11 @@ fun SensorUi(
                 overflow = TextOverflow.Ellipsis
             )
         },
+        secondaryLabel = {
+            sensor?.state?.let {
+                Text(if (sensor.unitOfMeasurement != null) "$it ${sensor.unitOfMeasurement}" else it)
+            }
+        },
         selectionControl = { ToggleSwitch(isChecked) },
         colors = getToggleButtonColors()
     )
@@ -95,10 +101,48 @@ fun SensorUi(
 private fun PreviewSensorUI() {
     val context = LocalContext.current
     CompositionLocalProvider {
-        SensorUi(
-            sensor = null,
-            manager = batterySensorManager,
-            basicSensor = runBlocking { batterySensorManager.getAvailableSensors(context).first() }
-        ) { _, _ -> }
+        ThemeLazyColumn {
+            item {
+                SensorUi(
+                    sensor = Sensor(
+                        "battery_level",
+                        0,
+                        true,
+                        state = "80",
+                        unitOfMeasurement = "%"
+                    ),
+                    manager = batterySensorManager,
+                    basicSensor = runBlocking {
+                        batterySensorManager.getAvailableSensors(context).first()
+                    }
+                ) { _, _ -> }
+            }
+
+            item {
+                SensorUi(
+                    sensor = Sensor(
+                        "is_charging",
+                        0,
+                        true,
+                        state = "true"
+                    ),
+                    manager = batterySensorManager,
+                    basicSensor = runBlocking {
+                        batterySensorManager.getAvailableSensors(context)
+                            .first { it.id == "is_charging" }
+                    }
+                ) { _, _ -> }
+            }
+
+            item {
+                SensorUi(
+                    sensor = null,
+                    manager = batterySensorManager,
+                    basicSensor = runBlocking {
+                        batterySensorManager.getAvailableSensors(context).last()
+                    }
+                ) { _, _ -> }
+            }
+        }
     }
 }
