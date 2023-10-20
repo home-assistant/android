@@ -89,7 +89,7 @@ fun SensorUi(
         secondaryLabel = {
             if (sensor?.enabled == true) {
                 sensor.state.let {
-                    Text(if (!basicSensor.unitOfMeasurement.isNullOrBlank() || sensor.state.toDoubleOrNull() != null) "$it ${sensor.unitOfMeasurement}" else it)
+                    Text(if (basicSensor.unitOfMeasurement.isNullOrBlank() || sensor.state.toDoubleOrNull() == null) it else "$it ${sensor.unitOfMeasurement}")
                 }
             }
         },
@@ -115,7 +115,7 @@ private fun PreviewSensorUI() {
                         unitOfMeasurement = "%"
                     ),
                     manager = batterySensorManager,
-                    basicSensor = runBlocking { batterySensors.first { it.id == "battery_level" } }
+                    basicSensor = batterySensors.first { it.id == "battery_level" }
                 ) { _, _ -> }
             }
 
@@ -128,7 +128,7 @@ private fun PreviewSensorUI() {
                         state = "true"
                     ),
                     manager = batterySensorManager,
-                    basicSensor = runBlocking { batterySensors.first { it.id == "is_charging" } }
+                    basicSensor = batterySensors.first { it.id == "is_charging" }
                 ) { _, _ -> }
             }
 
@@ -136,7 +136,7 @@ private fun PreviewSensorUI() {
                 SensorUi(
                     sensor = null,
                     manager = batterySensorManager,
-                    basicSensor = runBlocking { batterySensors.first { it.id == "battery_power" } }
+                    basicSensor = batterySensors.first { it.id == "battery_power" }
                 ) { _, _ -> }
             }
         }
