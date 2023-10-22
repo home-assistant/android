@@ -249,7 +249,7 @@
     <string name="error_ssl">Unable to communicate with Home Assistant because of a SSL error.  Please ensure your certificate is valid.</string>
     <string name="error_with_registration">The \'Mobile App\' integration is required to use the app, but it is not available on your Home Assistant server. Please check your server configuration and try again.</string>
     <string name="errors">Errors</string>
-    <string name="error_http_generic">There was an error loading Home Assistant. Please review the connection settings and try again.\n\nError Code: %d \nDescription: %s</string>
+    <string name="error_http_generic">There was an error loading Home Assistant. Please review the connection settings and try again.\n\nError Code: %1$d \nDescription: %2$s</string>
     <string name="event_error">Failed to notify HA of picked option.</string>
     <string name="exit">Exit</string>
     <string name="expand">Expand</string>
