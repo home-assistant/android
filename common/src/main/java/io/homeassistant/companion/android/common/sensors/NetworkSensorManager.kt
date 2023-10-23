@@ -532,7 +532,8 @@ class NetworkSensorManager : SensorManager {
             val connectivityManager = context.applicationContext.getSystemService<ConnectivityManager>()
             connectivityManager?.activeNetwork?.let {
                 val info = connectivityManager.getNetworkCapabilities(it)?.transportInfo
-                return@let info as? WifiInfo
+                @Suppress("DEPRECATION")
+                return@let info as? WifiInfo ?: context.applicationContext.getSystemService<WifiManager>()?.connectionInfo
             }
         } else {
             @Suppress("DEPRECATION")
