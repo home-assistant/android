@@ -42,7 +42,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.guava.future
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.nio.ByteBuffer
 import javax.inject.Inject
 import kotlin.math.min
@@ -146,8 +147,8 @@ class ShortcutsTile : TileService() {
                 .build()
         }
 
-    override fun onTileAddEvent(requestParams: EventBuilders.TileAddEvent) {
-        serviceScope.launch {
+    override fun onTileAddEvent(requestParams: EventBuilders.TileAddEvent): Unit = runBlocking {
+        withContext(Dispatchers.IO) {
             /**
              * When the app is updated from an older version (which only supported a single Shortcut Tile),
              * and the user is adding a new Shortcuts Tile, we can't tell for sure if it's the 1st or 2nd Tile.
@@ -167,8 +168,8 @@ class ShortcutsTile : TileService() {
         }
     }
 
-    override fun onTileRemoveEvent(requestParams: EventBuilders.TileRemoveEvent) {
-        serviceScope.launch {
+    override fun onTileRemoveEvent(requestParams: EventBuilders.TileRemoveEvent): Unit = runBlocking {
+        withContext(Dispatchers.IO) {
             wearPrefsRepository.removeTileShortcuts(requestParams.tileId)
         }
     }
