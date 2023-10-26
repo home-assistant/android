@@ -532,7 +532,10 @@ class NetworkSensorManager : SensorManager {
             val connectivityManager = context.applicationContext.getSystemService<ConnectivityManager>()
             connectivityManager?.activeNetwork?.let {
                 val info = connectivityManager.getNetworkCapabilities(it)?.transportInfo
-                return@let info as? WifiInfo
+
+                // If WifiInfo is null default to the deprecated method as a fix for some devices that may return null
+                @Suppress("DEPRECATION")
+                return@let info as? WifiInfo ?: context.applicationContext.getSystemService<WifiManager>()?.connectionInfo
             }
         } else {
             @Suppress("DEPRECATION")
