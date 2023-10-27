@@ -34,6 +34,15 @@ class OpenTileSettingsActivity : AppCompatActivity() {
                         tileId = it
                     )
                 }
+                "ConfigTemplateTile" -> {
+                    lifecycleScope.launch {
+                        wearPrefsRepository.getTemplateTileAndSaveTileId(tileId)
+                    }
+                    HomeActivity.getTemplateTileSettingsIntent(
+                        context = this,
+                        tileId = it
+                    )
+                }
                 else -> null
             }
 
