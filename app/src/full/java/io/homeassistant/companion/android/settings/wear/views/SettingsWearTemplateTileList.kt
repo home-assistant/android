@@ -34,18 +34,20 @@ fun SettingsWearTemplateTileList(
                 .padding(padding)
                 .padding(all = 16.dp)
         ) {
-            var index = 1
-            for (templateTileEntry in templateTiles.entries) {
-                SettingsRow(
-                    primaryText = stringResource(commonR.string.template_tile_n, index++),
-                    secondaryText = stringResource(commonR.string.template_tile_configure),
-                    mdiIcon = CommunityMaterial.Icon3.cmd_text_box,
-                    enabled = true,
-                    onClicked = { onTemplateTileClicked(templateTileEntry.key) }
-                )
+            if (templateTiles.entries.isEmpty()) {
+                Text(stringResource(commonR.string.template_tile_no_tiles_yet))
+            } else {
+                var index = 1
+                for (templateTileEntry in templateTiles.entries) {
+                    SettingsRow(
+                        primaryText = stringResource(commonR.string.template_tile_n, index++),
+                        secondaryText = stringResource(commonR.string.template_tile_configure),
+                        mdiIcon = CommunityMaterial.Icon3.cmd_text_box,
+                        enabled = true,
+                        onClicked = { onTemplateTileClicked(templateTileEntry.key) }
+                    )
+                }
             }
-
-            // TODO: add help text: "New Template tiles can be added on the Wear OS device."
         }
     }
 }
