@@ -99,7 +99,7 @@ fun primaryLayoutTimeline(
     builder.setContent(
         Text.Builder(context, context.getString(text))
             .setTypography(Typography.TYPOGRAPHY_BODY1)
-            .setMaxLines(10)
+            .setMaxLines(if (title != null) 3 else 4) // It is highly recommended that main content has [if] 1 label is present: content with max 3 lines
             .setColor(argb(theme.onSurface))
             .build()
     )

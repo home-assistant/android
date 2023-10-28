@@ -126,7 +126,7 @@
     <string name="camera">Camera</string>
     <string name="camera_tile">Camera tile</string>
     <string name="camera_tile_desc">See what\'s on your camera</string>
-    <string name="camera_tile_log_in">Log in to Home Assistant to add a camera tile</string>
+    <string name="camera_tile_log_in">Log in to add a camera tile</string>
     <string name="camera_tile_no_tiles_yet">There are no camera tiles added yet - add one from the watch face to set it up</string>
     <string name="camera_tile_no_entity_yet">Edit the tile settings and select a camera to show</string>
     <string name="camera_tile_n">Camera tile #%d</string>
@@ -774,14 +774,14 @@
     <string name="shortcuts_choose">Choose shortcuts</string>
     <string name="shortcut5_note">Not all launchers support displaying 5 shortcuts, you may not see this shortcut if the above 4 are already added.</string>
     <string name="shortcuts_summary">Add shortcuts to launcher</string>
-    <string name="shortcut_tiles">Shortcut tiles</string>
+    <string name="shortcut_tiles">Shortcuts tiles</string>
     <string name="shortcuts_tile_n">Shortcuts tile #%d</string>
     <string name="shortcuts_tile_select">Select shortcuts tile to manage</string>
     <string name="shortcuts_tile_description">Select up to 7 entities</string>
     <string name="shortcuts_tile_empty">Choose entities in settings</string>
-    <string name="shortcuts_tile_text_setting">Show names on shortcuts tile</string>
-    <string name="shortcuts_tile_log_in">Log in to Home Assistant to add your first shortcut</string>
-    <string name="shortcuts_tile_no_tiles_yet">There are no shortcut tiles added yet</string>
+    <string name="shortcuts_tile_text_setting">Show names on tile</string>
+    <string name="shortcuts_tile_log_in">Log in to add your first shortcut</string>
+    <string name="shortcuts_tile_no_tiles_yet">There are no shortcuts tiles added yet</string>
     <string name="shortcuts">Shortcuts</string>
     <string name="show">Show</string>
     <string name="show_on_map">Show on map</string>
@@ -845,7 +845,7 @@
     <string name="template_tile_content">Template tile content</string>
     <string name="template_tile_desc">Renders and displays a template</string>
     <string name="template_tile_empty">Set template in the phone settings</string>
-    <string name="template_tile_log_in">Log in to Home Assistant to set up a template</string>
+    <string name="template_tile_log_in">Log in to set up a template</string>
     <string name="template_error">Error in template</string>
     <string name="template_render_error">Error rendering template</string>
     <string name="template_tile_help">Provide a template below that will be displayed on the Wear OS template tile. See help for markup options.</string>
@@ -1152,7 +1152,7 @@
     <string name="assist_error">Oops, an error has occurred</string>
     <string name="assist_how_can_i_assist">How can I assist?</string>
     <string name="assist_last_used_pipeline">Last used assistant</string>
-    <string name="assist_log_in">Log in to Home Assistant to start using Assist</string>
+    <string name="assist_log_in">Log in to start using Assist</string>
     <string name="assist_manage_pipelines">Manage assistants</string>
     <string name="assist_permission">To use Assist with your voice, allow Home Assistant to access the microphone</string>
     <string name="assist_pipeline">Assistant</string>
