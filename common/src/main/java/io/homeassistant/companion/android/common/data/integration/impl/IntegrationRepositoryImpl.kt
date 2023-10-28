@@ -20,7 +20,8 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RegisterDeviceRequest
-import io.homeassistant.companion.android.common.data.integration.impl.entities.SensorRequest
+import io.homeassistant.companion.android.common.data.integration.impl.entities.SensorRegistrationRequest
+import io.homeassistant.companion.android.common.data.integration.impl.entities.SensorUpdateRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.ServiceCallRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.Template
 import io.homeassistant.companion.android.common.data.integration.impl.entities.UpdateLocationRequest
@@ -700,30 +701,33 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         val canRegisterCategoryStateClass = server.version?.isAtLeast(2021, 11, 0) == true
         val canRegisterEntityDisabledState = server.version?.isAtLeast(2022, 6, 0) == true
         val canRegisterDeviceClassDistance = server.version?.isAtLeast(2022, 10, 0) == true
+        val canRegisterNullProperties = server.version?.isAtLeast(2023, 2, 0) == true
+
+        val registrationData = SensorRegistrationRequest(
+            sensorRegistration.uniqueId,
+            if (canRegisterEntityDisabledState && sensorRegistration.disabled) {
+                null
+            } else if (sensorRegistration.state is String) {
+                sensorRegistration.state.ifBlank { null }
+            } else {
+                sensorRegistration.state
+            },
+            sensorRegistration.type,
+            sensorRegistration.icon,
+            sensorRegistration.attributes,
+            sensorRegistration.name,
+            when (sensorRegistration.deviceClass) {
+                "distance" -> if (canRegisterDeviceClassDistance) sensorRegistration.deviceClass else null
+                else -> sensorRegistration.deviceClass
+            },
+            sensorRegistration.unitOfMeasurement,
+            if (canRegisterCategoryStateClass) sensorRegistration.stateClass else null,
+            if (canRegisterCategoryStateClass) sensorRegistration.entityCategory else null,
+            if (canRegisterEntityDisabledState) sensorRegistration.disabled else null
+        )
         val integrationRequest = IntegrationRequest(
             "register_sensor",
-            SensorRequest(
-                sensorRegistration.uniqueId,
-                if (canRegisterEntityDisabledState && sensorRegistration.disabled) {
-                    null
-                } else if (sensorRegistration.state is String) {
-                    sensorRegistration.state.ifBlank { null }
-                } else {
-                    sensorRegistration.state
-                },
-                sensorRegistration.type,
-                sensorRegistration.icon,
-                sensorRegistration.attributes,
-                sensorRegistration.name,
-                when (sensorRegistration.deviceClass) {
-                    "distance" -> if (canRegisterDeviceClassDistance) sensorRegistration.deviceClass else null
-                    else -> sensorRegistration.deviceClass
-                },
-                sensorRegistration.unitOfMeasurement,
-                if (canRegisterCategoryStateClass) sensorRegistration.stateClass else null,
-                if (canRegisterCategoryStateClass) sensorRegistration.entityCategory else null,
-                if (canRegisterEntityDisabledState) sensorRegistration.disabled else null
-            )
+            if (canRegisterNullProperties) registrationData else registrationData.toLegacy()
         )
 
         var causeException: Exception? = null
@@ -751,7 +755,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         val integrationRequest = IntegrationRequest(
             "update_sensor_states",
             sensors.map {
-                SensorRequest(
+                SensorUpdateRequest(
                     it.uniqueId,
                     if (it.state is String) it.state.ifBlank { null } else it.state,
                     it.type,
