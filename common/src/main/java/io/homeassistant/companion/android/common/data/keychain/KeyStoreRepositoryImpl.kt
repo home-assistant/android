@@ -10,7 +10,7 @@ import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import javax.inject.Inject
 
-class KeyStoreImpl @Inject constructor() : KeyChainRepository {
+class KeyStoreRepositoryImpl @Inject constructor() : KeyChainRepository {
     companion object {
         private const val TAG = "KeyStoreRepository"
         const val ALIAS = "TLSClientCertificate"
@@ -21,13 +21,11 @@ class KeyStoreImpl @Inject constructor() : KeyChainRepository {
     private var chain: Array<X509Certificate>? = null
 
     override suspend fun clear() {
-        alias = null
-        key = null
-        chain = null
+        // intentionally left empty
     }
 
     override suspend fun load(context: Context, alias: String) = withContext(Dispatchers.IO) {
-        this@KeyStoreImpl.alias = alias
+        this@KeyStoreRepositoryImpl.alias = alias
         doLoad()
     }
 
@@ -36,9 +34,14 @@ class KeyStoreImpl @Inject constructor() : KeyChainRepository {
     }
 
     override suspend fun setData(alias: String, privateKey: PrivateKey, certificateChain: Array<X509Certificate>) = withContext(Dispatchers.IO) {
-        clear()
+        // clear state
+        this@KeyStoreRepositoryImpl.alias = null
+        this@KeyStoreRepositoryImpl.key = null
+        this@KeyStoreRepositoryImpl.chain = null
+
+        // store and load certificate to/from KeyStore
         doStore(alias, privateKey, certificateChain)
-        this@KeyStoreImpl.alias = alias
+        this@KeyStoreRepositoryImpl.alias = alias
         doLoad()
     }
 
@@ -70,6 +73,7 @@ class KeyStoreImpl @Inject constructor() : KeyChainRepository {
             if (entry != null) {
                 if (chain == null) {
                     chain = try {
+                        @Suppress("UNCHECKED_CAST")
                         entry.certificateChain as Array<X509Certificate>
                     } catch (e: Exception) {
                         Log.e(TAG, "Exception getting certificate chain", e)
@@ -97,7 +101,6 @@ class KeyStoreImpl @Inject constructor() : KeyChainRepository {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Exception storing KeyStore.Entry", e)
-            return
         }
     }
 }

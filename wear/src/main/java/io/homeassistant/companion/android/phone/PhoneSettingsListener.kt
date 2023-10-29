@@ -19,7 +19,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
-import io.homeassistant.companion.android.common.data.keychain.KeyStoreImpl
+import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepositoryImpl
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.WearDataMessages
@@ -165,7 +165,7 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
 
                         // we store the TLS Client key under a static alias because there is currently
                         // no way to ask the user for the correct alias
-                        keyStore.setData(KeyStoreImpl.ALIAS, privateKey, certificateChain)
+                        keyStore.setData(KeyStoreRepositoryImpl.ALIAS, privateKey, certificateChain)
                         keyChainRepository.load(applicationContext)
                     } catch (e: IOException) {
                         Log.e(TAG, "Cannot load TLS client certificate", e)

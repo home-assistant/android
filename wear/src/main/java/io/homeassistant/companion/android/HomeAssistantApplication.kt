@@ -12,7 +12,7 @@ import android.os.Build
 import android.os.PowerManager
 import dagger.hilt.android.HiltAndroidApp
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
-import io.homeassistant.companion.android.common.data.keychain.KeyStoreImpl
+import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepositoryImpl
 import io.homeassistant.companion.android.complications.ComplicationReceiver
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import kotlinx.coroutines.CoroutineScope
@@ -34,7 +34,7 @@ open class HomeAssistantApplication : Application() {
         super.onCreate()
 
         ioScope.launch {
-            keyStore.load(applicationContext, KeyStoreImpl.ALIAS)
+            keyStore.load(applicationContext, KeyStoreRepositoryImpl.ALIAS)
         }
 
         val sensorReceiver = SensorReceiver()
