@@ -72,7 +72,7 @@ fun SettingsView(
     onToastEnabled: (Boolean) -> Unit,
     setFavoritesOnly: (Boolean) -> Unit,
     onClickCameraTile: () -> Unit,
-    onClickTemplateTile: () -> Unit,
+    onClickTemplateTiles: () -> Unit,
     onAssistantAppAllowed: (Boolean) -> Unit
 ) {
     WearAppTheme {
@@ -188,7 +188,7 @@ fun SettingsView(
                 SecondarySettingsChip(
                     icon = CommunityMaterial.Icon3.cmd_text_box,
                     label = stringResource(commonR.string.template_tiles),
-                    onClick = onClickTemplateTile
+                    onClick = onClickTemplateTiles
                 )
             }
             item {
@@ -272,7 +272,7 @@ private fun PreviewSettingsView() {
         onToastEnabled = {},
         setFavoritesOnly = {},
         onClickCameraTile = {},
-        onClickTemplateTile = {},
+        onClickTemplateTiles = {},
         onAssistantAppAllowed = {}
     )
 }

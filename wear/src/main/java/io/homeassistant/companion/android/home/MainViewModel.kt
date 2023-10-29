@@ -172,6 +172,13 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    fun loadTemplateTiles() {
+        viewModelScope.launch {
+            templateTiles.clear()
+            templateTiles.putAll(homePresenter.getAllTemplateTiles())
+        }
+    }
+
     fun loadEntities() {
         if (!homePresenter.isConnected()) return
         viewModelScope.launch {

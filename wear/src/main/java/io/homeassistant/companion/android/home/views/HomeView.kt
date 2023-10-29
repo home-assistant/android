@@ -165,7 +165,10 @@ fun LoadHomePage(
                     onClickCameraTile = {
                         swipeDismissableNavController.navigate("$ROUTE_CAMERA_TILE/$SCREEN_SELECT_CAMERA_TILE")
                     },
-                    onClickTemplateTile = { swipeDismissableNavController.navigate("$ROUTE_TEMPLATE_TILE/$SCREEN_SELECT_TEMPLATE_TILE") },
+                    onClickTemplateTiles = {
+                        mainViewModel.loadTemplateTiles()
+                        swipeDismissableNavController.navigate("$ROUTE_TEMPLATE_TILE/$SCREEN_SELECT_TEMPLATE_TILE")
+                    },
                     onAssistantAppAllowed = mainViewModel::setAssistantApp
                 )
             }
