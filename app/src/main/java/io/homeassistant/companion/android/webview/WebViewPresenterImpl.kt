@@ -117,6 +117,13 @@ class WebViewPresenterImpl @Inject constructor(
 
     override fun getActiveServer(): Int = serverId
 
+    override fun getActiveServerName(): String? =
+        if (serverManager.isRegistered()) {
+            serverManager.getServer(serverId)?.friendlyName
+        } else {
+            null
+        }
+
     override fun updateActiveServer() {
         if (serverManager.isRegistered()) {
             serverManager.getServer()?.let {

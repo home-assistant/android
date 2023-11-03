@@ -244,6 +244,7 @@
     <string name="entity_widget_desc">View any entity\'s current state and toggle it</string>
     <string name="error_auth_revoked">It appears that your authorization was revoked, please reconnect to Home Assistant.</string>
     <string name="error_connection_failed">Unable to connect to Home Assistant.</string>
+    <string name="error_connection_failed_to">Unable to connect to %1$s</string>
     <string name="error_loading_entities">Error loading entities</string>
     <string name="error_onboarding_connection_failed">Unable to connect to Home Assistant.</string>
     <string name="error_ssl">Unable to communicate with Home Assistant because of a SSL error.  Please ensure your certificate is valid.</string>
