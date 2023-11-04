@@ -1215,8 +1215,14 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
         isShowingError = true
 
+        val serverName = if (serverManager.defaultServers.size > 1) presenter.getActiveServerName() else null
         val alert = AlertDialog.Builder(this)
-            .setTitle(commonR.string.error_connection_failed)
+            .setTitle(
+                getString(
+                    commonR.string.error_connection_failed_to,
+                    serverName ?: getString(commonR.string.app_name)
+                )
+            )
             .setOnDismissListener {
                 isShowingError = false
                 alertDialog = null
