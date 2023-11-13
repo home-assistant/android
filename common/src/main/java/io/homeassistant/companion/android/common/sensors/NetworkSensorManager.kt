@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.common.sensors
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.wifi.WifiInfo
@@ -202,6 +203,10 @@ class NetworkSensorManager : SensorManager {
 
     @SuppressLint("PrivateApi")
     private fun hasHotspot(context: Context): Boolean {
+        //Watch doesn't have hotspot.
+        if(context.packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            return false
+        }
         val wifiManager: WifiManager = context.applicationContext.getSystemService()!!
         return try {
             wifiManager.javaClass.getDeclaredMethod("isWifiApEnabled")
@@ -211,7 +216,7 @@ class NetworkSensorManager : SensorManager {
         }
     }
     private fun updateHotspotEnabledSensor(context: Context) {
-        if (!isEnabled(context, hotspotState) || !hasWifi(context) || !hasHotspot(context)) {
+        if (!isEnabled(context, hotspotState)) {
             return
         }
         val wifiManager: WifiManager = context.getSystemService()!!
