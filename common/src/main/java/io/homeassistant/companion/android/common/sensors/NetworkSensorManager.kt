@@ -203,8 +203,8 @@ class NetworkSensorManager : SensorManager {
 
     @SuppressLint("PrivateApi")
     private fun hasHotspot(context: Context): Boolean {
-        //Watch doesn't have hotspot.
-        if(context.packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+        // Watch doesn't have hotspot.
+        if (context.packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
             return false
         }
         val wifiManager: WifiManager = context.applicationContext.getSystemService()!!
