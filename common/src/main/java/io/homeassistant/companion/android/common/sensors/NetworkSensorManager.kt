@@ -24,11 +24,21 @@ import okhttp3.Response
 import okio.IOException
 import org.json.JSONException
 import org.json.JSONObject
+import java.lang.reflect.Method
 import io.homeassistant.companion.android.common.R as commonR
 
 class NetworkSensorManager : SensorManager {
     companion object {
         private const val TAG = "NetworkSM"
+        val hotspotState = SensorManager.BasicSensor(
+            "hotspot_state",
+            "binary_sensor",
+            commonR.string.basic_sensor_name_hotspot_state,
+            commonR.string.sensor_description_hotspot,
+            "mdi:wifi",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+        )
         val wifiConnection = SensorManager.BasicSensor(
             "wifi_connection",
             "sensor",
@@ -137,7 +147,12 @@ class NetworkSensorManager : SensorManager {
             wifiSignalStrength
         )
         val list = if (hasWifi(context)) {
-            wifiSensors.plus(publicIp)
+            val withPublicIp = wifiSensors.plus(publicIp)
+            if (hasHotspot(context)) {
+                withPublicIp.plus(hotspotState)
+            } else {
+                withPublicIp
+            }
         } else {
             listOf(publicIp)
         }
@@ -168,6 +183,7 @@ class NetworkSensorManager : SensorManager {
     override fun requestSensorUpdate(
         context: Context
     ) {
+        updateHotspotEnabledSensor(context)
         updateWifiConnectionSensor(context)
         updateBSSIDSensor(context)
         updateWifiIPSensor(context)
@@ -184,6 +200,35 @@ class NetworkSensorManager : SensorManager {
     private fun hasWifi(context: Context): Boolean =
         context.applicationContext.getSystemService<WifiManager>() != null
 
+    @SuppressLint("PrivateApi")
+    private fun hasHotspot(context: Context): Boolean {
+        val wifiManager: WifiManager = context.applicationContext.getSystemService()!!
+        return try {
+            wifiManager.javaClass.getDeclaredMethod("isWifiApEnabled")
+            true
+        } catch (e: NoSuchMethodException) {
+            false
+        }
+    }
+    private fun updateHotspotEnabledSensor(context: Context) {
+        if (!isEnabled(context, hotspotState) || !hasWifi(context) || !hasHotspot(context)) {
+            return
+        }
+        val wifiManager: WifiManager = context.getSystemService()!!
+
+        @SuppressLint("PrivateApi")
+        val method: Method = wifiManager.javaClass.getDeclaredMethod("isWifiApEnabled")
+        method.isAccessible = true
+        val enabled = method.invoke(wifiManager) as Boolean
+        val icon = if (enabled) "mdi:wifi" else "mdi:wifi-off"
+        onSensorUpdated(
+            context,
+            hotspotState,
+            enabled,
+            icon,
+            mapOf()
+        )
+    }
     private fun updateWifiConnectionSensor(context: Context) {
         if (!isEnabled(context, wifiConnection) || !hasWifi(context)) {
             return
