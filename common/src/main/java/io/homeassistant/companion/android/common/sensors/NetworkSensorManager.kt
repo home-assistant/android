@@ -36,7 +36,7 @@ class NetworkSensorManager : SensorManager {
             "binary_sensor",
             commonR.string.basic_sensor_name_hotspot_state,
             commonR.string.sensor_description_hotspot,
-            "mdi:wifi",
+            "mdi:access-point",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
@@ -225,7 +225,7 @@ class NetworkSensorManager : SensorManager {
         val method: Method = wifiManager.javaClass.getDeclaredMethod("isWifiApEnabled")
         method.isAccessible = true
         val enabled = method.invoke(wifiManager) as Boolean
-        val icon = if (enabled) "mdi:wifi" else "mdi:wifi-off"
+        val icon = if (enabled) "mdi:access-point" else "mdi:access-point-off"
         onSensorUpdated(
             context,
             hotspotState,
