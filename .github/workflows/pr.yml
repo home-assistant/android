@@ -30,6 +30,9 @@ jobs:
           cp .github/mock-google-services.json wear/google-services.json
           cp .github/mock-google-services.json automotive/google-services.json
 
+      - uses: gradle/wrapper-validation-action@v1
+        name: Validate Gradle Wrapper
+
       - name: Validate ktlint
         run: ./gradlew ktlintCheck
 
@@ -57,6 +60,9 @@ jobs:
           cp .github/mock-google-services.json app/google-services.json
           cp .github/mock-google-services.json wear/google-services.json
           cp .github/mock-google-services.json automotive/google-services.json
+
+      - uses: gradle/wrapper-validation-action@v1
+        name: Validate Gradle Wrapper
 
       - name: Validate Lint
         run: ./gradlew lint
@@ -99,6 +105,9 @@ jobs:
         cp .github/mock-google-services.json app/google-services.json
         cp .github/mock-google-services.json wear/google-services.json
         cp .github/mock-google-services.json automotive/google-services.json
+
+    - uses: gradle/wrapper-validation-action@v1
+      name: Validate Gradle Wrapper
 
     - name: Build Debug APK
       run: ./gradlew assembleDebug
