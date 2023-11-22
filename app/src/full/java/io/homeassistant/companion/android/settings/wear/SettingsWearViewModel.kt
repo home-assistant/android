@@ -84,7 +84,11 @@ class SettingsWearViewModel @Inject constructor(
     val resultSnackbar = _resultSnackbar.asSharedFlow()
 
     init {
-        Wearable.getDataClient(application).addListener(this)
+        try {
+            Wearable.getDataClient(application).addListener(this)
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to get wearable data client", e)
+        }
         viewModelScope.launch {
             try {
                 val capabilityInfo = Wearable.getCapabilityClient(application)
@@ -113,7 +117,11 @@ class SettingsWearViewModel @Inject constructor(
     }
 
     override fun onCleared() {
-        Wearable.getDataClient(getApplication<HomeAssistantApplication>()).removeListener(this)
+        try {
+            Wearable.getDataClient(getApplication<HomeAssistantApplication>()).removeListener(this)
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to remove listener from wearable data client", e)
+        }
 
         if (serverId != 0) {
             CoroutineScope(Dispatchers.Main + Job()).launch {
@@ -218,15 +226,18 @@ class SettingsWearViewModel @Inject constructor(
         }
 
         val app = getApplication<HomeAssistantApplication>()
-        Wearable.getDataClient(app).putDataItem(putDataRequest).apply {
-            addOnSuccessListener { Log.d(TAG, "Successfully sent auth to wear") }
-            addOnFailureListener { e ->
-                Log.e(TAG, "Failed to send auth to wear", e)
-                _hasData.value = true
-                viewModelScope.launch {
-                    _resultSnackbar.emit(app.getString(commonR.string.failed_watch_connection))
+        try {
+            Wearable.getDataClient(app).putDataItem(putDataRequest).apply {
+                addOnSuccessListener { Log.d(TAG, "Successfully sent auth to wear") }
+                addOnFailureListener { e ->
+                    Log.e(TAG, "Failed to send auth to wear", e)
+                    _hasData.value = true
+                    watchConnectionError(app)
                 }
             }
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to send auth to wear", e)
+            watchConnectionError(app)
         }
     }
 
@@ -238,9 +249,14 @@ class SettingsWearViewModel @Inject constructor(
             asPutDataRequest()
         }
 
-        Wearable.getDataClient(getApplication<HomeAssistantApplication>()).putDataItem(putDataRequest).apply {
-            addOnSuccessListener { Log.d(TAG, "Successfully sent tile template to wear") }
-            addOnFailureListener { e -> Log.e(TAG, "Failed to send tile template to wear", e) }
+        try {
+            Wearable.getDataClient(getApplication<HomeAssistantApplication>())
+                .putDataItem(putDataRequest).apply {
+                    addOnSuccessListener { Log.d(TAG, "Successfully sent tile template to wear") }
+                    addOnFailureListener { e -> Log.e(TAG, "Failed to send tile template to wear", e) }
+                }
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to send template tile to wear", e)
         }
     }
 
@@ -347,5 +363,11 @@ class SettingsWearViewModel @Inject constructor(
         }
 
         authenticateId = null
+    }
+
+    private fun watchConnectionError(app: HomeAssistantApplication) {
+        viewModelScope.launch {
+            _resultSnackbar.emit(app.getString(commonR.string.failed_watch_connection))
+        }
     }
 }

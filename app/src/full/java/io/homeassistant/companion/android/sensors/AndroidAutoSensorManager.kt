@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.sensors
 
 import android.content.Context
 import android.os.Build
+import android.util.Log
 import androidx.car.app.connection.CarConnection
 import androidx.lifecycle.Observer
 import io.homeassistant.companion.android.common.sensors.SensorManager
@@ -56,7 +57,12 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
         }
         CoroutineScope(Dispatchers.Main + Job()).launch {
             if (carConnection == null) {
-                carConnection = CarConnection(context.applicationContext)
+                carConnection = try {
+                    CarConnection(context.applicationContext)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to get car connection", e)
+                    null
+                }
             }
             carConnection?.type?.observeForever(this@AndroidAutoSensorManager)
         }

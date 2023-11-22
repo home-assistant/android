@@ -34,9 +34,9 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
 
     private lateinit var binding: ActivitySettingsWearBinding
 
-    private lateinit var capabilityClient: CapabilityClient
-    private lateinit var nodeClient: NodeClient
-    private lateinit var remoteActivityHelper: RemoteActivityHelper
+    private var capabilityClient: CapabilityClient? = null
+    private var nodeClient: NodeClient? = null
+    private var remoteActivityHelper: RemoteActivityHelper? = null
 
     private var wearNodesWithApp: Set<Node>? = null
     private var allConnectedNodes: List<Node>? = null
@@ -49,9 +49,24 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
 
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        capabilityClient = Wearable.getCapabilityClient(this)
-        nodeClient = Wearable.getNodeClient(this)
-        remoteActivityHelper = RemoteActivityHelper(this)
+        capabilityClient = try {
+            Wearable.getCapabilityClient(this)
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to get capability client", e)
+            null
+        }
+        nodeClient = try {
+            Wearable.getNodeClient(this)
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to get node client", e)
+            null
+        }
+        remoteActivityHelper = try {
+            RemoteActivityHelper(this)
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to get remote activity helper", e)
+            null
+        }
 
         binding.remoteOpenButton.setOnClickListener {
             openPlayStoreOnWearDevicesWithoutApp()
@@ -81,13 +96,13 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
 
     override fun onPause() {
         super.onPause()
-        capabilityClient.removeListener(this, CAPABILITY_WEAR_APP)
+        capabilityClient?.removeListener(this, CAPABILITY_WEAR_APP)
     }
 
     override fun onResume() {
         super.onResume()
         title = getString(commonR.string.wear_os_settings_title)
-        capabilityClient.addListener(this, CAPABILITY_WEAR_APP)
+        capabilityClient?.addListener(this, CAPABILITY_WEAR_APP)
     }
 
     /*
@@ -106,11 +121,11 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
     private suspend fun findWearDevicesWithApp() {
         try {
             val capabilityInfo = capabilityClient
-                .getCapability(CAPABILITY_WEAR_APP, CapabilityClient.FILTER_ALL)
-                .await()
+                ?.getCapability(CAPABILITY_WEAR_APP, CapabilityClient.FILTER_ALL)
+                ?.await()
 
             withContext(Dispatchers.Main) {
-                wearNodesWithApp = capabilityInfo.nodes
+                wearNodesWithApp = capabilityInfo?.nodes
                 Log.d(TAG, "Capable Nodes: $wearNodesWithApp")
                 updateUI()
             }
@@ -124,7 +139,7 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
 
     private suspend fun findAllWearDevices() {
         try {
-            val connectedNodes = nodeClient.connectedNodes.await()
+            val connectedNodes = nodeClient?.connectedNodes?.await()
 
             withContext(Dispatchers.Main) {
                 allConnectedNodes = connectedNodes
@@ -187,11 +202,11 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
             lifecycleScope.launch {
                 try {
                     remoteActivityHelper
-                        .startRemoteActivity(
+                        ?.startRemoteActivity(
                             targetIntent = intent,
                             targetNodeId = node.id
                         )
-                        .await()
+                        ?.await()
 
                     Toast.makeText(
                         this@SettingsWearActivity,
