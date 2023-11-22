@@ -90,9 +90,9 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okio.sink
 import org.json.JSONObject
 import java.io.File
-import java.io.FileOutputStream
 import java.net.URL
 import java.net.URLDecoder
 import javax.inject.Inject
@@ -1319,10 +1319,11 @@ class MessagingManager @Inject constructor(
                         videoFile.parentFile?.mkdirs()
                         videoFile.createNewFile()
                     }
-                    FileOutputStream(videoFile).use { output ->
-                        response.body?.byteStream()?.copyTo(output)
+                    response.body.source().use { source ->
+                        videoFile.sink().use { sink ->
+                            source.readAll(sink)
+                        }
                     }
-                    response.close()
 
                     mediaRetriever.setDataSource(videoFile.absolutePath)
                     val durationInMicroSeconds = ((mediaRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: VIDEO_GUESS_MILLISECONDS)) * 1000

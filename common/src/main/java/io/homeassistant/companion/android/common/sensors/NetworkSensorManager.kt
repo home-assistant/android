@@ -459,7 +459,7 @@ class NetworkSensorManager : SensorManager {
             override fun onResponse(call: Call, response: Response) {
                 if (!response.isSuccessful) throw IOException("Unexpected response code $response")
                 try {
-                    val jsonObject = JSONObject(response.body!!.string())
+                    val jsonObject = JSONObject(response.body.string())
                     ip = jsonObject.getString("ip")
                 } catch (e: JSONException) {
                     Log.e(TAG, "Unable to parse ip address from response", e)
