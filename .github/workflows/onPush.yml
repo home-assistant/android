@@ -36,7 +36,8 @@ jobs:
           ruby-version: '3.2'
           bundler-cache: true
 
-      - uses: gradle/gradle-build-action@v2
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
 
       - uses: ./.github/actions/create-release-number
         name: Create Release Number
@@ -144,7 +145,8 @@ jobs:
           ruby-version: '3.2'
           bundler-cache: true
 
-      - uses: gradle/gradle-build-action@v2
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
 
       - uses: ./.github/actions/create-release-number
         name: Create Release Number
