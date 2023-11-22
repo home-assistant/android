@@ -113,6 +113,7 @@
     <string name="basic_sensor_name_wifi_signal">WiFi signal strength</string>
     <string name="basic_sensor_name_wifi_state">WiFi state</string>
     <string name="basic_sensor_name_wifi">WiFi connection</string>
+    <string name="basic_sensor_name_hotspot_state">Hotspot state</string>
     <string name="binary_sensor">Binary sensor</string>
     <string name="biometric_message">Unlock using your biometric or screen lock credential</string>
     <string name="biometric_set_title">Confirm to continue</string>
@@ -590,6 +591,7 @@
     <string name="sensor_description_headphone">Whether headphones are plugged into the device</string>
     <string name="sensor_description_headset_mounted">Whether the headset is currently in use</string>
     <string name="sensor_description_high_accuracy_mode">Whether high accuracy mode is active on the device</string>
+    <string name="sensor_description_hotspot">Whether the WIFI hotspot is enabled</string>
     <string name="sensor_description_interactive">Whether the device is in an interactive state</string>
     <string name="sensor_description_internal_storage">Information about the total and available storage space internally</string>
     <string name="sensor_description_keyguard_locked">Whether the keyguard is currently locked</string>
