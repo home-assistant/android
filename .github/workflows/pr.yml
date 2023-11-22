@@ -110,7 +110,11 @@ jobs:
       name: Validate Gradle Wrapper
 
     - name: Build Debug APK
-      run: ./gradlew assembleDebug
+      run: |
+        ./gradlew :common:assemble
+        ./gradlew :app:assembleDebug
+        ./gradlew :wear:assembleDebug
+        ./gradlew :automotive:assembleDebug
 
     - name: Check for missing/modified DB schemas after build
       run: |
