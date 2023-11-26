@@ -16,8 +16,8 @@ import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun SettingsWearTemplateTileList(
-    templateTiles: Map<Int?, TemplateTileConfig>,
-    onTemplateTileClicked: (tileId: Int?) -> Unit,
+    templateTiles: Map<Int, TemplateTileConfig>,
+    onTemplateTileClicked: (tileId: Int) -> Unit,
     onBackClicked: () -> Unit
 ) {
     Scaffold(
@@ -57,8 +57,20 @@ fun SettingsWearTemplateTileList(
 private fun PreviewSettingsWearTemplateTileList() {
     SettingsWearTemplateTileList(
         templateTiles = mapOf(
-            0 to TemplateTileConfig("Example entity 1: {{ states('sensor.example_entity_1') }}", 300),
-            1 to TemplateTileConfig("Example entity 2: {{ states('sensor.example_entity_2') }}", 0)
+            123 to TemplateTileConfig("Example entity 1: {{ states('sensor.example_entity_1') }}", 300),
+            51468 to TemplateTileConfig("Example entity 2: {{ states('sensor.example_entity_2') }}", 0)
+        ),
+        onTemplateTileClicked = {},
+        onBackClicked = {}
+    )
+}
+
+@Preview
+@Composable
+private fun PreviewSettingsWearTemplateSingleLegacyTile() {
+    SettingsWearTemplateTileList(
+        templateTiles = mapOf(
+            -1 to TemplateTileConfig("Example entity 1: {{ states('sensor.example_entity_1') }}", 300),
         ),
         onTemplateTileClicked = {},
         onBackClicked = {}

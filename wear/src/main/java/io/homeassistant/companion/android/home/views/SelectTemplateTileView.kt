@@ -19,8 +19,8 @@ import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun SelectTemplateTileView(
-    templateTiles: Map<Int?, TemplateTileConfig>,
-    onSelectTemplateTile: (tileId: Int?) -> Unit
+    templateTiles: Map<Int, TemplateTileConfig>,
+    onSelectTemplateTile: (tileId: Int) -> Unit
 ) {
     WearAppTheme {
         ThemeLazyColumn {
@@ -56,7 +56,7 @@ fun SelectTemplateTileView(
 private fun PreviewSelectTemplateTileView() {
     SelectTemplateTileView(
         templateTiles = mapOf(
-            null to TemplateTileConfig("Old template", 0),
+            -1 to TemplateTileConfig("Old template", 0),
             1111 to TemplateTileConfig("New template #1", 10),
             2222 to TemplateTileConfig("New template #2", 20)
         ),

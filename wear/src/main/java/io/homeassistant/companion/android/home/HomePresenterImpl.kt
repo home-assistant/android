@@ -271,11 +271,11 @@ class HomePresenterImpl @Inject constructor(
         wearPrefsRepository.setShowShortcutTextEnabled(enabled)
     }
 
-    override suspend fun getAllTemplateTiles(): Map<Int?, TemplateTileConfig> {
+    override suspend fun getAllTemplateTiles(): Map<Int, TemplateTileConfig> {
         return wearPrefsRepository.getAllTemplateTiles()
     }
 
-    override suspend fun setTemplateTileRefreshInterval(tileId: Int?, interval: Int) {
+    override suspend fun setTemplateTileRefreshInterval(tileId: Int, interval: Int) {
         getAllTemplateTiles()[tileId]?.let {
             wearPrefsRepository.setTemplateTile(tileId, it.template, interval)
         }

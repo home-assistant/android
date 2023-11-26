@@ -122,9 +122,9 @@ class MainViewModel @Inject constructor(
         private set
     var isShowShortcutTextEnabled = mutableStateOf(false)
         private set
-    var templateTiles = mutableStateMapOf<Int?, TemplateTileConfig>()
+    var templateTiles = mutableStateMapOf<Int, TemplateTileConfig>()
         private set
-    var templateTilesRenderedTemplates = mutableStateMapOf<Int?, String>()
+    var templateTilesRenderedTemplates = mutableStateMapOf<Int, String>()
         private set
     var isFavoritesOnly by mutableStateOf(false)
         private set
@@ -493,7 +493,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun setTemplateTileRefreshInterval(tileId: Int?, interval: Int) {
+    fun setTemplateTileRefreshInterval(tileId: Int, interval: Int) {
         viewModelScope.launch {
             homePresenter.setTemplateTileRefreshInterval(tileId, interval)
             templateTiles[tileId]?.let {

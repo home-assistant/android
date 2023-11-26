@@ -359,7 +359,7 @@ fun LoadHomePage(
                     }
                 )
             ) { backStackEntry ->
-                val tileId = backStackEntry.arguments!!.getString(ARG_SCREEN_TEMPLATE_TILE_ID)!!.toIntOrNull()
+                val tileId = backStackEntry.arguments!!.getString(ARG_SCREEN_TEMPLATE_TILE_ID)!!.toInt()
                 RefreshIntervalPickerView(
                     currentInterval = mainViewModel.templateTiles[tileId]?.refreshInterval ?: 0
                 ) {

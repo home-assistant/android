@@ -49,8 +49,8 @@ interface HomePresenter {
     suspend fun setWearToastConfirmation(enabled: Boolean)
     suspend fun getShowShortcutText(): Boolean
     suspend fun setShowShortcutTextEnabled(enabled: Boolean)
-    suspend fun getAllTemplateTiles(): Map<Int?, TemplateTileConfig>
-    suspend fun setTemplateTileRefreshInterval(tileId: Int?, interval: Int)
+    suspend fun getAllTemplateTiles(): Map<Int, TemplateTileConfig>
+    suspend fun setTemplateTileRefreshInterval(tileId: Int, interval: Int)
 
     suspend fun getWearFavoritesOnly(): Boolean
     suspend fun setWearFavoritesOnly(enabled: Boolean)

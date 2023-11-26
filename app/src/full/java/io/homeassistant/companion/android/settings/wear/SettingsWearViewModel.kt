@@ -75,9 +75,9 @@ class SettingsWearViewModel @Inject constructor(
         private set
     var favoriteEntityIds = mutableStateListOf<String>()
         private set
-    var templateTiles = mutableStateMapOf<Int?, TemplateTileConfig>()
+    var templateTiles = mutableStateMapOf<Int, TemplateTileConfig>()
         private set
-    var templateTilesRenderedTemplates = mutableStateMapOf<Int?, String>()
+    var templateTilesRenderedTemplates = mutableStateMapOf<Int, String>()
         private set
 
     private val _resultSnackbar = MutableSharedFlow<String>()
@@ -158,7 +158,7 @@ class SettingsWearViewModel @Inject constructor(
         }
     }
 
-    private fun setTemplateTiles(newTemplateTiles: Map<Int?, TemplateTileConfig>) {
+    private fun setTemplateTiles(newTemplateTiles: Map<Int, TemplateTileConfig>) {
         templateTiles.clear()
         templateTilesRenderedTemplates.clear()
 
@@ -168,7 +168,7 @@ class SettingsWearViewModel @Inject constructor(
         }
     }
 
-    private fun renderTemplate(tileId: Int?, template: String) {
+    private fun renderTemplate(tileId: Int, template: String) {
         if (template.isNotEmpty() && serverId != 0) {
             viewModelScope.launch {
                 try {
@@ -332,7 +332,7 @@ class SettingsWearViewModel @Inject constructor(
             favoriteEntityIds.add(entityId)
         }
 
-        val templateTilesFromWear: Map<Int?, TemplateTileConfig> = objectMapper.readValue(
+        val templateTilesFromWear: Map<Int, TemplateTileConfig> = objectMapper.readValue(
             data.getString(
                 WearDataMessages.CONFIG_TEMPLATE_TILES,
                 "{}"

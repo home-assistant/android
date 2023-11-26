@@ -247,7 +247,7 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
     }
 
     private fun saveTemplateTiles(dataMap: DataMap) = mainScope.launch {
-        val templateTilesFromPhone: Map<Int?, TemplateTileConfig> = objectMapper.readValue(
+        val templateTilesFromPhone: Map<Int, TemplateTileConfig> = objectMapper.readValue(
             dataMap.getString(
                 WearDataMessages.CONFIG_TEMPLATE_TILES,
                 "{}"
