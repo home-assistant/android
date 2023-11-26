@@ -44,7 +44,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import java.io.IOException
 import java.security.KeyStore
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
@@ -156,20 +155,16 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
             // load TLS key
             if (tlsClientCertificateData != null && tlsClientCertificateData.isNotEmpty()) {
                 KeyStore.getInstance("PKCS12").apply {
-                    try {
-                        load(tlsClientCertificateData.inputStream(), tlsClientCertificatePassword)
+                    load(tlsClientCertificateData.inputStream(), tlsClientCertificatePassword)
 
-                        val alias = aliases().nextElement()
-                        val certificateChain = getCertificateChain(alias).filterIsInstance<X509Certificate>().toTypedArray()
-                        val privateKey = getKey(alias, tlsClientCertificatePassword) as PrivateKey
+                    val alias = aliases().nextElement()
+                    val certificateChain = getCertificateChain(alias).filterIsInstance<X509Certificate>().toTypedArray()
+                    val privateKey = getKey(alias, tlsClientCertificatePassword) as PrivateKey
 
-                        // we store the TLS Client key under a static alias because there is currently
-                        // no way to ask the user for the correct alias
-                        keyStore.setData(KeyStoreRepositoryImpl.ALIAS, privateKey, certificateChain)
-                        keyChainRepository.load(applicationContext)
-                    } catch (e: IOException) {
-                        Log.e(TAG, "Cannot load TLS client certificate", e)
-                    }
+                    // we store the TLS Client key under a static alias because there is currently
+                    // no way to ask the user for the correct alias
+                    keyStore.setData(KeyStoreRepositoryImpl.ALIAS, privateKey, certificateChain)
+                    keyChainRepository.load(applicationContext)
                 }
             }
 
