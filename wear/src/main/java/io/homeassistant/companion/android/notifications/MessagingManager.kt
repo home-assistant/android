@@ -84,7 +84,7 @@ class MessagingManager @Inject constructor(
                 message == TextToSpeechData.TTS -> speakText(context, notificationData)
                 message == TextToSpeechData.COMMAND_STOP_TTS -> stopTTS()
                 message == DeviceCommandData.COMMAND_UPDATE_SENSORS -> SensorReceiver.updateAllSensors(context)
-                else -> sendNotification(notificationData,  now)
+                else -> sendNotification(notificationData, now)
             }
         }
     }
