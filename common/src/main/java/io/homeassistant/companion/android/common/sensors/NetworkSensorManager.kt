@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.common.sensors
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.wifi.WifiInfo
@@ -24,11 +25,21 @@ import okhttp3.Response
 import okio.IOException
 import org.json.JSONException
 import org.json.JSONObject
+import java.lang.reflect.Method
 import io.homeassistant.companion.android.common.R as commonR
 
 class NetworkSensorManager : SensorManager {
     companion object {
         private const val TAG = "NetworkSM"
+        val hotspotState = SensorManager.BasicSensor(
+            "hotspot_state",
+            "binary_sensor",
+            commonR.string.basic_sensor_name_hotspot_state,
+            commonR.string.sensor_description_hotspot,
+            "mdi:access-point",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+        )
         val wifiConnection = SensorManager.BasicSensor(
             "wifi_connection",
             "sensor",
@@ -137,7 +148,12 @@ class NetworkSensorManager : SensorManager {
             wifiSignalStrength
         )
         val list = if (hasWifi(context)) {
-            wifiSensors.plus(publicIp)
+            val withPublicIp = wifiSensors.plus(publicIp)
+            if (hasHotspot(context)) {
+                withPublicIp.plus(hotspotState)
+            } else {
+                withPublicIp
+            }
         } else {
             listOf(publicIp)
         }
@@ -150,7 +166,7 @@ class NetworkSensorManager : SensorManager {
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return when {
-            sensorId == publicIp.id || sensorId == networkType.id -> {
+            sensorId == hotspotState.id || sensorId == publicIp.id || sensorId == networkType.id -> {
                 arrayOf()
             }
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> {
@@ -168,6 +184,7 @@ class NetworkSensorManager : SensorManager {
     override fun requestSensorUpdate(
         context: Context
     ) {
+        updateHotspotEnabledSensor(context)
         updateWifiConnectionSensor(context)
         updateBSSIDSensor(context)
         updateWifiIPSensor(context)
@@ -184,6 +201,39 @@ class NetworkSensorManager : SensorManager {
     private fun hasWifi(context: Context): Boolean =
         context.applicationContext.getSystemService<WifiManager>() != null
 
+    @SuppressLint("PrivateApi")
+    private fun hasHotspot(context: Context): Boolean {
+        // Watch doesn't have hotspot.
+        if (context.packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            return false
+        }
+        val wifiManager: WifiManager = context.applicationContext.getSystemService()!!
+        return try {
+            wifiManager.javaClass.getDeclaredMethod("isWifiApEnabled")
+            true
+        } catch (e: NoSuchMethodException) {
+            false
+        }
+    }
+    private fun updateHotspotEnabledSensor(context: Context) {
+        if (!isEnabled(context, hotspotState)) {
+            return
+        }
+        val wifiManager: WifiManager = context.getSystemService()!!
+
+        @SuppressLint("PrivateApi")
+        val method: Method = wifiManager.javaClass.getDeclaredMethod("isWifiApEnabled")
+        method.isAccessible = true
+        val enabled = method.invoke(wifiManager) as Boolean
+        val icon = if (enabled) "mdi:access-point" else "mdi:access-point-off"
+        onSensorUpdated(
+            context,
+            hotspotState,
+            enabled,
+            icon,
+            mapOf()
+        )
+    }
     private fun updateWifiConnectionSensor(context: Context) {
         if (!isEnabled(context, wifiConnection) || !hasWifi(context)) {
             return

@@ -16,6 +16,10 @@ import javax.inject.Inject
 @SuppressLint("VisibleForTests") // https://issuetracker.google.com/issues/239451111
 class WearOnboardingListener : WearableListenerService() {
 
+    companion object {
+        private const val TAG = "WearOnboardingListener"
+    }
+
     @Inject
     lateinit var serverManager: ServerManager
 
@@ -41,8 +45,16 @@ class WearOnboardingListener : WearableListenerService() {
                 setUrgent()
                 asPutDataRequest()
             }
-            Wearable.getDataClient(this@WearOnboardingListener).putDataItem(putDataReq).addOnCompleteListener {
-                Log.d("WearOnboardingListener", "sendHomeAssistantInstance: ${if (it.isSuccessful) "success" else "failed"}")
+            try {
+                Wearable.getDataClient(this@WearOnboardingListener).putDataItem(putDataReq)
+                    .addOnCompleteListener {
+                        Log.d(
+                            TAG,
+                            "sendHomeAssistantInstance: ${if (it.isSuccessful) "success" else "failed"}"
+                        )
+                    }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to send home assistant instance", e)
             }
         }
     }

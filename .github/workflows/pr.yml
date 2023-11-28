@@ -30,6 +30,9 @@ jobs:
           cp .github/mock-google-services.json wear/google-services.json
           cp .github/mock-google-services.json automotive/google-services.json
 
+      - uses: gradle/wrapper-validation-action@v1
+        name: Validate Gradle Wrapper
+
       - name: Validate ktlint
         run: ./gradlew ktlintCheck
 
@@ -58,6 +61,9 @@ jobs:
           cp .github/mock-google-services.json wear/google-services.json
           cp .github/mock-google-services.json automotive/google-services.json
 
+      - uses: gradle/wrapper-validation-action@v1
+        name: Validate Gradle Wrapper
+
       - name: Validate Lint
         run: ./gradlew lint
 
@@ -85,14 +91,8 @@ jobs:
         distribution: 'adopt'
         java-version: '17'
 
-    - uses: actions/cache@v3
-      with:
-        path: |
-          ~/.gradle/caches
-          ~/.gradle/wrapper
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
+    - name: Setup Gradle
+      uses: gradle/gradle-build-action@v2
 
     - name: Mock google-services.json
       run: |
@@ -100,8 +100,15 @@ jobs:
         cp .github/mock-google-services.json wear/google-services.json
         cp .github/mock-google-services.json automotive/google-services.json
 
+    - uses: gradle/wrapper-validation-action@v1
+      name: Validate Gradle Wrapper
+
     - name: Build Debug APK
-      run: ./gradlew assembleDebug
+      run: |
+        ./gradlew :common:assemble
+        ./gradlew :app:assembleDebug
+        ./gradlew :wear:assembleDebug
+        ./gradlew :automotive:assembleDebug
 
     - name: Check for missing/modified DB schemas after build
       run: |

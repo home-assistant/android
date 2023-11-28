@@ -194,7 +194,12 @@ class HighAccuracyLocationService : Service() {
             .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
             .build()
 
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
+        fusedLocationProviderClient = try {
+            LocationServices.getFusedLocationProviderClient(this)
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to get fused location provider client", e)
+            null
+        }
         fusedLocationProviderClient?.requestLocationUpdates(request, getLocationUpdateIntent())
     }
 }

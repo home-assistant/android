@@ -36,14 +36,8 @@ jobs:
           ruby-version: '3.2'
           bundler-cache: true
 
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
 
       - uses: ./.github/actions/create-release-number
         name: Create Release Number
@@ -69,13 +63,20 @@ jobs:
           lokalise-project: ${{ secrets.LOKALISE_PROJECT }}
           lokalise-token: ${{ secrets.LOKALISE_TOKEN }}
 
+      - uses: gradle/wrapper-validation-action@v1
+        name: Validate Gradle Wrapper
+
       - name: Build Release
         env:
           KEYSTORE_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_FILE_PASSWORD }}
           KEYSTORE_ALIAS: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS }}
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS_PASSWORD }}
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
-        run: ./gradlew assembleRelease
+        run: |
+          ./gradlew :common:assemble
+          ./gradlew :app:assembleRelease
+          ./gradlew :wear:assembleRelease
+          ./gradlew :automotive:assembleRelease
 
       - name: Archive Build
         uses: actions/upload-artifact@v3
@@ -144,14 +145,8 @@ jobs:
           ruby-version: '3.2'
           bundler-cache: true
 
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
 
       - uses: ./.github/actions/create-release-number
         name: Create Release Number
@@ -177,13 +172,20 @@ jobs:
           lokalise-project: ${{ secrets.LOKALISE_PROJECT }}
           lokalise-token: ${{ secrets.LOKALISE_TOKEN }}
 
+      - uses: gradle/wrapper-validation-action@v1
+        name: Validate Gradle Wrapper
+
       - name: Build Release
         env:
           KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
           KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
-        run: ./gradlew bundleRelease
+        run: |
+          ./gradlew :common:assemble
+          ./gradlew :app:bundleRelease
+          ./gradlew :wear:bundleRelease
+          ./gradlew :automotive:bundleRelease
 
       - name: Deploy to Playstore Internal
         run: bundle exec fastlane deploy_internal

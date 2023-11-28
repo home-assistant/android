@@ -125,6 +125,7 @@ open class HomeAssistantApplication : Application() {
             IntentFilter().apply {
                 addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION)
                 addAction(WifiManager.WIFI_STATE_CHANGED_ACTION)
+                addAction("android.net.wifi.WIFI_AP_STATE_CHANGED")
             }
         )
 

@@ -647,7 +647,13 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         }
         Log.d(TAG, "Registering for location updates.")
 
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(latestContext)
+        fusedLocationProviderClient = try {
+            LocationServices.getFusedLocationProviderClient(latestContext)
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to get fused location provider client", e)
+            null
+        }
+
         val intent = getLocationUpdateIntent(false)
 
         fusedLocationProviderClient?.requestLocationUpdates(
@@ -1109,65 +1115,88 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             setMaxUpdates(maxRetries)
             setMinUpdateIntervalMillis(5000)
         }.build()
-        LocationServices.getFusedLocationProviderClient(latestContext)
-            .requestLocationUpdates(
-                request,
-                object : LocationCallback() {
-                    val wakeLock: PowerManager.WakeLock? =
-                        latestContext.getSystemService<PowerManager>()
-                            ?.newWakeLock(
-                                PowerManager.PARTIAL_WAKE_LOCK,
-                                "HomeAssistant::AccurateLocation"
-                            )?.apply { acquire(10 * 60 * 1000L /*10 minutes*/) }
-                    var numberCalls = 0
-                    override fun onLocationResult(locationResult: LocationResult) {
-                        numberCalls++
-                        Log.d(
-                            TAG,
-                            "Got single accurate location update: ${locationResult.lastLocation}"
-                        )
-                        if (locationResult.equals(null)) {
-                            Log.w(TAG, "No location provided.")
-                            return
-                        }
+        try {
+            LocationServices.getFusedLocationProviderClient(latestContext)
+                .requestLocationUpdates(
+                    request,
+                    object : LocationCallback() {
+                        val wakeLock: PowerManager.WakeLock? =
+                            latestContext.getSystemService<PowerManager>()
+                                ?.newWakeLock(
+                                    PowerManager.PARTIAL_WAKE_LOCK,
+                                    "HomeAssistant::AccurateLocation"
+                                )?.apply { acquire(10 * 60 * 1000L /*10 minutes*/) }
+                        var numberCalls = 0
+                        override fun onLocationResult(locationResult: LocationResult) {
+                            numberCalls++
+                            Log.d(
+                                TAG,
+                                "Got single accurate location update: ${locationResult.lastLocation}"
+                            )
+                            if (locationResult.equals(null)) {
+                                Log.w(TAG, "No location provided.")
+                                return
+                            }
 
-                        when {
-                            locationResult.lastLocation!!.accuracy <= minAccuracy -> {
-                                Log.d(TAG, "Location accurate enough, all done with high accuracy.")
-                                runBlocking {
-                                    locationResult.lastLocation?.let {
-                                        getEnabledServers(latestContext, singleAccurateLocation).forEach { serverId ->
-                                            sendLocationUpdate(it, serverId, LocationUpdateTrigger.SINGLE_ACCURATE_LOCATION)
-                                        }
-                                    }
-                                }
-                                if (wakeLock?.isHeld == true) wakeLock.release()
-                            }
-                            numberCalls >= maxRetries -> {
-                                Log.d(
-                                    TAG,
-                                    "No location was accurate enough, sending our last location anyway"
-                                )
-                                if (locationResult.lastLocation!!.accuracy <= minAccuracy * 2) {
+                            when {
+                                locationResult.lastLocation!!.accuracy <= minAccuracy -> {
+                                    Log.d(
+                                        TAG,
+                                        "Location accurate enough, all done with high accuracy."
+                                    )
                                     runBlocking {
-                                        getEnabledServers(latestContext, singleAccurateLocation).forEach { serverId ->
-                                            sendLocationUpdate(locationResult.lastLocation!!, serverId, LocationUpdateTrigger.SINGLE_ACCURATE_LOCATION)
+                                        locationResult.lastLocation?.let {
+                                            getEnabledServers(
+                                                latestContext,
+                                                singleAccurateLocation
+                                            ).forEach { serverId ->
+                                                sendLocationUpdate(
+                                                    it,
+                                                    serverId,
+                                                    LocationUpdateTrigger.SINGLE_ACCURATE_LOCATION
+                                                )
+                                            }
                                         }
                                     }
+                                    if (wakeLock?.isHeld == true) wakeLock.release()
                                 }
-                                if (wakeLock?.isHeld == true) wakeLock.release()
-                            }
-                            else -> {
-                                Log.w(
-                                    TAG,
-                                    "Location not accurate enough on retry $numberCalls of $maxRetries"
-                                )
+
+                                numberCalls >= maxRetries -> {
+                                    Log.d(
+                                        TAG,
+                                        "No location was accurate enough, sending our last location anyway"
+                                    )
+                                    if (locationResult.lastLocation!!.accuracy <= minAccuracy * 2) {
+                                        runBlocking {
+                                            getEnabledServers(
+                                                latestContext,
+                                                singleAccurateLocation
+                                            ).forEach { serverId ->
+                                                sendLocationUpdate(
+                                                    locationResult.lastLocation!!,
+                                                    serverId,
+                                                    LocationUpdateTrigger.SINGLE_ACCURATE_LOCATION
+                                                )
+                                            }
+                                        }
+                                    }
+                                    if (wakeLock?.isHeld == true) wakeLock.release()
+                                }
+
+                                else -> {
+                                    Log.w(
+                                        TAG,
+                                        "Location not accurate enough on retry $numberCalls of $maxRetries"
+                                    )
+                                }
                             }
                         }
-                    }
-                },
-                Looper.getMainLooper()
-            )
+                    },
+                    Looper.getMainLooper()
+                )
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to get location data for single accurate sensor", e)
+        }
     }
 
     override fun docsLink(): String {
