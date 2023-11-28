@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.notifications
+package io.homeassistant.companion.android.common.notifications
 
 import android.content.BroadcastReceiver
 import android.content.Context

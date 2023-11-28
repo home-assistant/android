@@ -3,6 +3,8 @@ package io.homeassistant.companion.android.notifications
 import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
+import android.app.PendingIntent
+import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -88,7 +90,7 @@ class MessagingManager @Inject constructor(
     }
 
     @SuppressLint("MissingPermission")
-    private fun sendNotification(data: Map<String, String>, received: Long? = null) {
+    private fun sendNotification(data: Map<String, String>, id: Long? = null, received: Long? = null) {
         val notificationManagerCompat = NotificationManagerCompat.from(context)
 
         val tag = data["tag"]
