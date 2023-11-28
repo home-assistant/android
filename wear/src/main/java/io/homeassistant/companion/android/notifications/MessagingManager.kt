@@ -84,13 +84,13 @@ class MessagingManager @Inject constructor(
                 message == TextToSpeechData.TTS -> speakText(context, notificationData)
                 message == TextToSpeechData.COMMAND_STOP_TTS -> stopTTS()
                 message == DeviceCommandData.COMMAND_UPDATE_SENSORS -> SensorReceiver.updateAllSensors(context)
-                else -> sendNotification(notificationData, now)
+                else -> sendNotification(notificationData,  now)
             }
         }
     }
 
     @SuppressLint("MissingPermission")
-    private fun sendNotification(data: Map<String, String>, id: Long? = null, received: Long? = null) {
+    private fun sendNotification(data: Map<String, String>, received: Long? = null) {
         val notificationManagerCompat = NotificationManagerCompat.from(context)
 
         val tag = data["tag"]
@@ -119,7 +119,7 @@ class MessagingManager @Inject constructor(
 
         handleText(notificationBuilder, data)
 
-        handleDeleteIntent(notificationBuilder, data, messageId, group, groupId, id)
+        handleDeleteIntent(notificationBuilder, data, messageId, group, groupId)
 
         notificationManagerCompat.apply {
             Log.d(TAG, "Show notification with tag \"$tag\" and id \"$messageId\"")
@@ -144,14 +144,12 @@ class MessagingManager @Inject constructor(
         data: Map<String, String>,
         messageId: Int,
         group: String?,
-        groupId: Int,
-        databaseId: Long?
+        groupId: Int
     ) {
         val deleteIntent = Intent(context, NotificationDeleteReceiver::class.java).apply {
             putExtra(NotificationDeleteReceiver.EXTRA_DATA, HashMap(data))
             putExtra(NotificationDeleteReceiver.EXTRA_NOTIFICATION_GROUP, group)
             putExtra(NotificationDeleteReceiver.EXTRA_NOTIFICATION_GROUP_ID, groupId)
-            putExtra(NotificationDeleteReceiver.EXTRA_NOTIFICATION_DB, databaseId)
         }
         val deletePendingIntent = PendingIntent.getBroadcast(
             context,
