@@ -67,7 +67,7 @@ wearInput = "1.2.0-alpha02"
 webkit = "1.8.0"
 wear-remote-interactions = "1.0.0"
 workRuntimeKtx = "2.8.1"
-horologist = "0.5.10"
+horologist = "0.5.11"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidPlugin" }
