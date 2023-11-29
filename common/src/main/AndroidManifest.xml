@@ -11,6 +11,11 @@
                 <action android:name="io.homeassistant.companion.android.UPDATE_SENSORS" />
             </intent-filter>
         </receiver>
+
+        <receiver
+            android:name=".notifications.NotificationDeleteReceiver"
+            android:enabled="true"
+            android:exported="true" />
     </application>
 
 </manifest>
