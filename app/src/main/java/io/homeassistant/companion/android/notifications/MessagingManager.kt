@@ -49,7 +49,6 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.notifications.DeviceCommandData
 import io.homeassistant.companion.android.common.notifications.NotificationData
-import io.homeassistant.companion.android.common.notifications.NotificationDeleteReceiver
 import io.homeassistant.companion.android.common.notifications.clearNotification
 import io.homeassistant.companion.android.common.notifications.commandBeaconMonitor
 import io.homeassistant.companion.android.common.notifications.commandBleTransmitter
@@ -57,6 +56,7 @@ import io.homeassistant.companion.android.common.notifications.createChannelID
 import io.homeassistant.companion.android.common.notifications.getGroupNotificationBuilder
 import io.homeassistant.companion.android.common.notifications.handleChannel
 import io.homeassistant.companion.android.common.notifications.handleColor
+import io.homeassistant.companion.android.common.notifications.handleDeleteIntent
 import io.homeassistant.companion.android.common.notifications.handleSmallIcon
 import io.homeassistant.companion.android.common.notifications.handleText
 import io.homeassistant.companion.android.common.notifications.parseColor
@@ -936,7 +936,7 @@ class MessagingManager @Inject constructor(
 
         handleReplyHistory(notificationBuilder, data)
 
-        handleDeleteIntent(notificationBuilder, data, messageId, group, groupId, id)
+        handleDeleteIntent(context, notificationBuilder, data, messageId, group, groupId, id)
 
         handleContentIntent(notificationBuilder, data)
 
@@ -1032,29 +1032,6 @@ class MessagingManager @Inject constructor(
         if (actionUri != NO_ACTION) {
             builder.setContentIntent(createOpenUriPendingIntent(actionUri, data))
         }
-    }
-
-    private fun handleDeleteIntent(
-        builder: NotificationCompat.Builder,
-        data: Map<String, String>,
-        messageId: Int,
-        group: String?,
-        groupId: Int,
-        databaseId: Long?
-    ) {
-        val deleteIntent = Intent(context, NotificationDeleteReceiver::class.java).apply {
-            putExtra(NotificationDeleteReceiver.EXTRA_DATA, HashMap(data))
-            putExtra(NotificationDeleteReceiver.EXTRA_NOTIFICATION_GROUP, group)
-            putExtra(NotificationDeleteReceiver.EXTRA_NOTIFICATION_GROUP_ID, groupId)
-            putExtra(NotificationDeleteReceiver.EXTRA_NOTIFICATION_DB, databaseId)
-        }
-        val deletePendingIntent = PendingIntent.getBroadcast(
-            context,
-            messageId,
-            deleteIntent,
-            PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        builder.setDeleteIntent(deletePendingIntent)
     }
 
     private fun handlePersistent(
