@@ -53,7 +53,7 @@ object ClimateControl : HaControl {
         }
 
         val temperatureUnit = entity.attributes["temperature_unit"] ?: ""
-        val temperatureStepSize = (entity.attributes["target_temperature_step"] as? Number)?.toFloat()
+        val temperatureStepSize = (entity.attributes["target_temp_step"] as? Number)?.toFloat()
             ?: when (temperatureUnit) {
                 "°C" -> 0.5f
                 else -> 1f
