@@ -133,45 +133,42 @@ fun MobileAppIntegrationView(
                     )
                 }
                 if (onboardingViewModel.tlsClientCertificateUri != null) {
-                    Row {
-                        TextField(
-                            value = onboardingViewModel.tlsClientCertificatePassword,
-                            onValueChange = {
-                                onboardingViewModel.tlsClientCertificatePassword = it
-                                onCheckPassword(onboardingViewModel.tlsClientCertificatePassword)
-                            },
-                            label = { Text(text = stringResource(id = commonR.string.password)) },
-                            singleLine = true,
-                            visualTransformation = PasswordVisualTransformation(),
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Password,
-                                imeAction = ImeAction.Done
-                            ),
-                            keyboardActions = KeyboardActions(
-                                onDone = {
-                                    keyboardController?.hide()
-                                }
-                            ),
-                            trailingIcon = {
-                                if (onboardingViewModel.tlsClientCertificatePasswordCorrect) {
-                                    Icon(
-                                        imageVector = Icons.Filled.CheckCircle,
-                                        tint = colorResource(commonR.color.colorOnBackground),
-                                        contentDescription = stringResource(id = commonR.string.password_correct)
-                                    )
-                                } else {
-                                    Icon(
-                                        imageVector = Icons.Filled.Error,
-                                        tint = colorResource(commonR.color.colorWarning),
-                                        contentDescription = stringResource(id = commonR.string.password_incorrect)
-                                    )
-                                }
-                            },
-                            isError = !onboardingViewModel.tlsClientCertificatePasswordCorrect,
-                            modifier = Modifier
-                                .weight(1f)
-                        )
-                    }
+                    TextField(
+                        value = onboardingViewModel.tlsClientCertificatePassword,
+                        onValueChange = {
+                            onboardingViewModel.tlsClientCertificatePassword = it
+                            onCheckPassword(onboardingViewModel.tlsClientCertificatePassword)
+                        },
+                        label = { Text(text = stringResource(id = commonR.string.password)) },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                keyboardController?.hide()
+                            }
+                        ),
+                        trailingIcon = {
+                            if (onboardingViewModel.tlsClientCertificatePasswordCorrect) {
+                                Icon(
+                                    imageVector = Icons.Filled.CheckCircle,
+                                    tint = colorResource(commonR.color.colorOnBackground),
+                                    contentDescription = stringResource(id = commonR.string.password_correct)
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Filled.Error,
+                                    tint = colorResource(commonR.color.colorWarning),
+                                    contentDescription = stringResource(id = commonR.string.password_incorrect)
+                                )
+                            }
+                        },
+                        isError = !onboardingViewModel.tlsClientCertificatePasswordCorrect,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
             TextButton(onClick = openPrivacyPolicy) {
