@@ -28,6 +28,10 @@ android {
         }
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     kotlinOptions {
         jvmTarget = libs.versions.javaVersion.get()
     }
