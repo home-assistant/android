@@ -30,6 +30,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import javax.inject.Named
 
 @HiltAndroidApp
 open class HomeAssistantApplication : Application() {
@@ -40,6 +41,7 @@ open class HomeAssistantApplication : Application() {
     lateinit var prefsRepository: PrefsRepository
 
     @Inject
+    @Named("keyChainRepository")
     lateinit var keyChainRepository: KeyChainRepository
 
     @Inject

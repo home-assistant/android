@@ -8,6 +8,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
+import android.provider.OpenableColumns
 import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
@@ -18,6 +19,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.core.content.getSystemService
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.themeadapter.material.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
@@ -25,6 +27,9 @@ import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.onboarding.OnboardingViewModel
 import io.homeassistant.companion.android.onboarding.notifications.NotificationPermissionFragment
 import io.homeassistant.companion.android.sensors.LocationSensorManager
+import kotlinx.coroutines.launch
+import java.io.IOException
+import java.security.KeyStore
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
@@ -32,6 +37,9 @@ class MobileAppIntegrationFragment : Fragment() {
 
     private val requestLocationPermissions = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
         onLocationPermissionResult(it)
+    }
+    private val getContent = registerForActivityResult(ActivityResultContracts.GetContent()) {
+        onGetContentResult(it)
     }
 
     private var dialog: AlertDialog? = null
@@ -49,6 +57,8 @@ class MobileAppIntegrationFragment : Fragment() {
                         onboardingViewModel = viewModel,
                         openPrivacyPolicy = this@MobileAppIntegrationFragment::openPrivacyPolicy,
                         onLocationTrackingChanged = this@MobileAppIntegrationFragment::onLocationTrackingChanged,
+                        onSelectTLSCertificateClicked = this@MobileAppIntegrationFragment::onSelectTLSCertificateClicked,
+                        onCheckPassword = this@MobileAppIntegrationFragment::onCheckTLSCertificatePassword,
                         onFinishClicked = this@MobileAppIntegrationFragment::onComplete
                     )
                 }
@@ -86,6 +96,41 @@ class MobileAppIntegrationFragment : Fragment() {
         }
 
         viewModel.setLocationTracking(checked)
+    }
+
+    private fun onSelectTLSCertificateClicked() {
+        getContent.launch("*/*")
+    }
+
+    private fun onCheckTLSCertificatePassword(password: String) {
+        lifecycleScope.launch {
+            var ok: Boolean
+            context?.contentResolver?.openInputStream(viewModel.tlsClientCertificateUri!!)!!.buffered().use {
+                val keystore = KeyStore.getInstance("PKCS12")
+                ok = try {
+                    keystore.load(it, password.toCharArray())
+                    true
+                } catch (e: IOException) {
+                    // we cannot determine if it failed due to wrong password or other reasons, since e.cause is not set to UnrecoverableKeyException
+                    false
+                }
+            }
+            viewModel.tlsClientCertificatePasswordCorrect = ok
+        }
+    }
+
+    @SuppressLint("Range")
+    private fun onGetContentResult(uri: Uri?) {
+        if (uri != null) {
+            context?.contentResolver?.query(uri, null, null, null, null)?.use { cursor ->
+                cursor.moveToFirst()
+
+                viewModel.tlsClientCertificateUri = uri
+                viewModel.tlsClientCertificateFilename = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME))
+            }
+            // check with empty password
+            onCheckTLSCertificatePassword("")
+        }
     }
 
     private fun requestPermissions(sensorId: String) {

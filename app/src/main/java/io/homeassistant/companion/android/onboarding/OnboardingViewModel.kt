@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.onboarding
 
 import android.app.Application
+import android.net.Uri
 import android.util.Log
 import android.webkit.URLUtil
 import android.widget.Toast
@@ -52,6 +53,11 @@ class OnboardingViewModel @Inject constructor(
     var locationTrackingEnabled by mutableStateOf(false)
     val notificationsPossible = mutableStateOf(true)
     var notificationsEnabled by mutableStateOf(false)
+    var mayRequireTlsClientCertificate by mutableStateOf(false)
+    var tlsClientCertificateUri: Uri? by mutableStateOf(null)
+    var tlsClientCertificateFilename by mutableStateOf("")
+    var tlsClientCertificatePassword by mutableStateOf("")
+    var tlsClientCertificatePasswordCorrect by mutableStateOf(false)
 
     private var authCode = ""
 
@@ -81,7 +87,9 @@ class OnboardingViewModel @Inject constructor(
         authCode = authCode,
         deviceName = deviceName.value,
         deviceTrackingEnabled = locationTrackingEnabled,
-        notificationsEnabled = notificationsEnabled
+        notificationsEnabled = notificationsEnabled,
+        tlsClientCertificateUri = tlsClientCertificateUri?.toString() ?: "",
+        tlsClientCertificatePassword = tlsClientCertificatePassword
     )
 
     fun onDiscoveryActive() {
