@@ -117,7 +117,7 @@ class CameraTile : TileService() {
                         val maxHeight = requestParams.deviceConfiguration.screenHeightDp * requestParams.deviceConfiguration.screenDensity
                         withContext(Dispatchers.IO) {
                             val response = okHttpClient.newCall(Request.Builder().url(url).build()).execute()
-                            byteArray = response.body?.byteStream()?.readBytes()
+                            byteArray = response.body.byteStream().readBytes()
                             byteArray?.let {
                                 var bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
                                 if (bitmap.width > maxWidth || bitmap.height > maxHeight) {
