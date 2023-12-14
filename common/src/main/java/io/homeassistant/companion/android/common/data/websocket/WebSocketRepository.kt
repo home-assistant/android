@@ -60,7 +60,7 @@ interface WebSocketRepository {
      * @return [MatterCommissionResponse] detailing the server's response, or `null` if the server
      * did not return a response.
      */
-    suspend fun commissionMatterDeviceOnNetwork(pin: Long): MatterCommissionResponse?
+    suspend fun commissionMatterDeviceOnNetwork(pin: Long, ip: String): MatterCommissionResponse?
 
     /**
      * Return a list of all Thread datasets known to the server.

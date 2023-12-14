@@ -37,5 +37,5 @@ interface MatterManager {
      * Send a request to the server to commission an "on network" Matter device
      * @return [MatterCommissionResponse], or `null` if it wasn't possible to complete the request
      */
-    suspend fun commissionOnNetworkDevice(pin: Long, serverId: Int): MatterCommissionResponse?
+    suspend fun commissionOnNetworkDevice(pin: Long, ip: String, serverId: Int): MatterCommissionResponse?
 }

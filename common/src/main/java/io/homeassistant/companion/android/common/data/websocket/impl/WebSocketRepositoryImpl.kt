@@ -473,12 +473,13 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
         }
     }
 
-    override suspend fun commissionMatterDeviceOnNetwork(pin: Long): MatterCommissionResponse? {
+    override suspend fun commissionMatterDeviceOnNetwork(pin: Long, ip: String): MatterCommissionResponse? {
         val response = sendMessage(
             WebSocketRequest(
                 message = mapOf(
                     "type" to "matter/commission_on_network",
-                    "pin" to pin
+                    "pin" to pin,
+                    "ipaddr" to ip
                 ),
                 timeout = 120000L // Matter commissioning takes at least 60 seconds + interview
             )
