@@ -630,14 +630,15 @@ class MessagingManager @Inject constructor(
                 Toast.makeText(context, "$RELATIVE_VOLUME = $relative", Toast.LENGTH_SHORT).show()
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                    context.getSystemService<NotificationManager>()?.isNotificationPolicyAccessGranted == false) {
+                    context.getSystemService<NotificationManager>()?.isNotificationPolicyAccessGranted == false
+                ) {
                     notifyMissingPermission(message.toString(), serverId)
                 } else {
                     processStreamVolume(
                         audioManager = audioManager!!,
                         stream = data[NotificationData.MEDIA_STREAM].toString(),
                         volume = command!!.toInt(),
-                        relative = relative,
+                        relative = relative
                     )
                 }
             }
