@@ -121,6 +121,6 @@ jobs:
         fi
 
     - name: Archive Debug Build
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         path: ./**/*.apk
