@@ -12,6 +12,7 @@ import io.homeassistant.companion.android.common.R as commonR
 class AudioSensorManager : SensorManager {
     companion object {
         private const val TAG = "AudioSensor"
+        const val VOLUME_CHANGED_ACTION = "android.media.VOLUME_CHANGED_ACTION"
 
         val audioSensor = SensorManager.BasicSensor(
             "audio_sensor",
@@ -75,7 +76,8 @@ class AudioSensorManager : SensorManager {
             commonR.string.sensor_name_volume_alarm,
             commonR.string.sensor_description_volume_alarm,
             "mdi:alarm",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         private val volCall = SensorManager.BasicSensor(
             "volume_call",
@@ -83,15 +85,17 @@ class AudioSensorManager : SensorManager {
             commonR.string.sensor_name_volume_call,
             commonR.string.sensor_description_volume_call,
             "mdi:phone",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
-        private val volMusic = SensorManager.BasicSensor(
+        val volMusic = SensorManager.BasicSensor(
             "volume_music",
             "sensor",
             commonR.string.sensor_name_volume_music,
             commonR.string.sensor_description_volume_music,
             "mdi:music",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         private val volRing = SensorManager.BasicSensor(
             "volume_ring",
@@ -99,7 +103,8 @@ class AudioSensorManager : SensorManager {
             commonR.string.sensor_name_volume_ring,
             commonR.string.sensor_description_volume_ring,
             "mdi:phone-ring",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         private val volNotification = SensorManager.BasicSensor(
             "volume_notification",
@@ -107,7 +112,8 @@ class AudioSensorManager : SensorManager {
             commonR.string.sensor_name_volume_notification,
             commonR.string.sensor_description_volume_notification,
             "mdi:bell-ring",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         private val volSystem = SensorManager.BasicSensor(
             "volume_system",
@@ -115,7 +121,8 @@ class AudioSensorManager : SensorManager {
             commonR.string.sensor_name_volume_system,
             commonR.string.sensor_description_volume_system,
             "mdi:cellphone-sound",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         private val volAccessibility = SensorManager.BasicSensor(
             "volume_accessibility",
@@ -123,7 +130,8 @@ class AudioSensorManager : SensorManager {
             commonR.string.sensor_name_volume_accessibility,
             commonR.string.sensor_description_volume_accessibility,
             "mdi:human",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         private val volDTMF = SensorManager.BasicSensor(
             "volume_dtmf",
@@ -131,7 +139,8 @@ class AudioSensorManager : SensorManager {
             commonR.string.sensor_name_volume_dtmf,
             commonR.string.sensor_description_volume_dtmf,
             "mdi:volume-high",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
     }
 

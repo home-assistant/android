@@ -115,6 +115,7 @@ class SensorReceiver : SensorReceiverBase() {
         AudioManager.ACTION_MICROPHONE_MUTE_CHANGED to AudioSensorManager.micMuted.id,
         AudioManager.ACTION_SPEAKERPHONE_STATE_CHANGED to AudioSensorManager.speakerphoneState.id,
         AudioManager.RINGER_MODE_CHANGED_ACTION to AudioSensorManager.audioSensor.id,
+        AudioSensorManager.VOLUME_CHANGED_ACTION to AudioSensorManager.volMusic.id,
         Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE to DevicePolicyManager.isWorkProfile.id,
         Intent.ACTION_MANAGED_PROFILE_AVAILABLE to DevicePolicyManager.isWorkProfile.id,
         WifiManager.WIFI_STATE_CHANGED_ACTION to NetworkSensorManager.wifiState.id,

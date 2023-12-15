@@ -115,6 +115,7 @@ class SensorReceiver : SensorReceiverBase() {
         AudioManager.ACTION_MICROPHONE_MUTE_CHANGED to AudioSensorManager.micMuted.id,
         AudioManager.ACTION_SPEAKERPHONE_STATE_CHANGED to AudioSensorManager.speakerphoneState.id,
         AudioManager.RINGER_MODE_CHANGED_ACTION to AudioSensorManager.audioSensor.id,
+        AudioSensorManager.VOLUME_CHANGED_ACTION to AudioSensorManager.volMusic.id,
         "com.google.android.clockwork.actions.WET_MODE_STARTED" to WetModeSensorManager.wetModeSensor.id,
         "com.google.android.clockwork.actions.WET_MODE_ENDED" to WetModeSensorManager.wetModeSensor.id,
         "android.bluetooth.device.action.ACL_CONNECTED" to BluetoothSensorManager.bluetoothConnection.id,
