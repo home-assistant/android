@@ -287,6 +287,10 @@ class WebViewPresenterImpl @Inject constructor(
         } ?: 0
     }
 
+    override fun onStart(context: Context) {
+        matterUseCase.suppressDiscoveryBottomSheet(context)
+    }
+
     override fun onFinish() {
         mainScope.cancel()
     }

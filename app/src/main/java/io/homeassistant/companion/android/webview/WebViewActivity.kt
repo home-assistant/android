@@ -800,6 +800,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        presenter.onStart(this)
+    }
+
     override fun onResume() {
         super.onResume()
         if (currentAutoplay != presenter.isAutoPlayVideoEnabled()) {
