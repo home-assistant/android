@@ -70,7 +70,7 @@ private fun PreviewSettingsWearTemplateTileList() {
 private fun PreviewSettingsWearTemplateSingleLegacyTile() {
     SettingsWearTemplateTileList(
         templateTiles = mapOf(
-            -1 to TemplateTileConfig("Example entity 1: {{ states('sensor.example_entity_1') }}", 300),
+            -1 to TemplateTileConfig("Example entity 1: {{ states('sensor.example_entity_1') }}", 300)
         ),
         onTemplateTileClicked = {},
         onBackClicked = {}
