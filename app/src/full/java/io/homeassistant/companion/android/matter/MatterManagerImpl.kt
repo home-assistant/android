@@ -30,6 +30,11 @@ class MatterManagerImpl @Inject constructor(
         return config != null && config.components.contains("matter")
     }
 
+    override fun suppressDiscoveryBottomSheet(context: Context) {
+        if (!appSupportsCommissioning()) return
+        Matter.getCommissioningClient(context).suppressHalfSheetNotification()
+    }
+
     override fun startNewCommissioningFlow(
         context: Context,
         onSuccess: (IntentSender) -> Unit,

@@ -42,6 +42,8 @@ interface WebViewPresenter {
 
     fun sessionTimeOut(): Int
 
+    fun onStart(context: Context)
+
     fun onFinish()
 
     fun isSsidUsed(): Boolean
