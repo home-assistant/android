@@ -75,7 +75,6 @@ fun LoadSettingsHomeView(
                 val templateTile = settingsWearViewModel.templateTiles[tileId]
                 val renderedTemplate = settingsWearViewModel.templateTilesRenderedTemplates[tileId]
 
-                // TODO: error handling
                 templateTile?.let {
                     SettingsWearTemplateTile(
                         template = it.template,
