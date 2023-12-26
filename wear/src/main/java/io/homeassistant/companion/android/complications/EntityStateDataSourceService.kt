@@ -89,7 +89,11 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
 
         val contentDescription = PlainComplicationText.Builder(getText(R.string.complication_entity_state_content_description)).build()
         val monochromaticImage = MonochromaticImage.Builder(Icon.createWithBitmap(iconBitmap)).build()
-        val tapAction = ComplicationReceiver.getComplicationToggleIntent(this, request.complicationInstanceId)
+        val tapAction = ComplicationReceiver.getComplicationToggleIntent(
+            this,
+            request.complicationInstanceId,
+            if (settings.forwardTaps) entity.entityId else null
+        )
 
         return when (request.complicationType) {
             ComplicationType.SHORT_TEXT -> {
