@@ -63,9 +63,9 @@ class MatterManagerImpl @Inject constructor(
         }
     }
 
-    override suspend fun commissionOnNetworkDevice(pin: Long, serverId: Int): MatterCommissionResponse? {
+    override suspend fun commissionOnNetworkDevice(pin: Long, ip: String, serverId: Int): MatterCommissionResponse? {
         return try {
-            serverManager.webSocketRepository(serverId).commissionMatterDeviceOnNetwork(pin)
+            serverManager.webSocketRepository(serverId).commissionMatterDeviceOnNetwork(pin, ip)
         } catch (e: Exception) {
             Log.e(TAG, "Error while executing server commissioning request", e)
             null

@@ -58,7 +58,7 @@ class MatterCommissioningService : Service(), CommissioningService.Callback {
                 commissioningServiceDelegate.sendCommissioningError(CommissioningError.OTHER)
                 return@launch
             }
-            val result = matterManager.commissionOnNetworkDevice(metadata.passcode, serverId)
+            val result = matterManager.commissionOnNetworkDevice(metadata.passcode, metadata.networkLocation.formattedIpAddress, serverId)
             Log.d(TAG, "Server commissioning was ${if (result?.success == true) "successful" else "not successful (${result?.errorCode})"}")
 
             if (result?.success == true) {
