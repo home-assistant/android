@@ -2,6 +2,7 @@
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
     <release version="2024.1.1- Main" versioncode="3">
+        <change>More reliable Matter device commissioning when using Home Assistant 2024.1</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2024.1.1- Wear" versioncode="2">
