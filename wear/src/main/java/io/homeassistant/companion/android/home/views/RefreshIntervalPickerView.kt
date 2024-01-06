@@ -47,7 +47,7 @@ fun RefreshIntervalPickerView(
     )
 
     Column(
-        modifier = Modifier.padding(12.dp).fillMaxWidth(),
+        modifier = Modifier.padding(horizontal = 12.dp).fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         ListHeader(R.string.refresh_interval)
