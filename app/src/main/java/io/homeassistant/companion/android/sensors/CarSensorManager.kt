@@ -25,15 +25,15 @@ class CarSensorManager :
     DefaultLifecycleObserver {
 
     data class CarSensor(
-        val sensor : SensorManager.BasicSensor,
-        val autoEnabled : Boolean = true,
-        val automotiveEnabled : Boolean = true,
-        val autoPermissions : List<String> = emptyList(),
+        val sensor: SensorManager.BasicSensor,
+        val autoEnabled: Boolean = true,
+        val automotiveEnabled: Boolean = true,
+        val autoPermissions: List<String> = emptyList(),
         /**
          * Permissions can be checked here:
          * [PropertyUtils.java](https://github.com/androidx/androidx/blob/androidx-main/car/app/app-automotive/src/main/java/androidx/car/app/hardware/common/PropertyUtils.java)
-        */
-        val automotivePermissions : List<String> = emptyList()
+         */
+        val automotivePermissions: List<String> = emptyList()
     )
 
     companion object {
