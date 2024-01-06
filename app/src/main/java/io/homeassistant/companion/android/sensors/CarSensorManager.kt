@@ -181,6 +181,8 @@ class CarSensorManager :
         get() = R.string.sensor_name_car
 
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        this.context = context.applicationContext
+
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             sensorsList
         } else {
@@ -189,6 +191,8 @@ class CarSensorManager :
     }
 
     override fun hasSensor(context: Context): Boolean {
+        this.context = context.applicationContext
+
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
     }
 
@@ -203,6 +207,8 @@ class CarSensorManager :
     }
 
     fun isEnabled(context: Context, carSensor: CarSensor): Boolean {
+        this.context = context.applicationContext
+
         if (isAutomotive && !carSensor.automotiveEnabled || !isAutomotive && !carSensor.autoEnabled) {
             return false
         }
@@ -212,6 +218,7 @@ class CarSensorManager :
 
     override fun requestSensorUpdate(context: Context) {
         this.context = context.applicationContext
+
         if (allDisabled()) {
             return
         }
