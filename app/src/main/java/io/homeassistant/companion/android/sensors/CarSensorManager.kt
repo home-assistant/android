@@ -13,7 +13,6 @@ import androidx.car.app.hardware.info.Mileage
 import androidx.car.app.hardware.info.Model
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.DefaultLifecycleObserver
-import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
@@ -25,78 +24,122 @@ class CarSensorManager :
     SensorManager,
     DefaultLifecycleObserver {
 
+    data class CarSensor(
+        val sensor : SensorManager.BasicSensor,
+        val autoEnabled : Boolean = true,
+        val automotiveEnabled : Boolean = true,
+        val autoPermissions : List<String> = emptyList(),
+        /**
+         * Permissions can be checked here:
+         * [PropertyUtils.java](https://github.com/androidx/androidx/blob/androidx-main/car/app/app-automotive/src/main/java/androidx/car/app/hardware/common/PropertyUtils.java)
+        */
+        val automotivePermissions : List<String> = emptyList()
+    )
+
     companion object {
         internal const val TAG = "CarSM"
 
-        private val fuelLevel = SensorManager.BasicSensor(
-            "car_fuel",
-            "sensor",
-            R.string.basic_sensor_name_car_fuel,
-            R.string.sensor_description_car_fuel,
-            "mdi:barrel",
-            unitOfMeasurement = "%",
-            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
-            deviceClass = "battery"
+        private val fuelLevel = CarSensor(
+            SensorManager.BasicSensor(
+                "car_fuel",
+                "sensor",
+                R.string.basic_sensor_name_car_fuel,
+                R.string.sensor_description_car_fuel,
+                "mdi:barrel",
+                unitOfMeasurement = "%",
+                stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
+                deviceClass = "battery"
+            ),
+            autoPermissions = listOf("com.google.android.gms.permission.CAR_FUEL"),
+            automotivePermissions = listOf(
+                "android.car.permission.CAR_ENERGY",
+                "android.car.permission.CAR_ENERGY_PORTS",
+                "android.car.permission.READ_CAR_DISPLAY_UNITS"
+            )
         )
-        private val batteryLevel = SensorManager.BasicSensor(
-            "car_battery",
-            "sensor",
-            R.string.basic_sensor_name_car_battery,
-            R.string.sensor_description_car_battery,
-            "mdi:car-battery",
-            unitOfMeasurement = "%",
-            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
-            deviceClass = "battery",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+        private val batteryLevel = CarSensor(
+            SensorManager.BasicSensor(
+                "car_battery",
+                "sensor",
+                R.string.basic_sensor_name_car_battery,
+                R.string.sensor_description_car_battery,
+                "mdi:car-battery",
+                unitOfMeasurement = "%",
+                stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
+                deviceClass = "battery",
+                entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            ),
+            autoPermissions = listOf("com.google.android.gms.permission.CAR_FUEL"),
+            automotivePermissions = listOf(
+                "android.car.permission.CAR_ENERGY",
+                "android.car.permission.CAR_ENERGY_PORTS",
+                "android.car.permission.READ_CAR_DISPLAY_UNITS"
+            )
         )
-        private val carName = SensorManager.BasicSensor(
-            "car_name",
-            "sensor",
-            R.string.basic_sensor_name_car_name,
-            R.string.sensor_description_car_name,
-            "mdi:car-info"
+        private val carName = CarSensor(
+            SensorManager.BasicSensor(
+                "car_name",
+                "sensor",
+                R.string.basic_sensor_name_car_name,
+                R.string.sensor_description_car_name,
+                "mdi:car-info"
+            ),
+            automotivePermissions = listOf("android.car.permission.CAR_INFO")
         )
-        private val carStatus = SensorManager.BasicSensor(
-            "car_charging_status",
-            "sensor",
-            R.string.basic_sensor_name_car_charging_status,
-            R.string.sensor_description_car_charging_status,
-            "mdi:ev-station",
-            deviceClass = "plug"
+        private val carChargingStatus = CarSensor(
+            SensorManager.BasicSensor(
+                "car_charging_status",
+                "sensor",
+                R.string.basic_sensor_name_car_charging_status,
+                R.string.sensor_description_car_charging_status,
+                "mdi:ev-station",
+                deviceClass = "plug"
+            ),
+            automotivePermissions = listOf("android.car.permission.CAR_ENERGY_PORTS")
         )
-        private val odometerValue = SensorManager.BasicSensor(
-            "car_odometer",
-            "sensor",
-            R.string.basic_sensor_name_car_odometer,
-            R.string.sensor_description_car_odometer,
-            "mdi:map-marker-distance",
-            unitOfMeasurement = "m",
-            stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
-            deviceClass = "distance"
+        private val odometerValue = CarSensor(
+            SensorManager.BasicSensor(
+                "car_odometer",
+                "sensor",
+                R.string.basic_sensor_name_car_odometer,
+                R.string.sensor_description_car_odometer,
+                "mdi:map-marker-distance",
+                unitOfMeasurement = "m",
+                stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
+                deviceClass = "distance"
+            ),
+            automotiveEnabled = false,
+            autoPermissions = listOf("com.google.android.gms.permission.CAR_MILEAGE")
+        )
+        private val fuelType = CarSensor(
+            SensorManager.BasicSensor(
+                "car_fuel_type",
+                "sensor",
+                R.string.basic_sensor_name_car_fuel_type,
+                R.string.sensor_description_car_fuel_type,
+                "mdi:gas-station",
+                entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            ),
+            autoPermissions = listOf("com.google.android.gms.permission.CAR_FUEL"),
+            automotivePermissions = listOf("android.car.permission.CAR_INFO")
+        )
+        private val evConnector = CarSensor(
+            SensorManager.BasicSensor(
+                "car_ev_connector",
+                "sensor",
+                R.string.basic_sensor_name_car_ev_connector_type,
+                R.string.sensor_description_car_ev_connector_type,
+                "mdi:car-electric",
+                entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            ),
+            autoPermissions = listOf("com.google.android.gms.permission.CAR_FUEL"),
+            automotivePermissions = listOf("android.car.permission.CAR_INFO")
         )
 
-        private val fuelType = SensorManager.BasicSensor(
-            "car_fuel_type",
-            "sensor",
-            R.string.basic_sensor_name_car_fuel_type,
-            R.string.sensor_description_car_fuel_type,
-            "mdi:gas-station",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
-        )
-
-        private val evConnector = SensorManager.BasicSensor(
-            "car_ev_connector",
-            "sensor",
-            R.string.basic_sensor_name_car_ev_connector_type,
-            R.string.sensor_description_car_ev_connector_type,
-            "mdi:car-electric",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
-        )
-
-        private val sensorsList = listOf(
+        private val allSensorsList = listOf(
             batteryLevel,
             carName,
-            carStatus,
+            carChargingStatus,
             evConnector,
             fuelLevel,
             fuelType,
@@ -110,7 +153,7 @@ class CarSensorManager :
         private val listenerSensors = mapOf(
             Listener.ENERGY to listOf(batteryLevel, fuelLevel),
             Listener.MODEL to listOf(carName),
-            Listener.STATUS to listOf(carStatus),
+            Listener.STATUS to listOf(carChargingStatus),
             Listener.MILEAGE to listOf(odometerValue),
             Listener.PROFILE to listOf(evConnector, fuelType)
         )
@@ -122,6 +165,17 @@ class CarSensorManager :
             Listener.PROFILE to -1L
         )
     }
+
+    private lateinit var context: Context
+
+    private val isAutomotive get() = context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+
+    private val carSensorsList get() = allSensorsList.filter { (isAutomotive && it.automotiveEnabled) || (!isAutomotive && it.autoEnabled) }
+    private val sensorsList get() = carSensorsList.map { it.sensor }
+
+    private fun allDisabled(): Boolean = sensorsList.none { isEnabled(context, it) }
+
+    private fun connected(): Boolean = HaCarAppService.carInfo != null
 
     override val name: Int
         get() = R.string.sensor_name_car
@@ -135,30 +189,26 @@ class CarSensorManager :
     }
 
     override fun hasSensor(context: Context): Boolean {
-        // TODO: show sensors for automotive (except odometer) once
-        //  we can ask for special automotive permissions in requiredPermissions
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-            !context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) &&
-            BuildConfig.FLAVOR == "full"
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
-        return when {
-            (sensorId == fuelLevel.id || sensorId == batteryLevel.id || sensorId == fuelType.id || sensorId == evConnector.id) -> {
-                arrayOf("com.google.android.gms.permission.CAR_FUEL")
+        return carSensorsList.firstOrNull { it.sensor.id == sensorId }?.let {
+            if (isAutomotive) {
+                it.automotivePermissions.toTypedArray()
+            } else {
+                it.autoPermissions.toTypedArray()
             }
-            sensorId == odometerValue.id -> {
-                arrayOf("com.google.android.gms.permission.CAR_MILEAGE")
-            }
-            else -> emptyArray()
-        }
+        } ?: emptyArray()
     }
 
-    private lateinit var context: Context
+    fun isEnabled(context: Context, carSensor: CarSensor): Boolean {
+        if (isAutomotive && !carSensor.automotiveEnabled || !isAutomotive && !carSensor.autoEnabled) {
+            return false
+        }
 
-    private fun allDisabled(): Boolean = sensorsList.none { isEnabled(context, it) }
-
-    private fun connected(): Boolean = HaCarAppService.carInfo != null
+        return super.isEnabled(context, carSensor.sensor)
+    }
 
     override fun requestSensorUpdate(context: Context) {
         this.context = context.applicationContext
@@ -170,13 +220,13 @@ class CarSensorManager :
             if (connected()) {
                 updateCarInfo()
             } else {
-                sensorsList.forEach {
+                carSensorsList.forEach {
                     if (isEnabled(context, it)) {
                         onSensorUpdated(
                             context,
-                            it,
+                            it.sensor,
                             STATE_UNAVAILABLE,
-                            it.statelessIcon,
+                            it.sensor.statelessIcon,
                             mapOf()
                         )
                     }
@@ -258,9 +308,9 @@ class CarSensorManager :
         if (isEnabled(context, fuelLevel)) {
             onSensorUpdated(
                 context,
-                fuelLevel,
+                fuelLevel.sensor,
                 if (fuelStatus == "success") data.fuelPercent.value!! else STATE_UNKNOWN,
-                fuelLevel.statelessIcon,
+                fuelLevel.sensor.statelessIcon,
                 mapOf(
                     "status" to fuelStatus
                 ),
@@ -271,9 +321,9 @@ class CarSensorManager :
         if (isEnabled(context, batteryLevel)) {
             onSensorUpdated(
                 context,
-                batteryLevel,
+                batteryLevel.sensor,
                 if (batteryStatus == "success") data.batteryPercent.value!! else STATE_UNKNOWN,
-                batteryLevel.statelessIcon,
+                batteryLevel.sensor.statelessIcon,
                 mapOf(
                     "status" to batteryStatus
                 ),
@@ -289,9 +339,9 @@ class CarSensorManager :
         if (isEnabled(context, carName)) {
             onSensorUpdated(
                 context,
-                carName,
+                carName.sensor,
                 if (status == "success") data.name.value!! else STATE_UNKNOWN,
-                carName.statelessIcon,
+                carName.sensor.statelessIcon,
                 mapOf(
                     "car_manufacturer" to data.manufacturer.value,
                     "car_manufactured_year" to data.year.value,
@@ -307,12 +357,12 @@ class CarSensorManager :
     fun onStatusAvailable(data: EvStatus) {
         val status = carValueStatus(data.evChargePortConnected.status)
         Log.d(TAG, "Received status available: $data")
-        if (isEnabled(context, carStatus)) {
+        if (isEnabled(context, carChargingStatus)) {
             onSensorUpdated(
                 context,
-                carStatus,
+                carChargingStatus.sensor,
                 if (status == "success") (data.evChargePortConnected.value == true) else STATE_UNKNOWN,
-                carStatus.statelessIcon,
+                carChargingStatus.sensor.statelessIcon,
                 mapOf(
                     "car_charge_port_open" to (data.evChargePortOpen.value == true),
                     "status" to status
@@ -330,9 +380,9 @@ class CarSensorManager :
         if (isEnabled(context, odometerValue)) {
             onSensorUpdated(
                 context,
-                odometerValue,
+                odometerValue.sensor,
                 if (status == "success") data.odometerMeters.value!! else STATE_UNKNOWN,
-                odometerValue.statelessIcon,
+                odometerValue.sensor.statelessIcon,
                 mapOf(
                     "status" to status
                 ),
@@ -349,9 +399,9 @@ class CarSensorManager :
         if (isEnabled(context, fuelType)) {
             onSensorUpdated(
                 context,
-                fuelType,
+                fuelType.sensor,
                 if (fuelTypeStatus == "success") getFuelType(data.fuelTypes.value!!) else STATE_UNKNOWN,
-                fuelType.statelessIcon,
+                fuelType.sensor.statelessIcon,
                 mapOf(
                     "status" to fuelTypeStatus
                 ),
@@ -361,9 +411,9 @@ class CarSensorManager :
         if (isEnabled(context, evConnector)) {
             onSensorUpdated(
                 context,
-                evConnector,
+                evConnector.sensor,
                 if (evConnectorTypeStatus == "success") getEvConnectorType(data.evConnectorTypes.value!!) else STATE_UNKNOWN,
-                evConnector.statelessIcon,
+                evConnector.sensor.statelessIcon,
                 mapOf(
                     "status" to evConnectorTypeStatus
                 ),
