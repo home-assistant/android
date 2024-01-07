@@ -13,6 +13,7 @@ import androidx.car.app.hardware.info.Mileage
 import androidx.car.app.hardware.info.Model
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.DefaultLifecycleObserver
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
@@ -193,7 +194,12 @@ class CarSensorManager :
     override fun hasSensor(context: Context): Boolean {
         this.context = context.applicationContext
 
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+        return if (isAutomotive) {
+            BuildConfig.FLAVOR == "minimal"
+        } else {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            BuildConfig.FLAVOR == "full"
+        }
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
