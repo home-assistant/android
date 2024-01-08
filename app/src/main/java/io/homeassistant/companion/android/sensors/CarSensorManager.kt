@@ -198,7 +198,7 @@ class CarSensorManager :
             BuildConfig.FLAVOR == "minimal"
         } else {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-            BuildConfig.FLAVOR == "full"
+                BuildConfig.FLAVOR == "full"
         }
     }
 
