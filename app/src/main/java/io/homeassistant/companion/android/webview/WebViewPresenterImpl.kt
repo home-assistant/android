@@ -348,7 +348,7 @@ class WebViewPresenterImpl @Inject constructor(
 
             mainScope.launch {
                 val deviceThreadIntent = try {
-                    when (val result = threadUseCase.syncPreferredDataset(context, serverId, CoroutineScope(coroutineContext + SupervisorJob()))) {
+                    when (val result = threadUseCase.syncPreferredDataset(context, serverId, false, CoroutineScope(coroutineContext + SupervisorJob()))) {
                         is ThreadManager.SyncResult.OnlyOnDevice -> result.exportIntent
                         is ThreadManager.SyncResult.AllHaveCredentials -> result.exportIntent
                         else -> null
@@ -359,7 +359,7 @@ class WebViewPresenterImpl @Inject constructor(
                 }
                 if (deviceThreadIntent != null) {
                     matterCommissioningIntentSender = deviceThreadIntent
-                    _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.THREAD_EXPORT_TO_SERVER)
+                    _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.THREAD_EXPORT_TO_SERVER_MATTER)
                 } else {
                     startMatterCommissioningFlow(context)
                 }
@@ -377,7 +377,7 @@ class WebViewPresenterImpl @Inject constructor(
             },
             { e ->
                 Log.e(TAG, "Matter commissioning couldn't be prepared", e)
-                _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.ERROR)
+                _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.ERROR_MATTER)
             }
         )
     }
@@ -393,10 +393,21 @@ class WebViewPresenterImpl @Inject constructor(
 
     override fun onMatterCommissioningIntentResult(context: Context, result: ActivityResult) {
         when (_matterCommissioningStatus.value) {
-            MatterFrontendCommissioningStatus.THREAD_EXPORT_TO_SERVER -> {
+            MatterFrontendCommissioningStatus.THREAD_EXPORT_TO_SERVER_MATTER -> {
                 mainScope.launch {
                     threadUseCase.sendThreadDatasetExportResult(result, serverId)
                     startMatterCommissioningFlow(context)
+                }
+            }
+            MatterFrontendCommissioningStatus.THREAD_EXPORT_TO_SERVER_ONLY -> {
+                mainScope.launch {
+                    val sent = threadUseCase.sendThreadDatasetExportResult(result, serverId)
+                    Log.d(TAG, "Thread ${if (!sent.isNullOrBlank()) "sent credential for $sent" else "did not send credential"}")
+                    if (sent.isNullOrBlank()) {
+                        _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.THREAD_NONE)
+                    } else {
+                        _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.THREAD_SENT)
+                    }
                 }
             }
             else -> {
@@ -412,5 +423,40 @@ class WebViewPresenterImpl @Inject constructor(
 
     override fun confirmMatterCommissioningError() {
         _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.NOT_STARTED)
+    }
+
+    override fun appCanExportThreadCredentials(): Boolean = threadUseCase.appSupportsThread()
+
+    override fun exportThreadCredentials(context: Context) {
+        if (_matterCommissioningStatus.value != MatterFrontendCommissioningStatus.REQUESTED) {
+            _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.REQUESTED)
+
+            mainScope.launch {
+                try {
+                    val result = threadUseCase.syncPreferredDataset(context, serverId, true, CoroutineScope(coroutineContext + SupervisorJob()))
+                    Log.d(TAG, "Export preferred Thread dataset returned $result")
+
+                    when (result) {
+                        is ThreadManager.SyncResult.OnlyOnDevice -> {
+                            matterCommissioningIntentSender = result.exportIntent
+                            _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.THREAD_EXPORT_TO_SERVER_ONLY)
+                        }
+                        is ThreadManager.SyncResult.NoneHaveCredentials,
+                        is ThreadManager.SyncResult.OnlyOnServer -> {
+                            _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.THREAD_NONE)
+                        }
+                        is ThreadManager.SyncResult.NotConnected -> {
+                            _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.ERROR_THREAD_LOCAL_NETWORK)
+                        }
+                        else -> {
+                            _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.ERROR_THREAD_OTHER)
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "Unable to export preferred Thread dataset", e)
+                    _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.ERROR_THREAD_OTHER)
+                }
+            }
+        } // else already waiting for a result, don't send another request
     }
 }

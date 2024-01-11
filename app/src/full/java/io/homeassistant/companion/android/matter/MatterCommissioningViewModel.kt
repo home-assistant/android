@@ -97,6 +97,7 @@ class MatterCommissioningViewModel @Inject constructor(
             val result = threadManager.syncPreferredDataset(
                 getApplication<Application>().applicationContext,
                 serverId,
+                false,
                 viewModelScope
             )
             when (result) {

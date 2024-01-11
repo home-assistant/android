@@ -58,4 +58,8 @@ interface WebViewPresenter {
     fun getMatterCommissioningIntent(): IntentSender?
     fun onMatterCommissioningIntentResult(context: Context, result: ActivityResult)
     fun confirmMatterCommissioningError()
+
+    /** @return `true` if the app can send this device's preferred Thread credential to the server */
+    fun appCanExportThreadCredentials(): Boolean
+    fun exportThreadCredentials(context: Context)
 }

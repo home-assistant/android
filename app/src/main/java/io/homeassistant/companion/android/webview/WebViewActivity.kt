@@ -634,14 +634,41 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 presenter.getMatterCommissioningStatusFlow().collect {
                     Log.d(TAG, "Matter commissioning status changed to $it")
                     when (it) {
-                        MatterFrontendCommissioningStatus.THREAD_EXPORT_TO_SERVER,
+                        MatterFrontendCommissioningStatus.THREAD_EXPORT_TO_SERVER_MATTER,
+                        MatterFrontendCommissioningStatus.THREAD_EXPORT_TO_SERVER_ONLY,
                         MatterFrontendCommissioningStatus.IN_PROGRESS -> {
                             presenter.getMatterCommissioningIntent()?.let { intentSender ->
                                 commissionMatterDevice.launch(IntentSenderRequest.Builder(intentSender).build())
                             }
                         }
-                        MatterFrontendCommissioningStatus.ERROR -> {
+                        MatterFrontendCommissioningStatus.THREAD_NONE -> {
+                            alertDialog?.cancel()
+                            AlertDialog.Builder(this@WebViewActivity)
+                                .setMessage(commonR.string.thread_export_none)
+                                .setPositiveButton(commonR.string.ok, null)
+                                .show()
+                            presenter.confirmMatterCommissioningError()
+                        }
+                        MatterFrontendCommissioningStatus.THREAD_SENT -> {
+                            Toast.makeText(this@WebViewActivity, commonR.string.thread_export_success, Toast.LENGTH_SHORT).show()
+                            alertDialog?.cancel()
+                            presenter.confirmMatterCommissioningError()
+                        }
+                        MatterFrontendCommissioningStatus.ERROR_MATTER -> {
                             Toast.makeText(this@WebViewActivity, commonR.string.matter_commissioning_unavailable, Toast.LENGTH_SHORT).show()
+                            presenter.confirmMatterCommissioningError()
+                        }
+                        MatterFrontendCommissioningStatus.ERROR_THREAD_LOCAL_NETWORK -> {
+                            alertDialog?.cancel()
+                            AlertDialog.Builder(this@WebViewActivity)
+                                .setMessage(commonR.string.thread_export_not_connected)
+                                .setPositiveButton(commonR.string.ok, null)
+                                .show()
+                            presenter.confirmMatterCommissioningError()
+                        }
+                        MatterFrontendCommissioningStatus.ERROR_THREAD_OTHER -> {
+                            Toast.makeText(this@WebViewActivity, commonR.string.thread_export_unavailable, Toast.LENGTH_SHORT).show()
+                            alertDialog?.cancel()
                             presenter.confirmMatterCommissioningError()
                         }
                         else -> { } // Do nothing
@@ -702,6 +729,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                     val pm: PackageManager = context.packageManager
                                     val hasNfc = pm.hasSystemFeature(PackageManager.FEATURE_NFC)
                                     val canCommissionMatter = presenter.appCanCommissionMatterDevice()
+                                    val canExportThread = presenter.appCanExportThreadCredentials()
                                     webView.externalBus(
                                         id = JSONObject(message).get("id"),
                                         type = "result",
@@ -712,6 +740,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                                 "canWriteTag" to hasNfc,
                                                 "hasExoPlayer" to true,
                                                 "canCommissionMatter" to canCommissionMatter,
+                                                "canImportThreadCredentials" to canExportThread,
                                                 "hasAssist" to true
                                             )
                                         )
@@ -755,6 +784,14 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                         )
                                     )
                                 "matter/commission" -> presenter.startCommissioningMatterDevice(this@WebViewActivity)
+                                "thread/import_credentials" -> {
+                                    presenter.exportThreadCredentials(this@WebViewActivity)
+
+                                    alertDialog = AlertDialog.Builder(this@WebViewActivity)
+                                        .setMessage(commonR.string.thread_debug_active)
+                                        .create()
+                                    alertDialog?.show()
+                                }
                                 "exoplayer/play_hls" -> exoPlayHls(json)
                                 "exoplayer/stop" -> exoStopHls()
                                 "exoplayer/resize" -> exoResizeHls(json)

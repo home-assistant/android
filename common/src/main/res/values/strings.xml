@@ -1145,6 +1145,10 @@
     <string name="thread_debug_result_unsupported_server">The Home Assistant server does not support Thread</string>
     <string name="thread_debug_result_updated">Updated network from Home Assistant on this device</string>
     <string name="thread_debug_summary">Manually update device and server Thread credentials and verify results</string>
+    <string name="thread_export_success">Imported credential</string>
+    <string name="thread_export_none">You don\'t have any credentials to import.</string>
+    <string name="thread_export_not_connected">You are not connected to a local network. Connect to Wi-Fi or ethernet to import Thread credentials.</string>
+    <string name="thread_export_unavailable">Thread is currently unavailable</string>
     <string name="tile_vibrate">Vibrate when clicked</string>
     <string name="tile_auth_required">Requires unlocked device</string>
     <string name="no_results">No results yet</string>
