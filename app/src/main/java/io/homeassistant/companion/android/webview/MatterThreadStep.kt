@@ -1,11 +1,11 @@
-package io.homeassistant.companion.android.matter
+package io.homeassistant.companion.android.webview
 
-enum class MatterFrontendCommissioningStatus {
+enum class MatterThreadStep {
     NOT_STARTED,
     REQUESTED,
     THREAD_EXPORT_TO_SERVER_MATTER,
     THREAD_EXPORT_TO_SERVER_ONLY,
-    IN_PROGRESS,
+    MATTER_IN_PROGRESS,
     THREAD_SENT,
     THREAD_NONE,
     ERROR_MATTER,

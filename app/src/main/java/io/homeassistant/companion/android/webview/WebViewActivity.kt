@@ -87,7 +87,6 @@ import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.databinding.ActivityWebviewBinding
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
 import io.homeassistant.companion.android.launch.LaunchActivity
-import io.homeassistant.companion.android.matter.MatterFrontendCommissioningStatus
 import io.homeassistant.companion.android.nfc.WriteNfcTag
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
@@ -171,7 +170,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         mFilePathCallback = null
     }
     private val commissionMatterDevice = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-        presenter.onMatterCommissioningIntentResult(this, result)
+        presenter.onMatterThreadIntentResult(this, result)
     }
 
     @Inject
@@ -631,45 +630,45 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                presenter.getMatterCommissioningStatusFlow().collect {
-                    Log.d(TAG, "Matter commissioning status changed to $it")
+                presenter.getMatterThreadStepFlow().collect {
+                    Log.d(TAG, "Matter/Thread step changed to $it")
                     when (it) {
-                        MatterFrontendCommissioningStatus.THREAD_EXPORT_TO_SERVER_MATTER,
-                        MatterFrontendCommissioningStatus.THREAD_EXPORT_TO_SERVER_ONLY,
-                        MatterFrontendCommissioningStatus.IN_PROGRESS -> {
-                            presenter.getMatterCommissioningIntent()?.let { intentSender ->
+                        MatterThreadStep.THREAD_EXPORT_TO_SERVER_MATTER,
+                        MatterThreadStep.THREAD_EXPORT_TO_SERVER_ONLY,
+                        MatterThreadStep.MATTER_IN_PROGRESS -> {
+                            presenter.getMatterThreadIntent()?.let { intentSender ->
                                 commissionMatterDevice.launch(IntentSenderRequest.Builder(intentSender).build())
                             }
                         }
-                        MatterFrontendCommissioningStatus.THREAD_NONE -> {
+                        MatterThreadStep.THREAD_NONE -> {
                             alertDialog?.cancel()
                             AlertDialog.Builder(this@WebViewActivity)
                                 .setMessage(commonR.string.thread_export_none)
                                 .setPositiveButton(commonR.string.ok, null)
                                 .show()
-                            presenter.confirmMatterCommissioningError()
+                            presenter.finishMatterThreadFlow()
                         }
-                        MatterFrontendCommissioningStatus.THREAD_SENT -> {
+                        MatterThreadStep.THREAD_SENT -> {
                             Toast.makeText(this@WebViewActivity, commonR.string.thread_export_success, Toast.LENGTH_SHORT).show()
                             alertDialog?.cancel()
-                            presenter.confirmMatterCommissioningError()
+                            presenter.finishMatterThreadFlow()
                         }
-                        MatterFrontendCommissioningStatus.ERROR_MATTER -> {
+                        MatterThreadStep.ERROR_MATTER -> {
                             Toast.makeText(this@WebViewActivity, commonR.string.matter_commissioning_unavailable, Toast.LENGTH_SHORT).show()
-                            presenter.confirmMatterCommissioningError()
+                            presenter.finishMatterThreadFlow()
                         }
-                        MatterFrontendCommissioningStatus.ERROR_THREAD_LOCAL_NETWORK -> {
+                        MatterThreadStep.ERROR_THREAD_LOCAL_NETWORK -> {
                             alertDialog?.cancel()
                             AlertDialog.Builder(this@WebViewActivity)
                                 .setMessage(commonR.string.thread_export_not_connected)
                                 .setPositiveButton(commonR.string.ok, null)
                                 .show()
-                            presenter.confirmMatterCommissioningError()
+                            presenter.finishMatterThreadFlow()
                         }
-                        MatterFrontendCommissioningStatus.ERROR_THREAD_OTHER -> {
+                        MatterThreadStep.ERROR_THREAD_OTHER -> {
                             Toast.makeText(this@WebViewActivity, commonR.string.thread_export_unavailable, Toast.LENGTH_SHORT).show()
                             alertDialog?.cancel()
-                            presenter.confirmMatterCommissioningError()
+                            presenter.finishMatterThreadFlow()
                         }
                         else -> { } // Do nothing
                     }
