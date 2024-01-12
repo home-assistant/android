@@ -2,8 +2,7 @@
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
     <release version="2024.1.2 - Main" versioncode="3">
-        <change>More reliable Matter device commissioning when using Home Assistant 2024.1</change>
-        <change>Add support for Thread importing credentials from the frontend</change>
+        <change>Better Matter and Thread support</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2024.1.2 - Wear" versioncode="2">
