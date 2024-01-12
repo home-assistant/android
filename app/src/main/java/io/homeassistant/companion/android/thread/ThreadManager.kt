@@ -11,6 +11,7 @@ interface ThreadManager {
     sealed class SyncResult {
         object AppUnsupported : SyncResult()
         object ServerUnsupported : SyncResult()
+        object NotConnected : SyncResult()
         class OnlyOnServer(val imported: Boolean) : SyncResult()
         class OnlyOnDevice(val exportIntent: IntentSender?) : SyncResult()
         class AllHaveCredentials(val matches: Boolean?, val fromApp: Boolean?, val updated: Boolean?, val exportIntent: IntentSender?) : SyncResult()
@@ -28,15 +29,21 @@ interface ThreadManager {
     suspend fun coreSupportsThread(serverId: Int): Boolean
 
     /**
-     * Try to sync the preferred Thread dataset with the device and server. If one has a preferred
-     * dataset while the other one doesn't, it will sync. If both have preferred datasets, it will
-     * send updated data to the server if needed. If neither has a preferred dataset, skip syncing.
+     * Try to sync the preferred Thread dataset.
+     * @param exportOnly Controls the synchronization direction.
+     *  - If set to `true`, only get the device preferred dataset and sync to the server if it
+     *    wasn't added by the app.
+     *  - If set to `false`, try to get the device and server in sync. This will clean up old/stale
+     *    app datasets. If one has a preferred dataset while the other one doesn't, it will sync to
+     *    the other. If both have preferred datasets, it will send updated data to the server if
+     *    needed. If neither has a preferred dataset, skip syncing.
      * @return [SyncResult] with details of the sync operation, which may include an [IntentSender]
      * if permission is required to import the device dataset
      */
     suspend fun syncPreferredDataset(
         context: Context,
         serverId: Int,
+        exportOnly: Boolean,
         scope: CoroutineScope
     ): SyncResult
 

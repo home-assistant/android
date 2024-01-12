@@ -63,7 +63,7 @@ class DeveloperSettingsPresenterImpl @Inject constructor(
     override fun runThreadDebug(context: Context, serverId: Int) {
         mainScope.launch {
             try {
-                when (val syncResult = threadManager.syncPreferredDataset(context, serverId, CoroutineScope(coroutineContext + SupervisorJob()))) {
+                when (val syncResult = threadManager.syncPreferredDataset(context, serverId, false, CoroutineScope(coroutineContext + SupervisorJob()))) {
                     is ThreadManager.SyncResult.ServerUnsupported ->
                         view.onThreadDebugResult(context.getString(commonR.string.thread_debug_result_unsupported_server), false)
                     is ThreadManager.SyncResult.OnlyOnServer -> {

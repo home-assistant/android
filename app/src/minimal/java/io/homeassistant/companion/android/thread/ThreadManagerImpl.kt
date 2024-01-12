@@ -19,6 +19,7 @@ class ThreadManagerImpl @Inject constructor() : ThreadManager {
     override suspend fun syncPreferredDataset(
         context: Context,
         serverId: Int,
+        exportOnly: Boolean,
         scope: CoroutineScope
     ): ThreadManager.SyncResult = ThreadManager.SyncResult.AppUnsupported
 
