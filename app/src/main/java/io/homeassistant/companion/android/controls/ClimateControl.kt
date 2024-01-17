@@ -4,11 +4,13 @@ import android.content.Context
 import android.os.Build
 import android.service.controls.Control
 import android.service.controls.DeviceTypes
+import android.service.controls.actions.BooleanAction
 import android.service.controls.actions.ControlAction
 import android.service.controls.actions.FloatAction
 import android.service.controls.actions.ModeAction
 import android.service.controls.templates.RangeTemplate
 import android.service.controls.templates.TemperatureControlTemplate
+import android.service.controls.templates.ToggleRangeTemplate
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -31,6 +33,8 @@ object ClimateControl : HaControl {
         "heat_cool" to TemperatureControlTemplate.FLAG_MODE_HEAT_COOL,
         "off" to TemperatureControlTemplate.FLAG_MODE_OFF
     )
+    private var currentMode = "off"
+    private val supportedModes = ArrayList<String>()
 
     override fun provideControlFeatures(
         context: Context,
@@ -68,14 +72,22 @@ object ClimateControl : HaControl {
             "%.${temperatureFormatSize}f $temperatureUnit"
         )
         if (entityShouldBePresentedAsThermostat(entity)) {
+            supportedModes.clear()
+            val toggleRangeTemplate = ToggleRangeTemplate(
+                entity.entityId + "_range",
+                entity.state != "off",
+                "Toggle climate", rangeTemplate
+            )
             var modesFlag = 0
+            this.currentMode = entity.state
             (entity.attributes["hvac_modes"] as? List<String>)?.forEach {
                 modesFlag = modesFlag or temperatureControlModeFlags[it]!!
+                this.supportedModes.add(it)
             }
             control.setControlTemplate(
                 TemperatureControlTemplate(
                     entity.entityId,
-                    rangeTemplate,
+                    toggleRangeTemplate,
                     temperatureControlModes[entity.state]!!,
                     temperatureControlModes[entity.state]!!,
                     modesFlag
@@ -125,6 +137,18 @@ object ClimateControl : HaControl {
                                 it.value == ((action as? ModeAction)?.newMode ?: -1)
                             }?.key ?: ""
                             )
+                    )
+                )
+                true
+            }
+            is BooleanAction -> {
+                val nextMode = (this.supportedModes.indexOf(currentMode) + 1) % this.supportedModes.count()
+                integrationRepository.callService(
+                    action.templateId.split(".")[0],
+                    "set_hvac_mode",
+                    hashMapOf(
+                        "entity_id" to action.templateId,
+                        "hvac_mode" to this.supportedModes[nextMode]
                     )
                 )
                 true
