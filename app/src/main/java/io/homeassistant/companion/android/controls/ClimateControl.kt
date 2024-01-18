@@ -75,7 +75,7 @@ object ClimateControl : HaControl {
             supportedModes.clear()
             val toggleRangeTemplate = ToggleRangeTemplate(
                 entity.entityId + "_range",
-                entity.state != "off",
+                true,
                 "Toggle climate",
                 rangeTemplate
             )
