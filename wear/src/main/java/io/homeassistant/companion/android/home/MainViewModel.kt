@@ -497,7 +497,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             homePresenter.setTemplateTileRefreshInterval(tileId, interval)
             templateTiles[tileId]?.let {
-                templateTiles[tileId] = it.withRefreshInterval(interval)
+                templateTiles[tileId] = it.copy(refreshInterval = interval)
             }
         }
     }

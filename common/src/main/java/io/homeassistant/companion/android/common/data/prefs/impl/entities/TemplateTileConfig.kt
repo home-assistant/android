@@ -25,12 +25,4 @@ data class TemplateTileConfig(
             )
         )
     }
-
-    fun withTemplate(template: String): TemplateTileConfig {
-        return TemplateTileConfig(template, refreshInterval)
-    }
-
-    fun withRefreshInterval(refreshInterval: Int): TemplateTileConfig {
-        return TemplateTileConfig(template, refreshInterval)
-    }
 }
