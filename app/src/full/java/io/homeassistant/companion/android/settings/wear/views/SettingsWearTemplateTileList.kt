@@ -61,9 +61,18 @@ fun SettingsWearTemplateTileList(
 
                 var index = 1
                 for (templateTileEntry in templateTiles.entries) {
+                    val template = templateTileEntry.value.template
                     SettingsRow(
                         primaryText = stringResource(commonR.string.template_tile_n, index++),
-                        secondaryText = null,
+                        secondaryText = when {
+                            template.length < 100 -> {
+                                template
+                            }
+
+                            else -> {
+                                template.substring(0, template.length.coerceAtMost(100)) + "..."
+                            }
+                        },
                         mdiIcon = CommunityMaterial.Icon3.cmd_text_box,
                         enabled = true,
                         onClicked = { onTemplateTileClicked(templateTileEntry.key) }
