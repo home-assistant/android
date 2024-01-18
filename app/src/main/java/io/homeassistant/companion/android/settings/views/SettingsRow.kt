@@ -28,7 +28,7 @@ import com.mikepenz.iconics.typeface.IIcon
 @Composable
 fun SettingsRow(
     primaryText: String,
-    secondaryText: String,
+    secondaryText: String?,
     mdiIcon: IIcon?,
     enabled: Boolean,
     onClicked: () -> Unit
@@ -66,11 +66,13 @@ fun SettingsRow(
                 text = primaryText,
                 style = MaterialTheme.typography.body1
             )
-            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
-                Text(
-                    text = secondaryText,
-                    style = MaterialTheme.typography.body2
-                )
+            secondaryText?.let {
+                CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.body2
+                    )
+                }
             }
         }
     }

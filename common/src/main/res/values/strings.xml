@@ -848,7 +848,7 @@
     <string name="template_tile">Template tile</string>
     <string name="template_tile_n">Template tile #%d</string>
     <string name="template_tiles">Template tiles</string>
-    <string name="template_tile_configure">Configure Template tile</string>
+    <string name="template_tile_configure">Configure Template tiles</string>
     <string name="template_tile_select">Select Template tile to manage</string>
     <string name="template_tile_no_tiles_yet">There are no Template tiles added yet - add one from the watch face to set it up</string>
     <string name="template_tile_set_on_watch">Configure templates to use as Wear OS tiles</string>
