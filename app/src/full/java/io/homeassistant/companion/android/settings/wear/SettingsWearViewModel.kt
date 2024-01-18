@@ -177,7 +177,7 @@ class SettingsWearViewModel @Inject constructor(
                 } catch (e: Exception) {
                     Log.e(TAG, "Exception while rendering template for tile ID $tileId", e)
                     // JsonMappingException suggests that template is not a String (= error)
-                    getApplication<Application>().getString(
+                    templateTilesRenderedTemplates[tileId] = getApplication<Application>().getString(
                         if (e.cause is JsonMappingException) {
                             commonR.string.template_error
                         } else {
