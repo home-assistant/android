@@ -144,6 +144,7 @@ object ClimateControl : HaControl {
             }
             is BooleanAction -> {
                 val nextMode = (this.supportedModes.indexOf(currentMode) + 1) % this.supportedModes.count()
+                this.currentMode = this.supportedModes[nextMode]
                 integrationRepository.callService(
                     action.templateId.split(".")[0],
                     "set_hvac_mode",
