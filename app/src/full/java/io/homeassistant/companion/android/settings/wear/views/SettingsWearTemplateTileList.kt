@@ -38,9 +38,9 @@ fun SettingsWearTemplateTileList(
     ) { padding ->
         Column(
             Modifier
+                .verticalScroll(rememberScrollState())
                 .padding(padding)
                 .padding(all = 16.dp)
-                .verticalScroll(rememberScrollState())
         ) {
             if (templateTiles.entries.isEmpty()) {
                 Text(stringResource(commonR.string.template_tile_no_tiles_yet))
