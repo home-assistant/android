@@ -65,13 +65,8 @@ fun SettingsWearTemplateTileList(
                     SettingsRow(
                         primaryText = stringResource(commonR.string.template_tile_n, index++),
                         secondaryText = when {
-                            template.length < 100 -> {
-                                template
-                            }
-
-                            else -> {
-                                template.substring(0, template.length.coerceAtMost(100)) + "..."
-                            }
+                            template.length <= 100 -> template
+                            else -> "${template.take(100)}…"
                         },
                         mdiIcon = CommunityMaterial.Icon3.cmd_text_box,
                         enabled = true,
