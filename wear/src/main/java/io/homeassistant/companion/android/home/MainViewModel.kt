@@ -124,8 +124,6 @@ class MainViewModel @Inject constructor(
         private set
     var templateTiles = mutableStateMapOf<Int, TemplateTileConfig>()
         private set
-    var templateTilesRenderedTemplates = mutableStateMapOf<Int, String>()
-        private set
     var isFavoritesOnly by mutableStateOf(false)
         private set
     var isAssistantAppAllowed by mutableStateOf(true)
