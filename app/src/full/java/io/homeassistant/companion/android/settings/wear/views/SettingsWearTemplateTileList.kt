@@ -40,10 +40,13 @@ fun SettingsWearTemplateTileList(
             Modifier
                 .verticalScroll(rememberScrollState())
                 .padding(padding)
-                .padding(all = 16.dp)
         ) {
             if (templateTiles.entries.isEmpty()) {
-                Text(stringResource(commonR.string.template_tile_no_tiles_yet))
+                Text(
+                    text = stringResource(commonR.string.template_tile_no_tiles_yet),
+                    modifier = Modifier
+                        .padding(all = 16.dp)
+                )
             } else {
                 Row(
                     modifier = Modifier
