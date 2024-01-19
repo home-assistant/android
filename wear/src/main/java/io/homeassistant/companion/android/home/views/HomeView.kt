@@ -338,6 +338,9 @@ fun LoadHomePage(
                     navArgument(name = ARG_SCREEN_TEMPLATE_TILE_ID) {
                         type = NavType.StringType
                     }
+                ),
+                deepLinks = listOf(
+                    navDeepLink { uriPattern = "$DEEPLINK_PREFIX_SET_TEMPLATE_TILE/{$ARG_SCREEN_TEMPLATE_TILE_ID}" }
                 )
             ) { backStackEntry ->
                 val tileId = backStackEntry.arguments!!.getString(ARG_SCREEN_TEMPLATE_TILE_ID)!!.toIntOrNull()
