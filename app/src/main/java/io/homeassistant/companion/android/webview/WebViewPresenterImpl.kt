@@ -345,24 +345,11 @@ class WebViewPresenterImpl @Inject constructor(
         if (_matterThreadStep.value != MatterThreadStep.REQUESTED) {
             _matterThreadStep.tryEmit(MatterThreadStep.REQUESTED)
 
-            mainScope.launch {
-                val deviceThreadIntent = try {
-                    when (val result = threadUseCase.syncPreferredDataset(context, serverId, false, CoroutineScope(coroutineContext + SupervisorJob()))) {
-                        is ThreadManager.SyncResult.OnlyOnDevice -> result.exportIntent
-                        is ThreadManager.SyncResult.AllHaveCredentials -> result.exportIntent
-                        else -> null
-                    }
-                } catch (e: Exception) {
-                    Log.w(TAG, "Unable to sync preferred Thread dataset, continuing", e)
-                    null
-                }
-                if (deviceThreadIntent != null) {
-                    matterThreadIntentSender = deviceThreadIntent
-                    _matterThreadStep.tryEmit(MatterThreadStep.THREAD_EXPORT_TO_SERVER_MATTER)
-                } else {
-                    startMatterCommissioningFlow(context)
-                }
-            }
+            // The app used to sync Thread credentials here until commit 26a472a, but it was
+            // (temporarily?) removed due to slowing down the Matter commissioning flow for the user
+            // and limited usefulness of the result (because of API limitations)
+
+            startMatterCommissioningFlow(context)
         } // else already waiting for a result, don't send another request
     }
 
