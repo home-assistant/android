@@ -10,12 +10,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.wear.compose.material.ListHeader
+import androidx.wear.compose.material.LocalContentColor
 import androidx.wear.compose.material.Picker
 import androidx.wear.compose.material.rememberPickerState
 import androidx.wear.compose.material3.FilledIconButton
@@ -28,9 +31,10 @@ import androidx.wear.tooling.preview.devices.WearDevices
 import com.google.android.horologist.annotations.ExperimentalHorologistApi
 import com.google.android.horologist.composables.picker.toRotaryScrollAdapter
 import com.google.android.horologist.compose.rotaryinput.rotaryWithSnap
+import com.mikepenz.iconics.compose.Image
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.theme.wearColorScheme
 import io.homeassistant.companion.android.util.intervalToString
-import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.common.R as R
 
 @OptIn(ExperimentalHorologistApi::class)
@@ -50,7 +54,13 @@ fun RefreshIntervalPickerView(
         modifier = Modifier.padding(horizontal = 12.dp).fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        ListHeader(R.string.refresh_interval)
+        ListHeader {
+            Image(
+                asset = CommunityMaterial.Icon3.cmd_timer_cog,
+                contentDescription = stringResource(R.string.refresh_interval),
+                colorFilter = ColorFilter.tint(LocalContentColor.current)
+            )
+        }
         Picker(
             state = state,
             contentDescription = stringResource(R.string.refresh_interval),
