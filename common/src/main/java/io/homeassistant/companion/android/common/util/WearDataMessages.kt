@@ -17,8 +17,7 @@ object WearDataMessages {
     const val CONFIG_SERVER_REFRESH_TOKEN = "serverRefreshToken"
     const val CONFIG_SUPPORTED_DOMAINS = "supportedDomains"
     const val CONFIG_FAVORITES = "favorites"
-    const val CONFIG_TEMPLATE_TILE = "templateTile"
-    const val CONFIG_TEMPLATE_TILE_REFRESH_INTERVAL = "templateTileRefreshInterval"
+    const val CONFIG_TEMPLATE_TILES = "templateTiles"
 
     const val LOGIN_RESULT_EXCEPTION = "exception"
 }

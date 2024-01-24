@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.data.prefs
 
 import io.homeassistant.companion.android.common.data.LocalStorage
+import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.util.toStringList
 import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
@@ -15,19 +16,23 @@ class WearPrefsRepositoryImpl @Inject constructor(
 
     companion object {
         private const val MIGRATION_PREF = "migration"
-        private const val MIGRATION_VERSION = 1
+        private const val MIGRATION_VERSION = 2
 
         private const val PREF_TILE_SHORTCUTS = "tile_shortcuts_list"
         private const val PREF_SHOW_TILE_SHORTCUTS_TEXT = "show_tile_shortcuts_text"
-        private const val PREF_TILE_TEMPLATE = "tile_template"
-        private const val PREF_TILE_TEMPLATE_REFRESH_INTERVAL = "tile_template_refresh_interval"
+        private const val PREF_TILE_TEMPLATES = "tile_templates"
         private const val PREF_WEAR_HAPTIC_FEEDBACK = "wear_haptic_feedback"
         private const val PREF_WEAR_TOAST_CONFIRMATION = "wear_toast_confirmation"
         private const val PREF_WEAR_FAVORITES_ONLY = "wear_favorites_only"
+
+        private const val UNKNOWN_TEMPLATE_TILE_ID = -1
     }
 
     init {
         runBlocking {
+            val legacyPrefTileTemplate = "tile_template"
+            val legacyPrefTileTemplateRefreshInterval = "tile_template_refresh_interval"
+
             val currentVersion = localStorage.getInt(MIGRATION_PREF)
             if (currentVersion == null || currentVersion < 1) {
                 integrationStorage.getString(PREF_TILE_SHORTCUTS)?.let {
@@ -36,11 +41,11 @@ class WearPrefsRepositoryImpl @Inject constructor(
                 integrationStorage.getBooleanOrNull(PREF_SHOW_TILE_SHORTCUTS_TEXT)?.let {
                     localStorage.putBoolean(PREF_SHOW_TILE_SHORTCUTS_TEXT, it)
                 }
-                integrationStorage.getString(PREF_TILE_TEMPLATE)?.let {
-                    localStorage.putString(PREF_TILE_TEMPLATE, it)
+                integrationStorage.getString(legacyPrefTileTemplate)?.let {
+                    localStorage.putString(legacyPrefTileTemplate, it)
                 }
-                integrationStorage.getInt(PREF_TILE_TEMPLATE_REFRESH_INTERVAL)?.let {
-                    localStorage.putInt(PREF_TILE_TEMPLATE_REFRESH_INTERVAL, it)
+                integrationStorage.getInt(legacyPrefTileTemplateRefreshInterval)?.let {
+                    localStorage.putInt(legacyPrefTileTemplateRefreshInterval, it)
                 }
                 integrationStorage.getBooleanOrNull(PREF_WEAR_HAPTIC_FEEDBACK)?.let {
                     localStorage.putBoolean(PREF_WEAR_HAPTIC_FEEDBACK, it)
@@ -48,6 +53,26 @@ class WearPrefsRepositoryImpl @Inject constructor(
                 integrationStorage.getBooleanOrNull(PREF_WEAR_TOAST_CONFIRMATION)?.let {
                     localStorage.putBoolean(PREF_WEAR_TOAST_CONFIRMATION, it)
                 }
+
+                localStorage.putInt(MIGRATION_PREF, MIGRATION_VERSION)
+            }
+
+            if (currentVersion == null || currentVersion < 2) {
+                val template = localStorage.getString(legacyPrefTileTemplate)
+                val templateRefreshInterval = localStorage.getInt(
+                    legacyPrefTileTemplateRefreshInterval
+                )
+
+                if (template != null && templateRefreshInterval != null) {
+                    val templates = mapOf(
+                        UNKNOWN_TEMPLATE_TILE_ID.toString() to TemplateTileConfig(template, templateRefreshInterval).toJSONObject()
+                    )
+
+                    localStorage.putString(PREF_TILE_TEMPLATES, JSONObject(templates).toString())
+                }
+
+                localStorage.remove(legacyPrefTileTemplate)
+                localStorage.remove(legacyPrefTileTemplateRefreshInterval)
 
                 localStorage.putInt(MIGRATION_PREF, MIGRATION_VERSION)
             }
@@ -118,10 +143,6 @@ class WearPrefsRepositoryImpl @Inject constructor(
         return entities
     }
 
-    override suspend fun getTemplateTileContent(): String {
-        return localStorage.getString(PREF_TILE_TEMPLATE) ?: ""
-    }
-
     override suspend fun getShowShortcutText(): Boolean {
         return localStorage.getBoolean(PREF_SHOW_TILE_SHORTCUTS_TEXT)
     }
@@ -130,16 +151,56 @@ class WearPrefsRepositoryImpl @Inject constructor(
         localStorage.putBoolean(PREF_SHOW_TILE_SHORTCUTS_TEXT, enabled)
     }
 
-    override suspend fun setTemplateTileContent(content: String) {
-        localStorage.putString(PREF_TILE_TEMPLATE, content)
+    override suspend fun getAllTemplateTiles(): Map<Int, TemplateTileConfig> {
+        return localStorage.getString(PREF_TILE_TEMPLATES)?.let { jsonStr ->
+            val jsonObject = JSONObject(jsonStr)
+            buildMap {
+                jsonObject.keys().forEach { tileId ->
+                    val id = tileId.toInt()
+                    val templateTileConfig = TemplateTileConfig(jsonObject.getJSONObject(tileId))
+                    put(id, templateTileConfig)
+                }
+            }
+        } ?: emptyMap()
     }
 
-    override suspend fun getTemplateTileRefreshInterval(): Int {
-        return localStorage.getInt(PREF_TILE_TEMPLATE_REFRESH_INTERVAL) ?: 0
+    override suspend fun getTemplateTileAndSaveTileId(tileId: Int): TemplateTileConfig {
+        val tileIdToTemplatesMap = getAllTemplateTiles()
+        return if (UNKNOWN_TEMPLATE_TILE_ID in tileIdToTemplatesMap && tileId !in tileIdToTemplatesMap) {
+            // if there are Templates with an unknown (-1) tileId key from a previous installation,
+            // and the tileId parameter is not already present in the map, associate it with that Template
+            val templateData = removeTemplateTile(UNKNOWN_TEMPLATE_TILE_ID)!!
+            setTemplateTile(tileId, templateData.template, templateData.refreshInterval)
+            templateData
+        } else {
+            var templateData = tileIdToTemplatesMap[tileId]
+            if (templateData == null) {
+                templateData = setTemplateTile(tileId, "", 0)
+            }
+            templateData
+        }
     }
 
-    override suspend fun setTemplateTileRefreshInterval(interval: Int) {
-        localStorage.putInt(PREF_TILE_TEMPLATE_REFRESH_INTERVAL, interval)
+    override suspend fun setAllTemplateTiles(templateTiles: Map<Int, TemplateTileConfig>) {
+        val templateTilesJson = templateTiles.map { (tileId, templateTileConfig) ->
+            tileId.toString() to templateTileConfig.toJSONObject()
+        }.toMap()
+        val jsonStr = JSONObject(templateTilesJson).toString()
+        localStorage.putString(PREF_TILE_TEMPLATES, jsonStr)
+    }
+
+    override suspend fun setTemplateTile(tileId: Int, content: String, refreshInterval: Int): TemplateTileConfig {
+        val templateTileConfig = TemplateTileConfig(content, refreshInterval)
+        val map = getAllTemplateTiles() + mapOf(tileId to templateTileConfig)
+        setAllTemplateTiles(map)
+        return templateTileConfig
+    }
+
+    override suspend fun removeTemplateTile(tileId: Int): TemplateTileConfig? {
+        val templateTilesMap = getAllTemplateTiles().toMutableMap()
+        val templateTile = templateTilesMap.remove(tileId)
+        setAllTemplateTiles(templateTilesMap)
+        return templateTile
     }
 
     override suspend fun getWearHapticFeedback(): Boolean {

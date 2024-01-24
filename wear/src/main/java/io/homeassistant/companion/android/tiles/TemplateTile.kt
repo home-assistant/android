@@ -19,6 +19,7 @@ import androidx.wear.protolayout.LayoutElementBuilders.LayoutElement
 import androidx.wear.protolayout.ResourceBuilders
 import androidx.wear.protolayout.ResourceBuilders.Resources
 import androidx.wear.protolayout.TimelineBuilders.Timeline
+import androidx.wear.tiles.EventBuilders
 import androidx.wear.tiles.RequestBuilders.ResourcesRequest
 import androidx.wear.tiles.RequestBuilders.TileRequest
 import androidx.wear.tiles.TileBuilders.Tile
@@ -28,11 +29,14 @@ import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
+import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.guava.future
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -53,14 +57,17 @@ class TemplateTile : TileService() {
                 if (wearPrefsRepository.getWearHapticFeedback()) hapticClick(applicationContext)
             }
 
+            val tileId = requestParams.tileId
+            val templateTileConfig = getTemplateTileConfig(tileId)
+
             Tile.Builder()
                 .setResourcesVersion("1")
                 .setFreshnessIntervalMillis(
-                    wearPrefsRepository.getTemplateTileRefreshInterval().toLong() * 1000
+                    templateTileConfig.refreshInterval.toLong() * 1_000
                 )
                 .setTileTimeline(
                     if (serverManager.isRegistered()) {
-                        timeline()
+                        timeline(templateTileConfig)
                     } else {
                         loggedOutTimeline(
                             this@TemplateTile,
@@ -88,17 +95,43 @@ class TemplateTile : TileService() {
                 .build()
         }
 
+    override fun onTileAddEvent(requestParams: EventBuilders.TileAddEvent): Unit = runBlocking {
+        withContext(Dispatchers.IO) {
+            /**
+             * When the app is updated from an older version (which only supported a single Template Tile),
+             * and the user is adding a new Template Tile, we can't tell for sure if it's the 1st or 2nd Tile.
+             * Even though we may have the Template tile config stored in the prefs, it doesn't guarantee that
+             *   the tile was actually added to the Tiles carousel.
+             * The [WearPrefsRepositoryImpl::getTemplateTileAndSaveTileId] method will handle both of the following cases:
+             * 1. There was no Tile added, but there was a Template tile config stored in the prefs.
+             *    In this case, the stored config will be associated to the new tileId.
+             * 2. There was a single Tile added, and there was a Template tile config stored in the prefs.
+             *    If there was a Tile update since updating the app, the tileId will be already
+             *    associated to the config, because it also calls [getTemplateTileAndSaveTileId].
+             *    If there was no Tile update yet, the new Tile will "steal" the config from the existing Tile,
+             *    and the old Tile will behave as it is the new Tile. This is needed because
+             *    we don't know if it's the 1st or 2nd Tile.
+             */
+            wearPrefsRepository.getTemplateTileAndSaveTileId(requestParams.tileId)
+        }
+    }
+
+    override fun onTileRemoveEvent(requestParams: EventBuilders.TileRemoveEvent): Unit = runBlocking {
+        withContext(Dispatchers.IO) {
+            wearPrefsRepository.removeTemplateTile(requestParams.tileId)
+        }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         // Cleans up the coroutine
         serviceJob.cancel()
     }
 
-    private suspend fun timeline(): Timeline {
-        val template = wearPrefsRepository.getTemplateTileContent()
+    private suspend fun timeline(templateTileConfig: TemplateTileConfig): Timeline {
         val renderedText = try {
             if (serverManager.isRegistered()) {
-                serverManager.integrationRepository().renderTemplate(template, mapOf()).toString()
+                serverManager.integrationRepository().renderTemplate(templateTileConfig.template, mapOf()).toString()
             } else {
                 ""
             }
@@ -113,6 +146,10 @@ class TemplateTile : TileService() {
         }
 
         return Timeline.fromLayoutElement(layout(renderedText))
+    }
+
+    private suspend fun getTemplateTileConfig(tileId: Int): TemplateTileConfig {
+        return wearPrefsRepository.getTemplateTileAndSaveTileId(tileId)
     }
 
     fun layout(renderedText: String): LayoutElement = Box.Builder().apply {

@@ -24,6 +24,7 @@ private const val ARG_SCREEN_SENSOR_MANAGER_ID = "sensorManagerId"
 private const val ARG_SCREEN_CAMERA_TILE_ID = "cameraTileId"
 private const val ARG_SCREEN_SHORTCUTS_TILE_ID = "shortcutsTileId"
 private const val ARG_SCREEN_SHORTCUTS_TILE_ENTITY_INDEX = "shortcutsTileEntityIndex"
+private const val ARG_SCREEN_TEMPLATE_TILE_ID = "templateTileId"
 
 private const val SCREEN_LANDING = "landing"
 private const val SCREEN_ENTITY_DETAIL = "entity_detail"
@@ -38,7 +39,9 @@ private const val SCREEN_SET_CAMERA_TILE = "set_camera_tile"
 private const val SCREEN_SET_CAMERA_TILE_ENTITY = "entity"
 private const val SCREEN_SET_CAMERA_TILE_REFRESH_INTERVAL = "refresh_interval"
 private const val ROUTE_SHORTCUTS_TILE = "shortcuts_tile"
+private const val ROUTE_TEMPLATE_TILE = "template_tile"
 private const val SCREEN_SELECT_SHORTCUTS_TILE = "select_shortcuts_tile"
+private const val SCREEN_SELECT_TEMPLATE_TILE = "select_template_tile"
 private const val SCREEN_SET_SHORTCUTS_TILE = "set_shortcuts_tile"
 private const val SCREEN_SHORTCUTS_TILE_CHOOSE_ENTITY = "shortcuts_tile_choose_entity"
 private const val SCREEN_SET_TILE_TEMPLATE = "set_tile_template"
@@ -47,6 +50,7 @@ private const val SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL = "set_tile_template
 const val DEEPLINK_SENSOR_MANAGER = "ha_wear://$SCREEN_SINGLE_SENSOR_MANAGER"
 const val DEEPLINK_PREFIX_SET_CAMERA_TILE = "ha_wear://$SCREEN_SET_CAMERA_TILE"
 const val DEEPLINK_PREFIX_SET_SHORTCUT_TILE = "ha_wear://$SCREEN_SET_SHORTCUTS_TILE"
+const val DEEPLINK_PREFIX_SET_TEMPLATE_TILE = "ha_wear://$SCREEN_SET_TILE_TEMPLATE"
 
 @Composable
 fun LoadHomePage(
@@ -161,7 +165,10 @@ fun LoadHomePage(
                     onClickCameraTile = {
                         swipeDismissableNavController.navigate("$ROUTE_CAMERA_TILE/$SCREEN_SELECT_CAMERA_TILE")
                     },
-                    onClickTemplateTile = { swipeDismissableNavController.navigate(SCREEN_SET_TILE_TEMPLATE) },
+                    onClickTemplateTiles = {
+                        mainViewModel.loadTemplateTiles()
+                        swipeDismissableNavController.navigate("$ROUTE_TEMPLATE_TILE/$SCREEN_SELECT_TEMPLATE_TILE")
+                    },
                     onAssistantAppAllowed = mainViewModel::setAssistantApp
                 )
             }
@@ -317,21 +324,49 @@ fun LoadHomePage(
                     }
                 )
             }
-            composable(SCREEN_SET_TILE_TEMPLATE) {
+            composable("$ROUTE_TEMPLATE_TILE/$SCREEN_SELECT_TEMPLATE_TILE") {
+                SelectTemplateTileView(
+                    templateTiles = mainViewModel.templateTiles,
+                    onSelectTemplateTile = { tileId ->
+                        swipeDismissableNavController.navigate("$ROUTE_TEMPLATE_TILE/$tileId/$SCREEN_SET_TILE_TEMPLATE")
+                    }
+                )
+            }
+            composable(
+                route = "$ROUTE_TEMPLATE_TILE/{$ARG_SCREEN_TEMPLATE_TILE_ID}/$SCREEN_SET_TILE_TEMPLATE",
+                arguments = listOf(
+                    navArgument(name = ARG_SCREEN_TEMPLATE_TILE_ID) {
+                        type = NavType.StringType
+                    }
+                ),
+                deepLinks = listOf(
+                    navDeepLink { uriPattern = "$DEEPLINK_PREFIX_SET_TEMPLATE_TILE/{$ARG_SCREEN_TEMPLATE_TILE_ID}" }
+                )
+            ) { backStackEntry ->
+                val tileId = backStackEntry.arguments!!.getString(ARG_SCREEN_TEMPLATE_TILE_ID)!!.toIntOrNull()
+
                 TemplateTileSettingsView(
-                    templateContent = mainViewModel.templateTileContent.value,
-                    refreshInterval = mainViewModel.templateTileRefreshInterval.value
+                    templateContent = mainViewModel.templateTiles[tileId]?.template ?: "",
+                    refreshInterval = mainViewModel.templateTiles[tileId]?.refreshInterval ?: 0
                 ) {
                     swipeDismissableNavController.navigate(
-                        SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL
+                        "$ROUTE_TEMPLATE_TILE/$tileId/$SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL"
                     )
                 }
             }
-            composable(SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL) {
+            composable(
+                route = "$ROUTE_TEMPLATE_TILE/{$ARG_SCREEN_TEMPLATE_TILE_ID}/$SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL",
+                arguments = listOf(
+                    navArgument(name = ARG_SCREEN_TEMPLATE_TILE_ID) {
+                        type = NavType.StringType
+                    }
+                )
+            ) { backStackEntry ->
+                val tileId = backStackEntry.arguments!!.getString(ARG_SCREEN_TEMPLATE_TILE_ID)!!.toInt()
                 RefreshIntervalPickerView(
-                    currentInterval = mainViewModel.templateTileRefreshInterval.value
+                    currentInterval = mainViewModel.templateTiles[tileId]?.refreshInterval ?: 0
                 ) {
-                    mainViewModel.setTemplateTileRefreshInterval(it)
+                    mainViewModel.setTemplateTileRefreshInterval(tileId, it)
                     TileService.getUpdater(context).requestUpdate(TemplateTile::class.java)
                     swipeDismissableNavController.navigateUp()
                 }

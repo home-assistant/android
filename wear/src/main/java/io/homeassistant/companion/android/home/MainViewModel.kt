@@ -19,6 +19,7 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
+import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
@@ -121,9 +122,7 @@ class MainViewModel @Inject constructor(
         private set
     var isShowShortcutTextEnabled = mutableStateOf(false)
         private set
-    var templateTileContent = mutableStateOf("")
-        private set
-    var templateTileRefreshInterval = mutableStateOf(0)
+    var templateTiles = mutableStateMapOf<Int, TemplateTileConfig>()
         private set
     var isFavoritesOnly by mutableStateOf(false)
         private set
@@ -148,8 +147,8 @@ class MainViewModel @Inject constructor(
             isHapticEnabled.value = homePresenter.getWearHapticFeedback()
             isToastEnabled.value = homePresenter.getWearToastConfirmation()
             isShowShortcutTextEnabled.value = homePresenter.getShowShortcutText()
-            templateTileContent.value = homePresenter.getTemplateTileContent()
-            templateTileRefreshInterval.value = homePresenter.getTemplateTileRefreshInterval()
+            templateTiles.clear()
+            templateTiles.putAll(homePresenter.getAllTemplateTiles())
             isFavoritesOnly = homePresenter.getWearFavoritesOnly()
 
             val assistantAppComponent = ComponentName(
@@ -168,6 +167,13 @@ class MainViewModel @Inject constructor(
             }
             shortcutEntitiesMap.clear()
             shortcutEntitiesMap.putAll(map)
+        }
+    }
+
+    fun loadTemplateTiles() {
+        viewModelScope.launch {
+            templateTiles.clear()
+            templateTiles.putAll(homePresenter.getAllTemplateTiles())
         }
     }
 
@@ -485,10 +491,12 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun setTemplateTileRefreshInterval(interval: Int) {
+    fun setTemplateTileRefreshInterval(tileId: Int, interval: Int) {
         viewModelScope.launch {
-            homePresenter.setTemplateTileRefreshInterval(interval)
-            templateTileRefreshInterval.value = interval
+            homePresenter.setTemplateTileRefreshInterval(tileId, interval)
+            templateTiles[tileId]?.let {
+                templateTiles[tileId] = it.copy(refreshInterval = interval)
+            }
         }
     }
 

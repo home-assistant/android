@@ -11,9 +11,11 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.google.accompanist.themeadapter.material.MdcTheme
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
@@ -48,29 +50,49 @@ fun LoadSettingsHomeView(
                     hasData = hasData,
                     isAuthed = isAuthenticated,
                     navigateFavorites = { navController.navigate(SettingsWearMainView.FAVORITES) },
-                    navigateTemplateTile = { navController.navigate(SettingsWearMainView.TEMPLATE) },
+                    navigateTemplateTile = { navController.navigate(SettingsWearMainView.TEMPLATES) },
                     loginWearOs = loginWearOs,
                     onBackClicked = onStartBackClicked,
                     events = settingsWearViewModel.resultSnackbar
                 )
             }
-            composable(SettingsWearMainView.TEMPLATE) {
-                SettingsWearTemplateTile(
-                    template = settingsWearViewModel.templateTileContent.value,
-                    renderedTemplate = settingsWearViewModel.templateTileContentRendered.value,
-                    refreshInterval = settingsWearViewModel.templateTileRefreshInterval.value,
-                    onContentChanged = {
-                        settingsWearViewModel.setTemplateContent(it)
-                        settingsWearViewModel.sendTemplateTileInfo()
-                    },
-                    onRefreshIntervalChanged = {
-                        settingsWearViewModel.templateTileRefreshInterval.value = it
-                        settingsWearViewModel.sendTemplateTileInfo()
+            composable(SettingsWearMainView.TEMPLATES) {
+                SettingsWearTemplateTileList(
+                    templateTiles = settingsWearViewModel.templateTiles,
+                    onTemplateTileClicked = { tileId ->
+                        navController.navigate(SettingsWearMainView.TEMPLATE_TILE.format(tileId))
                     },
                     onBackClicked = {
                         navController.navigateUp()
                     }
                 )
+            }
+            composable(
+                route = SettingsWearMainView.TEMPLATE_TILE.format("{tileId}"),
+                arguments = listOf(navArgument("tileId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val tileId = backStackEntry.arguments?.getInt("tileId")
+                val templateTile = settingsWearViewModel.templateTiles[tileId]
+                val renderedTemplate = settingsWearViewModel.templateTilesRenderedTemplates[tileId]
+
+                templateTile?.let {
+                    SettingsWearTemplateTile(
+                        template = it.template,
+                        renderedTemplate = renderedTemplate ?: "",
+                        refreshInterval = it.refreshInterval,
+                        onContentChanged = { templateContent ->
+                            settingsWearViewModel.setTemplateTileContent(tileId!!, templateContent)
+                            settingsWearViewModel.sendTemplateTileInfo()
+                        },
+                        onRefreshIntervalChanged = { refreshInterval ->
+                            settingsWearViewModel.setTemplateTileRefreshInterval(tileId!!, refreshInterval)
+                            settingsWearViewModel.sendTemplateTileInfo()
+                        },
+                        onBackClicked = {
+                            navController.navigateUp()
+                        }
+                    )
+                }
             }
         }
     }

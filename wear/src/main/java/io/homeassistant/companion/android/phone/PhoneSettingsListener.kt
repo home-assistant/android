@@ -21,6 +21,7 @@ import io.homeassistant.companion.android.common.data.integration.DeviceRegistra
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepositoryImpl
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
+import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.WearDataMessages
 import io.homeassistant.companion.android.database.server.Server
@@ -103,8 +104,7 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
             }
             dataMap.putString(WearDataMessages.CONFIG_SUPPORTED_DOMAINS, objectMapper.writeValueAsString(HomePresenterImpl.supportedDomains))
             dataMap.putString(WearDataMessages.CONFIG_FAVORITES, objectMapper.writeValueAsString(currentFavorites))
-            dataMap.putString(WearDataMessages.CONFIG_TEMPLATE_TILE, wearPrefsRepository.getTemplateTileContent())
-            dataMap.putInt(WearDataMessages.CONFIG_TEMPLATE_TILE_REFRESH_INTERVAL, wearPrefsRepository.getTemplateTileRefreshInterval())
+            dataMap.putString(WearDataMessages.CONFIG_TEMPLATE_TILES, objectMapper.writeValueAsString(wearPrefsRepository.getAllTemplateTiles()))
             setUrgent()
             asPutDataRequest()
         }
@@ -129,8 +129,8 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
                         "/updateFavorites" -> {
                             saveFavorites(DataMapItem.fromDataItem(item).dataMap)
                         }
-                        "/updateTemplateTile" -> {
-                            saveTileTemplate(DataMapItem.fromDataItem(item).dataMap)
+                        "/updateTemplateTiles" -> {
+                            saveTemplateTiles(DataMapItem.fromDataItem(item).dataMap)
                         }
                     }
                 }
@@ -246,11 +246,15 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
         }
     }
 
-    private fun saveTileTemplate(dataMap: DataMap) = mainScope.launch {
-        val content = dataMap.getString(WearDataMessages.CONFIG_TEMPLATE_TILE, "")
-        val interval = dataMap.getInt(WearDataMessages.CONFIG_TEMPLATE_TILE_REFRESH_INTERVAL, 0)
-        wearPrefsRepository.setTemplateTileContent(content)
-        wearPrefsRepository.setTemplateTileRefreshInterval(interval)
+    private fun saveTemplateTiles(dataMap: DataMap) = mainScope.launch {
+        val templateTilesFromPhone: Map<Int, TemplateTileConfig> = objectMapper.readValue(
+            dataMap.getString(
+                WearDataMessages.CONFIG_TEMPLATE_TILES,
+                "{}"
+            )
+        )
+
+        wearPrefsRepository.setAllTemplateTiles(templateTilesFromPhone)
     }
 
     private fun updateTiles() = mainScope.launch {
