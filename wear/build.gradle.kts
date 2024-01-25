@@ -58,6 +58,7 @@ android {
     }
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility(libs.versions.javaVersion.get())
         targetCompatibility(libs.versions.javaVersion.get())
     }
@@ -73,6 +74,8 @@ android {
 
 dependencies {
     implementation(project(":common"))
+
+    coreLibraryDesugaring(libs.tools.desugar.jdk)
 
     implementation(libs.kotlin.stdlib)
     implementation(libs.kotlinx.coroutines.android)
