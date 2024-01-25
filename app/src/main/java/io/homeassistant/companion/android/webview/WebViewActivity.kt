@@ -461,7 +461,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                     startActivity(intent)
                                 }
                                 return true
-                            } else if (!webView.url.toString().contains(it.toString())) {
+                            } else if (shouldLaunchWebBrowser(it.toString())) {
                                 Log.d(TAG, "Launching browser")
                                 val browserIntent = Intent(Intent.ACTION_VIEW, it)
                                 startActivity(browserIntent)
@@ -675,6 +675,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 }
             }
         }
+    }
+
+    private fun shouldLaunchWebBrowser(url: String): Boolean {
+        return !webView.url.toString().contains(url)
     }
 
     private fun webViewAddJavascriptInterface() {
