@@ -113,6 +113,8 @@ import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.chromium.net.CronetEngine
 import org.json.JSONObject
+import java.net.MalformedURLException
+import java.net.URL
 import java.util.concurrent.Executors
 import javax.inject.Inject
 import javax.inject.Named
@@ -678,6 +680,16 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     }
 
     private fun shouldLaunchWebBrowser(url: String): Boolean {
+        val parsedUrl = try { URL(url); } catch (e: MalformedURLException) { null }
+        if (parsedUrl?.path?.startsWith("/cdn-cgi/access/") == true) {
+            // This particular path is used by Cloudflare's Access product. We need
+            // to handle this in the webview, as certain cookies will be set after a
+            // successful authentication. Cloudflare will only allow access to the underlying
+            // server if these cookies are present. If the user would authenticate in the browser,
+            // the cookies would be stored there and we would not be able to read them.
+            return false
+        }
+
         return !webView.url.toString().contains(url)
     }
 
