@@ -132,8 +132,8 @@
     <string name="camera_tile_no_entity_yet">Edit the tile settings and select a camera to show</string>
     <string name="camera_tile_n">Camera tile #%d</string>
     <string name="camera_tiles">Camera tiles</string>
-    <string name="camera_widgets">Camera widgets</string>
-    <string name="camera_widget_desc">Displays the latest image from the camera</string>
+    <string name="camera_widgets">Picture widgets</string>
+    <string name="camera_widget_desc">Displays the latest picture from a camera or image entity</string>
     <string name="cancel">Cancel</string>
     <string name="changelog">View full change log</string>
     <string name="checking_with_home_assistant">Checking with Home Assistant</string>
@@ -974,8 +974,8 @@
     <string name="widget_background_type_dynamiccolor">Dynamic color</string>
     <string name="widget_background_type_transparent">Transparent</string>
     <string name="widget_button_image_description">Service button</string>
-    <string name="widget_camera_description">Camera widget</string>
-    <string name="widget_camera_contentdescription">Camera image</string>
+    <string name="widget_camera_description">Picture widget</string>
+    <string name="widget_camera_contentdescription">Image</string>
     <string name="widget_config_service_error">A custom component is preventing service data from loading.</string>
     <string name="widget_creation_error">Unable to create widget.</string>
     <string name="widget_entity_fetch_error">Unable to fetch data for configured entity.</string>

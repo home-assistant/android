@@ -136,7 +136,7 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             lifecycleScope.launch {
                 try {
                     val fetchedEntities = serverManager.integrationRepository(server.id).getEntities().orEmpty()
-                        .filter { it.domain == "camera" }
+                        .filter { it.domain == "camera" || it.domain == "image" }
                     entities[server.id] = fetchedEntities
                     if (server.id == selectedServerId) setAdapterEntities(server.id)
                 } catch (e: Exception) {

@@ -47,7 +47,7 @@ import io.homeassistant.companion.android.widgets.template.TemplateWidgetConfigu
 
 enum class WidgetType(val widgetIcon: IIcon) {
     BUTTON(CommunityMaterial.Icon2.cmd_gesture_tap),
-    CAMERA(CommunityMaterial.Icon.cmd_camera),
+    CAMERA(CommunityMaterial.Icon.cmd_camera_image),
     STATE(CommunityMaterial.Icon3.cmd_shape),
     MEDIA(CommunityMaterial.Icon3.cmd_play_box_multiple),
     TEMPLATE(CommunityMaterial.Icon.cmd_code_braces);
