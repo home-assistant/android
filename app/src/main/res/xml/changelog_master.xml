@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2024.1.2 - Main" versioncode="3">
+    <release version="2024.1.4 - Main" versioncode="3">
         <change>Better Matter and Thread support</change>
+        <change>Rename Camera Widget to Picture Widget and add support for image entities</change>
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2024.1.2 - Wear" versioncode="2">
-        <change>Bug fixes and dependency updates</change>
+    <release version="2024.1.4 - Wear" versioncode="2">
+        <change>Add support for multiple template tiles</change>
+        <change>Bug fixes, design tweaks and dependency updates</change>
     </release>
-    <release version="2024.1.2 - Automotive" versioncode="1">
+    <release version="2024.1.4 - Automotive" versioncode="1">
+        <change>Add support for automotive sensors to non-play store build</change>
         <change>Bug fixes and dependency updates</change>
     </release>
 </changelog>
