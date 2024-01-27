@@ -144,7 +144,8 @@ fun ConversationResultView(
                             onClick = { onChangePipeline() },
                             onClickLabel = stringResource(R.string.assist_change_pipeline)
                         )
-                        .padding(bottom = 4.dp)
+                        .padding(bottom = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = currentPipeline.name,
