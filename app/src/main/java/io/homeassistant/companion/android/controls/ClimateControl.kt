@@ -76,7 +76,7 @@ object ClimateControl : HaControl {
             val toggleRangeTemplate = ToggleRangeTemplate(
                 entity.entityId + "_range",
                 true,
-                "Toggle climate",
+                context.getString(commonR.string.widget_tap_action_toggle),
                 rangeTemplate
             )
             var modesFlag = 0
