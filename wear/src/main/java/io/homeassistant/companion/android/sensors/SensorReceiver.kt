@@ -105,23 +105,32 @@ class SensorReceiver : SensorReceiverBase() {
     // Suppress Lint because we only register for the receiver if the android version matches the intent
     @SuppressLint("InlinedApi")
     override val skippableActions = mapOf(
-        WifiManager.WIFI_STATE_CHANGED_ACTION to NetworkSensorManager.wifiState.id,
-        "android.app.action.NEXT_ALARM_CLOCK_CHANGED" to NextAlarmManager.nextAlarm.id,
-        Intent.ACTION_SCREEN_OFF to PowerSensorManager.interactiveDevice.id,
-        Intent.ACTION_SCREEN_ON to PowerSensorManager.interactiveDevice.id,
-        PowerManager.ACTION_POWER_SAVE_MODE_CHANGED to PowerSensorManager.powerSave.id,
-        PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED to PowerSensorManager.doze.id,
-        NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED to DNDSensorManager.dndSensor.id,
-        AudioManager.ACTION_MICROPHONE_MUTE_CHANGED to AudioSensorManager.micMuted.id,
-        AudioManager.ACTION_SPEAKERPHONE_STATE_CHANGED to AudioSensorManager.speakerphoneState.id,
-        AudioManager.RINGER_MODE_CHANGED_ACTION to AudioSensorManager.audioSensor.id,
-        AudioSensorManager.VOLUME_CHANGED_ACTION to AudioSensorManager.volMusic.id,
-        "com.google.android.clockwork.actions.WET_MODE_STARTED" to WetModeSensorManager.wetModeSensor.id,
-        "com.google.android.clockwork.actions.WET_MODE_ENDED" to WetModeSensorManager.wetModeSensor.id,
-        "android.bluetooth.device.action.ACL_CONNECTED" to BluetoothSensorManager.bluetoothConnection.id,
-        "android.bluetooth.device.action.ACL_DISCONNECTED" to BluetoothSensorManager.bluetoothConnection.id,
-        BluetoothAdapter.ACTION_STATE_CHANGED to BluetoothSensorManager.bluetoothState.id,
-        NfcAdapter.ACTION_ADAPTER_STATE_CHANGED to NfcSensorManager.nfcStateSensor.id
+        WifiManager.WIFI_STATE_CHANGED_ACTION to listOf(NetworkSensorManager.wifiState.id),
+        "android.app.action.NEXT_ALARM_CLOCK_CHANGED" to listOf(NextAlarmManager.nextAlarm.id),
+        Intent.ACTION_SCREEN_OFF to listOf(PowerSensorManager.interactiveDevice.id),
+        Intent.ACTION_SCREEN_ON to listOf(PowerSensorManager.interactiveDevice.id),
+        PowerManager.ACTION_POWER_SAVE_MODE_CHANGED to listOf(PowerSensorManager.powerSave.id),
+        PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED to listOf(PowerSensorManager.doze.id),
+        NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED to listOf(DNDSensorManager.dndSensor.id),
+        AudioManager.ACTION_MICROPHONE_MUTE_CHANGED to listOf(AudioSensorManager.micMuted.id),
+        AudioManager.ACTION_SPEAKERPHONE_STATE_CHANGED to listOf(AudioSensorManager.speakerphoneState.id),
+        AudioManager.RINGER_MODE_CHANGED_ACTION to listOf(AudioSensorManager.audioSensor.id),
+        AudioSensorManager.VOLUME_CHANGED_ACTION to listOf(
+            AudioSensorManager.volAccessibility.id,
+            AudioSensorManager.volAlarm.id,
+            AudioSensorManager.volCall.id,
+            AudioSensorManager.volDTMF.id,
+            AudioSensorManager.volNotification.id,
+            AudioSensorManager.volMusic.id,
+            AudioSensorManager.volRing.id,
+            AudioSensorManager.volSystem.id
+        ),
+        "com.google.android.clockwork.actions.WET_MODE_STARTED" to listOf(WetModeSensorManager.wetModeSensor.id),
+        "com.google.android.clockwork.actions.WET_MODE_ENDED" to listOf(WetModeSensorManager.wetModeSensor.id),
+        "android.bluetooth.device.action.ACL_CONNECTED" to listOf(BluetoothSensorManager.bluetoothConnection.id),
+        "android.bluetooth.device.action.ACL_DISCONNECTED" to listOf(BluetoothSensorManager.bluetoothConnection.id),
+        BluetoothAdapter.ACTION_STATE_CHANGED to listOf(BluetoothSensorManager.bluetoothState.id),
+        NfcAdapter.ACTION_ADAPTER_STATE_CHANGED to listOf(NfcSensorManager.nfcStateSensor.id)
     )
 
     override fun getSensorSettingsIntent(
