@@ -37,7 +37,7 @@ jobs:
           bundler-cache: true
 
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
 
       - uses: ./.github/actions/create-release-number
         name: Create Release Number
@@ -146,7 +146,7 @@ jobs:
           bundler-cache: true
 
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
 
       - uses: ./.github/actions/create-release-number
         name: Create Release Number
