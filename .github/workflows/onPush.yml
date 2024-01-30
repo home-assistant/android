@@ -63,7 +63,7 @@ jobs:
           lokalise-project: ${{ secrets.LOKALISE_PROJECT }}
           lokalise-token: ${{ secrets.LOKALISE_TOKEN }}
 
-      - uses: gradle/wrapper-validation-action@v1
+      - uses: gradle/wrapper-validation-action@v2
         name: Validate Gradle Wrapper
 
       - name: Build Release
@@ -172,7 +172,7 @@ jobs:
           lokalise-project: ${{ secrets.LOKALISE_PROJECT }}
           lokalise-token: ${{ secrets.LOKALISE_TOKEN }}
 
-      - uses: gradle/wrapper-validation-action@v1
+      - uses: gradle/wrapper-validation-action@v2
         name: Validate Gradle Wrapper
 
       - name: Build Release
