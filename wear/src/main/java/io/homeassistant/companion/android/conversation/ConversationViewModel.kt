@@ -129,6 +129,8 @@ class ConversationViewModel @Inject constructor(
         return false
     }
 
+    fun isRegistered(): Boolean = serverManager.isRegistered()
+
     override fun getInput(): AssistInputMode = inputMode
 
     override fun setInput(inputMode: AssistInputMode) {
