@@ -78,7 +78,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         Intent.ACTION_POWER_DISCONNECTED
     )
 
-    protected abstract val skippableActions: Map<String, String>
+    protected abstract val skippableActions: Map<String, List<String>>
 
     protected abstract fun getSensorSettingsIntent(
         context: Context,
@@ -89,14 +89,16 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         Log.d(tag, "Received intent: ${intent.action}")
-        if (skippableActions.containsKey(intent.action)) {
-            val sensor = skippableActions[intent.action]
-            if (!isSensorEnabled(sensor!!)) {
+        skippableActions[intent.action]?.let { sensors ->
+            val noSensorsEnabled = sensors.none {
+                isSensorEnabled(it)
+            }
+            if (noSensorsEnabled) {
                 Log.d(
                     tag,
                     String.format(
-                        "Sensor %s corresponding to received event %s is disabled, skipping sensors update",
-                        sensor,
+                        "Sensor(s) %s corresponding to received event %s are disabled, skipping sensors update",
+                        sensors.toString(),
                         intent.action
                     )
                 )

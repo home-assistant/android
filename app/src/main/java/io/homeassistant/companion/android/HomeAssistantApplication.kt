@@ -14,6 +14,7 @@ import android.telephony.TelephonyManager
 import dagger.hilt.android.HiltAndroidApp
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
@@ -158,6 +159,7 @@ open class HomeAssistantApplication : Application() {
                 addAction(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
                 addAction(AudioManager.ACTION_HEADSET_PLUG)
                 addAction(AudioManager.RINGER_MODE_CHANGED_ACTION)
+                addAction(AudioSensorManager.VOLUME_CHANGED_ACTION)
             }
         )
 
