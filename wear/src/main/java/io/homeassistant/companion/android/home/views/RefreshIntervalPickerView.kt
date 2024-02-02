@@ -15,6 +15,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.ListHeader
@@ -43,7 +45,8 @@ fun RefreshIntervalPickerView(
     currentInterval: Int,
     onSelectInterval: (Int) -> Unit
 ) {
-    val options = listOf(0, 60, 2 * 60, 5 * 60, 10 * 60, 15 * 60, 30 * 60, 60 * 60, 2 * 60 * 60, 5 * 60 * 60, 10 * 60 * 60, 24 * 60 * 60)
+    // Refresh interval options: never, when viewed, every x time
+    val options = listOf(0, 1, 60, 2 * 60, 5 * 60, 10 * 60, 15 * 60, 30 * 60, 60 * 60, 2 * 60 * 60, 5 * 60 * 60, 10 * 60 * 60, 24 * 60 * 60)
     val initialIndex = options.indexOf(currentInterval)
     val state = rememberPickerState(
         initialNumberOfOptions = options.size,
@@ -76,7 +79,10 @@ fun RefreshIntervalPickerView(
                         fontSize = MaterialTheme.typography.displayMedium.fontSize.value.dp.toSp() // Ignore text scaling
                     )
                 },
-                color = wearColorScheme.primary
+                color = wearColorScheme.primary,
+                textAlign = TextAlign.Center, // In case of overflow, minimize weird layout behavior
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 2
             )
         }
         FilledIconButton(

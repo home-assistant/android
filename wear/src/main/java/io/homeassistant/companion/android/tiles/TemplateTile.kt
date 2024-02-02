@@ -35,6 +35,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.guava.future
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -42,6 +43,11 @@ import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class TemplateTile : TileService() {
+
+    companion object {
+        private const val TAG = "TemplateTile"
+    }
+
     private val serviceJob = Job()
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
 
@@ -59,12 +65,14 @@ class TemplateTile : TileService() {
 
             val tileId = requestParams.tileId
             val templateTileConfig = getTemplateTileConfig(tileId)
+            val freshness = when {
+                templateTileConfig.refreshInterval <= 1 -> 0
+                else -> templateTileConfig.refreshInterval
+            }
 
             Tile.Builder()
                 .setResourcesVersion("1")
-                .setFreshnessIntervalMillis(
-                    templateTileConfig.refreshInterval.toLong() * 1_000
-                )
+                .setFreshnessIntervalMillis(freshness.toLong() * 1_000)
                 .setTileTimeline(
                     if (serverManager.isRegistered()) {
                         timeline(templateTileConfig)
@@ -119,6 +127,20 @@ class TemplateTile : TileService() {
     override fun onTileRemoveEvent(requestParams: EventBuilders.TileRemoveEvent): Unit = runBlocking {
         withContext(Dispatchers.IO) {
             wearPrefsRepository.removeTemplateTile(requestParams.tileId)
+        }
+    }
+
+    override fun onTileEnterEvent(requestParams: EventBuilders.TileEnterEvent) {
+        serviceScope.launch {
+            val tileId = requestParams.tileId
+            val templateTileConfig = getTemplateTileConfig(tileId)
+            if (templateTileConfig.refreshInterval >= 1) {
+                try {
+                    getUpdater(this@TemplateTile).requestUpdate(TemplateTile::class.java)
+                } catch (e: Exception) {
+                    Log.w(TAG, "Unable to request tile update on enter", e)
+                }
+            }
         }
     }
 

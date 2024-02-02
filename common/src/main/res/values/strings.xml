@@ -317,6 +317,7 @@
         <item quantity="one">%d second</item>
         <item quantity="other">%d seconds</item>
     </plurals>
+    <string name="interval_on_view">On view</string>
     <string name="keep_screen_on_def">Do not lock screen when dashboard is active</string>
     <string name="keep_screen_on">Keep screen on</string>
     <string name="pinch_to_zoom_def">Allow pinch-to-zoom gesture to zoom app window</string>

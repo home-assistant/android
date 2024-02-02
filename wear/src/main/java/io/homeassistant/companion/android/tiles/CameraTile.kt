@@ -28,6 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.guava.future
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -70,12 +71,15 @@ class CameraTile : TileService() {
             if (requestParams.currentState.lastClickableId == MODIFIER_CLICK_REFRESH) {
                 if (wearPrefsRepository.getWearHapticFeedback()) hapticClick(applicationContext)
             }
+            val freshness = when {
+                (tileConfig?.refreshInterval != null && tileConfig.refreshInterval!! <= 1) -> 0
+                tileConfig?.refreshInterval != null -> tileConfig.refreshInterval!!
+                else -> DEFAULT_REFRESH_INTERVAL
+            }
 
             Tile.Builder()
                 .setResourcesVersion("$TAG$tileId.${System.currentTimeMillis()}")
-                .setFreshnessIntervalMillis(
-                    TimeUnit.SECONDS.toMillis(tileConfig?.refreshInterval ?: DEFAULT_REFRESH_INTERVAL)
-                )
+                .setFreshnessIntervalMillis(TimeUnit.SECONDS.toMillis(freshness))
                 .setTileTimeline(
                     if (serverManager.isRegistered()) {
                         timeline(
@@ -199,6 +203,25 @@ class CameraTile : TileService() {
             AppDatabase.getInstance(this@CameraTile)
                 .cameraTileDao()
                 .delete(requestParams.tileId)
+        }
+    }
+
+    override fun onTileEnterEvent(requestParams: EventBuilders.TileEnterEvent) {
+        serviceScope.launch {
+            val tileId = requestParams.tileId
+            val tileConfig = AppDatabase.getInstance(this@CameraTile)
+                .cameraTileDao()
+                .get(tileId)
+            tileConfig?.refreshInterval?.let {
+                if (it >= 1) {
+                    try {
+                        getUpdater(this@CameraTile)
+                            .requestUpdate(io.homeassistant.companion.android.tiles.CameraTile::class.java)
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Unable to request tile update on enter", e)
+                    }
+                }
+            }
         }
     }
 
