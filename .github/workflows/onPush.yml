@@ -118,6 +118,10 @@ jobs:
       - name: Prepare Amazon Listing
         if: github.event.inputs.beta == 'true'
         run: bundle exec fastlane prep_amazon
+        env:
+          AMAZON_APPSTORE_CLIENT_ID: ${{ secrets.AMAZON_APPSTORE_CLIENT_ID }}
+          AMAZON_APPSTORE_CLIENT_SECRET: ${{ secrets.AMAZON_APPSTORE_CLIENT_SECRET }}
+          AMAZON_APPSTORE_APP_ID: ${{ secrets.AMAZON_APPSTORE_APP_ID }}
 
       - name: Print `git status`
         run: git status
