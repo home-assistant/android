@@ -7,11 +7,11 @@ import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import com.google.accompanist.themeadapter.material.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.onboarding.OnboardingViewModel
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationFragment
+import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 
 @AndroidEntryPoint
 class ManualSetupFragment : Fragment() {
@@ -25,7 +25,7 @@ class ManualSetupFragment : Fragment() {
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
-                MdcTheme {
+                HomeAssistantAppTheme {
                     ManualSetupView(
                         onboardingViewModel = viewModel,
                         connectedClicked = { connectClicked() }
