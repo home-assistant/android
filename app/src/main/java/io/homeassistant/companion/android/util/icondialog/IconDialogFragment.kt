@@ -7,8 +7,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.DialogFragment
-import com.google.accompanist.themeadapter.material.MdcTheme
 import com.mikepenz.iconics.typeface.IIcon
+import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import kotlin.math.min
 
 class IconDialogFragment(callback: (IIcon) -> Unit) : DialogFragment() {
@@ -33,7 +33,7 @@ class IconDialogFragment(callback: (IIcon) -> Unit) : DialogFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         (view as ComposeView).setContent {
-            MdcTheme {
+            HomeAssistantAppTheme {
                 IconDialogContent(
                     onSelect = onSelect
                 )

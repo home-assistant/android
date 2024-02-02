@@ -18,12 +18,12 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.core.view.WindowCompat
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.google.accompanist.themeadapter.material.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.assist.ui.AssistSheetView
 import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.webview.WebViewActivity
 
 @AndroidEntryPoint
@@ -97,7 +97,7 @@ class AssistActivity : BaseActivity() {
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
-            MdcTheme {
+            HomeAssistantAppTheme {
                 val systemUiController = rememberSystemUiController()
                 val useDarkIcons = MaterialTheme.colors.isLight
                 SideEffect {

@@ -14,9 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.google.accompanist.themeadapter.material.MdcTheme
 import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 
 @Composable
 fun IconDialogContent(
@@ -56,7 +56,7 @@ fun IconDialog(
 @Preview
 @Composable
 private fun IconDialogPreview() {
-    MdcTheme {
+    HomeAssistantAppTheme {
         Surface(
             modifier = Modifier
                 .width(480.dp)

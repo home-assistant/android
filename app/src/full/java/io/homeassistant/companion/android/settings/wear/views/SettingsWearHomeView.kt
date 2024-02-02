@@ -16,10 +16,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.google.accompanist.themeadapter.material.MdcTheme
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.settings.wear.SettingsWearViewModel
+import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.common.R as commonR
 
 const val WEAR_DOCS_LINK = "https://companion.home-assistant.io/docs/wear-os/"
@@ -31,7 +31,7 @@ fun LoadSettingsHomeView(
     loginWearOs: () -> Unit,
     onStartBackClicked: () -> Unit
 ) {
-    MdcTheme {
+    HomeAssistantAppTheme {
         val navController = rememberNavController()
         NavHost(navController = navController, startDestination = SettingsWearMainView.LANDING) {
             composable(SettingsWearMainView.FAVORITES) {

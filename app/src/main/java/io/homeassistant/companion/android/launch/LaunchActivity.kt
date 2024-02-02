@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.google.accompanist.themeadapter.material.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
@@ -31,6 +30,7 @@ import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.settings.SettingViewModel
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
 import io.homeassistant.companion.android.util.UrlUtil
+import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -71,7 +71,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
         super.onCreate(savedInstanceState)
         setContent {
             Box(modifier = Modifier.fillMaxSize()) {
-                MdcTheme {
+                HomeAssistantAppTheme {
                     CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center)
                     )

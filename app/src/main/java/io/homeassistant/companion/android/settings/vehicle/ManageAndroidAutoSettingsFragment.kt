@@ -10,11 +10,11 @@ import androidx.annotation.RequiresApi
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import com.google.accompanist.themeadapter.material.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.settings.vehicle.views.AndroidAutoFavoritesSettings
+import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -34,7 +34,7 @@ class ManageAndroidAutoSettingsFragment : Fragment() {
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
-                MdcTheme {
+                HomeAssistantAppTheme {
                     AndroidAutoFavoritesSettings(
                         androidAutoViewModel = viewModel,
                         serversList = serverManager.defaultServers,
