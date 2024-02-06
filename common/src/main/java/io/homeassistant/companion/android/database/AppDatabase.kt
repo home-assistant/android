@@ -420,20 +420,14 @@ abstract class AppDatabase : RoomDatabase() {
                                     val currentSensorSettingName = cursor.getString(cursor.getColumnIndex("name"))
                                     var entries = ""
                                     var newSensorSettingName = currentSensorSettingName
-                                    // Alarm
+
                                     if (currentSensorId == "next_alarm" && currentSensorSettingName == "Allow List") {
                                         newSensorSettingName = "nextalarm_allow_list"
-                                    }
-                                    // Notification
-                                    else if ((currentSensorId == "last_removed_notification" || currentSensorId == "last_notification") && currentSensorSettingName == "Allow List") {
+                                    } else if ((currentSensorId == "last_removed_notification" || currentSensorId == "last_notification") && currentSensorSettingName == "Allow List") {
                                         newSensorSettingName = "notification_allow_list"
-                                    }
-                                    // Geocode
-                                    else if (currentSensorId == "geocoded_location" && currentSensorSettingName == "Minimum Accuracy") {
+                                    } else if (currentSensorId == "geocoded_location" && currentSensorSettingName == "Minimum Accuracy") {
                                         newSensorSettingName = "geocode_minimum_accuracy"
-                                    }
-                                    // Location
-                                    else if ((currentSensorId == "zone_background" || currentSensorId == "accurate_location" || currentSensorId == "location_background") && currentSensorSettingName == "Minimum Accuracy") {
+                                    } else if ((currentSensorId == "zone_background" || currentSensorId == "accurate_location" || currentSensorId == "location_background") && currentSensorSettingName == "Minimum Accuracy") {
                                         newSensorSettingName = "location_minimum_accuracy"
                                     } else if (currentSensorId == "accurate_location" && currentSensorSettingName == "Minimum time between updates") {
                                         newSensorSettingName = "location_minimum_time_updates"
@@ -449,9 +443,7 @@ abstract class AppDatabase : RoomDatabase() {
                                         newSensorSettingName = "location_ham_only_enter_zone"
                                     } else if (currentSensorId == "location_background" && currentSensorSettingName == "High accuracy mode trigger range for zone (meters)") {
                                         newSensorSettingName = "location_ham_trigger_range"
-                                    }
-                                    // Bluetooth
-                                    else if (currentSensorId == "ble_emitter" && currentSensorSettingName == "UUID") {
+                                    } else if (currentSensorId == "ble_emitter" && currentSensorSettingName == "UUID") {
                                         newSensorSettingName = "ble_uuid"
                                     } else if (currentSensorId == "ble_emitter" && currentSensorSettingName == "Major") {
                                         newSensorSettingName = "ble_major"
@@ -464,19 +456,13 @@ abstract class AppDatabase : RoomDatabase() {
                                         newSensorSettingName = "ble_transmit_enabled"
                                     } else if (currentSensorId == "ble_emitter" && currentSensorSettingName == "Include when enabling all sensors") {
                                         newSensorSettingName = "ble_enable_toggle_all"
-                                    }
-                                    // Last reboot
-                                    else if (currentSensorId == "last_reboot" && currentSensorSettingName == "deadband") {
+                                    } else if (currentSensorId == "last_reboot" && currentSensorSettingName == "deadband") {
                                         newSensorSettingName = "lastreboot_deadband"
-                                    }
-                                    // Last update
-                                    else if (currentSensorId == "last_update" && currentSensorSettingName == "Add New Intent") {
+                                    } else if (currentSensorId == "last_update" && currentSensorSettingName == "Add New Intent") {
                                         newSensorSettingName = "lastupdate_add_new_intent"
                                     } else if (currentSensorId == "last_update" && currentSensorSettingName.startsWith("intent")) {
                                         newSensorSettingName = "lastupdate_intent_var1:" + currentSensorSettingName.substringAfter("intent") + ":"
-                                    }
-                                    // Network
-                                    else if (currentSensorId == "wifi_bssid" && currentSensorSettingName == "get_current_bssid") {
+                                    } else if (currentSensorId == "wifi_bssid" && currentSensorSettingName == "get_current_bssid") {
                                         newSensorSettingName = "network_get_current_bssid"
                                     } else if (currentSensorId == "wifi_bssid" && currentSensorSettingName.startsWith("replace_")) {
                                         newSensorSettingName = "network_replace_mac_var1:" + currentSensorSettingName.substringAfter("replace_") + ":"
