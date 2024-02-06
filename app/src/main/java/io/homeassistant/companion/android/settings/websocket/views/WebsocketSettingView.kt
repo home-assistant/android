@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.common.util.websocketChannel
+import io.homeassistant.companion.android.common.util.CHANNEL_WEBSOCKET
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.util.compose.HaAlertWarning
 import io.homeassistant.companion.android.util.compose.InfoNotification
@@ -77,7 +77,7 @@ fun WebsocketSettingView(
             if (websocketSetting != WebsocketSetting.NEVER && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION) {
                 InfoNotification(
                     infoString = R.string.websocket_persistent_notification,
-                    channelId = websocketChannel,
+                    channelId = CHANNEL_WEBSOCKET,
                     buttonString = R.string.websocket_notification_channel
                 )
             }

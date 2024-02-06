@@ -12,7 +12,7 @@ import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
 import io.homeassistant.companion.android.common.sensors.SensorUpdateReceiver
-import io.homeassistant.companion.android.common.util.beaconMonitorChannel
+import io.homeassistant.companion.android.common.util.CHANNEL_BEACON_MONITOR
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -76,11 +76,11 @@ class MonitoringManager {
             }
         }
 
-        val builder = NotificationCompat.Builder(context, beaconMonitorChannel)
+        val builder = NotificationCompat.Builder(context, CHANNEL_BEACON_MONITOR)
         builder.setSmallIcon(R.drawable.ic_stat_ic_notification)
         builder.setContentTitle(context.getString(R.string.beacon_scanning))
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(beaconMonitorChannel, context.getString(R.string.beacon_scanning), NotificationManager.IMPORTANCE_LOW)
+            val channel = NotificationChannel(CHANNEL_BEACON_MONITOR, context.getString(R.string.beacon_scanning), NotificationManager.IMPORTANCE_LOW)
             val notifManager = context.getSystemService<NotificationManager>()!!
             notifManager.createNotificationChannel(channel)
         }

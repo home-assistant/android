@@ -32,7 +32,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.util.databaseChannel
+import io.homeassistant.companion.android.common.util.CHANNEL_DATABASE
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.database.location.LocationHistoryDao
@@ -897,10 +897,10 @@ abstract class AppDatabase : RoomDatabase() {
                 val notificationManager = appContext.getSystemService<NotificationManager>()!!
 
                 var notificationChannel =
-                    notificationManager.getNotificationChannel(databaseChannel)
+                    notificationManager.getNotificationChannel(CHANNEL_DATABASE)
                 if (notificationChannel == null) {
                     notificationChannel = NotificationChannel(
-                        databaseChannel,
+                        CHANNEL_DATABASE,
                         TAG,
                         NotificationManager.IMPORTANCE_HIGH
                     )
@@ -911,7 +911,7 @@ abstract class AppDatabase : RoomDatabase() {
 
         private fun notifyMigrationFailed() {
             createNotificationChannel()
-            val notification = NotificationCompat.Builder(appContext, databaseChannel)
+            val notification = NotificationCompat.Builder(appContext, CHANNEL_DATABASE)
                 .setSmallIcon(commonR.drawable.ic_stat_ic_notification)
                 .setContentTitle(appContext.getString(commonR.string.database_migration_failed))
                 .setPriority(NotificationCompat.PRIORITY_HIGH)

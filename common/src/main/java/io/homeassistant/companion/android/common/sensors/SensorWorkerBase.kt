@@ -12,7 +12,7 @@ import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.util.sensorWorkerChannel
+import io.homeassistant.companion.android.common.util.CHANNEL_SENSOR_WORKER
 import io.homeassistant.companion.android.database.AppDatabase
 import java.lang.IllegalStateException
 import kotlinx.coroutines.Dispatchers
@@ -43,7 +43,7 @@ abstract class SensorWorkerBase(
             }
         ) {
             createNotificationChannel()
-            val notification = NotificationCompat.Builder(applicationContext, sensorWorkerChannel)
+            val notification = NotificationCompat.Builder(applicationContext, CHANNEL_SENSOR_WORKER)
                 .setSmallIcon(commonR.drawable.ic_stat_ic_notification)
                 .setContentTitle(appContext.getString(commonR.string.updating_sensors))
                 .setPriority(NotificationCompat.PRIORITY_LOW)
@@ -72,10 +72,10 @@ abstract class SensorWorkerBase(
     protected fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             var notificationChannel =
-                notificationManager.getNotificationChannel(sensorWorkerChannel)
+                notificationManager.getNotificationChannel(CHANNEL_SENSOR_WORKER)
             if (notificationChannel == null) {
                 notificationChannel = NotificationChannel(
-                    sensorWorkerChannel,
+                    CHANNEL_SENSOR_WORKER,
                     TAG,
                     NotificationManager.IMPORTANCE_LOW
                 )
