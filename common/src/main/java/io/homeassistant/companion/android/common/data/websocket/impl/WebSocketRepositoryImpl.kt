@@ -455,7 +455,8 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
                     "type" to "matter/commission",
                     "code" to code
                 ),
-                timeout = 120000L // Matter commissioning takes at least 60 seconds + interview
+                // Matter commissioning takes at least 60 seconds + interview
+                timeout = 120000L
             )
         )
 
@@ -481,7 +482,8 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
         val response = sendMessage(
             WebSocketRequest(
                 message = if (server?.version?.isAtLeast(2024, 1) == true) data.plus("ip_addr" to ip) else data,
-                timeout = 120000L // Matter commissioning takes at least 60 seconds + interview
+                // Matter commissioning takes at least 60 seconds + interview
+                timeout = 120000L
             )
         )
 

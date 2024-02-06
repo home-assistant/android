@@ -116,7 +116,8 @@ class WearPrefsRepositoryImpl @Inject constructor(
                     val jsonArray = JSONArray(jsonStr)
                     val entities = jsonArray.toStringList()
                     mapOf(
-                        null to entities // the key is null since we don't (yet) have the tileId
+                        // the key is null since we don't (yet) have the tileId
+                        null to entities
                     )
                 }
             )

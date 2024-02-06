@@ -59,7 +59,8 @@ class PhoneInstallActivity : AppCompatActivity() {
                         addCategory(Intent.CATEGORY_BROWSABLE)
                         data = Uri.parse("https://play.google.com/store/apps/details?id=${BuildConfig.APPLICATION_ID}")
                     },
-                    null // a Wear device only has one companion device so this is not needed
+                    // A Wear device only has one companion device so this is not needed
+                    null
                 ).await()
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to open remote activity", e)

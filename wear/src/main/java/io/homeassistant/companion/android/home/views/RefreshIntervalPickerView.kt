@@ -76,11 +76,13 @@ fun RefreshIntervalPickerView(
                 style = with(LocalDensity.current) {
                     MaterialTheme.typography.displayMedium.copy(
                         fontWeight = FontWeight.Medium,
-                        fontSize = MaterialTheme.typography.displayMedium.fontSize.value.dp.toSp() // Ignore text scaling
+                        // Ignore text scaling
+                        fontSize = MaterialTheme.typography.displayMedium.fontSize.value.dp.toSp()
                     )
                 },
                 color = wearColorScheme.primary,
-                textAlign = TextAlign.Center, // In case of overflow, minimize weird layout behavior
+                // In case of overflow, minimize weird layout behavior
+                textAlign = TextAlign.Center,
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 2
             )

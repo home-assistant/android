@@ -123,7 +123,8 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
                         addCategory(Intent.CATEGORY_BROWSABLE)
                         data = Uri.parse(url)
                     },
-                    null // a Wear device only has one companion device so this is not needed
+                    // A Wear device only has one companion device so this is not needed
+                    null
                 ).await()
                 showContinueOnPhone()
             } catch (e: Exception) {
