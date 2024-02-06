@@ -57,7 +57,7 @@ class WebViewPresenterImpl @Inject constructor(
     private var url: URL? = null
     private var urlForServer: Int? = null
 
-    private val _matterThreadStep = MutableStateFlow(MatterThreadStep.NOT_STARTED)
+    private val mutableMatterThreadStep = MutableStateFlow(MatterThreadStep.NOT_STARTED)
 
     private var matterThreadIntentSender: IntentSender? = null
 
@@ -342,8 +342,8 @@ class WebViewPresenterImpl @Inject constructor(
     override fun appCanCommissionMatterDevice(): Boolean = matterUseCase.appSupportsCommissioning()
 
     override fun startCommissioningMatterDevice(context: Context) {
-        if (_matterThreadStep.value != MatterThreadStep.REQUESTED) {
-            _matterThreadStep.tryEmit(MatterThreadStep.REQUESTED)
+        if (mutableMatterThreadStep.value != MatterThreadStep.REQUESTED) {
+            mutableMatterThreadStep.tryEmit(MatterThreadStep.REQUESTED)
 
             // The app used to sync Thread credentials here until commit 26a472a, but it was
             // (temporarily?) removed due to slowing down the Matter commissioning flow for the user
@@ -359,11 +359,11 @@ class WebViewPresenterImpl @Inject constructor(
             { intentSender ->
                 Log.d(TAG, "Matter commissioning is ready")
                 matterThreadIntentSender = intentSender
-                _matterThreadStep.tryEmit(MatterThreadStep.MATTER_IN_PROGRESS)
+                mutableMatterThreadStep.tryEmit(MatterThreadStep.MATTER_IN_PROGRESS)
             },
             { e ->
                 Log.e(TAG, "Matter commissioning couldn't be prepared", e)
-                _matterThreadStep.tryEmit(MatterThreadStep.ERROR_MATTER)
+                mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_MATTER)
             }
         )
     }
@@ -371,8 +371,8 @@ class WebViewPresenterImpl @Inject constructor(
     override fun appCanExportThreadCredentials(): Boolean = threadUseCase.appSupportsThread()
 
     override fun exportThreadCredentials(context: Context) {
-        if (_matterThreadStep.value != MatterThreadStep.REQUESTED) {
-            _matterThreadStep.tryEmit(MatterThreadStep.REQUESTED)
+        if (mutableMatterThreadStep.value != MatterThreadStep.REQUESTED) {
+            mutableMatterThreadStep.tryEmit(MatterThreadStep.REQUESTED)
 
             mainScope.launch {
                 try {
@@ -382,29 +382,29 @@ class WebViewPresenterImpl @Inject constructor(
                     when (result) {
                         is ThreadManager.SyncResult.OnlyOnDevice -> {
                             matterThreadIntentSender = result.exportIntent
-                            _matterThreadStep.tryEmit(MatterThreadStep.THREAD_EXPORT_TO_SERVER_ONLY)
+                            mutableMatterThreadStep.tryEmit(MatterThreadStep.THREAD_EXPORT_TO_SERVER_ONLY)
                         }
                         is ThreadManager.SyncResult.NoneHaveCredentials,
                         is ThreadManager.SyncResult.OnlyOnServer -> {
-                            _matterThreadStep.tryEmit(MatterThreadStep.THREAD_NONE)
+                            mutableMatterThreadStep.tryEmit(MatterThreadStep.THREAD_NONE)
                         }
                         is ThreadManager.SyncResult.NotConnected -> {
-                            _matterThreadStep.tryEmit(MatterThreadStep.ERROR_THREAD_LOCAL_NETWORK)
+                            mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_THREAD_LOCAL_NETWORK)
                         }
                         else -> {
-                            _matterThreadStep.tryEmit(MatterThreadStep.ERROR_THREAD_OTHER)
+                            mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_THREAD_OTHER)
                         }
                     }
                 } catch (e: Exception) {
                     Log.w(TAG, "Unable to export preferred Thread dataset", e)
-                    _matterThreadStep.tryEmit(MatterThreadStep.ERROR_THREAD_OTHER)
+                    mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_THREAD_OTHER)
                 }
             }
         } // else already waiting for a result, don't send another request
     }
 
     override fun getMatterThreadStepFlow(): Flow<MatterThreadStep> =
-        _matterThreadStep.asStateFlow()
+        mutableMatterThreadStep.asStateFlow()
 
     override fun getMatterThreadIntent(): IntentSender? {
         val intent = matterThreadIntentSender
@@ -413,7 +413,7 @@ class WebViewPresenterImpl @Inject constructor(
     }
 
     override fun onMatterThreadIntentResult(context: Context, result: ActivityResult) {
-        when (_matterThreadStep.value) {
+        when (mutableMatterThreadStep.value) {
             MatterThreadStep.THREAD_EXPORT_TO_SERVER_MATTER -> {
                 mainScope.launch {
                     threadUseCase.sendThreadDatasetExportResult(result, serverId)
@@ -425,9 +425,9 @@ class WebViewPresenterImpl @Inject constructor(
                     val sent = threadUseCase.sendThreadDatasetExportResult(result, serverId)
                     Log.d(TAG, "Thread ${if (!sent.isNullOrBlank()) "sent credential for $sent" else "did not send credential"}")
                     if (sent.isNullOrBlank()) {
-                        _matterThreadStep.tryEmit(MatterThreadStep.THREAD_NONE)
+                        mutableMatterThreadStep.tryEmit(MatterThreadStep.THREAD_NONE)
                     } else {
-                        _matterThreadStep.tryEmit(MatterThreadStep.THREAD_SENT)
+                        mutableMatterThreadStep.tryEmit(MatterThreadStep.THREAD_SENT)
                     }
                 }
             }
@@ -443,6 +443,6 @@ class WebViewPresenterImpl @Inject constructor(
     }
 
     override fun finishMatterThreadFlow() {
-        _matterThreadStep.tryEmit(MatterThreadStep.NOT_STARTED)
+        mutableMatterThreadStep.tryEmit(MatterThreadStep.NOT_STARTED)
     }
 }
