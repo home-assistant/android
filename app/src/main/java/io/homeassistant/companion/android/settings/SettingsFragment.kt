@@ -137,7 +137,8 @@ class SettingsFragment(
             it.setOnPreferenceClickListener {
                 requestOnboardingResult.launch(
                     OnboardApp.Input(
-                        url = "", // Empty url skips the 'Welcome' screen
+                        // Empty url skips the 'Welcome' screen
+                        url = "",
                         discoveryOptions = OnboardApp.DiscoveryOptions.HIDE_EXISTING
                     )
                 )
