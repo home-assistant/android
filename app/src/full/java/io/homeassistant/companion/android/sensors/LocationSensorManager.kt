@@ -1125,7 +1125,9 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                                 ?.newWakeLock(
                                     PowerManager.PARTIAL_WAKE_LOCK,
                                     "HomeAssistant::AccurateLocation"
-                                )?.apply { acquire(10 * 60 * 1000L /*10 minutes*/) }
+                                )?.apply {
+                                    acquire(10 * 60 * 1000L) // 10 minutes
+                                }
                         var numberCalls = 0
                         override fun onLocationResult(locationResult: LocationResult) {
                             numberCalls++
