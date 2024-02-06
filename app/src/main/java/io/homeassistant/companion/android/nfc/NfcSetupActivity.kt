@@ -13,11 +13,11 @@ import androidx.activity.viewModels
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.nfc.views.LoadNfcView
 import io.homeassistant.companion.android.util.UrlUtil
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import kotlinx.coroutines.launch
-import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class NfcSetupActivity : BaseActivity() {

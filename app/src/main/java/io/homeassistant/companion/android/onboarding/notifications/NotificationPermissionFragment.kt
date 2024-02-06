@@ -14,9 +14,9 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.core.app.NotificationManagerCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.onboarding.OnboardingViewModel
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
-import io.homeassistant.companion.android.common.R as commonR
 
 class NotificationPermissionFragment : Fragment() {
 

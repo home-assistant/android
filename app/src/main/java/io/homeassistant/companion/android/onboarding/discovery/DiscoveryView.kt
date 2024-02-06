@@ -26,9 +26,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.onboarding.OnboardingHeaderView
 import io.homeassistant.companion.android.onboarding.OnboardingViewModel
-import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun DiscoveryView(

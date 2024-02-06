@@ -16,12 +16,12 @@ import com.google.android.gms.threadnetwork.ThreadNetworkStatusCodes
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetResponse
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.async
 import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
 
 class ThreadManagerImpl @Inject constructor(
     private val serverManager: ServerManager,

@@ -4,9 +4,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import java.math.RoundingMode
-import io.homeassistant.companion.android.common.R as commonR
 
 class BatterySensorManager : SensorManager {
 

@@ -6,10 +6,10 @@ import android.bluetooth.le.AdvertiseSettings
 import android.content.Context
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
+import java.util.UUID
 import org.altbeacon.beacon.Beacon
 import org.altbeacon.beacon.BeaconParser
 import org.altbeacon.beacon.BeaconTransmitter
-import java.util.UUID
 
 object TransmitterManager {
     private lateinit var physicalTransmitter: BeaconTransmitter

@@ -8,6 +8,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.activity.result.ActivityResult
 import dagger.hilt.android.qualifiers.ActivityContext
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -16,6 +17,13 @@ import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
 import io.homeassistant.companion.android.util.UrlUtil
 import io.homeassistant.companion.android.util.UrlUtil.baseIsEqual
+import java.net.SocketTimeoutException
+import java.net.URL
+import java.util.regex.Matcher
+import java.util.regex.Pattern
+import javax.inject.Inject
+import javax.net.ssl.SSLException
+import javax.net.ssl.SSLHandshakeException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -27,14 +35,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import java.net.SocketTimeoutException
-import java.net.URL
-import java.util.regex.Matcher
-import java.util.regex.Pattern
-import javax.inject.Inject
-import javax.net.ssl.SSLException
-import javax.net.ssl.SSLHandshakeException
-import io.homeassistant.companion.android.common.R as commonR
 
 class WebViewPresenterImpl @Inject constructor(
     @ActivityContext context: Context,

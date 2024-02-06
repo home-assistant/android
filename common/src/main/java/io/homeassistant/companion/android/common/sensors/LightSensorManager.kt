@@ -8,8 +8,8 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import android.util.Log
 import androidx.core.content.getSystemService
-import kotlin.math.roundToInt
 import io.homeassistant.companion.android.common.R as commonR
+import kotlin.math.roundToInt
 
 class LightSensorManager : SensorManager, SensorEventListener {
     companion object {

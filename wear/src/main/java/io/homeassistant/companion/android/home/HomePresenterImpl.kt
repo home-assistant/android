@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.home
 
 import android.util.Log
 import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -18,14 +19,13 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.En
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryUpdatedEvent
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.onboarding.getMessagingToken
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 class HomePresenterImpl @Inject constructor(
     private val serverManager: ServerManager,

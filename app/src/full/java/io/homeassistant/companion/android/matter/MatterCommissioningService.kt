@@ -10,12 +10,12 @@ import com.google.android.gms.home.matter.commissioning.CommissioningService
 import com.google.android.gms.home.matter.commissioning.CommissioningService.CommissioningError
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class MatterCommissioningService : Service(), CommissioningService.Callback {

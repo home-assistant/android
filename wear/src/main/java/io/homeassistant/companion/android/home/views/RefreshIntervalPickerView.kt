@@ -35,9 +35,9 @@ import com.google.android.horologist.composables.picker.toRotaryScrollAdapter
 import com.google.android.horologist.compose.rotaryinput.rotaryWithSnap
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.homeassistant.companion.android.common.R as R
 import io.homeassistant.companion.android.theme.wearColorScheme
 import io.homeassistant.companion.android.util.intervalToString
-import io.homeassistant.companion.android.common.R as R
 
 @OptIn(ExperimentalHorologistApi::class)
 @Composable

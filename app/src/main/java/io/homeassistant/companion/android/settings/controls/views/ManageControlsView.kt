@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.sp
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
@@ -59,7 +60,6 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.util.compose.HaAlertWarning
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.getEntityDomainString
-import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun ManageControlsView(

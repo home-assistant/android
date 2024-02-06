@@ -16,11 +16,11 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.mikepenz.iconics.typeface.IIcon
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.settings.shortcuts.views.ManageShortcutsView
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.icondialog.IconDialog
-import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @AndroidEntryPoint

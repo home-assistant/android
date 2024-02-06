@@ -4,12 +4,12 @@ import android.content.Context
 import android.security.KeyChain
 import android.util.Log
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.lang.UnsupportedOperationException
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class KeyChainRepositoryImpl @Inject constructor(
     private val prefsRepository: PrefsRepository

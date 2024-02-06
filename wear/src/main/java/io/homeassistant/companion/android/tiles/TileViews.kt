@@ -22,8 +22,8 @@ import androidx.wear.protolayout.material.Typography
 import androidx.wear.protolayout.material.layouts.PrimaryLayout
 import androidx.wear.tiles.RequestBuilders
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.splash.SplashActivity
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.splash.SplashActivity
 
 const val RESOURCE_REFRESH = "refresh"
 const val MODIFIER_CLICK_REFRESH = "refresh"

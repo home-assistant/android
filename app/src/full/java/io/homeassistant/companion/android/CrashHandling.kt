@@ -4,8 +4,6 @@ import android.content.Context
 import android.util.Log
 import io.sentry.SentryOptions
 import io.sentry.android.core.SentryAndroid
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.PrintWriter
 import java.net.ConnectException
@@ -18,6 +16,8 @@ import javax.net.ssl.SSLException
 import javax.net.ssl.SSLHandshakeException
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLProtocolException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 private const val FATAL_CRASH_FILE = "/fatalcrash/last_crash"
 

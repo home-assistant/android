@@ -10,13 +10,13 @@ import androidx.core.content.getSystemService
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.sensorWorkerChannel
 import io.homeassistant.companion.android.database.AppDatabase
+import java.lang.IllegalStateException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.lang.IllegalStateException
-import io.homeassistant.companion.android.common.R as commonR
 
 abstract class SensorWorkerBase(
     val appContext: Context,

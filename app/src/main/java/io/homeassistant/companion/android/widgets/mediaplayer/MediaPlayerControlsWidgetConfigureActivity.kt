@@ -17,6 +17,7 @@ import androidx.core.content.getSystemService
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
@@ -25,11 +26,10 @@ import io.homeassistant.companion.android.databinding.WidgetMediaControlsConfigu
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import java.util.LinkedList
 import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 @AndroidEntryPoint
 class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity() {

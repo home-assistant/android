@@ -53,15 +53,15 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.database.location.LocationHistoryItem
 import io.homeassistant.companion.android.database.location.LocationHistoryItemResult
 import io.homeassistant.companion.android.database.location.LocationHistoryItemTrigger
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.settings.views.EmptyState
-import kotlinx.coroutines.flow.Flow
 import java.text.DateFormat
 import java.util.TimeZone
-import io.homeassistant.companion.android.common.R as commonR
+import kotlinx.coroutines.flow.Flow
 
 @Composable
 fun LocationTrackingView(

@@ -7,8 +7,8 @@ import android.os.Build
 import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
-import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 
 @RequiresApi(Build.VERSION_CODES.M)
 class DNDSensorManager : SensorManager {

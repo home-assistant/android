@@ -2,9 +2,9 @@ package io.homeassistant.companion.android.common.data.prefs
 
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
-import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 import javax.inject.Named
+import kotlinx.coroutines.runBlocking
 
 class PrefsRepositoryImpl @Inject constructor(
     @Named("themes") private val localStorage: LocalStorage,

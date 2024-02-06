@@ -14,12 +14,12 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.mikepenz.iconics.typeface.IIcon
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.settings.qs.views.ManageTilesView
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.icondialog.IconDialog
-import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class ManageTilesFragment : Fragment() {

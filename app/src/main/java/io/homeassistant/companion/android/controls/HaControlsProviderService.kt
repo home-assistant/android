@@ -17,6 +17,10 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ar
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.util.RegistriesDataHandler
+import java.util.Calendar
+import java.util.concurrent.Flow
+import java.util.function.Consumer
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -28,10 +32,6 @@ import okhttp3.ResponseBody
 import okhttp3.ResponseBody.Companion.toResponseBody
 import retrofit2.HttpException
 import retrofit2.Response
-import java.util.Calendar
-import java.util.concurrent.Flow
-import java.util.function.Consumer
-import javax.inject.Inject
 
 @RequiresApi(Build.VERSION_CODES.R)
 @AndroidEntryPoint

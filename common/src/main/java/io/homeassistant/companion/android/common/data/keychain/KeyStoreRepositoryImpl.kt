@@ -2,13 +2,13 @@ package io.homeassistant.companion.android.common.data.keychain
 
 import android.content.Context
 import android.util.Log
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.security.KeyStore
 import java.security.KeyStore.PrivateKeyEntry
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class KeyStoreRepositoryImpl @Inject constructor() : KeyChainRepository {
     companion object {

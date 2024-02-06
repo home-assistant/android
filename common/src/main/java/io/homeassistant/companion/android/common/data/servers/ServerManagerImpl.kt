@@ -15,6 +15,9 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerDao
 import io.homeassistant.companion.android.database.server.ServerType
 import io.homeassistant.companion.android.database.settings.SettingsDao
+import javax.inject.Inject
+import javax.inject.Named
+import kotlin.math.min
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -23,9 +26,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import javax.inject.Inject
-import javax.inject.Named
-import kotlin.math.min
 
 class ServerManagerImpl @Inject constructor(
     private val authenticationRepositoryFactory: AuthenticationRepositoryFactory,

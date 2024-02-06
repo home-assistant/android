@@ -12,11 +12,13 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
+import java.lang.reflect.Method
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.OkHttpClient
@@ -25,8 +27,6 @@ import okhttp3.Response
 import okio.IOException
 import org.json.JSONException
 import org.json.JSONObject
-import java.lang.reflect.Method
-import io.homeassistant.companion.android.common.R as commonR
 
 class NetworkSensorManager : SensorManager {
     companion object {

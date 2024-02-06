@@ -157,7 +157,10 @@ abstract class OnSwipeListener(context: Context?) : View.OnTouchListener {
     ): Boolean
 
     enum class SwipeDirection {
-        UP, DOWN, LEFT, RIGHT;
+        UP,
+        DOWN,
+        LEFT,
+        RIGHT;
 
         companion object {
             fun fromVelocity(velocityX: Float, velocityY: Float): SwipeDirection {

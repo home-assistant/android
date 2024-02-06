@@ -4,9 +4,9 @@ import android.content.Context
 import android.os.Environment
 import android.os.StatFs
 import android.util.Log
+import io.homeassistant.companion.android.common.R as commonR
 import java.io.File
 import kotlin.math.roundToInt
-import io.homeassistant.companion.android.common.R as commonR
 
 class StorageSensorManager : SensorManager {
     companion object {

@@ -20,8 +20,8 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.matter.views.MatterCommissioningView
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.webview.WebViewActivity
-import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MatterCommissioningActivity : AppCompatActivity() {

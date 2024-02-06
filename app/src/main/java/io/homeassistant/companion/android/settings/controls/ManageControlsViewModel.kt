@@ -20,10 +20,10 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.controls.HaControlsPanelActivity
 import io.homeassistant.companion.android.controls.HaControlsProviderService
+import javax.inject.Inject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @HiltViewModel
@@ -54,8 +54,8 @@ class ManageControlsViewModel @Inject constructor(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                 panelEnabled =
                     application.packageManager.getComponentEnabledSetting(
-                    ComponentName(application, HaControlsPanelActivity::class.java)
-                ) == PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+                        ComponentName(application, HaControlsPanelActivity::class.java)
+                    ) == PackageManager.COMPONENT_ENABLED_STATE_ENABLED
 
                 val panelServer = prefsRepository.getControlsPanelServer()
                 val panelPath = prefsRepository.getControlsPanelPath()

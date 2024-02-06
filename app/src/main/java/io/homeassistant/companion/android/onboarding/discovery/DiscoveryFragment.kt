@@ -16,8 +16,8 @@ import io.homeassistant.companion.android.onboarding.OnboardingViewModel
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationFragment
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupFragment
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
-import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class DiscoveryFragment @Inject constructor() : Fragment() {

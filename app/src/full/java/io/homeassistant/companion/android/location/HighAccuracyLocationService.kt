@@ -19,12 +19,12 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.highAccuracyChannel
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.util.ForegroundServiceLauncher
 import kotlin.math.abs
 import kotlin.math.roundToInt
-import io.homeassistant.companion.android.common.R as commonR
 
 class HighAccuracyLocationService : Service() {
 

@@ -12,12 +12,12 @@ import io.homeassistant.companion.android.tiles.CameraTile
 import io.homeassistant.companion.android.tiles.ConversationTile
 import io.homeassistant.companion.android.tiles.ShortcutsTile
 import io.homeassistant.companion.android.tiles.TemplateTile
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 class MobileAppIntegrationPresenterImpl @Inject constructor(
     @ActivityContext context: Context,

@@ -30,6 +30,7 @@ import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.util.databaseChannel
 import io.homeassistant.companion.android.database.authentication.Authentication
@@ -72,9 +73,8 @@ import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundTypeConverter
 import io.homeassistant.companion.android.database.widget.WidgetTapActionConverter
-import kotlinx.coroutines.runBlocking
 import java.util.UUID
-import io.homeassistant.companion.android.common.R as commonR
+import kotlinx.coroutines.runBlocking
 
 @Database(
     entities = [

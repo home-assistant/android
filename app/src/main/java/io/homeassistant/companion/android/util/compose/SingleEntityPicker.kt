@@ -31,11 +31,11 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import io.homeassistant.companion.android.common.R as commonR
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable

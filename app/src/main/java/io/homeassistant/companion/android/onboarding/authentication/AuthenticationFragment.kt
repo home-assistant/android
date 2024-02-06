@@ -24,6 +24,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
@@ -33,11 +34,10 @@ import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.TLSWebViewClient
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.isStarted
-import okhttp3.HttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import javax.inject.Inject
 import javax.inject.Named
-import io.homeassistant.companion.android.common.R as commonR
+import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrl
 
 @AndroidEntryPoint
 class AuthenticationFragment : Fragment() {

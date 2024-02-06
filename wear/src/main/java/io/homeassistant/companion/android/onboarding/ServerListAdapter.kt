@@ -5,12 +5,12 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.viewHolders.HeaderViewHolder
 import io.homeassistant.companion.android.viewHolders.InstanceViewHolder
 import io.homeassistant.companion.android.viewHolders.LoadingViewHolder
 import io.homeassistant.companion.android.viewHolders.ManualSetupViewHolder
 import kotlin.math.min
-import io.homeassistant.companion.android.common.R as commonR
 
 class ServerListAdapter(
     val servers: ArrayList<HomeAssistantInstance>

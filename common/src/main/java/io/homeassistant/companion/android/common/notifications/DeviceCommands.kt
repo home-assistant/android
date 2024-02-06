@@ -5,9 +5,9 @@ import android.util.Log
 import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.common.sensors.SensorUpdateReceiver
 import io.homeassistant.companion.android.database.sensor.SensorDao
+import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import java.util.UUID
 
 object DeviceCommandData {
 

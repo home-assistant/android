@@ -5,11 +5,11 @@ import android.os.Build
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
 import org.xmlpull.v1.XmlPullParser
-import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 class LanguagesManager @Inject constructor(
     private var prefs: PrefsRepository

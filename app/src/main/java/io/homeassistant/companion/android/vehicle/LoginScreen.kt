@@ -27,13 +27,13 @@ class LoginScreen(context: CarContext, val serverManager: ServerManager) : Scree
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 isLoggedIn = serverManager.isRegistered() &&
                     serverManager.authenticationRepository()
-                    .getSessionState() == SessionState.CONNECTED
+                        .getSessionState() == SessionState.CONNECTED
                 invalidate()
                 while (isLoggedIn != true) {
                     delay(1000)
                     isLoggedIn = serverManager.isRegistered() &&
                         serverManager.authenticationRepository()
-                        .getSessionState() == SessionState.CONNECTED
+                            .getSessionState() == SessionState.CONNECTED
                 }
                 if (isLoggedIn == true) {
                     screenManager.pop()

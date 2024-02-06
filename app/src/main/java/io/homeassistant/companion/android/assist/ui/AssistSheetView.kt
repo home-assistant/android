@@ -79,9 +79,9 @@ import androidx.compose.ui.unit.sp
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import kotlinx.coroutines.launch
-import io.homeassistant.companion.android.common.R as commonR
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable

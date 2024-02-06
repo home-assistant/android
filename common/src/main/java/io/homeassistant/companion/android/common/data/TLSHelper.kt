@@ -1,8 +1,6 @@
 package io.homeassistant.companion.android.common.data
 
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
-import kotlinx.coroutines.runBlocking
-import okhttp3.OkHttpClient
 import java.net.Socket
 import java.security.KeyStore
 import java.security.Principal
@@ -14,6 +12,8 @@ import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509ExtendedKeyManager
 import javax.net.ssl.X509TrustManager
+import kotlinx.coroutines.runBlocking
+import okhttp3.OkHttpClient
 
 class TLSHelper @Inject constructor(
     @Named("keyChainRepository") private val keyChainRepository: KeyChainRepository,

@@ -23,9 +23,9 @@ import io.homeassistant.companion.android.database.wear.EntityStateComplications
 import io.homeassistant.companion.android.database.wear.EntityStateComplicationsDao
 import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.wear.getAllFlow
+import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @HiltViewModel
 class ComplicationConfigViewModel @Inject constructor(
@@ -39,7 +39,9 @@ class ComplicationConfigViewModel @Inject constructor(
     }
 
     enum class LoadingState {
-        LOADING, READY, ERROR
+        LOADING,
+        READY,
+        ERROR
     }
 
     val app = getApplication<HomeAssistantApplication>()

@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.bluetooth.BluetoothDevice
 import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils
 import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils.supportsTransmitter
@@ -18,11 +19,10 @@ import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
+import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.util.UUID
-import io.homeassistant.companion.android.common.R as commonR
 
 class BluetoothSensorManager : SensorManager {
     companion object {

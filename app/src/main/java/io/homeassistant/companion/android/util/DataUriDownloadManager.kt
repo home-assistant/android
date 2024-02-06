@@ -16,9 +16,8 @@ import android.util.Log
 import android.webkit.MimeTypeMap
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.downloadsChannel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -26,7 +25,8 @@ import java.util.Date
 import java.util.Locale
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
-import io.homeassistant.companion.android.common.R as commonR
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 object DataUriDownloadManager {
     private const val TAG = "DataUriDownloadMgr"

@@ -4,11 +4,11 @@ import android.net.Uri
 import android.util.Log
 import io.homeassistant.companion.android.common.data.MalformedHttpUrlException
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
+import java.net.URI
+import java.net.URL
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import java.net.URI
-import java.net.URL
 
 object UrlUtil {
     fun formattedUrlString(url: String): String {

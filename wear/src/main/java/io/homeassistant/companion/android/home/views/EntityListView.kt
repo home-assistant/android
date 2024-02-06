@@ -9,6 +9,7 @@ import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.getPrimaryButtonColors
@@ -21,7 +22,6 @@ import io.homeassistant.companion.android.views.ExpandableListHeader
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
 import io.homeassistant.companion.android.views.rememberExpandedStates
-import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun EntityViewList(

@@ -18,6 +18,7 @@ import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.BuildConfig
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
@@ -27,7 +28,6 @@ import io.homeassistant.companion.android.util.ToggleSwitch
 import io.homeassistant.companion.android.util.previewFavoritesList
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
-import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun SecondarySettingsChip(

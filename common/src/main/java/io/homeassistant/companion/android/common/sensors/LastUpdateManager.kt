@@ -2,10 +2,10 @@ package io.homeassistant.companion.android.common.sensors
 
 import android.content.Context
 import android.util.Log
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
-import io.homeassistant.companion.android.common.R as commonR
 
 class LastUpdateManager : SensorManager {
     companion object {

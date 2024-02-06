@@ -15,11 +15,11 @@ import com.google.android.gms.location.SleepClassifyEvent
 import com.google.android.gms.location.SleepSegmentEvent
 import com.google.android.gms.location.SleepSegmentRequest
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import java.util.concurrent.TimeUnit
-import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class ActivitySensorManager : BroadcastReceiver(), SensorManager {
@@ -234,11 +234,11 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
             }
         }
         if ((
-            isEnabled(context, sleepConfidence) || isEnabled(
+                isEnabled(context, sleepConfidence) || isEnabled(
                     context,
                     sleepSegment
                 )
-            ) && !sleepRegistration
+                ) && !sleepRegistration
         ) {
             val pendingIntent = getSleepPendingIntent(context)
             Log.d(TAG, "Registering for sleep updates")

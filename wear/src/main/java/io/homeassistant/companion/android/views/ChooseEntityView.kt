@@ -23,6 +23,7 @@ import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.Text
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.util.capitalize
@@ -31,7 +32,6 @@ import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
 import io.homeassistant.companion.android.util.stringForDomain
 import java.util.Locale
-import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun ChooseEntityView(

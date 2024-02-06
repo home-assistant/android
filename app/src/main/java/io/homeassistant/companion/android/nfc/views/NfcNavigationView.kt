@@ -23,11 +23,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.nfc.NfcViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun LoadNfcView(

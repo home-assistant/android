@@ -148,7 +148,11 @@ class CarSensorManager :
         )
 
         private enum class Listener {
-            ENERGY, MODEL, MILEAGE, STATUS, PROFILE
+            ENERGY,
+            MODEL,
+            MILEAGE,
+            STATUS,
+            PROFILE
         }
 
         private val listenerSensors = mapOf(

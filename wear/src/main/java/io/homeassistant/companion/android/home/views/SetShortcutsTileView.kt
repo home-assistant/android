@@ -22,6 +22,7 @@ import androidx.wear.compose.material3.Text
 import androidx.wear.compose.material3.touchTargetAwareSize
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
@@ -29,7 +30,6 @@ import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.simplifiedEntity
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
-import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun SetShortcutsTileView(

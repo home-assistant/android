@@ -10,12 +10,12 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.BuildConfig
+import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.jackson.JacksonConverterFactory
-import java.util.concurrent.TimeUnit
-import javax.inject.Inject
 
 class HomeAssistantApis @Inject constructor(
     private val tlsHelper: TLSHelper,

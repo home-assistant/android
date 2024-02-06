@@ -24,6 +24,11 @@ import io.homeassistant.companion.android.database.sensor.toSensorWithAttributes
 import io.homeassistant.companion.android.database.sensor.toSensorsWithAttributes
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
+import java.io.IOException
+import java.net.ConnectException
+import java.net.SocketTimeoutException
+import java.util.Locale
+import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,11 +37,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.io.IOException
-import java.net.ConnectException
-import java.net.SocketTimeoutException
-import java.util.Locale
-import javax.inject.Inject
 
 abstract class SensorReceiverBase : BroadcastReceiver() {
     companion object {

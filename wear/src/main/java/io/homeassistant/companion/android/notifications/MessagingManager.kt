@@ -26,12 +26,12 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.sensors.SensorReceiver
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.json.JSONObject
-import javax.inject.Inject
 
 class MessagingManager @Inject constructor(
     @ApplicationContext val context: Context,

@@ -8,8 +8,8 @@ import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.homeassistant.companion.android.common.data.wifi.WifiHelper
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.net.URL
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 data class ServerConnectionInfo(
     @ColumnInfo(name = "external_url")
