@@ -51,7 +51,7 @@ class DynamicColorSensorManager : SensorManager {
 
         val dynamicColorContext = DynamicColors.wrapContextIfAvailable(context)
         val attrsToResolve = intArrayOf(
-            android.R.attr.colorAccent // 0
+            android.R.attr.colorAccent
         )
         val test = dynamicColorContext.obtainStyledAttributes(attrsToResolve)
         val accent = test.getColor(0, 0)

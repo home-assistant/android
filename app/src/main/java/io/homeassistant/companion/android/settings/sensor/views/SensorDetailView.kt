@@ -538,9 +538,9 @@ fun SensorDetailSettingDialog(
                 }
                 onSubmit(state.copy().apply { setting.value = inputValue.value })
             }
-        } else {
+        } else { // list is saved when selecting a value
             null
-        }, // list is saved when selecting a value
+        },
         contentPadding = if (listSettingDialog) PaddingValues(all = 0.dp) else PaddingValues(horizontal = 24.dp)
     )
 }

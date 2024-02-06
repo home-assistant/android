@@ -728,7 +728,7 @@ class MessagingManager @Inject constructor(
                         PowerManager.ON_AFTER_RELEASE,
                     "HomeAssistant::NotificationScreenOnWakeLock"
                 )
-                wakeLock?.acquire(1 * 30 * 1000L /*30 seconds */)
+                wakeLock?.acquire(1 * 30 * 1000L) // 30 seconds
                 wakeLock?.release()
             }
             COMMAND_MEDIA -> {

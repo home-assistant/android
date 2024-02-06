@@ -91,7 +91,8 @@ fun LocationTrackingView(
                         )
                         Switch(
                             checked = useHistory,
-                            onCheckedChange = null, // Handled by row
+                            // Handled by row
+                            onCheckedChange = null,
                             modifier = Modifier.padding(start = 16.dp),
                             colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(commonR.color.colorSwitchUncheckedThumb))
                         )
