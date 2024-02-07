@@ -4,8 +4,8 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.Resources
-import kotlin.math.min
 import io.homeassistant.companion.android.R as commonR
+import kotlin.math.min
 
 data class TileSlot(
     val id: String,

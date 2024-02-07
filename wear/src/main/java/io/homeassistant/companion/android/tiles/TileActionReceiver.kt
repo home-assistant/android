@@ -8,8 +8,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.onEntityPressedWithoutState
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
+import kotlinx.coroutines.runBlocking
 
 @AndroidEntryPoint
 class TileActionReceiver : BroadcastReceiver() {

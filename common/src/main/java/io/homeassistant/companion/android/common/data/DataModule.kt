@@ -27,11 +27,11 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.ServerManagerImpl
 import io.homeassistant.companion.android.common.data.wifi.WifiHelper
 import io.homeassistant.companion.android.common.data.wifi.WifiHelperImpl
-import kotlinx.coroutines.runBlocking
-import okhttp3.OkHttpClient
 import java.util.UUID
 import javax.inject.Named
 import javax.inject.Singleton
+import kotlinx.coroutines.runBlocking
+import okhttp3.OkHttpClient
 
 @Module
 @InstallIn(SingletonComponent::class)

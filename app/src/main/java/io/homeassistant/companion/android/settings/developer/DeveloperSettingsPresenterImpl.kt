@@ -4,9 +4,11 @@ import android.content.Context
 import android.util.Log
 import androidx.activity.result.ActivityResult
 import androidx.preference.PreferenceDataStore
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.thread.ThreadManager
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -14,8 +16,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 class DeveloperSettingsPresenterImpl @Inject constructor(
     private val prefsRepository: PrefsRepository,

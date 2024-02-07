@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.common.util
 
-import okhttp3.internal.and
 import java.util.Locale
+import okhttp3.internal.and
 
 private val HEX_ARRAY = "0123456789ABCDEF".toCharArray()
 

@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -16,9 +17,8 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.As
 import io.homeassistant.companion.android.common.util.AudioRecorder
 import io.homeassistant.companion.android.common.util.AudioUrlPlayer
 import io.homeassistant.companion.android.conversation.views.AssistMessage
-import kotlinx.coroutines.launch
 import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
+import kotlinx.coroutines.launch
 
 @HiltViewModel
 class ConversationViewModel @Inject constructor(

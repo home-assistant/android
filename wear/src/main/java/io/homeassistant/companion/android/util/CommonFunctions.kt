@@ -5,11 +5,11 @@ import android.widget.Toast
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import com.mikepenz.iconics.typeface.IIcon
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.home.HomePresenterImpl
 import java.util.Calendar
-import io.homeassistant.companion.android.common.R as commonR
 
 fun stringForDomain(domain: String, context: Context): String? =
     (

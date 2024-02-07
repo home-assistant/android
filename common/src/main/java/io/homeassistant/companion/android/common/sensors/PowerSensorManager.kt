@@ -10,7 +10,7 @@ import io.homeassistant.companion.android.common.R as commonR
 class PowerSensorManager : SensorManager {
     companion object {
         private const val TAG = "PowerSensors"
-        private const val packageName = "io.homeassistant.companion.android"
+        private const val PACKAGE_NAME = "io.homeassistant.companion.android"
 
         val interactiveDevice = SensorManager.BasicSensor(
             "is_interactive",
@@ -103,7 +103,7 @@ class PowerSensorManager : SensorManager {
             icon,
             mapOf(
                 "ignoring_battery_optimizations" to powerManager.isIgnoringBatteryOptimizations(
-                    packageName
+                    PACKAGE_NAME
                 )
             )
         )

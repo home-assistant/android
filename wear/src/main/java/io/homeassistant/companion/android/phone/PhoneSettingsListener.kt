@@ -40,16 +40,16 @@ import io.homeassistant.companion.android.tiles.ConversationTile
 import io.homeassistant.companion.android.tiles.ShortcutsTile
 import io.homeassistant.companion.android.tiles.TemplateTile
 import io.homeassistant.companion.android.util.UrlUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 import java.security.KeyStore
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import javax.inject.Inject
 import javax.inject.Named
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 @AndroidEntryPoint
 @SuppressLint("VisibleForTests") // https://issuetracker.google.com/issues/239451111

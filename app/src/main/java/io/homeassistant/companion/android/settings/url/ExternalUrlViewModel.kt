@@ -12,8 +12,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.MalformedHttpUrlException
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.util.UrlUtil
-import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 @HiltViewModel
 class ExternalUrlViewModel @Inject constructor(

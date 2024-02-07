@@ -45,6 +45,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.notifications.DeviceCommandData
@@ -80,6 +81,11 @@ import io.homeassistant.companion.android.util.UrlUtil
 import io.homeassistant.companion.android.vehicle.HaCarAppService
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebViewActivity
+import java.io.File
+import java.io.FileOutputStream
+import java.net.URL
+import java.net.URLDecoder
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -92,12 +98,6 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
-import java.io.File
-import java.io.FileOutputStream
-import java.net.URL
-import java.net.URLDecoder
-import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 class MessagingManager @Inject constructor(
     @ApplicationContext val context: Context,
@@ -728,13 +728,13 @@ class MessagingManager @Inject constructor(
                         PowerManager.ON_AFTER_RELEASE,
                     "HomeAssistant::NotificationScreenOnWakeLock"
                 )
-                wakeLock?.acquire(1 * 30 * 1000L /*30 seconds */)
+                wakeLock?.acquire(1 * 30 * 1000L) // 30 seconds
                 wakeLock?.release()
             }
             COMMAND_MEDIA -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
                     if (!NotificationManagerCompat.getEnabledListenerPackages(context)
-                        .contains(context.packageName)
+                            .contains(context.packageName)
                     ) {
                         notifyMissingPermission(message.toString(), serverId)
                     } else {

@@ -10,8 +10,8 @@ import io.homeassistant.companion.android.common.data.authentication.Authorizati
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import javax.inject.Named
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 class AuthenticationRepositoryImpl @AssistedInject constructor(
     private val authenticationService: AuthenticationService,

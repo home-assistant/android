@@ -23,9 +23,9 @@ import androidx.compose.ui.unit.dp
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.onboarding.OnboardingHeaderView
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
-import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun NotificationPermissionView(

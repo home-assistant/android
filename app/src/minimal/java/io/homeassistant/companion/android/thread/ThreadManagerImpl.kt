@@ -4,8 +4,8 @@ import android.content.Context
 import android.content.IntentSender
 import androidx.activity.result.ActivityResult
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetResponse
-import kotlinx.coroutines.CoroutineScope
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineScope
 
 class ThreadManagerImpl @Inject constructor() : ThreadManager {
 

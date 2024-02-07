@@ -30,6 +30,7 @@ import com.google.android.material.snackbar.Snackbar
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.onboarding.OnboardApp
@@ -48,15 +49,14 @@ import io.homeassistant.companion.android.settings.wear.SettingsWearActivity
 import io.homeassistant.companion.android.settings.wear.SettingsWearDetection
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
 import io.homeassistant.companion.android.webview.WebViewActivity
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
-import io.homeassistant.companion.android.common.R as commonR
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class SettingsFragment(
     private val presenter: SettingsPresenter,
@@ -137,7 +137,8 @@ class SettingsFragment(
             it.setOnPreferenceClickListener {
                 requestOnboardingResult.launch(
                     OnboardApp.Input(
-                        url = "", // Empty url skips the 'Welcome' screen
+                        // Empty url skips the 'Welcome' screen
+                        url = "",
                         discoveryOptions = OnboardApp.DiscoveryOptions.HIDE_EXISTING
                     )
                 )

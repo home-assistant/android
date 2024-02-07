@@ -9,8 +9,8 @@ import android.os.Process
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
-import java.math.RoundingMode
 import io.homeassistant.companion.android.common.R as commonR
+import java.math.RoundingMode
 
 abstract class AppSensorManagerBase : SensorManager {
     companion object {

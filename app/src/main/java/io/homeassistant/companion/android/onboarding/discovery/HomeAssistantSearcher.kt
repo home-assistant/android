@@ -7,10 +7,10 @@ import android.util.Log
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
-import okio.internal.commonToUtf8String
 import java.net.MalformedURLException
 import java.net.URL
 import java.util.concurrent.locks.ReentrantLock
+import okio.internal.commonToUtf8String
 
 class HomeAssistantSearcher constructor(
     private val nsdManager: NsdManager,

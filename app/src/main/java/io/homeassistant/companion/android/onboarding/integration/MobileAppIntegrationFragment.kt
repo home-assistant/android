@@ -22,15 +22,15 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.onboarding.OnboardingViewModel
 import io.homeassistant.companion.android.onboarding.notifications.NotificationPermissionFragment
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
-import kotlinx.coroutines.launch
 import java.io.IOException
 import java.security.KeyStore
-import io.homeassistant.companion.android.common.R as commonR
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MobileAppIntegrationFragment : Fragment() {

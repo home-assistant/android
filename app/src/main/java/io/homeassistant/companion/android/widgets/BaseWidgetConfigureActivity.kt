@@ -53,7 +53,9 @@ abstract class BaseWidgetConfigureActivity : BaseActivity() {
                 val newId = serverManager.defaultServers.getOrNull(position)?.id
                 val isDifferent = selectedServerId != newId
                 selectedServerId = newId
-                if (isDifferent && newId != null) { onServerSelected(newId) }
+                if (isDifferent && newId != null) {
+                    onServerSelected(newId)
+                }
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {

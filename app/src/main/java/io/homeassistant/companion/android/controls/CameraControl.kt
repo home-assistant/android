@@ -12,17 +12,17 @@ import android.service.controls.templates.ThumbnailTemplate
 import android.util.Log
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
+import java.net.URL
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import java.net.URL
-import java.util.concurrent.TimeUnit
-import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.S)
 object CameraControl : HaControl {

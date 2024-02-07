@@ -24,14 +24,16 @@ import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.util.websocketChannel
-import io.homeassistant.companion.android.common.util.websocketIssuesChannel
+import io.homeassistant.companion.android.common.util.CHANNEL_WEBSOCKET
+import io.homeassistant.companion.android.common.util.CHANNEL_WEBSOCKET_ISSUES
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.notifications.MessagingManager
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.hasActiveConnection
 import io.homeassistant.companion.android.webview.WebViewActivity
+import java.lang.IllegalStateException
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -40,8 +42,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.lang.IllegalStateException
-import java.util.concurrent.TimeUnit
 
 class WebsocketManager(
     appContext: Context,
@@ -214,10 +214,10 @@ class WebsocketManager(
     private suspend fun createNotification(): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             var notificationChannel =
-                notificationManager.getNotificationChannel(websocketChannel)
+                notificationManager.getNotificationChannel(CHANNEL_WEBSOCKET)
             if (notificationChannel == null) {
                 notificationChannel = NotificationChannel(
-                    websocketChannel,
+                    CHANNEL_WEBSOCKET,
                     applicationContext.getString(R.string.websocket_setting_name),
                     NotificationManager.IMPORTANCE_LOW
                 )
@@ -247,13 +247,13 @@ class WebsocketManager(
             settingIntent,
             PendingIntent.FLAG_IMMUTABLE
         )
-        val notification = NotificationCompat.Builder(applicationContext, websocketChannel)
+        val notification = NotificationCompat.Builder(applicationContext, CHANNEL_WEBSOCKET)
             .setSmallIcon(R.drawable.ic_stat_ic_notification)
             .setContentTitle(applicationContext.getString(R.string.websocket_listening))
             .setContentIntent(pendingIntent)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
-            .setGroup(websocketChannel)
+            .setGroup(CHANNEL_WEBSOCKET)
             .addAction(
                 io.homeassistant.companion.android.R.drawable.ic_websocket,
                 applicationContext.getString(R.string.settings),
@@ -268,16 +268,16 @@ class WebsocketManager(
 
             Log.e(TAG, "Unable to setForeground due to restrictions", e)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                if (notificationManager.getNotificationChannel(websocketIssuesChannel) == null) {
+                if (notificationManager.getNotificationChannel(CHANNEL_WEBSOCKET_ISSUES) == null) {
                     val restrictedNotificationChannel = NotificationChannel(
-                        websocketIssuesChannel,
+                        CHANNEL_WEBSOCKET_ISSUES,
                         applicationContext.getString(R.string.websocket_notification_issues),
                         NotificationManager.IMPORTANCE_DEFAULT
                     )
                     notificationManager.createNotificationChannel(restrictedNotificationChannel)
                 }
             }
-            val restrictedNotification = NotificationCompat.Builder(applicationContext, websocketIssuesChannel)
+            val restrictedNotification = NotificationCompat.Builder(applicationContext, CHANNEL_WEBSOCKET_ISSUES)
                 .setSmallIcon(R.drawable.ic_stat_ic_notification)
                 .setContentTitle(applicationContext.getString(R.string.websocket_restricted_title))
                 .setContentText(applicationContext.getString(R.string.websocket_restricted_fix))

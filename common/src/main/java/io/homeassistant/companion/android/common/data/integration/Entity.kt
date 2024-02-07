@@ -8,6 +8,7 @@ import android.util.Log
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateDiff
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryOptions
 import java.time.ZonedDateTime
@@ -16,7 +17,6 @@ import java.time.format.DateTimeParseException
 import java.util.Calendar
 import java.util.Locale
 import kotlin.math.round
-import io.homeassistant.companion.android.common.R as commonR
 
 data class Entity<T>(
     val entityId: String,

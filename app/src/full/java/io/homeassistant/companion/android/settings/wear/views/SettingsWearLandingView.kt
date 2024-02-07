@@ -20,13 +20,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.settings.views.SettingsRow
 import io.homeassistant.companion.android.util.wearDeviceName
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun SettingWearLandingView(

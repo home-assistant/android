@@ -1,10 +1,10 @@
 package io.homeassistant.companion.android.common.sensors
 
 import android.content.Context
+import io.homeassistant.companion.android.common.R as commonR
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
-import io.homeassistant.companion.android.common.R as commonR
 
 class TimeZoneManager : SensorManager {
     companion object {

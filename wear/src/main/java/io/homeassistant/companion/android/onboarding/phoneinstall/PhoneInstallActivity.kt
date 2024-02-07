@@ -11,11 +11,11 @@ import androidx.lifecycle.lifecycleScope
 import androidx.wear.activity.ConfirmationActivity
 import androidx.wear.remote.interactions.RemoteActivityHelper
 import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupActivity
 import io.homeassistant.companion.android.theme.WearAppTheme
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
-import io.homeassistant.companion.android.common.R as commonR
 
 class PhoneInstallActivity : AppCompatActivity() {
     companion object {
@@ -59,7 +59,8 @@ class PhoneInstallActivity : AppCompatActivity() {
                         addCategory(Intent.CATEGORY_BROWSABLE)
                         data = Uri.parse("https://play.google.com/store/apps/details?id=${BuildConfig.APPLICATION_ID}")
                     },
-                    null // a Wear device only has one companion device so this is not needed
+                    // A Wear device only has one companion device so this is not needed
+                    null
                 ).await()
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to open remote activity", e)
@@ -69,14 +70,24 @@ class PhoneInstallActivity : AppCompatActivity() {
                 Intent(this@PhoneInstallActivity, ConfirmationActivity::class.java).apply {
                     putExtra(
                         ConfirmationActivity.EXTRA_ANIMATION_TYPE,
-                        if (success) { ConfirmationActivity.OPEN_ON_PHONE_ANIMATION } else { ConfirmationActivity.FAILURE_ANIMATION }
+                        if (success) {
+                            ConfirmationActivity.OPEN_ON_PHONE_ANIMATION
+                        } else {
+                            ConfirmationActivity.FAILURE_ANIMATION
+                        }
                     )
                     if (success) {
                         putExtra(ConfirmationActivity.EXTRA_ANIMATION_DURATION_MILLIS, 2000)
                     }
                     putExtra(
                         ConfirmationActivity.EXTRA_MESSAGE,
-                        getString(if (success) { commonR.string.continue_on_phone } else { commonR.string.failed_phone_connection })
+                        getString(
+                            if (success) {
+                                commonR.string.continue_on_phone
+                            } else {
+                                commonR.string.failed_phone_connection
+                            }
+                        )
                     )
                 }
             startActivity(confirmation)

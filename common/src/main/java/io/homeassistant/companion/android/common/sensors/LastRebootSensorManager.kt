@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.os.SystemClock
 import android.util.Log
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
@@ -15,7 +16,6 @@ import java.util.Date
 import java.util.GregorianCalendar
 import java.util.TimeZone
 import kotlin.math.absoluteValue
-import io.homeassistant.companion.android.common.R as commonR
 
 class LastRebootSensorManager : SensorManager {
     companion object {

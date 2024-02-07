@@ -3,11 +3,11 @@ package io.homeassistant.companion.android.common.data.prefs
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.util.toStringList
+import javax.inject.Inject
+import javax.inject.Named
 import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
 import org.json.JSONObject
-import javax.inject.Inject
-import javax.inject.Named
 
 class WearPrefsRepositoryImpl @Inject constructor(
     @Named("wear") private val localStorage: LocalStorage,
@@ -116,7 +116,8 @@ class WearPrefsRepositoryImpl @Inject constructor(
                     val jsonArray = JSONArray(jsonStr)
                     val entities = jsonArray.toStringList()
                     mapOf(
-                        null to entities // the key is null since we don't (yet) have the tileId
+                        // the key is null since we don't (yet) have the tileId
+                        null to entities
                     )
                 }
             )

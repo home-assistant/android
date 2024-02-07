@@ -18,15 +18,15 @@ import eightbitlab.com.blurview.RenderScriptBlur
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
 import io.homeassistant.companion.android.settings.sensor.SensorDetailFragment
 import io.homeassistant.companion.android.settings.server.ServerSettingsFragment
 import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
-import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
+import kotlinx.coroutines.runBlocking
 
 @AndroidEntryPoint
 class SettingsActivity : BaseActivity() {

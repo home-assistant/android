@@ -9,6 +9,7 @@ import androidx.wear.phone.interactions.authentication.OAuthRequest
 import androidx.wear.phone.interactions.authentication.OAuthResponse
 import androidx.wear.phone.interactions.authentication.RemoteAuthClient
 import dagger.hilt.android.qualifiers.ActivityContext
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
@@ -16,14 +17,13 @@ import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerType
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.util.UrlUtil
+import java.util.concurrent.Executors
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import java.util.concurrent.Executors
-import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 class ManualSetupPresenterImpl @Inject constructor(
     @ActivityContext context: Context,

@@ -18,11 +18,15 @@ import androidx.wear.tiles.TileService
 import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.wear.CameraTile
 import io.homeassistant.companion.android.util.UrlUtil
+import java.io.ByteArrayOutputStream
+import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -33,10 +37,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import java.io.ByteArrayOutputStream
-import java.util.concurrent.TimeUnit
-import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class CameraTile : TileService() {

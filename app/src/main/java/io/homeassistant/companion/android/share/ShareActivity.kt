@@ -7,11 +7,11 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class ShareActivity : BaseActivity() {

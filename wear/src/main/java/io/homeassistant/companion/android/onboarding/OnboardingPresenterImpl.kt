@@ -14,6 +14,7 @@ import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.DataMapItem
 import dagger.hilt.android.qualifiers.ActivityContext
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
@@ -21,15 +22,14 @@ import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerType
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.util.UrlUtil
+import java.net.URL
+import java.util.concurrent.Executors
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import java.net.URL
-import java.util.concurrent.Executors
-import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 @SuppressLint("VisibleForTests") // https://issuetracker.google.com/issues/239451111
 class OnboardingPresenterImpl @Inject constructor(

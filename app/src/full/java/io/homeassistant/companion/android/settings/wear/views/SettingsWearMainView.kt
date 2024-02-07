@@ -71,11 +71,12 @@ class SettingsWearMainView : AppCompatActivity() {
                 url = registerUrl,
                 defaultDeviceName = currentNodes.firstOrNull()?.displayName ?: "unknown",
                 locationTrackingPossible = false,
+                // While notifications are technically possible, the app can't handle this for the Wear device
                 notificationsPossible = false,
                 isWatch = true,
                 discoveryOptions = OnboardApp.DiscoveryOptions.ADD_EXISTING_EXTERNAL,
                 mayRequireTlsClientCertificate = (application as HomeAssistantApplication).keyChainRepository.getPrivateKey() != null
-            ) // While notifications are technically possible, the app can't handle this for the Wear device
+            )
         )
     }
 

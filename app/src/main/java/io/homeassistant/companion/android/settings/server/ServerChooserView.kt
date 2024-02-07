@@ -14,9 +14,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.util.compose.ModalBottomSheet
-import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun ServerChooserView(

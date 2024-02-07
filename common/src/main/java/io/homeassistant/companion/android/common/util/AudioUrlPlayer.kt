@@ -4,11 +4,11 @@ import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.os.Build
 import android.util.Log
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 
 /**
  * Simple interface for playing short streaming audio (from URLs).

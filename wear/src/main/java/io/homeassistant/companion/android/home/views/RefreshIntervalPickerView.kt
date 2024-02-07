@@ -35,9 +35,9 @@ import com.google.android.horologist.composables.picker.toRotaryScrollAdapter
 import com.google.android.horologist.compose.rotaryinput.rotaryWithSnap
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.homeassistant.companion.android.common.R as R
 import io.homeassistant.companion.android.theme.wearColorScheme
 import io.homeassistant.companion.android.util.intervalToString
-import io.homeassistant.companion.android.common.R as R
 
 @OptIn(ExperimentalHorologistApi::class)
 @Composable
@@ -76,11 +76,13 @@ fun RefreshIntervalPickerView(
                 style = with(LocalDensity.current) {
                     MaterialTheme.typography.displayMedium.copy(
                         fontWeight = FontWeight.Medium,
-                        fontSize = MaterialTheme.typography.displayMedium.fontSize.value.dp.toSp() // Ignore text scaling
+                        // Ignore text scaling
+                        fontSize = MaterialTheme.typography.displayMedium.fontSize.value.dp.toSp()
                     )
                 },
                 color = wearColorScheme.primary,
-                textAlign = TextAlign.Center, // In case of overflow, minimize weird layout behavior
+                // In case of overflow, minimize weird layout behavior
+                textAlign = TextAlign.Center,
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 2
             )

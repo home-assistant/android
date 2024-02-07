@@ -3,9 +3,9 @@ package io.homeassistant.companion.android.common.bluetooth.ble
 import android.content.Context
 import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.common.sensors.SensorUpdateReceiver
-import org.altbeacon.beacon.Beacon
 import kotlin.math.abs
 import kotlin.math.round
+import org.altbeacon.beacon.Beacon
 
 const val MAX_SKIPPED_UPDATED = 10
 

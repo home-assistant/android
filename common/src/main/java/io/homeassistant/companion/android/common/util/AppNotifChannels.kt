@@ -1,25 +1,25 @@
 package io.homeassistant.companion.android.common.util
 
-const val sensorWorkerChannel = "Sensor Worker"
-const val sensorCoreSyncChannel = "Sensor Sync"
-const val websocketChannel = "Websocket"
-const val websocketIssuesChannel = "Websocket Issues"
-const val highAccuracyChannel = "High accuracy location"
-const val databaseChannel = "App Database"
-const val locationDisabledChannel = "Location disabled"
-const val downloadsChannel = "downloads"
-const val generalChannel = "general"
-const val beaconMonitorChannel = "beacon"
+const val CHANNEL_SENSOR_WORKER = "Sensor Worker"
+const val CHANNEL_SENSOR_SYNC = "Sensor Sync"
+const val CHANNEL_WEBSOCKET = "Websocket"
+const val CHANNEL_WEBSOCKET_ISSUES = "Websocket Issues"
+const val CHANNEL_HIGH_ACCURACY = "High accuracy location"
+const val CHANNEL_DATABASE = "App Database"
+const val CHANNEL_LOCATION_DISABLED = "Location disabled"
+const val CHANNEL_DOWNLOADS = "downloads"
+const val CHANNEL_GENERAL = "general"
+const val CHANNEL_BEACON_MONITOR = "beacon"
 
 val appCreatedChannels = listOf(
-    sensorWorkerChannel,
-    sensorCoreSyncChannel,
-    websocketChannel,
-    websocketIssuesChannel,
-    highAccuracyChannel,
-    databaseChannel,
-    locationDisabledChannel,
-    downloadsChannel,
-    generalChannel,
-    beaconMonitorChannel
+    CHANNEL_SENSOR_WORKER,
+    CHANNEL_SENSOR_SYNC,
+    CHANNEL_WEBSOCKET,
+    CHANNEL_WEBSOCKET_ISSUES,
+    CHANNEL_HIGH_ACCURACY,
+    CHANNEL_DATABASE,
+    CHANNEL_LOCATION_DISABLED,
+    CHANNEL_DOWNLOADS,
+    CHANNEL_GENERAL,
+    CHANNEL_BEACON_MONITOR
 )

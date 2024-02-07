@@ -11,14 +11,14 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.assist.ui.AssistMessage
 import io.homeassistant.companion.android.assist.ui.AssistUiPipeline
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
 import io.homeassistant.companion.android.common.util.AudioRecorder
 import io.homeassistant.companion.android.common.util.AudioUrlPlayer
-import kotlinx.coroutines.launch
 import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
+import kotlinx.coroutines.launch
 
 @HiltViewModel
 class AssistViewModel @Inject constructor(

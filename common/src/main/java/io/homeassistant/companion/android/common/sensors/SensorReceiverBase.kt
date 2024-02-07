@@ -16,7 +16,7 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.IntegrationException
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.util.sensorCoreSyncChannel
+import io.homeassistant.companion.android.common.util.CHANNEL_SENSOR_SYNC
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.sensor.SensorWithAttributes
@@ -24,6 +24,11 @@ import io.homeassistant.companion.android.database.sensor.toSensorWithAttributes
 import io.homeassistant.companion.android.database.sensor.toSensorsWithAttributes
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
+import java.io.IOException
+import java.net.ConnectException
+import java.net.SocketTimeoutException
+import java.util.Locale
+import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,11 +37,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.io.IOException
-import java.net.ConnectException
-import java.net.SocketTimeoutException
-import java.util.Locale
-import javax.inject.Inject
 
 abstract class SensorReceiverBase : BroadcastReceiver() {
     companion object {
@@ -285,9 +285,9 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
 
                                 context.getSystemService<NotificationManager>()?.let { notificationManager ->
                                     createNotificationChannel(context)
-                                    val notificationId = "$sensorCoreSyncChannel-${basicSensor.id}".hashCode()
+                                    val notificationId = "$CHANNEL_SENSOR_SYNC-${basicSensor.id}".hashCode()
                                     val notificationIntent = getSensorSettingsIntent(context, basicSensor.id, manager.id(), notificationId)
-                                    val notification = NotificationCompat.Builder(context, sensorCoreSyncChannel)
+                                    val notification = NotificationCompat.Builder(context, CHANNEL_SENSOR_SYNC)
                                         .setSmallIcon(R.drawable.ic_stat_ic_notification)
                                         .setContentTitle(context.getString(basicSensor.name))
                                         .setContentText(context.getString(R.string.sensor_worker_sync_missing_permissions))
@@ -427,11 +427,11 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val notificationManager = context.getSystemService<NotificationManager>() ?: return
             var notificationChannel =
-                notificationManager.getNotificationChannel(sensorCoreSyncChannel)
+                notificationManager.getNotificationChannel(CHANNEL_SENSOR_SYNC)
             if (notificationChannel == null) {
                 notificationChannel = NotificationChannel(
-                    sensorCoreSyncChannel,
-                    sensorCoreSyncChannel,
+                    CHANNEL_SENSOR_SYNC,
+                    CHANNEL_SENSOR_SYNC,
                     NotificationManager.IMPORTANCE_DEFAULT
                 )
                 notificationManager.createNotificationChannel(notificationChannel)

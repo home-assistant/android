@@ -4,11 +4,11 @@ import android.content.res.AssetManager
 import android.util.JsonReader
 import android.util.NoSuchPropertyException
 import androidx.annotation.WorkerThread
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
 
 /**
  * Translation layer for IDs used by the old icondialog package to material icon names.

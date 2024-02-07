@@ -86,7 +86,7 @@ object DisabledLocationHandler {
             val notificationManager = NotificationManagerCompat.from(context)
             if (notificationManager.getActiveNotification(DISABLED_LOCATION_WARN_ID, DISABLED_LOCATION_WARN_ID.hashCode()) == null) {
                 if (VERSION.SDK_INT >= VERSION_CODES.O) {
-                    val channel = NotificationChannel(locationDisabledChannel, context.applicationContext.getString(commonR.string.location_warn_channel), NotificationManager.IMPORTANCE_DEFAULT)
+                    val channel = NotificationChannel(CHANNEL_LOCATION_DISABLED, context.applicationContext.getString(commonR.string.location_warn_channel), NotificationManager.IMPORTANCE_DEFAULT)
                     notificationManager.createNotificationChannel(channel)
                 }
 
@@ -97,7 +97,7 @@ object DisabledLocationHandler {
                     PendingIntent.FLAG_IMMUTABLE
                 )
 
-                val notificationBuilder = NotificationCompat.Builder(context, locationDisabledChannel)
+                val notificationBuilder = NotificationCompat.Builder(context, CHANNEL_LOCATION_DISABLED)
                     .setSmallIcon(commonR.drawable.ic_stat_ic_notification)
                     .setColor(Color.RED)
                     .setOngoing(true)

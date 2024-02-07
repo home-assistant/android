@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.sp
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
@@ -59,7 +60,6 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.util.compose.HaAlertWarning
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.getEntityDomainString
-import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun ManageControlsView(
@@ -275,7 +275,8 @@ fun ManageControlsEntity(
         Checkbox(
             checked = selected,
             modifier = Modifier.padding(end = 16.dp),
-            onCheckedChange = null // Handled by parent Row clickable modifier
+            // Handled by parent Row clickable modifier
+            onCheckedChange = null
         )
         Column(
             modifier = Modifier.weight(1f)
@@ -324,14 +325,16 @@ fun ManageControlsModeButton(
                 modifier = Modifier.fillMaxWidth()
             )
             Text(
-                text = "${stringResource(if (isPanel) commonR.string.controls_setting_mode_panel_info else commonR.string.controls_setting_mode_builtin_info)}\n", // Newline for spacing
+                // Add newline at the end for spacing
+                text = "${stringResource(if (isPanel) commonR.string.controls_setting_mode_panel_info else commonR.string.controls_setting_mode_builtin_info)}\n",
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
             RadioButton(
                 selected = selected,
-                onClick = null // Handled by parent
+                // Handled by parent
+                onClick = null
             )
         }
     }

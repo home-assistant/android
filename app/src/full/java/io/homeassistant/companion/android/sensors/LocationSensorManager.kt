@@ -27,6 +27,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.UpdateLocation
@@ -47,15 +48,14 @@ import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.database.sensor.toSensorWithAttributes
 import io.homeassistant.companion.android.location.HighAccuracyLocationService
 import io.homeassistant.companion.android.notifications.MessagingManager
+import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import java.util.concurrent.TimeUnit
-import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class LocationSensorManager : BroadcastReceiver(), SensorManager {
@@ -1125,7 +1125,9 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                                 ?.newWakeLock(
                                     PowerManager.PARTIAL_WAKE_LOCK,
                                     "HomeAssistant::AccurateLocation"
-                                )?.apply { acquire(10 * 60 * 1000L /*10 minutes*/) }
+                                )?.apply {
+                                    acquire(10 * 60 * 1000L) // 10 minutes
+                                }
                         var numberCalls = 0
                         override fun onLocationResult(locationResult: LocationResult) {
                             numberCalls++

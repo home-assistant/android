@@ -10,16 +10,16 @@ import android.widget.Toast
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.cancel
 import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.notifications.MessagingManager.Companion.KEY_TEXT_REPLY
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class NotificationActionReceiver : BroadcastReceiver() {

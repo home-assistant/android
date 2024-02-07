@@ -16,12 +16,12 @@ import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepositor
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.complications.ComplicationReceiver
 import io.homeassistant.companion.android.sensors.SensorReceiver
+import javax.inject.Inject
+import javax.inject.Named
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-import javax.inject.Named
 
 @HiltAndroidApp
 open class HomeAssistantApplication : Application() {

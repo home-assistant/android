@@ -78,6 +78,7 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.assist.AssistActivity
 import io.homeassistant.companion.android.authenticator.Authenticator
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -101,6 +102,9 @@ import io.homeassistant.companion.android.util.TLSWebViewClient
 import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebView.ErrorType
+import java.util.concurrent.Executors
+import javax.inject.Inject
+import javax.inject.Named
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -113,10 +117,6 @@ import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.chromium.net.CronetEngine
 import org.json.JSONObject
-import java.util.concurrent.Executors
-import javax.inject.Inject
-import javax.inject.Named
-import io.homeassistant.companion.android.common.R as commonR
 
 @OptIn(androidx.media3.common.util.UnstableApi::class)
 @AndroidEntryPoint
@@ -490,9 +490,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
                     Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ||
                     ActivityCompat.checkSelfPermission(
-                            context,
-                            android.Manifest.permission.WRITE_EXTERNAL_STORAGE
-                        ) == PackageManager.PERMISSION_GRANTED
+                        context,
+                        android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+                    ) == PackageManager.PERMISSION_GRANTED
                 ) {
                     downloadFile(url, contentDisposition, mimetype)
                 } else {

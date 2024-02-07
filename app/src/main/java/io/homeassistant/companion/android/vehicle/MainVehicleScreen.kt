@@ -12,6 +12,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
@@ -30,7 +31,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
-import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.O)
 class MainVehicleScreen(
@@ -63,13 +63,13 @@ class MainVehicleScreen(
                 favoritesList = prefsRepository.getAutoFavorites()
                 isLoggedIn = serverManager.isRegistered() &&
                     serverManager.authenticationRepository()
-                    .getSessionState() == SessionState.CONNECTED
+                        .getSessionState() == SessionState.CONNECTED
                 invalidate()
                 while (isLoggedIn != true) {
                     delay(1000)
                     isLoggedIn = serverManager.isRegistered() &&
                         serverManager.authenticationRepository()
-                        .getSessionState() == SessionState.CONNECTED
+                            .getSessionState() == SessionState.CONNECTED
                     invalidate()
                 }
                 serverId.collect { server ->

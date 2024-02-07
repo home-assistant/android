@@ -4,13 +4,13 @@ import android.util.Log
 import androidx.preference.PreferenceDataStore
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.wifi.WifiHelper
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import javax.inject.Inject
 
 class ServerSettingsPresenterImpl @Inject constructor(
     private val serverManager: ServerManager,

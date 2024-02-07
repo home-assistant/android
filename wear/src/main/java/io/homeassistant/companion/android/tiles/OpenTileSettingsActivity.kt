@@ -6,8 +6,8 @@ import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepositoryImpl
 import io.homeassistant.companion.android.home.HomeActivity
-import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class OpenTileSettingsActivity : AppCompatActivity() {

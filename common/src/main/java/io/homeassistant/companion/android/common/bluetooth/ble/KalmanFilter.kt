@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.common.bluetooth.ble
 
-import org.altbeacon.beacon.service.RssiFilter
 import kotlin.math.pow
+import org.altbeacon.beacon.service.RssiFilter
 
 class KalmanFilter : RssiFilter {
     companion object {

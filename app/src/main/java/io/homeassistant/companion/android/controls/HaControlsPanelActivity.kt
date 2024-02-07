@@ -24,13 +24,13 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.getSystemService
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.webview.WebViewActivity
-import kotlinx.coroutines.launch
 import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class HaControlsPanelActivity : AppCompatActivity() {

@@ -16,8 +16,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
-import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.database.server.Server
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable

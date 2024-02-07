@@ -10,6 +10,7 @@ import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.material3.Text
 import androidx.wear.compose.material3.ToggleButton
 import com.mikepenz.iconics.compose.Image
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.home.MainViewModel
@@ -21,7 +22,6 @@ import io.homeassistant.companion.android.views.ExpandableListHeader
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
 import io.homeassistant.companion.android.views.rememberExpandedStates
-import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun SetFavoritesView(

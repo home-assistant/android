@@ -24,8 +24,8 @@ import com.mikepenz.iconics.utils.colorFilter
 import com.mikepenz.iconics.utils.toAndroidIconCompat
 import com.vdurmont.emoji.EmojiParser
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.util.CHANNEL_GENERAL
 import io.homeassistant.companion.android.common.util.cancel
-import io.homeassistant.companion.android.common.util.generalChannel
 import java.util.Locale
 
 object NotificationData {
@@ -74,7 +74,7 @@ fun handleChannel(
     data: Map<String, String>
 ): String {
     // Define some values for a default channel
-    var channelID = generalChannel
+    var channelID = CHANNEL_GENERAL
     var channelName = "General"
 
     if (!data[NotificationData.CHANNEL].isNullOrEmpty()) {

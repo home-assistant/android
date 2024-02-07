@@ -18,11 +18,11 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.text.HtmlCompat
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.util.notificationItem
 import java.util.Calendar
 import java.util.GregorianCalendar
-import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun LoadNotification(notification: NotificationItem) {

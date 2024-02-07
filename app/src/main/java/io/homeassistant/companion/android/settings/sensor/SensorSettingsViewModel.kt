@@ -13,8 +13,8 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.sensors.SensorReceiver
-import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 @HiltViewModel
 class SensorSettingsViewModel @Inject constructor(

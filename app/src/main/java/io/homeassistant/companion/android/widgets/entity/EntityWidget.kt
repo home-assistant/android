@@ -18,6 +18,7 @@ import androidx.core.graphics.toColorInt
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.canSupportPrecision
 import io.homeassistant.companion.android.common.data.integration.friendlyState
@@ -28,9 +29,8 @@ import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.util.getAttribute
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
-import kotlinx.coroutines.launch
 import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class EntityWidget : BaseWidgetProvider() {
