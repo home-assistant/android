@@ -19,6 +19,8 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ar
 
 @RequiresApi(Build.VERSION_CODES.R)
 object ClimateControl : HaControl {
+    private data class ClimateState(val currentMode: String, val supportedModes: ArrayList<String>)
+
     private const val SUPPORT_TARGET_TEMPERATURE = 1
     private const val SUPPORT_TARGET_TEMPERATURE_RANGE = 2
     private val temperatureControlModes = mapOf(
@@ -33,8 +35,7 @@ object ClimateControl : HaControl {
         "heat_cool" to TemperatureControlTemplate.FLAG_MODE_HEAT_COOL,
         "off" to TemperatureControlTemplate.FLAG_MODE_OFF
     )
-    private var currentMode = "off"
-    private val supportedModes = ArrayList<String>()
+    private val climateStates = HashMap<String, ClimateState>()
 
     override fun provideControlFeatures(
         context: Context,
@@ -72,7 +73,7 @@ object ClimateControl : HaControl {
             "%.${temperatureFormatSize}f $temperatureUnit"
         )
         if (entityShouldBePresentedAsThermostat(entity)) {
-            supportedModes.clear()
+            val state = ClimateState(entity.state, ArrayList())
             val toggleRangeTemplate = ToggleRangeTemplate(
                 entity.entityId + "_range",
                 true,
@@ -80,11 +81,11 @@ object ClimateControl : HaControl {
                 rangeTemplate
             )
             var modesFlag = 0
-            this.currentMode = entity.state
             (entity.attributes["hvac_modes"] as? List<String>)?.forEach {
                 modesFlag = modesFlag or temperatureControlModeFlags[it]!!
-                this.supportedModes.add(it)
+                state.supportedModes.add(it)
             }
+            this.climateStates[entity.entityId] = state
             control.setControlTemplate(
                 TemperatureControlTemplate(
                     entity.entityId,
@@ -143,14 +144,15 @@ object ClimateControl : HaControl {
                 true
             }
             is BooleanAction -> {
-                val nextMode = (this.supportedModes.indexOf(currentMode) + 1) % this.supportedModes.count()
-                this.currentMode = this.supportedModes[nextMode]
+                val supportedModes = this.climateStates[action.templateId]!!.supportedModes
+                val currentMode = this.climateStates[action.templateId]!!.currentMode
+                val nextMode = (supportedModes.indexOf(currentMode) + 1) % supportedModes.count()
                 integrationRepository.callService(
                     action.templateId.split(".")[0],
                     "set_hvac_mode",
                     hashMapOf(
                         "entity_id" to action.templateId,
-                        "hvac_mode" to this.supportedModes[nextMode]
+                        "hvac_mode" to supportedModes[nextMode]
                     )
                 )
                 true
