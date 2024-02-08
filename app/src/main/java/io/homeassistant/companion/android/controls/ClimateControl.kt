@@ -15,7 +15,6 @@ import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 
 @RequiresApi(Build.VERSION_CODES.R)
 object ClimateControl : HaControl {
@@ -41,8 +40,7 @@ object ClimateControl : HaControl {
         context: Context,
         control: Control.StatefulBuilder,
         entity: Entity<Map<String, Any>>,
-        area: AreaRegistryResponse?,
-        baseUrl: String?
+        info: HaControlInfo
     ): Control.StatefulBuilder {
         val minValue = (entity.attributes["min_temp"] as? Number)?.toFloat() ?: 0f
         val maxValue = (entity.attributes["max_temp"] as? Number)?.toFloat() ?: 100f
@@ -65,7 +63,7 @@ object ClimateControl : HaControl {
             }
         val temperatureFormatSize = if (temperatureStepSize < 1f) "1" else "0"
         val rangeTemplate = RangeTemplate(
-            entity.entityId,
+            info.systemId,
             minValue,
             maxValue,
             currentValue,
@@ -75,7 +73,7 @@ object ClimateControl : HaControl {
         if (entityShouldBePresentedAsThermostat(entity)) {
             val state = ClimateState(entity.state, ArrayList())
             val toggleRangeTemplate = ToggleRangeTemplate(
-                entity.entityId + "_range",
+                info.systemId + "_range",
                 true,
                 context.getString(commonR.string.widget_tap_action_toggle),
                 rangeTemplate
@@ -85,10 +83,10 @@ object ClimateControl : HaControl {
                 modesFlag = modesFlag or temperatureControlModeFlags[it]!!
                 state.supportedModes.add(it)
             }
-            this.climateStates[entity.entityId] = state
+            this.climateStates[info.systemId] = state
             control.setControlTemplate(
                 TemperatureControlTemplate(
-                    entity.entityId,
+                    info.systemId,
                     toggleRangeTemplate,
                     temperatureControlModes[entity.state]!!,
                     temperatureControlModes[entity.state]!!,
@@ -116,13 +114,18 @@ object ClimateControl : HaControl {
         integrationRepository: IntegrationRepository,
         action: ControlAction
     ): Boolean {
+        val entityStr: String = if (action.templateId.split(".").size > 2) {
+            action.templateId.split(".", limit = 2)[1]
+        } else {
+            action.templateId
+        }
         return when (action) {
             is FloatAction -> {
                 integrationRepository.callService(
-                    action.templateId.split(".")[0],
+                    entityStr.split(".")[0],
                     "set_temperature",
                     hashMapOf(
-                        "entity_id" to action.templateId,
+                        "entity_id" to entityStr,
                         "temperature" to (action as? FloatAction)?.newValue.toString()
                     )
                 )
@@ -133,7 +136,7 @@ object ClimateControl : HaControl {
                     action.templateId.split(".")[0],
                     "set_hvac_mode",
                     hashMapOf(
-                        "entity_id" to action.templateId,
+                        "entity_id" to entityStr,
                         "hvac_mode" to (
                             temperatureControlModes.entries.find {
                                 it.value == ((action as? ModeAction)?.newMode ?: -1)
@@ -144,14 +147,17 @@ object ClimateControl : HaControl {
                 true
             }
             is BooleanAction -> {
+                if (this.climateStates[action.templateId] == null) {
+                    return false
+                }
                 val supportedModes = this.climateStates[action.templateId]!!.supportedModes
                 val currentMode = this.climateStates[action.templateId]!!.currentMode
                 val nextMode = (supportedModes.indexOf(currentMode) + 1) % supportedModes.count()
                 integrationRepository.callService(
-                    action.templateId.split(".")[0],
+                    entityStr.split(".")[0],
                     "set_hvac_mode",
                     hashMapOf(
-                        "entity_id" to action.templateId,
+                        "entity_id" to entityStr,
                         "hvac_mode" to supportedModes[nextMode]
                     )
                 )

@@ -18,7 +18,6 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.common.data.integration.getFanSpeed
 import io.homeassistant.companion.android.common.data.integration.isActive
 import io.homeassistant.companion.android.common.data.integration.supportsFanSetSpeed
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 
 @RequiresApi(Build.VERSION_CODES.R)
 object FanControl : HaControl {
@@ -26,8 +25,7 @@ object FanControl : HaControl {
         context: Context,
         control: Control.StatefulBuilder,
         entity: Entity<Map<String, Any>>,
-        area: AreaRegistryResponse?,
-        baseUrl: String?
+        info: HaControlInfo
     ): Control.StatefulBuilder {
         if (entity.supportsFanSetSpeed()) {
             val position = entity.getFanSpeed()
