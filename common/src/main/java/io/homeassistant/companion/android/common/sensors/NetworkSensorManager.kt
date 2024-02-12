@@ -27,6 +27,7 @@ import okhttp3.Response
 import okio.IOException
 import org.json.JSONException
 import org.json.JSONObject
+import java.net.Inet6Address
 
 class NetworkSensorManager : SensorManager {
     companion object {
@@ -119,6 +120,15 @@ class NetworkSensorManager : SensorManager {
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#public-ip-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
+        val ip6Addresses = SensorManager.BasicSensor(
+            "ip6_addresses",
+            "sensor",
+            commonR.string.basic_sensor_name_ip6_addresses,
+            commonR.string.sensor_description_ip6_addresses,
+            "mdi:ip",
+            docsLink = "TODO",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+        )
         val networkType = SensorManager.BasicSensor(
             "network_type",
             "sensor",
@@ -148,7 +158,7 @@ class NetworkSensorManager : SensorManager {
             wifiSignalStrength
         )
         val list = if (hasWifi(context)) {
-            val withPublicIp = wifiSensors.plus(publicIp)
+            val withPublicIp = wifiSensors.plus(publicIp).plus(ip6Addresses)
             if (hasHotspot(context)) {
                 withPublicIp.plus(hotspotState)
             } else {
@@ -354,6 +364,38 @@ class NetworkSensorManager : SensorManager {
             wifiIp.statelessIcon,
             mapOf()
         )
+    }
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun updateIP6Sensor(context: Context) {
+        if (!isEnabled(context, ip6Addresses) || !hasWifi(context)) {
+            return
+        }
+        var ipAddressList: List<String> = ArrayList()
+        var totalAddresses = 0
+
+        if (checkPermission(context, ip6Addresses.id)) {
+            val connectivityManager = context.applicationContext.getSystemService<ConnectivityManager>()
+            val activeNetwork = connectivityManager?.getActiveNetwork()
+            val ipAddresses = connectivityManager?.getLinkProperties(activeNetwork)?.linkAddresses
+            if (ipAddresses.isNullOrEmpty()) {
+                return
+            }
+            val ip6Addresses = ipAddresses.filter { linkAddress -> linkAddress.address is Inet6Address }
+            if (ip6Addresses.isEmpty()) {
+                return
+            } else {
+                ipAddressList.plus(ipAddresses.map { toString() })
+                totalAddresses += ip6Addresses.size
+            }
+        }
+        onSensorUpdated(
+            context,
+            ip6Addresses,
+            totalAddresses,
+            ip6Addresses.statelessIcon,
+            mapOf("ip6_addresses" to ipAddressList))
+
     }
 
     private fun updateWifiLinkSpeedSensor(context: Context) {
@@ -591,4 +633,5 @@ class NetworkSensorManager : SensorManager {
             @Suppress("DEPRECATION")
             context.applicationContext.getSystemService<WifiManager>()?.connectionInfo
         }
+
 }
