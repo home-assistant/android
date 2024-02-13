@@ -126,8 +126,11 @@ class NetworkSensorManager : SensorManager {
             commonR.string.basic_sensor_name_ip6_addresses,
             commonR.string.sensor_description_ip6_addresses,
             "mdi:ip",
-            docsLink = "TODO",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            unitOfMeasurement = "connection(s)",
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#connection-type-sensor",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         val networkType = SensorManager.BasicSensor(
             "network_type",
@@ -371,7 +374,7 @@ class NetworkSensorManager : SensorManager {
         if (!isEnabled(context, ip6Addresses) || !hasWifi(context)) {
             return
         }
-        var ipAddressList: List<String> = ArrayList()
+        val ipAddressList: List<String> = ArrayList()
         var totalAddresses = 0
 
         if (checkPermission(context, ip6Addresses.id)) {
