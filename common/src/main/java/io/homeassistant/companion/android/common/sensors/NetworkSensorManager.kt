@@ -126,7 +126,7 @@ class NetworkSensorManager : SensorManager {
             commonR.string.basic_sensor_name_ip6_addresses,
             commonR.string.sensor_description_ip6_addresses,
             "mdi:ip",
-            unitOfMeasurement = "connection(s)",
+            unitOfMeasurement = "address(es)",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT
