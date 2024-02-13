@@ -128,7 +128,6 @@ class NetworkSensorManager : SensorManager {
             "mdi:ip",
             unitOfMeasurement = "connection(s)",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
-            docsLink = "https://companion.home-assistant.io/docs/core/sensors#connection-type-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
@@ -161,7 +160,7 @@ class NetworkSensorManager : SensorManager {
             wifiSignalStrength
         )
         val list = if (hasWifi(context)) {
-            val withPublicIp = wifiSensors.plus(publicIp).plus(ip6Addresses)
+            val withPublicIp = wifiSensors.plus(publicIp)
             if (hasHotspot(context)) {
                 withPublicIp.plus(hotspotState)
             } else {
@@ -171,7 +170,7 @@ class NetworkSensorManager : SensorManager {
             listOf(publicIp)
         }
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            list.plus(networkType)
+            list.plus(networkType).plus(ip6Addresses)
         } else {
             list
         }
@@ -208,6 +207,7 @@ class NetworkSensorManager : SensorManager {
         updatePublicIpSensor(context)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             updateNetworkType(context)
+            updateIP6Sensor(context)
         }
     }
 
@@ -371,7 +371,7 @@ class NetworkSensorManager : SensorManager {
 
     @RequiresApi(Build.VERSION_CODES.M)
     private fun updateIP6Sensor(context: Context) {
-        if (!isEnabled(context, ip6Addresses) || !hasWifi(context)) {
+        if (!isEnabled(context, ip6Addresses)) {
             return
         }
         val ipAddressList: List<String> = ArrayList()
@@ -379,17 +379,14 @@ class NetworkSensorManager : SensorManager {
 
         if (checkPermission(context, ip6Addresses.id)) {
             val connectivityManager = context.applicationContext.getSystemService<ConnectivityManager>()
-            val activeNetwork = connectivityManager?.getActiveNetwork()
+            val activeNetwork = connectivityManager?.activeNetwork
             val ipAddresses = connectivityManager?.getLinkProperties(activeNetwork)?.linkAddresses
-            if (ipAddresses.isNullOrEmpty()) {
-                return
-            }
-            val ip6Addresses = ipAddresses.filter { linkAddress -> linkAddress.address is Inet6Address }
-            if (ip6Addresses.isEmpty()) {
-                return
-            } else {
-                ipAddressList.plus(ipAddresses.map { toString() })
-                totalAddresses += ip6Addresses.size
+            if (!ipAddresses.isNullOrEmpty()) {
+                val ip6Addresses = ipAddresses.filter { linkAddress -> linkAddress.address is Inet6Address }
+                if (!ip6Addresses.isEmpty()) {
+                    ipAddressList.plus(ipAddresses.map { toString() })
+                    totalAddresses += ip6Addresses.size
+                }
             }
         }
         onSensorUpdated(
