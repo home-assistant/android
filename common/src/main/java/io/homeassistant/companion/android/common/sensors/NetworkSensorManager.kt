@@ -19,6 +19,7 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import java.lang.reflect.Method
+import java.net.Inet6Address
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.OkHttpClient
@@ -27,7 +28,6 @@ import okhttp3.Response
 import okio.IOException
 import org.json.JSONException
 import org.json.JSONObject
-import java.net.Inet6Address
 
 class NetworkSensorManager : SensorManager {
     companion object {
@@ -394,8 +394,10 @@ class NetworkSensorManager : SensorManager {
             ip6Addresses,
             totalAddresses,
             ip6Addresses.statelessIcon,
-            mapOf("ip6_addresses" to ipAddressList))
-
+            mapOf(
+                "ip6_addresses" to ipAddressList
+            )
+        )
     }
 
     private fun updateWifiLinkSpeedSensor(context: Context) {
@@ -633,5 +635,4 @@ class NetworkSensorManager : SensorManager {
             @Suppress("DEPRECATION")
             context.applicationContext.getSystemService<WifiManager>()?.connectionInfo
         }
-
 }
