@@ -74,6 +74,7 @@ object ClimateControl : HaControl {
             val state = ClimateState(entity.state, ArrayList())
             val toggleRangeTemplate = ToggleRangeTemplate(
                 info.systemId + "_range",
+                // Set checked to true to always show the temperature indicator, regardless of climate mode
                 true,
                 context.getString(commonR.string.widget_tap_action_toggle),
                 rangeTemplate
