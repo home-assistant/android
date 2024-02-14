@@ -374,7 +374,7 @@ class NetworkSensorManager : SensorManager {
         if (!isEnabled(context, ip6Addresses)) {
             return
         }
-        val ipAddressList: List<String> = ArrayList()
+        var ipAddressList: List<String> = ArrayList()
         var totalAddresses = 0
 
         if (checkPermission(context, ip6Addresses.id)) {
@@ -383,8 +383,8 @@ class NetworkSensorManager : SensorManager {
             val ipAddresses = connectivityManager?.getLinkProperties(activeNetwork)?.linkAddresses
             if (!ipAddresses.isNullOrEmpty()) {
                 val ip6Addresses = ipAddresses.filter { linkAddress -> linkAddress.address is Inet6Address }
-                if (!ip6Addresses.isEmpty()) {
-                    ipAddressList.plus(ipAddresses.map { linkAddress -> linkAddress.address.toString() })
+                if (ip6Addresses.isNotEmpty()) {
+                    ipAddressList = ipAddressList.plus(elements = ipAddresses.map { linkAddress -> linkAddress.toString() })
                     totalAddresses += ip6Addresses.size
                 }
             }
