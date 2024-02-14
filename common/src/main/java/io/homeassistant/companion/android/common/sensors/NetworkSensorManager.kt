@@ -384,7 +384,7 @@ class NetworkSensorManager : SensorManager {
             if (!ipAddresses.isNullOrEmpty()) {
                 val ip6Addresses = ipAddresses.filter { linkAddress -> linkAddress.address is Inet6Address }
                 if (ip6Addresses.isNotEmpty()) {
-                    ipAddressList = ipAddressList.plus(elements = ipAddresses.map { linkAddress -> linkAddress.toString() })
+                    ipAddressList = ipAddressList.plus(elements = ip6Addresses.map { linkAddress -> linkAddress.toString() })
                     totalAddresses += ip6Addresses.size
                 }
             }
