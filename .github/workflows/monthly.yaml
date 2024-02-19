@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Get Current Time
-        uses: josStorer/get-current-time@v2.1.1
+        uses: josStorer/get-current-time@v2.1.2
         id: current-time
 
       - name: Bump Calendar Version
