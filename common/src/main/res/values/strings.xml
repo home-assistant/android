@@ -82,6 +82,7 @@
     <string name="basic_sensor_name_high_accuracy_mode">High accuracy mode</string>
     <string name="basic_sensor_name_interactive">Interactive</string>
     <string name="basic_sensor_name_internal_storage">Internal storage</string>
+    <string name="basic_sensor_name_ip6_addresses">IPv6 addresses</string>
     <string name="basic_sensor_name_keyguard_locked">Keyguard locked</string>
     <string name="basic_sensor_name_keyguard_secure">Keyguard secure</string>
     <string name="basic_sensor_name_last_notification">Last notification</string>
@@ -598,6 +599,7 @@
     <string name="sensor_description_hotspot">Whether the WIFI hotspot is enabled</string>
     <string name="sensor_description_interactive">Whether the device is in an interactive state</string>
     <string name="sensor_description_internal_storage">Information about the total and available storage space internally</string>
+    <string name="sensor_description_ip6_addresses">The IPv6 addresses bound to the currently active network interface</string>
     <string name="sensor_description_keyguard_locked">Whether the keyguard is currently locked</string>
     <string name="sensor_description_keyguard_secure">Whether the keyguard is secured by a PIN, pattern or password or a SIM card is currently locked</string>
     <string name="sensor_description_last_notification">The details of the last notification. You must set up an allow list or explicitly allow all notifications to be sent.\n\nNote: Sending all notification data will result in heavy battery usage.</string>

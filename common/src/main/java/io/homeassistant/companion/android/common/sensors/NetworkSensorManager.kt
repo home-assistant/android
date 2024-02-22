@@ -19,6 +19,7 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import java.lang.reflect.Method
+import java.net.Inet6Address
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.OkHttpClient
@@ -119,6 +120,17 @@ class NetworkSensorManager : SensorManager {
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#public-ip-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
+        val ip6Addresses = SensorManager.BasicSensor(
+            "ip6_addresses",
+            "sensor",
+            commonR.string.basic_sensor_name_ip6_addresses,
+            commonR.string.sensor_description_ip6_addresses,
+            "mdi:ip",
+            unitOfMeasurement = "address(es)",
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+        )
         val networkType = SensorManager.BasicSensor(
             "network_type",
             "sensor",
@@ -158,7 +170,7 @@ class NetworkSensorManager : SensorManager {
             listOf(publicIp)
         }
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            list.plus(networkType)
+            list.plus(networkType).plus(ip6Addresses)
         } else {
             list
         }
@@ -195,6 +207,7 @@ class NetworkSensorManager : SensorManager {
         updatePublicIpSensor(context)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             updateNetworkType(context)
+            updateIP6Sensor(context)
         }
     }
 
@@ -353,6 +366,37 @@ class NetworkSensorManager : SensorManager {
             deviceIp,
             wifiIp.statelessIcon,
             mapOf()
+        )
+    }
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun updateIP6Sensor(context: Context) {
+        if (!isEnabled(context, ip6Addresses)) {
+            return
+        }
+        var ipAddressList: List<String> = ArrayList()
+        var totalAddresses = 0
+
+        if (checkPermission(context, ip6Addresses.id)) {
+            val connectivityManager = context.applicationContext.getSystemService<ConnectivityManager>()
+            val activeNetwork = connectivityManager?.activeNetwork
+            val ipAddresses = connectivityManager?.getLinkProperties(activeNetwork)?.linkAddresses
+            if (!ipAddresses.isNullOrEmpty()) {
+                val ip6Addresses = ipAddresses.filter { linkAddress -> linkAddress.address is Inet6Address }
+                if (ip6Addresses.isNotEmpty()) {
+                    ipAddressList = ipAddressList.plus(elements = ip6Addresses.map { linkAddress -> linkAddress.toString() })
+                    totalAddresses += ip6Addresses.size
+                }
+            }
+        }
+        onSensorUpdated(
+            context,
+            ip6Addresses,
+            totalAddresses,
+            ip6Addresses.statelessIcon,
+            mapOf(
+                "ip6_addresses" to ipAddressList
+            )
         )
     }
 
