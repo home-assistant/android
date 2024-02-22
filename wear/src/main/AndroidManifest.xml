@@ -45,6 +45,9 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
                 <action android:name="android.intent.action.MY_PACKAGE_SUSPENDED" />
                 <action android:name="android.intent.action.MY_PACKAGE_UNSUSPENDED" />
+                <action android:name="android.intent.action.ACTION_POWER_CONNECTED" />
+                <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED" />
+                <action android:name="android.intent.action.PHONE_STATE" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
                 <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
                 <action android:name="android.app.action.NEXT_ALARM_CLOCK_CHANGED" />
