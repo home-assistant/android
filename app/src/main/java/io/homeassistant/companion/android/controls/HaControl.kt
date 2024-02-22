@@ -17,7 +17,6 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.friendlyState
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.webview.WebViewActivity
 
 @RequiresApi(Build.VERSION_CODES.R)
@@ -77,15 +76,14 @@ interface HaControl {
             }
         }
 
-        return provideControlFeatures(context, control, entity, info.area, info.baseUrl).build()
+        return provideControlFeatures(context, control, entity, info).build()
     }
 
     fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
         entity: Entity<Map<String, Any>>,
-        area: AreaRegistryResponse?,
-        baseUrl: String?
+        info: HaControlInfo
     ): Control.StatefulBuilder
 
     fun getDeviceType(entity: Entity<Map<String, Any>>): Int

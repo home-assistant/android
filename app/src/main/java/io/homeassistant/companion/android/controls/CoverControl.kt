@@ -17,7 +17,6 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.getCoverPosition
 import io.homeassistant.companion.android.common.data.integration.isActive
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 
 @RequiresApi(Build.VERSION_CODES.R)
 object CoverControl : HaControl {
@@ -26,8 +25,7 @@ object CoverControl : HaControl {
         context: Context,
         control: Control.StatefulBuilder,
         entity: Entity<Map<String, Any>>,
-        area: AreaRegistryResponse?,
-        baseUrl: String?
+        info: HaControlInfo
     ): Control.StatefulBuilder {
         val position = entity.getCoverPosition()
         control.setControlTemplate(

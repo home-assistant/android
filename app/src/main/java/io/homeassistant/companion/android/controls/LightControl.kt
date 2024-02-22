@@ -18,7 +18,6 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.common.data.integration.getLightBrightness
 import io.homeassistant.companion.android.common.data.integration.isActive
 import io.homeassistant.companion.android.common.data.integration.supportsLightBrightness
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 
 @RequiresApi(Build.VERSION_CODES.R)
 object LightControl : HaControl {
@@ -26,8 +25,7 @@ object LightControl : HaControl {
         context: Context,
         control: Control.StatefulBuilder,
         entity: Entity<Map<String, Any>>,
-        area: AreaRegistryResponse?,
-        baseUrl: String?
+        info: HaControlInfo
     ): Control.StatefulBuilder {
         val position = entity.getLightBrightness()
         control.setControlTemplate(
