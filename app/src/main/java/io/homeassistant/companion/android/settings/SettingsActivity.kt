@@ -14,7 +14,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.components.ActivityComponent
 import eightbitlab.com.blurview.BlurView
-import eightbitlab.com.blurview.RenderScriptBlur
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
@@ -60,10 +59,7 @@ class SettingsActivity : BaseActivity() {
 
         blurView = findViewById(R.id.blurView)
         blurView.setupWith(window.decorView.rootView as ViewGroup)
-            .setBlurAlgorithm(RenderScriptBlur(this))
-            .setBlurAutoUpdate(true)
             .setBlurRadius(8f)
-            .setHasFixedTransformationMatrix(false)
             .setBlurEnabled(false)
 
         authenticator = Authenticator(this, this, ::settingsActivityAuthenticationResult)

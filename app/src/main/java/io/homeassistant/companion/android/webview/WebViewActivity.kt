@@ -72,7 +72,6 @@ import androidx.media3.ui.PlayerView
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import dagger.hilt.android.AndroidEntryPoint
-import eightbitlab.com.blurview.RenderScriptBlur
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
@@ -257,9 +256,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         setStatusBarAndNavigationBarColor(colorLaunchScreenBackground, colorLaunchScreenBackground)
 
         binding.blurView.setupWith(binding.root)
-            .setBlurAlgorithm(RenderScriptBlur(this))
             .setBlurRadius(8f)
-            .setHasFixedTransformationMatrix(false)
 
         exoPlayerView = binding.exoplayerView
         exoPlayerView.visibility = View.GONE
