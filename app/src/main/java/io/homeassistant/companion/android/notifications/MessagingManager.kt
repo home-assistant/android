@@ -1878,7 +1878,7 @@ class MessagingManager @Inject constructor(
                                 }
                                 navigateAppDetails()
                             }
-                            COMMAND_SCREEN_BRIGHTNESS_LEVEL, COMMAND_AUTO_SCREEN_BRIGHTNESS -> {
+                            COMMAND_SCREEN_BRIGHTNESS_LEVEL, COMMAND_AUTO_SCREEN_BRIGHTNESS, COMMAND_SCREEN_OFF_TIMEOUT -> {
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                                     requestWriteSystemPermission()
                                 }
