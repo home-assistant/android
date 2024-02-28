@@ -36,7 +36,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     }
 
     @Inject
-    protected lateinit var serverManager: ServerManager
+    lateinit var serverManager: ServerManager
 
     private var thisSetScope = false
     protected var lastIntent = ""
