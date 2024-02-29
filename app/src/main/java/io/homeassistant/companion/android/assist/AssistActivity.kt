@@ -31,6 +31,8 @@ class AssistActivity : BaseActivity() {
 
     private val viewModel: AssistViewModel by viewModels()
 
+    private var contextIsLocked = true
+
     companion object {
         const val TAG = "AssistActivity"
 
@@ -62,15 +64,7 @@ class AssistActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.O) {
-            @Suppress("DEPRECATION")
-            window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED)
-        } // else handled by manifest attribute
-        val isLocked = getSystemService<KeyguardManager>()?.isKeyguardLocked ?: false
-        if (isLocked) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER)
-        }
+        updateShowWhenLocked()
 
         if (savedInstanceState == null) {
             viewModel.onCreate(
@@ -149,7 +143,32 @@ class AssistActivity : BaseActivity() {
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         this.intent = intent
-        viewModel.onNewIntent(intent)
+
+        val isLocked = getSystemService<KeyguardManager>()?.isKeyguardLocked ?: false
+        viewModel.onNewIntent(intent, contextIsLocked == isLocked)
+        updateShowWhenLocked(isLocked)
+    }
+
+    /** Set flags to show dialog when (un)locked, and prevent unlocked dialogs from resuming while locked **/
+    private fun updateShowWhenLocked(isLocked: Boolean? = null) {
+        val locked = isLocked ?: getSystemService<KeyguardManager>()?.isKeyguardLocked ?: false
+        contextIsLocked = locked
+        if (locked) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER)
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.O) {
+                @Suppress("DEPRECATION")
+                window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED)
+            } else {
+                setShowWhenLocked(true)
+            }
+        } else {
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.O) {
+                @Suppress("DEPRECATION")
+                window.clearFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED)
+            } else {
+                setShowWhenLocked(false)
+            }
+        }
     }
 
     private fun hasRecordingPermission() =

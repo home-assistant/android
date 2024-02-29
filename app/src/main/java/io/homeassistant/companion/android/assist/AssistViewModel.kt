@@ -117,15 +117,23 @@ class AssistViewModel @Inject constructor(
         }
     }
 
-    fun onNewIntent(intent: Intent?) {
+    /**
+     * Update the state of the Assist dialog for a new 'assistant triggered' action
+     * @param intent the updated intent
+     * @param lockedMatches whether the locked state changed and contents should be cleared
+     */
+    fun onNewIntent(intent: Intent?, lockedMatches: Boolean) {
         if (
-            (
-                (intent?.flags != null && intent.flags and Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT != 0) ||
-                    intent?.action in listOf(Intent.ACTION_ASSIST, "android.intent.action.VOICE_ASSIST")
-                ) &&
-            (inputMode == AssistInputMode.VOICE_ACTIVE || inputMode == AssistInputMode.VOICE_INACTIVE)
+            (intent?.flags != null && intent.flags and Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT != 0) ||
+            intent?.action in listOf(Intent.ACTION_ASSIST, "android.intent.action.VOICE_ASSIST")
         ) {
-            onMicrophoneInput()
+            if (!lockedMatches && inputMode != AssistInputMode.BLOCKED) {
+                _conversation.clear()
+                _conversation.add(startMessage)
+            }
+            if (inputMode == AssistInputMode.VOICE_ACTIVE || inputMode == AssistInputMode.VOICE_INACTIVE) {
+                onMicrophoneInput()
+            }
         }
     }
 
