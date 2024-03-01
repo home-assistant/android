@@ -18,10 +18,14 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
@@ -29,6 +33,8 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.onboarding.OnboardingHeaderView
 import io.homeassistant.companion.android.onboarding.OnboardingViewModel
+import io.homeassistant.companion.android.util.homeAssistantInstance1
+import io.homeassistant.companion.android.util.homeAssistantInstance2
 
 @Composable
 fun DiscoveryView(
@@ -36,8 +42,18 @@ fun DiscoveryView(
     manualSetupClicked: () -> Unit,
     instanceClicked: (instance: HomeAssistantInstance) -> Unit
 ) {
+    DiscoveryView(foundInstances = onboardingViewModel.foundInstances, manualSetupClicked = manualSetupClicked, instanceClicked = instanceClicked)
+}
+
+@Composable
+fun DiscoveryView(
+    foundInstances: SnapshotStateList<HomeAssistantInstance>,
+    manualSetupClicked: () -> Unit,
+    instanceClicked: (instance: HomeAssistantInstance) -> Unit
+) {
     Column(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
             .padding(16.dp)
     ) {
         OnboardingHeaderView(
@@ -45,7 +61,8 @@ fun DiscoveryView(
             title = stringResource(id = commonR.string.select_instance)
         )
         LinearProgressIndicator(
-            modifier = Modifier.fillMaxWidth(0.25f)
+            modifier = Modifier
+                .fillMaxWidth(0.25f)
                 .padding(vertical = 16.dp)
                 .height(2.dp)
                 .align(Alignment.CenterHorizontally)
@@ -55,8 +72,8 @@ fun DiscoveryView(
                 .fillMaxWidth()
                 .weight(1f)
         ) {
-            items(onboardingViewModel.foundInstances.size, { onboardingViewModel.foundInstances[it].url }) { index ->
-                val instance = onboardingViewModel.foundInstances[index]
+            items(foundInstances.size, { foundInstances[it].url }) { index ->
+                val instance = foundInstances[index]
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -91,4 +108,16 @@ fun DiscoveryView(
             Text(text = stringResource(commonR.string.manual_setup))
         }
     }
+}
+
+@Preview(showSystemUi = true)
+@Composable
+fun DiscoveryViewPreview() {
+    DiscoveryView(
+        foundInstances = remember {
+            mutableStateListOf(homeAssistantInstance1, homeAssistantInstance2)
+        },
+        manualSetupClicked = { },
+        instanceClicked = {}
+    )
 }
