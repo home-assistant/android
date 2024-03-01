@@ -145,13 +145,16 @@ class ManageTilesViewModel @Inject constructor(
 
     var servers by mutableStateOf(serverManager.defaultServers)
         private set
-    var sortedEntities by mutableStateOf<List<Entity<*>>>(emptyList())
+    var sortedActionEntities by mutableStateOf<List<Entity<*>>>(emptyList())
+        private set
+    var sortedStatusEntities by mutableStateOf<List<Entity<*>>>(emptyList())
         private set
     var selectedServerId by mutableStateOf(ServerManager.SERVER_ID_ACTIVE)
         private set
     var selectedIconId by mutableStateOf<String?>(null)
         private set
-    var selectedEntityId by mutableStateOf("")
+    var selectedActionEntityId by mutableStateOf("")
+    var selectedStatusEntityId by mutableStateOf("")
     var tileLabel by mutableStateOf("")
     var tileSubtitle by mutableStateOf<String?>(null)
     var submitButtonLabel by mutableStateOf(commonR.string.tile_save)
@@ -163,7 +166,8 @@ class ManageTilesViewModel @Inject constructor(
     private var selectedTileId = 0
     private var selectedTileAdded = false
 
-    private val entities = mutableMapOf<Int, List<Entity<*>>>()
+    private val actionEntities = mutableMapOf<Int, List<Entity<*>>>()
+    private val statusEntities = mutableMapOf<Int, List<Entity<*>>>()
 
     private val _tileInfoSnackbar = MutableSharedFlow<Int>(replay = 1)
     var tileInfoSnackbar = _tileInfoSnackbar.asSharedFlow()
@@ -183,13 +187,15 @@ class ManageTilesViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             serverManager.defaultServers.map {
                 async {
-                    entities[it.id] = try {
+                    val entities = try {
                         serverManager.integrationRepository(it.id).getEntities().orEmpty()
-                            .filter { it.domain in ManageTilesFragment.validDomains }
                     } catch (e: Exception) {
                         Log.e(TAG, "Couldn't load entities for server", e)
                         emptyList()
                     }
+
+                    actionEntities[it.id] = entities.filter { it.domain in ManageTilesFragment.validDomainsAction }
+                    statusEntities[it.id] = entities.filter { it.domain in ManageTilesFragment.validDomainsStatus }
                 }
             }.awaitAll()
             withContext(Dispatchers.Main) {
@@ -229,30 +235,38 @@ class ManageTilesViewModel @Inject constructor(
     }
 
     fun selectServerId(serverId: Int) {
-        val resetEntity = serverId != selectedServerId && entities[serverId]?.none { it.entityId == selectedEntityId } == true
+        val resetEntity = serverId != selectedServerId && actionEntities[serverId]?.none { it.entityId == selectedActionEntityId }  == true && statusEntities[serverId]?.none { it.entityId == selectedStatusEntityId }  == true
         selectedServerId = serverId
         loadEntities(serverId)
-        selectEntityId(if (resetEntity) "" else selectedEntityId)
+        selectActionEntityId(if (resetEntity) "" else selectedActionEntityId)
+        selectStatusEntityId(if (resetEntity) "" else selectedStatusEntityId)
     }
 
     private fun loadEntities(serverId: Int) {
-        sortedEntities = entities[serverId] ?: emptyList()
+        sortedActionEntities = actionEntities[serverId] ?: emptyList()
+        sortedStatusEntities = statusEntities[serverId] ?: emptyList()
     }
 
-    fun selectEntityId(entityId: String) {
-        selectedEntityId = entityId
+    fun selectActionEntityId(entityId: String) {
+        selectedActionEntityId = entityId
+        if (selectedIconId == null) selectIcon(null) // trigger drawable update
+    }
+
+    fun selectStatusEntityId(entityId: String) {
+        selectedStatusEntityId = entityId
         if (selectedIconId == null) selectIcon(null) // trigger drawable update
     }
 
     fun selectIcon(icon: IIcon?) {
         selectedIconId = icon?.mdiName
-        selectedIcon = icon ?: sortedEntities.firstOrNull { it.entityId == selectedEntityId }?.getIcon(app)
+        selectedIcon = icon ?: sortedActionEntities.firstOrNull { it.entityId == selectedActionEntityId }?.getIcon(app)
     }
 
     private fun updateExistingTileFields(currentTile: TileEntity) {
         tileLabel = currentTile.label
         tileSubtitle = currentTile.subtitle
-        selectedEntityId = currentTile.entityId
+        selectedActionEntityId = currentTile.actionEntityId
+        selectedStatusEntityId = currentTile.statusEntityId
         selectedShouldVibrate = currentTile.shouldVibrate
         tileAuthRequired = currentTile.authRequired
         selectIcon(
@@ -268,7 +282,8 @@ class ManageTilesViewModel @Inject constructor(
                 serverId = selectedServerId,
                 added = selectedTileAdded,
                 iconName = selectedIconId,
-                entityId = selectedEntityId,
+                actionEntityId = selectedActionEntityId,
+                statusEntityId = selectedStatusEntityId,
                 label = tileLabel,
                 subtitle = tileSubtitle,
                 shouldVibrate = selectedShouldVibrate,

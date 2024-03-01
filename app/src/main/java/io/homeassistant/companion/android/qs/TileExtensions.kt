@@ -107,10 +107,15 @@ abstract class TileExtensions : TileService() {
                 val tileData = tileDao.get(getTileId())
                 if (tileData != null &&
                     tileData.isSetup &&
-                    tileData.entityId.split('.')[0] in toggleDomainsWithLock &&
+                    tileData.actionEntityId.split('.')[0] in toggleDomainsWithLock &&
                     serverManager.getServer(tileData.serverId) != null
                 ) {
-                    serverManager.integrationRepository(tileData.serverId).getEntityUpdates(listOf(tileData.entityId))?.collect {
+                    val entity = if (tileData.statusEntityId != ""){
+                        serverManager.integrationRepository(tileData.serverId).getEntityUpdates(listOf(tileData.statusEntityId))
+                    }else{
+                        serverManager.integrationRepository(tileData.serverId).getEntityUpdates(listOf(tileData.actionEntityId))
+                    }
+                    entity?.collect {
                         tile.state =
                             if (it.isActive()) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
                         getTileIcon(tileData.iconName, it, applicationContext)?.let { icon ->
@@ -146,12 +151,12 @@ abstract class TileExtensions : TileService() {
                 }
                 val state: Entity<*>? =
                     if (
-                        tileData.entityId.split(".")[0] in toggleDomainsWithLock ||
+                        tileData.actionEntityId.split(".")[0] in toggleDomainsWithLock ||
                         tileData.iconName == null
                     ) {
                         withContext(Dispatchers.IO) {
                             try {
-                                serverManager.integrationRepository(tileData.serverId).getEntity(tileData.entityId)
+                                serverManager.integrationRepository(tileData.serverId).getEntity(tileData.actionEntityId)
                             } catch (e: Exception) {
                                 Log.e(TAG, "Unable to get state for tile", e)
                                 null
@@ -160,7 +165,7 @@ abstract class TileExtensions : TileService() {
                     } else {
                         null
                     }
-                if (tileData.entityId.split('.')[0] in toggleDomainsWithLock) {
+                if (tileData.actionEntityId.split('.')[0] in toggleDomainsWithLock) {
                     tile.state = when {
                         state?.isActive() == true -> Tile.STATE_ACTIVE
                         state?.state != null && !state.isActive() -> Tile.STATE_INACTIVE
@@ -227,7 +232,7 @@ abstract class TileExtensions : TileService() {
         }
 
         val hasTile = setTileData(tileId, tile)
-        val needsUpdate = tileData != null && tileData.entityId.split('.')[0] !in toggleDomainsWithLock
+        val needsUpdate = tileData != null && tileData.actionEntityId.split('.')[0] !in toggleDomainsWithLock
         if (hasTile) {
             if (tileData?.serverId == null || serverManager.getServer(tileData.serverId) == null) {
                 tileClickedError(tileData, null)
@@ -240,7 +245,7 @@ abstract class TileExtensions : TileService() {
             withContext(Dispatchers.IO) {
                 try {
                     onEntityPressedWithoutState(
-                        tileData.entityId,
+                        tileData.actionEntityId,
                         serverManager.integrationRepository(tileData.serverId)
                     )
                     Log.d(TAG, "Service call sent for tile ID: $tileId")
@@ -298,7 +303,8 @@ abstract class TileExtensions : TileService() {
                         added = true,
                         serverId = 0,
                         iconName = null,
-                        entityId = "",
+                        actionEntityId = "",
+                        statusEntityId = "",
                         label = "",
                         subtitle = null,
                         shouldVibrate = false,

@@ -127,17 +127,31 @@ fun ManageTilesView(
                 }
 
                 SingleEntityPicker(
-                    entities = viewModel.sortedEntities,
-                    currentEntity = viewModel.selectedEntityId,
-                    onEntityCleared = { viewModel.selectEntityId("") },
+                    entities = viewModel.sortedActionEntities,
+                    currentEntity = viewModel.selectedActionEntityId,
+                    onEntityCleared = { viewModel.selectActionEntityId("") },
                     onEntitySelected = {
-                        viewModel.selectEntityId(it)
+                        viewModel.selectActionEntityId(it)
+                        return@SingleEntityPicker true
+                    },
+                    modifier = Modifier
+                        .padding(top = 16.dp)
+                        .fillMaxWidth(),
+                    label = { Text(stringResource(R.string.tile_entity)) }
+                )
+
+                SingleEntityPicker(
+                    entities = viewModel.sortedStatusEntities,
+                    currentEntity = viewModel.selectedStatusEntityId,
+                    onEntityCleared = { viewModel.selectStatusEntityId("") },
+                    onEntitySelected = {
+                        viewModel.selectStatusEntityId(it)
                         return@SingleEntityPicker true
                     },
                     modifier = Modifier
                         .padding(vertical = 16.dp)
                         .fillMaxWidth(),
-                    label = { Text(stringResource(R.string.tile_entity)) }
+                    label = { Text(stringResource(R.string.tile_alternative_status)) }
                 )
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -158,7 +172,7 @@ fun ManageTilesView(
                             )
                         }
                     }
-                    if (viewModel.selectedIconId != null && viewModel.selectedEntityId.isNotBlank()) {
+                    if (viewModel.selectedIconId != null && viewModel.selectedActionEntityId.isNotBlank()) {
                         TextButton(
                             modifier = Modifier.padding(start = 4.dp),
                             onClick = { viewModel.selectIcon(null) }
@@ -196,7 +210,7 @@ fun ManageTilesView(
                     onClick = { viewModel.addTile() },
                     enabled = viewModel.tileLabel.isNotBlank() &&
                         viewModel.selectedServerId in viewModel.servers.map { it.id } &&
-                        viewModel.selectedEntityId in viewModel.sortedEntities.map { it.entityId }
+                        viewModel.selectedActionEntityId in viewModel.sortedActionEntities.map { it.entityId }
                 ) {
                     Text(stringResource(viewModel.submitButtonLabel))
                 }

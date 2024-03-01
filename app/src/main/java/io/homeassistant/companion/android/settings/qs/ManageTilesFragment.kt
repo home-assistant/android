@@ -26,7 +26,8 @@ class ManageTilesFragment : Fragment() {
 
     companion object {
         private const val TAG = "TileFragment"
-        val validDomains = EntityExt.APP_PRESS_ACTION_DOMAINS
+        val validDomainsAction = EntityExt.APP_PRESS_ACTION_DOMAINS
+        val validDomainsStatus = EntityExt.STATE_COLORED_DOMAINS
     }
 
     val viewModel: ManageTilesViewModel by viewModels()

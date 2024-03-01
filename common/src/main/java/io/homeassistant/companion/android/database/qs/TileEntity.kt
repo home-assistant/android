@@ -17,8 +17,10 @@ data class TileEntity(
     /** Icon name, such as "mdi:account-alert" */
     @ColumnInfo(name = "icon_name")
     val iconName: String?,
-    @ColumnInfo(name = "entity_id")
-    val entityId: String,
+    @ColumnInfo(name = "action_entity_id")
+    val actionEntityId: String,
+    @ColumnInfo(name = "status_entity_id", defaultValue = "")
+    val statusEntityId: String,
     @ColumnInfo(name = "label")
     val label: String,
     @ColumnInfo(name = "subtitle")
@@ -30,7 +32,7 @@ data class TileEntity(
 )
 
 val TileEntity.isSetup: Boolean
-    get() = this.label.isNotBlank() && this.entityId.isNotBlank()
+    get() = this.label.isNotBlank() && this.actionEntityId.isNotBlank()
 
 val TileEntity.numberedId: Int
     get() = this.tileId.split("_")[1].toInt()
