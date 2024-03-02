@@ -235,7 +235,7 @@ class ManageTilesViewModel @Inject constructor(
     }
 
     fun selectServerId(serverId: Int) {
-        val resetEntity = serverId != selectedServerId && actionEntities[serverId]?.none { it.entityId == selectedActionEntityId }  == true && statusEntities[serverId]?.none { it.entityId == selectedStatusEntityId }  == true
+        val resetEntity = serverId != selectedServerId && actionEntities[serverId]?.none { it.entityId == selectedActionEntityId } == true && statusEntities[serverId]?.none { it.entityId == selectedStatusEntityId } == true
         selectedServerId = serverId
         loadEntities(serverId)
         selectActionEntityId(if (resetEntity) "" else selectedActionEntityId)
@@ -259,7 +259,14 @@ class ManageTilesViewModel @Inject constructor(
 
     fun selectIcon(icon: IIcon?) {
         selectedIconId = icon?.mdiName
-        selectedIcon = icon ?: sortedActionEntities.firstOrNull { it.entityId == selectedActionEntityId }?.getIcon(app)
+        selectedIcon = icon
+            ?: if (selectedStatusEntityId != "") {
+                sortedStatusEntities.firstOrNull { it.entityId == selectedStatusEntityId }
+                    ?.getIcon(app)
+            } else {
+                sortedActionEntities.firstOrNull { it.entityId == selectedActionEntityId }
+                    ?.getIcon(app)
+            }
     }
 
     private fun updateExistingTileFields(currentTile: TileEntity) {

@@ -106,13 +106,13 @@ abstract class TileExtensions : TileService() {
             stateUpdateJob = mainScope.launch {
                 val tileData = tileDao.get(getTileId())
                 if (tileData != null &&
-                    tileData.isSetup &&
-                    tileData.actionEntityId.split('.')[0] in toggleDomainsWithLock &&
-                    serverManager.getServer(tileData.serverId) != null
+                    tileData.isSetup && (
+                        tileData.actionEntityId != "" || tileData.statusEntityId.split('.')[0] in domainWithIconChange
+                        ) && serverManager.getServer(tileData.serverId) != null
                 ) {
-                    val entity = if (tileData.statusEntityId != ""){
+                    val entity = if (tileData.statusEntityId != "") {
                         serverManager.integrationRepository(tileData.serverId).getEntityUpdates(listOf(tileData.statusEntityId))
-                    }else{
+                    } else {
                         serverManager.integrationRepository(tileData.serverId).getEntityUpdates(listOf(tileData.actionEntityId))
                     }
                     entity?.collect {
@@ -150,7 +150,16 @@ abstract class TileExtensions : TileService() {
                     tile.subtitle = tileData.subtitle
                 }
                 val state: Entity<*>? =
-                    if (
+                    if (tileData.statusEntityId != "") {
+                        withContext(Dispatchers.IO) {
+                            try {
+                                serverManager.integrationRepository(tileData.serverId).getEntity(tileData.statusEntityId)
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Unable to get state of statusEntity for tile", e)
+                                null
+                            }
+                        }
+                    } else if (
                         tileData.actionEntityId.split(".")[0] in toggleDomainsWithLock ||
                         tileData.iconName == null
                     ) {
@@ -158,7 +167,7 @@ abstract class TileExtensions : TileService() {
                             try {
                                 serverManager.integrationRepository(tileData.serverId).getEntity(tileData.actionEntityId)
                             } catch (e: Exception) {
-                                Log.e(TAG, "Unable to get state for tile", e)
+                                Log.e(TAG, "Unable to get state of actionEntity for tile", e)
                                 null
                             }
                         }
@@ -232,7 +241,7 @@ abstract class TileExtensions : TileService() {
         }
 
         val hasTile = setTileData(tileId, tile)
-        val needsUpdate = tileData != null && tileData.actionEntityId.split('.')[0] !in toggleDomainsWithLock
+        val needsUpdate = tileData != null && tileData.statusEntityId == "" && tileData.actionEntityId.split('.')[0] !in toggleDomainsWithLock
         if (hasTile) {
             if (tileData?.serverId == null || serverManager.getServer(tileData.serverId) == null) {
                 tileClickedError(tileData, null)
@@ -339,6 +348,7 @@ abstract class TileExtensions : TileService() {
     companion object {
         private const val TAG = "TileExtensions"
         private val toggleDomainsWithLock = EntityExt.DOMAINS_TOGGLE
+        private val domainWithIconChange = EntityExt.STATE_COLORED_DOMAINS
     }
 
     private fun handleInject() {

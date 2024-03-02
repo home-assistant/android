@@ -119,7 +119,7 @@ import kotlinx.coroutines.runBlocking
         AutoMigration(from = 42, to = 43),
         AutoMigration(from = 43, to = 44),
         AutoMigration(from = 44, to = 45),
-        AutoMigration(from = 45, to = 46, spec = AppDatabase.Companion.Migration45to46::class),
+        AutoMigration(from = 45, to = 46, spec = AppDatabase.Companion.Migration45to46::class)
     ]
 )
 @TypeConverters(
