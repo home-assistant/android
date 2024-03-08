@@ -147,7 +147,8 @@ class SensorDetailViewModel @Inject constructor(
     }
 
     init {
-        val sensorFlow = sensorDao.getFullFlow(sensorId)
+        val serverId = serverManager.getServer()?.id ?: -1
+        val sensorFlow = sensorDao.getFullFlow(sensorId, serverId)
         viewModelScope.launch {
             sensorFlow.collect { map ->
                 sensors = map.toSensorsWithAttributes()
