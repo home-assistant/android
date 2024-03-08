@@ -24,7 +24,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
@@ -109,16 +108,4 @@ fun NfcWriteIdentifierDialog(
         onCancel = onCancel,
         onSave = { onSubmit(inputValue.value) }
     )
-}
-
-@Preview(showSystemUi = true)
-@Composable
-fun NfcWriteView_NfcDisabled_Preview() {
-    NfcWriteView(isNfcEnabled = false, identifier = "identifier")
-}
-
-@Preview(showSystemUi = true)
-@Composable
-fun NfcWriteView_NfcEnabled_Preview() {
-    NfcWriteView(isNfcEnabled = true, identifier = "identifier", onSetIdentifier = {})
 }

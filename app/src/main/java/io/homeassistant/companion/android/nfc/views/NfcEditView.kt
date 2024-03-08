@@ -25,7 +25,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -148,10 +147,4 @@ fun NfcTriggerExample(
         }
         NfcCodeContainer(text = example)
     }
-}
-
-@Preview(showSystemUi = true)
-@Composable
-fun NfcEditViewPreview() {
-    NfcEditView(identifier = "identifier", showDeviceSample = true, onDuplicateClicked = {}, onFireEventClicked = {})
 }

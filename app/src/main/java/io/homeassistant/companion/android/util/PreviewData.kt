@@ -1,10 +1,7 @@
 package io.homeassistant.companion.android.util
 
-import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.database.notification.NotificationItem
-import io.homeassistant.companion.android.onboarding.discovery.HomeAssistantInstance
-import java.net.URL
 import java.util.Calendar
 
 val notificationItem = NotificationItem(1, 1636389288682, "testing", "{\"message\":\"test\"}", "FCM", null)
@@ -29,6 +26,3 @@ val previewEntityList = mapOf(
 )
 
 val previewFavoritesList = listOf("light.test")
-
-val homeAssistantInstance1 = HomeAssistantInstance(name = "Home", url = URL("https://google.com"), version = HomeAssistantVersion(year = 2024, month = 1, release = 1))
-val homeAssistantInstance2 = HomeAssistantInstance(name = "Vacation Home", url = URL("http://localhost"), version = HomeAssistantVersion(year = 2024, month = 1, release = 1))
