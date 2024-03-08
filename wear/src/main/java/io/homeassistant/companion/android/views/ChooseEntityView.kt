@@ -25,7 +25,6 @@ import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.Text
-import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
@@ -157,7 +156,7 @@ private fun ChooseEntityChip(
     )
 }
 
-@Preview(device = WearDevices.LARGE_ROUND)
+@Preview(showSystemUi = true)
 @Composable
 fun ChooseEntityView_Empty_Preview() {
     ChooseEntityView(
@@ -174,7 +173,7 @@ fun ChooseEntityView_Empty_Preview() {
     )
 }
 
-@Preview(device = WearDevices.LARGE_ROUND)
+@Preview(showSystemUi = true)
 @Composable
 fun ChooseEntityView_WithData_Preview() {
     ChooseEntityView(
