@@ -35,9 +35,8 @@ import io.homeassistant.companion.android.common.util.capitalize
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
-import io.homeassistant.companion.android.util.playPreviewEntityScene1
-import io.homeassistant.companion.android.util.playPreviewEntityScene2
 import io.homeassistant.companion.android.util.stringForDomain
+import java.util.Calendar
 import java.util.Locale
 
 @Composable
@@ -180,21 +179,21 @@ fun ChooseEntityView_Empty_Preview() {
 fun ChooseEntityView_WithData_Preview() {
     ChooseEntityView(
         entitiesByDomainOrder = remember {
-            mutableStateListOf(playPreviewEntityScene1.entityId, playPreviewEntityScene2.entityId)
+            mutableStateListOf("first", "second")
         },
         entitiesByDomain = remember {
             mutableStateMapOf(
                 Pair(
-                    playPreviewEntityScene1.entityId,
-                    mutableStateListOf(playPreviewEntityScene1)
+                    "first",
+                    mutableStateListOf(Entity("first", "on", "", Calendar.getInstance(), Calendar.getInstance(), null))
                 ),
                 Pair(
-                    playPreviewEntityScene2.entityId,
-                    mutableStateListOf(playPreviewEntityScene2)
+                    "second",
+                    mutableStateListOf(Entity("second", "on", "", Calendar.getInstance(), Calendar.getInstance(), null))
                 )
             )
         },
-        favoriteEntityIds = remember { mutableStateOf(listOf(playPreviewEntityScene1.entityId)) },
+        favoriteEntityIds = remember { mutableStateOf(listOf("first")) },
         onNoneClicked = {},
         onEntitySelected = {},
         allowNone = false
