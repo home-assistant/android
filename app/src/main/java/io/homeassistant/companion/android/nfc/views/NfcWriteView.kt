@@ -113,12 +113,12 @@ fun NfcWriteIdentifierDialog(
 
 @Preview(showSystemUi = true)
 @Composable
-fun NfcWriteView_NfcDisabled_Preview() {
+fun NfcWriteViewNfcDisabledPreview() {
     NfcWriteView(isNfcEnabled = false, identifier = "identifier")
 }
 
 @Preview(showSystemUi = true)
 @Composable
-fun NfcWriteView_NfcEnabled_Preview() {
+fun NfcWriteViewNfcEnabledPreview() {
     NfcWriteView(isNfcEnabled = true, identifier = "identifier", onSetIdentifier = {})
 }

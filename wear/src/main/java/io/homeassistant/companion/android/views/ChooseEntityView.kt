@@ -160,7 +160,7 @@ private fun ChooseEntityChip(
 
 @Preview(device = WearDevices.LARGE_ROUND)
 @Composable
-fun ChooseEntityView_Empty_Preview() {
+fun ChooseEntityViewEmptyPreview() {
     ChooseEntityView(
         entitiesByDomainOrder = remember {
             mutableStateListOf()
@@ -177,7 +177,7 @@ fun ChooseEntityView_Empty_Preview() {
 
 @Preview(device = WearDevices.LARGE_ROUND)
 @Composable
-fun ChooseEntityView_WithData_Preview() {
+fun ChooseEntityViewWithDataPreview() {
     ChooseEntityView(
         entitiesByDomainOrder = remember {
             mutableStateListOf(playPreviewEntityScene1.entityId, playPreviewEntityScene2.entityId)
