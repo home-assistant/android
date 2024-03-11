@@ -157,7 +157,8 @@ class MainVehicleScreen(
                     carContext,
                     screenManager,
                     serverManager.integrationRepository(serverId.value),
-                    allEntities
+                    allEntities,
+                    entityRegistry
                 ).build()
             )
 
