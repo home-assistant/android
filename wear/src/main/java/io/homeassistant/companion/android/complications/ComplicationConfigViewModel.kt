@@ -62,7 +62,8 @@ class ComplicationConfigViewModel @Inject constructor(
         private set
     var entityShowUnit by mutableStateOf(true)
         private set
-
+    var entityForwardTaps by mutableStateOf(true)
+        private set
     init {
         loadEntities()
     }
@@ -76,6 +77,7 @@ class ComplicationConfigViewModel @Inject constructor(
                 selectedEntity = SimplifiedEntity(entityId = it.entityId)
                 entityShowTitle = it.showTitle
                 entityShowUnit = it.showUnit
+                entityForwardTaps = it.forwardTaps
                 if (loadingState == LoadingState.READY) {
                     updateSelectedEntity()
                 }
@@ -162,9 +164,13 @@ class ComplicationConfigViewModel @Inject constructor(
         entityShowUnit = show
     }
 
+    fun setForwardTaps(show: Boolean) {
+        entityForwardTaps = show
+    }
+
     fun addEntityStateComplication(id: Int, entity: SimplifiedEntity) {
         viewModelScope.launch {
-            entityStateComplicationsDao.add(EntityStateComplications(id, entity.entityId, entityShowTitle, entityShowUnit))
+            entityStateComplicationsDao.add(EntityStateComplications(id, entity.entityId, entityShowTitle, entityShowUnit, entityForwardTaps))
         }
     }
 

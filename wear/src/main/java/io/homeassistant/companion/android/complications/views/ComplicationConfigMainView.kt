@@ -57,12 +57,14 @@ fun LoadConfigView(
                     entity = complicationConfigViewModel.selectedEntity,
                     showTitle = complicationConfigViewModel.entityShowTitle,
                     showUnit = complicationConfigViewModel.entityShowUnit,
+                    forwardTaps = complicationConfigViewModel.entityForwardTaps,
                     loadingState = complicationConfigViewModel.loadingState,
                     onChooseEntityClicked = {
                         swipeDismissableNavController.navigate(SCREEN_CHOOSE_ENTITY)
                     },
                     onShowTitleClicked = complicationConfigViewModel::setShowTitle,
                     onShowUnitClicked = complicationConfigViewModel::setShowUnit,
+                    onForwardTapsClicked = complicationConfigViewModel::setForwardTaps,
                     onAcceptClicked = onAcceptClicked
                 )
             }
@@ -88,10 +90,12 @@ fun MainConfigView(
     entity: SimplifiedEntity?,
     showTitle: Boolean,
     showUnit: Boolean,
+    forwardTaps: Boolean,
     loadingState: ComplicationConfigViewModel.LoadingState,
     onChooseEntityClicked: () -> Unit,
     onShowTitleClicked: (Boolean) -> Unit,
     onShowUnitClicked: (Boolean) -> Unit,
+    onForwardTapsClicked: (Boolean) -> Unit,
     onAcceptClicked: () -> Unit
 ) {
     ThemeLazyColumn {
@@ -153,7 +157,18 @@ fun MainConfigView(
                     colors = getToggleButtonColors()
                 )
             }
-
+            item {
+                val isChecked = if (loaded) forwardTaps else false
+                ToggleButton(
+                    checked = isChecked,
+                    onCheckedChange = onForwardTapsClicked,
+                    label = { Text(stringResource(R.string.forward_taps_title)) },
+                    selectionControl = { ToggleSwitch(isChecked) },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = loaded && entity != null,
+                    colors = getToggleButtonColors()
+                )
+            }
             item {
                 FilledIconButton(
                     modifier = Modifier.padding(top = 8.dp).touchTargetAwareSize(IconButtonDefaults.SmallButtonSize),
@@ -182,10 +197,12 @@ fun PreviewMainConfigView() {
         entity = simplifiedEntity,
         showTitle = true,
         showUnit = false,
+        forwardTaps = false,
         loadingState = ComplicationConfigViewModel.LoadingState.READY,
         onChooseEntityClicked = {},
         onShowTitleClicked = {},
         onShowUnitClicked = {},
+        onForwardTapsClicked = {},
         onAcceptClicked = {}
     )
 }
