@@ -128,6 +128,7 @@ class MessagingManager @Inject constructor(
         const val PERSISTENT = "persistent"
         const val CHRONOMETER = "chronometer"
         const val WHEN = "when"
+        const val WHEN_RELATIVE = "when_relative"
         const val CAR_UI = "car_ui"
         const val KEY_TEXT_REPLY = "key_text_reply"
         const val INTENT_CLASS_NAME = "intent_class_name"
@@ -980,10 +981,15 @@ class MessagingManager @Inject constructor(
         data: Map<String, String>
     ) {
         try { // Without this, a non-numeric when value will crash the app
-            val notificationWhen = data[WHEN]?.toLongOrNull()?.times(1000) ?: 0
+            var notificationWhen = data[WHEN]?.toLongOrNull()?.times(1000) ?: 0
+            val isRelative = data[WHEN_RELATIVE]?.toBoolean() ?: false
             val usesChronometer = data[CHRONOMETER]?.toBoolean() ?: false
 
             if (notificationWhen != 0L) {
+                if (isRelative) {
+                    notificationWhen += System.currentTimeMillis()
+                }
+
                 builder.setWhen(notificationWhen)
                 builder.setUsesChronometer(usesChronometer)
 
