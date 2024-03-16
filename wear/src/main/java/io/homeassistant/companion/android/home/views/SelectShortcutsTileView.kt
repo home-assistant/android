@@ -52,7 +52,7 @@ fun SelectShortcutsTileView(
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     },
-                    selectionControl = { ToggleCheckbox(isShowShortcutTextEnabled) },
+                    toggleControl = { ToggleCheckbox(isShowShortcutTextEnabled) },
                     colors = getToggleButtonColors()
                 )
             }
