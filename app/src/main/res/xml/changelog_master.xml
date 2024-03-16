@@ -1,21 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2024.2.4 - Main" versioncode="3">
+    <release version="2024.3.3 - Main" versioncode="3">
         <change>Add instant updates for all Volume sensors</change>
         <change>Add Network sensor for IPv6 addresses</change>
+        <change>Android Auto: Hide hidden entities in Navigation menu</change>
         <change>Allow Climate entities to cycle through HVAC modes in device controls</change>
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2024.2.4 - Wear" versioncode="2">
+    <release version="2024.3.3 - Wear" versioncode="2">
         <change>Add instant updates for all Volume sensors</change>
         <change>Add Network sensor for IPv6 addresses</change>
         <change>Add option to update Camera and Template tiles when the tile is in view</change>
         <change>Bug fixes, design tweaks and dependency updates</change>
     </release>
-    <release version="2024.2.4 - Automotive" versioncode="1">
+    <release version="2024.3.3 - Automotive" versioncode="1">
         <change>Add instant updates for all Volume sensors</change>
         <change>Add Network sensor for IPv6 addresses</change>
+        <change>Driving Interface: Hide hidden entities in Navigation menu</change>
         <change>Bug fixes and dependency updates</change>
     </release>
 </changelog>
