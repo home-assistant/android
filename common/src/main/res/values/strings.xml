@@ -696,6 +696,7 @@
     <string name="sensor_setting_ble_measured_power_at_1m_title">Measured power</string>
     <string name="sensor_setting_ble_minor_title">Minor</string>
     <string name="sensor_setting_ble_transmit_enabled_title">Enable transmitter</string>
+    <string name="sensor_setting_ble_home_wifi_only_title">Transmit on Home SSID only</string>
     <string name="sensor_setting_ble_transmit_power_high_label">High</string>
     <string name="sensor_setting_ble_transmit_power_low_label">Low</string>
     <string name="sensor_setting_ble_transmit_power_medium_label">Medium</string>
