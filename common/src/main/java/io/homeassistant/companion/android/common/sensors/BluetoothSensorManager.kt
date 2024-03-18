@@ -248,9 +248,7 @@ class BluetoothSensorManager : SensorManager {
         )
     }
 
-    private fun isPermittedOnThisWifiNetwork(context: Context): Boolean {
-        return serverManager(context).defaultServers.any { it.connection.isHomeWifiSsid() }
-    }
+    private fun isPermittedOnThisWifiNetwork(context: Context) = serverManager(context).defaultServers.any { it.connection.isHomeWifiSsid() }
 
     private fun updateBLEDevice(context: Context) {
         val transmitActive = getToggleSetting(context, bleTransmitter, SETTING_BLE_TRANSMIT_ENABLED, default = true)
