@@ -353,7 +353,7 @@ class BluetoothSensorManager : SensorManager {
         // transmit when BT is on, if we are not already transmitting, or details have changed, and we're permitted on this wifi network
         if (isBtOn(context)) {
             if (bleTransmitterDevice.transmitRequested && (!bleTransmitterDevice.transmitting || bleTransmitterDevice.restartRequired) &&
-                !bleTransmitterDevice.onlyTransmitOnHomeWifiSetting || isPermittedOnThisWifiNetwork(context)
+                (!bleTransmitterDevice.onlyTransmitOnHomeWifiSetting || isPermittedOnThisWifiNetwork(context))
             ) {
                 TransmitterManager.startTransmitting(context, bleTransmitterDevice)
             }
