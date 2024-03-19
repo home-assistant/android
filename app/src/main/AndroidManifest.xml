@@ -393,6 +393,11 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".barcode.BarcodeScannerActivity"
+            android:exported="false"
+            android:theme="@style/Theme.HomeAssistant.Config" />
+
         <activity android:name=".assist.AssistActivity"
             android:exported="true"
             android:windowSoftInputMode="adjustResize"
