@@ -100,6 +100,10 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.util.Calendar
 
 class MessagingManager @Inject constructor(
     @ApplicationContext val context: Context,
@@ -1242,6 +1246,7 @@ class MessagingManager @Inject constructor(
             return@withContext image
         }
 
+    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     private suspend fun saveTempAnimatedImage(serverId: Int, url: URL?, requiresAuth: Boolean = false): Uri? =
         withContext(
             Dispatchers.IO
@@ -1250,7 +1255,14 @@ class MessagingManager @Inject constructor(
                 return@withContext null
             }
 
-            val file = File(context.externalCacheDir, "animated_notification_image.gif")
+            // delete previous images that are no longer needed
+            val imageCutoff = LocalDateTime.now().minusHours(1)
+            context.externalCacheDir?.listFiles()?.filter { file ->
+                file.endsWith("_animated_notification.gif")
+                    && imageCutoff.isAfter(LocalDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), ZoneId.systemDefault()))
+            }?.forEach { expired -> expired.delete() }
+
+            val file = File(context.externalCacheDir, "${System.currentTimeMillis()}_animated_notification.gif")
             try {
                 val request = Request.Builder().apply {
                     url(url)
