@@ -87,6 +87,9 @@ import java.io.File
 import java.io.FileOutputStream
 import java.net.URL
 import java.net.URLDecoder
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -100,10 +103,6 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
-import java.time.Instant
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.util.Calendar
 
 class MessagingManager @Inject constructor(
     @ApplicationContext val context: Context,
@@ -1258,8 +1257,8 @@ class MessagingManager @Inject constructor(
             // delete previous images that are no longer needed
             val imageCutoff = LocalDateTime.now().minusHours(1)
             context.externalCacheDir?.listFiles()?.filter { file ->
-                file.endsWith("_animated_notification.gif")
-                    && imageCutoff.isAfter(LocalDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), ZoneId.systemDefault()))
+                file.endsWith("_animated_notification.gif") &&
+                    imageCutoff.isAfter(LocalDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), ZoneId.systemDefault()))
             }?.forEach { expired -> expired.delete() }
 
             val file = File(context.externalCacheDir, "${System.currentTimeMillis()}_animated_notification.gif")
