@@ -1255,9 +1255,9 @@ class MessagingManager @Inject constructor(
             }
 
             // delete previous images that are no longer needed
-            val imageCutoff = LocalDateTime.now().minusHours(1)
+            val imageCutoff = LocalDateTime.now().minusDays(2)
             context.externalCacheDir?.listFiles()?.filter { file ->
-                file.endsWith("_animated_notification.gif") &&
+                file.absolutePath.endsWith("_animated_notification.gif") &&
                     imageCutoff.isAfter(LocalDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), ZoneId.systemDefault()))
             }?.forEach { expired -> expired.delete() }
 
