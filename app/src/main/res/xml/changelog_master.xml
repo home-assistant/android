@@ -5,6 +5,7 @@
         <change>Add instant updates for all Volume sensors</change>
         <change>Add Network sensor for IPv6 addresses</change>
         <change>Add new BLE transmitter setting to enable only when on home WiFi network</change>
+        <change>Android 14 and up: Render GIFs in notifications</change>
         <change>Android Auto: Hide hidden entities in Navigation menu</change>
         <change>Allow Climate entities to cycle through HVAC modes in device controls</change>
         <change>Allow notification chronometer when parameter to be relative, so timeout parameter can be in sync</change>
