@@ -136,10 +136,4 @@
         <item name="android:src">@drawable/ic_baseline_volume_up_24</item>
         <item name="android:contentDescription">@string/mute_unmute</item>
     </style>
-
-<style name="HomeAssistantBarcodeScanner">
-    <!-- Hide most of the visible viewfinder, keep dots indicating recognition -->
-    <item name="zxing_viewfinder_mask">#00000000</item>
-    <item name="zxing_viewfinder_laser_visibility">false</item>
-</style>
 </resources>

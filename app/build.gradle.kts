@@ -182,6 +182,7 @@ dependencies {
     implementation(libs.compose.uiTooling)
     implementation(libs.activity.compose)
     implementation(libs.navigation.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
 
     implementation(libs.iconics.core)
     implementation(libs.iconics.compose)
