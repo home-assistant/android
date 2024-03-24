@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 
 /**
  * A semi-transparent overlay with a rounded square cutout in the middle (portrait) or on
- * the right half (landscape), to use as an viewfinder for the barcode scanner's camera.
+ * the right half (landscape), to use as a QR code viewfinder for the scanner's camera.
  * Based on https://stackoverflow.com/a/73533699/4214819.
  */
 @Composable
@@ -63,4 +63,4 @@ fun BarcodeScannerOverlay(
     }
 }
 
-val barcodeScannerOverlayColor = Color(0x77000000)
+val barcodeScannerOverlayColor = Color(0xAA000000)

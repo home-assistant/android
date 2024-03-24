@@ -13,6 +13,7 @@ import androidx.activity.viewModels
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.barcode.view.BarcodeScannerView
+import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 
 @AndroidEntryPoint
 class BarcodeScannerActivity : BaseActivity() {
@@ -38,20 +39,25 @@ class BarcodeScannerActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            BarcodeScannerView(
-                hasPermission = viewModel.hasPermission,
-                requestPermission = {
-                    cameraPermission.launch(Manifest.permission.CAMERA)
-                },
-                onResult = {
-                    // TODO return to WebViewActivity
-                    Log.d(TAG, "Decoded $it")
-                    Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
-                },
-                onCancel = {
-                    finish()
-                }
-            )
+            HomeAssistantAppTheme {
+                BarcodeScannerView(
+                    title = "Scan QR code",
+                    subtitle = "Find the code on your device",
+                    action = "Enter code manually",
+                    hasPermission = viewModel.hasPermission,
+                    requestPermission = {
+                        cameraPermission.launch(Manifest.permission.CAMERA)
+                    },
+                    onResult = {
+                        // TODO return to WebViewActivity
+                        Log.d(TAG, "Decoded $it")
+                        Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
+                    },
+                    onCancel = { forAction ->
+                        finish()
+                    }
+                )
+            }
         }
     }
 }
