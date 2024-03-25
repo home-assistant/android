@@ -1214,7 +1214,7 @@ class MessagingManager @Inject constructor(
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                                 saveTempAnimatedImage(serverId, url, !UrlUtil.isAbsoluteUrl(dataImage))?.let { filePath ->
                                     style.bigPicture(Icon.createWithContentUri(filePath))
-                                } ?: { style.bigPicture(bitmap) }
+                                } ?: run { style.bigPicture(bitmap) }
                             } else {
                                 style.bigPicture(bitmap)
                             }
