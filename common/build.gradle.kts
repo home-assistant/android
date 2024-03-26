@@ -70,8 +70,9 @@ dependencies {
 
     api(libs.androidx.work.runtime.ktx)
 
+    api(platform(libs.retrofit.bom))
     api(libs.retrofit)
-    implementation(libs.converter.jackson)
+    implementation(libs.retrofit.converter.jackson)
     implementation(libs.okhttp)
     implementation(libs.logging.interceptor)
     implementation(libs.jackson.module.kotlin)
