@@ -6,6 +6,8 @@ import android.content.ComponentName
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.View
 import android.widget.AdapterView
@@ -26,6 +28,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.domain
+import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
@@ -56,6 +59,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     private var selectedEntity: Entity<Any>? = null
     private var appendAttributes: Boolean = false
     private var selectedAttributeIds: ArrayList<String> = ArrayList()
+    private var labelFromEntity = false
 
     private lateinit var binding: WidgetStaticConfigureBinding
 
@@ -210,6 +214,8 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             appendAttributes = isChecked
         }
 
+        binding.label.addTextChangedListener(labelTextChanged)
+
         binding.backgroundType.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 binding.textColor.visibility =
@@ -267,6 +273,14 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     private val entityDropDownOnItemClick =
         AdapterView.OnItemClickListener { parent, _, position, _ ->
             selectedEntity = parent.getItemAtPosition(position) as Entity<Any>?
+            if (binding.label.text.isNullOrBlank() || labelFromEntity) {
+                selectedEntity?.friendlyName?.takeIf { it != selectedEntity?.entityId }?.let { name ->
+                    binding.label.removeTextChangedListener(labelTextChanged)
+                    binding.label.setText(name)
+                    labelFromEntity = true
+                    binding.label.addTextChangedListener(labelTextChanged)
+                }
+            }
             setupAttributes()
         }
 
@@ -274,6 +288,20 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         AdapterView.OnItemClickListener { parent, _, position, _ ->
             selectedAttributeIds.add(parent.getItemAtPosition(position) as String)
         }
+
+    private val labelTextChanged = object : TextWatcher {
+        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+            // Not implemented
+        }
+
+        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+            // Not implemented
+        }
+
+        override fun afterTextChanged(s: Editable?) {
+            labelFromEntity = false
+        }
+    }
 
     private fun setupAttributes() {
         val fetchedAttributes = selectedEntity?.attributes as? Map<String, String>
