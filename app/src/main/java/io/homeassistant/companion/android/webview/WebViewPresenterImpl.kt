@@ -100,7 +100,12 @@ class WebViewPresenterImpl @Inject constructor(
             loosing wifi signal and reopening app. Without this we would still be trying to use the
             internal url externally.
              */
-            if (oldUrlForServer != urlForServer || oldUrl?.host != url?.host) {
+            if (
+                oldUrlForServer != urlForServer ||
+                oldUrl?.protocol != url?.protocol ||
+                oldUrl?.host != url?.host ||
+                oldUrl?.port != url?.port
+            ) {
                 view.loadUrl(
                     url = Uri.parse(url.toString())
                         .buildUpon()
