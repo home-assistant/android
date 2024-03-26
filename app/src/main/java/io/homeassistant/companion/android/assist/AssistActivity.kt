@@ -5,19 +5,17 @@ import android.app.KeyguardManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.material.MaterialTheme
-import androidx.compose.runtime.SideEffect
-import androidx.compose.ui.graphics.Color
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
-import androidx.core.view.WindowCompat
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.assist.ui.AssistSheetView
@@ -63,6 +61,9 @@ class AssistActivity : BaseActivity() {
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge(
+            navigationBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT)
+        )
         super.onCreate(savedInstanceState)
         updateShowWhenLocked()
 
@@ -89,15 +90,8 @@ class AssistActivity : BaseActivity() {
 
         val fromFrontend = intent.getBooleanExtra(EXTRA_FROM_FRONTEND, false)
 
-        WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             HomeAssistantAppTheme {
-                val systemUiController = rememberSystemUiController()
-                val useDarkIcons = MaterialTheme.colors.isLight
-                SideEffect {
-                    systemUiController.setSystemBarsColor(Color.Transparent, darkIcons = useDarkIcons)
-                }
-
                 AssistSheetView(
                     conversation = viewModel.conversation,
                     pipelines = viewModel.pipelines,
