@@ -733,6 +733,7 @@
     <string name="sensor_setting_notification_allow_list_title">Allow list</string>
     <string name="sensor_setting_notification_disable_allow_list_title">Disable allow list requirement</string>
     <string name="sensor_setting_battery_current_divisor_title">Battery current divisor</string>
+    <string name="sensor_setting_battery_voltage_divisor_title">Battery voltage divisor</string>
     <string name="sensor_settings">Sensor settings</string>
     <string name="sensor_summary">Use this to manage what sensors are enabled/disabled.</string>
     <string name="sensor_title">Manage sensors</string>
@@ -1110,7 +1111,7 @@
     <string name="basic_sensor_name_battery_power">Battery power</string>
     <string name="widget_checkbox_require_authentication">Require authentication</string>
     <string name="widget_error_authenticating">Error authenticating - is an authentication method configured?</string>
-    <string name="sensor_description_battery_power">The current wattage of the device. To get the most out of this sensor consider using the \"Fast while charging\" sensor update frequency setting. If your values are not as expected you may need to adjust the \"Battery Current Divisor\" setting to get a proper unit of amperes for the \"current\" attribute. Android is supposed to report microamperes however, some devices may report a different unit. The default will convert microamperes to amperes.</string>
+    <string name="sensor_description_battery_power">The current wattage of the device. To get the most out of this sensor consider using the \"Fast while charging\" sensor update frequency setting.\n\nIf the sensor\'s state or attributes are not as expected, you may need to adjust the current or voltage divisor to get a correct value. Some devices report these values in a different unit.\n- The "Battery current divisor" will convert from microamperes to amperes by default.\n- The "Battery voltage divisor" will convert from millivolts to volts by default.</string>
     <string name="sensor_name_accent_color_sensor">Accent color</string>
     <string name="sensor_description_accent_color_sensor">A hexadecimal color value for the dynamic accent color used in the device theme</string>
     <string name="sensor_name_dynamic_color">Dynamic color</string>
