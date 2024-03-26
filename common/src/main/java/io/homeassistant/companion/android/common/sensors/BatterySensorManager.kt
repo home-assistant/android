@@ -14,6 +14,8 @@ class BatterySensorManager : SensorManager {
         private const val TAG = "BatterySensor"
         private const val SETTING_BATTERY_CURRENT_DIVISOR = "battery_current_divisor"
         private const val DEFAULT_BATTERY_CURRENT_DIVISOR = 1000000
+        private const val SETTING_BATTERY_VOLTAGE_DIVISOR = "battery_voltage_divisor"
+        private const val DEFAULT_BATTERY_VOLTAGE_DIVISOR = 1000
         private val batteryLevel = SensorManager.BasicSensor(
             "battery_level",
             "sensor",
@@ -281,7 +283,7 @@ class BatterySensorManager : SensorManager {
             return
         }
 
-        val voltage = getBatteryVolts(intent)
+        val voltage = getBatteryVolts(context, intent)
         val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
         val current = getBatteryCurrent(context, batteryManager)
         val wattage = voltage * current
@@ -345,7 +347,13 @@ class BatterySensorManager : SensorManager {
         return batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW) / dividerSetting.toFloat()
     }
 
-    private fun getBatteryVolts(intent: Intent): Float {
-        return intent.getIntExtra(BatteryManager.EXTRA_VOLTAGE, 0) / 1000f
+    private fun getBatteryVolts(context: Context, intent: Intent): Float {
+        val dividerSetting = getNumberSetting(
+            context,
+            batteryPower,
+            SETTING_BATTERY_VOLTAGE_DIVISOR,
+            DEFAULT_BATTERY_VOLTAGE_DIVISOR
+        )
+        return intent.getIntExtra(BatteryManager.EXTRA_VOLTAGE, 0) / dividerSetting.toFloat()
     }
 }
