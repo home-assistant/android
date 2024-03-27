@@ -779,7 +779,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                 "config_screen/show" ->
                                     // TODO restore
                                     startActivity(
-                                        BarcodeScannerActivity.newInstance(this@WebViewActivity)
+                                        BarcodeScannerActivity.newInstance(this@WebViewActivity, "Scan QR code", "Find the code on your device", "Enter code manually")
                                     )
                                 "tag/write" ->
                                     writeNfcTag.launch(
