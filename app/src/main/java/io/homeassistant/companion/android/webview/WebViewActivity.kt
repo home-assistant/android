@@ -77,6 +77,7 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.assist.AssistActivity
 import io.homeassistant.companion.android.authenticator.Authenticator
+import io.homeassistant.companion.android.barcode.BarcodeScannerActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
@@ -769,8 +770,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                     )
                                 }
                                 "config_screen/show" ->
+                                    // TODO restore
                                     startActivity(
-                                        SettingsActivity.newInstance(this@WebViewActivity)
+                                        BarcodeScannerActivity.newInstance(this@WebViewActivity, "Scan QR code", "Find the code on your device", "Enter code manually")
                                     )
                                 "tag/write" ->
                                     writeNfcTag.launch(
