@@ -12,6 +12,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.wear.compose.material.Switch
 import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.LocalContentColor
@@ -28,7 +29,6 @@ import io.homeassistant.companion.android.common.data.integration.isActive
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
 import io.homeassistant.companion.android.theme.wearColorScheme
-import io.homeassistant.companion.android.util.ToggleSwitch
 import io.homeassistant.companion.android.util.WearToggleChip
 import io.homeassistant.companion.android.util.onEntityClickedFeedback
 import io.homeassistant.companion.android.util.previewEntity1
@@ -99,7 +99,7 @@ fun EntityUi(
                 }
             },
             enabled = isEnabled,
-            toggleControl = { ToggleSwitch(isChecked) },
+            toggleControl = { Switch(checked = isChecked) },
             colors = colors
         )
     } else {

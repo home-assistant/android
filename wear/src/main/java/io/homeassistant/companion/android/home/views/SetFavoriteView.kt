@@ -93,7 +93,7 @@ private fun FavoriteToggleChip(
                 overflow = TextOverflow.Ellipsis
             )
         },
-        selectionControl = { ToggleSwitch(checked) },
+        toggleControl = { ToggleSwitch(checked) },
         colors = getToggleButtonColors()
     )
 }

@@ -135,7 +135,7 @@ fun MainConfigView(
                     checked = isChecked,
                     onCheckedChange = onShowTitleClicked,
                     label = { Text(stringResource(R.string.show_entity_title)) },
-                    selectionControl = { ToggleSwitch(isChecked) },
+                    toggleControl = { ToggleSwitch(isChecked) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = loaded && entity != null,
                     colors = getToggleButtonColors()
@@ -147,7 +147,7 @@ fun MainConfigView(
                     checked = isChecked,
                     onCheckedChange = onShowUnitClicked,
                     label = { Text(stringResource(R.string.show_unit_title)) },
-                    selectionControl = { ToggleSwitch(isChecked) },
+                    toggleControl = { ToggleSwitch(isChecked) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = loaded && entity != null,
                     colors = getToggleButtonColors()
