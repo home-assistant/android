@@ -19,8 +19,13 @@ class BarcodeScannerViewModel @Inject constructor(
     var hasPermission by mutableStateOf(false)
         private set
 
+    var hasFlashlight by mutableStateOf(false)
+        private set
+
     init {
         checkPermission()
+
+        hasFlashlight = app.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH)
     }
 
     fun checkPermission() {
