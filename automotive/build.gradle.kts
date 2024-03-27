@@ -87,6 +87,7 @@ android {
     }
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility(libs.versions.javaVersion.get())
         targetCompatibility(libs.versions.javaVersion.get())
     }
@@ -154,6 +155,8 @@ android {
 dependencies {
     implementation(project(":common"))
 
+    coreLibraryDesugaring(libs.tools.desugar.jdk)
+
     implementation(libs.blurView)
 
     implementation(libs.kotlin.stdlib)
@@ -208,6 +211,7 @@ dependencies {
     implementation(libs.compose.uiTooling)
     implementation(libs.activity.compose)
     implementation(libs.navigation.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
 
     implementation(libs.iconics.core)
     implementation(libs.iconics.compose)
