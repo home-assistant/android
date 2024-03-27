@@ -218,6 +218,8 @@ dependencies {
     implementation(libs.reorderable)
     implementation(libs.changeLog)
 
+    implementation(libs.zxing)
+
     implementation(libs.car.core)
     implementation(libs.car.automotive)
 }
