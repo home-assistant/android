@@ -2,8 +2,14 @@ package io.homeassistant.companion.android.common.util
 
 import android.annotation.SuppressLint
 import android.media.AudioFormat
+import android.media.AudioManager
+import android.media.AudioManager.OnAudioFocusChangeListener
 import android.media.AudioRecord
 import android.media.MediaRecorder.AudioSource
+import androidx.media.AudioAttributesCompat
+import androidx.media.AudioFocusRequestCompat
+import androidx.media.AudioManagerCompat
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -16,7 +22,9 @@ import kotlinx.coroutines.launch
 /**
  * Wrapper around [AudioRecord] providing pre-configured audio recording functionality.
  */
-class AudioRecorder {
+class AudioRecorder @Inject constructor(
+    private val audioManager: AudioManager?
+) {
 
     companion object {
         // Docs: 'currently the only rate that is guaranteed to work on all devices'
@@ -42,6 +50,9 @@ class AudioRecorder {
     /** Flow emitting audio recording bytes as they come in */
     val audioBytes = _audioBytes.asSharedFlow()
 
+    private var focusRequest: AudioFocusRequestCompat? = null
+    private val focusListener = OnAudioFocusChangeListener { /* Not used */ }
+
     /**
      * Start the recorder. After calling this function, data will be available via [audioBytes].
      * @throws SecurityException when missing permission to record audio
@@ -55,6 +66,7 @@ class AudioRecorder {
         if (!ready) return false
 
         if (recorderJob == null || recorderJob?.isActive == false) {
+            requestFocus()
             recorder?.startRecording()
             recorderJob = ioScope.launch {
                 val dataSize = minBufferSize()
@@ -84,6 +96,7 @@ class AudioRecorder {
         recorder?.stop()
         recorderJob?.cancel()
         recorderJob = null
+        abandonFocus()
         releaseRecorder()
     }
 
@@ -101,4 +114,34 @@ class AudioRecorder {
     }
 
     private fun minBufferSize() = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT)
+
+    private fun requestFocus() {
+        if (audioManager == null) return
+        if (focusRequest == null) {
+            focusRequest = AudioFocusRequestCompat.Builder(AudioManagerCompat.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE).run {
+                setAudioAttributes(
+                    AudioAttributesCompat.Builder().run {
+                        setUsage(AudioAttributesCompat.USAGE_ASSISTANT)
+                        setContentType(AudioAttributesCompat.CONTENT_TYPE_SPEECH)
+                        build()
+                    }
+                )
+                setOnAudioFocusChangeListener(focusListener)
+                build()
+            }
+        }
+
+        focusRequest?.let {
+            try {
+                AudioManagerCompat.requestAudioFocus(audioManager, it)
+            } catch (e: Exception) {
+                // We don't use the result / focus if available but if not still continue
+            }
+        }
+    }
+
+    private fun abandonFocus() {
+        if (audioManager == null || focusRequest == null) return
+        AudioManagerCompat.abandonAudioFocusRequest(audioManager, focusRequest!!)
+    }
 }
