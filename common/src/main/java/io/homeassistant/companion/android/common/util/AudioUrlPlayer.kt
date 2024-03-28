@@ -9,7 +9,6 @@ import android.util.Log
 import androidx.media.AudioAttributesCompat
 import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
-import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.Dispatchers
@@ -19,9 +18,7 @@ import kotlinx.coroutines.withContext
 /**
  * Simple interface for playing short streaming audio (from URLs).
  */
-class AudioUrlPlayer @Inject constructor(
-    private val audioManager: AudioManager?
-) {
+class AudioUrlPlayer(private val audioManager: AudioManager?) {
 
     companion object {
         private const val TAG = "AudioUrlPlayer"

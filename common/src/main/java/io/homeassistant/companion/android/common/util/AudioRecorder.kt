@@ -9,7 +9,6 @@ import android.media.MediaRecorder.AudioSource
 import androidx.media.AudioAttributesCompat
 import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -22,9 +21,7 @@ import kotlinx.coroutines.launch
 /**
  * Wrapper around [AudioRecord] providing pre-configured audio recording functionality.
  */
-class AudioRecorder @Inject constructor(
-    private val audioManager: AudioManager?
-) {
+class AudioRecorder(private val audioManager: AudioManager?) {
 
     companion object {
         // Docs: 'currently the only rate that is guaranteed to work on all devices'
