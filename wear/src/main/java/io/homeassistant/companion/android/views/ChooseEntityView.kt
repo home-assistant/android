@@ -5,7 +5,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -16,11 +19,13 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.Text
+import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
@@ -30,6 +35,8 @@ import io.homeassistant.companion.android.common.util.capitalize
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
+import io.homeassistant.companion.android.util.playPreviewEntityScene1
+import io.homeassistant.companion.android.util.playPreviewEntityScene2
 import io.homeassistant.companion.android.util.stringForDomain
 import java.util.Locale
 
@@ -148,5 +155,48 @@ private fun ChooseEntityChip(
             )
         },
         colors = getFilledTonalButtonColors()
+    )
+}
+
+@Preview(device = WearDevices.LARGE_ROUND)
+@Composable
+fun ChooseEntityViewEmptyPreview() {
+    ChooseEntityView(
+        entitiesByDomainOrder = remember {
+            mutableStateListOf()
+        },
+        entitiesByDomain = remember {
+            mutableStateMapOf()
+        },
+        favoriteEntityIds = remember { mutableStateOf(listOf()) },
+        onNoneClicked = {},
+        onEntitySelected = {},
+        allowNone = true
+    )
+}
+
+@Preview(device = WearDevices.LARGE_ROUND)
+@Composable
+fun ChooseEntityViewWithDataPreview() {
+    ChooseEntityView(
+        entitiesByDomainOrder = remember {
+            mutableStateListOf(playPreviewEntityScene1.entityId, playPreviewEntityScene2.entityId)
+        },
+        entitiesByDomain = remember {
+            mutableStateMapOf(
+                Pair(
+                    playPreviewEntityScene1.entityId,
+                    mutableStateListOf(playPreviewEntityScene1)
+                ),
+                Pair(
+                    playPreviewEntityScene2.entityId,
+                    mutableStateListOf(playPreviewEntityScene2)
+                )
+            )
+        },
+        favoriteEntityIds = remember { mutableStateOf(listOf(playPreviewEntityScene1.entityId)) },
+        onNoneClicked = {},
+        onEntitySelected = {},
+        allowNone = false
     )
 }
