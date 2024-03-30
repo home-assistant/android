@@ -1,23 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2024.3.4 - Main" versioncode="3">
+    <release version="2024.3.5 - Main" versioncode="3">
         <change>Add instant updates for all Volume sensors</change>
         <change>Add Network sensor for IPv6 addresses</change>
         <change>Add new BLE transmitter setting to enable only when on home WiFi network</change>
+        <change>Add new battery voltage divisor setting for devices that do not report in millivolts</change>
         <change>Android 14 and up: Render GIFs in notifications</change>
         <change>Android Auto: Hide hidden entities in Navigation menu</change>
         <change>Allow Climate entities to cycle through HVAC modes in device controls</change>
         <change>Allow notification chronometer when parameter to be relative, so timeout parameter can be in sync</change>
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2024.3.4 - Wear" versioncode="2">
+    <release version="2024.3.5 - Wear" versioncode="2">
         <change>Add instant updates for all Volume sensors</change>
         <change>Add Network sensor for IPv6 addresses</change>
         <change>Add option to update Camera and Template tiles when the tile is in view</change>
         <change>Bug fixes, design tweaks and dependency updates</change>
     </release>
-    <release version="2024.3.4 - Automotive" versioncode="1">
+    <release version="2024.3.5 - Automotive" versioncode="1">
         <change>Add instant updates for all Volume sensors</change>
         <change>Add Network sensor for IPv6 addresses</change>
         <change>Add new BLE transmitter setting to enable only when on home WiFi network</change>
