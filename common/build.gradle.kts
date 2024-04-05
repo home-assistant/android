@@ -62,6 +62,7 @@ dependencies {
     implementation(libs.appcompat)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.media)
 
     api(libs.androidx.room.runtime)
     api(libs.androidx.room.ktx)
