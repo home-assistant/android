@@ -2,6 +2,7 @@
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
     <release version="2024.4.1 - Main" versioncode="3">
+        <change>Assist: Pause media during interactions</change>
         <change>Add instant updates for all Volume sensors</change>
         <change>Add Network sensor for IPv6 addresses</change>
         <change>Add new BLE transmitter setting to enable only when on home WiFi network</change>
@@ -13,6 +14,7 @@
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2024.4.1 - Wear" versioncode="2">
+        <change>Assist: Pause media during interactions</change>
         <change>Add instant updates for all Volume sensors</change>
         <change>Add Network sensor for IPv6 addresses</change>
         <change>Add option to update Camera and Template tiles when the tile is in view</change>
