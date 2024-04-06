@@ -1256,7 +1256,7 @@ class MessagingManager @Inject constructor(
         withContext(
             Dispatchers.IO
         ) {
-            if (url == null || url.path.endsWith("gif").not()) {
+            if (url == null || (url.path.endsWith("gif").not() && !isGif(url))) {
                 return@withContext null
             }
 
@@ -1286,6 +1286,20 @@ class MessagingManager @Inject constructor(
             }
             return@withContext FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
         }
+
+    private fun isGif(url: URL): Boolean {
+        val connection = url.openConnection() as? HttpURLConnection ?: return false
+        try {
+            connection.setRequestProperty("User-Agent", "Mozilla/5.0")
+            val contentType = connection.contentType
+            return contentType != null && contentType.startsWith("image/gif")
+        } catch (e: IOException) {
+            Log.e(TAG, "Error checking content type", e)
+            return false
+        } finally {
+            connection.disconnect()
+        }
+    }
 
     private suspend fun handleVideo(
         builder: NotificationCompat.Builder,
