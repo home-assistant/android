@@ -1258,7 +1258,7 @@ class MessagingManager @Inject constructor(
         withContext(
             Dispatchers.IO
         ) {
-            if (url == null || (url.path.endsWith("gif").not() && !isGif(url))) {
+            if (url == null || !isGif(url)) {
                 return@withContext null
             }
 
@@ -1291,11 +1291,29 @@ class MessagingManager @Inject constructor(
 
     private suspend fun isGif(url: URL): Boolean {
         try {
-            val connection = url.openConnection() as? HttpURLConnection ?: return false
-            connection.setRequestProperty("User-Agent", HomeAssistantApis.USER_AGENT_STRING)
-            connection.requestMethod = "HEAD"
-            val contentType = connection.contentType
-            return contentType != null && contentType.startsWith("image/gif")
+            if (url.path.endsWith(".gif")) {
+                return true
+            }
+
+            if (url.protocol == "http" || url.protocol == "https") {
+                val connection = url.openConnection() as? HttpURLConnection ?: return false
+                connection.setRequestProperty("User-Agent", HomeAssistantApis.USER_AGENT_STRING)
+                connection.requestMethod = "HEAD"
+                val contentType = connection.contentType
+                return contentType != null && contentType.startsWith("image/gif")
+            }
+
+            if (url.path.startsWith("/api/image_proxy/")) {
+                val connection = url.openConnection()
+                val inputStream = connection.inputStream
+                val bytes = ByteArray(6)
+                inputStream.read(bytes, 0, 6)
+                inputStream.close()
+                val fileSignature = String(bytes, Charsets.UTF_8)
+                if (fileSignature == "GIF87a" || fileSignature == "GIF89a") {
+                    return true
+                }
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Error checking content type", e)
             return false
