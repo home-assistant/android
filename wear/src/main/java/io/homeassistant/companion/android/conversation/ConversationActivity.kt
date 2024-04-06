@@ -1,10 +1,15 @@
 package io.homeassistant.companion.android.conversation
 
 import android.Manifest
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.IBinder
+import android.os.Message
+import android.os.Messenger
 import android.os.PowerManager
 import android.speech.RecognizerIntent
 import androidx.activity.ComponentActivity
@@ -16,6 +21,7 @@ import androidx.core.content.getSystemService
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.util.AudioUrlPlayerService
 import io.homeassistant.companion.android.conversation.views.LoadAssistView
 import io.homeassistant.companion.android.home.HomeActivity
 import kotlinx.coroutines.launch
@@ -49,6 +55,10 @@ class ConversationActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
+
+        val playerIntent = Intent(this, AudioUrlPlayerService::class.java)
+        startService(playerIntent)
+        bindService(playerIntent, serviceConnection, Context.BIND_AUTO_CREATE)
 
         lifecycleScope.launch {
             val launchIntent = conversationViewModel.onCreate(hasRecordingPermission())
@@ -89,6 +99,35 @@ class ConversationActivity : ComponentActivity() {
         val launchIntent = conversationViewModel.onNewIntent(intent)
         if (launchIntent) {
             launchVoiceInputIntent()
+        }
+    }
+
+    private val serviceConnection: ServiceConnection = object : ServiceConnection {
+        private var player: Messenger? = null
+        private var serviceBound = false
+
+        override fun onServiceConnected(name: ComponentName, service: IBinder) {
+            player = Messenger(service)
+            serviceBound = true
+            conversationViewModel.setAudioPlayer(this::startAudio, this::stopAudio)
+        }
+
+        override fun onServiceDisconnected(name: ComponentName) {
+            player = null
+            serviceBound = false
+            conversationViewModel.clearAudioPlayer()
+        }
+
+        fun startAudio(path: String) {
+            if (serviceBound) {
+                player?.send(Message.obtain(null, AudioUrlPlayerService.MSG_START_PLAYBACK, AudioUrlPlayerService.PlaybackRequestMessage(path, true)))
+            }
+        }
+
+        fun stopAudio() {
+            if (serviceBound) {
+                player?.send(Message.obtain(null, AudioUrlPlayerService.MSG_STOP_PLAYBACK, null))
+            }
         }
     }
 

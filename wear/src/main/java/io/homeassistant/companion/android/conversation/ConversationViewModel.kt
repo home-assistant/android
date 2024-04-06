@@ -15,7 +15,6 @@ import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
 import io.homeassistant.companion.android.common.util.AudioRecorder
-import io.homeassistant.companion.android.common.util.AudioUrlPlayer
 import io.homeassistant.companion.android.conversation.views.AssistMessage
 import javax.inject.Inject
 import kotlinx.coroutines.launch
@@ -24,10 +23,9 @@ import kotlinx.coroutines.launch
 class ConversationViewModel @Inject constructor(
     private val serverManager: ServerManager,
     private val audioRecorder: AudioRecorder,
-    audioUrlPlayer: AudioUrlPlayer,
     private val wearPrefsRepository: WearPrefsRepository,
     application: Application
-) : AssistViewModelBase(serverManager, audioRecorder, audioUrlPlayer, application) {
+) : AssistViewModelBase(serverManager, audioRecorder, application) {
 
     companion object {
         private const val TAG = "ConvViewModel"

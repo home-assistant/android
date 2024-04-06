@@ -16,7 +16,6 @@ import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
 import io.homeassistant.companion.android.common.util.AudioRecorder
-import io.homeassistant.companion.android.common.util.AudioUrlPlayer
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 
@@ -24,9 +23,8 @@ import kotlinx.coroutines.launch
 class AssistViewModel @Inject constructor(
     val serverManager: ServerManager,
     private val audioRecorder: AudioRecorder,
-    audioUrlPlayer: AudioUrlPlayer,
     application: Application
-) : AssistViewModelBase(serverManager, audioRecorder, audioUrlPlayer, application) {
+) : AssistViewModelBase(serverManager, audioRecorder, application) {
 
     companion object {
         const val TAG = "AssistViewModel"
@@ -125,7 +123,7 @@ class AssistViewModel @Inject constructor(
     fun onNewIntent(intent: Intent?, lockedMatches: Boolean) {
         if (
             (intent?.flags != null && intent.flags and Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT != 0) ||
-            intent?.action in listOf(Intent.ACTION_ASSIST, "android.intent.action.VOICE_ASSIST")
+            intent?.action in listOf(Intent.ACTION_ASSIST, "android.intent.action.VOICE_ASSIST", Intent.ACTION_VOICE_COMMAND)
         ) {
             if (!lockedMatches && inputMode != AssistInputMode.BLOCKED) {
                 _conversation.clear()
@@ -327,7 +325,7 @@ class AssistViewModel @Inject constructor(
         if (!proactive) requestSilently = false
     }
 
-    fun onPause() {
+    fun onDestroy() {
         requestPermission = null
         stopRecording()
         stopPlayback()

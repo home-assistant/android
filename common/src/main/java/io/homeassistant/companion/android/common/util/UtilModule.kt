@@ -18,9 +18,4 @@ object UtilModule {
     @Singleton
     fun provideAudioRecorder(@ApplicationContext appContext: Context): AudioRecorder =
         AudioRecorder(appContext.getSystemService<AudioManager>())
-
-    @Provides
-    @Singleton
-    fun provideAudioUrlPlayer(@ApplicationContext appContext: Context): AudioUrlPlayer =
-        AudioUrlPlayer(appContext.getSystemService<AudioManager>())
 }

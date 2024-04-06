@@ -14,7 +14,6 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.As
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineSttEnd
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineTtsEnd
 import io.homeassistant.companion.android.common.util.AudioRecorder
-import io.homeassistant.companion.android.common.util.AudioUrlPlayer
 import io.homeassistant.companion.android.util.UrlUtil
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -22,7 +21,6 @@ import kotlinx.coroutines.launch
 abstract class AssistViewModelBase(
     private val serverManager: ServerManager,
     private val audioRecorder: AudioRecorder,
-    private val audioUrlPlayer: AudioUrlPlayer,
     application: Application
 ) : AndroidViewModel(application) {
 
@@ -52,12 +50,25 @@ abstract class AssistViewModelBase(
     private var binaryHandlerId: Int? = null
     private var conversationId: String? = null
 
+    private var onPlayAudio: ((path: String) -> Unit)? = null
+    private var onStopAudio: (() -> Unit)? = null
+
     abstract fun getInput(): AssistInputMode?
     abstract fun setInput(inputMode: AssistInputMode)
 
     protected fun clearPipelineData() {
         binaryHandlerId = null
         conversationId = null
+    }
+
+    fun setAudioPlayer(onPlayAudio: (path: String) -> Unit, onStopAudio: () -> Unit) {
+        this.onPlayAudio = onPlayAudio
+        this.onStopAudio = onStopAudio
+    }
+
+    fun clearAudioPlayer() {
+        this.onPlayAudio = null
+        this.onStopAudio = null
     }
 
     /**
@@ -167,9 +178,7 @@ abstract class AssistViewModelBase(
 
     private fun playAudio(path: String) {
         UrlUtil.handle(serverManager.getServer(selectedServerId)?.connection?.getUrl(), path)?.let {
-            viewModelScope.launch {
-                audioUrlPlayer.playAudio(it.toString())
-            }
+            onPlayAudio?.let { f -> f(it.toString()) }
         }
     }
 
@@ -195,5 +204,7 @@ abstract class AssistViewModelBase(
         recorderProactive = false
     }
 
-    protected fun stopPlayback() = audioUrlPlayer.stop()
+    protected fun stopPlayback() {
+        onStopAudio?.let { it() }
+    }
 }

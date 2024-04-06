@@ -2,12 +2,17 @@ package io.homeassistant.companion.android.assist
 
 import android.Manifest
 import android.app.KeyguardManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.os.IBinder
+import android.os.Message
+import android.os.Messenger
 import android.view.WindowManager
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -21,6 +26,10 @@ import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.assist.ui.AssistSheetView
 import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.AudioUrlPlayerService
+import io.homeassistant.companion.android.common.util.AudioUrlPlayerService.Companion.MSG_START_PLAYBACK
+import io.homeassistant.companion.android.common.util.AudioUrlPlayerService.Companion.MSG_STOP_PLAYBACK
+import io.homeassistant.companion.android.common.util.AudioUrlPlayerService.PlaybackRequestMessage
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.webview.WebViewActivity
 
@@ -67,6 +76,10 @@ class AssistActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         updateShowWhenLocked()
 
+        val playerIntent = Intent(this, AudioUrlPlayerService::class.java)
+        startService(playerIntent)
+        bindService(playerIntent, serviceConnection, Context.BIND_AUTO_CREATE)
+
         if (savedInstanceState == null) {
             viewModel.onCreate(
                 hasPermission = hasRecordingPermission(),
@@ -82,6 +95,9 @@ class AssistActivity : BaseActivity() {
                 },
                 startListening = if (intent.hasExtra(EXTRA_START_LISTENING)) {
                     intent.getBooleanExtra(EXTRA_START_LISTENING, true)
+                } else if (intent.action == Intent.ACTION_VOICE_COMMAND) {
+                    // Always start listening if triggered via the voice command (e.g., from a BT headset).
+                    true
                 } else {
                     null
                 }
@@ -129,9 +145,9 @@ class AssistActivity : BaseActivity() {
         viewModel.setPermissionInfo(hasRecordingPermission()) { requestPermission.launch(Manifest.permission.RECORD_AUDIO) }
     }
 
-    override fun onPause() {
-        super.onPause()
-        viewModel.onPause()
+    override fun onDestroy() {
+        super.onDestroy()
+        viewModel.onDestroy()
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -154,6 +170,7 @@ class AssistActivity : BaseActivity() {
                 window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED)
             } else {
                 setShowWhenLocked(true)
+                setTurnScreenOn(true)
             }
         } else {
             if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.O) {
@@ -161,6 +178,35 @@ class AssistActivity : BaseActivity() {
                 window.clearFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED)
             } else {
                 setShowWhenLocked(false)
+            }
+        }
+    }
+
+    private val serviceConnection: ServiceConnection = object : ServiceConnection {
+        private var player: Messenger? = null
+        private var serviceBound = false
+
+        override fun onServiceConnected(name: ComponentName, service: IBinder) {
+            player = Messenger(service)
+            serviceBound = true
+            viewModel.setAudioPlayer(this::startAudio, this::stopAudio)
+        }
+
+        override fun onServiceDisconnected(name: ComponentName) {
+            player = null
+            serviceBound = false
+            viewModel.clearAudioPlayer()
+        }
+
+        fun startAudio(path: String) {
+            if (serviceBound) {
+                player?.send(Message.obtain(null, MSG_START_PLAYBACK, PlaybackRequestMessage(path, true)))
+            }
+        }
+
+        fun stopAudio() {
+            if (serviceBound) {
+                player?.send(Message.obtain(null, MSG_STOP_PLAYBACK, null))
             }
         }
     }
