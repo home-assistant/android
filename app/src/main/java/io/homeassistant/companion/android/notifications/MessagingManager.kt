@@ -1310,14 +1310,13 @@ class MessagingManager @Inject constructor(
                 inputStream.read(bytes, 0, 6)
                 inputStream.close()
                 val fileSignature = String(bytes, Charsets.UTF_8)
-                if (fileSignature == "GIF87a" || fileSignature == "GIF89a") {
-                    return true
-                }
+                return fileSignature == "GIF87a" || fileSignature == "GIF89a"
+
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error checking content type", e)
-            return false
         }
+        return false
     }
 
     private suspend fun handleVideo(
