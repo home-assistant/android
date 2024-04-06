@@ -1303,7 +1303,7 @@ class MessagingManager @Inject constructor(
                 return contentType != null && contentType.startsWith("image/gif")
             }
 
-            if (url.path.startsWith("/api/image_proxy/")) {
+            if (url.path.startsWith("/api/image_proxy/") || url.path.startsWith("/api/camera_proxy/")) {
                 val connection = url.openConnection()
                 val inputStream = connection.inputStream
                 val bytes = ByteArray(6)
