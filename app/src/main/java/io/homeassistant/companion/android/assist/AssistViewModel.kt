@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
 import io.homeassistant.companion.android.common.util.AudioRecorder
+import io.homeassistant.companion.android.common.util.AudioUrlPlayer
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 
@@ -23,8 +24,9 @@ import kotlinx.coroutines.launch
 class AssistViewModel @Inject constructor(
     val serverManager: ServerManager,
     private val audioRecorder: AudioRecorder,
+    audioUrlPlayer: AudioUrlPlayer,
     application: Application
-) : AssistViewModelBase(serverManager, audioRecorder, application) {
+) : AssistViewModelBase(serverManager, audioRecorder, audioUrlPlayer, application) {
 
     companion object {
         const val TAG = "AssistViewModel"

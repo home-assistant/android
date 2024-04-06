@@ -868,12 +868,6 @@
                 android:value="true" />
         </service>
 
-        <service
-            android:name=".common.util.AudioUrlPlayerService"
-            android:enabled="true"
-            android:exported="false">
-        </service>
-
         <receiver
             android:name=".notifications.NotificationActionReceiver"
             android:enabled="true"

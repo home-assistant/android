@@ -2,17 +2,12 @@ package io.homeassistant.companion.android.assist
 
 import android.Manifest
 import android.app.KeyguardManager
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
-import android.os.IBinder
-import android.os.Message
-import android.os.Messenger
 import android.view.WindowManager
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -26,10 +21,6 @@ import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.assist.ui.AssistSheetView
 import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.util.AudioUrlPlayerService
-import io.homeassistant.companion.android.common.util.AudioUrlPlayerService.Companion.MSG_START_PLAYBACK
-import io.homeassistant.companion.android.common.util.AudioUrlPlayerService.Companion.MSG_STOP_PLAYBACK
-import io.homeassistant.companion.android.common.util.AudioUrlPlayerService.PlaybackRequestMessage
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.webview.WebViewActivity
 
@@ -75,10 +66,6 @@ class AssistActivity : BaseActivity() {
         )
         super.onCreate(savedInstanceState)
         updateShowWhenLocked()
-
-        val playerIntent = Intent(this, AudioUrlPlayerService::class.java)
-        startService(playerIntent)
-        bindService(playerIntent, serviceConnection, Context.BIND_AUTO_CREATE)
 
         if (savedInstanceState == null) {
             viewModel.onCreate(
@@ -178,35 +165,6 @@ class AssistActivity : BaseActivity() {
                 window.clearFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED)
             } else {
                 setShowWhenLocked(false)
-            }
-        }
-    }
-
-    private val serviceConnection: ServiceConnection = object : ServiceConnection {
-        private var player: Messenger? = null
-        private var serviceBound = false
-
-        override fun onServiceConnected(name: ComponentName, service: IBinder) {
-            player = Messenger(service)
-            serviceBound = true
-            viewModel.setAudioPlayer(this::startAudio, this::stopAudio)
-        }
-
-        override fun onServiceDisconnected(name: ComponentName) {
-            player = null
-            serviceBound = false
-            viewModel.clearAudioPlayer()
-        }
-
-        fun startAudio(path: String) {
-            if (serviceBound) {
-                player?.send(Message.obtain(null, MSG_START_PLAYBACK, PlaybackRequestMessage(path, true)))
-            }
-        }
-
-        fun stopAudio() {
-            if (serviceBound) {
-                player?.send(Message.obtain(null, MSG_STOP_PLAYBACK, null))
             }
         }
     }
