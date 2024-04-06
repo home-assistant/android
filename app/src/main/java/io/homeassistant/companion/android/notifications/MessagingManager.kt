@@ -1311,7 +1311,6 @@ class MessagingManager @Inject constructor(
                 inputStream.close()
                 val fileSignature = String(bytes, Charsets.UTF_8)
                 return fileSignature == "GIF87a" || fileSignature == "GIF89a"
-
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error checking content type", e)
