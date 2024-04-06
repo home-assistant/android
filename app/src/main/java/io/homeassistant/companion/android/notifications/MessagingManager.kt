@@ -47,8 +47,8 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
-import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.notifications.DeviceCommandData
@@ -1291,7 +1291,7 @@ class MessagingManager @Inject constructor(
     private suspend fun isGif(url: URL): Boolean {
         try {
             val connection = url.openConnection()
-            connection.setRequestProperty("User-Agent", "Home Assistant/${BuildConfig.VERSION_NAME} (Android ${Build.VERSION.RELEASE}; ${Build.MODEL})")
+            connection.setRequestProperty("User-Agent", HomeAssistantApis.USER_AGENT_STRING)
             val contentType = connection.contentType
             return contentType != null && contentType.startsWith("image/gif")
         } catch (e: Exception) {
