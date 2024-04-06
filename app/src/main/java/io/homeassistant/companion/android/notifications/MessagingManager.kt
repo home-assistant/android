@@ -1290,7 +1290,7 @@ class MessagingManager @Inject constructor(
     private suspend fun isGif(url: URL): Boolean {
         try {
             val connection = url.openConnection()
-            connection.setRequestProperty("User-Agent", "Mozilla/5.0")
+            connection.setRequestProperty("User-Agent", "Home Assistant/${BuildConfig.VERSION_NAME} (Android ${Build.VERSION.RELEASE}; ${Build.MODEL})")
             val contentType = connection.contentType
             return contentType != null && contentType.startsWith("image/gif")
         } catch (e: Exception) {
