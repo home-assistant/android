@@ -1292,6 +1292,7 @@ class MessagingManager @Inject constructor(
         try {
             val connection = url.openConnection()
             connection.setRequestProperty("User-Agent", HomeAssistantApis.USER_AGENT_STRING)
+            connection.requestMethod = "HEAD"
             val contentType = connection.contentType
             return contentType != null && contentType.startsWith("image/gif")
         } catch (e: Exception) {
