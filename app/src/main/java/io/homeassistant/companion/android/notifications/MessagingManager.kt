@@ -86,6 +86,7 @@ import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebViewActivity
 import java.io.File
 import java.io.FileOutputStream
+import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLDecoder
 import java.time.Instant
@@ -1290,7 +1291,7 @@ class MessagingManager @Inject constructor(
 
     private suspend fun isGif(url: URL): Boolean {
         try {
-            val connection = url.openConnection()
+            val connection = url.openConnection() as? HttpURLConnection ?: return false
             connection.setRequestProperty("User-Agent", HomeAssistantApis.USER_AGENT_STRING)
             connection.requestMethod = "HEAD"
             val contentType = connection.contentType
