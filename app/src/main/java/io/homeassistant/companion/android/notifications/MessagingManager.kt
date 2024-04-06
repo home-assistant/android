@@ -1287,17 +1287,15 @@ class MessagingManager @Inject constructor(
             return@withContext FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
         }
 
-    private fun isGif(url: URL): Boolean {
-        val connection = url.openConnection() as? HttpURLConnection ?: return false
+    private suspend fun isGif(url: URL): Boolean {
         try {
+            val connection = url.openConnection()
             connection.setRequestProperty("User-Agent", "Mozilla/5.0")
             val contentType = connection.contentType
             return contentType != null && contentType.startsWith("image/gif")
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             Log.e(TAG, "Error checking content type", e)
             return false
-        } finally {
-            connection.disconnect()
         }
     }
 
