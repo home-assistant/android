@@ -132,6 +132,11 @@ class AssistActivity : BaseActivity() {
         viewModel.setPermissionInfo(hasRecordingPermission()) { requestPermission.launch(Manifest.permission.RECORD_AUDIO) }
     }
 
+    override fun onPause() {
+        super.onPause()
+        viewModel.onPause()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         viewModel.onDestroy()

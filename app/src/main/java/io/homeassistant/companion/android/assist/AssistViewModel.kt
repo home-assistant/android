@@ -327,6 +327,11 @@ class AssistViewModel @Inject constructor(
         if (!proactive) requestSilently = false
     }
 
+    fun onPause() {
+        requestPermission = null
+        stopRecording()
+    }
+
     fun onDestroy() {
         requestPermission = null
         stopRecording()
