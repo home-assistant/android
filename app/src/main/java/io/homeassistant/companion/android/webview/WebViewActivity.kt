@@ -101,6 +101,7 @@ import io.homeassistant.companion.android.util.TLSWebViewClient
 import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebView.ErrorType
+import io.homeassistant.companion.android.webview.externalbus.ExternalBusMessage
 import java.util.concurrent.Executors
 import javax.inject.Inject
 import javax.inject.Named
@@ -155,14 +156,17 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             }
         }
     private val writeNfcTag = registerForActivityResult(WriteNfcTag()) { messageId ->
-        webView.externalBus(
-            id = messageId,
-            type = "result",
-            success = true,
-            result = emptyMap<String, String>()
-        ) {
-            Log.d(TAG, "NFC Write Complete $it")
-        }
+        sendExternalBusMessage(
+            ExternalBusMessage(
+                id = messageId,
+                type = "result",
+                success = true,
+                result = emptyMap<String, String>(),
+                callback = {
+                    Log.d(TAG, "NFC Write Complete $it")
+                }
+            )
+        )
     }
     private val showWebFileChooser = registerForActivityResult(ShowWebFileChooser()) { result ->
         mFilePathCallback?.onReceiveValue(result)
@@ -726,23 +730,26 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                     val hasNfc = pm.hasSystemFeature(PackageManager.FEATURE_NFC)
                                     val canCommissionMatter = presenter.appCanCommissionMatterDevice()
                                     val canExportThread = presenter.appCanExportThreadCredentials()
-                                    webView.externalBus(
-                                        id = JSONObject(message).get("id"),
-                                        type = "result",
-                                        success = true,
-                                        result = JSONObject(
-                                            mapOf(
-                                                "hasSettingsScreen" to true,
-                                                "canWriteTag" to hasNfc,
-                                                "hasExoPlayer" to true,
-                                                "canCommissionMatter" to canCommissionMatter,
-                                                "canImportThreadCredentials" to canExportThread,
-                                                "hasAssist" to true
-                                            )
+                                    sendExternalBusMessage(
+                                        ExternalBusMessage(
+                                            id = JSONObject(message).get("id"),
+                                            type = "result",
+                                            success = true,
+                                            result = JSONObject(
+                                                mapOf(
+                                                    "hasSettingsScreen" to true,
+                                                    "canWriteTag" to hasNfc,
+                                                    "hasExoPlayer" to true,
+                                                    "canCommissionMatter" to canCommissionMatter,
+                                                    "canImportThreadCredentials" to canExportThread,
+                                                    "hasAssist" to true
+                                                )
+                                            ),
+                                            callback = {
+                                                Log.d(TAG, "Callback $it")
+                                            }
                                         )
-                                    ) {
-                                        Log.d(TAG, "Callback $it")
-                                    }
+                                    )
 
                                     // TODO This feature is deprecated and should be removed after 2022.6
                                     getAndSetStatusBarNavigationBarColors()
@@ -793,6 +800,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                 "exoplayer/resize" -> exoResizeHls(json)
                                 "haptic" -> processHaptic(json.getJSONObject("payload").getString("hapticType"))
                                 "theme-update" -> getAndSetStatusBarNavigationBarColors()
+                                else -> presenter.onExternalBusMessage(json)
                             }
                         }
                     }
@@ -958,14 +966,16 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             exoPlayerView.visibility = View.VISIBLE
             findViewById<ImageButton>(R.id.exo_ha_mute)?.setOnClickListener { exoToggleMute() }
         }
-        webView.externalBus(
-            id = json.get("id"),
-            type = "result",
-            success = true,
-            result = null
-        ) {
-            Log.d(TAG, "Callback $it")
-        }
+        sendExternalBusMessage(
+            ExternalBusMessage(
+                id = json.get("id"),
+                type = "result",
+                success = true,
+                callback = {
+                    Log.d(TAG, "Callback $it")
+                }
+            )
+        )
     }
 
     fun exoStopHls() {
@@ -1490,28 +1500,21 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         )
     }
 
-    private fun WebView.externalBus(
-        id: Any,
-        type: String,
-        success: Boolean,
-        result: Any? = null,
-        error: Any? = null,
-        callback: ValueCallback<String>?
-    ) {
+    override fun sendExternalBusMessage(message: ExternalBusMessage) {
         val map = mutableMapOf(
-            "id" to id,
-            "type" to type,
-            "success" to success
+            "id" to message.id,
+            "type" to message.type,
+            "success" to message.success
         )
-        if (result != null) map["result"] = result
-        if (error != null) map["error"] = error
+        message.result?.let { map["result"] = it }
+        message.error?.let { map["error"] = it }
 
         val json = JSONObject(map.toMap())
         val script = "externalBus($json);"
 
         Log.d(TAG, script)
 
-        this.evaluateJavascript(script, callback)
+        webView.evaluateJavascript(script, message.callback)
     }
 
     private fun downloadFile(url: String, contentDisposition: String, mimetype: String) {

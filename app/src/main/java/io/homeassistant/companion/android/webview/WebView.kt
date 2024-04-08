@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.webview
 
 import android.net.http.SslError
+import io.homeassistant.companion.android.webview.externalbus.ExternalBusMessage
 
 interface WebView {
     enum class ErrorType {
@@ -15,6 +16,8 @@ interface WebView {
     fun setStatusBarAndNavigationBarColor(statusBarColor: Int, navigationBarColor: Int)
 
     fun setExternalAuth(script: String)
+
+    fun sendExternalBusMessage(message: ExternalBusMessage)
 
     fun relaunchApp()
 
