@@ -45,16 +45,14 @@ object DefaultSliderControl : HaControl {
         integrationRepository: IntegrationRepository,
         action: ControlAction
     ): Boolean {
-        return runBlocking {
-            integrationRepository.callService(
-                action.templateId.split(".")[0],
-                "set_value",
-                hashMapOf(
-                    "entity_id" to action.templateId,
-                    "value" to (action as? FloatAction)?.newValue.toString()
-                )
+        integrationRepository.callService(
+            action.templateId.split(".")[0],
+            "set_value",
+            hashMapOf(
+                "entity_id" to action.templateId,
+                "value" to (action as? FloatAction)?.newValue.toString()
             )
-            return@runBlocking true
-        }
+        )
+        return true
     }
 }
