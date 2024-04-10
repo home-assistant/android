@@ -21,8 +21,8 @@ class LanguagesManager @Inject constructor(
         private const val SYSTEM_MANAGES_LOCALE = "system_managed"
     }
 
-    fun getCurrentLang(): String {
-        return runBlocking {
+    suspend fun getCurrentLang(): String {
+        return run {
             val lang = prefs.getCurrentLang()
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 migrateLangSetting()
