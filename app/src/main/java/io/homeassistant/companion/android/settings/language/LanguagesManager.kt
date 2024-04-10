@@ -38,8 +38,8 @@ class LanguagesManager @Inject constructor(
         }
     }
 
-    fun saveLang(lang: String?) {
-        return runBlocking {
+    suspend fun saveLang(lang: String?) {
+        return run {
             if (!lang.isNullOrEmpty()) {
                 val currentLang = getCurrentLang()
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
