@@ -7,8 +7,10 @@ import android.os.BatteryManager
 import android.os.Build
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import java.math.RoundingMode
+import kotlin.math.ceil
 
 class BatterySensorManager : SensorManager {
 
@@ -100,7 +102,7 @@ class BatterySensorManager : SensorManager {
             commonR.string.sensor_description_remaining_charge_time,
             "mdi:battery-clock",
             "duration",
-            unitOfMeasurement = "ms",
+            unitOfMeasurement = "m",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
 
@@ -330,12 +332,21 @@ class BatterySensorManager : SensorManager {
         }
 
         val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
-        val remainingCharge = batteryManager.computeChargeTimeRemaining()
+        val chargeTime = batteryManager.computeChargeTimeRemaining()
+        val remainingCharge = if (chargeTime >= 0) {
+            chargeTime.toFloat() / 1000000f
+        } else {
+            STATE_UNAVAILABLE
+        }
 
         onSensorUpdated(
             context,
             remainingChargeTime,
-            remainingCharge,
+            if (chargeTime >= 0) {
+                ceil(remainingCharge as Float).toInt()
+            } else {
+                remainingCharge
+            },
             remainingChargeTime.statelessIcon,
             mapOf()
         )
