@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
+import android.os.Build
+import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import java.math.RoundingMode
@@ -91,6 +93,17 @@ class BatterySensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
 
+        private val remainingChargeTime = SensorManager.BasicSensor(
+            "remaining_charge_time",
+            "sensor",
+            commonR.string.basic_sensor_name_remaining_charge_time,
+            commonR.string.sensor_description_remaining_charge_time,
+            "mdi:battery-clock",
+            "duration",
+            unitOfMeasurement = "ms",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+        )
+
         fun getIsCharging(intent: Intent): Boolean {
             val status: Int = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
 
@@ -106,16 +119,22 @@ class BatterySensorManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_battery
 
+    private val defaultSensorList = listOf(
+        batteryLevel,
+        batteryState,
+        isChargingState,
+        chargerTypeState,
+        batteryHealthState,
+        batteryTemperature,
+        batteryPower
+    )
+
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        return listOf(
-            batteryLevel,
-            batteryState,
-            isChargingState,
-            chargerTypeState,
-            batteryHealthState,
-            batteryTemperature,
-            batteryPower
-        )
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            defaultSensorList.plus(remainingChargeTime)
+        } else {
+            defaultSensorList
+        }
     }
 
     override fun hasSensor(context: Context): Boolean {
@@ -139,6 +158,9 @@ class BatterySensorManager : SensorManager {
             updateBatteryHealth(context, intent)
             updateBatteryTemperature(context, intent)
             updateBatteryPower(context, intent)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                updateRemainingChargeTime(context)
+            }
         }
     }
 
@@ -298,6 +320,24 @@ class BatterySensorManager : SensorManager {
                 "current" to current,
                 "voltage" to voltage
             )
+        )
+    }
+
+    @RequiresApi(Build.VERSION_CODES.P)
+    private fun updateRemainingChargeTime(context: Context) {
+        if (!isEnabled(context, remainingChargeTime)) {
+            return
+        }
+
+        val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
+        val remainingCharge = batteryManager.computeChargeTimeRemaining()
+
+        onSensorUpdated(
+            context,
+            remainingChargeTime,
+            remainingCharge,
+            remainingChargeTime.statelessIcon,
+            mapOf()
         )
     }
 
