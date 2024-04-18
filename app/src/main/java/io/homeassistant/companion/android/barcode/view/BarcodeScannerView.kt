@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.times
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.isVisible
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import com.google.zxing.BarcodeFormat
 import com.journeyapps.barcodescanner.CaptureManager
 import com.journeyapps.barcodescanner.DecoratedBarcodeView
 import io.homeassistant.companion.android.common.R as commonR
@@ -66,7 +67,7 @@ fun BarcodeScannerView(
     hasPermission: Boolean,
     didRequestPermission: Boolean,
     requestPermission: () -> Unit,
-    onResult: (String) -> Unit,
+    onResult: (String, BarcodeFormat) -> Unit,
     onCancel: (Boolean) -> Unit
 ) {
     val context = LocalContext.current
@@ -82,7 +83,7 @@ fun BarcodeScannerView(
             captureManager.decode()
             decodeContinuous { result ->
                 result.text.ifBlank { null }?.let {
-                    onResult(it)
+                    onResult(it, result.barcodeFormat)
                 }
             }
         }

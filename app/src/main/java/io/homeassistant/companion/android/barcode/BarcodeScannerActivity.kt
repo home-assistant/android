@@ -17,11 +17,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.toArgb
+import com.google.zxing.BarcodeFormat
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.barcode.view.BarcodeScannerView
 import io.homeassistant.companion.android.barcode.view.barcodeScannerOverlayColor
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
+import java.util.Locale
 
 @AndroidEntryPoint
 class BarcodeScannerActivity : BaseActivity() {
@@ -76,10 +78,18 @@ class BarcodeScannerActivity : BaseActivity() {
                     hasPermission = viewModel.hasPermission,
                     requestPermission = { requestPermission(false) },
                     didRequestPermission = !requestSilently,
-                    onResult = {
+                    onResult = { text, format ->
                         // TODO return to WebViewActivity / external bus
-                        Log.d(TAG, "Decoded $it")
-                        Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
+                        val frontendFormat = when (format) {
+                            BarcodeFormat.PDF_417 -> "pdf417"
+                            BarcodeFormat.MAXICODE,
+                            BarcodeFormat.RSS_14,
+                            BarcodeFormat.RSS_EXPANDED,
+                            BarcodeFormat.UPC_EAN_EXTENSION -> "unknown"
+                            else -> format.toString().lowercase(Locale.getDefault())
+                        }
+                        Log.d(TAG, "Decoded $text ($format)")
+                        Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
                     },
                     onCancel = { forAction ->
                         // TODO return to WebViewActivity / external bus
