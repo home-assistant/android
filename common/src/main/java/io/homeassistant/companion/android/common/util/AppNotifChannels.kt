@@ -10,6 +10,7 @@ const val CHANNEL_LOCATION_DISABLED = "Location disabled"
 const val CHANNEL_DOWNLOADS = "downloads"
 const val CHANNEL_GENERAL = "general"
 const val CHANNEL_BEACON_MONITOR = "beacon"
+const val CHANNEL_BLE_TRANSMITTER = "transmitter"
 
 val appCreatedChannels = listOf(
     CHANNEL_SENSOR_WORKER,
@@ -21,5 +22,6 @@ val appCreatedChannels = listOf(
     CHANNEL_LOCATION_DISABLED,
     CHANNEL_DOWNLOADS,
     CHANNEL_GENERAL,
-    CHANNEL_BEACON_MONITOR
+    CHANNEL_BEACON_MONITOR,
+    CHANNEL_BLE_TRANSMITTER
 )

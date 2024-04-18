@@ -1,19 +1,34 @@
 package io.homeassistant.companion.android.common.bluetooth.ble
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseSettings
 import android.content.Context
+import android.content.Intent
+import android.os.Build
+import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
+import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
+import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
+import io.homeassistant.companion.android.common.sensors.SensorUpdateReceiver
+import io.homeassistant.companion.android.common.util.CHANNEL_BLE_TRANSMITTER
 import java.util.UUID
 import org.altbeacon.beacon.Beacon
+import org.altbeacon.beacon.BeaconManager
 import org.altbeacon.beacon.BeaconParser
 import org.altbeacon.beacon.BeaconTransmitter
+import org.altbeacon.beacon.Identifier
+import org.altbeacon.beacon.Region
 
 object TransmitterManager {
     private lateinit var physicalTransmitter: BeaconTransmitter
+    private lateinit var beaconManager: BeaconManager
     private lateinit var beacon: Beacon
+    private val region = Region("dummy-region", Identifier.parse("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF"), null, null)
 
     private fun buildBeacon(haTransmitterI: IBeaconTransmitter): Beacon {
         val builder = Beacon.Builder()
@@ -58,9 +73,31 @@ object TransmitterManager {
         }
         val bluetoothAdapter = context.getSystemService<BluetoothManager>()?.adapter
         val bluetoothOn = bluetoothAdapter?.isEnabled == true
+        beaconManager = BeaconManager.getInstanceForApplication(context)
+
         if (bluetoothOn) {
             val beacon = buildBeacon(haTransmitter)
             if (!physicalTransmitter.isStarted) {
+                val builder = NotificationCompat.Builder(context, CHANNEL_BLE_TRANSMITTER)
+                builder.setSmallIcon(R.drawable.ic_stat_ic_notification)
+                builder.setContentTitle(context.getString(R.string.beacon_transmitting))
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    val channel = NotificationChannel(CHANNEL_BLE_TRANSMITTER, context.getString(R.string.beacon_transmitting), NotificationManager.IMPORTANCE_LOW)
+                    val notifManager = context.getSystemService<NotificationManager>()!!
+                    notifManager.createNotificationChannel(channel)
+                }
+                val stopScanningIntent = Intent(context, SensorUpdateReceiver::class.java)
+                stopScanningIntent.action = SensorReceiverBase.ACTION_STOP_BEACON_TRANSMITTING
+                val stopScanningPendingIntent = PendingIntent.getBroadcast(context, 0, stopScanningIntent, PendingIntent.FLAG_MUTABLE)
+                builder.addAction(0, context.getString(R.string.disable), stopScanningPendingIntent)
+                beaconManager.enableForegroundServiceScanning(builder.build(), 445)
+                beaconManager.setEnableScheduledScanJobs(false)
+                beaconManager.beaconParsers.clear()
+                beaconManager.backgroundBetweenScanPeriod = Long.MAX_VALUE
+                beaconManager.backgroundScanPeriod = 0
+                beaconManager.foregroundBetweenScanPeriod = Long.MAX_VALUE
+                beaconManager.foregroundScanPeriod = 0
+                beaconManager.startMonitoring(region)
                 physicalTransmitter.advertiseTxPowerLevel = getPowerLevel(haTransmitter)
                 physicalTransmitter.advertiseMode = getAdvertiseMode(haTransmitter)
                 physicalTransmitter.startAdvertising(
@@ -115,5 +152,7 @@ object TransmitterManager {
         }
         haTransmitter.transmitting = false
         haTransmitter.state = "Stopped"
+        beaconManager.stopMonitoring(region)
+        beaconManager.disableForegroundServiceScanning()
     }
 }

@@ -43,6 +43,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         const val ACTION_UPDATE_SENSOR = "io.homeassistant.companion.android.UPDATE_SENSOR"
         const val ACTION_UPDATE_SENSORS = "io.homeassistant.companion.android.UPDATE_SENSORS"
         const val ACTION_STOP_BEACON_SCANNING = "io.homeassistant.companion.android.STOP_BEACON_SCANNING"
+        const val ACTION_STOP_BEACON_TRANSMITTING = "io.homeassistant.companion.android.STOP_BEACON_TRANSMITTING"
         const val EXTRA_SENSOR_ID = "sensorId"
 
         fun shouldDoFastUpdates(context: Context): Boolean {
@@ -108,6 +109,11 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
 
         if (intent.action == ACTION_STOP_BEACON_SCANNING) {
             BluetoothSensorManager.enableDisableBeaconMonitor(context, false)
+            return
+        }
+
+        if (intent.action == ACTION_STOP_BEACON_TRANSMITTING) {
+            BluetoothSensorManager.enableDisableBLETransmitter(context, false)
             return
         }
 

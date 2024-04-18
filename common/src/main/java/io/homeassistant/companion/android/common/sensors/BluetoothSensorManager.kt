@@ -114,6 +114,7 @@ class BluetoothSensorManager : SensorManager {
             }
 
             sensorDao.add(SensorSetting(bleTransmitter.id, SETTING_BLE_TRANSMIT_ENABLED, transmitEnabled.toString(), SensorSettingType.TOGGLE))
+            SensorUpdateReceiver.updateSensors(context)
         }
 
         fun enableDisableBeaconMonitor(context: Context, monitorEnabled: Boolean) {
