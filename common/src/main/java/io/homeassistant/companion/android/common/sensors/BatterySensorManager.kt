@@ -334,7 +334,7 @@ class BatterySensorManager : SensorManager {
         val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
         val chargeTime = batteryManager.computeChargeTimeRemaining()
         val remainingCharge = if (chargeTime >= 0) {
-            chargeTime.toFloat() / 1000000f
+            chargeTime.toFloat() / 60000f
         } else {
             STATE_UNAVAILABLE
         }
