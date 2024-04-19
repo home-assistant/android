@@ -102,7 +102,7 @@ class BatterySensorManager : SensorManager {
             commonR.string.sensor_description_remaining_charge_time,
             "mdi:battery-clock",
             "duration",
-            unitOfMeasurement = "m",
+            unitOfMeasurement = "min",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
 
