@@ -10,7 +10,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import java.math.RoundingMode
-import kotlin.math.ceil
+import kotlin.math.floor
 
 class BatterySensorManager : SensorManager {
 
@@ -343,7 +343,7 @@ class BatterySensorManager : SensorManager {
             context,
             remainingChargeTime,
             if (chargeTime >= 0) {
-                ceil(remainingCharge as Float).toInt()
+                floor(remainingCharge as Float).toInt()
             } else {
                 remainingCharge
             },
