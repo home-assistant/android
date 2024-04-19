@@ -78,14 +78,19 @@ open class HomeAssistantApplication : Application() {
             }
         )
 
-        // Add extra audio receiver for devices that support it
+        // Listen for microphone mute changes
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            registerReceiver(
+                sensorReceiver,
+                IntentFilter(AudioManager.ACTION_MICROPHONE_MUTE_CHANGED)
+            )
+        }
+
+        // Listen for speakerphone state changes
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             registerReceiver(
                 sensorReceiver,
-                IntentFilter().apply {
-                    addAction(AudioManager.ACTION_MICROPHONE_MUTE_CHANGED)
-                    addAction(AudioManager.ACTION_SPEAKERPHONE_STATE_CHANGED)
-                }
+                IntentFilter(AudioManager.ACTION_SPEAKERPHONE_STATE_CHANGED)
             )
         }
 
