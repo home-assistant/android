@@ -16,7 +16,7 @@ import org.altbeacon.beacon.Region
 
 object TransmitterManager {
     private lateinit var physicalTransmitter: BeaconTransmitter
-    private lateinit var beaconManager: BeaconManager
+    private var beaconManager: BeaconManager? = null
     private lateinit var beacon: Beacon
     private val region = Region("dummy-region", Identifier.parse("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF"), null, null)
 
@@ -69,14 +69,14 @@ object TransmitterManager {
             val beacon = buildBeacon(haTransmitter)
             if (!physicalTransmitter.isStarted) {
                 val builder = beaconNotification(true, context)
-                beaconManager.enableForegroundServiceScanning(builder.build(), 445)
-                beaconManager.setEnableScheduledScanJobs(false)
-                beaconManager.beaconParsers.clear()
-                beaconManager.backgroundBetweenScanPeriod = Long.MAX_VALUE
-                beaconManager.backgroundScanPeriod = 0
-                beaconManager.foregroundBetweenScanPeriod = Long.MAX_VALUE
-                beaconManager.foregroundScanPeriod = 0
-                beaconManager.startMonitoring(region)
+                beaconManager?.enableForegroundServiceScanning(builder.build(), 445)
+                beaconManager?.setEnableScheduledScanJobs(false)
+                beaconManager?.beaconParsers?.clear()
+                beaconManager?.backgroundBetweenScanPeriod = Long.MAX_VALUE
+                beaconManager?.backgroundScanPeriod = 0
+                beaconManager?.foregroundBetweenScanPeriod = Long.MAX_VALUE
+                beaconManager?.foregroundScanPeriod = 0
+                beaconManager?.startMonitoring(region)
                 physicalTransmitter.advertiseTxPowerLevel = getPowerLevel(haTransmitter)
                 physicalTransmitter.advertiseMode = getAdvertiseMode(haTransmitter)
                 physicalTransmitter.startAdvertising(
@@ -131,7 +131,7 @@ object TransmitterManager {
         }
         haTransmitter.transmitting = false
         haTransmitter.state = "Stopped"
-        beaconManager.stopMonitoring(region)
-        beaconManager.disableForegroundServiceScanning()
+        beaconManager?.stopMonitoring(region)
+        beaconManager?.disableForegroundServiceScanning()
     }
 }
