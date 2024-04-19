@@ -44,7 +44,7 @@ class AudioSensorManager : SensorManager {
             commonR.string.sensor_description_mic_muted,
             "mdi:microphone-off",
             updateType =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 SensorManager.BasicSensor.UpdateType.INTENT
             } else {
                 SensorManager.BasicSensor.UpdateType.WORKER
