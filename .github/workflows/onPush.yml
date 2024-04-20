@@ -36,6 +36,9 @@ jobs:
           ruby-version: '3.2'
           bundler-cache: true
 
+      - name: Validate Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@v3
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
@@ -62,9 +65,6 @@ jobs:
         with:
           lokalise-project: ${{ secrets.LOKALISE_PROJECT }}
           lokalise-token: ${{ secrets.LOKALISE_TOKEN }}
-
-      - uses: gradle/wrapper-validation-action@v2
-        name: Validate Gradle Wrapper
 
       - name: Build Release
         env:
@@ -149,6 +149,9 @@ jobs:
           ruby-version: '3.2'
           bundler-cache: true
 
+      - name: Validate Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@v3
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
@@ -175,9 +178,6 @@ jobs:
         with:
           lokalise-project: ${{ secrets.LOKALISE_PROJECT }}
           lokalise-token: ${{ secrets.LOKALISE_TOKEN }}
-
-      - uses: gradle/wrapper-validation-action@v2
-        name: Validate Gradle Wrapper
 
       - name: Build Release
         env:
