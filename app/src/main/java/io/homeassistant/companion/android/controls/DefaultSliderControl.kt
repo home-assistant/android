@@ -11,7 +11,6 @@ import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import kotlinx.coroutines.runBlocking
 
 @RequiresApi(Build.VERSION_CODES.R)
 object DefaultSliderControl : HaControl {
@@ -45,16 +44,14 @@ object DefaultSliderControl : HaControl {
         integrationRepository: IntegrationRepository,
         action: ControlAction
     ): Boolean {
-        return runBlocking {
-            integrationRepository.callService(
-                action.templateId.split(".")[0],
-                "set_value",
-                hashMapOf(
-                    "entity_id" to action.templateId,
-                    "value" to (action as? FloatAction)?.newValue.toString()
-                )
+        integrationRepository.callService(
+            action.templateId.split(".")[0],
+            "set_value",
+            hashMapOf(
+                "entity_id" to action.templateId,
+                "value" to (action as? FloatAction)?.newValue.toString()
             )
-            return@runBlocking true
-        }
+        )
+        return true
     }
 }
