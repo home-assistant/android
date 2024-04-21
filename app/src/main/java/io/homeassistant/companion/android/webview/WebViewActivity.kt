@@ -113,7 +113,6 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -493,7 +492,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                 startActivity(browserIntent)
                                 return true
                             } else {
-                                //Log.d(TAG, "No unique cases found to override url=${it}") // Unstoppable flood.
+                                // Log.d(TAG, "No unique cases found to override url=${it}") // Unstoppable flood.
                             }
                         } catch (e: Exception) {
                             Log.e(TAG, "Unable to override the URL", e)
@@ -1229,7 +1228,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     }
 
     override fun loadUrl(url: String, keepHistory: Boolean, openInApp: Boolean) {
-        Log.d(TAG, "loadUrl(url=${url}, keepHistory=${keepHistory}, openInApp=${openInApp})")
+        Log.d(TAG, "loadUrl(url=$url, keepHistory=$keepHistory, openInApp=$openInApp)")
         if (openInApp) {
             isPageFinished = false
             pageError = 0
@@ -1537,7 +1536,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     private fun reloadPage() {
         if (isPageFinished || pageError != 0) {
-            Log.d(TAG, "reloadPage: isPageFinished=${isPageFinished} pageError=${pageError}")
+            Log.d(TAG, "reloadPage: isPageFinished=$isPageFinished pageError=$pageError")
             isPageFinished = false
             pageError = 0
             webView.reload()
