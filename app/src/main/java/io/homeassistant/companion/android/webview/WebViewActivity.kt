@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.Rect
 import android.net.Uri
@@ -39,6 +40,7 @@ import android.webkit.SslErrorHandler
 import android.webkit.URLUtil
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
@@ -207,6 +209,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var mFilePathCallback: ValueCallback<Array<Uri>>? = null
     private var isConnected = false
     private var isShowingError = false
+    private var isPageFinished = false
+    private var pageError = 0 // 0 - OK, <0 - Connection Error, >=400 - HTTP Error
     private var alertDialog: AlertDialog? = null
     private var isVideoFullScreen = false
     private var videoHeight = 0
@@ -327,6 +331,15 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             settings.mediaPlaybackRequiresUserGesture = !presenter.isAutoPlayVideoEnabled()
             settings.userAgentString = settings.userAgentString + " ${HomeAssistantApis.USER_AGENT_STRING}"
             webViewClient = object : TLSWebViewClient(keyChainRepository) {
+                override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                    // onReceivedHttpError is getting called before onPageStarted.
+                    // https://issuetracker.google.com/issues/210920403
+                    // onPageStarted is always called before onPageFinished.
+                    // For localhost it is possible to catch onReceived* after onPageFinished !
+                    isPageFinished = false
+                    // Don't pageError=0 here!
+                }
+
                 @Deprecated("Deprecated in Java for SDK >= 23")
                 override fun onReceivedError(
                     view: WebView?,
@@ -336,11 +349,22 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 ) {
                     Log.e(TAG, "onReceivedError: errorCode: $errorCode url:$failingUrl")
                     if (failingUrl == loadedUrl) {
+                        pageError = errorCode
+                        showError()
+                    }
+                }
+
+                @RequiresApi(23)
+                override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
+                    Log.e(TAG, "onReceivedError: errorCode: ${error?.errorCode} ${error?.description} url:${request?.url}")
+                    if (request?.isForMainFrame == true && request.url.toString() == loadedUrl) {
+                        pageError = error?.errorCode ?: -1
                         showError()
                     }
                 }
 
                 override fun onPageFinished(view: WebView?, url: String?) {
+                    isPageFinished = true
                     if (clearHistory) {
                         webView.clearHistory()
                         clearHistory = false
@@ -369,7 +393,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     errorResponse: WebResourceResponse?
                 ) {
                     Log.e(TAG, "onReceivedHttpError: ${errorResponse?.statusCode} : ${errorResponse?.reasonPhrase} for: ${request?.url}")
-                    if (request?.url.toString() == loadedUrl) {
+                    if (request?.isForMainFrame == true && request.url.toString() == loadedUrl) {
+                        pageError = errorResponse?.statusCode ?: 404
                         showError()
                     }
                 }
@@ -468,7 +493,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                 startActivity(browserIntent)
                                 return true
                             } else {
-                                Log.d(TAG, "No unique cases found to override")
+                                //Log.d(TAG, "No unique cases found to override url=${it}") // Unstoppable flood.
                             }
                         } catch (e: Exception) {
                             Log.e(TAG, "Unable to override the URL", e)
@@ -879,6 +904,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             checkAndWarnForDisabledLocation()
         }
         changeLog.showChangeLog(this, false)
+
+        if (::loadedUrl.isInitialized) {
+            reloadPage()
+        }
     }
 
     override fun onStop() {
@@ -1200,7 +1229,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     }
 
     override fun loadUrl(url: String, keepHistory: Boolean, openInApp: Boolean) {
+        Log.d(TAG, "loadUrl(url=${url}, keepHistory=${keepHistory}, openInApp=${openInApp})")
         if (openInApp) {
+            isPageFinished = false
+            pageError = 0
             loadedUrl = url
             clearHistory = !keepHistory
             webView.loadUrl(url)
@@ -1369,7 +1401,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             alert.setPositiveButton(commonR.string.settings) { _, _ ->
                 startActivity(SettingsActivity.newInstance(this))
             }
-            val isInternal = serverManager.getServer(presenter.getActiveServer())?.connection?.isInternal() == true
+            val connection = serverManager.getServer(presenter.getActiveServer())?.connection
+            val isInternal = connection?.isInternal() == true
             alert.setNegativeButton(
                 if (failedConnection == "external" && isInternal) {
                     commonR.string.refresh_internal
@@ -1377,19 +1410,20 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     commonR.string.refresh_external
                 }
             ) { _, _ ->
-                runBlocking {
+                if (connection != null) {
                     failedConnection = if (failedConnection == "external") {
-                        serverManager.getServer(presenter.getActiveServer())?.let { webView.loadUrl(it.connection.getUrl(true).toString()) }
+                        loadUrl(connection.getUrl(true).toString())
                         "internal"
                     } else {
-                        serverManager.getServer(presenter.getActiveServer())?.let { webView.loadUrl(it.connection.getUrl(false).toString()) }
+                        loadUrl(connection.getUrl(false).toString())
                         "external"
                     }
+                } else {
+                    waitForConnection()
                 }
-                waitForConnection()
             }
             alert.setNeutralButton(commonR.string.wait) { _, _ ->
-                waitForConnection()
+                reloadPage()
             }
         }
         alertDialog = alert.create()
@@ -1486,6 +1520,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     }
 
     private fun waitForConnection() {
+        // Called inside an this.loadUrl() [not webView.loadUrl()]
         Handler(Looper.getMainLooper()).postDelayed(
             {
                 if (
@@ -1498,6 +1533,16 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             },
             CONNECTION_DELAY
         )
+    }
+
+    private fun reloadPage() {
+        if (isPageFinished || pageError != 0) {
+            Log.d(TAG, "reloadPage: isPageFinished=${isPageFinished} pageError=${pageError}")
+            isPageFinished = false
+            pageError = 0
+            webView.reload()
+        }
+        waitForConnection()
     }
 
     override fun sendExternalBusMessage(message: ExternalBusMessage) {

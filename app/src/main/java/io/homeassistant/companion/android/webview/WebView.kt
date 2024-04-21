@@ -11,7 +11,7 @@ interface WebView {
         TIMEOUT
     }
 
-    fun loadUrl(url: String, keepHistory: Boolean, openInApp: Boolean)
+    fun loadUrl(url: String, keepHistory: Boolean = false, openInApp: Boolean = true)
 
     fun setStatusBarAndNavigationBarColor(statusBarColor: Int, navigationBarColor: Int)
 
