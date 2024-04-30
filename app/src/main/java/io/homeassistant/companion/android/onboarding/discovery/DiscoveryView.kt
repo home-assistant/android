@@ -32,18 +32,8 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.onboarding.OnboardingHeaderView
-import io.homeassistant.companion.android.onboarding.OnboardingViewModel
 import io.homeassistant.companion.android.util.homeAssistantInstance1
 import io.homeassistant.companion.android.util.homeAssistantInstance2
-
-@Composable
-fun DiscoveryView(
-    onboardingViewModel: OnboardingViewModel,
-    manualSetupClicked: () -> Unit,
-    instanceClicked: (instance: HomeAssistantInstance) -> Unit
-) {
-    DiscoveryView(foundInstances = onboardingViewModel.foundInstances, manualSetupClicked = manualSetupClicked, instanceClicked = instanceClicked)
-}
 
 @Composable
 fun DiscoveryView(

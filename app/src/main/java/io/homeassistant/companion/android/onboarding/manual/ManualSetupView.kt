@@ -16,7 +16,6 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -28,16 +27,6 @@ import androidx.compose.ui.unit.dp
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.onboarding.OnboardingHeaderView
-import io.homeassistant.companion.android.onboarding.OnboardingViewModel
-
-@OptIn(ExperimentalComposeUiApi::class)
-@Composable
-fun ManualSetupView(
-    onboardingViewModel: OnboardingViewModel,
-    connectedClicked: () -> Unit
-) {
-    ManualSetupView(onboardingViewModel.manualUrl, onboardingViewModel::onManualUrlUpdated, onboardingViewModel.manualContinueEnabled, connectedClicked)
-}
 
 @Composable
 fun ManualSetupView(

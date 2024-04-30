@@ -75,6 +75,5 @@ fun NfcWelcomeView(
 @Preview(showSystemUi = true)
 @Composable
 fun NfcWelcomeViewPreview() {
-    NfcWelcomeView(isNfcEnabled = true, onReadClicked = { }, onWriteClicked = {
-    })
+    NfcWelcomeView(isNfcEnabled = true, onReadClicked = { }, onWriteClicked = {})
 }
