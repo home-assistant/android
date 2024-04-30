@@ -141,6 +141,16 @@ class NetworkSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
+        val cellTowerConnection = SensorManager.BasicSensor(
+            "cell_tower_connection",
+            "sensor",
+            commonR.string.basic_sensor_name_cell_tower,
+            commonR.string.sensor_description_cell_tower,
+            "mdi:radio-tower",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+        )
+
         private const val SETTING_GET_CURRENT_BSSID = "network_get_current_bssid"
     }
 

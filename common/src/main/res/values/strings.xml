@@ -1090,6 +1090,8 @@
     <string name="undo">Undo</string>
     <string name="basic_sensor_name_network_type">Network type</string>
     <string name="sensor_description_network_type">The type of transport the current active network is using</string>
+    <string name="basic_sensor_name_cell_tower">Cell tower connection</string>
+    <string name="sensor_description_cell_tower">The id of the cell tower the device is currently connected to</string>
     <string name="sensor_name_volume_notification">Volume level notification</string>
     <string name="sensor_description_volume_notification">Volume level for notifications on the device</string>
     <string name="sensor_name_volume_system">Volume level system</string>
