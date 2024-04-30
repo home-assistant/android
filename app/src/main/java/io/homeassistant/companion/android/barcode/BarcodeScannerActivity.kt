@@ -6,24 +6,28 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
-import android.util.Log
-import android.widget.Toast
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.toArgb
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.zxing.BarcodeFormat
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.barcode.view.BarcodeScannerView
 import io.homeassistant.companion.android.barcode.view.barcodeScannerOverlayColor
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import java.util.Locale
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class BarcodeScannerActivity : BaseActivity() {
@@ -31,17 +35,20 @@ class BarcodeScannerActivity : BaseActivity() {
     companion object {
         private const val TAG = "BarcodeScannerActivity"
 
+        private const val EXTRA_MESSAGE_ID = "message_id"
         private const val EXTRA_TITLE = "title"
         private const val EXTRA_SUBTITLE = "subtitle"
         private const val EXTRA_ACTION = "action"
 
         fun newInstance(
             context: Context,
+            messageId: Int,
             title: String,
             subtitle: String,
             action: String?
         ): Intent {
             return Intent(context, BarcodeScannerActivity::class.java).apply {
+                putExtra(EXTRA_MESSAGE_ID, messageId)
                 putExtra(EXTRA_TITLE, title)
                 putExtra(EXTRA_SUBTITLE, subtitle)
                 putExtra(EXTRA_ACTION, action)
@@ -63,6 +70,8 @@ class BarcodeScannerActivity : BaseActivity() {
         enableEdgeToEdge(overlaySystemBarStyle, overlaySystemBarStyle)
         super.onCreate(savedInstanceState)
 
+        val messageId = intent.getIntExtra(EXTRA_MESSAGE_ID, -1)
+
         val title = if (intent.hasExtra(EXTRA_TITLE)) intent.getStringExtra(EXTRA_TITLE) else null
         val subtitle = if (intent.hasExtra(EXTRA_SUBTITLE)) intent.getStringExtra(EXTRA_SUBTITLE) else null
         if (title == null || subtitle == null) finish() // Invalid state
@@ -79,7 +88,6 @@ class BarcodeScannerActivity : BaseActivity() {
                     requestPermission = { requestPermission(false) },
                     didRequestPermission = !requestSilently,
                     onResult = { text, format ->
-                        // TODO return to WebViewActivity / external bus
                         val frontendFormat = when (format) {
                             BarcodeFormat.PDF_417 -> "pdf417"
                             BarcodeFormat.MAXICODE,
@@ -88,14 +96,30 @@ class BarcodeScannerActivity : BaseActivity() {
                             BarcodeFormat.UPC_EAN_EXTENSION -> "unknown"
                             else -> format.toString().lowercase(Locale.getDefault())
                         }
-                        Log.d(TAG, "Decoded $text ($format)")
-                        Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
+                        viewModel.sendScannerResult(messageId, text, frontendFormat)
                     },
                     onCancel = { forAction ->
-                        // TODO return to WebViewActivity / external bus
+                        viewModel.sendScannerClosing(messageId, forAction)
                         finish()
                     }
                 )
+            }
+        }
+
+        lifecycleScope.launch {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                viewModel.actionsFlow.collect {
+                    when (it.type) {
+                        BarcodeActionType.NOTIFY -> {
+                            if (it.message.isNullOrBlank()) return@collect
+                            AlertDialog.Builder(this@BarcodeScannerActivity)
+                                .setMessage(it.message)
+                                .setPositiveButton(commonR.string.ok, null)
+                                .show()
+                        }
+                        BarcodeActionType.CLOSE -> finish()
+                    }
+                }
             }
         }
     }

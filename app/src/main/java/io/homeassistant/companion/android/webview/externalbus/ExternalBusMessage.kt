@@ -8,5 +8,6 @@ data class ExternalBusMessage(
     val success: Boolean,
     val result: Any? = null,
     val error: Any? = null,
+    val payload: Any? = null,
     val callback: ValueCallback<String>? = null
 )

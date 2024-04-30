@@ -68,10 +68,14 @@ fun BarcodeScannerView(
     didRequestPermission: Boolean,
     requestPermission: () -> Unit,
     onResult: (String, BarcodeFormat) -> Unit,
-    onCancel: (Boolean) -> Unit
+    onCancel: (Boolean) -> Unit,
+    resultTimeoutMillis: Long = 1500L
 ) {
     val context = LocalContext.current
     val barcodeView = remember {
+        // The app remembers last time scanned to prevent spamming the frontend
+        var resultScanned = System.currentTimeMillis()
+
         DecoratedBarcodeView(context).apply {
             val activity = context.getActivity() ?: return@apply
             // Hide default UI
@@ -82,7 +86,9 @@ fun BarcodeScannerView(
             captureManager.initializeFromIntent(null, null)
             captureManager.decode()
             decodeContinuous { result ->
+                if ((System.currentTimeMillis() - resultScanned) < resultTimeoutMillis) return@decodeContinuous
                 result.text.ifBlank { null }?.let {
+                    resultScanned = System.currentTimeMillis()
                     onResult(it, result.barcodeFormat)
                 }
             }

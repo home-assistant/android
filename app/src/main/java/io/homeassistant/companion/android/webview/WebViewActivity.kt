@@ -743,7 +743,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                                     "hasExoPlayer" to true,
                                                     "canCommissionMatter" to canCommissionMatter,
                                                     "canImportThreadCredentials" to canExportThread,
-                                                    "hasAssist" to true
+                                                    "hasAssist" to true,
+                                                    "hasBarCodeScanner" to 1
                                                 )
                                             ),
                                             callback = {
@@ -777,9 +778,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                     )
                                 }
                                 "config_screen/show" ->
-                                    // TODO restore
                                     startActivity(
-                                        BarcodeScannerActivity.newInstance(this@WebViewActivity, "Scan QR code", "Find the code on your device", "Enter code manually")
+                                        SettingsActivity.newInstance(this@WebViewActivity)
                                     )
                                 "tag/write" ->
                                     writeNfcTag.launch(
@@ -796,6 +796,19 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                         .setMessage(commonR.string.thread_debug_active)
                                         .create()
                                     alertDialog?.show()
+                                }
+                                "bar_code/scan" -> {
+                                    val payload = if (json.has("payload")) json.getJSONObject("payload") else null
+                                    if (payload?.has("title") != true || !payload.has("description")) return@post
+                                    startActivity(
+                                        BarcodeScannerActivity.newInstance(
+                                            this@WebViewActivity,
+                                            messageId = json.getInt("id"),
+                                            title = payload.getString("title"),
+                                            subtitle = payload.getString("description"),
+                                            action = if (payload.has("alternative_option_label")) payload.getString("alternative_option_label").ifBlank { null } else null
+                                        )
+                                    )
                                 }
                                 "exoplayer/play_hls" -> exoPlayHls(json)
                                 "exoplayer/stop" -> exoStopHls()
@@ -1510,6 +1523,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         )
         message.result?.let { map["result"] = it }
         message.error?.let { map["error"] = it }
+        message.payload?.let { map["payload"] = it }
 
         val json = JSONObject(map.toMap())
         val script = "externalBus($json);"
