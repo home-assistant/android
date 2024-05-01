@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.SystemBarStyle
+import androidx.activity.addCallback
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -104,6 +105,11 @@ class BarcodeScannerActivity : BaseActivity() {
                     }
                 )
             }
+        }
+
+        onBackPressedDispatcher.addCallback(this) {
+            viewModel.sendScannerClosing(messageId, false)
+            finish()
         }
 
         lifecycleScope.launch {

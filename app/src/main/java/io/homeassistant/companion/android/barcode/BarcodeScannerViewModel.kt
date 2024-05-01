@@ -46,10 +46,10 @@ class BarcodeScannerViewModel @Inject constructor(
                 listOf(BarcodeActionType.NOTIFY.externalBusType, BarcodeActionType.CLOSE.externalBusType)
             ).collect { message ->
                 when (val type = BarcodeActionType.fromExternalBus(message.getString("type"))) {
-                    BarcodeActionType.NOTIFY -> frontendActionsFlow.tryEmit(
-                        BarcodeScannerAction(type, message.getString("message"))
+                    BarcodeActionType.NOTIFY -> frontendActionsFlow.emit(
+                        BarcodeScannerAction(type, message.getJSONObject("payload").getString("message"))
                     )
-                    BarcodeActionType.CLOSE -> frontendActionsFlow.tryEmit(
+                    BarcodeActionType.CLOSE -> frontendActionsFlow.emit(
                         BarcodeScannerAction(type)
                     )
                     else -> Log.w(TAG, "Received unexpected external bus message of type ${type?.name}")
@@ -67,8 +67,8 @@ class BarcodeScannerViewModel @Inject constructor(
             externalBusRepository.send(
                 ExternalBusMessage(
                     id = messageId,
-                    type = "bar_code/result",
-                    success = true,
+                    type = "command",
+                    command = "bar_code/scan_result",
                     payload = mapOf(
                         "rawValue" to text,
                         "format" to format
@@ -83,8 +83,8 @@ class BarcodeScannerViewModel @Inject constructor(
             externalBusRepository.send(
                 ExternalBusMessage(
                     id = messageId,
-                    type = "bar_code/aborted",
-                    success = true,
+                    type = "command",
+                    command = "bar_code/aborted",
                     payload = mapOf(
                         "reason" to (if (forAction) "alternative_options" else "canceled")
                     )

@@ -1518,9 +1518,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     override fun sendExternalBusMessage(message: ExternalBusMessage) {
         val map = mutableMapOf(
             "id" to message.id,
-            "type" to message.type,
-            "success" to message.success
+            "type" to message.type
         )
+        message.command?.let { map["command"] = it }
+        message.success?.let { map["success"] = it }
         message.result?.let { map["result"] = it }
         message.error?.let { map["error"] = it }
         message.payload?.let { map["payload"] = it }
