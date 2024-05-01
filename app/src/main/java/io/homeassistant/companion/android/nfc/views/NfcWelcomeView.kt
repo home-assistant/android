@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -69,4 +70,10 @@ fun NfcWelcomeView(
             }
         }
     }
+}
+
+@Preview(showSystemUi = true)
+@Composable
+fun NfcWelcomeViewPreview() {
+    NfcWelcomeView(isNfcEnabled = true, onReadClicked = { }, onWriteClicked = {})
 }
