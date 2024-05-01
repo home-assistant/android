@@ -731,6 +731,15 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                     val hasNfc = pm.hasSystemFeature(PackageManager.FEATURE_NFC)
                                     val canCommissionMatter = presenter.appCanCommissionMatterDevice()
                                     val canExportThread = presenter.appCanExportThreadCredentials()
+                                    val hasBarCodeScanner =
+                                        if (
+                                            pm.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) &&
+                                            !pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+                                        ) {
+                                            1
+                                        } else {
+                                            0
+                                        }
                                     sendExternalBusMessage(
                                         ExternalBusMessage(
                                             id = JSONObject(message).get("id"),
@@ -744,7 +753,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                                     "canCommissionMatter" to canCommissionMatter,
                                                     "canImportThreadCredentials" to canExportThread,
                                                     "hasAssist" to true,
-                                                    "hasBarCodeScanner" to 1
+                                                    "hasBarCodeScanner" to hasBarCodeScanner
                                                 )
                                             ),
                                             callback = {
