@@ -610,7 +610,7 @@ class NetworkSensorManager : SensorManager {
 
         val cell = telephonyManager.getAllCellInfo().findLast { cell -> cell.isRegistered } ?: return
 
-        val cellId : String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        val cellId: String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             when (cell) {
                 is CellInfoNr -> {
                     "nr:" + (cell.cellIdentity as CellIdentityNr).nci
@@ -620,11 +620,11 @@ class NetworkSensorManager : SensorManager {
                     "tdcdma:" + cell.cellIdentity.lac + ":" + cell.cellIdentity.cid
                 }
 
-                is CellInfoLte -> { //tested
+                is CellInfoLte -> { // tested
                     "lte:" + cell.cellIdentity.tac + ":" + cell.cellIdentity.ci + ":" + cell.cellIdentity.pci
                 }
 
-                is CellInfoWcdma -> { //tested
+                is CellInfoWcdma -> { // tested
                     "wcdma:" + cell.cellIdentity.lac + ":" + cell.cellIdentity.cid
                 }
 
@@ -635,20 +635,20 @@ class NetworkSensorManager : SensorManager {
                 is CellInfoGsm -> {
                     "gsm:" + cell.cellIdentity.lac + ":" + ":" + cell.cellIdentity.cid
                 }
-                else -> { "" }
+                else -> {
+                    ""
+                }
             }
-        }
-        //support for older devices
-        else {
+        } else { // support for older devices
             when (cell) {
                 // CellInfoNr requires Build.VERSION_CODES.Q
                 // CellInfoTdscdma requires Build.VERSION_CODES.Q
 
-                is CellInfoLte -> { //tested
+                is CellInfoLte -> { // tested
                     "lte:" + cell.cellIdentity.tac + ":" + cell.cellIdentity.ci + ":" + cell.cellIdentity.pci
                 }
 
-                is CellInfoWcdma -> { //tested
+                is CellInfoWcdma -> { // tested
                     "wcdma:" + cell.cellIdentity.lac + ":" + cell.cellIdentity.cid
                 }
 
@@ -659,7 +659,9 @@ class NetworkSensorManager : SensorManager {
                 is CellInfoGsm -> { // tested
                     "gsm:" + cell.cellIdentity.lac + ":" + ":" + cell.cellIdentity.cid
                 }
-                else -> { "" }
+                else -> {
+                    ""
+                }
             }
         }
 
@@ -670,7 +672,6 @@ class NetworkSensorManager : SensorManager {
             cellConnection.statelessIcon,
             mapOf()
         )
-
     }
 
     @SuppressLint("MissingPermission")
