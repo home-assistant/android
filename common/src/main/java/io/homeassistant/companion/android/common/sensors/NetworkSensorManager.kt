@@ -9,8 +9,13 @@ import android.net.NetworkCapabilities
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
+import android.telephony.CellIdentityCdma
+import android.telephony.CellIdentityGsm
 import android.telephony.CellIdentityLte
+import android.telephony.CellIdentityNr
+import android.telephony.CellIdentityTdscdma
 import android.telephony.CellIdentityWcdma
+import android.telephony.CellInfo
 import android.telephony.TelephonyManager
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -596,9 +601,9 @@ class NetworkSensorManager : SensorManager {
         })
     }
 
-    @SuppressLint("MissingPermission")
     @RequiresApi(Build.VERSION_CODES.R)
-    private fun updateCellTowerConnectionSensor(context: Context){
+    @SuppressLint("MissingPermission")
+    private fun updateCellTowerConnectionSensor(context: Context) {
         if (!isEnabled(context, cellTowerConnection) || !hasTelephony(context)) {
             return
         }
@@ -608,34 +613,47 @@ class NetworkSensorManager : SensorManager {
         //get the list of cells
         val cellInfoList = telephonyManager.getAllCellInfo()
 
-        if (cellInfoList == null || cellInfoList.size == 0) {
-            STATE_UNAVAILABLE
-        } else {
-            //get the "registered" (= currently used for communication?) cell
-            val cell = cellInfoList.findLast { cell -> cell.isRegistered }
+        val cell = cellInfoList.findLast { cell -> cell.cellConnectionStatus == CellInfo.CONNECTION_PRIMARY_SERVING }
 
-            val cellTowerStr = when (val a = cell?.cellIdentity) {
-                is CellIdentityLte -> {
-                    "lte:" + a.tac + ":" + a.ci + ":" + a.pci
-                }
-
-                is CellIdentityWcdma -> {
-                    "wcdma:" + a.lac + ":" + a.cid
-                }
-
-                else -> {
-                    ""
-                }
+        val cellTowerStr = when (val cellIdentity = cell?.cellIdentity) {
+            is CellIdentityNr -> {
+                "nr:" + cellIdentity.nci
             }
 
-            onSensorUpdated(
-                context,
-                cellTowerConnection,
-                cellTowerStr,
-                cellTowerConnection.statelessIcon,
-                mapOf()
-            )
+            is CellIdentityLte -> {
+                "lte:" + cellIdentity.tac + ":" + cellIdentity.ci + ":" + cellIdentity.pci
+            }
+
+            is CellIdentityWcdma -> {
+                "wcdma:" + cellIdentity.lac + ":" + cellIdentity.cid
+            }
+
+            is CellIdentityTdscdma -> {
+                "tdcdma:" + cellIdentity.lac + ":" + cellIdentity.cid
+            }
+
+            is CellIdentityCdma -> {
+                "cdma:" + cellIdentity.systemId + ":" + cellIdentity.networkId + ":" + cellIdentity.basestationId
+            }
+
+            is CellIdentityGsm -> {
+                // can't access the RNC, some information some information I found https://wiki.opencellid.org/wiki/FAQ
+                "gsm:" + cellIdentity.lac + ":" + ":" + cellIdentity.cid
+            }
+
+            else -> {
+                ""
+            }
         }
+
+        onSensorUpdated(
+            context,
+            cellTowerConnection,
+            cellTowerStr,
+            cellTowerConnection.statelessIcon,
+            mapOf()
+        )
+
     }
 
     @SuppressLint("MissingPermission")
