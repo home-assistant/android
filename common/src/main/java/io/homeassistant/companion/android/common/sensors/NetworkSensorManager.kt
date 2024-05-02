@@ -149,11 +149,11 @@ class NetworkSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
-        val cellTowerConnection = SensorManager.BasicSensor(
-            "cell_tower_connection",
+        val cellConnection = SensorManager.BasicSensor(
+            "cell_connection",
             "sensor",
-            commonR.string.basic_sensor_name_cell_tower,
-            commonR.string.sensor_description_cell_tower,
+            commonR.string.basic_sensor_name_cell,
+            commonR.string.sensor_description_cell,
             "mdi:radio-tower",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT
@@ -189,7 +189,7 @@ class NetworkSensorManager : SensorManager {
         }
 
         val list = if (hasTelephony(context)) {
-            listWithWifi.plus(cellTowerConnection)
+            listWithWifi.plus(cellConnection)
         } else {
             listWithWifi
         }
@@ -230,7 +230,7 @@ class NetworkSensorManager : SensorManager {
         updateWifiFrequencySensor(context)
         updateWifiSignalStrengthSensor(context)
         updatePublicIpSensor(context)
-        updateCellTowerConnectionSensor(context)
+        updateCellConnectionSensor(context)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             updateNetworkType(context)
@@ -601,22 +601,16 @@ class NetworkSensorManager : SensorManager {
     }
 
     @SuppressLint("MissingPermission")
-    private fun updateCellTowerConnectionSensor(context: Context) {
-        if (!isEnabled(context, cellTowerConnection) || !hasTelephony(context)) {
+    private fun updateCellConnectionSensor(context: Context) {
+        if (!isEnabled(context, cellConnection) || !hasTelephony(context)) {
             return
         }
 
         val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
 
-        val cellInfoList = telephonyManager.getAllCellInfo()
+        val cell = telephonyManager.getAllCellInfo().findLast { cell -> cell.isRegistered } ?: return
 
-        val cell = cellInfoList.findLast { cell -> cell.isRegistered } //cell.cellConnectionStatus == CellInfo.CONNECTION_PRIMARY_SERVING
-
-        if(cell == null){
-            return
-        }
-
-        val cellTowerStr : String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        val cellId : String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             when (cell) {
                 is CellInfoNr -> {
                     "nr:" + (cell.cellIdentity as CellIdentityNr).nci
@@ -671,9 +665,9 @@ class NetworkSensorManager : SensorManager {
 
         onSensorUpdated(
             context,
-            cellTowerConnection,
-            cellTowerStr,
-            cellTowerConnection.statelessIcon,
+            cellConnection,
+            cellId,
+            cellConnection.statelessIcon,
             mapOf()
         )
 
