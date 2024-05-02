@@ -9,13 +9,13 @@ import android.net.NetworkCapabilities
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
-import android.telephony.CellIdentityCdma
-import android.telephony.CellIdentityGsm
-import android.telephony.CellIdentityLte
 import android.telephony.CellIdentityNr
-import android.telephony.CellIdentityTdscdma
-import android.telephony.CellIdentityWcdma
-import android.telephony.CellInfo
+import android.telephony.CellInfoCdma
+import android.telephony.CellInfoGsm
+import android.telephony.CellInfoLte
+import android.telephony.CellInfoNr
+import android.telephony.CellInfoTdscdma
+import android.telephony.CellInfoWcdma
 import android.telephony.TelephonyManager
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -230,9 +230,8 @@ class NetworkSensorManager : SensorManager {
         updateWifiFrequencySensor(context)
         updateWifiSignalStrengthSensor(context)
         updatePublicIpSensor(context)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R){
-            updateCellTowerConnectionSensor(context)
-        }
+        updateCellTowerConnectionSensor(context)
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             updateNetworkType(context)
             updateIP6Sensor(context)
@@ -601,7 +600,6 @@ class NetworkSensorManager : SensorManager {
         })
     }
 
-    @RequiresApi(Build.VERSION_CODES.R)
     @SuppressLint("MissingPermission")
     private fun updateCellTowerConnectionSensor(context: Context) {
         if (!isEnabled(context, cellTowerConnection) || !hasTelephony(context)) {
@@ -610,39 +608,64 @@ class NetworkSensorManager : SensorManager {
 
         val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
 
-        //get the list of cells
         val cellInfoList = telephonyManager.getAllCellInfo()
 
-        val cell = cellInfoList.findLast { cell -> cell.cellConnectionStatus == CellInfo.CONNECTION_PRIMARY_SERVING }
+        val cell = cellInfoList.findLast { cell -> cell.isRegistered } //cell.cellConnectionStatus == CellInfo.CONNECTION_PRIMARY_SERVING
 
-        val cellTowerStr = when (val cellIdentity = cell?.cellIdentity) {
-            is CellIdentityNr -> {
-                "nr:" + cellIdentity.nci
+        if(cell == null){
+            return
+        }
+
+        val cellTowerStr : String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            when (cell) {
+                is CellInfoNr -> {
+                    "nr:" + (cell.cellIdentity as CellIdentityNr).nci
+                }
+
+                is CellInfoTdscdma -> {
+                    "tdcdma:" + cell.cellIdentity.lac + ":" + cell.cellIdentity.cid
+                }
+
+                is CellInfoLte -> { //tested
+                    "lte:" + cell.cellIdentity.tac + ":" + cell.cellIdentity.ci + ":" + cell.cellIdentity.pci
+                }
+
+                is CellInfoWcdma -> { //tested
+                    "wcdma:" + cell.cellIdentity.lac + ":" + cell.cellIdentity.cid
+                }
+
+                is CellInfoCdma -> {
+                    "cdma:" + cell.cellIdentity.systemId + ":" + cell.cellIdentity.networkId + ":" + cell.cellIdentity.basestationId
+                }
+
+                is CellInfoGsm -> {
+                    "gsm:" + cell.cellIdentity.lac + ":" + ":" + cell.cellIdentity.cid
+                }
+                else -> { "" }
             }
+        }
+        //support for older devices
+        else {
+            when (cell) {
+                // CellInfoNr requires Build.VERSION_CODES.Q
+                // CellInfoTdscdma requires Build.VERSION_CODES.Q
 
-            is CellIdentityLte -> {
-                "lte:" + cellIdentity.tac + ":" + cellIdentity.ci + ":" + cellIdentity.pci
-            }
+                is CellInfoLte -> { //tested
+                    "lte:" + cell.cellIdentity.tac + ":" + cell.cellIdentity.ci + ":" + cell.cellIdentity.pci
+                }
 
-            is CellIdentityWcdma -> {
-                "wcdma:" + cellIdentity.lac + ":" + cellIdentity.cid
-            }
+                is CellInfoWcdma -> { //tested
+                    "wcdma:" + cell.cellIdentity.lac + ":" + cell.cellIdentity.cid
+                }
 
-            is CellIdentityTdscdma -> {
-                "tdcdma:" + cellIdentity.lac + ":" + cellIdentity.cid
-            }
+                is CellInfoCdma -> {
+                    "cdma:" + cell.cellIdentity.systemId + ":" + cell.cellIdentity.networkId + ":" + cell.cellIdentity.basestationId
+                }
 
-            is CellIdentityCdma -> {
-                "cdma:" + cellIdentity.systemId + ":" + cellIdentity.networkId + ":" + cellIdentity.basestationId
-            }
-
-            is CellIdentityGsm -> {
-                // can't access the RNC, some information some information I found https://wiki.opencellid.org/wiki/FAQ
-                "gsm:" + cellIdentity.lac + ":" + ":" + cellIdentity.cid
-            }
-
-            else -> {
-                ""
+                is CellInfoGsm -> { // tested
+                    "gsm:" + cell.cellIdentity.lac + ":" + ":" + cell.cellIdentity.cid
+                }
+                else -> { "" }
             }
         }
 
