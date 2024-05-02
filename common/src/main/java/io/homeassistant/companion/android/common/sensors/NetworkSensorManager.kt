@@ -9,6 +9,9 @@ import android.net.NetworkCapabilities
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
+import android.telephony.CellIdentityLte
+import android.telephony.CellIdentityWcdma
+import android.telephony.TelephonyManager
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
@@ -169,7 +172,7 @@ class NetworkSensorManager : SensorManager {
             wifiFrequency,
             wifiSignalStrength
         )
-        val list = if (hasWifi(context)) {
+        val listWithWifi = if (hasWifi(context)) {
             val withPublicIp = wifiSensors.plus(publicIp)
             if (hasHotspot(context)) {
                 withPublicIp.plus(hotspotState)
@@ -179,6 +182,13 @@ class NetworkSensorManager : SensorManager {
         } else {
             listOf(publicIp)
         }
+
+        val list = if (hasTelephony(context)) {
+            listWithWifi.plus(cellTowerConnection)
+        } else {
+            listWithWifi
+        }
+
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             list.plus(networkType).plus(ip6Addresses)
         } else {
@@ -215,11 +225,17 @@ class NetworkSensorManager : SensorManager {
         updateWifiFrequencySensor(context)
         updateWifiSignalStrengthSensor(context)
         updatePublicIpSensor(context)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R){
+            updateCellTowerConnectionSensor(context)
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             updateNetworkType(context)
             updateIP6Sensor(context)
         }
     }
+
+    private fun hasTelephony(context: Context): Boolean =
+        context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
 
     private fun hasWifi(context: Context): Boolean =
         context.applicationContext.getSystemService<WifiManager>() != null
@@ -578,6 +594,48 @@ class NetworkSensorManager : SensorManager {
                 )
             }
         })
+    }
+
+    @SuppressLint("MissingPermission")
+    @RequiresApi(Build.VERSION_CODES.R)
+    private fun updateCellTowerConnectionSensor(context: Context){
+        if (!isEnabled(context, cellTowerConnection) || !hasTelephony(context)) {
+            return
+        }
+
+        val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+
+        //get the list of cells
+        val cellInfoList = telephonyManager.getAllCellInfo()
+
+        if (cellInfoList == null || cellInfoList.size == 0) {
+            STATE_UNAVAILABLE
+        } else {
+            //get the "registered" (= currently used for communication?) cell
+            val cell = cellInfoList.findLast { cell -> cell.isRegistered }
+
+            val cellTowerStr = when (val a = cell?.cellIdentity) {
+                is CellIdentityLte -> {
+                    "lte:" + a.tac + ":" + a.ci + ":" + a.pci
+                }
+
+                is CellIdentityWcdma -> {
+                    "wcdma:" + a.lac + ":" + a.cid
+                }
+
+                else -> {
+                    ""
+                }
+            }
+
+            onSensorUpdated(
+                context,
+                cellTowerConnection,
+                cellTowerStr,
+                cellTowerConnection.statelessIcon,
+                mapOf()
+            )
+        }
     }
 
     @SuppressLint("MissingPermission")
