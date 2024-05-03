@@ -77,6 +77,7 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.assist.AssistActivity
 import io.homeassistant.companion.android.authenticator.Authenticator
+import io.homeassistant.companion.android.barcode.BarcodeScannerActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
@@ -730,6 +731,15 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                     val hasNfc = pm.hasSystemFeature(PackageManager.FEATURE_NFC)
                                     val canCommissionMatter = presenter.appCanCommissionMatterDevice()
                                     val canExportThread = presenter.appCanExportThreadCredentials()
+                                    val hasBarCodeScanner =
+                                        if (
+                                            pm.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) &&
+                                            !pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+                                        ) {
+                                            1
+                                        } else {
+                                            0
+                                        }
                                     sendExternalBusMessage(
                                         ExternalBusMessage(
                                             id = JSONObject(message).get("id"),
@@ -742,7 +752,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                                     "hasExoPlayer" to true,
                                                     "canCommissionMatter" to canCommissionMatter,
                                                     "canImportThreadCredentials" to canExportThread,
-                                                    "hasAssist" to true
+                                                    "hasAssist" to true,
+                                                    "hasBarCodeScanner" to hasBarCodeScanner
                                                 )
                                             ),
                                             callback = {
@@ -794,6 +805,19 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                         .setMessage(commonR.string.thread_debug_active)
                                         .create()
                                     alertDialog?.show()
+                                }
+                                "bar_code/scan" -> {
+                                    val payload = if (json.has("payload")) json.getJSONObject("payload") else null
+                                    if (payload?.has("title") != true || !payload.has("description")) return@post
+                                    startActivity(
+                                        BarcodeScannerActivity.newInstance(
+                                            this@WebViewActivity,
+                                            messageId = json.getInt("id"),
+                                            title = payload.getString("title"),
+                                            subtitle = payload.getString("description"),
+                                            action = if (payload.has("alternative_option_label")) payload.getString("alternative_option_label").ifBlank { null } else null
+                                        )
+                                    )
                                 }
                                 "exoplayer/play_hls" -> exoPlayHls(json)
                                 "exoplayer/stop" -> exoStopHls()
@@ -1503,11 +1527,13 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     override fun sendExternalBusMessage(message: ExternalBusMessage) {
         val map = mutableMapOf(
             "id" to message.id,
-            "type" to message.type,
-            "success" to message.success
+            "type" to message.type
         )
+        message.command?.let { map["command"] = it }
+        message.success?.let { map["success"] = it }
         message.result?.let { map["result"] = it }
         message.error?.let { map["error"] = it }
+        message.payload?.let { map["payload"] = it }
 
         val json = JSONObject(map.toMap())
         val script = "externalBus($json);"
