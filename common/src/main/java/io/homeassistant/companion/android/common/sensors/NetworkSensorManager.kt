@@ -608,60 +608,27 @@ class NetworkSensorManager : SensorManager {
 
         val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
 
-        val cell = telephonyManager.getAllCellInfo().findLast { cell -> cell.isRegistered } ?: return
+        val cell = telephonyManager.getAllCellInfo().findLast { cell -> cell.isRegistered }
 
-        val cellId: String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        val cellId = if (cell == null) {
+            STATE_UNKNOWN
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             when (cell) {
-                is CellInfoNr -> {
-                    "nr:" + (cell.cellIdentity as CellIdentityNr).nci
-                }
-
-                is CellInfoTdscdma -> {
-                    "tdcdma:" + cell.cellIdentity.lac + ":" + cell.cellIdentity.cid
-                }
-
-                is CellInfoLte -> { // tested
-                    "lte:" + cell.cellIdentity.tac + ":" + cell.cellIdentity.ci + ":" + cell.cellIdentity.pci
-                }
-
-                is CellInfoWcdma -> { // tested
-                    "wcdma:" + cell.cellIdentity.lac + ":" + cell.cellIdentity.cid
-                }
-
-                is CellInfoCdma -> {
-                    "cdma:" + cell.cellIdentity.systemId + ":" + cell.cellIdentity.networkId + ":" + cell.cellIdentity.basestationId
-                }
-
-                is CellInfoGsm -> {
-                    "gsm:" + cell.cellIdentity.lac + ":" + ":" + cell.cellIdentity.cid
-                }
-                else -> {
-                    ""
-                }
+                is CellInfoNr -> "nr:" + (cell.cellIdentity as CellIdentityNr).nci
+                is CellInfoTdscdma -> "tdcdma:" + cell.cellIdentity.lac + ":" + cell.cellIdentity.cid
+                is CellInfoLte -> "lte:" + cell.cellIdentity.tac + ":" + cell.cellIdentity.ci + ":" + cell.cellIdentity.pci
+                is CellInfoWcdma -> "wcdma:" + cell.cellIdentity.lac + ":" + cell.cellIdentity.cid
+                is CellInfoCdma -> "cdma:" + cell.cellIdentity.systemId + ":" + cell.cellIdentity.networkId + ":" + cell.cellIdentity.basestationId
+                is CellInfoGsm -> "gsm:" + cell.cellIdentity.lac + ":" + ":" + cell.cellIdentity.cid
+                else -> STATE_UNKNOWN
             }
         } else { // support for older devices
             when (cell) {
-                // CellInfoNr requires Build.VERSION_CODES.Q
-                // CellInfoTdscdma requires Build.VERSION_CODES.Q
-
-                is CellInfoLte -> { // tested
-                    "lte:" + cell.cellIdentity.tac + ":" + cell.cellIdentity.ci + ":" + cell.cellIdentity.pci
-                }
-
-                is CellInfoWcdma -> { // tested
-                    "wcdma:" + cell.cellIdentity.lac + ":" + cell.cellIdentity.cid
-                }
-
-                is CellInfoCdma -> {
-                    "cdma:" + cell.cellIdentity.systemId + ":" + cell.cellIdentity.networkId + ":" + cell.cellIdentity.basestationId
-                }
-
-                is CellInfoGsm -> { // tested
-                    "gsm:" + cell.cellIdentity.lac + ":" + ":" + cell.cellIdentity.cid
-                }
-                else -> {
-                    ""
-                }
+                is CellInfoLte -> "lte:" + cell.cellIdentity.tac + ":" + cell.cellIdentity.ci + ":" + cell.cellIdentity.pci
+                is CellInfoWcdma -> "wcdma:" + cell.cellIdentity.lac + ":" + cell.cellIdentity.cid
+                is CellInfoCdma -> "cdma:" + cell.cellIdentity.systemId + ":" + cell.cellIdentity.networkId + ":" + cell.cellIdentity.basestationId
+                is CellInfoGsm -> "gsm:" + cell.cellIdentity.lac + ":" + ":" + cell.cellIdentity.cid
+                else -> STATE_UNKNOWN
             }
         }
 
