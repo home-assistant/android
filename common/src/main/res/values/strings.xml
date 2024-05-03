@@ -1234,4 +1234,6 @@
     <string name="state_sunny">Sunny</string>
     <string name="state_windy">Windy</string>
     <string name="feedback">Feedback</string>
+    <string name="basic_sensor_name_remaining_charge_time">Remaining charge time</string>
+    <string name="sensor_description_remaining_charge_time">Compute an approximation for how much time (in minutes) remains until the battery is fully charged. Returns unavailable if no time can be computed: either there is not enough current data to make a decision or the battery is currently discharging. Returns 0 if calculation is not complete but device is currently charging.</string>
 </resources>
