@@ -610,27 +610,59 @@ class NetworkSensorManager : SensorManager {
 
         val cell = telephonyManager.getAllCellInfo().findLast { cell -> cell.isRegistered }
 
-        val cellId = if (cell == null) {
-            STATE_UNKNOWN
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            when (cell) {
-                is CellInfoNr -> "nr:" + (cell.cellIdentity as CellIdentityNr).nci
-                is CellInfoTdscdma -> "tdcdma:" + cell.cellIdentity.lac + ":" + cell.cellIdentity.cid
-                is CellInfoLte -> "lte:" + cell.cellIdentity.tac + ":" + cell.cellIdentity.ci + ":" + cell.cellIdentity.pci
-                is CellInfoWcdma -> "wcdma:" + cell.cellIdentity.lac + ":" + cell.cellIdentity.cid
-                is CellInfoCdma -> "cdma:" + cell.cellIdentity.systemId + ":" + cell.cellIdentity.networkId + ":" + cell.cellIdentity.basestationId
-                is CellInfoGsm -> "gsm:" + cell.cellIdentity.lac + ":" + ":" + cell.cellIdentity.cid
-                else -> STATE_UNKNOWN
-            }
-        } else { // support for older devices
-            when (cell) {
-                is CellInfoLte -> "lte:" + cell.cellIdentity.tac + ":" + cell.cellIdentity.ci + ":" + cell.cellIdentity.pci
-                is CellInfoWcdma -> "wcdma:" + cell.cellIdentity.lac + ":" + cell.cellIdentity.cid
-                is CellInfoCdma -> "cdma:" + cell.cellIdentity.systemId + ":" + cell.cellIdentity.networkId + ":" + cell.cellIdentity.basestationId
-                is CellInfoGsm -> "gsm:" + cell.cellIdentity.lac + ":" + ":" + cell.cellIdentity.cid
-                else -> STATE_UNKNOWN
-            }
+        if (cell == null) {
+            onSensorUpdated(
+                context,
+                cellConnection,
+                STATE_UNAVAILABLE,
+                cellConnection.statelessIcon,
+                mapOf()
+            )
+            return
         }
+
+        val radio: String
+        val mcc = telephonyManager.networkOperator.substring(0, 3) // extracting mcc and mnc from the networkOperator https://developer.android.com/reference/android/telephony/TelephonyManager#getNetworkOperator()
+        val mnc = telephonyManager.networkOperator.substring(3).toInt().toString()
+        val lac: String
+        val cid: String
+
+        if (cell is CellInfoGsm) {
+            radio = "GSM"
+            lac = cell.cellIdentity.lac.toString()
+            cid = cell.cellIdentity.cid.toString()
+        } else if (cell is CellInfoCdma) {
+            radio = "CDMA"
+            lac = cell.cellIdentity.networkId.toString()
+            cid = cell.cellIdentity.basestationId.toString()
+        } else if (cell is CellInfoWcdma) {
+            radio = "UMTS"
+            lac = cell.cellIdentity.lac.toString()
+            cid = cell.cellIdentity.cid.toString()
+        } else if (cell is CellInfoLte) {
+            radio = "LTE"
+            lac = cell.cellIdentity.tac.toString()
+            cid = cell.cellIdentity.ci.toString()
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && cell is CellInfoTdscdma) {
+            radio = "UTMS"
+            lac = cell.cellIdentity.lac.toString()
+            cid = cell.cellIdentity.cid.toString()
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && cell is CellInfoNr) {
+            radio = "NR"
+            lac = (cell.cellIdentity as CellIdentityNr).tac.toString()
+            cid = (cell.cellIdentity as CellIdentityNr).nci.toString()
+        } else {
+            onSensorUpdated(
+                context,
+                cellConnection,
+                STATE_UNKNOWN,
+                cellConnection.statelessIcon,
+                mapOf()
+            )
+            return
+        }
+
+        val cellId = "$radio:$mcc:$mnc:$lac:$cid"
 
         onSensorUpdated(
             context,
