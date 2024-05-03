@@ -112,11 +112,11 @@ class ConversationViewModel @Inject constructor(
     }
 
     /** @return `true` if the voice input intent should be fired */
-    fun onNewIntent(intent: Intent?): Boolean {
+    fun onNewIntent(intent: Intent): Boolean {
         if (
             (
-                (intent?.flags != null && intent.flags and Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT != 0) ||
-                    intent?.action in listOf(Intent.ACTION_ASSIST, "android.intent.action.VOICE_ASSIST")
+                (intent.flags and Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT != 0) ||
+                    intent.action in listOf(Intent.ACTION_ASSIST, "android.intent.action.VOICE_ASSIST")
                 ) &&
             inputMode != AssistInputMode.BLOCKED
         ) {
