@@ -11,7 +11,6 @@
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2024.5.1 - Automotive" versioncode="1">
-        <change>Android 9+: Add a charge time remaining sensor</change>
         <change>Assist: Support voice command action to trigger via headset</change>
         <change>Bug fixes and dependency updates</change>
     </release>
