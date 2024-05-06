@@ -38,6 +38,9 @@ interface SensorDao {
     @Query("SELECT * FROM Sensors WHERE server_id = :serverId")
     suspend fun getAllServer(serverId: Int): List<Sensor>
 
+    @Query("SELECT * FROM Sensors WHERE NOT(server_id IN (:serverIds))")
+    suspend fun getAllExceptServer(serverIds: List<Int>): List<Sensor>
+
     @Transaction
     @Query("SELECT * FROM sensor_settings WHERE sensor_id = :id")
     fun getSettings(id: String): List<SensorSetting>

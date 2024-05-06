@@ -208,6 +208,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var mFilePathCallback: ValueCallback<Array<Uri>>? = null
     private var isConnected = false
     private var isShowingError = false
+    private var isRelaunching = false
     private var alertDialog: AlertDialog? = null
     private var isVideoFullScreen = false
     private var videoHeight = 0
@@ -708,8 +709,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     @JavascriptInterface
                     fun revokeExternalAuth(callback: String) {
                         presenter.onRevokeExternalAuth(JSONObject(callback).get("callback") as String)
-                        relaunchApp()
-                        finish()
+                        isRelaunching = true // Prevent auth errors from showing
                     }
 
                     @JavascriptInterface
@@ -913,7 +913,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     override fun onPause() {
         super.onPause()
         presenter.setAppActive(false)
-        if (!isFinishing) SensorReceiver.updateAllSensors(this)
+        if (!isFinishing && !isRelaunching) SensorReceiver.updateAllSensors(this)
     }
 
     private suspend fun checkAndWarnForDisabledLocation() {
@@ -1219,6 +1219,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     }
 
     override fun relaunchApp() {
+        isRelaunching = true
         startActivity(Intent(this, LaunchActivity::class.java))
         finish()
     }
@@ -1284,7 +1285,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         error: SslError?,
         description: String?
     ) {
-        if (isShowingError || !isStarted) {
+        if (isShowingError || !isStarted || isRelaunching) {
             return
         }
         isShowingError = true

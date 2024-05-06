@@ -66,6 +66,18 @@ abstract class SensorWorkerBase(
             }
             sensorReceiver.updateSensors(appContext, serverManager, sensorDao, null)
         }
+
+        // Cleanup orphaned sensors that may have been created by a slow or long running update
+        // writing data when deleting the server.
+        val currentServerIds = serverManager.defaultServers.map { it.id }
+        val orphanedSensors = sensorDao.getAllExceptServer(currentServerIds)
+        if (orphanedSensors.any()) {
+            Log.i(TAG, "Cleaning up ${orphanedSensors.size} orphaned sensor entries")
+            orphanedSensors.forEach {
+                sensorDao.removeSensor(it.id, it.serverId)
+            }
+        }
+
         Result.success()
     }
 
