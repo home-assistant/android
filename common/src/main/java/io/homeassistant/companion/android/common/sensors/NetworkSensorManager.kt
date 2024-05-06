@@ -627,8 +627,8 @@ class NetworkSensorManager : SensorManager {
         val lac: String
         val cid: String
 
-        val signalStrengthLevel : Int
-        val signalStrengthDbm : Int
+        val signalStrengthLevel: Int
+        val signalStrengthDbm: Int
 
         if (cell is CellInfoGsm) {
             radio = "GSM"
