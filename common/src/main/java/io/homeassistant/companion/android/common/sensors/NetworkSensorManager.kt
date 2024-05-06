@@ -156,7 +156,7 @@ class NetworkSensorManager : SensorManager {
             commonR.string.sensor_description_cell,
             "mdi:radio-tower",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.WORKER
         )
 
         private const val SETTING_GET_CURRENT_BSSID = "network_get_current_bssid"
@@ -627,30 +627,45 @@ class NetworkSensorManager : SensorManager {
         val lac: String
         val cid: String
 
+        val signalStrengthLevel : Int
+        val signalStrengthDbm : Int
+
         if (cell is CellInfoGsm) {
             radio = "GSM"
             lac = cell.cellIdentity.lac.toString()
             cid = cell.cellIdentity.cid.toString()
+            signalStrengthLevel = cell.cellSignalStrength.level
+            signalStrengthDbm = cell.cellSignalStrength.dbm
         } else if (cell is CellInfoCdma) {
             radio = "CDMA"
             lac = cell.cellIdentity.networkId.toString()
             cid = cell.cellIdentity.basestationId.toString()
+            signalStrengthLevel = cell.cellSignalStrength.level
+            signalStrengthDbm = cell.cellSignalStrength.dbm
         } else if (cell is CellInfoWcdma) {
             radio = "UMTS"
             lac = cell.cellIdentity.lac.toString()
             cid = cell.cellIdentity.cid.toString()
+            signalStrengthLevel = cell.cellSignalStrength.level
+            signalStrengthDbm = cell.cellSignalStrength.dbm
         } else if (cell is CellInfoLte) {
             radio = "LTE"
             lac = cell.cellIdentity.tac.toString()
             cid = cell.cellIdentity.ci.toString()
+            signalStrengthLevel = cell.cellSignalStrength.level
+            signalStrengthDbm = cell.cellSignalStrength.dbm
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && cell is CellInfoTdscdma) {
             radio = "UTMS"
             lac = cell.cellIdentity.lac.toString()
             cid = cell.cellIdentity.cid.toString()
+            signalStrengthLevel = cell.cellSignalStrength.level
+            signalStrengthDbm = cell.cellSignalStrength.dbm
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && cell is CellInfoNr) {
             radio = "NR"
             lac = (cell.cellIdentity as CellIdentityNr).tac.toString()
             cid = (cell.cellIdentity as CellIdentityNr).nci.toString()
+            signalStrengthLevel = cell.cellSignalStrength.level
+            signalStrengthDbm = cell.cellSignalStrength.dbm
         } else {
             onSensorUpdated(
                 context,
@@ -669,7 +684,10 @@ class NetworkSensorManager : SensorManager {
             cellConnection,
             cellId,
             cellConnection.statelessIcon,
-            mapOf()
+            mapOf(
+                "signal_strength_dbm" to signalStrengthDbm,
+                "signal_strength_level" to signalStrengthLevel
+            )
         )
     }
 
