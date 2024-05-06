@@ -28,7 +28,7 @@ class FirebaseCloudMessagingService : FirebaseMessagingService() {
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        Log.d(TAG, "From: ${remoteMessage.from}")
+        Log.d(TAG, "From: ${remoteMessage.from} and data: ${remoteMessage.data}")
 
         messagingManager.handleMessage(remoteMessage.data, SOURCE)
     }
