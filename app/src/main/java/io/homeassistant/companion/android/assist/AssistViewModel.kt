@@ -122,10 +122,10 @@ class AssistViewModel @Inject constructor(
      * @param intent the updated intent
      * @param lockedMatches whether the locked state changed and contents should be cleared
      */
-    fun onNewIntent(intent: Intent?, lockedMatches: Boolean) {
+    fun onNewIntent(intent: Intent, lockedMatches: Boolean) {
         if (
-            (intent?.flags != null && intent.flags and Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT != 0) ||
-            intent?.action in listOf(Intent.ACTION_ASSIST, "android.intent.action.VOICE_ASSIST", Intent.ACTION_VOICE_COMMAND)
+            (intent.flags and Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT != 0) ||
+            intent.action in listOf(Intent.ACTION_ASSIST, "android.intent.action.VOICE_ASSIST", Intent.ACTION_VOICE_COMMAND)
         ) {
             if (!lockedMatches && inputMode != AssistInputMode.BLOCKED) {
                 _conversation.clear()
