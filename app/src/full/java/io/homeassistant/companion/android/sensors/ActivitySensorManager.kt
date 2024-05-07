@@ -40,7 +40,8 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_activity,
             commonR.string.sensor_description_detected_activity,
-            "mdi:walk"
+            "mdi:walk",
+            deviceClass = "enum"
         )
 
         private val sleepConfidence = SensorManager.BasicSensor(
@@ -111,7 +112,9 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
                     activity,
                     probActivity,
                     getSensorIcon(probActivity),
-                    result.probableActivities.associate { typeToString(it) to it.confidence }
+                    result.probableActivities.associate { typeToString(it) to it.confidence }.plus(
+                        "options" to listOf("in_vehicle", "on_bicycle", "on_foot", "still", "tilting", "walking", "running")
+                    )
                 )
             }
         }

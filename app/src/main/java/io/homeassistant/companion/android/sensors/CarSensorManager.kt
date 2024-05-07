@@ -119,6 +119,7 @@ class CarSensorManager :
                 R.string.basic_sensor_name_car_fuel_type,
                 R.string.sensor_description_car_fuel_type,
                 "mdi:gas-station",
+                deviceClass = "enum",
                 entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
             ),
             autoPermissions = listOf("com.google.android.gms.permission.CAR_FUEL"),
@@ -131,6 +132,7 @@ class CarSensorManager :
                 R.string.basic_sensor_name_car_ev_connector_type,
                 R.string.sensor_description_car_ev_connector_type,
                 "mdi:car-electric",
+                deviceClass = "enum",
                 entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
             ),
             autoPermissions = listOf("com.google.android.gms.permission.CAR_FUEL"),
@@ -420,7 +422,12 @@ class CarSensorManager :
                 if (fuelTypeStatus == "success") getFuelType(data.fuelTypes.value!!) else STATE_UNKNOWN,
                 fuelType.sensor.statelessIcon,
                 mapOf(
-                    "status" to fuelTypeStatus
+                    "status" to fuelTypeStatus,
+                    "options" to listOf(
+                        "Biodiesel", "Compressed natural gas", "#1 Grade Diesel", "#2 Grade Diesel",
+                        "85% ethanol/gasoline blend", "Electric", "Hydrogen fuel cell", "Leaded gasoline",
+                        "Liquified natural gas", "Liquified petroleum gas", "Other", "Unleaded gasoline"
+                    )
                 ),
                 forceUpdate = true
             )
@@ -432,7 +439,14 @@ class CarSensorManager :
                 if (evConnectorTypeStatus == "success") getEvConnectorType(data.evConnectorTypes.value!!) else STATE_UNKNOWN,
                 evConnector.sensor.statelessIcon,
                 mapOf(
-                    "status" to evConnectorTypeStatus
+                    "status" to evConnectorTypeStatus,
+                    "options" to listOf(
+                        "CHAdeMo fast charger connector", "Combined Charging System Combo 1",
+                        "Combined Charging System Combo 2", "GBT_AC Fast Charging Standard",
+                        "GBT_DC Fast Charging Standard", "Connector type SAE J1772", "IEC 62196 Type 2 connector",
+                        "other", "IEC_TYPE_3_AC connector", "High Power Wall Charger of Tesla",
+                        "Connector of Tesla Roadster", "Supercharger of Tesla"
+                    )
                 ),
                 forceUpdate = true
             )
