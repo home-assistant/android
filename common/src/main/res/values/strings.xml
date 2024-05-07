@@ -933,6 +933,7 @@
     <string name="tile_updated">Tile data updated</string>
     <string name="tiles">Tiles</string>
     <string name="toast_message">%1$s was selected</string>
+    <string name="toggle_flashlight">Toggle flashlight</string>
     <string name="trust_server_title">Remotely control app &amp; device</string>
     <string name="trust_server_summary">Manage enabled sensors and use notification commands from this server</string>
     <string name="tts_error">Unable to process notification \"%1$s\" as text to speech.</string>
@@ -1081,6 +1082,7 @@
     <string name="sensor_update_type_info_worker_setting">You can change how often this sensor is updated by using the \'%1$s\' setting.</string>
     <string name="sensor_update_type_info_location">For more information about location updates, please check the documentation.</string>
     <string name="sensor_update_type_info_custom">This sensor updates on a non-standard schedule, please check the documentation.</string>
+    <string name="missing_camera_permission">\'Camera\' permission required</string>
     <string name="missing_phone_permission">Please grant Phone permission to make a phone call</string>
     <string name="missing_bluetooth_permission">Please grant Nearby devices permission to control Bluetooth</string>
     <string name="notification_channels_description">Notification channels allow you to control the look and feel of a certain type of notification. You can create notification channels by sending a notification with the channel parameter, refer to the help icon in the upper right hand corner to learn more. Below is a list of all notification channels created by your server and the app. Select the edit icon to adjust channel settings like ringtone and Do Not Disturb override. Select the delete icon to remove the channel from this list.\n\nDeleting a channel does not reset channel settings, if a notification is received with the same channel name then it will re-use its previous settings. You can only delete channels created by your server.</string>
@@ -1232,4 +1234,6 @@
     <string name="state_sunny">Sunny</string>
     <string name="state_windy">Windy</string>
     <string name="feedback">Feedback</string>
+    <string name="basic_sensor_name_remaining_charge_time">Remaining charge time</string>
+    <string name="sensor_description_remaining_charge_time">Compute an approximation for how much time (in minutes) remains until the battery is fully charged. Returns unavailable if no time can be computed: either there is not enough current data to make a decision or the battery is currently discharging. Returns 0 if calculation is not complete but device is currently charging.</string>
 </resources>

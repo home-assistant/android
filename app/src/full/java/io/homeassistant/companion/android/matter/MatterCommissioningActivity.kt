@@ -91,7 +91,7 @@ class MatterCommissioningActivity : AppCompatActivity() {
         }
     }
 
-    override fun onNewIntent(intent: Intent?) {
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         this.intent = intent // Data is handled by check in onResume()
         newMatterDevice = true
