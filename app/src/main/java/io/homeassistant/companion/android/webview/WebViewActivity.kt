@@ -355,7 +355,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     }
                 }
 
-                @RequiresApi(23)
+                @RequiresApi(Build.VERSION_CODES.M)
                 override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
                     Log.e(TAG, "onReceivedError: errorCode: ${error?.errorCode} ${error?.description} url:${request?.url}")
                     if (request?.isForMainFrame == true && request.url.toString() == loadedUrl) {
@@ -929,7 +929,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         changeLog.showChangeLog(this, false)
 
         if (::loadedUrl.isInitialized) {
-            reloadPage()
+            waitForConnection()
         }
     }
 
@@ -1559,8 +1559,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         )
     }
 
-    private fun reloadPage() {
-        if (isPageFinished || pageError != 0) {
+    private fun reloadPage(force: Boolean = false) {
+        if (force || isPageFinished || pageError != 0) {
             Log.d(TAG, "reloadPage: isPageFinished=$isPageFinished pageError=$pageError")
             isPageFinished = false
             pageError = 0
