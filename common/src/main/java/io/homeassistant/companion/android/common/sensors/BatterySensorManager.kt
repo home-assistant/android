@@ -38,6 +38,7 @@ class BatterySensorManager : SensorManager {
             commonR.string.basic_sensor_name_battery_state,
             commonR.string.sensor_description_battery_state,
             "mdi:battery-charging",
+            deviceClass = "enum",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
             enabledByDefault = true
@@ -58,6 +59,7 @@ class BatterySensorManager : SensorManager {
             commonR.string.basic_sensor_name_charger_type,
             commonR.string.sensor_description_charger_type,
             "mdi:power-plug",
+            deviceClass = "enum",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
             enabledByDefault = true
@@ -68,6 +70,7 @@ class BatterySensorManager : SensorManager {
             commonR.string.basic_sensor_name_battery_health,
             commonR.string.sensor_description_battery_health,
             "mdi:battery-heart-variant",
+            deviceClass = "enum",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
 
@@ -223,7 +226,9 @@ class BatterySensorManager : SensorManager {
             batteryState,
             chargingStatus,
             icon,
-            mapOf()
+            mapOf(
+                "options" to listOf("charging", "discharging", "full", "not_charging")
+            )
         )
     }
 
@@ -262,7 +267,9 @@ class BatterySensorManager : SensorManager {
             chargerTypeState,
             chargerType,
             icon,
-            mapOf()
+            mapOf(
+                "options" to listOf("ac", "usb", "wireless", "dock", "none")
+            )
         )
     }
 
@@ -282,7 +289,9 @@ class BatterySensorManager : SensorManager {
             batteryHealthState,
             batteryHealth,
             icon,
-            mapOf()
+            mapOf(
+                "options" to listOf("cold", "dead", "good", "overheated", "over_voltage", "failed")
+            )
         )
     }
 

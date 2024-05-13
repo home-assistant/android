@@ -89,6 +89,7 @@ class BluetoothSensorManager : SensorManager {
             commonR.string.basic_sensor_name_bluetooth_ble_emitter,
             commonR.string.sensor_description_bluetooth_ble_emitter,
             "mdi:bluetooth",
+            deviceClass = "enum",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
@@ -100,6 +101,7 @@ class BluetoothSensorManager : SensorManager {
             commonR.string.basic_sensor_name_bluetooth_ble_beacon_monitor,
             commonR.string.sensor_description_bluetooth_ble_beacon_monitor,
             "mdi:bluetooth",
+            deviceClass = "enum",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.CUSTOM
         )
@@ -375,7 +377,8 @@ class BluetoothSensorManager : SensorManager {
                 "Transmitting power" to bleTransmitterDevice.transmitPowerSetting,
                 "Advertise mode" to bleTransmitterDevice.advertiseModeSetting,
                 "Measured power" to bleTransmitterDevice.measuredPowerSetting,
-                "Supports transmitter" to supportsTransmitter(context)
+                "Supports transmitter" to supportsTransmitter(context),
+                "options" to listOf("Transmitting", "Bluetooth is turned off", "Stopped", "Unable to transmit")
             )
         )
     }
@@ -402,7 +405,9 @@ class BluetoothSensorManager : SensorManager {
             beaconMonitor,
             state,
             icon,
-            attr,
+            attr.plus(
+                "options" to listOf("Monitoring", "Stopped", "Bluetooth is turned off")
+            ),
             forceUpdate = true
         )
     }
