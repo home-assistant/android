@@ -703,8 +703,8 @@ fun <T> Entity<T>.friendlyState(context: Context, options: EntityRegistryOptions
     val attributes = this.attributes as Map<String, Any?>
 
     var friendlyState = when (domain) {
-        // https://github.com/home-assistant/core/blob/dev/homeassistant/components/binary_sensor/strings.json#L113
         "binary_sensor" -> {
+            // https://github.com/home-assistant/core/blob/dev/homeassistant/components/binary_sensor/strings.json#L113
             when (attributes["device_class"]) {
                 "battery" -> if (state == "on") context.getString(commonR.string.state_low) else context.getString(commonR.string.state_normal)
                 "battery_charging" -> if (state == "on") context.getString(commonR.string.state_charging) else context.getString(commonR.string.state_not_charging)
