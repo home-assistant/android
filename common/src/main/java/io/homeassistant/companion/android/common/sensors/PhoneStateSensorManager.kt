@@ -24,6 +24,7 @@ class PhoneStateSensorManager : SensorManager {
             commonR.string.basic_sensor_name_phone,
             commonR.string.sensor_description_phone_state,
             "mdi:phone",
+            deviceClass = "enum",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#phone-state-sensor",
             updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
@@ -111,7 +112,9 @@ class PhoneStateSensorManager : SensorManager {
             phoneState,
             state,
             phoneIcon,
-            mapOf()
+            mapOf(
+                "options" to listOf("idle", "ringing", "offhook")
+            )
         )
     }
 

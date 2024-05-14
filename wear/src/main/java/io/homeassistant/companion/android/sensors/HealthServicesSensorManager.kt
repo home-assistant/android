@@ -39,6 +39,7 @@ class HealthServicesSensorManager : SensorManager {
             commonR.string.sensor_name_activity_state,
             commonR.string.sensor_description_activity_state,
             "mdi:account",
+            deviceClass = "enum",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
@@ -205,7 +206,8 @@ class HealthServicesSensorManager : SensorManager {
                     getActivityIcon(info),
                     mapOf(
                         "time" to info.stateChangeTime,
-                        "exercise_type" to info.exerciseInfo?.exerciseType?.name
+                        "exercise_type" to info.exerciseInfo?.exerciseType?.name,
+                        "options" to listOf("asleep", "passive", "exercise")
                     ),
                     forceUpdate = forceUpdate
                 )
