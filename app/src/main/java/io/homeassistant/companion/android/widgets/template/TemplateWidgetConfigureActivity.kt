@@ -54,8 +54,8 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
     private var requestLauncherSetup = false
 
-    public override fun onCreate(icicle: Bundle?) {
-        super.onCreate(icicle)
+    public override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
         // Set the result to CANCELED.  This will cause the widget host to cancel
         // out of the widget placement if the user presses the back button.

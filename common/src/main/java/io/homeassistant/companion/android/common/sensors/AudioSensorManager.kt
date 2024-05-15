@@ -330,6 +330,8 @@ class AudioSensorManager : SensorManager {
             return
         }
 
+        // Use deprecated function as we can't perfectly map communication device to speakerphone
+        @Suppress("DEPRECATION")
         val isSpeakerOn = audioManager.isSpeakerphoneOn
 
         val icon = if (isSpeakerOn) "mdi:volume-high" else "mdi:volume-off"
