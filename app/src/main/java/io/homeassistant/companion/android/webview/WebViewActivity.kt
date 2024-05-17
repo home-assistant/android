@@ -112,7 +112,6 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -337,7 +336,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     failingUrl: String?
                 ) {
                     Log.e(TAG, "onReceivedError: errorCode: $errorCode url:$failingUrl")
-                    Log.d(TAG, "onReceivedError is for main ${failingUrl == loadedUrl}")
                     if (failingUrl == loadedUrl) {
                         showError()
                     }
@@ -1396,23 +1394,28 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 startActivity(SettingsActivity.newInstance(this))
             }
             val isInternal = serverManager.getServer(presenter.getActiveServer())?.connection?.isInternal() == true
+            val buttonRefreshesInternal = failedConnection == "external" && isInternal
             alert.setNegativeButton(
-                if (failedConnection == "external" && isInternal) {
+                if (buttonRefreshesInternal) {
                     commonR.string.refresh_internal
                 } else {
                     commonR.string.refresh_external
                 }
             ) { _, _ ->
-                runBlocking {
-                    failedConnection = if (failedConnection == "external") {
-                        serverManager.getServer(presenter.getActiveServer())?.let { webView.loadUrl(it.connection.getUrl(true).toString()) }
-                        "internal"
-                    } else {
-                        serverManager.getServer(presenter.getActiveServer())?.let { webView.loadUrl(it.connection.getUrl(false).toString()) }
-                        "external"
-                    }
+                val url = serverManager.getServer(presenter.getActiveServer())?.let {
+                    val base = it.connection.getUrl(buttonRefreshesInternal) ?: return@let null
+                    Uri.parse(base.toString())
+                        .buildUpon()
+                        .appendQueryParameter("external_auth", "1")
+                        .build()
+                        .toString()
                 }
-                waitForConnection()
+                failedConnection = if (buttonRefreshesInternal) "internal" else "external"
+                if (url != null) {
+                    loadUrl(url = url, keepHistory = true, openInApp = true)
+                } else {
+                    waitForConnection()
+                }
             }
             if (errorType == ErrorType.TIMEOUT_EXTERNAL_BUS) {
                 alert.setNeutralButton(commonR.string.wait) { _, _ ->
