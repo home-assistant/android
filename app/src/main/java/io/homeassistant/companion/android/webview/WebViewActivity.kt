@@ -337,6 +337,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     failingUrl: String?
                 ) {
                     Log.e(TAG, "onReceivedError: errorCode: $errorCode url:$failingUrl")
+                    Log.d(TAG, "onReceivedError is for main ${failingUrl == loadedUrl}")
                     if (failingUrl == loadedUrl) {
                         showError()
                     }
@@ -1310,7 +1311,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
 
         if (tlsWebViewClient?.isTLSClientAuthNeeded == true &&
-            errorType == ErrorType.TIMEOUT &&
+            (errorType == ErrorType.TIMEOUT_GENERAL || errorType == ErrorType.TIMEOUT_EXTERNAL_BUS) &&
             !tlsWebViewClient.hasUserDeniedAccess
         ) {
             // Ignore if a timeout occurs but the user has not denied access
@@ -1413,8 +1414,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 }
                 waitForConnection()
             }
-            alert.setNeutralButton(commonR.string.wait) { _, _ ->
-                waitForConnection()
+            if (errorType == ErrorType.TIMEOUT_EXTERNAL_BUS) {
+                alert.setNeutralButton(commonR.string.wait) { _, _ ->
+                    waitForConnection()
+                }
             }
         }
         alertDialog = alert.create()
@@ -1518,7 +1521,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     !loadedUrl.toHttpUrl().pathSegments.first().contains("api") &&
                     !loadedUrl.toHttpUrl().pathSegments.first().contains("local")
                 ) {
-                    showError()
+                    showError(errorType = ErrorType.TIMEOUT_EXTERNAL_BUS)
                 }
             },
             CONNECTION_DELAY
