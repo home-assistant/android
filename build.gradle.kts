@@ -9,7 +9,6 @@ plugins {
     alias(libs.plugins.google.services).apply(false)
     alias(libs.plugins.firebase.appdistribution).apply(false)
     alias(libs.plugins.hilt).apply(false)
-    alias(libs.plugins.kotlin.kapt).apply(false)
     alias(libs.plugins.kotlin.parcelize).apply(false)
     alias(libs.plugins.ksp).apply(false)
 }
