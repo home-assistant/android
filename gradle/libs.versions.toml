@@ -77,6 +77,7 @@ google-services = { id = "com.google.gms.google-services", version.ref = "google
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 
@@ -112,7 +113,6 @@ compose-material-icons-extended = { module = "androidx.compose.material:material
 compose-runtime = { module = "androidx.compose.runtime:runtime" }
 compose-ui = { module = "androidx.compose.ui:ui" }
 compose-uiTooling = { module = "androidx.compose.ui:ui-tooling" }
-compose-compiler = { module = "androidx.compose.compiler:compiler", version.ref = "compose-compiler" }
 core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
 core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "core-splashscreen" }
 cronet-embedded = { module = "org.chromium.net:cronet-embedded", version.ref = "cronet-embedded" }
