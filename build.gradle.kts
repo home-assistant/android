@@ -16,12 +16,6 @@ plugins {
 
 allprojects {
     apply(plugin = rootProject.libs.plugins.ktlint.get().pluginId)
-
-    tasks.withType<KotlinCompile>().configureEach {
-        kotlinOptions {
-            jvmTarget = libs.versions.javaVersion.get()
-        }
-    }
 }
 
 tasks.register("clean").configure {
