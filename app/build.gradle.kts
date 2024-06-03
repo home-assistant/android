@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.firebase.appdistribution)
     alias(libs.plugins.google.services)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.compose.compiler)
 }
 
 android {
@@ -41,10 +42,6 @@ android {
         viewBinding = true
         compose = true
         buildConfig = true
-    }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
     }
 
     kotlinOptions {
@@ -168,7 +165,6 @@ dependencies {
 
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.animation)
-    implementation(libs.compose.compiler)
     implementation(libs.compose.foundation)
     implementation(libs.compose.material)
     implementation(libs.compose.material.icons.core)

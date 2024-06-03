@@ -15,7 +15,6 @@ car-versions = "1.4.0-rc02"
 changeLog = "3.5"
 community-material-typeface = "7.0.96.0-kotlin"
 compose-bom = "2024.05.00"
-compose-compiler = "1.5.14"
 constraintlayout = "2.1.4"
 coreKtx = "1.13.1"
 core-splashscreen = "1.1.0-rc01"
@@ -32,8 +31,8 @@ iconics = "5.4.0"
 jackson-module-kotlin = "2.13.5"
 javaVersion = "11"
 kotlinx-coroutines = "1.8.1"
-kotlin = "1.9.24"
-ksp = "1.9.24-1.0.20"
+kotlin = "2.0.0"
+ksp = "2.0.0-1.0.21"
 ktlint = "12.1.1"
 lifecycle = "2.8.1"
 material = "1.12.0"
@@ -77,6 +76,7 @@ google-services = { id = "com.google.gms.google-services", version.ref = "google
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 
@@ -112,7 +112,6 @@ compose-material-icons-extended = { module = "androidx.compose.material:material
 compose-runtime = { module = "androidx.compose.runtime:runtime" }
 compose-ui = { module = "androidx.compose.ui:ui" }
 compose-uiTooling = { module = "androidx.compose.ui:ui-tooling" }
-compose-compiler = { module = "androidx.compose.compiler:compiler", version.ref = "compose-compiler" }
 core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
 core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "core-splashscreen" }
 cronet-embedded = { module = "org.chromium.net:cronet-embedded", version.ref = "cronet-embedded" }
