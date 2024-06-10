@@ -1,28 +1,23 @@
-The official app for Home Assistant. Home Assistant for Android lets you control all your devices in your Home Assistant instance. 
+The Home Assistant Companion app allows you to access your Home Assistant instance on the go. Home Assistant is the smart home solution focused on privacy, choice, and sustainability. It runs locally in your home via a device like the Home Assistant Green or Raspberry Pi.
 
-Home Assistant is an open-source home automation platform that focuses on privacy and local control.
+This app connects to all the most powerful features of Home Assistant,
+- One app to control the whole home - Home Assistant is compatible with the biggest brands in the smart home, connecting to thousands of smart devices and services.
+- Discover automatically and quickly configure new devices - such as Philips Hue, Google Cast, Sonos, IKEA Tradfri and Apple Homekit compatible devices.
+- Automate everything - Make all the devices in your home work in harmony - have your lights dim when you start watching a movie, or turn off your heat when you’re away from home.
+- Keep your home’s data in the home - use it privately to see past trends and averages.
+- Connect to open standards with hardware add-ons - including Z-Wave, Zigbee, Matter, Thread, and Bluetooth.
+- Connect Anywhere - If you would like to access this app while away from home, the most secure and simple way to get started is Home Assistant Cloud.
 
-Home Assistant for Android requires that you have access to a Home Assistant instance.
+The app unlocks your smartphone or tablet as a home automation tool,
+- Securely share your location, using it to automate heating, security, and so much more.
+- Can share your phone's sensors with Home Assistant for automations including information on: steps taken, battery level, connectivity, next alarm, and many more.
+- Get notifications on what's happening in your home, from detecting leaks to doors left open, you have full control over what it tells you.
+Android Auto functionality lets you open a garage or disable the security system from the dash of your car.
+- Build your own widgets to control any device in your home with a tap.
+- Text or talk to your local voice assistant on your device.
+- Wear OS compatibility, with support for notifications, sensors, tiles and watchface complications.
 
-With the Companion app you are able to integrate Home Assistant with many of Androids features such as:
+Join the over 1 million users and empower your home with better privacy, choice and sustainability.
 
-- Device Controls
-- Notifications
-- Quick Setting Tiles
-- Shortcuts
-- Sensors
-- Widgets
 
-For documentation around the application please see https://companion.home-assistant.io/
-
-There is a Wear OS app with features such as:
-
-- Notifications
-- Sensors
-- Tiles
-- Watchface Complications
-
-Android Auto support has also been added with features such as:
-
-- See and control devices
-- Navigate to any user or location
+Compatible with: Airthings, Amazon Alexa, Amcrest, Android TVs, Apple HomeKit, Apple TV, ASUSWRT, August, Belink WeMo, Bluetooth, Bose SoundTouch, Broadlink, BTHome, deCONZ, Denon, Devolo, DLNA, Ecobee, Ecovacs, Ecowitt, Elgato, EZVIZ, Fritz, Fully Kiosk, GoodWe, Google Assistant, Google Cast, Google Home, Google Nest, Govee, Growatt, Hikvision, Hive, Home Connect, Homematic, HomeWizard, Honeywell, iCloud, IFTTT, IKEA Tradfri, Insteon, Jellyfin, LG Smart TVs, LIFX, Logitech Harmony, Lutron Caseta, Magic Home, Matter, MotionEye, MQTT, MusicCast, Nanoleaf, Netatmo, Nuki, OctoPrint, ONVIF, Opower, Overkiz, OwnTracks, Panasonic Viera, Philips Hue, Pi-hole, Plex, Reolink, Ring, Roborock, Roku, Samsung TVs, Sense, Sensiba, Shelly, SmartThings, SolarEdge, Sonarr, Sonos, Sony Bravia, Spotify, Steam, SwitchBot, Synology, Tado, Tasmota, Tesla Wall, Thread, Tile, TP-Link Smart Home, Tuya, UniFi, UPnP, Verisure, Vizio, Wallbox, WebRTC, WiZ, WLED, Xbox, Xiaomi BLE, Yale, Yeelight, YoLink, Z-Wave, Zigbee
