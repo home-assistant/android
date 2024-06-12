@@ -262,7 +262,7 @@ class ConversationViewModel @Inject constructor(
         ) { newMessage, isInput, isError ->
             _conversation.indexOf(message).takeIf { pos -> pos >= 0 }?.let { index ->
                 _conversation[index] = message.copy(
-                    message = newMessage,
+                    message = newMessage.trim(),
                     isInput = isInput ?: message.isInput,
                     isError = isError
                 )

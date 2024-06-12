@@ -137,6 +137,7 @@ class NetworkSensorManager : SensorManager {
             commonR.string.basic_sensor_name_network_type,
             commonR.string.sensor_description_network_type,
             "mdi:network",
+            deviceClass = "enum",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#network-type-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT
@@ -615,7 +616,8 @@ class NetworkSensorManager : SensorManager {
             networkCapability,
             icon,
             mapOf(
-                "metered" to metered
+                "metered" to metered,
+                "options" to listOf("bluetooth", "cellular", "ethernet", "lowpan", "usb", "vpn", "wifi", "wifi_aware")
             )
         )
     }

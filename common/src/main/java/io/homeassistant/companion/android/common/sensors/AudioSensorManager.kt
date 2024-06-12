@@ -20,6 +20,7 @@ class AudioSensorManager : SensorManager {
             commonR.string.sensor_name_ringer_mode,
             commonR.string.sensor_description_audio_sensor,
             "mdi:volume-high",
+            deviceClass = "enum",
             updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         private val audioState = SensorManager.BasicSensor(
@@ -27,7 +28,8 @@ class AudioSensorManager : SensorManager {
             "sensor",
             commonR.string.sensor_name_audio_mode,
             commonR.string.sensor_description_audio_mode,
-            "mdi:volume-high"
+            "mdi:volume-high",
+            deviceClass = "enum"
         )
         private val headphoneState = SensorManager.BasicSensor(
             "headphone_state",
@@ -212,7 +214,9 @@ class AudioSensorManager : SensorManager {
             audioSensor,
             ringerMode,
             icon,
-            mapOf()
+            mapOf(
+                "options" to listOf("normal", "silent", "vibrate")
+            )
         )
     }
 
@@ -247,7 +251,12 @@ class AudioSensorManager : SensorManager {
             audioState,
             audioMode,
             icon,
-            mapOf()
+            mapOf(
+                "options" to listOf(
+                    "normal", "ringing", "in_call", "in_communication", "call_screening",
+                    "call_redirect", "communication_redirect"
+                )
+            )
         )
     }
 
@@ -321,6 +330,8 @@ class AudioSensorManager : SensorManager {
             return
         }
 
+        // Use deprecated function as we can't perfectly map communication device to speakerphone
+        @Suppress("DEPRECATION")
         val isSpeakerOn = audioManager.isSpeakerphoneOn
 
         val icon = if (isSpeakerOn) "mdi:volume-high" else "mdi:volume-off"
