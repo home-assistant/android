@@ -148,7 +148,11 @@ class HealthConnectSensorManager : SensorManager {
     }
 
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        return listOf(weight, activeCaloriesBurned, totalCaloriesBurned)
+        return if (hasSensor(context)) {
+            listOf(weight, activeCaloriesBurned, totalCaloriesBurned)
+        } else{
+            emptyList()
+        }
     }
 
     override fun hasSensor(context: Context): Boolean {
