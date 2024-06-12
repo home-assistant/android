@@ -2,14 +2,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-sdk tools:overrideLibrary="com.google.android.gms.threadnetwork" />
+    <uses-sdk tools:overrideLibrary="com.google.android.gms.threadnetwork, androidx.health.connect.client" />
     <uses-permission android:name="com.google.android.gms.permission.CAR_FUEL" />
     <uses-permission android:name="com.google.android.gms.permission.CAR_MILEAGE" />
+    <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED" />
+    <uses-permission android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED" />
+    <uses-permission android:name="android.permission.health.READ_WEIGHT" />
 
     <queries>
         <!-- For GMS Core/Play service -->
         <package android:name="com.google.android.gms" />
         <package android:name="com.android.vending" />
+        <package android:name="com.google.android.apps.healthdata" />
         <!-- End of GMS Core/Play service-->
     </queries>
 

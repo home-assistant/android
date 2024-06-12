@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.settings.sensor.views
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
@@ -64,6 +65,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.health.connect.client.PermissionController
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.mikepenz.iconics.IconicsDrawable
@@ -75,6 +77,7 @@ import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.database.sensor.SensorWithAttributes
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
+import io.homeassistant.companion.android.sensors.HealthConnectSensorManager
 import io.homeassistant.companion.android.settings.sensor.SensorDetailViewModel
 import io.homeassistant.companion.android.util.compose.MdcAlertDialog
 import io.homeassistant.companion.android.util.compose.TransparentChip
@@ -92,6 +95,8 @@ fun SensorDetailView(
     val context = LocalContext.current
     var sensorUpdateTypeInfo by remember { mutableStateOf(false) }
     val jsonMapper by lazy { jacksonObjectMapper() }
+    val healthConnectPermission = rememberLauncherForActivityResult(PermissionController.createRequestPermissionResultContract(context.packageName)) {
+    }
 
     val sensorEnabled = viewModel.sensor?.sensor?.enabled
         ?: (
@@ -107,7 +112,11 @@ fun SensorDetailView(
             ).let { result ->
                 if (result == SnackbarResult.ActionPerformed) {
                     if (it.actionOpensSettings) {
-                        context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}")))
+                        if (viewModel.sensorId.startsWith("health_connect")) {
+                            healthConnectPermission.launch(HealthConnectSensorManager().requiredPermissions(viewModel.sensorId).toSet())
+                        } else {
+                            context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}")))
+                        }
                     } else {
                         onSetEnabled(true, it.serverId)
                     }
