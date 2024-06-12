@@ -77,7 +77,8 @@ The project currently uses [lokalise](https://lokalise.com/public/145814835dd655
 
 
 ## Generating a release to production
-* Go to the latest Pre-Release and edit it
-* Delete the body of the release, select the last full release tag and auto generate the release notes
-* Uncheck the Pre-Release box and click update release
-* This should cause the `Play Publish Production` Workflow to execute and should handle the rest
+* Go to the latest Pre-release and edit it
+* Uncheck the Pre-release box, check the Latest release box, and click Update release
+  * This should cause the `Play Publish Production` Workflow to execute and should handle the rest for Google Play
+  * Some platforms, such as the Amazon App Store, need to be updated manually
+  * F-Droid uses the `version_code.txt` file of the latest release to build a new version, this may take some time
