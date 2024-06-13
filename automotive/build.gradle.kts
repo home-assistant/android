@@ -151,6 +151,7 @@ dependencies {
     coreLibraryDesugaring(libs.tools.desugar.jdk)
 
     implementation(libs.blurView)
+    implementation(libs.androidx.connect.client)
 
     implementation(libs.kotlin.stdlib)
     implementation(libs.kotlin.reflect)
