@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-sdk tools:overrideLibrary="androidx.wear.remote.interactions,androidx.car.app.projected" />
+    <uses-sdk tools:overrideLibrary="androidx.wear.remote.interactions,androidx.car.app.projected, androidx.health.connect.client" />
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />

@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.sensors
 import android.content.Context
 import android.os.Build
 import android.os.Build.VERSION.SDK_INT
-import androidx.annotation.RequiresApi
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
@@ -159,7 +158,6 @@ class HealthConnectSensorManager : SensorManager {
         return SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
     }
 
-    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     override fun checkPermission(context: Context, sensorId: String): Boolean {
         val healthConnectClient = HealthConnectClient.getOrCreate(context)
         val result = runBlocking {
