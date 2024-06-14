@@ -63,16 +63,24 @@ class KeyChainRepositoryImpl @Inject constructor(
             if (chain == null) {
                 chain = try {
                     KeyChain.getCertificateChain(context, alias!!)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Exception getting certificate chain", e)
+                } catch (t: Throwable) {
+                    when (t) {
+                        is AssertionError,
+                        is Exception -> Log.e(TAG, "Issue getting certificate chain", t)
+                        else -> throw t
+                    }
                     null
                 }
             }
             if (key == null) {
                 key = try {
                     KeyChain.getPrivateKey(context, alias!!)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Exception getting private key", e)
+                } catch (t: Throwable) {
+                    when (t) {
+                        is AssertionError,
+                        is Exception -> Log.e(TAG, "Issue getting private key", t)
+                        else -> throw t
+                    }
                     null
                 }
             }
