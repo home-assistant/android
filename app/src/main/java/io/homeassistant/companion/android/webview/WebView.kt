@@ -8,7 +8,12 @@ interface WebView {
         AUTHENTICATION,
         SSL,
         SECURITY_WARNING,
-        TIMEOUT
+
+        /** Timeout or general loading error */
+        TIMEOUT_GENERAL,
+
+        /** Timeout due to no 'connection-status: connected' event on the external bus */
+        TIMEOUT_EXTERNAL_BUS
     }
 
     fun loadUrl(url: String, keepHistory: Boolean, openInApp: Boolean)
@@ -23,5 +28,5 @@ interface WebView {
 
     fun unlockAppIfNeeded()
 
-    fun showError(errorType: ErrorType = ErrorType.TIMEOUT, error: SslError? = null, description: String? = null)
+    fun showError(errorType: ErrorType = ErrorType.TIMEOUT_GENERAL, error: SslError? = null, description: String? = null)
 }
