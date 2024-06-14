@@ -30,10 +30,3 @@ jobs:
 
       - name: Promote Beta to Production Play Store
         run: bundle exec fastlane promote_to_production
-
-      - name: Send to Production Amazon App Store
-        run: bundle exec fastlane submit_amazon
-        env:
-          AMAZON_APPSTORE_CLIENT_ID: ${{ secrets.AMAZON_APPSTORE_CLIENT_ID }}
-          AMAZON_APPSTORE_CLIENT_SECRET: ${{ secrets.AMAZON_APPSTORE_CLIENT_SECRET }}
-          AMAZON_APPSTORE_APP_ID: ${{ secrets.AMAZON_APPSTORE_APP_ID }}
