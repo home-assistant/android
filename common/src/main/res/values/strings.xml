@@ -44,7 +44,7 @@
     <string name="background_access_enabled">Home Assistant has access to run in the background</string>
     <string name="background_access_title">Background access</string>
     <string name="basic_sensor_lullaby">Lullaby</string>
-    <string name="basic_sensor_name_active_calories_burned">Active Calories Burned</string>
+    <string name="basic_sensor_name_active_calories_burned">Active calories burned</string>
     <string name="basic_sensor_name_active_notification_count">Active notification count</string>
     <string name="basic_sensor_name_activity">Detected activity</string>
     <string name="basic_sensor_name_alarm">Next alarm</string>
@@ -106,7 +106,7 @@
     <string name="basic_sensor_name_sim2">SIM 2</string>
     <string name="basic_sensor_name_sleep_confidence">Sleep confidence</string>
     <string name="basic_sensor_name_sleep_segment">Sleep segment</string>
-    <string name="basic_sensor_name_total_calories_burned">Total Calories Burned</string>
+    <string name="basic_sensor_name_total_calories_burned">Total calories burned</string>
     <string name="basic_sensor_name_total_rx_gb">Total Rx GB</string>
     <string name="basic_sensor_name_total_tx_gb">Total Tx GB</string>
     <string name="basic_sensor_name_weight">Weight</string>
@@ -637,7 +637,7 @@
     <string name="sensor_description_speakerphone">Whether speakerphone is enabled on the device</string>
     <string name="sensor_description_steps_sensor">The total number of steps since the last reboot of the device</string>
     <string name="sensor_description_storage_sensor">Information about the total and available storage space internally and externally</string>
-    <string name="sensor_description_total_calories_burned">Get Total Calories Burned from Health Connect</string>
+    <string name="sensor_description_total_calories_burned">Get total calories burned from Health Connect</string>
     <string name="sensor_description_total_rx_gb">Total Rx GB since last device reboot</string>
     <string name="sensor_description_total_tx_gb">Total Tx GB since last device reboot</string>
     <string name="sensor_description_volume_alarm">Volume level for alarms on the device</string>
@@ -1267,5 +1267,5 @@
     <string name="state_tampering_detected">Tampering detected</string>
     <string name="state_update_available">Update available</string>
     <string name="state_up_to_date">Up-to-date</string>
-    <string name="sensor_name_health_connect">Health Connect Sensors</string>
+    <string name="sensor_name_health_connect">Health Connect sensors</string>
 </resources>
