@@ -1,23 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2024.6.1 - Main" versioncode="3">
-        <change>Sensors: Add possible states to supported sensors for easier automation creation</change>
-        <change>State in widgets and Android Auto now better matches state shown on dashboard</change>
-        <change>Android 9+: Add a charge time remaining sensor</change>
-        <change>Assist: Support voice command action to trigger via headset</change>
+    <release version="2024.6.3 - Main" versioncode="3">
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2024.6.1 - Wear" versioncode="2">
-        <change>Sensors: Add possible states to supported sensors for easier automation creation</change>
-        <change>State in complications now better matches state shown on dashboard</change>
-        <change>Android 9+: Add a charge time remaining sensor</change>
+    <release version="2024.6.3 - Wear" versioncode="2">
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2024.6.1 - Automotive" versioncode="1">
-        <change>Sensors: Add possible states to supported sensors for easier automation creation</change>
-        <change>State in driving interface now better matches state shown on dashboard</change>
-        <change>Assist: Support voice command action to trigger via headset</change>
+    <release version="2024.6.3 - Automotive" versioncode="1">
         <change>Bug fixes and dependency updates</change>
     </release>
 </changelog>

@@ -112,7 +112,6 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -1310,7 +1309,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
 
         if (tlsWebViewClient?.isTLSClientAuthNeeded == true &&
-            errorType == ErrorType.TIMEOUT &&
+            (errorType == ErrorType.TIMEOUT_GENERAL || errorType == ErrorType.TIMEOUT_EXTERNAL_BUS) &&
             !tlsWebViewClient.hasUserDeniedAccess
         ) {
             // Ignore if a timeout occurs but the user has not denied access
@@ -1395,26 +1394,33 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 startActivity(SettingsActivity.newInstance(this))
             }
             val isInternal = serverManager.getServer(presenter.getActiveServer())?.connection?.isInternal() == true
+            val buttonRefreshesInternal = failedConnection == "external" && isInternal
             alert.setNegativeButton(
-                if (failedConnection == "external" && isInternal) {
+                if (buttonRefreshesInternal) {
                     commonR.string.refresh_internal
                 } else {
                     commonR.string.refresh_external
                 }
             ) { _, _ ->
-                runBlocking {
-                    failedConnection = if (failedConnection == "external") {
-                        serverManager.getServer(presenter.getActiveServer())?.let { webView.loadUrl(it.connection.getUrl(true).toString()) }
-                        "internal"
-                    } else {
-                        serverManager.getServer(presenter.getActiveServer())?.let { webView.loadUrl(it.connection.getUrl(false).toString()) }
-                        "external"
-                    }
+                val url = serverManager.getServer(presenter.getActiveServer())?.let {
+                    val base = it.connection.getUrl(buttonRefreshesInternal) ?: return@let null
+                    Uri.parse(base.toString())
+                        .buildUpon()
+                        .appendQueryParameter("external_auth", "1")
+                        .build()
+                        .toString()
                 }
-                waitForConnection()
+                failedConnection = if (buttonRefreshesInternal) "internal" else "external"
+                if (url != null) {
+                    loadUrl(url = url, keepHistory = true, openInApp = true)
+                } else {
+                    waitForConnection()
+                }
             }
-            alert.setNeutralButton(commonR.string.wait) { _, _ ->
-                waitForConnection()
+            if (errorType == ErrorType.TIMEOUT_EXTERNAL_BUS) {
+                alert.setNeutralButton(commonR.string.wait) { _, _ ->
+                    waitForConnection()
+                }
             }
         }
         alertDialog = alert.create()
@@ -1518,7 +1524,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     !loadedUrl.toHttpUrl().pathSegments.first().contains("api") &&
                     !loadedUrl.toHttpUrl().pathSegments.first().contains("local")
                 ) {
-                    showError()
+                    showError(errorType = ErrorType.TIMEOUT_EXTERNAL_BUS)
                 }
             },
             CONNECTION_DELAY

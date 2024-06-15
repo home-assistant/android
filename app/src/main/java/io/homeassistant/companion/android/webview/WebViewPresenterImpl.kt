@@ -211,7 +211,7 @@ class WebViewPresenterImpl @Inject constructor(
                     errorType = when {
                         anonymousSession -> WebView.ErrorType.AUTHENTICATION
                         e is SSLException || (e is SocketTimeoutException && e.suppressed.any { it is SSLException }) -> WebView.ErrorType.SSL
-                        else -> WebView.ErrorType.TIMEOUT
+                        else -> WebView.ErrorType.TIMEOUT_GENERAL
                     },
                     description = when {
                         anonymousSession -> null
