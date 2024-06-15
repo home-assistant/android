@@ -151,7 +151,7 @@ dependencies {
     coreLibraryDesugaring(libs.tools.desugar.jdk)
 
     implementation(libs.blurView)
-    "fullImplementation"(libs.androidx.health.connect.client)
+    implementation(libs.androidx.health.connect.client)
 
     implementation(libs.kotlin.stdlib)
     implementation(libs.kotlin.reflect)
