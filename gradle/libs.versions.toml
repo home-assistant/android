@@ -85,7 +85,7 @@ ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activity-compose" }
 activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activity-compose" }
 android-beacon-library = { module = "org.altbeacon:android-beacon-library", version.ref = "androidBeaconLibrary" }
-androidx-connect-client = { module = "androidx.health.connect:connect-client", version.ref = "connectClient" }
+androidx-health-connect-client = { module = "androidx.health.connect:connect-client", version.ref = "connectClient" }
 androidx-health-services-client = { module = "androidx.health:health-services-client", version.ref = "healthServicesClient" }
 androidx-media = { module = "androidx.media:media", version.ref = "media" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
