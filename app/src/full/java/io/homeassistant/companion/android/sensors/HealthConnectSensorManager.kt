@@ -13,6 +13,8 @@ import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -29,7 +31,10 @@ class HealthConnectSensorManager : SensorManager {
             commonR.string.basic_sensor_name_active_calories_burned,
             commonR.string.sensor_description_active_calories_burned,
             "mdi:fire",
-            unitOfMeasurement = "kcal"
+            unitOfMeasurement = "kcal",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.WORKER
+
         )
 
         val totalCaloriesBurned = SensorManager.BasicSensor(
@@ -38,7 +43,9 @@ class HealthConnectSensorManager : SensorManager {
             commonR.string.basic_sensor_name_total_calories_burned,
             commonR.string.sensor_description_total_calories_burned,
             "mdi:fire",
-            unitOfMeasurement = "kcal"
+            unitOfMeasurement = "kcal",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.WORKER
         )
 
         val weight = SensorManager.BasicSensor(
@@ -47,7 +54,10 @@ class HealthConnectSensorManager : SensorManager {
             commonR.string.basic_sensor_name_weight,
             commonR.string.sensor_description_weight,
             "mdi:weight",
-            unitOfMeasurement = "g"
+            unitOfMeasurement = "g",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.WORKER,
+            deviceClass = "weight"
 
         )
     }
@@ -94,7 +104,7 @@ class HealthConnectSensorManager : SensorManager {
             onSensorUpdated(
                 context,
                 totalCaloriesBurned,
-                it.inKilocalories,
+                BigDecimal(it.inKilocalories).setScale(2, RoundingMode.HALF_EVEN),
                 totalCaloriesBurned.statelessIcon,
                 attributes = mapOf("endTime" to LocalDateTime.of(LocalDate.now(), LocalTime.now()).toInstant(ZoneOffset.UTC))
             )
@@ -116,7 +126,7 @@ class HealthConnectSensorManager : SensorManager {
         onSensorUpdated(
             context,
             weight,
-            response.records.last().weight.inGrams,
+            BigDecimal(response.records.last().weight.inGrams).setScale(2, RoundingMode.HALF_EVEN),
             weight.statelessIcon,
             attributes = mapOf("date" to response.records.last().time)
         )
@@ -140,7 +150,7 @@ class HealthConnectSensorManager : SensorManager {
         onSensorUpdated(
             context,
             activeCaloriesBurned,
-            response.records.last().energy.inKilocalories,
+            BigDecimal(response.records.last().energy.inKilocalories).setScale(2, RoundingMode.HALF_EVEN),
             activeCaloriesBurned.statelessIcon,
             attributes = mapOf("endTime" to response.records.last().endTime)
         )
