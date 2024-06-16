@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.settings
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.MenuItem
@@ -48,6 +49,12 @@ class SettingsActivity : BaseActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        if (intent.action == "android.intent.action.VIEW_PERMISSION_USAGE") {
+            Intent(Intent.ACTION_VIEW, Uri.parse(resources.getString(commonR.string.privacy_url))).also {
+                startActivity(it)
+            }
+            finish()
+        }
         val entryPoint = EntryPointAccessors.fromActivity(this, SettingsFragmentFactoryEntryPoint::class.java)
         supportFragmentManager.fragmentFactory = entryPoint.getSettingsFragmentFactory()
 
