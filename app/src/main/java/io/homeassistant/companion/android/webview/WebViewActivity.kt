@@ -463,7 +463,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                     startActivity(intent)
                                 }
                                 return true
-                            } else if (!webView.url.toString().contains(it.toString())) {
+                            } else if (isConnected && !webView.url.toString().contains(it.toString())) {
                                 Log.d(TAG, "Launching browser")
                                 val browserIntent = Intent(Intent.ACTION_VIEW, it)
                                 startActivity(browserIntent)
