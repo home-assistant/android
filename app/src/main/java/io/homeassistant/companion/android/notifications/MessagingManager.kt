@@ -1305,13 +1305,17 @@ class MessagingManager @Inject constructor(
 
             if (url.path.startsWith("/api/image_proxy/") || url.path.startsWith("/api/camera_proxy/")) {
                 val connection = url.openConnection()
-                val inputStream = connection.inputStream
-                val bytes = ByteArray(6)
-                inputStream.read(bytes, 0, 6)
-                inputStream.close()
-                val fileSignature = String(bytes, Charsets.UTF_8)
-                return fileSignature == "GIF87a" || fileSignature == "GIF89a"
+                connection.getInputStream().use { inputStream ->
+                    val bytes = ByteArray(6)
+                    if (inputStream.read(bytes) == 6) {
+                        // GIF-Dateisignaturen in Byteform
+                        val gif87a = byteArrayOf(0x47, 0x49, 0x46, 0x38, 0x37, 0x61) // "GIF87a"
+                        val gif89a = byteArrayOf(0x47, 0x49, 0x46, 0x38, 0x39, 0x61) // "GIF89a"
+                        return bytes.contentEquals(gif87a) || bytes.contentEquals(gif89a)
+                    }
+                }
             }
+            
         } catch (e: Exception) {
             Log.e(TAG, "Error checking content type", e)
         }
