@@ -1289,7 +1289,6 @@ class MessagingManager @Inject constructor(
         }
 
     private suspend fun isGif(url: URL, serverId: Int, requiresAuth: Boolean = false): Boolean {
-            private suspend fun isGif(url: URL, requiresAuth: Boolean = false): Boolean {
         try {
             Log.d(TAG, "Checking URL: $url")
 
