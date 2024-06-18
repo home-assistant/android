@@ -1303,7 +1303,7 @@ class MessagingManager @Inject constructor(
             if (requiresAuth && serverId != null) {
                 requestBuilder.header("Authorization", serverManager.authenticationRepository(serverId).buildBearerToken())
             }
-            
+
             if (url.protocol == "http" || url.protocol == "https") {
                 val request = requestBuilder.head().build()
                 val response = okHttpClient.newCall(request).execute()
