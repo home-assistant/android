@@ -1315,7 +1315,6 @@ class MessagingManager @Inject constructor(
                     }
                 }
             }
-            
         } catch (e: Exception) {
             Log.e(TAG, "Error checking content type", e)
         }
