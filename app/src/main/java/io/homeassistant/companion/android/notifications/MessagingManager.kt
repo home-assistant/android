@@ -1309,11 +1309,6 @@ class MessagingManager @Inject constructor(
                 val response = okHttpClient.newCall(request).execute()
                 val contentType = response.header("Content-Type")
                 Log.d(TAG, "Content-Type: $contentType")
-
-                if (!response.isSuccessful) {
-                    Log.e(TAG, "Failed to connect, response code: $responseCode")
-                    return false
-                }
                 return contentType != null && contentType.startsWith("image/gif")
             }
         } catch (e: Exception) {
