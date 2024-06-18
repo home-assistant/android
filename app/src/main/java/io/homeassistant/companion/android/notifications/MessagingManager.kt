@@ -1288,7 +1288,7 @@ class MessagingManager @Inject constructor(
             return@withContext FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
         }
 
-    private suspend fun isGif(url: URL, requiresAuth: Boolean = false): Boolean {
+    private suspend fun isGif(serverId: Int, url: URL, requiresAuth: Boolean = false): Boolean {
         try {
             Log.d(TAG, "Checking URL: $url")
 
@@ -1308,8 +1308,6 @@ class MessagingManager @Inject constructor(
                 val request = requestBuilder.head().build()
                 val response = okHttpClient.newCall(request).execute()
                 val contentType = response.header("Content-Type")
-                val responseCode = response.code()
-                Log.d(TAG, "Response Code: $responseCode")
                 Log.d(TAG, "Content-Type: $contentType")
 
                 if (!response.isSuccessful) {
