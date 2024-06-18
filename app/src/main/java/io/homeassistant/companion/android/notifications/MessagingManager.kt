@@ -1288,7 +1288,8 @@ class MessagingManager @Inject constructor(
             return@withContext FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
         }
 
-    private suspend fun isGif(serverId: Int, url: URL, requiresAuth: Boolean = false): Boolean {
+    private suspend fun isGif(url: URL, serverId: Int, requiresAuth: Boolean = false): Boolean {
+            private suspend fun isGif(url: URL, requiresAuth: Boolean = false): Boolean {
         try {
             Log.d(TAG, "Checking URL: $url")
 
