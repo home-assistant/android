@@ -1311,7 +1311,7 @@ class MessagingManager @Inject constructor(
                 val responseCode = response.code()
                 Log.d(TAG, "Response Code: $responseCode")
                 Log.d(TAG, "Content-Type: $contentType")
-            
+
                 if (!response.isSuccessful) {
                     Log.e(TAG, "Failed to connect, response code: $responseCode")
                     return false
