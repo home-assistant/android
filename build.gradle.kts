@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
     alias(libs.plugins.ktlint)
 
@@ -9,19 +7,13 @@ plugins {
     alias(libs.plugins.google.services).apply(false)
     alias(libs.plugins.firebase.appdistribution).apply(false)
     alias(libs.plugins.hilt).apply(false)
-    alias(libs.plugins.kotlin.kapt).apply(false)
     alias(libs.plugins.kotlin.parcelize).apply(false)
     alias(libs.plugins.ksp).apply(false)
+    alias(libs.plugins.compose.compiler).apply(false)
 }
 
 allprojects {
     apply(plugin = rootProject.libs.plugins.ktlint.get().pluginId)
-
-    tasks.withType<KotlinCompile>().configureEach {
-        kotlinOptions {
-            jvmTarget = libs.versions.javaVersion.get()
-        }
-    }
 }
 
 tasks.register("clean").configure {

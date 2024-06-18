@@ -17,6 +17,7 @@ import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
 import io.homeassistant.companion.android.util.UrlUtil
 import io.homeassistant.companion.android.util.UrlUtil.baseIsEqual
+import io.homeassistant.companion.android.webview.externalbus.ExternalBusRepository
 import java.net.SocketTimeoutException
 import java.net.URL
 import java.util.regex.Matcher
@@ -35,10 +36,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
 
 class WebViewPresenterImpl @Inject constructor(
     @ActivityContext context: Context,
     private val serverManager: ServerManager,
+    private val externalBusRepository: ExternalBusRepository,
     private val prefsRepository: PrefsRepository,
     private val matterUseCase: MatterManager,
     private val threadUseCase: ThreadManager
@@ -63,6 +66,16 @@ class WebViewPresenterImpl @Inject constructor(
 
     init {
         updateActiveServer()
+
+        mainScope.launch {
+            externalBusRepository.getSentFlow().collect {
+                try {
+                    view.sendExternalBusMessage(it)
+                } catch (e: Exception) {
+                    Log.w(TAG, "Unable to send message to external bus $it", e)
+                }
+            }
+        }
     }
 
     override fun onViewReady(path: String?) {
@@ -198,7 +211,7 @@ class WebViewPresenterImpl @Inject constructor(
                     errorType = when {
                         anonymousSession -> WebView.ErrorType.AUTHENTICATION
                         e is SSLException || (e is SocketTimeoutException && e.suppressed.any { it is SSLException }) -> WebView.ErrorType.SSL
-                        else -> WebView.ErrorType.TIMEOUT
+                        else -> WebView.ErrorType.TIMEOUT_GENERAL
                     },
                     description = when {
                         anonymousSession -> null
@@ -283,6 +296,12 @@ class WebViewPresenterImpl @Inject constructor(
 
     override fun isAlwaysShowFirstViewOnAppStartEnabled(): Boolean = runBlocking {
         prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled()
+    }
+
+    override fun onExternalBusMessage(message: JSONObject) {
+        mainScope.launch {
+            externalBusRepository.received(message)
+        }
     }
 
     override fun sessionTimeOut(): Int = runBlocking {

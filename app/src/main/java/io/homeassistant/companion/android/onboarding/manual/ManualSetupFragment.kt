@@ -27,7 +27,9 @@ class ManualSetupFragment : Fragment() {
             setContent {
                 HomeAssistantAppTheme {
                     ManualSetupView(
-                        onboardingViewModel = viewModel,
+                        manualUrl = viewModel.manualUrl,
+                        onManualUrlUpdated = viewModel::onManualUrlUpdated,
+                        manualContinueEnabled = viewModel.manualContinueEnabled,
                         connectedClicked = { connectClicked() }
                     )
                 }

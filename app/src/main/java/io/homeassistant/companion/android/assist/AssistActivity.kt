@@ -82,6 +82,9 @@ class AssistActivity : BaseActivity() {
                 },
                 startListening = if (intent.hasExtra(EXTRA_START_LISTENING)) {
                     intent.getBooleanExtra(EXTRA_START_LISTENING, true)
+                } else if (intent.action == Intent.ACTION_VOICE_COMMAND) {
+                    // Always start listening if triggered via the voice command (e.g., from a BT headset).
+                    true
                 } else {
                     null
                 }
@@ -134,7 +137,12 @@ class AssistActivity : BaseActivity() {
         viewModel.onPause()
     }
 
-    override fun onNewIntent(intent: Intent?) {
+    override fun onDestroy() {
+        super.onDestroy()
+        viewModel.onDestroy()
+    }
+
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         this.intent = intent
 
@@ -154,6 +162,7 @@ class AssistActivity : BaseActivity() {
                 window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED)
             } else {
                 setShowWhenLocked(true)
+                setTurnScreenOn(true)
             }
         } else {
             if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.O) {

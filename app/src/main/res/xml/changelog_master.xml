@@ -1,31 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2024.4.1 - Main" versioncode="3">
-        <change>Assist: Pause media during interactions</change>
-        <change>Add instant updates for all Volume sensors</change>
-        <change>Add Network sensor for IPv6 addresses</change>
-        <change>Add new BLE transmitter setting to enable only when on home WiFi network</change>
-        <change>Add new battery voltage divisor setting for devices that do not report in millivolts</change>
-        <change>Android 14 and up: Render GIFs in notifications</change>
-        <change>Android Auto: Hide hidden entities in Navigation menu</change>
-        <change>Allow Climate entities to cycle through HVAC modes in device controls</change>
-        <change>Allow notification chronometer when parameter to be relative, so timeout parameter can be in sync</change>
+    <release version="2024.6.3 - Main" versioncode="3">
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2024.4.1 - Wear" versioncode="2">
-        <change>Assist: Pause media during interactions</change>
-        <change>Add instant updates for all Volume sensors</change>
-        <change>Add Network sensor for IPv6 addresses</change>
-        <change>Add option to update Camera and Template tiles when the tile is in view</change>
-        <change>Bug fixes, design tweaks and dependency updates</change>
+    <release version="2024.6.3 - Wear" versioncode="2">
+        <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2024.4.1 - Automotive" versioncode="1">
-        <change>Add instant updates for all Volume sensors</change>
-        <change>Add Network sensor for IPv6 addresses</change>
-        <change>Add new BLE transmitter setting to enable only when on home WiFi network</change>
-        <change>Allow notification chronometer when parameter to be relative, so timeout parameter can be in sync</change>
-        <change>Driving Interface: Hide hidden entities in Navigation menu</change>
+    <release version="2024.6.3 - Automotive" versioncode="1">
         <change>Bug fixes and dependency updates</change>
     </release>
 </changelog>

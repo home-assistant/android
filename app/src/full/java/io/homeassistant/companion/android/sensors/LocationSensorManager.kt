@@ -829,7 +829,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         }
     }
 
-    private fun sendLocationUpdate(location: Location, serverId: Int, trigger: LocationUpdateTrigger?) {
+    private suspend fun sendLocationUpdate(location: Location, serverId: Int, trigger: LocationUpdateTrigger?) {
         Log.d(
             TAG,
             "Last Location: " +
@@ -844,35 +844,33 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         val updateLocation: UpdateLocation
         val updateLocationAs: String
         val updateLocationString: String
-        runBlocking {
-            updateLocationAs = getSendLocationAsSetting(serverId)
-            if (updateLocationAs == SEND_LOCATION_AS_ZONE_ONLY) {
-                val zones = getZones(serverId)
-                val locationZone = zones
-                    .filter { !it.attributes.passive && it.containsWithAccuracy(location) }
-                    .minByOrNull { it.attributes.radius }
-                updateLocation = UpdateLocation(
-                    gps = null,
-                    gpsAccuracy = null,
-                    locationName = locationZone?.entityId?.split(".")?.get(1) ?: ZONE_NAME_NOT_HOME,
-                    speed = null,
-                    altitude = null,
-                    course = null,
-                    verticalAccuracy = null
-                )
-                updateLocationString = updateLocation.locationName!!
-            } else {
-                updateLocation = UpdateLocation(
-                    gps = arrayOf(location.latitude, location.longitude),
-                    gpsAccuracy = accuracy,
-                    locationName = null,
-                    speed = location.speed.toInt(),
-                    altitude = location.altitude.toInt(),
-                    course = location.bearing.toInt(),
-                    verticalAccuracy = if (Build.VERSION.SDK_INT >= 26) location.verticalAccuracyMeters.toInt() else 0
-                )
-                updateLocationString = updateLocation.gps.contentToString()
-            }
+        updateLocationAs = getSendLocationAsSetting(serverId)
+        if (updateLocationAs == SEND_LOCATION_AS_ZONE_ONLY) {
+            val zones = getZones(serverId)
+            val locationZone = zones
+                .filter { !it.attributes.passive && it.containsWithAccuracy(location) }
+                .minByOrNull { it.attributes.radius }
+            updateLocation = UpdateLocation(
+                gps = null,
+                gpsAccuracy = null,
+                locationName = locationZone?.entityId?.split(".")?.get(1) ?: ZONE_NAME_NOT_HOME,
+                speed = null,
+                altitude = null,
+                course = null,
+                verticalAccuracy = null
+            )
+            updateLocationString = updateLocation.locationName!!
+        } else {
+            updateLocation = UpdateLocation(
+                gps = arrayOf(location.latitude, location.longitude),
+                gpsAccuracy = accuracy,
+                locationName = null,
+                speed = location.speed.toInt(),
+                altitude = location.altitude.toInt(),
+                course = location.bearing.toInt(),
+                verticalAccuracy = if (Build.VERSION.SDK_INT >= 26) location.verticalAccuracyMeters.toInt() else 0
+            )
+            updateLocationString = updateLocation.gps.contentToString()
         }
 
         val now = System.currentTimeMillis()

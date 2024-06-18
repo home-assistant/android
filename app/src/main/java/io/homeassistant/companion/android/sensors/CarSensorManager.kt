@@ -119,6 +119,7 @@ class CarSensorManager :
                 R.string.basic_sensor_name_car_fuel_type,
                 R.string.sensor_description_car_fuel_type,
                 "mdi:gas-station",
+                deviceClass = "enum",
                 entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
             ),
             autoPermissions = listOf("com.google.android.gms.permission.CAR_FUEL"),
@@ -131,6 +132,7 @@ class CarSensorManager :
                 R.string.basic_sensor_name_car_ev_connector_type,
                 R.string.sensor_description_car_ev_connector_type,
                 "mdi:car-electric",
+                deviceClass = "enum",
                 entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
             ),
             autoPermissions = listOf("com.google.android.gms.permission.CAR_FUEL"),
@@ -182,6 +184,38 @@ class CarSensorManager :
 
     private fun connected(): Boolean = HaCarAppService.carInfo != null
 
+    private val fuelTypeMap = mapOf(
+        EnergyProfile.FUEL_TYPE_BIODIESEL to "Biodiesel",
+        EnergyProfile.FUEL_TYPE_CNG to "Compressed natural gas",
+        EnergyProfile.FUEL_TYPE_DIESEL_1 to "#1 Grade Diesel",
+        EnergyProfile.FUEL_TYPE_DIESEL_2 to "#2 Grade Diesel",
+        EnergyProfile.FUEL_TYPE_E85 to "85% ethanol/gasoline blend",
+        EnergyProfile.FUEL_TYPE_ELECTRIC to "Electric",
+        EnergyProfile.FUEL_TYPE_HYDROGEN to "Hydrogen fuel cell",
+        EnergyProfile.FUEL_TYPE_LEADED to "Leaded gasoline",
+        EnergyProfile.FUEL_TYPE_LNG to "Liquified natural gas",
+        EnergyProfile.FUEL_TYPE_LPG to "Liquified petroleum gas",
+        EnergyProfile.FUEL_TYPE_OTHER to "Other",
+        EnergyProfile.FUEL_TYPE_UNLEADED to "Unleaded gasoline",
+        EnergyProfile.FUEL_TYPE_UNKNOWN to STATE_UNKNOWN
+    )
+
+    private val evTypeMap = mapOf(
+        EnergyProfile.EVCONNECTOR_TYPE_CHADEMO to "CHAdeMo fast charger connector",
+        EnergyProfile.EVCONNECTOR_TYPE_COMBO_1 to "Combined Charging System Combo 1",
+        EnergyProfile.EVCONNECTOR_TYPE_COMBO_2 to "Combined Charging System Combo 2",
+        EnergyProfile.EVCONNECTOR_TYPE_GBT to "GBT_AC Fast Charging Standard",
+        EnergyProfile.EVCONNECTOR_TYPE_GBT_DC to "GBT_DC Fast Charging Standard",
+        EnergyProfile.EVCONNECTOR_TYPE_J1772 to "Connector type SAE J1772",
+        EnergyProfile.EVCONNECTOR_TYPE_MENNEKES to "IEC 62196 Type 2 connector",
+        EnergyProfile.EVCONNECTOR_TYPE_OTHER to "other",
+        EnergyProfile.EVCONNECTOR_TYPE_SCAME to "IEC_TYPE_3_AC connector",
+        EnergyProfile.EVCONNECTOR_TYPE_TESLA_HPWC to "High Power Wall Charger of Tesla",
+        EnergyProfile.EVCONNECTOR_TYPE_TESLA_ROADSTER to "Connector of Tesla Roadster",
+        EnergyProfile.EVCONNECTOR_TYPE_TESLA_SUPERCHARGER to "Supercharger of Tesla",
+        EnergyProfile.EVCONNECTOR_TYPE_UNKNOWN to STATE_UNKNOWN
+    )
+
     override val name: Int
         get() = R.string.sensor_name_car
 
@@ -195,6 +229,7 @@ class CarSensorManager :
         }
     }
 
+    @Suppress("KotlinConstantConditions")
     override fun hasSensor(context: Context): Boolean {
         this.latestContext = context.applicationContext
 
@@ -239,12 +274,23 @@ class CarSensorManager :
             } else {
                 carSensorsList.forEach {
                     if (isEnabled(context, it)) {
+                        val attrs = if (it.sensor.id == fuelType.sensor.id || it.sensor.id == evConnector.sensor.id) {
+                            mapOf(
+                                "options" to when (it.sensor.id) {
+                                    fuelType.sensor.id -> fuelTypeMap.values.toList()
+                                    evConnector.sensor.id -> evTypeMap.values.toList()
+                                    else -> {} // unreachable
+                                }
+                            )
+                        } else {
+                            mapOf()
+                        }
                         onSensorUpdated(
                             context,
                             it.sensor,
                             STATE_UNAVAILABLE,
                             it.sensor.statelessIcon,
-                            mapOf()
+                            attrs
                         )
                     }
                 }
@@ -420,7 +466,8 @@ class CarSensorManager :
                 if (fuelTypeStatus == "success") getFuelType(data.fuelTypes.value!!) else STATE_UNKNOWN,
                 fuelType.sensor.statelessIcon,
                 mapOf(
-                    "status" to fuelTypeStatus
+                    "status" to fuelTypeStatus,
+                    "options" to fuelTypeMap.values.toList()
                 ),
                 forceUpdate = true
             )
@@ -432,7 +479,8 @@ class CarSensorManager :
                 if (evConnectorTypeStatus == "success") getEvConnectorType(data.evConnectorTypes.value!!) else STATE_UNKNOWN,
                 evConnector.sensor.statelessIcon,
                 mapOf(
-                    "status" to evConnectorTypeStatus
+                    "status" to evConnectorTypeStatus,
+                    "options" to evTypeMap.values.toList()
                 ),
                 forceUpdate = true
             )
@@ -452,22 +500,7 @@ class CarSensorManager :
     private fun getFuelType(values: List<Int>): String {
         val fuelTypeList = emptyList<String>().toMutableList()
         values.forEach {
-            fuelTypeList += when (it) {
-                EnergyProfile.FUEL_TYPE_BIODIESEL -> "Biodiesel"
-                EnergyProfile.FUEL_TYPE_CNG -> "Compressed natural gas"
-                EnergyProfile.FUEL_TYPE_DIESEL_1 -> "#1 Grade Diesel"
-                EnergyProfile.FUEL_TYPE_DIESEL_2 -> "#2 Grade Diesel"
-                EnergyProfile.FUEL_TYPE_E85 -> "85% ethanol/gasoline blend"
-                EnergyProfile.FUEL_TYPE_ELECTRIC -> "Electric"
-                EnergyProfile.FUEL_TYPE_HYDROGEN -> "Hydrogen fuel cell"
-                EnergyProfile.FUEL_TYPE_LEADED -> "Leaded gasoline"
-                EnergyProfile.FUEL_TYPE_LNG -> "Liquified natural gas"
-                EnergyProfile.FUEL_TYPE_LPG -> "Liquified petroleum gas"
-                EnergyProfile.FUEL_TYPE_OTHER -> "Other"
-                EnergyProfile.FUEL_TYPE_UNKNOWN -> STATE_UNKNOWN
-                EnergyProfile.FUEL_TYPE_UNLEADED -> "Unleaded gasoline"
-                else -> STATE_UNKNOWN
-            }
+            fuelTypeList += fuelTypeMap.getOrDefault(it, STATE_UNKNOWN)
         }
         return fuelTypeList.toString()
     }
@@ -475,22 +508,7 @@ class CarSensorManager :
     private fun getEvConnectorType(values: List<Int>): String {
         val evConnectorList = emptyList<String>().toMutableList()
         values.forEach {
-            evConnectorList += when (it) {
-                EnergyProfile.EVCONNECTOR_TYPE_CHADEMO -> "CHAdeMo fast charger connector"
-                EnergyProfile.EVCONNECTOR_TYPE_COMBO_1 -> "Combined Charging System Combo 1"
-                EnergyProfile.EVCONNECTOR_TYPE_COMBO_2 -> "Combined Charging System Combo 2"
-                EnergyProfile.EVCONNECTOR_TYPE_GBT -> "GBT_AC Fast Charging Standard"
-                EnergyProfile.EVCONNECTOR_TYPE_GBT_DC -> "GBT_DC Fast Charging Standard"
-                EnergyProfile.EVCONNECTOR_TYPE_J1772 -> "Connector type SAE J1772"
-                EnergyProfile.EVCONNECTOR_TYPE_MENNEKES -> "IEC 62196 Type 2 connector"
-                EnergyProfile.EVCONNECTOR_TYPE_OTHER -> "other"
-                EnergyProfile.EVCONNECTOR_TYPE_SCAME -> "IEC_TYPE_3_AC connector"
-                EnergyProfile.EVCONNECTOR_TYPE_TESLA_HPWC -> "High Power Wall Charger of Tesla"
-                EnergyProfile.EVCONNECTOR_TYPE_TESLA_ROADSTER -> "Connector of Tesla Roadster"
-                EnergyProfile.EVCONNECTOR_TYPE_TESLA_SUPERCHARGER -> "Supercharger of Tesla"
-                EnergyProfile.EVCONNECTOR_TYPE_UNKNOWN -> STATE_UNKNOWN
-                else -> STATE_UNKNOWN
-            }
+            evConnectorList += evTypeMap.getOrDefault(it, STATE_UNKNOWN)
         }
         return evConnectorList.toString()
     }
