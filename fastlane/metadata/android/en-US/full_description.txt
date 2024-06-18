@@ -12,7 +12,7 @@ The app unlocks your smartphone or tablet as a home automation tool,
 - Securely share your location, using it to automate heating, security, and so much more.
 - Can share your phone's sensors with Home Assistant for automations including information on: steps taken, battery level, connectivity, next alarm, and many more.
 - Get notifications on what's happening in your home, from detecting leaks to doors left open, you have full control over what it tells you.
-Android Auto functionality lets you open a garage or disable the security system from the dash of your car.
+- Android Auto functionality lets you control your home from the dash of your car - open the garage, disable the security system, and more.
 - Build your own widgets to control any device in your home with a tap.
 - Text or talk to your local voice assistant on your device.
 - Wear OS compatibility, with support for notifications, sensors, tiles and watchface complications.
