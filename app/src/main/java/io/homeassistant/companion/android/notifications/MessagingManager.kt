@@ -1301,7 +1301,8 @@ class MessagingManager @Inject constructor(
                 .header("User-Agent", HomeAssistantApis.USER_AGENT_STRING)
 
             if (requiresAuth && serverId != null) {
-                requestBuilder.header("Authorization", serverManager.authenticationRepository(serverId).buildBearerToken())
+                val bearerToken = serverManager.authenticationRepository(serverId).buildBearerToken()
+                requestBuilder.header("Authorization", "Bearer $bearerToken")
             }
 
             if (url.protocol == "http" || url.protocol == "https") {
