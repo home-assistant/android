@@ -86,7 +86,6 @@ import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebViewActivity
 import java.io.File
 import java.io.FileOutputStream
-import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLDecoder
 import java.time.Instant
@@ -1297,25 +1296,27 @@ class MessagingManager @Inject constructor(
                 return true
             }
 
-            if (url.protocol == "http" || url.protocol == "https") {
-                val connection = url.openConnection() as? HttpURLConnection ?: return false
-                connection.setRequestProperty("User-Agent", HomeAssistantApis.USER_AGENT_STRING)
-                connection.requestMethod = "HEAD"
-                val contentType = connection.contentType
-                return contentType != null && contentType.startsWith("image/gif")
-            }
+            val requestBuilder = Request.Builder()
+                .url(url)
+                .header("User-Agent", HomeAssistantApis.USER_AGENT_STRING)
 
-            if (url.path.startsWith("/api/image_proxy/") || url.path.startsWith("/api/camera_proxy/")) {
-                val connection = url.openConnection()
-                connection.getInputStream().use { inputStream ->
-                    val bytes = ByteArray(6)
-                    if (inputStream.read(bytes) == 6) {
-                        // GIF-Dateisignaturen in Byteform
-                        val gif87a = byteArrayOf(0x47, 0x49, 0x46, 0x38, 0x37, 0x61) // "GIF87a"
-                        val gif89a = byteArrayOf(0x47, 0x49, 0x46, 0x38, 0x39, 0x61) // "GIF89a"
-                        return bytes.contentEquals(gif87a) || bytes.contentEquals(gif89a)
-                    }
+            if (requiresAuth && serverId != null) {
+                requestBuilder.header("Authorization", serverManager.authenticationRepository(serverId).buildBearerToken())
+            }
+            
+            if (url.protocol == "http" || url.protocol == "https") {
+                val request = requestBuilder.head().build()
+                val response = okHttpClient.newCall(request).execute()
+                val contentType = response.header("Content-Type")
+                val responseCode = response.code()
+                Log.d(TAG, "Response Code: $responseCode")
+                Log.d(TAG, "Content-Type: $contentType")
+            
+                if (!response.isSuccessful) {
+                    Log.e(TAG, "Failed to connect, response code: $responseCode")
+                    return false
                 }
+                return contentType != null && contentType.startsWith("image/gif")
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error checking content type", e)
