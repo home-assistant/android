@@ -1257,7 +1257,7 @@ class MessagingManager @Inject constructor(
         withContext(
             Dispatchers.IO
         ) {
-            if (url == null || !isGif(url, requiresAuth, serverId.toString())) {
+            if (url == null || !isGif(url, requiresAuth, serverId)) {
                 return@withContext null
             }
 
@@ -1288,7 +1288,7 @@ class MessagingManager @Inject constructor(
             return@withContext FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
         }
 
-    private suspend fun isGif(url: URL, requiresAuth: Boolean = false, serverId: String? = null): Boolean {
+    private suspend fun isGif(url: URL, requiresAuth: Boolean = false, serverId: Int? = null): Boolean {
         try {
             Log.d(TAG, "Checking URL: $url")
 
