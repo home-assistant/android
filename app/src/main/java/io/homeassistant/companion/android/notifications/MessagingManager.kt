@@ -1289,7 +1289,7 @@ class MessagingManager @Inject constructor(
             return@withContext FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
         }
 
-    private suspend fun isGif(url: URL): Boolean {
+    private suspend fun isGif(url: URL, requiresAuth: Boolean = false): Boolean {
         try {
             if (url.path.endsWith(".gif")) {
                 return true
