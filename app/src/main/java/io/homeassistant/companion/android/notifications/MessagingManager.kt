@@ -1296,17 +1296,15 @@ class MessagingManager @Inject constructor(
                 return true
             }
 
-            val requestBuilder = Request.Builder()
-                .url(url)
-                .header("User-Agent", HomeAssistantApis.USER_AGENT_STRING)
-
-            if (requiresAuth && serverId != null) {
-                val bearerToken = serverManager.authenticationRepository(serverId).buildBearerToken()
-                requestBuilder.header("Authorization", "Bearer $bearerToken")
-            }
-
-            if (url.protocol == "http" || url.protocol == "https") {
-                val request = requestBuilder.head().build()
+            val request = Request.Builder().apply {
+                url(url)
+                header("User-Agent", HomeAssistantApis.USER_AGENT_STRING)
+                if (requiresAuth && serverId != null) {
+                    addHeader("Authorization", serverManager.authenticationRepository(serverId).buildBearerToken())
+                }
+                head()
+                }.build()
+    
                 val response = okHttpClient.newCall(request).execute()
                 val contentType = response.header("Content-Type")
                 Log.d(TAG, "Content-Type: $contentType")
