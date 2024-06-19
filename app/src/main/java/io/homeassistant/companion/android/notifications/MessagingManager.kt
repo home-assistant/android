@@ -1258,7 +1258,7 @@ class MessagingManager @Inject constructor(
         withContext(
             Dispatchers.IO
         ) {
-            if (url == null || !isGif(url, requiresAuth, serverId)) {
+            if (url == null || !isGif(url, serverId)) {
                 return@withContext null
             }
 
@@ -1305,7 +1305,7 @@ class MessagingManager @Inject constructor(
                     connection.setRequestProperty("Authorization", authToken)
                 }
                 connection.requestMethod = "HEAD"
-                val contentType = connection.getHeaderField("Content-Type")
+                val contentType = connection.contentType
                 Log.d(TAG, "Content-Type: $contentType")
                 return contentType != null && contentType.startsWith("image/gif")
             }
