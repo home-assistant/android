@@ -1309,7 +1309,7 @@ class MessagingManager @Inject constructor(
                 val contentType = response.header("Content-Type")
                 Log.d(TAG, "Content-Type: $contentType")
                 return contentType != null && contentType.startsWith("image/gif")
-            }
+
         } catch (e: Exception) {
             Log.e(TAG, "Error checking content type", e)
         }
