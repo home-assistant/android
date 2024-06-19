@@ -1258,7 +1258,7 @@ class MessagingManager @Inject constructor(
         withContext(
             Dispatchers.IO
         ) {
-            if (url == null || !isGif(url, serverId)) {
+            if (url == null || !isGif(url, requiresAuth, serverId)) {
                 return@withContext null
             }
 
