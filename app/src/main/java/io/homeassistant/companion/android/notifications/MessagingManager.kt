@@ -1302,7 +1302,6 @@ class MessagingManager @Inject constructor(
                 if (requiresAuth && serverId != null) {
                     addHeader("Authorization", serverManager.authenticationRepository(serverId).buildBearerToken())
                 }
-                head()
             }.build()
 
             val response = okHttpClient.newCall(request).execute()
