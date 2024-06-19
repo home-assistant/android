@@ -86,6 +86,7 @@ import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebViewActivity
 import java.io.File
 import java.io.FileOutputStream
+import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLDecoder
 import java.time.Instant
@@ -1296,18 +1297,18 @@ class MessagingManager @Inject constructor(
                 return true
             }
 
-            val request = Request.Builder().apply {
-                url(url)
-                header("User-Agent", HomeAssistantApis.USER_AGENT_STRING)
+            if (url.protocol == "http" || url.protocol == "https") {
+                val connection = url.openConnection() as? HttpURLConnection ?: return false
+                connection.setRequestProperty("User-Agent", HomeAssistantApis.USER_AGENT_STRING)
                 if (requiresAuth && serverId != null) {
-                    addHeader("Authorization", serverManager.authenticationRepository(serverId).buildBearerToken())
+                    val authToken = serverManager.authenticationRepository(serverId).buildBearerToken()
+                    connection.setRequestProperty("Authorization", authToken)
                 }
-            }.build()
-
-            val response = okHttpClient.newCall(request).execute()
-            val contentType = response.header("Content-Type")
-            Log.d(TAG, "Content-Type: $contentType")
-            return contentType != null && contentType.startsWith("image/gif")
+                connection.requestMethod = "HEAD"
+                val contentType = connection.getHeaderField("Content-Type")
+                Log.d(TAG, "Content-Type: $contentType")
+                return contentType != null && contentType.startsWith("image/gif")
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Error checking content type", e)
         }
