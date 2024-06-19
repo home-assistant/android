@@ -1303,13 +1303,12 @@ class MessagingManager @Inject constructor(
                     addHeader("Authorization", serverManager.authenticationRepository(serverId).buildBearerToken())
                 }
                 head()
-                }.build()
+            }.build()
     
-                val response = okHttpClient.newCall(request).execute()
-                val contentType = response.header("Content-Type")
-                Log.d(TAG, "Content-Type: $contentType")
-                return contentType != null && contentType.startsWith("image/gif")
-
+            val response = okHttpClient.newCall(request).execute()
+            val contentType = response.header("Content-Type")
+            Log.d(TAG, "Content-Type: $contentType")
+            return contentType != null && contentType.startsWith("image/gif")
         } catch (e: Exception) {
             Log.e(TAG, "Error checking content type", e)
         }
