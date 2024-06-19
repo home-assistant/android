@@ -1304,7 +1304,7 @@ class MessagingManager @Inject constructor(
                 }
                 head()
             }.build()
-    
+
             val response = okHttpClient.newCall(request).execute()
             val contentType = response.header("Content-Type")
             Log.d(TAG, "Content-Type: $contentType")
