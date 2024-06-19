@@ -1298,9 +1298,11 @@ class MessagingManager @Inject constructor(
             }
 
             if (url.protocol == "http" || url.protocol == "https") {
+                Log.d(TAG, "It's an http URL")
                 val connection = url.openConnection() as? HttpURLConnection ?: return false
                 connection.setRequestProperty("User-Agent", HomeAssistantApis.USER_AGENT_STRING)
                 if (requiresAuth && serverId != null) {
+                    Log.d(TAG, "Authorization required!")
                     val authToken = serverManager.authenticationRepository(serverId).buildBearerToken()
                     connection.setRequestProperty("Authorization", authToken)
                 }
