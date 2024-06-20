@@ -1293,10 +1293,6 @@ class MessagingManager @Inject constructor(
         try {
             Log.d(TAG, "Checking URL: $url")
 
-            if (url.path.endsWith(".gif")) {
-                return true
-            }
-
             if (url.protocol == "http" || url.protocol == "https") {
                 Log.d(TAG, "It's an http URL")
                 val connection = url.openConnection() as? HttpURLConnection ?: return false
@@ -1308,11 +1304,31 @@ class MessagingManager @Inject constructor(
                     Log.d(TAG, "Auth Token: Bearer $authToken")
                 }
                 connection.requestMethod = "HEAD"
+                connection.connect()
+
                 val responseCode = connection.responseCode
-                val contentType = connection.contentType
-                Log.d(TAG, "Response Code: $responseCode")
-                Log.d(TAG, "Content-Type: $contentType")
-                return contentType != null && contentType.startsWith("image/gif")
+                Log.d(TAG, "Response Code (HEAD): $responseCode")
+
+                if (responseCode == 405) {
+                    Log.d(TAG, "HEAD method not allowed, retrying with GET")
+                    val getConnection = url.openConnection() as? HttpURLConnection ?: return false
+                    getConnection.setRequestProperty("User-Agent", HomeAssistantApis.USER_AGENT_STRING)
+                    if (requiresAuth && serverId != null) {
+                        val authToken = serverManager.authenticationRepository(serverId).buildBearerToken()
+                        getConnection.setRequestProperty("Authorization", "Bearer $authToken")
+                    }
+                    getConnection.requestMethod = "GET"
+                    getConnection.connect()
+                    val getContentType = getConnection.contentType
+                    val getResponseCode = getConnection.responseCode
+                    Log.d(TAG, "Response Code (GET): $getResponseCode")
+                    Log.d(TAG, "Content-Type (GET): $getContentType")
+                    return getContentType != null && getContentType.startsWith("image/gif")
+                } else {
+                    val contentType = connection.contentType
+                    Log.d(TAG, "Content-Type (HEAD): $contentType")
+                    return contentType != null && contentType.startsWith("image/gif")
+                }
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error checking content type", e)
