@@ -86,7 +86,6 @@ import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebViewActivity
 import java.io.File
 import java.io.FileOutputStream
-import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLDecoder
 import java.time.Instant
@@ -1296,16 +1295,15 @@ private suspend fun isGif(url: URL, requiresAuth: Boolean = false, serverId: Int
             Log.d(TAG, "It's an http URL")
 
             val client = OkHttpClient()
-            val requestBuilder = Request.Builder()
-                .url(url.toString())
-                .header("User-Agent", HomeAssistantApis.USER_AGENT_STRING)
-
-            if (requiresAuth && serverId != null) {
-                Log.d(TAG, "Authorization required!")
-                val authToken = serverManager.authenticationRepository(serverId).buildBearerToken()
-                requestBuilder.header("Authorization", "Bearer $authToken")
-                Log.d(TAG, "Auth Token: Bearer $authToken")
-            }
+            val requestBuilder = Request.Builder().apply {
+                    url(url)
+                    addHeader("User-Agent", HomeAssistantApis.USER_AGENT_STRING)
+                    if (requiresAuth) {
+                        Log.d(TAG, "Authorization required!")
+                        addHeader("Authorization", serverManager.authenticationRepository(serverId).buildBearerToken())
+                    }
+                    Log.d(TAG, "Auth Token: $authToken")
+                }.build()
 
             // Try with HEAD method first
             val headRequest = requestBuilder.head().build()
