@@ -1296,20 +1296,21 @@ private suspend fun isGif(url: URL, requiresAuth: Boolean = false, serverId: Int
 
             val client = OkHttpClient()
             val requestBuilder = Request.Builder().apply {
-                    url(url)
-                    addHeader("User-Agent", HomeAssistantApis.USER_AGENT_STRING)
-                    if (requiresAuth) {
-                        Log.d(TAG, "Authorization required!")
-                        addHeader("Authorization", serverManager.authenticationRepository(serverId).buildBearerToken())
-                    }
-                    Log.d(TAG, "Auth Token: $authToken")
-                }.build()
+                url(url)
+                addHeader("User-Agent", HomeAssistantApis.USER_AGENT_STRING)
+                if (requiresAuth) {
+                    Log.d(TAG, "Authorization required!")
+                    addHeader("Authorization", serverManager.authenticationRepository(serverId).buildBearerToken())
+                }
+                Log.d(TAG, "Auth Token: $authToken")
+            }.build()
 
             // Try with HEAD method first
             val headRequest = requestBuilder.head().build()
             val headResponse = client.newCall(headRequest).execute()
 
             val responseCode = headResponse.code
+            response.close()
             Log.d(TAG, "Response Code (HEAD): $responseCode")
 
             if (responseCode == 405) {
@@ -1319,6 +1320,7 @@ private suspend fun isGif(url: URL, requiresAuth: Boolean = false, serverId: Int
                 val getResponse = client.newCall(getRequest).execute()
                 val getContentType = getResponse.header("Content-Type")
                 val getResponseCode = getResponse.code
+                response.close()
                 Log.d(TAG, "Response Code (GET): $getResponseCode")
                 Log.d(TAG, "Content-Type (GET): $getContentType")
                 return getContentType != null && getContentType.startsWith("image/gif")
