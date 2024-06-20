@@ -1304,10 +1304,13 @@ class MessagingManager @Inject constructor(
                 if (requiresAuth && serverId != null) {
                     Log.d(TAG, "Authorization required!")
                     val authToken = serverManager.authenticationRepository(serverId).buildBearerToken()
-                    connection.setRequestProperty("Authorization", authToken)
+                    connection.setRequestProperty("Authorization", "Bearer $authToken")
+                    Log.d(TAG, "Auth Token: Bearer $authToken")
                 }
                 connection.requestMethod = "HEAD"
+                val responseCode = connection.responseCode
                 val contentType = connection.contentType
+                Log.d(TAG, "Response Code: $responseCode")
                 Log.d(TAG, "Content-Type: $contentType")
                 return contentType != null && contentType.startsWith("image/gif")
             }
