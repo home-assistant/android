@@ -1287,59 +1287,63 @@ class MessagingManager @Inject constructor(
             }
             return@withContext FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
         }
+
     private suspend fun isGif(url: URL, requiresAuth: Boolean = false, serverId: Int): Boolean {
-        try {
-            Log.d(TAG, "Checking URL: $url")
+        withContext(
+            Dispatchers.IO
+        ) {
+            try {
+                Log.d(TAG, "Checking URL: $url")
 
-            if (url.protocol == "http" || url.protocol == "https") {
-                Log.d(TAG, "It's an http URL")
+                if (url.protocol == "http" || url.protocol == "https") {
+                    Log.d(TAG, "It's an http URL")
 
-                val client = OkHttpClient()
-                val requestBuilder = Request.Builder().apply {
-                    url(url)
-                    addHeader("User-Agent", HomeAssistantApis.USER_AGENT_STRING)
-                    if (requiresAuth) {
-                        Log.d(TAG, "Authorization required!")
-                        val authToken = serverManager.authenticationRepository(serverId).buildBearerToken()
-                        addHeader("Authorization", authToken)
-                        Log.d(TAG, "Auth Token: $authToken")
+                    val client = OkHttpClient()
+                    val requestBuilder = Request.Builder().apply {
+                        url(url)
+                        addHeader("User-Agent", HomeAssistantApis.USER_AGENT_STRING)
+                        if (requiresAuth) {
+                            Log.d(TAG, "Authorization required!")
+                            val authToken = serverManager.authenticationRepository(serverId).buildBearerToken()
+                            addHeader("Authorization", authToken)
+                            Log.d(TAG, "Auth Token: $authToken")
+                        }
+                    }
+
+                    // Try with HEAD method first
+                    val headRequest = requestBuilder.method("HEAD", null).head().build()
+                    val headResponse = client.newCall(headRequest).execute()
+
+                    val responseCode = headResponse.code
+                    val contentType = headResponse.header("Content-Type")
+
+                    Log.d(TAG, "Response Code (HEAD): $responseCode")
+                    Log.d(TAG, "Content-Type (HEAD): $contentType")
+
+                    headResponse.close()
+
+                    if (responseCode == 405) {
+                        Log.d(TAG, "HEAD method not allowed, retrying with GET")
+                        // Retry with GET method
+                        val getRequest = requestBuilder.method("HEAD", null).head().build()
+                        val getResponse = client.newCall(getRequest).execute()
+                        val getContentType = getResponse.header("Content-Type")
+                        val getResponseCode = getResponse.code
+                        getResponse.close()
+                        Log.d(TAG, "Response Code (GET): $getResponseCode")
+                        Log.d(TAG, "Content-Type (GET): $getContentType")
+                        return getContentType != null && getContentType.startsWith("image/gif")
+                    } else {
+                        val contentType = headResponse.header("Content-Type")
+                        Log.d(TAG, "Content-Type (HEAD): $contentType")
+                        return contentType != null && contentType.startsWith("image/gif")
                     }
                 }
-
-                // Try with HEAD method first
-                val headRequest = requestBuilder.method("HEAD", null).head().build()
-                val headResponse = client.newCall(headRequest).execute()
-
-                val responseCode = headResponse.code
-                val contentType = headResponse.header("Content-Type")
-
-                Log.d(TAG, "Response Code (HEAD): $responseCode")
-                Log.d(TAG, "Content-Type (HEAD): $contentType")
-
-                headResponse.close()
-
-                if (responseCode == 405) {
-                    Log.d(TAG, "HEAD method not allowed, retrying with GET")
-                    // Retry with GET method
-                    val getRequest = requestBuilder.method("HEAD", null).head().build()
-                    val getResponse = client.newCall(getRequest).execute()
-                    val getContentType = getResponse.header("Content-Type")
-                    val getResponseCode = getResponse.code
-                    getResponse.close()
-                    Log.d(TAG, "Response Code (GET): $getResponseCode")
-                    Log.d(TAG, "Content-Type (GET): $getContentType")
-                    return getContentType != null && getContentType.startsWith("image/gif")
-                } else {
-                    val contentType = headResponse.header("Content-Type")
-                    Log.d(TAG, "Content-Type (HEAD): $contentType")
-                    return contentType != null && contentType.startsWith("image/gif")
-                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error checking content type", e)
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error checking content type", e)
+            return false
         }
-        return false
-    }
 
     private suspend fun handleVideo(
         builder: NotificationCompat.Builder,
