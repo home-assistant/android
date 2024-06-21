@@ -1344,6 +1344,7 @@ class MessagingManager @Inject constructor(
             }
             return false
         }
+    }    
 
     private suspend fun handleVideo(
         builder: NotificationCompat.Builder,
