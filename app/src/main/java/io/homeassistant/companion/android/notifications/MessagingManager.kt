@@ -1304,10 +1304,10 @@ class MessagingManager @Inject constructor(
                         addHeader("Authorization", authToken)
                         Log.d(TAG, "Auth Token: $authToken")
                     }
-                }.build()
+                }
 
                 // Try with HEAD method first
-                val headRequest = requestBuilder.method("HEAD", null)
+                val headRequest = requestBuilder.method("HEAD", null).head().build()
                 val headResponse = client.newCall(headRequest).execute()
 
                 val responseCode = headResponse.code
@@ -1321,7 +1321,7 @@ class MessagingManager @Inject constructor(
                 if (responseCode == 405) {
                     Log.d(TAG, "HEAD method not allowed, retrying with GET")
                     // Retry with GET method
-                    val getRequest = requestBuilder.method("HEAD", null)
+                    val getRequest = requestBuilder.method("HEAD", null).head().build()
                     val getResponse = client.newCall(getRequest).execute()
                     val getContentType = getResponse.header("Content-Type")
                     val getResponseCode = getResponse.code
