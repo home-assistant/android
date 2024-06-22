@@ -154,10 +154,10 @@ class HaCarAppService : CarAppService() {
 
     /** Returns an immutable copy of this. */
     private fun <K, V> Map<K, V>.toImmutableMap(): Map<K, V> {
-      return if (isEmpty()) {
-        emptyMap()
-      } else {
-        Collections.unmodifiableMap(LinkedHashMap(this))
-      }
+        return if (isEmpty()) {
+            emptyMap()
+        } else {
+            Collections.unmodifiableMap(LinkedHashMap(this))
+        }
     }
 }
