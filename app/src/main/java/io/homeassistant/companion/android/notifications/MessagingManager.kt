@@ -84,7 +84,6 @@ import io.homeassistant.companion.android.vehicle.HaCarAppService
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebViewActivity
 import java.io.File
-import java.io.FileOutputStream
 import java.net.URL
 import java.net.URLDecoder
 import java.time.Instant
