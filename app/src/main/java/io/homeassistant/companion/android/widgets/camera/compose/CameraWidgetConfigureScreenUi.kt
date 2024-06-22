@@ -12,13 +12,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -29,8 +27,8 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.database.widget.CameraWidgetTapAction
 import io.homeassistant.companion.android.util.compose.ExposedDropdownMenu
+import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.compose.SingleEntityPicker
-import io.homeassistant.companion.android.util.compose.colorPrimary
 
 data class CameraWidgetConfigureScreenUiState(
     val entities: List<Entity<Any>> = emptyList(),
@@ -147,11 +145,7 @@ private fun ColumnScope.ApplyChangesButton(title: String, onClick: () -> Unit) {
         onClick = onClick,
         modifier = Modifier.Companion
             .align(Alignment.End)
-            .padding(top = 8.dp),
-        colors = ButtonDefaults.buttonColors(
-            backgroundColor = colorPrimary,
-            contentColor = Color.White
-        )
+            .padding(top = 8.dp)
     ) {
         Text(text = title)
     }
@@ -175,5 +169,8 @@ private fun Preview() {
     val mockState = CameraWidgetConfigureScreenUiState(
         isServerPickerVisible = true
     )
-    CameraWidgetConfigureScreenUi(mockState)
+
+    HomeAssistantAppTheme {
+        CameraWidgetConfigureScreenUi(mockState)
+    }
 }
