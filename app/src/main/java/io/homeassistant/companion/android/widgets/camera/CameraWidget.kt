@@ -58,7 +58,6 @@ class CameraWidget : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray
     ) {
-        println("Testing: onUpdate, ${appWidgetIds.joinToString()} widgets to update")
         // There may be multiple widgets active, so update all of them
         appWidgetIds.forEach { appWidgetId ->
             updateAppWidget(
