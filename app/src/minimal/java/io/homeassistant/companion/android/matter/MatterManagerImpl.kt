@@ -14,6 +14,10 @@ class MatterManagerImpl @Inject constructor() : MatterManager {
 
     override suspend fun coreSupportsCommissioning(serverId: Int): Boolean = false
 
+    override fun suppressDiscoveryBottomSheet(context: Context) {
+        // No support, so nothing to suppress
+    }
+
     override fun startNewCommissioningFlow(
         context: Context,
         onSuccess: (IntentSender) -> Unit,
@@ -24,5 +28,5 @@ class MatterManagerImpl @Inject constructor() : MatterManager {
 
     override suspend fun commissionDevice(code: String, serverId: Int): MatterCommissionResponse? = null
 
-    override suspend fun commissionOnNetworkDevice(pin: Long, serverId: Int): MatterCommissionResponse? = null
+    override suspend fun commissionOnNetworkDevice(pin: Long, ip: String, serverId: Int): MatterCommissionResponse? = null
 }

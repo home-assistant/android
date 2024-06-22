@@ -7,9 +7,9 @@ import androidx.car.app.model.ItemList
 import androidx.car.app.model.ListTemplate
 import androidx.car.app.model.Row
 import androidx.car.app.model.Template
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import kotlinx.coroutines.flow.StateFlow
-import io.homeassistant.companion.android.common.R as commonR
 
 class ChangeServerScreen(
     carContext: CarContext,

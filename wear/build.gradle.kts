@@ -1,9 +1,10 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.kapt)
+    alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.compose.compiler)
 }
 
 android {
@@ -24,10 +25,7 @@ android {
     buildFeatures {
         viewBinding = true
         compose = true
-    }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
+        buildConfig = true
     }
 
     signingConfigs {
@@ -57,6 +55,7 @@ android {
     }
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility(libs.versions.javaVersion.get())
         targetCompatibility(libs.versions.javaVersion.get())
     }
@@ -64,14 +63,12 @@ android {
     lint {
         disable += "MissingTranslation"
     }
-
-    kapt {
-        correctErrorTypes = true
-    }
 }
 
 dependencies {
     implementation(project(":common"))
+
+    coreLibraryDesugaring(libs.tools.desugar.jdk)
 
     implementation(libs.kotlin.stdlib)
     implementation(libs.kotlinx.coroutines.android)
@@ -89,7 +86,7 @@ dependencies {
     implementation(libs.wear.phone.interactions)
 
     implementation(libs.hilt.android)
-    kapt(libs.hilt.android.compiler)
+    ksp(libs.hilt.android.compiler)
 
     implementation(libs.jackson.module.kotlin)
     implementation(libs.okhttp)
@@ -101,7 +98,6 @@ dependencies {
 
     implementation(libs.activity.ktx)
     implementation(libs.activity.compose)
-    implementation(libs.compose.compiler)
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.foundation)
     implementation(libs.compose.material.icons.core)
@@ -123,11 +119,4 @@ dependencies {
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
-}
-
-// https://github.com/google/guava/releases/tag/v32.1.0: Reporting dependencies that overlap with Guava
-configurations.all {
-    resolutionStrategy.capabilitiesResolution.withCapability("com.google.guava:listenablefuture") {
-        select("com.google.guava:guava:0")
-    }
 }

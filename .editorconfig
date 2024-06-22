@@ -1,0 +1,15 @@
+root = true
+
+[*]
+charset = utf-8
+indent_size = 4
+indent_style = space
+
+[*.{kt,kts}]
+ktlint_code_style = android_studio
+# Disable wildcard imports
+ij_kotlin_name_count_to_use_star_import = 9999
+ij_kotlin_name_count_to_use_star_import_for_members = 9999
+# ktlint overrides
+ktlint_function_naming_ignore_when_annotated_with=Composable
+max_line_length = off

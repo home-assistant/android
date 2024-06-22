@@ -13,13 +13,14 @@ import androidx.lifecycle.repeatOnLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_CAMERA_TILE
 import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_SHORTCUT_TILE
+import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_TEMPLATE_TILE
 import io.homeassistant.companion.android.home.views.LoadHomePage
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
+import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class HomeActivity : ComponentActivity(), HomeView {
@@ -54,6 +55,16 @@ class HomeActivity : ComponentActivity(), HomeView {
         ) = Intent(
             Intent.ACTION_VIEW,
             "$DEEPLINK_PREFIX_SET_SHORTCUT_TILE/$tileId".toUri(),
+            context,
+            HomeActivity::class.java
+        )
+
+        fun getTemplateTileSettingsIntent(
+            context: Context,
+            tileId: Int
+        ) = Intent(
+            Intent.ACTION_VIEW,
+            "$DEEPLINK_PREFIX_SET_TEMPLATE_TILE/$tileId".toUri(),
             context,
             HomeActivity::class.java
         )

@@ -15,12 +15,20 @@ class WidgetAuthenticationActivity : AppCompatActivity() {
         private const val TAG = "WidgetAuthenticationA"
     }
 
+    private var authenticating = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate in WidgetAuthenticationActivity called")
+    }
 
-        val authenticator = Authenticator(this, this, ::authenticationResult)
-        authenticator.authenticate(getString(R.string.biometric_set_title))
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus && !isFinishing && !authenticating) {
+            val authenticator = Authenticator(this, this, ::authenticationResult)
+            authenticator.authenticate(getString(R.string.biometric_set_title))
+            authenticating = true
+        }
     }
 
     private fun authenticationResult(result: Int) {

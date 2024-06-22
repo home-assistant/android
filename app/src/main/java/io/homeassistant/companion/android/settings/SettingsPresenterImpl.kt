@@ -10,6 +10,7 @@ import androidx.core.content.getSystemService
 import androidx.preference.PreferenceDataStore
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
@@ -31,6 +32,7 @@ import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.ChangeLog
 import io.homeassistant.companion.android.util.UrlUtil
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -40,8 +42,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 class SettingsPresenterImpl @Inject constructor(
     private val serverManager: ServerManager,

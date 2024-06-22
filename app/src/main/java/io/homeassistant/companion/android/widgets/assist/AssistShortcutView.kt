@@ -26,12 +26,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineListResponse
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.util.compose.ExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
-import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun AssistShortcutView(

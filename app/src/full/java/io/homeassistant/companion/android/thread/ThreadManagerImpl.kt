@@ -7,19 +7,21 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
 import androidx.activity.result.ActivityResult
+import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.threadnetwork.IsPreferredCredentialsResult
 import com.google.android.gms.threadnetwork.ThreadBorderAgent
 import com.google.android.gms.threadnetwork.ThreadNetwork
 import com.google.android.gms.threadnetwork.ThreadNetworkCredentials
+import com.google.android.gms.threadnetwork.ThreadNetworkStatusCodes
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetResponse
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.async
 import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
 
 class ThreadManagerImpl @Inject constructor(
     private val serverManager: ServerManager,
@@ -49,11 +51,52 @@ class ThreadManagerImpl @Inject constructor(
     override suspend fun syncPreferredDataset(
         context: Context,
         serverId: Int,
+        exportOnly: Boolean,
         scope: CoroutineScope
     ): ThreadManager.SyncResult {
         if (!appSupportsThread()) return ThreadManager.SyncResult.AppUnsupported
         if (!coreSupportsThread(serverId)) return ThreadManager.SyncResult.ServerUnsupported
 
+        return if (exportOnly) { // Limited sync, only export non-app dataset
+            exportSyncPreferredDataset(context)
+        } else { // Full sync
+            fullSyncPreferredDataset(context, serverId, scope)
+        }
+    }
+
+    private suspend fun exportSyncPreferredDataset(
+        context: Context
+    ): ThreadManager.SyncResult {
+        val getDeviceDataset = try {
+            getPreferredDatasetFromDevice(context)
+        } catch (e: ApiException) {
+            Log.e(TAG, "Thread: export cannot be started", e)
+            if (e.statusCode == ThreadNetworkStatusCodes.LOCAL_NETWORK_NOT_CONNECTED) {
+                return ThreadManager.SyncResult.NotConnected
+            } else {
+                throw e
+            }
+        }
+
+        return if (getDeviceDataset == null) {
+            ThreadManager.SyncResult.NoneHaveCredentials
+        } else {
+            val appIsDevicePreferred = appAddedIsPreferredCredentials(context)
+            Log.d(TAG, "Thread: device ${if (appIsDevicePreferred) "prefers" else "doesn't prefer" } dataset from app")
+
+            return if (appIsDevicePreferred) {
+                ThreadManager.SyncResult.OnlyOnServer(imported = false)
+            } else {
+                ThreadManager.SyncResult.OnlyOnDevice(exportIntent = getDeviceDataset)
+            }
+        }
+    }
+
+    private suspend fun fullSyncPreferredDataset(
+        context: Context,
+        serverId: Int,
+        scope: CoroutineScope
+    ): ThreadManager.SyncResult {
         deleteOrphanedThreadCredentials(context, serverId)
 
         val getDeviceDataset = scope.async { getPreferredDatasetFromDevice(context) }

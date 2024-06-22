@@ -11,7 +11,7 @@ runs:
   using: 'composite'
   steps:
     - name: Get Previous Release Tag
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       id: latest-release-tag
       with:
         github-token: ${{ inputs.gh-token }}
@@ -23,7 +23,7 @@ runs:
           })
           return data.tag_name
     - name: Get Generated Release Notes
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       id: generate-notes
       with:
         github-token: ${{ inputs.gh-token }}

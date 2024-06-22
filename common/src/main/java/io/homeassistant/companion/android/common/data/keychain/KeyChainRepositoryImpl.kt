@@ -4,11 +4,12 @@ import android.content.Context
 import android.security.KeyChain
 import android.util.Log
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import java.lang.UnsupportedOperationException
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class KeyChainRepositoryImpl @Inject constructor(
     private val prefsRepository: PrefsRepository
@@ -40,6 +41,10 @@ class KeyChainRepositoryImpl @Inject constructor(
         doLoad(context)
     }
 
+    override suspend fun setData(alias: String, privateKey: PrivateKey, certificateChain: Array<X509Certificate>) {
+        throw UnsupportedOperationException("setData not supported for KeyChainRepositoryImpl")
+    }
+
     override fun getAlias(): String? {
         return alias
     }
@@ -58,16 +63,24 @@ class KeyChainRepositoryImpl @Inject constructor(
             if (chain == null) {
                 chain = try {
                     KeyChain.getCertificateChain(context, alias!!)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Exception getting certificate chain", e)
+                } catch (t: Throwable) {
+                    when (t) {
+                        is AssertionError,
+                        is Exception -> Log.e(TAG, "Issue getting certificate chain", t)
+                        else -> throw t
+                    }
                     null
                 }
             }
             if (key == null) {
                 key = try {
                     KeyChain.getPrivateKey(context, alias!!)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Exception getting private key", e)
+                } catch (t: Throwable) {
+                    when (t) {
+                        is AssertionError,
+                        is Exception -> Log.e(TAG, "Issue getting private key", t)
+                        else -> throw t
+                    }
                     null
                 }
             }

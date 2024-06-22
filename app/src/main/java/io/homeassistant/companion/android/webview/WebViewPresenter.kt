@@ -3,8 +3,8 @@ package io.homeassistant.companion.android.webview
 import android.content.Context
 import android.content.IntentSender
 import androidx.activity.result.ActivityResult
-import io.homeassistant.companion.android.matter.MatterFrontendCommissioningStatus
 import kotlinx.coroutines.flow.Flow
+import org.json.JSONObject
 
 interface WebViewPresenter {
 
@@ -42,6 +42,10 @@ interface WebViewPresenter {
 
     fun sessionTimeOut(): Int
 
+    fun onExternalBusMessage(message: JSONObject)
+
+    fun onStart(context: Context)
+
     fun onFinish()
 
     fun isSsidUsed(): Boolean
@@ -52,8 +56,12 @@ interface WebViewPresenter {
 
     fun appCanCommissionMatterDevice(): Boolean
     fun startCommissioningMatterDevice(context: Context)
-    fun getMatterCommissioningStatusFlow(): Flow<MatterFrontendCommissioningStatus>
-    fun getMatterCommissioningIntent(): IntentSender?
-    fun onMatterCommissioningIntentResult(context: Context, result: ActivityResult)
-    fun confirmMatterCommissioningError()
+
+    /** @return `true` if the app can send this device's preferred Thread credential to the server */
+    fun appCanExportThreadCredentials(): Boolean
+    fun exportThreadCredentials(context: Context)
+    fun getMatterThreadStepFlow(): Flow<MatterThreadStep>
+    fun getMatterThreadIntent(): IntentSender?
+    fun onMatterThreadIntentResult(context: Context, result: ActivityResult)
+    fun finishMatterThreadFlow()
 }

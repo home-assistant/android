@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.home
 
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
@@ -48,9 +49,9 @@ interface HomePresenter {
     suspend fun setWearToastConfirmation(enabled: Boolean)
     suspend fun getShowShortcutText(): Boolean
     suspend fun setShowShortcutTextEnabled(enabled: Boolean)
-    suspend fun getTemplateTileContent(): String
-    suspend fun getTemplateTileRefreshInterval(): Int
-    suspend fun setTemplateTileRefreshInterval(interval: Int)
+    suspend fun getAllTemplateTiles(): Map<Int, TemplateTileConfig>
+    suspend fun setTemplateTileRefreshInterval(tileId: Int, interval: Int)
+
     suspend fun getWearFavoritesOnly(): Boolean
     suspend fun setWearFavoritesOnly(enabled: Boolean)
 }

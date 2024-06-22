@@ -19,13 +19,13 @@ import androidx.health.services.client.data.PassiveListenerConfig
 import androidx.health.services.client.data.PassiveMonitoringCapabilities
 import androidx.health.services.client.data.UserActivityInfo
 import androidx.health.services.client.data.UserActivityState
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.database.AppDatabase
+import java.time.Instant
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.runBlocking
-import java.time.Instant
-import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.R)
 class HealthServicesSensorManager : SensorManager {
@@ -39,6 +39,7 @@ class HealthServicesSensorManager : SensorManager {
             commonR.string.sensor_name_activity_state,
             commonR.string.sensor_description_activity_state,
             "mdi:account",
+            deviceClass = "enum",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
@@ -205,7 +206,8 @@ class HealthServicesSensorManager : SensorManager {
                     getActivityIcon(info),
                     mapOf(
                         "time" to info.stateChangeTime,
-                        "exercise_type" to info.exerciseInfo?.exerciseType?.name
+                        "exercise_type" to info.exerciseInfo?.exerciseType?.name,
+                        "options" to listOf("asleep", "passive", "exercise")
                     ),
                     forceUpdate = forceUpdate
                 )

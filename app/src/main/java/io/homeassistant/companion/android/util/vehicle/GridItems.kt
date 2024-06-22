@@ -28,12 +28,12 @@ import io.homeassistant.companion.android.vehicle.ChangeServerScreen
 import io.homeassistant.companion.android.vehicle.DomainListScreen
 import io.homeassistant.companion.android.vehicle.EntityGridVehicleScreen
 import io.homeassistant.companion.android.vehicle.MapVehicleScreen
+import java.util.Calendar
+import java.util.Locale
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import java.util.Calendar
-import java.util.Locale
 
 private const val TAG = "GridItems"
 
@@ -80,7 +80,8 @@ fun getNavigationGridItem(
     carContext: CarContext,
     screenManager: ScreenManager,
     integrationRepository: IntegrationRepository,
-    allEntities: Flow<Map<String, Entity<*>>>
+    allEntities: Flow<Map<String, Entity<*>>>,
+    entityRegistry: List<EntityRegistryResponse>?
 ): GridItem.Builder {
     return GridItem.Builder().apply {
         setTitle(carContext.getString(R.string.aa_navigation))
@@ -102,7 +103,15 @@ fun getNavigationGridItem(
                 MapVehicleScreen(
                     carContext,
                     integrationRepository,
-                    allEntities.map { it.values.filter { entity -> entity.domain in MAP_DOMAINS } }
+                    allEntities.map {
+                        it.values.filter { entity ->
+                            entity.domain in MAP_DOMAINS &&
+                                RegistriesDataHandler.getHiddenByForEntity(
+                                    entity.entityId,
+                                    entityRegistry
+                                ) == null
+                        }
+                    }
                 )
             )
         }

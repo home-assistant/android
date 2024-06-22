@@ -8,11 +8,9 @@ import android.service.controls.actions.ControlAction
 import android.service.controls.actions.FloatAction
 import android.service.controls.templates.RangeTemplate
 import androidx.annotation.RequiresApi
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
-import kotlinx.coroutines.runBlocking
-import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.R)
 object DefaultSliderControl : HaControl {
@@ -20,8 +18,7 @@ object DefaultSliderControl : HaControl {
         context: Context,
         control: Control.StatefulBuilder,
         entity: Entity<Map<String, Any>>,
-        area: AreaRegistryResponse?,
-        baseUrl: String?
+        info: HaControlInfo
     ): Control.StatefulBuilder {
         control.setStatusText("")
         control.setControlTemplate(
@@ -47,16 +44,14 @@ object DefaultSliderControl : HaControl {
         integrationRepository: IntegrationRepository,
         action: ControlAction
     ): Boolean {
-        return runBlocking {
-            integrationRepository.callService(
-                action.templateId.split(".")[0],
-                "set_value",
-                hashMapOf(
-                    "entity_id" to action.templateId,
-                    "value" to (action as? FloatAction)?.newValue.toString()
-                )
+        integrationRepository.callService(
+            action.templateId.split(".")[0],
+            "set_value",
+            hashMapOf(
+                "entity_id" to action.templateId,
+                "value" to (action as? FloatAction)?.newValue.toString()
             )
-            return@runBlocking true
-        }
+        )
+        return true
     }
 }

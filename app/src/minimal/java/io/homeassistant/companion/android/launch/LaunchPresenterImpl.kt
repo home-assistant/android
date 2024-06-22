@@ -4,8 +4,8 @@ import android.util.Log
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 class LaunchPresenterImpl @Inject constructor(
     view: LaunchView,

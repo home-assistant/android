@@ -15,13 +15,13 @@ import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
-import com.google.accompanist.themeadapter.material.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.settings.developer.location.views.LocationTrackingView
+import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class LocationTrackingFragment : Fragment() {
@@ -38,7 +38,7 @@ class LocationTrackingFragment : Fragment() {
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
-                MdcTheme {
+                HomeAssistantAppTheme {
                     LocationTrackingView(
                         useHistory = viewModel.historyEnabled,
                         onSetHistory = viewModel::enableHistory,

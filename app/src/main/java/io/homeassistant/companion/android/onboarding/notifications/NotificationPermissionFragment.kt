@@ -14,9 +14,9 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.core.app.NotificationManagerCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import com.google.accompanist.themeadapter.material.MdcTheme
-import io.homeassistant.companion.android.onboarding.OnboardingViewModel
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.onboarding.OnboardingViewModel
+import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 
 class NotificationPermissionFragment : Fragment() {
 
@@ -44,7 +44,7 @@ class NotificationPermissionFragment : Fragment() {
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
-                MdcTheme {
+                HomeAssistantAppTheme {
                     NotificationPermissionView(
                         onSetNotificationsEnabled = ::setNotifications
                     )

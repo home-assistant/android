@@ -4,9 +4,11 @@ import android.content.Context
 import android.util.Log
 import androidx.activity.result.ActivityResult
 import androidx.preference.PreferenceDataStore
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.thread.ThreadManager
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -14,8 +16,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 class DeveloperSettingsPresenterImpl @Inject constructor(
     private val prefsRepository: PrefsRepository,
@@ -63,7 +63,7 @@ class DeveloperSettingsPresenterImpl @Inject constructor(
     override fun runThreadDebug(context: Context, serverId: Int) {
         mainScope.launch {
             try {
-                when (val syncResult = threadManager.syncPreferredDataset(context, serverId, CoroutineScope(coroutineContext + SupervisorJob()))) {
+                when (val syncResult = threadManager.syncPreferredDataset(context, serverId, false, CoroutineScope(coroutineContext + SupervisorJob()))) {
                     is ThreadManager.SyncResult.ServerUnsupported ->
                         view.onThreadDebugResult(context.getString(commonR.string.thread_debug_result_unsupported_server), false)
                     is ThreadManager.SyncResult.OnlyOnServer -> {

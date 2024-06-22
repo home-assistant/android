@@ -121,7 +121,7 @@ fun ConversationResultView(
     val scrollState = rememberScalingLazyListState()
     LaunchedEffect(conversation.size) {
         scrollState.scrollToItem(
-            if (inputMode != AssistViewModelBase.AssistInputMode.BLOCKED) conversation.size else (conversation.size - 1)
+            if (inputMode != AssistViewModelBase.AssistInputMode.BLOCKED) (conversation.size + 1) else conversation.size
         )
     }
     if (hapticFeedback) {
@@ -136,6 +136,9 @@ fun ConversationResultView(
 
     ThemeLazyColumn(state = scrollState) {
         item {
+            Spacer(Modifier.size(1.dp)) // This exists to allow the next item to be centered
+        }
+        item {
             if (currentPipeline != null) {
                 val textColor = LocalContentColor.current.copy(alpha = 0.38f) // disabled/hint alpha
                 Row(
@@ -144,7 +147,8 @@ fun ConversationResultView(
                             onClick = { onChangePipeline() },
                             onClickLabel = stringResource(R.string.assist_change_pipeline)
                         )
-                        .padding(bottom = 4.dp)
+                        .padding(bottom = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = currentPipeline.name,

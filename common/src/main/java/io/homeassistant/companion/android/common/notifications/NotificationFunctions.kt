@@ -2,7 +2,9 @@ package io.homeassistant.companion.android.common.notifications
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.graphics.Color
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
@@ -22,8 +24,8 @@ import com.mikepenz.iconics.utils.colorFilter
 import com.mikepenz.iconics.utils.toAndroidIconCompat
 import com.vdurmont.emoji.EmojiParser
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.util.CHANNEL_GENERAL
 import io.homeassistant.companion.android.common.util.cancel
-import io.homeassistant.companion.android.common.util.generalChannel
 import java.util.Locale
 
 object NotificationData {
@@ -72,7 +74,7 @@ fun handleChannel(
     data: Map<String, String>
 ): String {
     // Define some values for a default channel
-    var channelID = generalChannel
+    var channelID = CHANNEL_GENERAL
     var channelName = "General"
 
     if (!data[NotificationData.CHANNEL].isNullOrEmpty()) {
@@ -289,4 +291,28 @@ fun clearNotification(context: Context, tag: String) {
     val notificationManagerCompat = NotificationManagerCompat.from(context)
     val messageId = tag.hashCode()
     notificationManagerCompat.cancel(tag, messageId, true)
+}
+
+fun handleDeleteIntent(
+    context: Context,
+    builder: NotificationCompat.Builder,
+    data: Map<String, String>,
+    messageId: Int,
+    group: String?,
+    groupId: Int,
+    databaseId: Long?
+) {
+    val deleteIntent = Intent(context, NotificationDeleteReceiver::class.java).apply {
+        putExtra(NotificationDeleteReceiver.EXTRA_DATA, HashMap(data))
+        putExtra(NotificationDeleteReceiver.EXTRA_NOTIFICATION_GROUP, group)
+        putExtra(NotificationDeleteReceiver.EXTRA_NOTIFICATION_GROUP_ID, groupId)
+        putExtra(NotificationDeleteReceiver.EXTRA_NOTIFICATION_DB, databaseId)
+    }
+    val deletePendingIntent = PendingIntent.getBroadcast(
+        context,
+        messageId,
+        deleteIntent,
+        PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+    builder.setDeleteIntent(deletePendingIntent)
 }

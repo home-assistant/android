@@ -18,7 +18,10 @@ import com.google.android.gms.wearable.WearableListenerService
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
+import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
+import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepositoryImpl
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
+import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.WearDataMessages
 import io.homeassistant.companion.android.database.server.Server
@@ -37,12 +40,16 @@ import io.homeassistant.companion.android.tiles.ConversationTile
 import io.homeassistant.companion.android.tiles.ShortcutsTile
 import io.homeassistant.companion.android.tiles.TemplateTile
 import io.homeassistant.companion.android.util.UrlUtil
+import java.security.KeyStore
+import java.security.PrivateKey
+import java.security.cert.X509Certificate
+import javax.inject.Inject
+import javax.inject.Named
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import javax.inject.Inject
 
 @AndroidEntryPoint
 @SuppressLint("VisibleForTests") // https://issuetracker.google.com/issues/239451111
@@ -56,6 +63,14 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
 
     @Inject
     lateinit var favoritesDao: FavoritesDao
+
+    @Inject
+    @Named("keyChainRepository")
+    lateinit var keyChainRepository: KeyChainRepository
+
+    @Inject
+    @Named("keyStore")
+    lateinit var keyStore: KeyChainRepository
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -89,8 +104,7 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
             }
             dataMap.putString(WearDataMessages.CONFIG_SUPPORTED_DOMAINS, objectMapper.writeValueAsString(HomePresenterImpl.supportedDomains))
             dataMap.putString(WearDataMessages.CONFIG_FAVORITES, objectMapper.writeValueAsString(currentFavorites))
-            dataMap.putString(WearDataMessages.CONFIG_TEMPLATE_TILE, wearPrefsRepository.getTemplateTileContent())
-            dataMap.putInt(WearDataMessages.CONFIG_TEMPLATE_TILE_REFRESH_INTERVAL, wearPrefsRepository.getTemplateTileRefreshInterval())
+            dataMap.putString(WearDataMessages.CONFIG_TEMPLATE_TILES, objectMapper.writeValueAsString(wearPrefsRepository.getAllTemplateTiles()))
             setUrgent()
             asPutDataRequest()
         }
@@ -115,8 +129,8 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
                         "/updateFavorites" -> {
                             saveFavorites(DataMapItem.fromDataItem(item).dataMap)
                         }
-                        "/updateTemplateTile" -> {
-                            saveTileTemplate(DataMapItem.fromDataItem(item).dataMap)
+                        "/updateTemplateTiles" -> {
+                            saveTemplateTiles(DataMapItem.fromDataItem(item).dataMap)
                         }
                     }
                 }
@@ -135,6 +149,24 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
             val deviceName = dataMap.getString("DeviceName")
             val deviceTrackingEnabled = dataMap.getBoolean("LocationTracking")
             val notificationsEnabled = dataMap.getBoolean("Notifications")
+            val tlsClientCertificateData = dataMap.getByteArray("TLSClientCertificateData")
+            val tlsClientCertificatePassword = dataMap.getString("TLSClientCertificatePassword").orEmpty().toCharArray()
+
+            // load TLS key
+            if (tlsClientCertificateData != null && tlsClientCertificateData.isNotEmpty()) {
+                KeyStore.getInstance("PKCS12").apply {
+                    load(tlsClientCertificateData.inputStream(), tlsClientCertificatePassword)
+
+                    val alias = aliases().nextElement()
+                    val certificateChain = getCertificateChain(alias).filterIsInstance<X509Certificate>().toTypedArray()
+                    val privateKey = getKey(alias, tlsClientCertificatePassword) as PrivateKey
+
+                    // we store the TLS Client key under a static alias because there is currently
+                    // no way to ask the user for the correct alias
+                    keyStore.setData(KeyStoreRepositoryImpl.ALIAS, privateKey, certificateChain)
+                    keyChainRepository.load(applicationContext)
+                }
+            }
 
             val formattedUrl = UrlUtil.formattedUrlString(url)
             val server = Server(
@@ -214,11 +246,15 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
         }
     }
 
-    private fun saveTileTemplate(dataMap: DataMap) = mainScope.launch {
-        val content = dataMap.getString(WearDataMessages.CONFIG_TEMPLATE_TILE, "")
-        val interval = dataMap.getInt(WearDataMessages.CONFIG_TEMPLATE_TILE_REFRESH_INTERVAL, 0)
-        wearPrefsRepository.setTemplateTileContent(content)
-        wearPrefsRepository.setTemplateTileRefreshInterval(interval)
+    private fun saveTemplateTiles(dataMap: DataMap) = mainScope.launch {
+        val templateTilesFromPhone: Map<Int, TemplateTileConfig> = objectMapper.readValue(
+            dataMap.getString(
+                WearDataMessages.CONFIG_TEMPLATE_TILES,
+                "{}"
+            )
+        )
+
+        wearPrefsRepository.setAllTemplateTiles(templateTilesFromPhone)
     }
 
     private fun updateTiles() = mainScope.launch {

@@ -18,24 +18,25 @@ import androidx.wear.tiles.TileService
 import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.wear.CameraTile
 import io.homeassistant.companion.android.util.UrlUtil
+import java.io.ByteArrayOutputStream
+import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.guava.future
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import java.io.ByteArrayOutputStream
-import java.util.concurrent.TimeUnit
-import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class CameraTile : TileService() {
@@ -70,12 +71,15 @@ class CameraTile : TileService() {
             if (requestParams.currentState.lastClickableId == MODIFIER_CLICK_REFRESH) {
                 if (wearPrefsRepository.getWearHapticFeedback()) hapticClick(applicationContext)
             }
+            val freshness = when {
+                (tileConfig?.refreshInterval != null && tileConfig.refreshInterval!! <= 1) -> 0
+                tileConfig?.refreshInterval != null -> tileConfig.refreshInterval!!
+                else -> DEFAULT_REFRESH_INTERVAL
+            }
 
             Tile.Builder()
                 .setResourcesVersion("$TAG$tileId.${System.currentTimeMillis()}")
-                .setFreshnessIntervalMillis(
-                    TimeUnit.SECONDS.toMillis(tileConfig?.refreshInterval ?: DEFAULT_REFRESH_INTERVAL)
-                )
+                .setFreshnessIntervalMillis(TimeUnit.SECONDS.toMillis(freshness))
                 .setTileTimeline(
                     if (serverManager.isRegistered()) {
                         timeline(
@@ -199,6 +203,25 @@ class CameraTile : TileService() {
             AppDatabase.getInstance(this@CameraTile)
                 .cameraTileDao()
                 .delete(requestParams.tileId)
+        }
+    }
+
+    override fun onTileEnterEvent(requestParams: EventBuilders.TileEnterEvent) {
+        serviceScope.launch {
+            val tileId = requestParams.tileId
+            val tileConfig = AppDatabase.getInstance(this@CameraTile)
+                .cameraTileDao()
+                .get(tileId)
+            tileConfig?.refreshInterval?.let {
+                if (it >= 1) {
+                    try {
+                        getUpdater(this@CameraTile)
+                            .requestUpdate(io.homeassistant.companion.android.tiles.CameraTile::class.java)
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Unable to request tile update on enter", e)
+                    }
+                }
+            }
         }
     }
 

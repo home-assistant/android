@@ -10,14 +10,14 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.google.accompanist.themeadapter.material.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.onboarding.OnboardingViewModel
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationFragment
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupFragment
-import kotlinx.coroutines.launch
+import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class DiscoveryFragment @Inject constructor() : Fragment() {
@@ -42,9 +42,9 @@ class DiscoveryFragment @Inject constructor() : Fragment() {
 
         return ComposeView(requireContext()).apply {
             setContent {
-                MdcTheme {
+                HomeAssistantAppTheme {
                     DiscoveryView(
-                        onboardingViewModel = viewModel,
+                        foundInstances = viewModel.foundInstances,
                         manualSetupClicked = { navigateToManualSetup() },
                         instanceClicked = { onInstanceClicked(it) }
                     )

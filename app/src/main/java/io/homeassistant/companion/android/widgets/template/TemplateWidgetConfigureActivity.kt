@@ -21,17 +21,17 @@ import androidx.lifecycle.lifecycleScope
 import com.fasterxml.jackson.databind.JsonMappingException
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetTemplateConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.util.getHexForColor
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
@@ -54,8 +54,8 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
     private var requestLauncherSetup = false
 
-    public override fun onCreate(icicle: Bundle?) {
-        super.onCreate(icicle)
+    public override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
         // Set the result to CANCELED.  This will cause the widget host to cancel
         // out of the widget placement if the user presses the back button.
@@ -213,9 +213,9 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         finish()
     }
 
-    override fun onNewIntent(intent: Intent?) {
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        if (intent != null && intent.extras != null && intent.hasExtra(PIN_WIDGET_CALLBACK)) {
+        if (intent.extras != null && intent.hasExtra(PIN_WIDGET_CALLBACK)) {
             appWidgetId = intent.extras!!.getInt(
                 AppWidgetManager.EXTRA_APPWIDGET_ID,
                 AppWidgetManager.INVALID_APPWIDGET_ID

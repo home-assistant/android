@@ -11,13 +11,13 @@ import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.lifecycle.lifecycleScope
-import com.google.accompanist.themeadapter.material.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.nfc.views.LoadNfcView
 import io.homeassistant.companion.android.util.UrlUtil
+import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import kotlinx.coroutines.launch
-import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class NfcSetupActivity : BaseActivity() {
@@ -62,7 +62,7 @@ class NfcSetupActivity : BaseActivity() {
         }
 
         setContent {
-            MdcTheme {
+            HomeAssistantAppTheme {
                 LoadNfcView(
                     viewModel = viewModel,
                     startDestination = if (simpleWrite) NAV_WRITE else NAV_WELCOME,

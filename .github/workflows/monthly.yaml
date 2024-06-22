@@ -12,10 +12,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Get Current Time
-        uses: josStorer/get-current-time@v2.1.1
+        uses: josStorer/get-current-time@v2.1.2
         id: current-time
 
       - name: Bump Calendar Version
-        uses: rickstaa/action-create-tag@v1.6.6
+        uses: rickstaa/action-create-tag@v1.7.2
         with:
           tag: ${{ steps.current-time.outputs.year }}.${{ steps.current-time.outputs.month }}.0

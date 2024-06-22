@@ -36,10 +36,10 @@ import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import io.homeassistant.companion.android.util.icondialog.mdiName
 import io.homeassistant.companion.android.webview.WebViewActivity
 import io.homeassistant.companion.android.widgets.assist.AssistShortcutActivity
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @HiltViewModel

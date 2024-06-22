@@ -18,6 +18,7 @@ import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.getIcon
@@ -69,6 +70,8 @@ import io.homeassistant.companion.android.qs.Tile8Service
 import io.homeassistant.companion.android.qs.Tile9Service
 import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import io.homeassistant.companion.android.util.icondialog.mdiName
+import java.util.concurrent.Executors
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -76,9 +79,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.concurrent.Executors
-import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 @HiltViewModel
 class ManageTilesViewModel @Inject constructor(

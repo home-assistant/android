@@ -8,15 +8,23 @@ import android.net.Uri
 import android.util.Log
 import androidx.activity.result.ActivityResult
 import dagger.hilt.android.qualifiers.ActivityContext
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
-import io.homeassistant.companion.android.matter.MatterFrontendCommissioningStatus
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
 import io.homeassistant.companion.android.util.UrlUtil
 import io.homeassistant.companion.android.util.UrlUtil.baseIsEqual
+import io.homeassistant.companion.android.webview.externalbus.ExternalBusRepository
+import java.net.SocketTimeoutException
+import java.net.URL
+import java.util.regex.Matcher
+import java.util.regex.Pattern
+import javax.inject.Inject
+import javax.net.ssl.SSLException
+import javax.net.ssl.SSLHandshakeException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -28,18 +36,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import java.net.SocketTimeoutException
-import java.net.URL
-import java.util.regex.Matcher
-import java.util.regex.Pattern
-import javax.inject.Inject
-import javax.net.ssl.SSLException
-import javax.net.ssl.SSLHandshakeException
-import io.homeassistant.companion.android.common.R as commonR
+import org.json.JSONObject
 
 class WebViewPresenterImpl @Inject constructor(
     @ActivityContext context: Context,
     private val serverManager: ServerManager,
+    private val externalBusRepository: ExternalBusRepository,
     private val prefsRepository: PrefsRepository,
     private val matterUseCase: MatterManager,
     private val threadUseCase: ThreadManager
@@ -58,12 +60,22 @@ class WebViewPresenterImpl @Inject constructor(
     private var url: URL? = null
     private var urlForServer: Int? = null
 
-    private val _matterCommissioningStatus = MutableStateFlow(MatterFrontendCommissioningStatus.NOT_STARTED)
+    private val mutableMatterThreadStep = MutableStateFlow(MatterThreadStep.NOT_STARTED)
 
-    private var matterCommissioningIntentSender: IntentSender? = null
+    private var matterThreadIntentSender: IntentSender? = null
 
     init {
         updateActiveServer()
+
+        mainScope.launch {
+            externalBusRepository.getSentFlow().collect {
+                try {
+                    view.sendExternalBusMessage(it)
+                } catch (e: Exception) {
+                    Log.w(TAG, "Unable to send message to external bus $it", e)
+                }
+            }
+        }
     }
 
     override fun onViewReady(path: String?) {
@@ -101,7 +113,12 @@ class WebViewPresenterImpl @Inject constructor(
             loosing wifi signal and reopening app. Without this we would still be trying to use the
             internal url externally.
              */
-            if (oldUrlForServer != urlForServer || oldUrl?.host != url?.host) {
+            if (
+                oldUrlForServer != urlForServer ||
+                oldUrl?.protocol != url?.protocol ||
+                oldUrl?.host != url?.host ||
+                oldUrl?.port != url?.port
+            ) {
                 view.loadUrl(
                     url = Uri.parse(url.toString())
                         .buildUpon()
@@ -194,7 +211,7 @@ class WebViewPresenterImpl @Inject constructor(
                     errorType = when {
                         anonymousSession -> WebView.ErrorType.AUTHENTICATION
                         e is SSLException || (e is SocketTimeoutException && e.suppressed.any { it is SSLException }) -> WebView.ErrorType.SSL
-                        else -> WebView.ErrorType.TIMEOUT
+                        else -> WebView.ErrorType.TIMEOUT_GENERAL
                     },
                     description = when {
                         anonymousSession -> null
@@ -281,10 +298,20 @@ class WebViewPresenterImpl @Inject constructor(
         prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled()
     }
 
+    override fun onExternalBusMessage(message: JSONObject) {
+        mainScope.launch {
+            externalBusRepository.received(message)
+        }
+    }
+
     override fun sessionTimeOut(): Int = runBlocking {
         serverManager.getServer(serverId)?.let {
             serverManager.integrationRepository(serverId).getSessionTimeOut()
         } ?: 0
+    }
+
+    override fun onStart(context: Context) {
+        matterUseCase.suppressDiscoveryBottomSheet(context)
     }
 
     override fun onFinish() {
@@ -339,27 +366,14 @@ class WebViewPresenterImpl @Inject constructor(
     override fun appCanCommissionMatterDevice(): Boolean = matterUseCase.appSupportsCommissioning()
 
     override fun startCommissioningMatterDevice(context: Context) {
-        if (_matterCommissioningStatus.value != MatterFrontendCommissioningStatus.REQUESTED) {
-            _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.REQUESTED)
+        if (mutableMatterThreadStep.value != MatterThreadStep.REQUESTED) {
+            mutableMatterThreadStep.tryEmit(MatterThreadStep.REQUESTED)
 
-            mainScope.launch {
-                val deviceThreadIntent = try {
-                    when (val result = threadUseCase.syncPreferredDataset(context, serverId, CoroutineScope(coroutineContext + SupervisorJob()))) {
-                        is ThreadManager.SyncResult.OnlyOnDevice -> result.exportIntent
-                        is ThreadManager.SyncResult.AllHaveCredentials -> result.exportIntent
-                        else -> null
-                    }
-                } catch (e: Exception) {
-                    Log.w(TAG, "Unable to sync preferred Thread dataset, continuing", e)
-                    null
-                }
-                if (deviceThreadIntent != null) {
-                    matterCommissioningIntentSender = deviceThreadIntent
-                    _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.THREAD_EXPORT_TO_SERVER)
-                } else {
-                    startMatterCommissioningFlow(context)
-                }
-            }
+            // The app used to sync Thread credentials here until commit 26a472a, but it was
+            // (temporarily?) removed due to slowing down the Matter commissioning flow for the user
+            // and limited usefulness of the result (because of API limitations)
+
+            startMatterCommissioningFlow(context)
         } // else already waiting for a result, don't send another request
     }
 
@@ -368,31 +382,77 @@ class WebViewPresenterImpl @Inject constructor(
             context,
             { intentSender ->
                 Log.d(TAG, "Matter commissioning is ready")
-                matterCommissioningIntentSender = intentSender
-                _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.IN_PROGRESS)
+                matterThreadIntentSender = intentSender
+                mutableMatterThreadStep.tryEmit(MatterThreadStep.MATTER_IN_PROGRESS)
             },
             { e ->
                 Log.e(TAG, "Matter commissioning couldn't be prepared", e)
-                _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.ERROR)
+                mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_MATTER)
             }
         )
     }
 
-    override fun getMatterCommissioningStatusFlow(): Flow<MatterFrontendCommissioningStatus> =
-        _matterCommissioningStatus.asStateFlow()
+    override fun appCanExportThreadCredentials(): Boolean = threadUseCase.appSupportsThread()
 
-    override fun getMatterCommissioningIntent(): IntentSender? {
-        val intent = matterCommissioningIntentSender
-        matterCommissioningIntentSender = null
+    override fun exportThreadCredentials(context: Context) {
+        if (mutableMatterThreadStep.value != MatterThreadStep.REQUESTED) {
+            mutableMatterThreadStep.tryEmit(MatterThreadStep.REQUESTED)
+
+            mainScope.launch {
+                try {
+                    val result = threadUseCase.syncPreferredDataset(context, serverId, true, CoroutineScope(coroutineContext + SupervisorJob()))
+                    Log.d(TAG, "Export preferred Thread dataset returned $result")
+
+                    when (result) {
+                        is ThreadManager.SyncResult.OnlyOnDevice -> {
+                            matterThreadIntentSender = result.exportIntent
+                            mutableMatterThreadStep.tryEmit(MatterThreadStep.THREAD_EXPORT_TO_SERVER_ONLY)
+                        }
+                        is ThreadManager.SyncResult.NoneHaveCredentials,
+                        is ThreadManager.SyncResult.OnlyOnServer -> {
+                            mutableMatterThreadStep.tryEmit(MatterThreadStep.THREAD_NONE)
+                        }
+                        is ThreadManager.SyncResult.NotConnected -> {
+                            mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_THREAD_LOCAL_NETWORK)
+                        }
+                        else -> {
+                            mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_THREAD_OTHER)
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "Unable to export preferred Thread dataset", e)
+                    mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_THREAD_OTHER)
+                }
+            }
+        } // else already waiting for a result, don't send another request
+    }
+
+    override fun getMatterThreadStepFlow(): Flow<MatterThreadStep> =
+        mutableMatterThreadStep.asStateFlow()
+
+    override fun getMatterThreadIntent(): IntentSender? {
+        val intent = matterThreadIntentSender
+        matterThreadIntentSender = null
         return intent
     }
 
-    override fun onMatterCommissioningIntentResult(context: Context, result: ActivityResult) {
-        when (_matterCommissioningStatus.value) {
-            MatterFrontendCommissioningStatus.THREAD_EXPORT_TO_SERVER -> {
+    override fun onMatterThreadIntentResult(context: Context, result: ActivityResult) {
+        when (mutableMatterThreadStep.value) {
+            MatterThreadStep.THREAD_EXPORT_TO_SERVER_MATTER -> {
                 mainScope.launch {
                     threadUseCase.sendThreadDatasetExportResult(result, serverId)
                     startMatterCommissioningFlow(context)
+                }
+            }
+            MatterThreadStep.THREAD_EXPORT_TO_SERVER_ONLY -> {
+                mainScope.launch {
+                    val sent = threadUseCase.sendThreadDatasetExportResult(result, serverId)
+                    Log.d(TAG, "Thread ${if (!sent.isNullOrBlank()) "sent credential for $sent" else "did not send credential"}")
+                    if (sent.isNullOrBlank()) {
+                        mutableMatterThreadStep.tryEmit(MatterThreadStep.THREAD_NONE)
+                    } else {
+                        mutableMatterThreadStep.tryEmit(MatterThreadStep.THREAD_SENT)
+                    }
                 }
             }
             else -> {
@@ -406,7 +466,7 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
-    override fun confirmMatterCommissioningError() {
-        _matterCommissioningStatus.tryEmit(MatterFrontendCommissioningStatus.NOT_STARTED)
+    override fun finishMatterThreadFlow() {
+        mutableMatterThreadStep.tryEmit(MatterThreadStep.NOT_STARTED)
     }
 }

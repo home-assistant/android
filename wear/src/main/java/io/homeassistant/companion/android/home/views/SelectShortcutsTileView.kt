@@ -14,6 +14,7 @@ import androidx.wear.compose.material3.ToggleButton
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
 import io.homeassistant.companion.android.theme.getToggleButtonColors
@@ -21,7 +22,6 @@ import io.homeassistant.companion.android.theme.wearColorScheme
 import io.homeassistant.companion.android.util.ToggleCheckbox
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
-import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun SelectShortcutsTileView(

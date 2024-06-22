@@ -16,11 +16,11 @@ import android.service.notification.StatusBarNotification
 import android.util.Log
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
-import io.homeassistant.companion.android.common.R as commonR
 
 class NotificationSensorManager : NotificationListenerService(), SensorManager {
     companion object {
@@ -64,6 +64,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             commonR.string.basic_sensor_name_media_session,
             commonR.string.sensor_description_media_session,
             "mdi:play-circle",
+            deviceClass = "enum",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#media-session-sensor"
         )
     }
@@ -260,6 +261,21 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         }
     }
 
+    private val mediaStates = mapOf(
+        PlaybackState.STATE_PLAYING to "Playing",
+        PlaybackState.STATE_PAUSED to "Paused",
+        PlaybackState.STATE_STOPPED to "Stopped",
+        PlaybackState.STATE_BUFFERING to "Buffering",
+        PlaybackState.STATE_CONNECTING to "Connecting",
+        PlaybackState.STATE_ERROR to "Error",
+        PlaybackState.STATE_FAST_FORWARDING to "Fast Forwarding",
+        PlaybackState.STATE_NONE to "None",
+        PlaybackState.STATE_REWINDING to "Rewinding",
+        PlaybackState.STATE_SKIPPING_TO_NEXT to "Skip to Next",
+        PlaybackState.STATE_SKIPPING_TO_PREVIOUS to "Skip to Previous",
+        PlaybackState.STATE_SKIPPING_TO_QUEUE_ITEM to "Skip to Queue Item"
+    )
+
     private fun updateMediaSession(context: Context) {
         if (!isEnabled(context, mediaSession)) {
             return
@@ -283,7 +299,10 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
                 )
             }
         }
-        attr += mapOf("total_media_session_count" to sessionCount)
+        attr += mapOf(
+            "total_media_session_count" to sessionCount,
+            "options" to mediaStates.values.toList()
+        )
         onSensorUpdated(
             context,
             mediaSession,
@@ -295,21 +314,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
     }
 
     private fun getPlaybackState(state: Int?): String {
-        return when (state) {
-            PlaybackState.STATE_PLAYING -> "Playing"
-            PlaybackState.STATE_PAUSED -> "Paused"
-            PlaybackState.STATE_STOPPED -> "Stopped"
-            PlaybackState.STATE_BUFFERING -> "Buffering"
-            PlaybackState.STATE_CONNECTING -> "Connecting"
-            PlaybackState.STATE_ERROR -> "Error"
-            PlaybackState.STATE_FAST_FORWARDING -> "Fast Forwarding"
-            PlaybackState.STATE_NONE -> "None"
-            PlaybackState.STATE_REWINDING -> "Rewinding"
-            PlaybackState.STATE_SKIPPING_TO_NEXT -> "Skip to Next"
-            PlaybackState.STATE_SKIPPING_TO_PREVIOUS -> "Skip to Previous"
-            PlaybackState.STATE_SKIPPING_TO_QUEUE_ITEM -> "Skip to Queue Item"
-            else -> STATE_UNKNOWN
-        }
+        return mediaStates.getOrDefault(state ?: PlaybackState.STATE_NONE, STATE_UNKNOWN)
     }
 
     /**

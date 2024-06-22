@@ -28,8 +28,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import io.homeassistant.companion.android.common.R as commonR
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable

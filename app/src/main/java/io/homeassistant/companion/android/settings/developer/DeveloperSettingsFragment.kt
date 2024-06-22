@@ -11,12 +11,12 @@ import androidx.preference.PreferenceFragmentCompat
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.settings.developer.location.LocationTrackingFragment
 import io.homeassistant.companion.android.settings.log.LogFragment
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
 import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class DeveloperSettingsFragment : DeveloperSettingsView, PreferenceFragmentCompat() {

@@ -17,6 +17,10 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ar
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.util.RegistriesDataHandler
+import java.util.Calendar
+import java.util.concurrent.Flow
+import java.util.function.Consumer
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -28,10 +32,6 @@ import okhttp3.ResponseBody
 import okhttp3.ResponseBody.Companion.toResponseBody
 import retrofit2.HttpException
 import retrofit2.Response
-import java.util.Calendar
-import java.util.concurrent.Flow
-import java.util.function.Consumer
-import javax.inject.Inject
 
 @RequiresApi(Build.VERSION_CODES.R)
 @AndroidEntryPoint
@@ -94,11 +94,11 @@ class HaControlsProviderService : ControlsProviderService() {
                     return@launch
                 }
 
-                try {
-                    val entities = mutableMapOf<Int, List<Entity<Any>>?>()
-                    val areaForEntity = mutableMapOf<Int, Map<String, AreaRegistryResponse?>>()
-                    serverManager.defaultServers.map { server ->
-                        async {
+                val entities = mutableMapOf<Int, List<Entity<Any>>?>()
+                val areaForEntity = mutableMapOf<Int, Map<String, AreaRegistryResponse?>>()
+                serverManager.defaultServers.map { server ->
+                    async {
+                        try {
                             val getAreaRegistry = async { serverManager.webSocketRepository(server.id).getAreaRegistry() }
                             val getDeviceRegistry = async { serverManager.webSocketRepository(server.id).getDeviceRegistry() }
                             val getEntityRegistry = async { serverManager.webSocketRepository(server.id).getEntityRegistry() }
@@ -119,9 +119,13 @@ class HaControlsProviderService : ControlsProviderService() {
                             }
                             entities[server.id] = entities[server.id].orEmpty()
                                 .sortedWith(compareBy(nullsLast()) { areaForEntity[server.id]?.get(it.entityId)?.name })
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Unable to load entities/registries for server ${server.id} (${server.friendlyName}), skipping", e)
                         }
-                    }.awaitAll()
+                    }
+                }.awaitAll()
 
+                try {
                     val allEntities = mutableListOf<Pair<Int, Entity<Any>>>()
                     entities.forEach { serverEntities ->
                         serverEntities.value?.forEach { allEntities += Pair(serverEntities.key, it) }
@@ -158,7 +162,7 @@ class HaControlsProviderService : ControlsProviderService() {
                             subscriber.onNext(it)
                         }
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error getting list of entities", e)
+                    Log.e(TAG, "Error building list of entities", e)
                 }
                 subscriber.onComplete()
             }

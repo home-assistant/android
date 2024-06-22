@@ -10,12 +10,12 @@ import com.google.android.gms.home.matter.commissioning.CommissioningService
 import com.google.android.gms.home.matter.commissioning.CommissioningService.CommissioningError
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class MatterCommissioningService : Service(), CommissioningService.Callback {
@@ -58,7 +58,7 @@ class MatterCommissioningService : Service(), CommissioningService.Callback {
                 commissioningServiceDelegate.sendCommissioningError(CommissioningError.OTHER)
                 return@launch
             }
-            val result = matterManager.commissionOnNetworkDevice(metadata.passcode, serverId)
+            val result = matterManager.commissionOnNetworkDevice(metadata.passcode, metadata.networkLocation.formattedIpAddress, serverId)
             Log.d(TAG, "Server commissioning was ${if (result?.success == true) "successful" else "not successful (${result?.errorCode})"}")
 
             if (result?.success == true) {

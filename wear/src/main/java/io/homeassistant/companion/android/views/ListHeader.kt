@@ -11,8 +11,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.material3.ListHeader
 import androidx.wear.compose.material3.LocalTextStyle
 import androidx.wear.compose.material3.Text
-import kotlin.math.floor
 import io.homeassistant.companion.android.common.R as commonR
+import kotlin.math.floor
 
 @Composable
 fun ListHeader(@StringRes id: Int, modifier: Modifier = Modifier) {

@@ -14,6 +14,7 @@ import io.homeassistant.companion.android.common.notifications.commandBeaconMoni
 import io.homeassistant.companion.android.common.notifications.commandBleTransmitter
 import io.homeassistant.companion.android.common.notifications.getGroupNotificationBuilder
 import io.homeassistant.companion.android.common.notifications.handleChannel
+import io.homeassistant.companion.android.common.notifications.handleDeleteIntent
 import io.homeassistant.companion.android.common.notifications.handleSmallIcon
 import io.homeassistant.companion.android.common.notifications.handleText
 import io.homeassistant.companion.android.common.util.TextToSpeechData
@@ -25,12 +26,12 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.sensors.SensorReceiver
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.json.JSONObject
-import javax.inject.Inject
 
 class MessagingManager @Inject constructor(
     @ApplicationContext val context: Context,
@@ -115,6 +116,8 @@ class MessagingManager @Inject constructor(
         handleSmallIcon(context, notificationBuilder, data)
 
         handleText(notificationBuilder, data)
+
+        handleDeleteIntent(context, notificationBuilder, data, messageId, group, groupId, null)
 
         notificationManagerCompat.apply {
             Log.d(TAG, "Show notification with tag \"$tag\" and id \"$messageId\"")

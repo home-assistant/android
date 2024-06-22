@@ -16,13 +16,13 @@ import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
-import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.GregorianCalendar
 import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class NotificationHistoryFragment : PreferenceFragmentCompat() {

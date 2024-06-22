@@ -6,8 +6,8 @@ import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepositoryImpl
 import io.homeassistant.companion.android.home.HomeActivity
-import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class OpenTileSettingsActivity : AppCompatActivity() {
@@ -30,6 +30,15 @@ class OpenTileSettingsActivity : AppCompatActivity() {
                         wearPrefsRepository.getTileShortcutsAndSaveTileId(tileId)
                     }
                     HomeActivity.getShortcutsTileSettingsIntent(
+                        context = this,
+                        tileId = it
+                    )
+                }
+                "ConfigTemplateTile" -> {
+                    lifecycleScope.launch {
+                        wearPrefsRepository.getTemplateTileAndSaveTileId(tileId)
+                    }
+                    HomeActivity.getTemplateTileSettingsIntent(
                         context = this,
                         tileId = it
                     )

@@ -3,7 +3,8 @@ package io.homeassistant.companion.android.database.widget
 import androidx.room.TypeConverter
 
 enum class WidgetTapAction {
-    REFRESH, TOGGLE
+    REFRESH,
+    TOGGLE
 }
 
 class WidgetTapActionConverter {

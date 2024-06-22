@@ -3,10 +3,11 @@ import com.google.gms.googleservices.GoogleServicesPlugin.GoogleServicesPluginCo
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.kapt)
+    alias(libs.plugins.ksp)
     alias(libs.plugins.kotlin.parcelize)
     alias(libs.plugins.google.services)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.compose.compiler)
 }
 
 android {
@@ -75,10 +76,7 @@ android {
     buildFeatures {
         viewBinding = true
         compose = true
-    }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
+        buildConfig = true
     }
 
     kotlinOptions {
@@ -86,6 +84,7 @@ android {
     }
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility(libs.versions.javaVersion.get())
         targetCompatibility(libs.versions.javaVersion.get())
     }
@@ -144,14 +143,12 @@ android {
         abortOnError = false
         disable += "MissingTranslation"
     }
-
-    kapt {
-        correctErrorTypes = true
-    }
 }
 
 dependencies {
     implementation(project(":common"))
+
+    coreLibraryDesugaring(libs.tools.desugar.jdk)
 
     implementation(libs.blurView)
 
@@ -162,7 +159,7 @@ dependencies {
     "fullImplementation"(libs.kotlinx.coroutines.play.services)
 
     implementation(libs.hilt.android)
-    kapt(libs.hilt.android.compiler)
+    ksp(libs.hilt.android.compiler)
 
     implementation(libs.appcompat)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -197,7 +194,6 @@ dependencies {
 
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.animation)
-    implementation(libs.compose.compiler)
     implementation(libs.compose.foundation)
     implementation(libs.compose.material)
     implementation(libs.compose.material.icons.core)
@@ -207,8 +203,7 @@ dependencies {
     implementation(libs.compose.uiTooling)
     implementation(libs.activity.compose)
     implementation(libs.navigation.compose)
-    implementation(libs.accompanist.systemuicontroller)
-    implementation(libs.accompanist.themeadapter.material)
+    implementation(libs.androidx.lifecycle.runtime.compose)
 
     implementation(libs.iconics.core)
     implementation(libs.iconics.compose)
@@ -218,6 +213,8 @@ dependencies {
 
     implementation(libs.reorderable)
     implementation(libs.changeLog)
+
+    implementation(libs.zxing)
 
     implementation(libs.car.core)
     implementation(libs.car.automotive)

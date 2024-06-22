@@ -17,6 +17,7 @@ import androidx.core.content.getSystemService
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
@@ -25,11 +26,10 @@ import io.homeassistant.companion.android.databinding.WidgetMediaControlsConfigu
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import java.util.LinkedList
 import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 @AndroidEntryPoint
 class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity() {
@@ -58,8 +58,8 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
 
     private var entityAdapter: SingleItemArrayAdapter<Entity<Any>>? = null
 
-    public override fun onCreate(icicle: Bundle?) {
-        super.onCreate(icicle)
+    public override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
         // Set the result to CANCELED.  This will cause the widget host to cancel
         // out of the widget placement if the user presses the back button.
@@ -280,9 +280,9 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
         }
     }
 
-    override fun onNewIntent(intent: Intent?) {
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        if (intent != null && intent.extras != null && intent.hasExtra(PIN_WIDGET_CALLBACK)) {
+        if (intent.extras != null && intent.hasExtra(PIN_WIDGET_CALLBACK)) {
             appWidgetId = intent.extras!!.getInt(
                 AppWidgetManager.EXTRA_APPWIDGET_ID,
                 AppWidgetManager.INVALID_APPWIDGET_ID

@@ -51,8 +51,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import io.homeassistant.companion.android.common.data.wifi.WifiHelper
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.wifi.WifiHelper
 
 @OptIn(
     ExperimentalComposeUiApi::class,

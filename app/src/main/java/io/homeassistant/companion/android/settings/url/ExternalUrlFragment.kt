@@ -7,10 +7,10 @@ import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import com.google.accompanist.themeadapter.material.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.settings.url.views.ExternalUrlView
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.settings.url.views.ExternalUrlView
+import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 
 @AndroidEntryPoint
 class ExternalUrlFragment : Fragment() {
@@ -28,7 +28,7 @@ class ExternalUrlFragment : Fragment() {
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
-                MdcTheme {
+                HomeAssistantAppTheme {
                     ExternalUrlView(
                         canUseCloud = viewModel.canUseCloud,
                         useCloud = viewModel.useCloud,

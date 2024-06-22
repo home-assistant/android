@@ -17,6 +17,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.conversation.views.LoadAssistView
+import io.homeassistant.companion.android.home.HomeActivity
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -53,6 +54,9 @@ class ConversationActivity : ComponentActivity() {
             val launchIntent = conversationViewModel.onCreate(hasRecordingPermission())
             if (launchIntent) {
                 launchVoiceInputIntent()
+            } else if (!conversationViewModel.isRegistered()) {
+                startActivity(HomeActivity.newInstance(this@ConversationActivity))
+                finish()
             }
         }
 
@@ -78,7 +82,7 @@ class ConversationActivity : ComponentActivity() {
         }
     }
 
-    override fun onNewIntent(intent: Intent?) {
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         this.intent = intent
 

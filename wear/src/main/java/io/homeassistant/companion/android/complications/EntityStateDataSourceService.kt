@@ -22,8 +22,8 @@ import io.homeassistant.companion.android.common.data.integration.friendlyState
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.wear.EntityStateComplicationsDao
-import retrofit2.HttpException
 import javax.inject.Inject
+import retrofit2.HttpException
 
 @AndroidEntryPoint
 class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
@@ -163,7 +163,11 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
         setTapAction: Boolean = false
     ): ComplicationData {
         val text = PlainComplicationText.Builder(
-            if (setTapAction) { "+" } else { getText(textRes) }
+            if (setTapAction) {
+                "+"
+            } else {
+                getText(textRes)
+            }
         ).build()
         val contentDescription = PlainComplicationText.Builder(getText(R.string.complication_entity_state_content_description)).build()
         val tapAction = if (setTapAction) {

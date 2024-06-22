@@ -8,11 +8,11 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.wear.activity.ConfirmationActivity
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.databinding.ActivityIntegrationBinding
 import io.homeassistant.companion.android.home.HomeActivity
 import io.homeassistant.companion.android.util.adjustInset
 import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationView {

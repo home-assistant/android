@@ -22,8 +22,8 @@ import androidx.wear.protolayout.material.Typography
 import androidx.wear.protolayout.material.layouts.PrimaryLayout
 import androidx.wear.tiles.RequestBuilders
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.splash.SplashActivity
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.splash.SplashActivity
 
 const val RESOURCE_REFRESH = "refresh"
 const val MODIFIER_CLICK_REFRESH = "refresh"
@@ -77,10 +77,12 @@ fun primaryLayoutTimeline(
     action: ActionBuilders.Action
 ): Timeline {
     val theme = Colors(
-        ContextCompat.getColor(context, commonR.color.colorPrimary), // Primary
-        ContextCompat.getColor(context, commonR.color.colorOnPrimary), // On primary
-        ContextCompat.getColor(context, R.color.colorOverlay), // Surface
-        ContextCompat.getColor(context, android.R.color.white) // On surface
+        ContextCompat.getColor(context, commonR.color.colorPrimary),
+        ContextCompat.getColor(context, commonR.color.colorOnPrimary),
+        // Surface
+        ContextCompat.getColor(context, R.color.colorOverlay),
+        // On surface
+        ContextCompat.getColor(context, android.R.color.white)
     )
     val chipColors = ChipColors.primaryChipColors(theme)
     val chipAction = ModifiersBuilders.Clickable.Builder()

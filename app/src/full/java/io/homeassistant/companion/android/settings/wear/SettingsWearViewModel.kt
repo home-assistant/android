@@ -5,7 +5,7 @@ import android.app.Application
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
+import androidx.core.net.toUri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.fasterxml.jackson.databind.JsonMappingException
@@ -21,7 +21,9 @@ import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.HomeAssistantApplication
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.WearDataMessages
 import io.homeassistant.companion.android.database.server.Server
@@ -29,6 +31,8 @@ import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerType
 import io.homeassistant.companion.android.database.server.ServerUserInfo
+import java.util.UUID
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -39,9 +43,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import org.burnoutcrew.reorderable.ItemPosition
-import java.util.UUID
-import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 @HiltViewModel
 @SuppressLint("VisibleForTests") // https://issuetracker.google.com/issues/239451111
@@ -73,18 +74,20 @@ class SettingsWearViewModel @Inject constructor(
         private set
     var favoriteEntityIds = mutableStateListOf<String>()
         private set
-    var templateTileContent = mutableStateOf("")
+    var templateTiles = mutableStateMapOf<Int, TemplateTileConfig>()
         private set
-    var templateTileContentRendered = mutableStateOf("")
-        private set
-    var templateTileRefreshInterval = mutableStateOf(0)
+    var templateTilesRenderedTemplates = mutableStateMapOf<Int, String>()
         private set
 
     private val _resultSnackbar = MutableSharedFlow<String>()
     val resultSnackbar = _resultSnackbar.asSharedFlow()
 
     init {
-        Wearable.getDataClient(application).addListener(this)
+        try {
+            Wearable.getDataClient(application).addListener(this)
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to get wearable data client", e)
+        }
         viewModelScope.launch {
             try {
                 val capabilityInfo = Wearable.getCapabilityClient(application)
@@ -113,7 +116,11 @@ class SettingsWearViewModel @Inject constructor(
     }
 
     override fun onCleared() {
-        Wearable.getDataClient(getApplication<HomeAssistantApplication>()).removeListener(this)
+        try {
+            Wearable.getDataClient(getApplication<HomeAssistantApplication>()).removeListener(this)
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to remove listener from wearable data client", e)
+        }
 
         if (serverId != 0) {
             CoroutineScope(Dispatchers.Main + Job()).launch {
@@ -135,17 +142,42 @@ class SettingsWearViewModel @Inject constructor(
         }
     }
 
-    fun setTemplateContent(template: String) {
-        templateTileContent.value = template
+    fun setTemplateTileContent(tileId: Int, updatedTemplateTileContent: String) {
+        val templateTileConfig = templateTiles[tileId]
+        templateTileConfig?.let {
+            templateTiles[tileId] = it.copy(template = updatedTemplateTileContent)
+            renderTemplate(tileId, updatedTemplateTileContent)
+        }
+    }
+
+    fun setTemplateTileRefreshInterval(tileId: Int, refreshInterval: Int) {
+        val templateTileConfig = templateTiles[tileId]
+        templateTileConfig?.let {
+            templateTiles[tileId] = it.copy(refreshInterval = refreshInterval)
+        }
+    }
+
+    private fun setTemplateTiles(newTemplateTiles: Map<Int, TemplateTileConfig>) {
+        templateTiles.clear()
+        templateTilesRenderedTemplates.clear()
+
+        templateTiles.putAll(newTemplateTiles)
+        templateTiles.forEach {
+            renderTemplate(it.key, it.value.template)
+        }
+    }
+
+    private fun renderTemplate(tileId: Int, template: String) {
         if (template.isNotEmpty() && serverId != 0) {
             viewModelScope.launch {
                 try {
-                    templateTileContentRendered.value =
-                        serverManager.integrationRepository(serverId).renderTemplate(template, mapOf()).toString()
+                    templateTilesRenderedTemplates[tileId] = serverManager
+                        .integrationRepository(serverId)
+                        .renderTemplate(template, mapOf()).toString()
                 } catch (e: Exception) {
-                    Log.e(TAG, "Exception while rendering template", e)
+                    Log.e(TAG, "Exception while rendering template for tile ID $tileId", e)
                     // JsonMappingException suggests that template is not a String (= error)
-                    templateTileContentRendered.value = getApplication<Application>().getString(
+                    templateTilesRenderedTemplates[tileId] = getApplication<Application>().getString(
                         if (e.cause is JsonMappingException) {
                             commonR.string.template_error
                         } else {
@@ -155,7 +187,7 @@ class SettingsWearViewModel @Inject constructor(
                 }
             }
         } else {
-            templateTileContentRendered.value = ""
+            templateTilesRenderedTemplates[tileId] = ""
         }
     }
 
@@ -197,12 +229,21 @@ class SettingsWearViewModel @Inject constructor(
         }
     }
 
+    private fun readUriData(uri: String): ByteArray {
+        if (uri.isEmpty()) return ByteArray(0)
+        return getApplication<HomeAssistantApplication>().contentResolver.openInputStream(uri.toUri())!!.buffered().use {
+            it.readBytes()
+        }
+    }
+
     fun sendAuthToWear(
         url: String,
         authCode: String,
         deviceName: String,
         deviceTrackingEnabled: Boolean,
-        notificationsEnabled: Boolean
+        notificationsEnabled: Boolean,
+        tlsClientCertificateUri: String,
+        tlsClientCertificatePassword: String
     ) {
         _hasData.value = false // Show loading indicator
         val putDataRequest = PutDataMapRequest.create("/authenticate").run {
@@ -213,34 +254,43 @@ class SettingsWearViewModel @Inject constructor(
             dataMap.putString("DeviceName", deviceName)
             dataMap.putBoolean("LocationTracking", deviceTrackingEnabled)
             dataMap.putBoolean("Notifications", notificationsEnabled)
+            dataMap.putByteArray("TLSClientCertificateData", readUriData(tlsClientCertificateUri))
+            dataMap.putString("TLSClientCertificatePassword", tlsClientCertificatePassword)
             setUrgent()
             asPutDataRequest()
         }
 
         val app = getApplication<HomeAssistantApplication>()
-        Wearable.getDataClient(app).putDataItem(putDataRequest).apply {
-            addOnSuccessListener { Log.d(TAG, "Successfully sent auth to wear") }
-            addOnFailureListener { e ->
-                Log.e(TAG, "Failed to send auth to wear", e)
-                _hasData.value = true
-                viewModelScope.launch {
-                    _resultSnackbar.emit(app.getString(commonR.string.failed_watch_connection))
+        try {
+            Wearable.getDataClient(app).putDataItem(putDataRequest).apply {
+                addOnSuccessListener { Log.d(TAG, "Successfully sent auth to wear") }
+                addOnFailureListener { e ->
+                    Log.e(TAG, "Failed to send auth to wear", e)
+                    _hasData.value = true
+                    watchConnectionError(app)
                 }
             }
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to send auth to wear", e)
+            watchConnectionError(app)
         }
     }
 
     fun sendTemplateTileInfo() {
-        val putDataRequest = PutDataMapRequest.create("/updateTemplateTile").run {
-            dataMap.putString(WearDataMessages.CONFIG_TEMPLATE_TILE, templateTileContent.value)
-            dataMap.putInt(WearDataMessages.CONFIG_TEMPLATE_TILE_REFRESH_INTERVAL, templateTileRefreshInterval.value)
+        val putDataRequest = PutDataMapRequest.create("/updateTemplateTiles").run {
+            dataMap.putString(WearDataMessages.CONFIG_TEMPLATE_TILES, objectMapper.writeValueAsString(templateTiles))
             setUrgent()
             asPutDataRequest()
         }
 
-        Wearable.getDataClient(getApplication<HomeAssistantApplication>()).putDataItem(putDataRequest).apply {
-            addOnSuccessListener { Log.d(TAG, "Successfully sent tile template to wear") }
-            addOnFailureListener { e -> Log.e(TAG, "Failed to send tile template to wear", e) }
+        try {
+            Wearable.getDataClient(getApplication<HomeAssistantApplication>())
+                .putDataItem(putDataRequest).apply {
+                    addOnSuccessListener { Log.d(TAG, "Successfully sent tile template to wear") }
+                    addOnFailureListener { e -> Log.e(TAG, "Failed to send tile template to wear", e) }
+                }
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to send template tile to wear", e)
         }
     }
 
@@ -280,8 +330,14 @@ class SettingsWearViewModel @Inject constructor(
         favoriteEntityIdList.forEach { entityId ->
             favoriteEntityIds.add(entityId)
         }
-        setTemplateContent(data.getString(WearDataMessages.CONFIG_TEMPLATE_TILE, ""))
-        templateTileRefreshInterval.value = data.getInt(WearDataMessages.CONFIG_TEMPLATE_TILE_REFRESH_INTERVAL, 0)
+
+        val templateTilesFromWear: Map<Int, TemplateTileConfig> = objectMapper.readValue(
+            data.getString(
+                WearDataMessages.CONFIG_TEMPLATE_TILES,
+                "{}"
+            )
+        )
+        setTemplateTiles(templateTilesFromWear)
 
         _hasData.value = true
     }
@@ -347,5 +403,11 @@ class SettingsWearViewModel @Inject constructor(
         }
 
         authenticateId = null
+    }
+
+    private fun watchConnectionError(app: HomeAssistantApplication) {
+        viewModelScope.launch {
+            _resultSnackbar.emit(app.getString(commonR.string.failed_watch_connection))
+        }
     }
 }

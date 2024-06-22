@@ -2,8 +2,8 @@ package io.homeassistant.companion.android.common.sensors
 
 import android.content.Context
 import android.os.Build
-import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 
 class AndroidOsSensorManager : SensorManager {
 

@@ -14,6 +14,7 @@ import android.telephony.TelephonyManager
 import dagger.hilt.android.HiltAndroidApp
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
@@ -25,11 +26,12 @@ import io.homeassistant.companion.android.widgets.button.ButtonWidget
 import io.homeassistant.companion.android.widgets.entity.EntityWidget
 import io.homeassistant.companion.android.widgets.mediaplayer.MediaPlayerControlsWidget
 import io.homeassistant.companion.android.widgets.template.TemplateWidget
+import javax.inject.Inject
+import javax.inject.Named
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @HiltAndroidApp
 open class HomeAssistantApplication : Application() {
@@ -40,6 +42,7 @@ open class HomeAssistantApplication : Application() {
     lateinit var prefsRepository: PrefsRepository
 
     @Inject
+    @Named("keyChainRepository")
     lateinit var keyChainRepository: KeyChainRepository
 
     @Inject
@@ -125,6 +128,7 @@ open class HomeAssistantApplication : Application() {
             IntentFilter().apply {
                 addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION)
                 addAction(WifiManager.WIFI_STATE_CHANGED_ACTION)
+                addAction("android.net.wifi.WIFI_AP_STATE_CHANGED")
             }
         )
 
@@ -155,17 +159,23 @@ open class HomeAssistantApplication : Application() {
                 addAction(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
                 addAction(AudioManager.ACTION_HEADSET_PLUG)
                 addAction(AudioManager.RINGER_MODE_CHANGED_ACTION)
+                addAction(AudioSensorManager.VOLUME_CHANGED_ACTION)
             }
         )
 
-        // Add extra audio receiver for devices that support it
+        // Listen for microphone mute changes
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            registerReceiver(
+                sensorReceiver,
+                IntentFilter(AudioManager.ACTION_MICROPHONE_MUTE_CHANGED)
+            )
+        }
+
+        // Listen for speakerphone state changes
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             registerReceiver(
                 sensorReceiver,
-                IntentFilter().apply {
-                    addAction(AudioManager.ACTION_MICROPHONE_MUTE_CHANGED)
-                    addAction(AudioManager.ACTION_SPEAKERPHONE_STATE_CHANGED)
-                }
+                IntentFilter(AudioManager.ACTION_SPEAKERPHONE_STATE_CHANGED)
             )
         }
 

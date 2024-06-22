@@ -26,7 +26,7 @@ class SensorUpdateReceiver : SensorReceiverBase() {
     override val managers: List<SensorManager>
         get() = listOf(BluetoothSensorManager())
 
-    override val skippableActions: Map<String, String>
+    override val skippableActions: Map<String, List<String>>
         get() = emptyMap()
 
     override fun getSensorSettingsIntent(

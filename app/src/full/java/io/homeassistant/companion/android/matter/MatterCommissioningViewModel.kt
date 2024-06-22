@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.matter
 
 import android.app.Application
 import android.content.IntentSender
-import android.util.Log
 import androidx.activity.result.ActivityResult
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -12,8 +11,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.thread.ThreadManager
-import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 @HiltViewModel
 class MatterCommissioningViewModel @Inject constructor(
@@ -91,23 +90,12 @@ class MatterCommissioningViewModel @Inject constructor(
         }
     }
 
-    suspend fun syncThreadIfNecessary(): IntentSender? {
+    fun syncThreadIfNecessary(): IntentSender? {
         step = CommissioningFlowStep.Working
-        return try {
-            val result = threadManager.syncPreferredDataset(
-                getApplication<Application>().applicationContext,
-                serverId,
-                viewModelScope
-            )
-            when (result) {
-                is ThreadManager.SyncResult.OnlyOnDevice -> result.exportIntent
-                is ThreadManager.SyncResult.AllHaveCredentials -> result.exportIntent
-                else -> null
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "Unable to sync preferred Thread dataset, continuing", e)
-            null
-        }
+        // The app used to sync Thread credentials here until commit 26a472a, but it was
+        // (temporarily?) removed due to slowing down the Matter commissioning flow for the user
+        // and limited usefulness of the result (because of API limitations)
+        return null
     }
 
     fun onThreadPermissionResult(result: ActivityResult, code: String) {

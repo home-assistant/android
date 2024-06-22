@@ -12,16 +12,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
-import com.google.accompanist.themeadapter.material.MdcTheme
 import com.google.android.gms.home.matter.Matter
 import com.google.android.gms.home.matter.commissioning.SharedDeviceData
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.matter.views.MatterCommissioningView
+import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.webview.WebViewActivity
-import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MatterCommissioningActivity : AppCompatActivity() {
@@ -47,7 +47,7 @@ class MatterCommissioningActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            MdcTheme {
+            HomeAssistantAppTheme {
                 MatterCommissioningView(
                     step = viewModel.step,
                     deviceName = deviceName,
@@ -91,7 +91,7 @@ class MatterCommissioningActivity : AppCompatActivity() {
         }
     }
 
-    override fun onNewIntent(intent: Intent?) {
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         this.intent = intent // Data is handled by check in onResume()
         newMatterDevice = true

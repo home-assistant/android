@@ -8,12 +8,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import com.google.accompanist.themeadapter.material.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.settings.SettingViewModel
 import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.settings.sensor.views.SensorUpdateFrequencyView
-import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 
 @AndroidEntryPoint
 class SensorUpdateFrequencyFragment : Fragment() {
@@ -27,7 +27,7 @@ class SensorUpdateFrequencyFragment : Fragment() {
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
-                MdcTheme {
+                HomeAssistantAppTheme {
                     val settings = viewModel.getSettingFlow(0)
                         .collectAsState(initial = viewModel.getSetting(0))
                     SensorUpdateFrequencyView(

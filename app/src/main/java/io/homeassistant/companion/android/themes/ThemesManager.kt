@@ -8,15 +8,15 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewFeature
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
-import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
+import kotlinx.coroutines.runBlocking
 
 class ThemesManager @Inject constructor(
     private val themesUseCase: PrefsRepository
 ) {
 
-    fun getCurrentTheme(): String {
-        return runBlocking {
+    suspend fun getCurrentTheme(): String {
+        return run {
             val theme = themesUseCase.getCurrentTheme()
             if (theme.isNullOrEmpty()) {
                 val toSetTheme = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -32,8 +32,8 @@ class ThemesManager @Inject constructor(
         }
     }
 
-    fun saveTheme(theme: String?) {
-        return runBlocking {
+    suspend fun saveTheme(theme: String?) {
+        return run {
             if (!theme.isNullOrEmpty()) {
                 val currentTheme = getCurrentTheme()
                 if (currentTheme != theme) {
@@ -46,7 +46,7 @@ class ThemesManager @Inject constructor(
 
     @Suppress("DEPRECATION")
     fun setThemeForWebView(context: Context, webSettings: WebSettings) {
-        val theme = getCurrentTheme()
+        val theme = runBlocking { getCurrentTheme() }
         setNightModeBasedOnTheme(theme)
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU &&

@@ -13,6 +13,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.drawable.Icon
 import android.media.AudioManager
 import android.media.MediaMetadataRetriever
 import android.media.RingtoneManager
@@ -38,6 +39,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.core.content.getSystemService
 import androidx.core.text.isDigitsOnly
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -45,6 +47,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.notifications.DeviceCommandData
@@ -56,6 +59,7 @@ import io.homeassistant.companion.android.common.notifications.createChannelID
 import io.homeassistant.companion.android.common.notifications.getGroupNotificationBuilder
 import io.homeassistant.companion.android.common.notifications.handleChannel
 import io.homeassistant.companion.android.common.notifications.handleColor
+import io.homeassistant.companion.android.common.notifications.handleDeleteIntent
 import io.homeassistant.companion.android.common.notifications.handleSmallIcon
 import io.homeassistant.companion.android.common.notifications.handleText
 import io.homeassistant.companion.android.common.notifications.parseColor
@@ -79,6 +83,14 @@ import io.homeassistant.companion.android.util.UrlUtil
 import io.homeassistant.companion.android.vehicle.HaCarAppService
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebViewActivity
+import java.io.File
+import java.io.FileOutputStream
+import java.net.URL
+import java.net.URLDecoder
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -92,11 +104,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okio.sink
 import org.json.JSONObject
-import java.io.File
-import java.net.URL
-import java.net.URLDecoder
-import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 class MessagingManager @Inject constructor(
     @ApplicationContext val context: Context,
@@ -127,6 +134,7 @@ class MessagingManager @Inject constructor(
         const val PERSISTENT = "persistent"
         const val CHRONOMETER = "chronometer"
         const val WHEN = "when"
+        const val WHEN_RELATIVE = "when_relative"
         const val CAR_UI = "car_ui"
         const val KEY_TEXT_REPLY = "key_text_reply"
         const val INTENT_CLASS_NAME = "intent_class_name"
@@ -727,13 +735,13 @@ class MessagingManager @Inject constructor(
                         PowerManager.ON_AFTER_RELEASE,
                     "HomeAssistant::NotificationScreenOnWakeLock"
                 )
-                wakeLock?.acquire(1 * 30 * 1000L /*30 seconds */)
+                wakeLock?.acquire(1 * 30 * 1000L) // 30 seconds
                 wakeLock?.release()
             }
             COMMAND_MEDIA -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
                     if (!NotificationManagerCompat.getEnabledListenerPackages(context)
-                        .contains(context.packageName)
+                            .contains(context.packageName)
                     ) {
                         notifyMissingPermission(message.toString(), serverId)
                     } else {
@@ -935,7 +943,7 @@ class MessagingManager @Inject constructor(
 
         handleReplyHistory(notificationBuilder, data)
 
-        handleDeleteIntent(notificationBuilder, data, messageId, group, groupId, id)
+        handleDeleteIntent(context, notificationBuilder, data, messageId, group, groupId, id)
 
         handleContentIntent(notificationBuilder, data)
 
@@ -979,10 +987,15 @@ class MessagingManager @Inject constructor(
         data: Map<String, String>
     ) {
         try { // Without this, a non-numeric when value will crash the app
-            val notificationWhen = data[WHEN]?.toLongOrNull()?.times(1000) ?: 0
+            var notificationWhen = data[WHEN]?.toLongOrNull()?.times(1000) ?: 0
+            val isRelative = data[WHEN_RELATIVE]?.toBoolean() ?: false
             val usesChronometer = data[CHRONOMETER]?.toBoolean() ?: false
 
             if (notificationWhen != 0L) {
+                if (isRelative) {
+                    notificationWhen += System.currentTimeMillis()
+                }
+
                 builder.setWhen(notificationWhen)
                 builder.setUsesChronometer(usesChronometer)
 
@@ -1031,29 +1044,6 @@ class MessagingManager @Inject constructor(
         if (actionUri != NO_ACTION) {
             builder.setContentIntent(createOpenUriPendingIntent(actionUri, data))
         }
-    }
-
-    private fun handleDeleteIntent(
-        builder: NotificationCompat.Builder,
-        data: Map<String, String>,
-        messageId: Int,
-        group: String?,
-        groupId: Int,
-        databaseId: Long?
-    ) {
-        val deleteIntent = Intent(context, NotificationDeleteReceiver::class.java).apply {
-            putExtra(NotificationDeleteReceiver.EXTRA_DATA, HashMap(data))
-            putExtra(NotificationDeleteReceiver.EXTRA_NOTIFICATION_GROUP, group)
-            putExtra(NotificationDeleteReceiver.EXTRA_NOTIFICATION_GROUP_ID, groupId)
-            putExtra(NotificationDeleteReceiver.EXTRA_NOTIFICATION_DB, databaseId)
-        }
-        val deletePendingIntent = PendingIntent.getBroadcast(
-            context,
-            messageId,
-            deleteIntent,
-            PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        builder.setDeleteIntent(deletePendingIntent)
     }
 
     private fun handlePersistent(
@@ -1221,8 +1211,15 @@ class MessagingManager @Inject constructor(
                 builder
                     .setLargeIcon(bitmap)
                     .setStyle(
-                        NotificationCompat.BigPictureStyle()
-                            .bigPicture(bitmap)
+                        NotificationCompat.BigPictureStyle().also { style ->
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                                saveTempAnimatedImage(serverId, url, !UrlUtil.isAbsoluteUrl(dataImage))?.let { filePath ->
+                                    style.bigPicture(Icon.createWithContentUri(filePath))
+                                } ?: run { style.bigPicture(bitmap) }
+                            } else {
+                                style.bigPicture(bitmap)
+                            }
+                        }
                             .bigLargeIcon(null as Bitmap?)
                     )
             }
@@ -1253,6 +1250,42 @@ class MessagingManager @Inject constructor(
                 Log.e(TAG, "Couldn't download image for notification", e)
             }
             return@withContext image
+        }
+
+    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    private suspend fun saveTempAnimatedImage(serverId: Int, url: URL?, requiresAuth: Boolean = false): Uri? =
+        withContext(
+            Dispatchers.IO
+        ) {
+            if (url == null || url.path.endsWith("gif").not()) {
+                return@withContext null
+            }
+
+            // delete previous images that are no longer needed
+            val imageCutoff = LocalDateTime.now().minusDays(2)
+            context.externalCacheDir?.listFiles()?.filter { file ->
+                file.absolutePath.endsWith("_animated_notification.gif") &&
+                    imageCutoff.isAfter(LocalDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), ZoneId.systemDefault()))
+            }?.forEach { expired -> expired.delete() }
+
+            val file = File(context.externalCacheDir, "${System.currentTimeMillis()}_animated_notification.gif")
+            try {
+                val request = Request.Builder().apply {
+                    url(url)
+                    if (requiresAuth) {
+                        addHeader("Authorization", serverManager.authenticationRepository(serverId).buildBearerToken())
+                    }
+                }.build()
+
+                val response = okHttpClient.newCall(request).execute()
+                val bytes = response.body?.bytes() ?: return@withContext null
+                file.writeBytes(bytes)
+
+                response.close()
+            } catch (e: Exception) {
+                Log.e(TAG, "Couldn't download image for notification", e)
+            }
+            return@withContext FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
         }
 
     private suspend fun handleVideo(
@@ -1758,7 +1791,8 @@ class MessagingManager @Inject constructor(
             } else {
                 WebViewActivity.newInstance(context, title, serverId)
             }
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
             intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
             context.startActivity(intent)
         } catch (e: Exception) {
@@ -1901,7 +1935,7 @@ class MessagingManager @Inject constructor(
                                 }
                                 navigateAppDetails()
                             }
-                            COMMAND_SCREEN_BRIGHTNESS_LEVEL, COMMAND_AUTO_SCREEN_BRIGHTNESS -> {
+                            COMMAND_SCREEN_BRIGHTNESS_LEVEL, COMMAND_AUTO_SCREEN_BRIGHTNESS, COMMAND_SCREEN_OFF_TIMEOUT -> {
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                                     requestWriteSystemPermission()
                                 }

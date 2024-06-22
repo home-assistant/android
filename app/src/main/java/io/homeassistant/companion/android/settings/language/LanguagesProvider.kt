@@ -1,10 +1,10 @@
 package io.homeassistant.companion.android.settings.language
 
 import android.content.Context
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.capitalize
 import java.util.Locale
 import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 class LanguagesProvider @Inject constructor(
     private var langManager: LanguagesManager

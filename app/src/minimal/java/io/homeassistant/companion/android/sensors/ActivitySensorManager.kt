@@ -3,8 +3,8 @@ package io.homeassistant.companion.android.sensors
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.sensors.SensorManager
 
 class ActivitySensorManager : BroadcastReceiver(), SensorManager {
 

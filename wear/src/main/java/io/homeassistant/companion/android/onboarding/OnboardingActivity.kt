@@ -21,13 +21,13 @@ import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.Wearable
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationActivity
 import io.homeassistant.companion.android.onboarding.phoneinstall.PhoneInstallActivity
 import io.homeassistant.companion.android.util.LoadingView
+import javax.inject.Inject
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 @SuppressLint("VisibleForTests") // https://issuetracker.google.com/issues/239451111
@@ -123,7 +123,8 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
                         addCategory(Intent.CATEGORY_BROWSABLE)
                         data = Uri.parse(url)
                     },
-                    null // a Wear device only has one companion device so this is not needed
+                    // A Wear device only has one companion device so this is not needed
+                    null
                 ).await()
                 showContinueOnPhone()
             } catch (e: Exception) {

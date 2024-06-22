@@ -27,9 +27,9 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.accompanist.themeadapter.material.MdcTheme
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 
 @Composable
 fun WelcomeView(
@@ -103,7 +103,7 @@ fun WelcomeView(
 @Preview(showSystemUi = true)
 @Preview(showSystemUi = true, uiMode = UI_MODE_NIGHT_YES)
 private fun PreviewWelcome() {
-    MdcTheme {
+    HomeAssistantAppTheme {
         WelcomeView(onContinue = {})
     }
 }

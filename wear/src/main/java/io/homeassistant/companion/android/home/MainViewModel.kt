@@ -19,6 +19,7 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
+import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
@@ -36,6 +37,7 @@ import io.homeassistant.companion.android.database.wear.getAllFlow
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.util.RegistriesDataHandler
 import io.homeassistant.companion.android.util.throttleLatest
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
@@ -43,7 +45,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
@@ -59,7 +60,9 @@ class MainViewModel @Inject constructor(
     }
 
     enum class LoadingState {
-        LOADING, READY, ERROR
+        LOADING,
+        READY,
+        ERROR
     }
 
     private val app = application
@@ -121,9 +124,7 @@ class MainViewModel @Inject constructor(
         private set
     var isShowShortcutTextEnabled = mutableStateOf(false)
         private set
-    var templateTileContent = mutableStateOf("")
-        private set
-    var templateTileRefreshInterval = mutableStateOf(0)
+    var templateTiles = mutableStateMapOf<Int, TemplateTileConfig>()
         private set
     var isFavoritesOnly by mutableStateOf(false)
         private set
@@ -148,8 +149,8 @@ class MainViewModel @Inject constructor(
             isHapticEnabled.value = homePresenter.getWearHapticFeedback()
             isToastEnabled.value = homePresenter.getWearToastConfirmation()
             isShowShortcutTextEnabled.value = homePresenter.getShowShortcutText()
-            templateTileContent.value = homePresenter.getTemplateTileContent()
-            templateTileRefreshInterval.value = homePresenter.getTemplateTileRefreshInterval()
+            templateTiles.clear()
+            templateTiles.putAll(homePresenter.getAllTemplateTiles())
             isFavoritesOnly = homePresenter.getWearFavoritesOnly()
 
             val assistantAppComponent = ComponentName(
@@ -168,6 +169,13 @@ class MainViewModel @Inject constructor(
             }
             shortcutEntitiesMap.clear()
             shortcutEntitiesMap.putAll(map)
+        }
+    }
+
+    fun loadTemplateTiles() {
+        viewModelScope.launch {
+            templateTiles.clear()
+            templateTiles.putAll(homePresenter.getAllTemplateTiles())
         }
     }
 
@@ -485,10 +493,12 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun setTemplateTileRefreshInterval(interval: Int) {
+    fun setTemplateTileRefreshInterval(tileId: Int, interval: Int) {
         viewModelScope.launch {
-            homePresenter.setTemplateTileRefreshInterval(interval)
-            templateTileRefreshInterval.value = interval
+            homePresenter.setTemplateTileRefreshInterval(tileId, interval)
+            templateTiles[tileId]?.let {
+                templateTiles[tileId] = it.copy(refreshInterval = interval)
+            }
         }
     }
 

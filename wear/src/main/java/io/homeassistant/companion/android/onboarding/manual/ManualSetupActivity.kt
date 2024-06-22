@@ -10,11 +10,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.wear.activity.ConfirmationActivity
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.databinding.ActivityManualSetupBinding
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationActivity
 import io.homeassistant.companion.android.util.adjustInset
 import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class ManualSetupActivity : AppCompatActivity(), ManualSetupView {

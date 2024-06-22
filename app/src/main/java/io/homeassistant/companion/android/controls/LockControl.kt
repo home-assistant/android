@@ -9,11 +9,10 @@ import android.service.controls.actions.ControlAction
 import android.service.controls.templates.ControlButton
 import android.service.controls.templates.ToggleTemplate
 import androidx.annotation.RequiresApi
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.isActive
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
-import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.R)
 object LockControl : HaControl {
@@ -21,8 +20,7 @@ object LockControl : HaControl {
         context: Context,
         control: Control.StatefulBuilder,
         entity: Entity<Map<String, Any>>,
-        area: AreaRegistryResponse?,
-        baseUrl: String?
+        info: HaControlInfo
     ): Control.StatefulBuilder {
         control.setControlTemplate(
             ToggleTemplate(

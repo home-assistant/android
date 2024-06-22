@@ -10,13 +10,13 @@ import androidx.core.content.getSystemService
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.util.sensorWorkerChannel
+import io.homeassistant.companion.android.common.util.CHANNEL_SENSOR_WORKER
 import io.homeassistant.companion.android.database.AppDatabase
+import java.lang.IllegalStateException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.lang.IllegalStateException
-import io.homeassistant.companion.android.common.R as commonR
 
 abstract class SensorWorkerBase(
     val appContext: Context,
@@ -43,7 +43,7 @@ abstract class SensorWorkerBase(
             }
         ) {
             createNotificationChannel()
-            val notification = NotificationCompat.Builder(applicationContext, sensorWorkerChannel)
+            val notification = NotificationCompat.Builder(applicationContext, CHANNEL_SENSOR_WORKER)
                 .setSmallIcon(commonR.drawable.ic_stat_ic_notification)
                 .setContentTitle(appContext.getString(commonR.string.updating_sensors))
                 .setPriority(NotificationCompat.PRIORITY_LOW)
@@ -66,16 +66,28 @@ abstract class SensorWorkerBase(
             }
             sensorReceiver.updateSensors(appContext, serverManager, sensorDao, null)
         }
+
+        // Cleanup orphaned sensors that may have been created by a slow or long running update
+        // writing data when deleting the server.
+        val currentServerIds = serverManager.defaultServers.map { it.id }
+        val orphanedSensors = sensorDao.getAllExceptServer(currentServerIds)
+        if (orphanedSensors.any()) {
+            Log.i(TAG, "Cleaning up ${orphanedSensors.size} orphaned sensor entries")
+            orphanedSensors.forEach {
+                sensorDao.removeSensor(it.id, it.serverId)
+            }
+        }
+
         Result.success()
     }
 
     protected fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             var notificationChannel =
-                notificationManager.getNotificationChannel(sensorWorkerChannel)
+                notificationManager.getNotificationChannel(CHANNEL_SENSOR_WORKER)
             if (notificationChannel == null) {
                 notificationChannel = NotificationChannel(
-                    sensorWorkerChannel,
+                    CHANNEL_SENSOR_WORKER,
                     TAG,
                     NotificationManager.IMPORTANCE_LOW
                 )

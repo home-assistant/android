@@ -8,19 +8,19 @@ import android.os.Build
 import android.os.Build.VERSION.SDK_INT
 import android.util.Log
 import com.google.android.gms.location.LocationServices
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.location.HighAccuracyLocationService
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
-import io.homeassistant.companion.android.common.R as commonR
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class GeocodeSensorManager : SensorManager {
 
@@ -75,7 +75,12 @@ class GeocodeSensorManager : SensorManager {
             return
         }
 
-        val location = LocationServices.getFusedLocationProviderClient(context).lastLocation.await()
+        val location = try {
+            LocationServices.getFusedLocationProviderClient(context).lastLocation.await()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to get fused location provider client", e)
+            null
+        }
         var address: Address? = null
         try {
             if (location == null) {
@@ -128,7 +133,13 @@ class GeocodeSensorManager : SensorManager {
 
         val prettyAddress = address?.getAddressLine(0)
 
-        HighAccuracyLocationService.updateNotificationAddress(context, location, if (!prettyAddress.isNullOrEmpty()) prettyAddress else context.getString(commonR.string.unknown_address))
+        if (location != null) {
+            HighAccuracyLocationService.updateNotificationAddress(
+                context,
+                location,
+                if (!prettyAddress.isNullOrEmpty()) prettyAddress else context.getString(commonR.string.unknown_address)
+            )
+        }
 
         onSensorUpdated(
             context,

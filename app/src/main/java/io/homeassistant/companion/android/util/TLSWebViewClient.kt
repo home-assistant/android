@@ -13,14 +13,15 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
-import kotlinx.coroutines.launch
 import java.security.Principal
 import java.security.PrivateKey
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
 import javax.inject.Inject
+import javax.inject.Named
+import kotlinx.coroutines.launch
 
-open class TLSWebViewClient @Inject constructor(private var keyChainRepository: KeyChainRepository) : WebViewClient() {
+open class TLSWebViewClient @Inject constructor(@Named("keyChainRepository") private var keyChainRepository: KeyChainRepository) : WebViewClient() {
 
     var isTLSClientAuthNeeded = false
         private set

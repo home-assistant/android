@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.common.util.sensorWorkerChannel
+import io.homeassistant.companion.android.common.util.CHANNEL_SENSOR_WORKER
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.util.compose.InfoNotification
 import io.homeassistant.companion.android.util.compose.RadioButtonRow
@@ -50,7 +50,7 @@ fun SensorUpdateFrequencyView(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 InfoNotification(
                     infoString = R.string.sensor_update_notification,
-                    channelId = sensorWorkerChannel,
+                    channelId = CHANNEL_SENSOR_WORKER,
                     buttonString = R.string.sensor_worker_notification_channel
                 )
             }

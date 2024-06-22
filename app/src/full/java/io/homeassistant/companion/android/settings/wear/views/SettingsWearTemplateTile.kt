@@ -36,14 +36,15 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.text.HtmlCompat.FROM_HTML_MODE_LEGACY
 import androidx.core.text.HtmlCompat.fromHtml
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import io.homeassistant.companion.android.util.intervalToString
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.util.intervalToString
 
 @Composable
 fun SettingsWearTemplateTile(
@@ -87,7 +88,7 @@ fun SettingsWearTemplateTile(
                         expanded = dropdownExpanded,
                         onDismissRequest = { dropdownExpanded = false }
                     ) {
-                        val options = listOf(0, 60, 2 * 60, 5 * 60, 10 * 60, 15 * 60, 30 * 60, 60 * 60, 2 * 60 * 60, 5 * 60 * 60, 10 * 60 * 60, 24 * 60 * 60)
+                        val options = listOf(0, 1, 60, 2 * 60, 5 * 60, 10 * 60, 15 * 60, 30 * 60, 60 * 60, 2 * 60 * 60, 5 * 60 * 60, 10 * 60 * 60, 24 * 60 * 60)
                         for (option in options) {
                             DropdownMenuItem(onClick = {
                                 onRefreshIntervalChanged(option)
@@ -140,4 +141,17 @@ private fun parseHtml(renderedText: String) = buildAnnotatedString {
             is UnderlineSpan -> addStyle(SpanStyle(textDecoration = TextDecoration.Underline), start, end)
         }
     }
+}
+
+@Preview
+@Composable
+private fun PreviewSettingsWearTemplateTile() {
+    SettingsWearTemplateTile(
+        template = "Example entity: {{ states('sensor.example_entity') }}",
+        renderedTemplate = "Example entity: Lorem ipsum",
+        refreshInterval = 300,
+        onContentChanged = {},
+        onRefreshIntervalChanged = {},
+        onBackClicked = {}
+    )
 }

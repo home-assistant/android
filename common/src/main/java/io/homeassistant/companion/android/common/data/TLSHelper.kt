@@ -1,20 +1,24 @@
 package io.homeassistant.companion.android.common.data
 
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
-import kotlinx.coroutines.runBlocking
-import okhttp3.OkHttpClient
 import java.net.Socket
 import java.security.KeyStore
 import java.security.Principal
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import javax.inject.Inject
+import javax.inject.Named
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509ExtendedKeyManager
 import javax.net.ssl.X509TrustManager
+import kotlinx.coroutines.runBlocking
+import okhttp3.OkHttpClient
 
-class TLSHelper @Inject constructor(private val keyChainRepository: KeyChainRepository) {
+class TLSHelper @Inject constructor(
+    @Named("keyChainRepository") private val keyChainRepository: KeyChainRepository,
+    @Named("keyStore") private val keyStore: KeyChainRepository
+) {
 
     fun setupOkHttpClientSSLSocketFactory(builder: OkHttpClient.Builder) {
         val trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
@@ -64,7 +68,7 @@ class TLSHelper @Inject constructor(private val keyChainRepository: KeyChainRepo
 
                 // block until a chain is provided via the TLSWebView
                 runBlocking {
-                    chain = keyChainRepository.getCertificateChain()
+                    chain = keyChainRepository.getCertificateChain() ?: keyStore.getCertificateChain()
                 }
 
                 return chain
@@ -75,7 +79,7 @@ class TLSHelper @Inject constructor(private val keyChainRepository: KeyChainRepo
 
                 // block until a key is provided via the TLSWebView
                 runBlocking {
-                    key = keyChainRepository.getPrivateKey()
+                    key = keyChainRepository.getPrivateKey() ?: keyStore.getPrivateKey()
                 }
 
                 return key

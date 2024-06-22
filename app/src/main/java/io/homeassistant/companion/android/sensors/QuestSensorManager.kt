@@ -4,8 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
-import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.sensors.SensorManager
 
 class QuestSensorManager : SensorManager {
     companion object {

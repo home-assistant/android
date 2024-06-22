@@ -5,11 +5,11 @@ import android.os.Build
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
 import org.xmlpull.v1.XmlPullParser
-import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 class LanguagesManager @Inject constructor(
     private var prefs: PrefsRepository
@@ -21,8 +21,8 @@ class LanguagesManager @Inject constructor(
         private const val SYSTEM_MANAGES_LOCALE = "system_managed"
     }
 
-    fun getCurrentLang(): String {
-        return runBlocking {
+    suspend fun getCurrentLang(): String {
+        return run {
             val lang = prefs.getCurrentLang()
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 migrateLangSetting()
@@ -38,8 +38,8 @@ class LanguagesManager @Inject constructor(
         }
     }
 
-    fun saveLang(lang: String?) {
-        return runBlocking {
+    suspend fun saveLang(lang: String?) {
+        return run {
             if (!lang.isNullOrEmpty()) {
                 val currentLang = getCurrentLang()
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

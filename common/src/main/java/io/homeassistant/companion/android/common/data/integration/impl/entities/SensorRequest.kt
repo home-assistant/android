@@ -11,11 +11,13 @@ data class SensorRegistrationRequest<T>(
     val icon: String,
     val attributes: Map<String, Any>,
     val name: String? = null,
-    @JsonInclude(JsonInclude.Include.ALWAYS) // Always to override incorrect value from old registration
+    // Always to override incorrect value from old registration
+    @JsonInclude(JsonInclude.Include.ALWAYS)
     val deviceClass: String? = null,
     val unitOfMeasurement: String? = null,
     val stateClass: String? = null,
-    @JsonInclude(JsonInclude.Include.ALWAYS) // Always to override incorrect value from old registration
+    // Always to override incorrect value from old registration
+    @JsonInclude(JsonInclude.Include.ALWAYS)
     val entityCategory: String? = null,
     val disabled: Boolean? = null
 ) {

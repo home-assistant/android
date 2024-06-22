@@ -16,9 +16,9 @@ import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
 import io.homeassistant.companion.android.views.ThemeLazyColumn
-import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun PhoneInstallView(

@@ -17,6 +17,11 @@ interface MatterManager {
     suspend fun coreSupportsCommissioning(serverId: Int): Boolean
 
     /**
+     * Prevent the bottom sheet for discovered Matter devices from showing up while the app is open.
+     */
+    fun suppressDiscoveryBottomSheet(context: Context)
+
+    /**
      * Start a flow to commission a Matter device that is on the same network as this device.
      * @param onSuccess Callback that receives an intent to launch the commissioning flow
      * @param onFailure Callback for an exception if the commissioning flow cannot be started
@@ -37,5 +42,5 @@ interface MatterManager {
      * Send a request to the server to commission an "on network" Matter device
      * @return [MatterCommissionResponse], or `null` if it wasn't possible to complete the request
      */
-    suspend fun commissionOnNetworkDevice(pin: Long, serverId: Int): MatterCommissionResponse?
+    suspend fun commissionOnNetworkDevice(pin: Long, ip: String, serverId: Int): MatterCommissionResponse?
 }

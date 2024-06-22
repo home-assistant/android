@@ -4,8 +4,8 @@ import android.content.Context
 import android.os.Build
 import android.provider.Settings
 import android.util.Log
-import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.sensors.SensorManager
 
 class TheaterModeSensorManager : SensorManager {
     companion object {

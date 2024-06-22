@@ -16,9 +16,8 @@ import android.util.Log
 import android.webkit.MimeTypeMap
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import io.homeassistant.companion.android.common.util.downloadsChannel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.util.CHANNEL_DOWNLOADS
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -26,7 +25,8 @@ import java.util.Date
 import java.util.Locale
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
-import io.homeassistant.companion.android.common.R as commonR
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 object DataUriDownloadManager {
     private const val TAG = "DataUriDownloadMgr"
@@ -44,7 +44,7 @@ object DataUriDownloadManager {
         val result = writeDataUriToFile(context, url, mime)
 
         createNotificationChannel(context)
-        val notification = NotificationCompat.Builder(context, downloadsChannel)
+        val notification = NotificationCompat.Builder(context, CHANNEL_DOWNLOADS)
             .setContentTitle(context.getString(commonR.string.downloads_unnamed_file))
             .setSmallIcon(android.R.drawable.stat_sys_download_done)
             .setAutoCancel(true)
@@ -145,7 +145,7 @@ object DataUriDownloadManager {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val notificationManager = NotificationManagerCompat.from(context)
             val channel = NotificationChannel(
-                downloadsChannel,
+                CHANNEL_DOWNLOADS,
                 context.getString(commonR.string.downloads),
                 NotificationManager.IMPORTANCE_DEFAULT
             )

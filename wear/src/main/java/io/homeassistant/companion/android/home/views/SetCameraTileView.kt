@@ -11,6 +11,7 @@ import androidx.wear.compose.material3.Text
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.getIcon
@@ -22,7 +23,6 @@ import io.homeassistant.companion.android.tiles.CameraTile.Companion.DEFAULT_REF
 import io.homeassistant.companion.android.util.intervalToString
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
-import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun SetCameraTileView(

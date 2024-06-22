@@ -11,13 +11,32 @@ import android.nfc.NfcAdapter
 import android.os.Build
 import android.os.PowerManager
 import dagger.hilt.android.HiltAndroidApp
+import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
+import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepositoryImpl
+import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.complications.ComplicationReceiver
 import io.homeassistant.companion.android.sensors.SensorReceiver
+import javax.inject.Inject
+import javax.inject.Named
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
 @HiltAndroidApp
 open class HomeAssistantApplication : Application() {
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
+
+    @Inject
+    @Named("keyStore")
+    lateinit var keyStore: KeyChainRepository
+
     override fun onCreate() {
         super.onCreate()
+
+        ioScope.launch {
+            keyStore.load(applicationContext, KeyStoreRepositoryImpl.ALIAS)
+        }
 
         val sensorReceiver = SensorReceiver()
         // This will cause the sensor to be updated every time the OS broadcasts that a cable was plugged/unplugged.
@@ -55,17 +74,23 @@ open class HomeAssistantApplication : Application() {
                 addAction(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
                 addAction(AudioManager.ACTION_HEADSET_PLUG)
                 addAction(AudioManager.RINGER_MODE_CHANGED_ACTION)
+                addAction(AudioSensorManager.VOLUME_CHANGED_ACTION)
             }
         )
 
-        // Add extra audio receiver for devices that support it
+        // Listen for microphone mute changes
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            registerReceiver(
+                sensorReceiver,
+                IntentFilter(AudioManager.ACTION_MICROPHONE_MUTE_CHANGED)
+            )
+        }
+
+        // Listen for speakerphone state changes
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             registerReceiver(
                 sensorReceiver,
-                IntentFilter().apply {
-                    addAction(AudioManager.ACTION_MICROPHONE_MUTE_CHANGED)
-                    addAction(AudioManager.ACTION_SPEAKERPHONE_STATE_CHANGED)
-                }
+                IntentFilter(AudioManager.ACTION_SPEAKERPHONE_STATE_CHANGED)
             )
         }
 

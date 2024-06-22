@@ -4,19 +4,22 @@ import android.content.Context
 import android.os.Build
 import android.service.controls.Control
 import android.service.controls.DeviceTypes
+import android.service.controls.actions.BooleanAction
 import android.service.controls.actions.ControlAction
 import android.service.controls.actions.FloatAction
 import android.service.controls.actions.ModeAction
 import android.service.controls.templates.RangeTemplate
 import android.service.controls.templates.TemperatureControlTemplate
+import android.service.controls.templates.ToggleRangeTemplate
 import androidx.annotation.RequiresApi
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
-import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.R)
 object ClimateControl : HaControl {
+    private data class ClimateState(val currentMode: String, val supportedModes: ArrayList<String>)
+
     private const val SUPPORT_TARGET_TEMPERATURE = 1
     private const val SUPPORT_TARGET_TEMPERATURE_RANGE = 2
     private val temperatureControlModes = mapOf(
@@ -31,13 +34,13 @@ object ClimateControl : HaControl {
         "heat_cool" to TemperatureControlTemplate.FLAG_MODE_HEAT_COOL,
         "off" to TemperatureControlTemplate.FLAG_MODE_OFF
     )
+    private val climateStates = HashMap<String, ClimateState>()
 
     override fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
         entity: Entity<Map<String, Any>>,
-        area: AreaRegistryResponse?,
-        baseUrl: String?
+        info: HaControlInfo
     ): Control.StatefulBuilder {
         val minValue = (entity.attributes["min_temp"] as? Number)?.toFloat() ?: 0f
         val maxValue = (entity.attributes["max_temp"] as? Number)?.toFloat() ?: 100f
@@ -53,14 +56,14 @@ object ClimateControl : HaControl {
         }
 
         val temperatureUnit = entity.attributes["temperature_unit"] ?: ""
-        val temperatureStepSize = (entity.attributes["target_temperature_step"] as? Number)?.toFloat()
+        val temperatureStepSize = (entity.attributes["target_temp_step"] as? Number)?.toFloat()
             ?: when (temperatureUnit) {
                 "°C" -> 0.5f
                 else -> 1f
             }
         val temperatureFormatSize = if (temperatureStepSize < 1f) "1" else "0"
         val rangeTemplate = RangeTemplate(
-            entity.entityId,
+            info.systemId,
             minValue,
             maxValue,
             currentValue,
@@ -68,14 +71,24 @@ object ClimateControl : HaControl {
             "%.${temperatureFormatSize}f $temperatureUnit"
         )
         if (entityShouldBePresentedAsThermostat(entity)) {
+            val state = ClimateState(entity.state, ArrayList())
+            val toggleRangeTemplate = ToggleRangeTemplate(
+                info.systemId + "_range",
+                // Set checked to true to always show the temperature indicator, regardless of climate mode
+                true,
+                context.getString(commonR.string.widget_tap_action_toggle),
+                rangeTemplate
+            )
             var modesFlag = 0
             (entity.attributes["hvac_modes"] as? List<String>)?.forEach {
                 modesFlag = modesFlag or temperatureControlModeFlags[it]!!
+                state.supportedModes.add(it)
             }
+            this.climateStates[info.systemId] = state
             control.setControlTemplate(
                 TemperatureControlTemplate(
-                    entity.entityId,
-                    rangeTemplate,
+                    info.systemId,
+                    toggleRangeTemplate,
                     temperatureControlModes[entity.state]!!,
                     temperatureControlModes[entity.state]!!,
                     modesFlag
@@ -102,13 +115,18 @@ object ClimateControl : HaControl {
         integrationRepository: IntegrationRepository,
         action: ControlAction
     ): Boolean {
+        val entityStr: String = if (action.templateId.split(".").size > 2) {
+            action.templateId.split(".", limit = 2)[1]
+        } else {
+            action.templateId
+        }
         return when (action) {
             is FloatAction -> {
                 integrationRepository.callService(
-                    action.templateId.split(".")[0],
+                    entityStr.split(".")[0],
                     "set_temperature",
                     hashMapOf(
-                        "entity_id" to action.templateId,
+                        "entity_id" to entityStr,
                         "temperature" to (action as? FloatAction)?.newValue.toString()
                     )
                 )
@@ -119,12 +137,29 @@ object ClimateControl : HaControl {
                     action.templateId.split(".")[0],
                     "set_hvac_mode",
                     hashMapOf(
-                        "entity_id" to action.templateId,
+                        "entity_id" to entityStr,
                         "hvac_mode" to (
                             temperatureControlModes.entries.find {
                                 it.value == ((action as? ModeAction)?.newMode ?: -1)
                             }?.key ?: ""
                             )
+                    )
+                )
+                true
+            }
+            is BooleanAction -> {
+                if (this.climateStates[action.templateId] == null) {
+                    return false
+                }
+                val supportedModes = this.climateStates[action.templateId]!!.supportedModes
+                val currentMode = this.climateStates[action.templateId]!!.currentMode
+                val nextMode = (supportedModes.indexOf(currentMode) + 1) % supportedModes.count()
+                integrationRepository.callService(
+                    entityStr.split(".")[0],
+                    "set_hvac_mode",
+                    hashMapOf(
+                        "entity_id" to entityStr,
+                        "hvac_mode" to supportedModes[nextMode]
                     )
                 )
                 true

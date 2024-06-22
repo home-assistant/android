@@ -1,21 +1,25 @@
 package io.homeassistant.companion.android.common.data
 
+import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
 import android.webkit.CookieManager
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.BuildConfig
+import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.jackson.JacksonConverterFactory
-import java.util.concurrent.TimeUnit
-import javax.inject.Inject
 
 class HomeAssistantApis @Inject constructor(
-    private val tlsHelper: TLSHelper
+    private val tlsHelper: TLSHelper,
+    @ApplicationContext private val appContext: Context
 ) {
     companion object {
         private const val LOCAL_HOST = "http://localhost/"
@@ -41,18 +45,20 @@ class HomeAssistantApis @Inject constructor(
                     .build()
             )
         }
-        // Only deal with cookies when on non wear device and for now I don't have a better
-        // way to determine if we are really on wear os....
-        // TODO: Please fix me.
-        var cookieManager: CookieManager? = null
-        try {
-            cookieManager = CookieManager.getInstance()
-        } catch (e: Exception) {
-            // Noop
+
+        val isWear = appContext.packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)
+        if (!isWear) {
+            var cookieManager: CookieManager? = null
+            try {
+                cookieManager = CookieManager.getInstance()
+            } catch (e: Exception) {
+                // Noop
+            }
+            if (cookieManager != null) {
+                builder.cookieJar(CookieJarCookieManagerShim())
+            }
         }
-        if (cookieManager != null) {
-            builder.cookieJar(CookieJarCookieManagerShim())
-        }
+
         builder.callTimeout(CALL_TIMEOUT, TimeUnit.SECONDS)
         builder.readTimeout(READ_TIMEOUT, TimeUnit.SECONDS)
 

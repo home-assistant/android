@@ -40,5 +40,6 @@ data class Server(
 }
 
 enum class ServerType {
-    TEMPORARY, DEFAULT
+    TEMPORARY,
+    DEFAULT
 }

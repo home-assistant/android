@@ -26,7 +26,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v3.13.0
+        uses: actions/setup-java@v4.2.1
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -36,14 +36,11 @@ jobs:
           ruby-version: '3.2'
           bundler-cache: true
 
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+      - name: Validate Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@v3
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
 
       - uses: ./.github/actions/create-release-number
         name: Create Release Number
@@ -75,10 +72,14 @@ jobs:
           KEYSTORE_ALIAS: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS }}
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS_PASSWORD }}
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
-        run: ./gradlew assembleRelease
+        run: |
+          ./gradlew :common:assemble
+          ./gradlew :app:assembleRelease
+          ./gradlew :wear:assembleRelease
+          ./gradlew :automotive:assembleRelease
 
       - name: Archive Build
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           path: ./**/*.apk
 
@@ -92,7 +93,7 @@ jobs:
 
       - name: Create Github Pre-Release
         if: github.event.inputs.beta == 'true'
-        uses: softprops/action-gh-release@v0.1.15
+        uses: softprops/action-gh-release@v2.0.6
         with:
           tag_name: ${{ steps.rel_number.outputs.version }}
           body_path: ./app/build/outputs/changelogGithub
@@ -117,6 +118,10 @@ jobs:
       - name: Prepare Amazon Listing
         if: github.event.inputs.beta == 'true'
         run: bundle exec fastlane prep_amazon
+        env:
+          AMAZON_APPSTORE_CLIENT_ID: ${{ secrets.AMAZON_APPSTORE_CLIENT_ID }}
+          AMAZON_APPSTORE_CLIENT_SECRET: ${{ secrets.AMAZON_APPSTORE_CLIENT_SECRET }}
+          AMAZON_APPSTORE_APP_ID: ${{ secrets.AMAZON_APPSTORE_APP_ID }}
 
       - name: Print `git status`
         run: git status
@@ -134,7 +139,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v3.13.0
+        uses: actions/setup-java@v4.2.1
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -144,14 +149,11 @@ jobs:
           ruby-version: '3.2'
           bundler-cache: true
 
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+      - name: Validate Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@v3
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
 
       - uses: ./.github/actions/create-release-number
         name: Create Release Number
@@ -183,7 +185,11 @@ jobs:
           KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
-        run: ./gradlew bundleRelease
+        run: |
+          ./gradlew :common:assemble
+          ./gradlew :app:bundleRelease
+          ./gradlew :wear:bundleRelease
+          ./gradlew :automotive:bundleRelease
 
       - name: Deploy to Playstore Internal
         run: bundle exec fastlane deploy_internal

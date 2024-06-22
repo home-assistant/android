@@ -1,17 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2023.11.2 - Main" versioncode="3">
-        <change>Update icon</change>
+    <release version="2024.6.3 - Main" versioncode="3">
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2023.11.2 - Wear" versioncode="2">
-        <change>Update icon</change>
-        <change>Notifications: Add support for clear_notification command</change>
-        <change>Bug fixes, design improvements and dependency updates</change>
+    <release version="2024.6.3 - Wear" versioncode="2">
+        <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2023.11.2 - Automotive" versioncode="1">
-        <change>Update icon</change>
+    <release version="2024.6.3 - Automotive" versioncode="1">
         <change>Bug fixes and dependency updates</change>
     </release>
 </changelog>

@@ -30,13 +30,13 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.As
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEventType
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineIntentEnd
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
+import java.util.concurrent.TimeUnit
+import javax.inject.Named
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import java.util.concurrent.TimeUnit
-import javax.inject.Named
 
 class IntegrationRepositoryImpl @AssistedInject constructor(
     private val integrationService: IntegrationService,
@@ -702,6 +702,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         val canRegisterEntityDisabledState = server.version?.isAtLeast(2022, 6, 0) == true
         val canRegisterDeviceClassDistance = server.version?.isAtLeast(2022, 10, 0) == true
         val canRegisterNullProperties = server.version?.isAtLeast(2023, 2, 0) == true
+        val canRegisterDeviceClassEnum = server.version?.isAtLeast(2023, 1, 0) == true
 
         val registrationData = SensorRegistrationRequest(
             sensorRegistration.uniqueId,
@@ -718,6 +719,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             sensorRegistration.name,
             when (sensorRegistration.deviceClass) {
                 "distance" -> if (canRegisterDeviceClassDistance) sensorRegistration.deviceClass else null
+                "enum" -> if (canRegisterDeviceClassEnum) sensorRegistration.deviceClass else null
                 else -> sensorRegistration.deviceClass
             },
             sensorRegistration.unitOfMeasurement,

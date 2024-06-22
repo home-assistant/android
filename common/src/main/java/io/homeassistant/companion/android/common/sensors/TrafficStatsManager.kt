@@ -6,9 +6,9 @@ import android.net.NetworkCapabilities
 import android.net.TrafficStats
 import android.util.Log
 import androidx.core.content.getSystemService
+import io.homeassistant.companion.android.common.R as commonR
 import java.math.RoundingMode
 import kotlin.math.absoluteValue
-import io.homeassistant.companion.android.common.R as commonR
 
 class TrafficStatsManager : SensorManager {
     companion object {

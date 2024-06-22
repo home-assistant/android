@@ -34,21 +34,21 @@ import com.mikepenz.iconics.utils.colorInt
 import com.mikepenz.iconics.utils.sizeDp
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.util.getIcon
+import java.nio.ByteBuffer
+import javax.inject.Inject
+import kotlin.math.min
+import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import java.nio.ByteBuffer
-import javax.inject.Inject
-import kotlin.math.min
-import kotlin.math.roundToInt
-import io.homeassistant.companion.android.common.R as commonR
 
 // Dimensions (dp)
 private const val CIRCLE_SIZE = 56f

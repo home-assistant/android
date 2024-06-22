@@ -13,9 +13,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.google.accompanist.themeadapter.material.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.sensor.SensorDao
@@ -31,16 +31,16 @@ import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.settings.SettingViewModel
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
 import io.homeassistant.companion.android.util.UrlUtil
+import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.webview.WebViewActivity
+import javax.inject.Inject
+import javax.net.ssl.SSLException
+import javax.net.ssl.SSLHandshakeException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
-import javax.inject.Inject
-import javax.net.ssl.SSLException
-import javax.net.ssl.SSLHandshakeException
-import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class LaunchActivity : AppCompatActivity(), LaunchView {
@@ -71,7 +71,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
         super.onCreate(savedInstanceState)
         setContent {
             Box(modifier = Modifier.fillMaxSize()) {
-                MdcTheme {
+                HomeAssistantAppTheme {
                     CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center)
                     )
