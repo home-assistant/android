@@ -30,6 +30,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.database.widget.CameraWidgetTapAction
 import io.homeassistant.companion.android.util.compose.ExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.SingleEntityPicker
+import io.homeassistant.companion.android.util.compose.colorPrimary
 
 data class CameraWidgetConfigureScreenUiState(
     val entities: List<Entity<Any>> = emptyList(),
@@ -148,8 +149,8 @@ private fun ColumnScope.ApplyChangesButton(title: String, onClick: () -> Unit) {
             .align(Alignment.End)
             .padding(top = 8.dp),
         colors = ButtonDefaults.buttonColors(
-            backgroundColor = Color(0xFF03A9F4),
-            contentColor = Color.White.copy(alpha = 1f)
+            backgroundColor = colorPrimary,
+            contentColor = Color.White
         )
     ) {
         Text(text = title)
