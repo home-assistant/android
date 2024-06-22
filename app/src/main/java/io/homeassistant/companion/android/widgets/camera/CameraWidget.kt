@@ -20,7 +20,9 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
+import io.homeassistant.companion.android.database.widget.CameraWidgetTapAction
 import io.homeassistant.companion.android.util.hasActiveConnection
+import io.homeassistant.companion.android.webview.WebViewActivity
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,6 +41,7 @@ class CameraWidget : AppWidgetProvider() {
 
         internal const val EXTRA_SERVER_ID = "EXTRA_SERVER_ID"
         internal const val EXTRA_ENTITY_ID = "EXTRA_ENTITY_ID"
+        internal const val EXTRA_TAP_ACTION_ORDINAL = "EXTRA_TAP_ACTION_ORDINAL"
         private var lastIntent = ""
     }
 
@@ -55,6 +58,7 @@ class CameraWidget : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray
     ) {
+        println("Testing: onUpdate, ${appWidgetIds.joinToString()} widgets to update")
         // There may be multiple widgets active, so update all of them
         appWidgetIds.forEach { appWidgetId ->
             updateAppWidget(
@@ -166,14 +170,24 @@ class CameraWidget : AppWidgetProvider() {
                     }
                 }
 
-                setOnClickPendingIntent(
-                    R.id.widgetCameraImage,
-                    PendingIntent.getBroadcast(
+                val tapImagePendingIntent = when (widget.tapAction) {
+                    CameraWidgetTapAction.UPDATE_IMAGE -> PendingIntent.getBroadcast(
                         context,
                         appWidgetId,
                         updateCameraIntent,
                         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                     )
+
+                    CameraWidgetTapAction.OPEN_CAMERA -> PendingIntent.getActivity(
+                        context,
+                        appWidgetId,
+                        WebViewActivity.newInstance(context, "entityId:${widget.entityId}", widget.serverId),
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
+                }
+                setOnClickPendingIntent(
+                    R.id.widgetCameraImage,
+                    tapImagePendingIntent
                 )
                 setOnClickPendingIntent(
                     R.id.widgetCameraPlaceholder,
@@ -217,6 +231,8 @@ class CameraWidget : AppWidgetProvider() {
 
         val serverSelection = if (extras.containsKey(EXTRA_SERVER_ID)) extras.getInt(EXTRA_SERVER_ID) else null
         val entitySelection: String? = extras.getString(EXTRA_ENTITY_ID)
+        val tapActionOrdinal = extras.getInt(EXTRA_TAP_ACTION_ORDINAL, CameraWidgetTapAction.UPDATE_IMAGE.ordinal)
+        val tapAction = CameraWidgetTapAction.entries[tapActionOrdinal]
 
         if (serverSelection == null || entitySelection == null) {
             Log.e(TAG, "Did not receive complete configuration data")
@@ -233,7 +249,8 @@ class CameraWidget : AppWidgetProvider() {
                 CameraWidgetEntity(
                     appWidgetId,
                     serverSelection,
-                    entitySelection
+                    entitySelection,
+                    tapAction
                 )
             )
 

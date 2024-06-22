@@ -974,6 +974,7 @@
     <string name="welcome_hass_desc">This app connects to your Home Assistant server and allows integrating data about you and your phone.\n\nHome Assistant is free and open source home automation software with a focus on local control and privacy.</string>
     <string name="welcome_hass">Welcome to Home Assistant Companion!</string>
     <string name="what_is_this_crash">Unable to load Home Assistant home page, do you have a browser installed?</string>
+    <string name="widget_action_on_tap">Action on Tap:</string>
     <string name="widget_attribute_separator_label">Separator between attributes:</string>
     <string name="widget_background_type_label">Widget theme:</string>
     <string name="widget_background_type_daynight">Light/dark theme</string>
@@ -982,6 +983,8 @@
     <string name="widget_button_image_description">Service button</string>
     <string name="widget_camera_description">Picture widget</string>
     <string name="widget_camera_contentdescription">Image</string>
+    <string name="widget_camera_open_camera_action">Open Camera</string>
+    <string name="widget_camera_update_image_action">Update Image</string>
     <string name="widget_config_service_error">A custom component is preventing service data from loading.</string>
     <string name="widget_creation_error">Unable to create widget.</string>
     <string name="widget_entity_fetch_error">Unable to fetch data for configured entity.</string>

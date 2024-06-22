@@ -21,7 +21,7 @@ import io.homeassistant.companion.android.database.server.Server
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun ExposedDropdownMenu(label: String, keys: List<String>, currentIndex: Int?, onSelected: (Int) -> Unit, modifier: Modifier = Modifier) {
+fun ExposedDropdownMenu(label: String?, keys: List<String>, currentIndex: Int?, onSelected: (Int) -> Unit, modifier: Modifier = Modifier) {
     var expanded by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
     ExposedDropdownMenuBox(
@@ -33,7 +33,7 @@ fun ExposedDropdownMenu(label: String, keys: List<String>, currentIndex: Int?, o
             readOnly = true,
             value = currentIndex?.let { keys[it] } ?: "",
             onValueChange = { },
-            label = { Text(label) },
+            label = label?.let { { Text(it) } },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             colors = ExposedDropdownMenuDefaults.textFieldColors(),
             modifier = Modifier.fillMaxWidth()

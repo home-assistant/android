@@ -63,6 +63,7 @@ import io.homeassistant.companion.android.database.wear.Favorites
 import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
+import io.homeassistant.companion.android.database.widget.CameraWidgetActionConverter
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
@@ -97,7 +98,7 @@ import kotlinx.coroutines.runBlocking
         Server::class,
         Setting::class
     ],
-    version = 45,
+    version = 46,
     autoMigrations = [
         AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
@@ -118,7 +119,8 @@ import kotlinx.coroutines.runBlocking
         AutoMigration(from = 41, to = 42),
         AutoMigration(from = 42, to = 43),
         AutoMigration(from = 43, to = 44),
-        AutoMigration(from = 44, to = 45)
+        AutoMigration(from = 44, to = 45),
+        AutoMigration(from = 45, to = 46)
     ]
 )
 @TypeConverters(
@@ -127,7 +129,8 @@ import kotlinx.coroutines.runBlocking
     EntriesTypeConverter::class,
     SensorSettingTypeConverter::class,
     WidgetBackgroundTypeConverter::class,
-    WidgetTapActionConverter::class
+    WidgetTapActionConverter::class,
+    CameraWidgetActionConverter::class
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun authenticationDao(): AuthenticationDao
