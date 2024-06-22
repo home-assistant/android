@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.common.util
 
 import java.util.Locale
-import okhttp3.internal.and
 import okio.ByteString.Companion.toByteString
 
 fun ByteArray.toHexString(): String {
