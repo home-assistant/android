@@ -543,6 +543,8 @@ class SettingsFragment(
         }
     }
 
+    override fun getPackageManager(): PackageManager? = context?.packageManager
+
     override fun onPause() {
         super.onPause()
         snackbar?.dismiss()

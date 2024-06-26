@@ -124,6 +124,15 @@
             android:summary="@string/rate_limit_summary"/>
     </PreferenceCategory>
     <PreferenceCategory
+        android:title="@string/assist"
+        android:key="assist">
+        <SwitchPreference
+            android:key="assist_voice_command_intent"
+            android:icon="@drawable/ic_headphones_settings"
+            android:title="@string/open_with_headphone_button"
+            android:summary="@string/open_with_headphone_button_summary" />
+    </PreferenceCategory>
+    <PreferenceCategory
         android:title="@string/basic_sensor_name_android_auto"
         android:key="android_auto">
         <Preference

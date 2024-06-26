@@ -408,10 +408,18 @@
             android:theme="@style/Theme.HomeAssistant.Assist">
             <intent-filter>
                 <action android:name="android.intent.action.ASSIST" />
-                <action android:name="android.intent.action.VOICE_COMMAND" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+        <activity-alias
+            android:name=".assist.VoiceCommandIntentActivity"
+            android:targetActivity=".assist.AssistActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VOICE_COMMAND" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
 
         <activity android:name=".widgets.assist.AssistShortcutActivity"
             android:label="@string/assist_shortcut"
