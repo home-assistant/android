@@ -9,6 +9,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.CookieManager
 import android.webkit.SslErrorHandler
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
@@ -158,6 +159,11 @@ class AuthenticationFragment : Fragment() {
                                     showError(requireContext().getString(commonR.string.error_ssl), error, null)
                                 }
                             }
+
+                            val cookieManager = CookieManager.getInstance()
+                            cookieManager.setAcceptCookie(true)
+                            cookieManager.setAcceptThirdPartyCookies(this, true)
+
                             authUrl = buildAuthUrl(viewModel.manualUrl.value)
                             loadUrl(authUrl!!)
                         }
