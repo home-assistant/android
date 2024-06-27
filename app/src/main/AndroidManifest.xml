@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-sdk tools:overrideLibrary="androidx.wear.remote.interactions,androidx.car.app.projected" />
+    <uses-sdk tools:overrideLibrary="androidx.wear.remote.interactions,androidx.car.app.projected, androidx.health.connect.client" />
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
@@ -100,6 +100,7 @@
                 <action android:name="android.bluetooth.device.action.ACL_CONNECTED" />
                 <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
                 <action android:name="io.homeassistant.companion.android.UPDATE_SENSORS" />
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
             </intent-filter>
         </receiver>
 
@@ -275,6 +276,7 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
 
+
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -348,9 +350,15 @@
         <activity
             android:name=".settings.SettingsActivity"
             android:parentActivityName=".webview.WebViewActivity"
-            android:exported="false"
+            android:exported="true"
             android:configChanges="orientation|screenSize"
-            android:theme="@style/Theme.HomeAssistant.Config"/>
+            android:theme="@style/Theme.HomeAssistant.Config">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".nfc.TagReaderActivity"
