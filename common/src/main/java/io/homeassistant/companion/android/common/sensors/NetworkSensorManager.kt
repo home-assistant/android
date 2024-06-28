@@ -9,6 +9,14 @@ import android.net.NetworkCapabilities
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
+import android.telephony.CellIdentityNr
+import android.telephony.CellInfoCdma
+import android.telephony.CellInfoGsm
+import android.telephony.CellInfoLte
+import android.telephony.CellInfoNr
+import android.telephony.CellInfoTdscdma
+import android.telephony.CellInfoWcdma
+import android.telephony.TelephonyManager
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
@@ -142,6 +150,16 @@ class NetworkSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
+        val cellConnection = SensorManager.BasicSensor(
+            "cell_connection",
+            "sensor",
+            commonR.string.basic_sensor_name_cell,
+            commonR.string.sensor_description_cell,
+            "mdi:radio-tower",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.WORKER
+        )
+
         private const val SETTING_GET_CURRENT_BSSID = "network_get_current_bssid"
     }
 
@@ -160,7 +178,7 @@ class NetworkSensorManager : SensorManager {
             wifiFrequency,
             wifiSignalStrength
         )
-        val list = if (hasWifi(context)) {
+        val listWithWifi = if (hasWifi(context)) {
             val withPublicIp = wifiSensors.plus(publicIp)
             if (hasHotspot(context)) {
                 withPublicIp.plus(hotspotState)
@@ -170,6 +188,13 @@ class NetworkSensorManager : SensorManager {
         } else {
             listOf(publicIp)
         }
+
+        val list = if (hasTelephony(context)) {
+            listWithWifi.plus(cellConnection)
+        } else {
+            listWithWifi
+        }
+
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             list.plus(networkType).plus(ip6Addresses)
         } else {
@@ -206,11 +231,16 @@ class NetworkSensorManager : SensorManager {
         updateWifiFrequencySensor(context)
         updateWifiSignalStrengthSensor(context)
         updatePublicIpSensor(context)
+        updateCellConnectionSensor(context)
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             updateNetworkType(context)
             updateIP6Sensor(context)
         }
     }
+
+    private fun hasTelephony(context: Context): Boolean =
+        context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
 
     private fun hasWifi(context: Context): Boolean =
         context.applicationContext.getSystemService<WifiManager>() != null
@@ -569,6 +599,97 @@ class NetworkSensorManager : SensorManager {
                 )
             }
         })
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun updateCellConnectionSensor(context: Context) {
+        if (!isEnabled(context, cellConnection) || !hasTelephony(context)) {
+            return
+        }
+
+        val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+
+        val cell = telephonyManager.getAllCellInfo().findLast { cell -> cell.isRegistered }
+
+        if (cell == null) {
+            onSensorUpdated(
+                context,
+                cellConnection,
+                STATE_UNAVAILABLE,
+                cellConnection.statelessIcon,
+                mapOf()
+            )
+            return
+        }
+
+        val radio: String
+        val mcc = telephonyManager.networkOperator.substring(0, 3) // extracting mcc and mnc from the networkOperator https://developer.android.com/reference/android/telephony/TelephonyManager#getNetworkOperator()
+        val mnc = telephonyManager.networkOperator.substring(3).toInt().toString()
+        val lac: String
+        val cid: String
+
+        val signalStrengthLevel: Int
+        val signalStrengthDbm: Int
+
+        if (cell is CellInfoGsm) {
+            radio = "GSM"
+            lac = cell.cellIdentity.lac.toString()
+            cid = cell.cellIdentity.cid.toString()
+            signalStrengthLevel = cell.cellSignalStrength.level
+            signalStrengthDbm = cell.cellSignalStrength.dbm
+        } else if (cell is CellInfoCdma) {
+            radio = "CDMA"
+            lac = cell.cellIdentity.networkId.toString()
+            cid = cell.cellIdentity.basestationId.toString()
+            signalStrengthLevel = cell.cellSignalStrength.level
+            signalStrengthDbm = cell.cellSignalStrength.dbm
+        } else if (cell is CellInfoWcdma) {
+            radio = "UMTS"
+            lac = cell.cellIdentity.lac.toString()
+            cid = cell.cellIdentity.cid.toString()
+            signalStrengthLevel = cell.cellSignalStrength.level
+            signalStrengthDbm = cell.cellSignalStrength.dbm
+        } else if (cell is CellInfoLte) {
+            radio = "LTE"
+            lac = cell.cellIdentity.tac.toString()
+            cid = cell.cellIdentity.ci.toString()
+            signalStrengthLevel = cell.cellSignalStrength.level
+            signalStrengthDbm = cell.cellSignalStrength.dbm
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && cell is CellInfoTdscdma) {
+            radio = "UTMS"
+            lac = cell.cellIdentity.lac.toString()
+            cid = cell.cellIdentity.cid.toString()
+            signalStrengthLevel = cell.cellSignalStrength.level
+            signalStrengthDbm = cell.cellSignalStrength.dbm
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && cell is CellInfoNr) {
+            radio = "NR"
+            lac = (cell.cellIdentity as CellIdentityNr).tac.toString()
+            cid = (cell.cellIdentity as CellIdentityNr).nci.toString()
+            signalStrengthLevel = cell.cellSignalStrength.level
+            signalStrengthDbm = cell.cellSignalStrength.dbm
+        } else {
+            onSensorUpdated(
+                context,
+                cellConnection,
+                STATE_UNKNOWN,
+                cellConnection.statelessIcon,
+                mapOf()
+            )
+            return
+        }
+
+        val cellId = "$radio:$mcc:$mnc:$lac:$cid"
+
+        onSensorUpdated(
+            context,
+            cellConnection,
+            cellId,
+            cellConnection.statelessIcon,
+            mapOf(
+                "signal_strength_dbm" to signalStrengthDbm,
+                "signal_strength_level" to signalStrengthLevel
+            )
+        )
     }
 
     @SuppressLint("MissingPermission")
