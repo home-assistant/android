@@ -8,12 +8,17 @@ import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
 import java.util.UUID
 import org.altbeacon.beacon.Beacon
+import org.altbeacon.beacon.BeaconManager
 import org.altbeacon.beacon.BeaconParser
 import org.altbeacon.beacon.BeaconTransmitter
+import org.altbeacon.beacon.Identifier
+import org.altbeacon.beacon.Region
 
 object TransmitterManager {
     private lateinit var physicalTransmitter: BeaconTransmitter
+    private var beaconManager: BeaconManager? = null
     private lateinit var beacon: Beacon
+    private val region = Region("dummy-region", Identifier.parse("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF"), null, null)
 
     private fun buildBeacon(haTransmitterI: IBeaconTransmitter): Beacon {
         val builder = Beacon.Builder()
@@ -58,9 +63,20 @@ object TransmitterManager {
         }
         val bluetoothAdapter = context.getSystemService<BluetoothManager>()?.adapter
         val bluetoothOn = bluetoothAdapter?.isEnabled == true
+        beaconManager = BeaconManager.getInstanceForApplication(context)
+
         if (bluetoothOn) {
             val beacon = buildBeacon(haTransmitter)
             if (!physicalTransmitter.isStarted) {
+                val builder = beaconNotification(true, context)
+                beaconManager?.enableForegroundServiceScanning(builder.build(), 445)
+                beaconManager?.setEnableScheduledScanJobs(false)
+                beaconManager?.beaconParsers?.clear()
+                beaconManager?.backgroundBetweenScanPeriod = Long.MAX_VALUE
+                beaconManager?.backgroundScanPeriod = 0
+                beaconManager?.foregroundBetweenScanPeriod = Long.MAX_VALUE
+                beaconManager?.foregroundScanPeriod = 0
+                beaconManager?.startMonitoring(region)
                 physicalTransmitter.advertiseTxPowerLevel = getPowerLevel(haTransmitter)
                 physicalTransmitter.advertiseMode = getAdvertiseMode(haTransmitter)
                 physicalTransmitter.startAdvertising(
@@ -115,5 +131,7 @@ object TransmitterManager {
         }
         haTransmitter.transmitting = false
         haTransmitter.state = "Stopped"
+        beaconManager?.stopMonitoring(region)
+        beaconManager?.disableForegroundServiceScanning()
     }
 }
