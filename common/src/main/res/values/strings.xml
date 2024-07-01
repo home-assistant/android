@@ -802,6 +802,7 @@
     <string name="show_share_logs">Show and share logs</string>
     <string name="show_entity_title">Show entity name</string>
     <string name="show_unit_title">Show entity unit</string>
+    <string name="forward_taps_title">Toggle entity when tapped</string>
     <string name="sign_in_on_phone">Sign in on phone</string>
     <string name="slider_decreased">%1$s decreased</string>
     <string name="slider_increased">%1$s increased</string>

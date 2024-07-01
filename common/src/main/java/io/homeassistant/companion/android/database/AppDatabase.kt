@@ -97,7 +97,7 @@ import kotlinx.coroutines.runBlocking
         Server::class,
         Setting::class
     ],
-    version = 45,
+    version = 46,
     autoMigrations = [
         AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
@@ -118,7 +118,8 @@ import kotlinx.coroutines.runBlocking
         AutoMigration(from = 41, to = 42),
         AutoMigration(from = 42, to = 43),
         AutoMigration(from = 43, to = 44),
-        AutoMigration(from = 44, to = 45)
+        AutoMigration(from = 44, to = 45),
+        AutoMigration(from = 45, to = 46)
     ]
 )
 @TypeConverters(
