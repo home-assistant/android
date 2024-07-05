@@ -63,7 +63,6 @@ import io.homeassistant.companion.android.database.wear.Favorites
 import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
-import io.homeassistant.companion.android.database.widget.CameraWidgetActionConverter
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
@@ -129,8 +128,7 @@ import kotlinx.coroutines.runBlocking
     EntriesTypeConverter::class,
     SensorSettingTypeConverter::class,
     WidgetBackgroundTypeConverter::class,
-    WidgetTapActionConverter::class,
-    CameraWidgetActionConverter::class
+    WidgetTapActionConverter::class
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun authenticationDao(): AuthenticationDao

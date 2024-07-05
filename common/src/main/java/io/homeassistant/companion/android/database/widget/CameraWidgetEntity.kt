@@ -12,6 +12,6 @@ data class CameraWidgetEntity(
     override val serverId: Int,
     @ColumnInfo(name = "entity_id")
     val entityId: String,
-    @ColumnInfo(name = "tap_action", defaultValue = "UPDATE_IMAGE")
-    val tapAction: CameraWidgetTapAction
+    @ColumnInfo(name = "tap_action", defaultValue = "REFRESH")
+    val tapAction: WidgetTapAction
 ) : WidgetEntity

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 46,
-    "identityHash": "3138fd1b09d79aab4816be9a99848b77",
+    "identityHash": "3e13bdece58aaaa2c1a332bfb2f88021",
     "entities": [
       {
         "tableName": "sensor_attributes",
@@ -326,7 +326,7 @@
       },
       {
         "tableName": "camera_widgets",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `entity_id` TEXT NOT NULL, `tap_action` TEXT NOT NULL DEFAULT 'UPDATE_IMAGE', PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `entity_id` TEXT NOT NULL, `tap_action` TEXT NOT NULL DEFAULT 'REFRESH', PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -352,7 +352,7 @@
             "columnName": "tap_action",
             "affinity": "TEXT",
             "notNull": true,
-            "defaultValue": "'UPDATE_IMAGE'"
+            "defaultValue": "'REFRESH'"
           }
         ],
         "primaryKey": {
@@ -1115,7 +1115,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3138fd1b09d79aab4816be9a99848b77')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3e13bdece58aaaa2c1a332bfb2f88021')"
     ]
   }
 }

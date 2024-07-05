@@ -7,6 +7,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -20,9 +21,10 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
-import io.homeassistant.companion.android.database.widget.CameraWidgetTapAction
+import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.util.hasActiveConnection
 import io.homeassistant.companion.android.webview.WebViewActivity
+import java.io.Serializable
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -41,7 +43,7 @@ class CameraWidget : AppWidgetProvider() {
 
         internal const val EXTRA_SERVER_ID = "EXTRA_SERVER_ID"
         internal const val EXTRA_ENTITY_ID = "EXTRA_ENTITY_ID"
-        internal const val EXTRA_TAP_ACTION_ORDINAL = "EXTRA_TAP_ACTION_ORDINAL"
+        internal const val EXTRA_TAP_ACTION = "EXTRA_TAP_ACTION"
         private var lastIntent = ""
     }
 
@@ -169,34 +171,23 @@ class CameraWidget : AppWidgetProvider() {
                     }
                 }
 
-                val tapImagePendingIntent = when (widget.tapAction) {
-                    CameraWidgetTapAction.UPDATE_IMAGE -> PendingIntent.getBroadcast(
-                        context,
-                        appWidgetId,
-                        updateCameraIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                    )
-
-                    CameraWidgetTapAction.OPEN_CAMERA -> PendingIntent.getActivity(
+                val tapWidgetPendingIntent = when (widget.tapAction) {
+                    WidgetTapAction.OPEN -> PendingIntent.getActivity(
                         context,
                         appWidgetId,
                         WebViewActivity.newInstance(context, "entityId:${widget.entityId}", widget.serverId),
                         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                     )
-                }
-                setOnClickPendingIntent(
-                    R.id.widgetCameraImage,
-                    tapImagePendingIntent
-                )
-                setOnClickPendingIntent(
-                    R.id.widgetCameraPlaceholder,
-                    PendingIntent.getBroadcast(
+
+                    else -> PendingIntent.getBroadcast(
                         context,
                         appWidgetId,
                         updateCameraIntent,
                         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                     )
-                )
+                }
+                setOnClickPendingIntent(R.id.widgetCameraImage, tapWidgetPendingIntent)
+                setOnClickPendingIntent(R.id.widgetCameraPlaceholder, tapWidgetPendingIntent)
             }
         }
     }
@@ -230,8 +221,7 @@ class CameraWidget : AppWidgetProvider() {
 
         val serverSelection = if (extras.containsKey(EXTRA_SERVER_ID)) extras.getInt(EXTRA_SERVER_ID) else null
         val entitySelection: String? = extras.getString(EXTRA_ENTITY_ID)
-        val tapActionOrdinal = extras.getInt(EXTRA_TAP_ACTION_ORDINAL, CameraWidgetTapAction.UPDATE_IMAGE.ordinal)
-        val tapAction = CameraWidgetTapAction.entries[tapActionOrdinal]
+        val tapActionSelection: WidgetTapAction = extras.getSerializableCompat<WidgetTapAction>(EXTRA_TAP_ACTION) ?: WidgetTapAction.REFRESH
 
         if (serverSelection == null || entitySelection == null) {
             Log.e(TAG, "Did not receive complete configuration data")
@@ -249,7 +239,7 @@ class CameraWidget : AppWidgetProvider() {
                     appWidgetId,
                     serverSelection,
                     entitySelection,
-                    tapAction
+                    tapActionSelection
                 )
             )
 
@@ -274,5 +264,14 @@ class CameraWidget : AppWidgetProvider() {
 
     private fun getScreenWidth(): Int {
         return Resources.getSystem().displayMetrics.widthPixels
+    }
+}
+
+private inline fun <reified T : Serializable> Bundle.getSerializableCompat(key: String): T? {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        getSerializable(key, T::class.java)
+    } else {
+        @Suppress("DEPRECATION")
+        getSerializable(key) as? T
     }
 }
