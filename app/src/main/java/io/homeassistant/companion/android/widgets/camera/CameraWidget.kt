@@ -221,7 +221,7 @@ class CameraWidget : AppWidgetProvider() {
 
         val serverSelection = if (extras.containsKey(EXTRA_SERVER_ID)) extras.getInt(EXTRA_SERVER_ID) else null
         val entitySelection: String? = extras.getString(EXTRA_ENTITY_ID)
-        val tapActionSelection: WidgetTapAction = extras.getSerializableCompat<WidgetTapAction>(EXTRA_TAP_ACTION) ?: WidgetTapAction.REFRESH
+        val tapActionSelection: WidgetTapAction = extras.getSerializableCompat(EXTRA_TAP_ACTION) ?: WidgetTapAction.REFRESH
 
         if (serverSelection == null || entitySelection == null) {
             Log.e(TAG, "Did not receive complete configuration data")
