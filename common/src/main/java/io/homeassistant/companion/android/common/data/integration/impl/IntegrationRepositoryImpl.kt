@@ -545,6 +545,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             server.copy(
                 _name = config.locationName,
                 _version = config.version,
+                deviceRegistryId = config.hassDeviceId ?: server.deviceRegistryId,
                 connection = server.connection.copy(
                     cloudUrl = config.remoteUiUrl,
                     cloudhookUrl = config.cloudhookUrl
