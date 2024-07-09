@@ -6,7 +6,6 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.util.TypedValue
@@ -15,6 +14,7 @@ import android.widget.RemoteViews
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
+import androidx.core.os.BundleCompat
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
@@ -209,18 +209,10 @@ class EntityWidget : BaseWidgetProvider() {
         val textSizeSelection: String? = extras.getString(EXTRA_TEXT_SIZE)
         val stateSeparatorSelection: String? = extras.getString(EXTRA_STATE_SEPARATOR)
         val attributeSeparatorSelection: String? = extras.getString(EXTRA_ATTRIBUTE_SEPARATOR)
-        val tapActionSelection: WidgetTapAction = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            extras.getSerializable(EXTRA_TAP_ACTION, WidgetTapAction::class.java)
-        } else {
-            @Suppress("DEPRECATION")
-            extras.getSerializable(EXTRA_TAP_ACTION) as? WidgetTapAction
-        } ?: WidgetTapAction.REFRESH
-        val backgroundTypeSelection: WidgetBackgroundType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            extras.getSerializable(EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
-        } else {
-            @Suppress("DEPRECATION")
-            extras.getSerializable(EXTRA_BACKGROUND_TYPE) as? WidgetBackgroundType
-        } ?: WidgetBackgroundType.DAYNIGHT
+        val tapActionSelection = BundleCompat.getSerializable(extras, EXTRA_TAP_ACTION, WidgetTapAction::class.java)
+            ?: WidgetTapAction.REFRESH
+        val backgroundTypeSelection = BundleCompat.getSerializable(extras, EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
+            ?: WidgetBackgroundType.DAYNIGHT
         val textColorSelection: String? = extras.getString(EXTRA_TEXT_COLOR)
 
         if (serverId == null || entitySelection == null) {
