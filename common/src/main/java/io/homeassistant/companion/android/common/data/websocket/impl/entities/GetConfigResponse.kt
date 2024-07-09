@@ -18,6 +18,6 @@ data class GetConfigResponse(
     val remoteUiUrl: String?,
     // only on core >= 2022.6 when using webhook
     val entities: Map<String, Map<String, Any>>?,
-    // only on core >= 2024.8 when using webhook
+    // only on core >= 2024.7.2 when using webhook
     val hassDeviceId: String?
 )
