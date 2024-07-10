@@ -5,7 +5,6 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -13,6 +12,7 @@ import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
 import android.widget.Toast
+import androidx.core.os.BundleCompat
 import com.google.android.material.color.DynamicColors
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
@@ -473,12 +473,8 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         val showSeek: Boolean = extras.getBoolean(EXTRA_SHOW_SEEK)
         val showVolume: Boolean = extras.getBoolean(EXTRA_SHOW_VOLUME)
         val showSource: Boolean = extras.getBoolean(EXTRA_SHOW_SOURCE)
-        val backgroundType: WidgetBackgroundType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            extras.getSerializable(EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
-        } else {
-            @Suppress("DEPRECATION")
-            extras.getSerializable(EXTRA_BACKGROUND_TYPE) as? WidgetBackgroundType
-        } ?: WidgetBackgroundType.DAYNIGHT
+        val backgroundType = BundleCompat.getSerializable(extras, EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
+            ?: WidgetBackgroundType.DAYNIGHT
 
         if (serverId == null || entitySelection == null) {
             Log.e(TAG, "Did not receive complete configuration data")

@@ -11,7 +11,7 @@ import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.nfc.tech.Ndef
 import android.nfc.tech.NdefFormatable
-import android.os.Build
+import androidx.core.content.IntentCompat
 import io.homeassistant.companion.android.BuildConfig
 import java.io.IOException
 
@@ -21,12 +21,7 @@ object NFCUtil {
             return null
         }
 
-        val rawMessages = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES, NdefMessage::class.java)
-        } else {
-            @Suppress("DEPRECATION")
-            intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES)
-        }
+        val rawMessages = IntentCompat.getParcelableArrayExtra(intent, NfcAdapter.EXTRA_NDEF_MESSAGES, NdefMessage::class.java)
         val ndefMessage = rawMessages?.get(0) as NdefMessage?
         return ndefMessage?.records?.get(0)?.toUri()
     }
@@ -41,12 +36,7 @@ object NFCUtil {
         val nfcMessage = NdefMessage(arrayOf(nfcRecord) + applicationRecords)
         val nfcFallbackMessage = NdefMessage(arrayOf(nfcRecord))
         intent?.let {
-            val tag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                it.getParcelableExtra(NfcAdapter.EXTRA_TAG, Tag::class.java)
-            } else {
-                @Suppress("DEPRECATION")
-                it.getParcelableExtra(NfcAdapter.EXTRA_TAG)
-            }
+            val tag = IntentCompat.getParcelableExtra(it, NfcAdapter.EXTRA_TAG, Tag::class.java)
             return writeMessageToTag(nfcMessage, nfcFallbackMessage, tag)
         }
         return false

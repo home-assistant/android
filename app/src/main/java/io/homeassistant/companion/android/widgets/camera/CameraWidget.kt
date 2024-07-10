@@ -7,13 +7,13 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
+import androidx.core.os.BundleCompat
 import com.squareup.picasso.Picasso
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
@@ -24,7 +24,6 @@ import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.util.hasActiveConnection
 import io.homeassistant.companion.android.webview.WebViewActivity
-import java.io.Serializable
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -221,7 +220,8 @@ class CameraWidget : AppWidgetProvider() {
 
         val serverSelection = if (extras.containsKey(EXTRA_SERVER_ID)) extras.getInt(EXTRA_SERVER_ID) else null
         val entitySelection: String? = extras.getString(EXTRA_ENTITY_ID)
-        val tapActionSelection: WidgetTapAction = extras.getSerializableCompat(EXTRA_TAP_ACTION) ?: WidgetTapAction.REFRESH
+        val tapActionSelection = BundleCompat.getSerializable(extras, EXTRA_TAP_ACTION, WidgetTapAction::class.java)
+            ?: WidgetTapAction.REFRESH
 
         if (serverSelection == null || entitySelection == null) {
             Log.e(TAG, "Did not receive complete configuration data")
@@ -264,14 +264,5 @@ class CameraWidget : AppWidgetProvider() {
 
     private fun getScreenWidth(): Int {
         return Resources.getSystem().displayMetrics.widthPixels
-    }
-}
-
-private inline fun <reified T : Serializable> Bundle.getSerializableCompat(key: String): T? {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        getSerializable(key, T::class.java)
-    } else {
-        @Suppress("DEPRECATION")
-        getSerializable(key) as? T
     }
 }
