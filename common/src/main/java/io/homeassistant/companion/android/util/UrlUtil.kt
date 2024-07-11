@@ -60,6 +60,7 @@ object UrlUtil {
                     ?.newBuilder()
                 if (!asURI.path.isNullOrBlank()) builder?.addPathSegments(asURI.path.trim().removePrefix("/"))
                 if (!asURI.query.isNullOrBlank()) builder?.query(asURI.query.trim())
+                if (!asURI.fragment.isNullOrBlank()) builder?.fragment(asURI.fragment.trim())
                 builder?.build()?.toUrl()
             }
         }
