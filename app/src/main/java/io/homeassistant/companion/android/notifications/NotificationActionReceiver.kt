@@ -3,12 +3,12 @@ package io.homeassistant.companion.android.notifications
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.Handler
 import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
+import androidx.core.content.IntentCompat
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -45,12 +45,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
     lateinit var notificationDao: NotificationDao
 
     override fun onReceive(context: Context, intent: Intent) {
-        val notificationAction = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            intent.getParcelableExtra(EXTRA_NOTIFICATION_ACTION, NotificationAction::class.java)
-        } else {
-            @Suppress("DEPRECATION")
-            intent.getParcelableExtra(EXTRA_NOTIFICATION_ACTION)
-        }
+        val notificationAction = IntentCompat.getParcelableExtra(intent, EXTRA_NOTIFICATION_ACTION, NotificationAction::class.java)
 
         if (notificationAction == null) {
             Log.e(TAG, "Failed to get notification action.")

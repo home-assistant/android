@@ -19,6 +19,8 @@ data class Server(
     val nameOverride: String? = null,
     @ColumnInfo(name = "_version")
     val _version: String? = null,
+    @ColumnInfo(name = "device_registry_id")
+    val deviceRegistryId: String? = null,
     @Ignore
     val type: ServerType = ServerType.DEFAULT,
     @ColumnInfo(name = "list_order")
@@ -29,8 +31,8 @@ data class Server(
     @Embedded val session: ServerSessionInfo,
     @Embedded val user: ServerUserInfo
 ) {
-    constructor(id: Int, _name: String, nameOverride: String?, _version: String?, listOrder: Int, deviceName: String?, connection: ServerConnectionInfo, session: ServerSessionInfo, user: ServerUserInfo) :
-        this(id, _name, nameOverride, _version, ServerType.DEFAULT, listOrder, deviceName, connection, session, user)
+    constructor(id: Int, _name: String, nameOverride: String?, _version: String?, deviceRegistryId: String?, listOrder: Int, deviceName: String?, connection: ServerConnectionInfo, session: ServerSessionInfo, user: ServerUserInfo) :
+        this(id, _name, nameOverride, _version, deviceRegistryId, ServerType.DEFAULT, listOrder, deviceName, connection, session, user)
 
     val friendlyName: String
         get() = nameOverride ?: _name.ifBlank { connection.externalUrl }

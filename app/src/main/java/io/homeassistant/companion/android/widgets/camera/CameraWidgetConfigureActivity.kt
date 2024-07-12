@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.widgets.camera
 
+import android.R
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
@@ -9,6 +10,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.Spinner
 import android.widget.Toast
@@ -19,6 +21,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
+import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.databinding.WidgetCameraConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
@@ -104,9 +107,11 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             finish()
             return
         }
+        initTapActionsSpinner()
 
         val cameraWidget = cameraWidgetDao.get(appWidgetId)
         if (cameraWidget != null) {
+            setCurrentTapAction(tapAction = cameraWidget.tapAction)
             binding.widgetTextConfigEntityId.setText(cameraWidget.entityId)
             binding.addButton.setText(commonR.string.update_widget)
             val entity = runBlocking {
@@ -199,6 +204,10 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 CameraWidget.EXTRA_ENTITY_ID,
                 selectedEntity!!.entityId
             )
+            intent.putExtra(
+                CameraWidget.EXTRA_TAP_ACTION,
+                if (binding.tapActionList.selectedItemPosition == 0) WidgetTapAction.REFRESH else WidgetTapAction.OPEN
+            )
 
             context.sendBroadcast(intent)
 
@@ -212,6 +221,15 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             Log.e(TAG, "Issue configuring widget", e)
             showAddWidgetError()
         }
+    }
+
+    private fun initTapActionsSpinner() {
+        val tapActionValues = listOf(getString(commonR.string.refresh), getString(commonR.string.state_open))
+        binding.tapActionList.adapter = ArrayAdapter(this, R.layout.simple_spinner_dropdown_item, tapActionValues)
+    }
+
+    private fun setCurrentTapAction(tapAction: WidgetTapAction) {
+        binding.tapActionList.setSelection(if (tapAction == WidgetTapAction.REFRESH) 0 else 1)
     }
 
     override fun onNewIntent(intent: Intent) {
