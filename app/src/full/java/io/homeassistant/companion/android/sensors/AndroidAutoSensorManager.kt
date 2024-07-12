@@ -100,7 +100,7 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
             context,
             androidAutoConnected,
             connected,
-            icon,
+            if (connected) androidAutoConnected.statelessIcon else "mdi:car-off"
             mapOf(
                 "connection_type" to typeString
             )
