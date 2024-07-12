@@ -72,12 +72,19 @@ class DNDSensorManager : SensorManager {
             NotificationManager.INTERRUPTION_FILTER_UNKNOWN -> STATE_UNKNOWN
             else -> STATE_UNKNOWN
         }
+        val icon = when (state) {
+            "off" -> "mdi:bell-ring"
+            "alarms_only" -> "mdi:alarm"
+            "priority_only" -> "mdi:star-outline"
+            "total_silence" -> "mdi:bell-sleep"
+            else -> "mdi:minus-circle"
+        }
 
         onSensorUpdated(
             context,
             dndSensor,
             state,
-            dndSensor.statelessIcon,
+            icon,
             mapOf(
                 "options" to listOf("alarms_only", "off", "priority_only", "total_silence")
             )
