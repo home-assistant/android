@@ -938,7 +938,8 @@
     <string name="toggle_flashlight">Toggle flashlight</string>
     <string name="trust_server_title">Remotely control app &amp; device</string>
     <string name="trust_server_summary">Manage enabled sensors and use notification commands from this server</string>
-    <string name="tts_error">Unable to process notification \"%1$s\" as text to speech.</string>
+    <string name="tts_error_utterance">Unable to process notification \"%1$s\" as text to speech.</string>
+    <string name="tts_error_init">Failed to initialize a text to speech engine.</string>
     <string name="tts_no_text">Please set the text for text to speech to process</string>
     <string name="unable_to_register">Unable to register application</string>
     <string name="unknown_address">Unknown address</string>

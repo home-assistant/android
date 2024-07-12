@@ -65,11 +65,10 @@ import io.homeassistant.companion.android.common.notifications.handleText
 import io.homeassistant.companion.android.common.notifications.parseColor
 import io.homeassistant.companion.android.common.notifications.parseVibrationPattern
 import io.homeassistant.companion.android.common.notifications.prepareText
-import io.homeassistant.companion.android.common.util.TextToSpeechData
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.getActiveNotification
-import io.homeassistant.companion.android.common.util.speakText
-import io.homeassistant.companion.android.common.util.stopTTS
+import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
+import io.homeassistant.companion.android.common.util.tts.TextToSpeechData
 import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.database.sensor.SensorDao
@@ -111,7 +110,8 @@ class MessagingManager @Inject constructor(
     private val prefsRepository: PrefsRepository,
     private val notificationDao: NotificationDao,
     private val sensorDao: SensorDao,
-    private val settingsDao: SettingsDao
+    private val settingsDao: SettingsDao,
+    private val textToSpeechClient: TextToSpeechClient
 ) {
     companion object {
         const val TAG = "MessagingService"
@@ -323,9 +323,9 @@ class MessagingManager @Inject constructor(
                     removeNotificationChannel(jsonData[NotificationData.CHANNEL]!!)
                 }
                 jsonData[NotificationData.MESSAGE] == TextToSpeechData.TTS -> {
-                    speakText(context, jsonData)
+                    textToSpeechClient.speakText(jsonData)
                 }
-                jsonData[NotificationData.MESSAGE] == TextToSpeechData.COMMAND_STOP_TTS -> stopTTS()
+                jsonData[NotificationData.MESSAGE] == TextToSpeechData.COMMAND_STOP_TTS -> textToSpeechClient.stopTTS()
                 jsonData[NotificationData.MESSAGE] in DEVICE_COMMANDS && allowCommands -> {
                     Log.d(TAG, "Processing device command")
                     when (jsonData[NotificationData.MESSAGE]) {

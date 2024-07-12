@@ -27,6 +27,8 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.ServerManagerImpl
 import io.homeassistant.companion.android.common.data.wifi.WifiHelper
 import io.homeassistant.companion.android.common.data.wifi.WifiHelperImpl
+import io.homeassistant.companion.android.common.util.tts.AndroidTextToSpeechEngine
+import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
 import java.util.UUID
 import javax.inject.Named
 import javax.inject.Singleton
@@ -144,6 +146,12 @@ abstract class DataModule {
         @Provides
         @Singleton
         fun packageManager(@ApplicationContext appContext: Context) = appContext.packageManager
+
+        @Provides
+        @Singleton
+        fun providesTextToSpeechClient(
+            @ApplicationContext appContext: Context
+        ): TextToSpeechClient = TextToSpeechClient(appContext, AndroidTextToSpeechEngine(appContext))
     }
 
     @Binds
