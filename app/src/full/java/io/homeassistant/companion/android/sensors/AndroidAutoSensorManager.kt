@@ -91,16 +91,11 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
             }
         }
 
-        val icon = when (connected) {
-            true -> "mdi:car"
-            else -> "mdi:car-off"
-        }
-
         onSensorUpdated(
             context,
             androidAutoConnected,
             connected,
-            if (connected) androidAutoConnected.statelessIcon else "mdi:car-off"
+            if (connected) androidAutoConnected.statelessIcon else "mdi:car-off",
             mapOf(
                 "connection_type" to typeString
             )
