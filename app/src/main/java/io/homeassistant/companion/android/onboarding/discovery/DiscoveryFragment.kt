@@ -44,6 +44,7 @@ class DiscoveryFragment @Inject constructor() : Fragment() {
             setContent {
                 HomeAssistantAppTheme {
                     DiscoveryView(
+                        discoveryActive = viewModel.discoveryActive,
                         foundInstances = viewModel.foundInstances,
                         manualSetupClicked = { navigateToManualSetup() },
                         instanceClicked = { onInstanceClicked(it) }
