@@ -734,7 +734,7 @@
     <string name="sensor_setting_nextalarm_allow_list_title">Allow list</string>
     <string name="sensor_setting_notification_allow_list_title">Allow list</string>
     <string name="sensor_setting_notification_disable_allow_list_title">Disable allow list requirement</string>
-    <string name="sensor_setting_active_notification_count_content_attrs_title">Include content from all notifications as sensor attributes</string>
+    <string name="sensor_setting_active_notification_count_content_attrs_title">Include content from all notifications as attributes</string>
     <string name="sensor_setting_battery_current_divisor_title">Battery current divisor</string>
     <string name="sensor_setting_battery_voltage_divisor_title">Battery voltage divisor</string>
     <string name="sensor_settings">Sensor settings</string>
