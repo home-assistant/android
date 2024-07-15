@@ -90,7 +90,6 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
                 false to "Unknown($value)"
             }
         }
-
         onSensorUpdated(
             context,
             androidAutoConnected,
