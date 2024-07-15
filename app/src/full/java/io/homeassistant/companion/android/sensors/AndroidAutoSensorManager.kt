@@ -24,6 +24,7 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
             commonR.string.basic_sensor_name_android_auto,
             commonR.string.sensor_description_android_auto,
             "mdi:car",
+            deviceClass = "connectivity",
             updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
     }

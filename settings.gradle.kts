@@ -15,7 +15,7 @@ plugins {
     id("org.ajoberstar.reckon.settings").version("0.18.0")
 }
 
-extensions.configure<org.ajoberstar.reckon.gradle.ReckonExtension> {
+reckon {
     setDefaultInferredScope("patch")
     stages("beta", "final")
     setScopeCalc { java.util.Optional.of(org.ajoberstar.reckon.core.Scope.PATCH) }

@@ -291,7 +291,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
             "in_vehicle" -> "mdi:car"
             "on_bicycle" -> "mdi:bike"
             "on_foot" -> "mdi:shoe-print"
-            "still" -> "mdi:sleep"
+            "still" -> "mdi:human-male"
             "tilting" -> "mdi:phone-rotate-portrait"
             "walking" -> "mdi:walk"
             "running" -> "mdi:run"

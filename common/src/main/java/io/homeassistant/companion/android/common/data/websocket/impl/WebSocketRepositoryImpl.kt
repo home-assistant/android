@@ -267,7 +267,7 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
         pipelineId: String?,
         conversationId: String?
     ): Flow<AssistPipelineEvent>? {
-        val data = mapOf(
+        var data = mapOf(
             "start_stage" to "intent",
             "end_stage" to "intent",
             "input" to mapOf(
@@ -275,9 +275,15 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
             ),
             "conversation_id" to conversationId
         )
+        pipelineId?.let {
+            data = data.plus("pipeline" to it)
+        }
+        server?.deviceRegistryId?.let {
+            data = data.plus("device_id" to it)
+        }
         return subscribeTo(
             SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
-            (pipelineId?.let { data.plus("pipeline" to it) } ?: data) as Map<Any, Any>
+            data as Map<Any, Any>
         )
     }
 
@@ -288,7 +294,7 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
         pipelineId: String?,
         conversationId: String?
     ): Flow<AssistPipelineEvent>? {
-        val data = mapOf(
+        var data = mapOf(
             "start_stage" to "stt",
             "end_stage" to (if (outputTts) "tts" else "intent"),
             "input" to mapOf(
@@ -296,9 +302,15 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
             ),
             "conversation_id" to conversationId
         )
+        pipelineId?.let {
+            data = data.plus("pipeline" to it)
+        }
+        server?.deviceRegistryId?.let {
+            data = data.plus("device_id" to it)
+        }
         return subscribeTo(
             SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
-            (pipelineId?.let { data.plus("pipeline" to it) } ?: data) as Map<Any, Any>
+            data as Map<Any, Any>
         )
     }
 

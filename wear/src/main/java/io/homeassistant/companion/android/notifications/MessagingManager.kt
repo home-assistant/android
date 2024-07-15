@@ -17,11 +17,10 @@ import io.homeassistant.companion.android.common.notifications.handleChannel
 import io.homeassistant.companion.android.common.notifications.handleDeleteIntent
 import io.homeassistant.companion.android.common.notifications.handleSmallIcon
 import io.homeassistant.companion.android.common.notifications.handleText
-import io.homeassistant.companion.android.common.util.TextToSpeechData
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.getActiveNotification
-import io.homeassistant.companion.android.common.util.speakText
-import io.homeassistant.companion.android.common.util.stopTTS
+import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
+import io.homeassistant.companion.android.common.util.tts.TextToSpeechData
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.database.sensor.SensorDao
@@ -36,7 +35,8 @@ import org.json.JSONObject
 class MessagingManager @Inject constructor(
     @ApplicationContext val context: Context,
     private val serverManager: ServerManager,
-    private val sensorDao: SensorDao
+    private val sensorDao: SensorDao,
+    private val textToSpeechClient: TextToSpeechClient
 ) {
 
     companion object {
@@ -79,8 +79,8 @@ class MessagingManager @Inject constructor(
                         sendNotification(notificationData)
                     }
                 }
-                message == TextToSpeechData.TTS -> speakText(context, notificationData)
-                message == TextToSpeechData.COMMAND_STOP_TTS -> stopTTS()
+                message == TextToSpeechData.TTS -> textToSpeechClient.speakText(notificationData)
+                message == TextToSpeechData.COMMAND_STOP_TTS -> textToSpeechClient.stopTTS()
                 message == DeviceCommandData.COMMAND_UPDATE_SENSORS -> SensorReceiver.updateAllSensors(context)
                 else -> sendNotification(notificationData, now)
             }

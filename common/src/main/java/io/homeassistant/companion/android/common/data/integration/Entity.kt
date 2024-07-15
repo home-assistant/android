@@ -307,7 +307,7 @@ fun <T> Entity<T>.getIcon(context: Context): IIcon {
     } else {
         /**
          * Return a default icon for the domain that matches the icon used in the frontend, see
-         * https://github.com/home-assistant/frontend/blob/dev/src/common/entity/domain_icon.ts.
+         * icons.json in the component's core integration.
          * Note: for SimplifiedEntity sometimes return a more general icon because we don't have state.
          */
         val compareState =
@@ -386,9 +386,9 @@ fun <T> Entity<T>.getIcon(context: Context): IIcon {
             "lawn_mower" -> CommunityMaterial.Icon3.cmd_robot_mower
             "light" -> CommunityMaterial.Icon2.cmd_lightbulb
             "lock" -> when (compareState) {
-                "unlocked" -> CommunityMaterial.Icon2.cmd_lock_open
+                "unlocked", "open" -> CommunityMaterial.Icon2.cmd_lock_open_variant
                 "jammed" -> CommunityMaterial.Icon2.cmd_lock_alert
-                "locking", "unlocking" -> CommunityMaterial.Icon2.cmd_lock_clock
+                "locking", "unlocking", "opening" -> CommunityMaterial.Icon2.cmd_lock_clock
                 else -> CommunityMaterial.Icon2.cmd_lock
             }
             "mailbox" -> CommunityMaterial.Icon3.cmd_mailbox
@@ -415,7 +415,7 @@ fun <T> Entity<T>.getIcon(context: Context): IIcon {
                     else -> CommunityMaterial.Icon.cmd_cast
                 }
             }
-            "notify" -> CommunityMaterial.Icon.cmd_comment_alert
+            "notify" -> CommunityMaterial.Icon3.cmd_message
             "number" -> CommunityMaterial.Icon3.cmd_ray_vertex
             "persistent_notification" -> CommunityMaterial.Icon.cmd_bell
             "person" -> if (compareState == "not_home") {
@@ -447,6 +447,7 @@ fun <T> Entity<T>.getIcon(context: Context): IIcon {
             } else { // For SimplifiedEntity without state, use a more generic icon
                 CommunityMaterial.Icon2.cmd_light_switch
             }
+            "tag" -> CommunityMaterial.Icon3.cmd_tag_outline
             "text" -> CommunityMaterial.Icon2.cmd_form_textbox
             "timer" -> CommunityMaterial.Icon3.cmd_timer_outline
             "update" -> CommunityMaterial.Icon3.cmd_package
