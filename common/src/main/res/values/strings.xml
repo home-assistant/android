@@ -559,7 +559,7 @@
     <string name="select_entity_to_display">Select entity to display</string>
     <string name="select_file">Select file</string>
     <string name="select_instance">Select your Home Assistant server</string>
-    <string name="sensor_description_active_notification_count">Total count of active notifications that are visible to the user including silent, persistent and the Sensor Worker notifications.</string>
+    <string name="sensor_description_active_notification_count">Total count of active notifications that are visible to the user including silent, persistent and the Sensor Worker notifications. Attributes will include the contents of all notifications if the corresponding setting is enabled. It\'s enabled by default.</string>
     <string name="sensor_description_app_importance">If the app is in the foreground, background or any other state it can be</string>
     <string name="sensor_description_android_auto">If the phone is currently connected to an Android Auto head unit</string>
     <string name="sensor_description_android_os_version">Android OS version</string>
