@@ -73,10 +73,7 @@ class DNDSensorManager : SensorManager {
             else -> STATE_UNKNOWN
         }
         val icon = when (state) {
-            "off" -> "mdi:bell-ring"
-            "alarms_only" -> "mdi:alarm"
-            "priority_only" -> "mdi:star-outline"
-            "total_silence" -> "mdi:bell-sleep"
+            "off" -> "mdi:minus-circle-off"
             else -> "mdi:minus-circle"
         }
 
