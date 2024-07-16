@@ -415,6 +415,7 @@
     <string name="manage_widgets">Manage widgets</string>
     <string name="manual_desc">Enter the URL of your Home Assistant server. Make sure it includes the protocol and port. For example:\n\nhttp://homeassistant.local:8123 or \nhttps://example.duckdns.org.</string>
     <string name="manual_setup">Enter address manually</string>
+    <string name="manual_setup_hint">Not finding your server?</string>
     <string name="manual_title">What is your Home Assistant address?</string>
     <string name="map">Map</string>
     <string name="matter_commissioning_unavailable">Matter is currently unavailable</string>
@@ -809,6 +810,7 @@
     <string name="slider_fan_speed">Fan speed</string>
     <string name="slider_light_brightness">Brightness</string>
     <string name="slider_light_colortemp">Color temperature</string>
+    <string name="slow_scan">Scanning… Make sure your server is on and you\'re connected to the same network.</string>
     <string name="skip">Skip</string>
     <string name="speed">Speed: %1$d%%</string>
     <string name="state_auto">Auto</string>

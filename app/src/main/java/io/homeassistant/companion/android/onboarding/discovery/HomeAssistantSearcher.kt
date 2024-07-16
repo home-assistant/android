@@ -15,6 +15,7 @@ import okio.internal.commonToUtf8String
 class HomeAssistantSearcher constructor(
     private val nsdManager: NsdManager,
     private val wifiManager: WifiManager?,
+    private val onStart: () -> Unit,
     private val onInstanceFound: (instance: HomeAssistantInstance) -> Unit,
     private val onError: () -> Unit
 ) : NsdManager.DiscoveryListener, DefaultLifecycleObserver {
@@ -44,6 +45,7 @@ class HomeAssistantSearcher constructor(
             onError()
             return
         }
+        onStart()
         try {
             if (wifiManager != null && multicastLock == null) {
                 multicastLock = wifiManager.createMulticastLock(TAG)
