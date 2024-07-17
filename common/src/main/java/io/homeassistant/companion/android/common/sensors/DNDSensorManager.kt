@@ -72,10 +72,6 @@ class DNDSensorManager : SensorManager {
             NotificationManager.INTERRUPTION_FILTER_UNKNOWN -> STATE_UNKNOWN
             else -> STATE_UNKNOWN
         }
-        val icon = when (state) {
-            "off" -> "mdi:minus-circle-off"
-            else -> "mdi:minus-circle"
-        }
 
         onSensorUpdated(
             context,
