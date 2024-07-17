@@ -81,7 +81,7 @@ class DNDSensorManager : SensorManager {
             context,
             dndSensor,
             state,
-            icon,
+            if (state != "off") dndSensor.statelessIcon else "mdi:minus-circle-off",
             mapOf(
                 "options" to listOf("alarms_only", "off", "priority_only", "total_silence")
             )
