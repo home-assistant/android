@@ -99,7 +99,6 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
 
     override fun requestSensorUpdate(context: Context) {
         updateMediaSession(context)
-        updateActiveNotificationCount()
     }
 
     override fun onListenerConnected() {
