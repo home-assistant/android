@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.qs
 
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -13,6 +14,8 @@ import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
+import androidx.core.service.quicksettings.PendingIntentActivityWrapper
+import androidx.core.service.quicksettings.TileServiceCompat
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import com.mikepenz.iconics.utils.sizeDp
@@ -254,13 +257,21 @@ abstract class TileExtensions : TileService() {
             }
         } else {
             Log.d(TAG, "No tile data found for tile ID: $tileId")
+            val tileSettingIntent = SettingsActivity.newInstance(context).apply {
+                putExtra("fragment", "tiles/$tileId")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
+            }
             withContext(Dispatchers.Main) {
-                startActivityAndCollapse(
-                    SettingsActivity.newInstance(context).apply {
-                        putExtra("fragment", "tiles/$tileId")
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
-                    }
+                TileServiceCompat.startActivityAndCollapse(
+                    this@TileExtensions,
+                    PendingIntentActivityWrapper(
+                        context,
+                        tileId.hashCode(),
+                        tileSettingIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT,
+                        false
+                    )
                 )
             }
         }

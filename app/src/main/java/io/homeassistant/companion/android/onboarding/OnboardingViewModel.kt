@@ -4,7 +4,6 @@ import android.app.Application
 import android.net.Uri
 import android.util.Log
 import android.webkit.URLUtil
-import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -13,7 +12,6 @@ import androidx.core.content.getSystemService
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LifecycleObserver
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.onboarding.discovery.HomeAssistantInstance
@@ -34,15 +32,15 @@ class OnboardingViewModel @Inject constructor(
     private val _homeAssistantSearcher = HomeAssistantSearcher(
         nsdManager = app.getSystemService()!!,
         wifiManager = app.getSystemService(),
+        onStart = { discoveryActive = true },
         onInstanceFound = ::onInstanceFound,
-        onError = {
-            Toast.makeText(app, R.string.failed_scan, Toast.LENGTH_LONG).show()
-            // TODO: Go to manual setup?
-        }
+        onError = { discoveryActive = false }
     )
     val homeAssistantSearcher: LifecycleObserver = _homeAssistantSearcher
 
     val foundInstances = mutableStateListOf<HomeAssistantInstance>()
+    var discoveryActive by mutableStateOf(true)
+        private set
     val manualUrl = mutableStateOf("")
     var discoveryOptions: OnboardApp.DiscoveryOptions? = null
     var manualContinueEnabled by mutableStateOf(false)

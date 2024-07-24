@@ -418,6 +418,7 @@
     <string name="manage_widgets">Manage widgets</string>
     <string name="manual_desc">Enter the URL of your Home Assistant server. Make sure it includes the protocol and port. For example:\n\nhttp://homeassistant.local:8123 or \nhttps://example.duckdns.org.</string>
     <string name="manual_setup">Enter address manually</string>
+    <string name="manual_setup_hint">Not finding your server?</string>
     <string name="manual_title">What is your Home Assistant address?</string>
     <string name="map">Map</string>
     <string name="matter_commissioning_unavailable">Matter is currently unavailable</string>
@@ -563,7 +564,7 @@
     <string name="select_file">Select file</string>
     <string name="select_instance">Select your Home Assistant server</string>
     <string name="sensor_description_active_calories_burned">Get active calories burned from Health Connect</string>
-    <string name="sensor_description_active_notification_count">Total count of active notifications that are visible to the user including silent, persistent and the Sensor Worker notifications.</string>
+    <string name="sensor_description_active_notification_count">Total count of active notifications that are visible to the user including silent, persistent and the Sensor Worker notifications. Attributes will include the contents of all notifications if the corresponding setting is enabled. It\'s enabled by default.</string>
     <string name="sensor_description_app_importance">If the app is in the foreground, background or any other state it can be</string>
     <string name="sensor_description_android_auto">If the phone is currently connected to an Android Auto head unit</string>
     <string name="sensor_description_android_os_version">Android OS version</string>
@@ -740,6 +741,7 @@
     <string name="sensor_setting_nextalarm_allow_list_title">Allow list</string>
     <string name="sensor_setting_notification_allow_list_title">Allow list</string>
     <string name="sensor_setting_notification_disable_allow_list_title">Disable allow list requirement</string>
+    <string name="sensor_setting_active_notification_count_content_attrs_title">Include content from all notifications as attributes</string>
     <string name="sensor_setting_battery_current_divisor_title">Battery current divisor</string>
     <string name="sensor_setting_battery_voltage_divisor_title">Battery voltage divisor</string>
     <string name="sensor_settings">Sensor settings</string>
@@ -814,6 +816,7 @@
     <string name="slider_fan_speed">Fan speed</string>
     <string name="slider_light_brightness">Brightness</string>
     <string name="slider_light_colortemp">Color temperature</string>
+    <string name="slow_scan">Scanning… Make sure your server is on and you\'re connected to the same network.</string>
     <string name="skip">Skip</string>
     <string name="speed">Speed: %1$d%%</string>
     <string name="state_auto">Auto</string>

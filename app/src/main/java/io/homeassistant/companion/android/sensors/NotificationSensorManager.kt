@@ -27,6 +27,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         private const val TAG = "NotificationManager"
         private const val SETTING_ALLOW_LIST = "notification_allow_list"
         private const val SETTING_DISABLE_ALLOW_LIST = "notification_disable_allow_list"
+        private const val SETTING_INCLUDE_CONTENTS_AS_ATTRS = "active_notification_count_content_attrs"
 
         private var listenerConnected = false
         val lastNotification = SensorManager.BasicSensor(
@@ -237,16 +238,19 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
 
         try {
             val attr: MutableMap<String, Any?> = mutableMapOf()
-            for (item in activeNotifications) {
-                attr += mappedBundle(item.notification.extras, "_${item.packageName}_${item.id}").orEmpty()
-                    .plus("${item.packageName}_${item.id}_post_time" to item.postTime)
-                    .plus("${item.packageName}_${item.id}_is_ongoing" to item.isOngoing)
-                    .plus("${item.packageName}_${item.id}_is_clearable" to item.isClearable)
-                    .plus("${item.packageName}_${item.id}_group_id" to item.notification.group)
-                    .plus("${item.packageName}_${item.id}_category" to item.notification.category)
+            val includeContentsAsAttrsSetting = getToggleSetting(applicationContext, activeNotificationCount, SETTING_INCLUDE_CONTENTS_AS_ATTRS, default = true)
+            if (includeContentsAsAttrsSetting) {
+                for (item in activeNotifications) {
+                    attr += mappedBundle(item.notification.extras, "_${item.packageName}_${item.id}").orEmpty()
+                        .plus("${item.packageName}_${item.id}_post_time" to item.postTime)
+                        .plus("${item.packageName}_${item.id}_is_ongoing" to item.isOngoing)
+                        .plus("${item.packageName}_${item.id}_is_clearable" to item.isClearable)
+                        .plus("${item.packageName}_${item.id}_group_id" to item.notification.group)
+                        .plus("${item.packageName}_${item.id}_category" to item.notification.category)
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    attr["${item.packageName}_${item.id}_channel_id"] = item.notification.channelId
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        attr["${item.packageName}_${item.id}_channel_id"] = item.notification.channelId
+                    }
                 }
             }
             onSensorUpdated(
