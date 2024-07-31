@@ -5,14 +5,15 @@ rootProject.name = "home-assistant-android"
 
 pluginManagement {
     repositories {
-        gradlePluginPortal()
         google()
+        mavenCentral()
+        gradlePluginPortal()
     }
 }
 
 plugins {
     // So we can't reach the libs.plugins.* aliases from here so we need to declare them the old way...
-    id("org.ajoberstar.reckon.settings").version("0.18.0")
+    id("org.ajoberstar.reckon.settings").version("0.18.3")
 }
 
 reckon {
