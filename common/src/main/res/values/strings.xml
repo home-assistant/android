@@ -123,7 +123,7 @@
     <string name="broadcast_intent_error">Unable to send broadcast intent, please check the command format</string>
     <string name="buttons">Buttons</string>
     <string name="button_forward">Next</string>
-    <string name="button_widget_desc">Call any action</string>
+    <string name="button_widget_desc">Perform an action</string>
     <string name="calendar">Calendar</string>
     <string name="camera">Camera</string>
     <string name="camera_tile">Camera tile</string>
