@@ -842,9 +842,8 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             accuracy = location.accuracy.toInt()
         }
         val updateLocation: UpdateLocation
-        val updateLocationAs: String
         val updateLocationString: String
-        updateLocationAs = getSendLocationAsSetting(serverId)
+        val updateLocationAs: String = getSendLocationAsSetting(serverId)
         if (updateLocationAs == SEND_LOCATION_AS_ZONE_ONLY) {
             val zones = getZones(serverId)
             val locationZone = zones
@@ -917,8 +916,6 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.SKIPPED_OLD)
             return
         }
-        lastLocationSend[serverId] = now
-        lastUpdateLocation[serverId] = updateLocationString
 
         val geocodeIncludeLocation = getSetting(
             latestContext,
@@ -932,6 +929,8 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             try {
                 serverManager(latestContext).integrationRepository(serverId).updateLocation(updateLocation)
                 Log.d(TAG, "Location update sent successfully for $serverId as $updateLocationAs")
+                lastLocationSend[serverId] = now
+                lastUpdateLocation[serverId] = updateLocationString
                 logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.SENT)
 
                 // Update Geocoded Location Sensor
