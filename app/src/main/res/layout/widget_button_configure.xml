@@ -16,7 +16,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
-            android:text="@string/configure_service_call" />
+            android:text="@string/configure_action" />
 
         <LinearLayout
             android:id="@+id/server_select"
@@ -51,7 +51,7 @@
                 android:layout_height="wrap_content"
                 android:labelFor="@id/widget_text_config_service"
                 android:padding="5dp"
-                android:text="@string/label_service" />
+                android:text="@string/label_action" />
 
             <AutoCompleteTextView
                 android:id="@+id/widget_text_config_service"
@@ -68,7 +68,7 @@
             android:layout_height="wrap_content"
             android:textAlignment="center"
             android:textSize="14sp"
-            android:text="@string/widget_config_service_error"
+            android:text="@string/widget_config_action_error"
             android:visibility="gone" />
 
         <androidx.recyclerview.widget.RecyclerView
@@ -82,7 +82,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="end"
             android:layout_marginTop="8dp"
-            android:text="@string/add_service_data_field" />
+            android:text="@string/add_action_data_field" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/widget_config_icon_layout"

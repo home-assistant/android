@@ -642,7 +642,7 @@ private fun sensorIcon(state: String?, entity: Entity<Map<String, Any?>>): IIcon
 suspend fun <T> Entity<T>.onPressed(
     integrationRepository: IntegrationRepository
 ) {
-    val service = when (domain) {
+    val action = when (domain) {
         "lock" -> {
             if (state == "unlocked") "lock" else "unlock"
         }
@@ -660,10 +660,10 @@ suspend fun <T> Entity<T>.onPressed(
         else -> "toggle"
     }
 
-    integrationRepository.callService(
+    integrationRepository.callAction(
         domain = this.domain,
-        service = service,
-        serviceData = hashMapOf("entity_id" to entityId)
+        action = action,
+        actionData = hashMapOf("entity_id" to entityId)
     )
 }
 
@@ -677,7 +677,7 @@ suspend fun onEntityPressedWithoutState(
     integrationRepository: IntegrationRepository
 ) {
     val domain = entityId.split(".")[0]
-    val service = when (domain) {
+    val action = when (domain) {
         "lock" -> {
             val lockEntity = try {
                 integrationRepository.getEntity(entityId)
@@ -690,10 +690,10 @@ suspend fun onEntityPressedWithoutState(
         in EntityExt.DOMAINS_TOGGLE -> "toggle"
         else -> "turn_on"
     }
-    integrationRepository.callService(
+    integrationRepository.callAction(
         domain = domain,
-        service = service,
-        serviceData = hashMapOf("entity_id" to entityId)
+        action = action,
+        actionData = hashMapOf("entity_id" to entityId)
     )
 }
 

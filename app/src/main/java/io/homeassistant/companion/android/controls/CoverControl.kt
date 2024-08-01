@@ -78,7 +78,7 @@ object CoverControl : HaControl {
     ): Boolean {
         return when (action) {
             is BooleanAction -> {
-                integrationRepository.callService(
+                integrationRepository.callAction(
                     action.templateId.split(".")[0],
                     if ((action as? BooleanAction)?.newState == true) "open_cover" else "close_cover",
                     hashMapOf(
@@ -89,7 +89,7 @@ object CoverControl : HaControl {
             }
             is FloatAction -> {
                 val convertPosition = action.newValue
-                integrationRepository.callService(
+                integrationRepository.callAction(
                     action.templateId.split(".")[0],
                     "set_cover_position",
                     hashMapOf(
