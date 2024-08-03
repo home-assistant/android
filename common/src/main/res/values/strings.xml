@@ -13,7 +13,7 @@
     <string name="activity_intent_error">Unable to send activity intent, please check command format</string>
     <string name="add_device">Add device</string>
     <string name="add_favorite">Add favorite</string>
-    <string name="add_service_data_field">Add field</string>
+    <string name="add_action_data_field">Add field</string>
     <string name="add_shortcut">Add shortcut</string>
     <string name="disable_all_sensors">Disable all %1$d sensors</string>
     <string name="add_ssid">Add</string>
@@ -123,7 +123,7 @@
     <string name="broadcast_intent_error">Unable to send broadcast intent, please check the command format</string>
     <string name="buttons">Buttons</string>
     <string name="button_forward">Next</string>
-    <string name="button_widget_desc">Call any service</string>
+    <string name="button_widget_desc">Perform an action</string>
     <string name="calendar">Calendar</string>
     <string name="camera">Camera</string>
     <string name="camera_tile">Camera tile</string>
@@ -150,7 +150,7 @@
     <string name="complication_entity_state_label">Entity state</string>
     <string name="complication_entity_state_preview">Preview</string>
     <string name="config">Configuration</string>
-    <string name="configure_service_call">Configure service call</string>
+    <string name="configure_action">Configure action</string>
     <string name="configure_widget_label">Widget label</string>
     <string name="confirm_delete_all_notification_message">Are you sure? This cannot be undone</string>
     <string name="confirm_delete_all_notification_title">Confirm deleting all notifications</string>
@@ -329,7 +329,7 @@
     <string name="label_entity_ids">Entity ID(s):</string>
     <string name="label_icon">Icon:</string>
     <string name="label_label">Label:</string>
-    <string name="label_service">Service:</string>
+    <string name="label_action">Action:</string>
     <string name="label">Label</string>
     <string name="lang_option_label_default">Device language</string>
     <string name="lang_option_value_default">default</string>
@@ -489,7 +489,7 @@
     <string name="onboarding_notifications_denied">If you want to enable notifications in the future, you can change this in Settings.</string>
     <string name="onboarding_notifications_bullet_alert">Get alerted from notifications</string>
     <string name="onboarding_notifications_bullet_commands">Send commands to your device</string>
-    <string name="onboarding_notifications_subtitle">Enable notifications to create a notify service for your device</string>
+    <string name="onboarding_notifications_subtitle">Enable notifications to create a notify action for your device</string>
     <string name="open_with_headphone_button">Open with headset button</string>
     <string name="open_with_headphone_button_summary">Use Assist with the assistant/voice command button on supported headphones and earbuds</string>
     <string name="other_settings">Other settings</string>
@@ -759,7 +759,7 @@
     <string name="server_delete_confirm">Are you sure you want to delete this server from the app?</string>
     <string name="server_delete_working">Deleting server…</string>
     <string name="server_name">Server name</string>
-    <string name="service_call_failure">Unable to send service call</string>
+    <string name="action_failure">Unable to send action</string>
     <string name="session_timeout_title">Session timeout (in seconds)</string>
     <string name="set_favorite">Set favorites</string>
     <string name="set_favorites_on_device">Set favorites on Wear OS device</string>
@@ -985,10 +985,10 @@
     <string name="widget_background_type_daynight">Light/dark theme</string>
     <string name="widget_background_type_dynamiccolor">Dynamic color</string>
     <string name="widget_background_type_transparent">Transparent</string>
-    <string name="widget_button_image_description">Service button</string>
+    <string name="widget_button_image_description">Action button</string>
     <string name="widget_camera_description">Picture widget</string>
     <string name="widget_camera_contentdescription">Image</string>
-    <string name="widget_config_service_error">A custom component is preventing service data from loading.</string>
+    <string name="widget_config_action_error">A custom component is preventing action data from loading.</string>
     <string name="widget_creation_error">Unable to create widget.</string>
     <string name="widget_entity_fetch_error">Unable to fetch data for configured entity.</string>
     <string name="widget_image_description">Home Assistant widget</string>
@@ -1020,9 +1020,9 @@
     <string name="widget_tap_action_toggle">Toggle</string>
     <string name="widget_template_error">Unable to render the template</string>
     <string name="widget_text_hint_label">Label</string>
-    <string name="widget_text_hint_service_data">Entity ID</string>
-    <string name="widget_text_hint_service_domain">Domain</string>
-    <string name="widget_text_hint_service_service">Service</string>
+    <string name="widget_text_hint_action_data">Entity ID</string>
+    <string name="widget_text_hint_action_domain">Domain</string>
+    <string name="widget_text_hint_action_action">Action</string>
     <string name="widget_text_size_default">30</string>
     <string name="widget_text_size_label">Widget text size:</string>
     <string name="widget_text_size_template">12</string>

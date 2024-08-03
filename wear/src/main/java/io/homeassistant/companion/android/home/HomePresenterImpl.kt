@@ -99,7 +99,7 @@ class HomePresenterImpl @Inject constructor(
             else -> "turn_on"
         }
         try {
-            serverManager.integrationRepository().callService(
+            serverManager.integrationRepository().callAction(
                 domain,
                 serviceName,
                 hashMapOf("entity_id" to entityId)
@@ -111,7 +111,7 @@ class HomePresenterImpl @Inject constructor(
 
     override suspend fun onFanSpeedChanged(entityId: String, speed: Float) {
         try {
-            serverManager.integrationRepository().callService(
+            serverManager.integrationRepository().callAction(
                 entityId.split(".")[0],
                 "set_percentage",
                 hashMapOf(
@@ -126,7 +126,7 @@ class HomePresenterImpl @Inject constructor(
 
     override suspend fun onBrightnessChanged(entityId: String, brightness: Float) {
         try {
-            serverManager.integrationRepository().callService(
+            serverManager.integrationRepository().callAction(
                 entityId.split(".")[0],
                 "turn_on",
                 hashMapOf(
@@ -142,7 +142,7 @@ class HomePresenterImpl @Inject constructor(
     override suspend fun onColorTempChanged(entityId: String, colorTemp: Float, isKelvin: Boolean) {
         try {
             val colorTempKey = if (isKelvin) "color_temp_kelvin" else "color_temp"
-            serverManager.integrationRepository().callService(
+            serverManager.integrationRepository().callAction(
                 entityId.split(".")[0],
                 "turn_on",
                 hashMapOf(

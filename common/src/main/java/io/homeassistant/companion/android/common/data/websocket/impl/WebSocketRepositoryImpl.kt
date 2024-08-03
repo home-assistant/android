@@ -15,7 +15,7 @@ import io.homeassistant.companion.android.common.data.HomeAssistantApis.Companio
 import io.homeassistant.companion.android.common.data.HomeAssistantApis.Companion.USER_AGENT_STRING
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.authentication.AuthorizationException
-import io.homeassistant.companion.android.common.data.integration.ServiceData
+import io.homeassistant.companion.android.common.data.integration.ActionData
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
@@ -222,7 +222,7 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
             )
         )
 
-        val response: Map<String, Map<String, ServiceData>>? = mapResponse(socketResponse)
+        val response: Map<String, Map<String, ActionData>>? = mapResponse(socketResponse)
         return response?.map {
             DomainResponse(it.key, it.value)
         }

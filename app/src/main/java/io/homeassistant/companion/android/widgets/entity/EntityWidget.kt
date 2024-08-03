@@ -278,7 +278,7 @@ class EntityWidget : BaseWidgetProvider() {
             }
 
             if (!success) {
-                Toast.makeText(context, commonR.string.service_call_failure, Toast.LENGTH_LONG).show()
+                Toast.makeText(context, commonR.string.action_failure, Toast.LENGTH_LONG).show()
 
                 val views = getWidgetRemoteViews(context, appWidgetId)
                 appWidgetManager.updateAppWidget(appWidgetId, views)

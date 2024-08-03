@@ -44,7 +44,7 @@ object DefaultSliderControl : HaControl {
         integrationRepository: IntegrationRepository,
         action: ControlAction
     ): Boolean {
-        integrationRepository.callService(
+        integrationRepository.callAction(
             action.templateId.split(".")[0],
             "set_value",
             hashMapOf(

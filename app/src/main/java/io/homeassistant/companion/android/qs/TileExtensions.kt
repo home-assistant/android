@@ -291,7 +291,7 @@ abstract class TileExtensions : TileService() {
         withContext(Dispatchers.Main) {
             Toast.makeText(
                 applicationContext,
-                commonR.string.service_call_failure,
+                commonR.string.action_failure,
                 Toast.LENGTH_SHORT
             )
                 .show()

@@ -35,14 +35,14 @@ interface IntegrationRepository {
     suspend fun isHomeAssistantVersionAtLeast(year: Int, month: Int, release: Int): Boolean
 
     suspend fun getConfig(): GetConfigResponse
-    suspend fun getServices(): List<Service>?
+    suspend fun getServices(): List<Action>?
 
     suspend fun getEntities(): List<Entity<Any>>?
     suspend fun getEntity(entityId: String): Entity<Map<String, Any>>?
     suspend fun getEntityUpdates(): Flow<Entity<*>>?
     suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity<*>>?
 
-    suspend fun callService(domain: String, service: String, serviceData: HashMap<String, Any>)
+    suspend fun callAction(domain: String, action: String, actionData: HashMap<String, Any>)
 
     suspend fun scanTag(data: HashMap<String, Any>)
 

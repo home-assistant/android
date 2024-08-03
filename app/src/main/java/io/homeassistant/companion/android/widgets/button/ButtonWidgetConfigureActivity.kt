@@ -35,8 +35,8 @@ import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.integration.Action
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.Service
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetButtonConfigureBinding
@@ -46,7 +46,7 @@ import io.homeassistant.companion.android.util.icondialog.IconDialogFragment
 import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import io.homeassistant.companion.android.util.icondialog.mdiName
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
-import io.homeassistant.companion.android.widgets.common.ServiceFieldBinder
+import io.homeassistant.companion.android.widgets.common.ActionFieldBinder
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetDynamicFieldAdapter
 import javax.inject.Inject
@@ -63,9 +63,9 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     lateinit var buttonWidgetDao: ButtonWidgetDao
     override val dao get() = buttonWidgetDao
 
-    private var services = mutableMapOf<Int, HashMap<String, Service>>()
+    private var actions = mutableMapOf<Int, HashMap<String, Action>>()
     private var entities = mutableMapOf<Int, HashMap<String, Entity<Any>>>()
-    private var dynamicFields = ArrayList<ServiceFieldBinder>()
+    private var dynamicFields = ArrayList<ActionFieldBinder>()
     private lateinit var dynamicFieldAdapter: WidgetDynamicFieldAdapter
 
     private lateinit var binding: WidgetButtonConfigureBinding
@@ -78,7 +78,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
     private var requestLauncherSetup = false
 
-    private var serviceAdapter: SingleItemArrayAdapter<Service>? = null
+    private var actionAdapter: SingleItemArrayAdapter<Action>? = null
 
     private val onAddFieldListener = View.OnClickListener {
         val context = this@ButtonWidgetConfigureActivity
@@ -98,7 +98,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 val position = dynamicFields.size
                 dynamicFields.add(
                     position,
-                    ServiceFieldBinder(
+                    ActionFieldBinder(
                         binding.widgetTextConfigService.text.toString(),
                         fieldKeyInput.text.toString()
                     )
@@ -115,14 +115,14 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         }
     }
 
-    private val serviceTextWatcher: TextWatcher = (
+    private val actionTextWatcher: TextWatcher = (
         object : TextWatcher {
             @SuppressLint("NotifyDataSetChanged")
             override fun afterTextChanged(p0: Editable?) {
-                val serviceText: String = p0.toString()
+                val actionText: String = p0.toString()
 
-                if (services[selectedServerId].orEmpty().keys.contains(serviceText)) {
-                    Log.d(TAG, "Valid domain and service--processing dynamic fields")
+                if (actions[selectedServerId].orEmpty().keys.contains(actionText)) {
+                    Log.d(TAG, "Valid domain and action--processing dynamic fields")
 
                     // Make sure there are not already any dynamic fields created
                     // This can happen if selecting the drop-down twice or pasting
@@ -130,19 +130,19 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
                     // We only call this if servicesAvailable was fetched and is not null,
                     // so we can safely assume that it is not null here
-                    val serviceData = services[selectedServerId]!![serviceText]!!.serviceData
-                    val target = serviceData.target
-                    val fields = serviceData.fields
+                    val actionData = actions[selectedServerId]!![actionText]!!.actionData
+                    val target = actionData.target
+                    val fields = actionData.fields
 
                     val fieldKeys = fields.keys
-                    Log.d(TAG, "Fields applicable to this service: $fields")
+                    Log.d(TAG, "Fields applicable to this action: $fields")
 
-                    val existingServiceData = mutableMapOf<String, Any?>()
+                    val existingActionData = mutableMapOf<String, Any?>()
                     val addedFields = mutableListOf<String>()
                     buttonWidgetDao.get(appWidgetId)?.let { buttonWidget ->
                         if (
                             buttonWidget.serverId != selectedServerId ||
-                            "${buttonWidget.domain}.${buttonWidget.service}" != serviceText
+                            "${buttonWidget.domain}.${buttonWidget.service}" != actionText
                         ) {
                             return@let
                         }
@@ -150,13 +150,13 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                         val dbMap: HashMap<String, Any?> = jacksonObjectMapper().readValue(buttonWidget.serviceData)
                         for (item in dbMap) {
                             val value = item.value.toString().replace("[", "").replace("]", "") + if (item.key == "entity_id") ", " else ""
-                            existingServiceData[item.key] = value.ifEmpty { null }
+                            existingActionData[item.key] = value.ifEmpty { null }
                             addedFields.add(item.key)
                         }
                     }
 
                     if (target != false) {
-                        dynamicFields.add(0, ServiceFieldBinder(serviceText, "entity_id", existingServiceData["entity_id"]))
+                        dynamicFields.add(0, ActionFieldBinder(actionText, "entity_id", existingActionData["entity_id"]))
                     }
 
                     fieldKeys.sorted().forEach { fieldKey ->
@@ -166,14 +166,14 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                         // IDs get priority and go at the top, since the other fields
                         // are usually optional but the ID is required
                         if (fieldKey.contains("_id")) {
-                            dynamicFields.add(0, ServiceFieldBinder(serviceText, fieldKey, existingServiceData[fieldKey]))
+                            dynamicFields.add(0, ActionFieldBinder(actionText, fieldKey, existingActionData[fieldKey]))
                         } else {
-                            dynamicFields.add(ServiceFieldBinder(serviceText, fieldKey, existingServiceData[fieldKey]))
+                            dynamicFields.add(ActionFieldBinder(actionText, fieldKey, existingActionData[fieldKey]))
                         }
                     }
                     addedFields.minus("entity_id").minus(fieldKeys).forEach { extraFieldKey ->
                         Log.d(TAG, "Creating a text input box for extra $extraFieldKey")
-                        dynamicFields.add(ServiceFieldBinder(serviceText, extraFieldKey, existingServiceData[extraFieldKey]))
+                        dynamicFields.add(ActionFieldBinder(actionText, extraFieldKey, existingActionData[extraFieldKey]))
                     }
 
                     dynamicFieldAdapter.notifyDataSetChanged()
@@ -190,8 +190,8 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         }
         )
 
-    private fun getServiceString(service: Service): String {
-        return "${service.domain}.${service.service}"
+    private fun getActionString(action: Action): String {
+        return "${action.domain}.${action.action}"
     }
 
     public override fun onCreate(savedInstanceState: Bundle?) {
@@ -236,8 +236,8 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         binding.backgroundType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
 
         if (buttonWidget != null) {
-            val serviceText = "${buttonWidget.domain}.${buttonWidget.service}"
-            binding.widgetTextConfigService.setText(serviceText)
+            val actionText = "${buttonWidget.domain}.${buttonWidget.service}"
+            binding.widgetTextConfigService.setText(actionText)
             binding.label.setText(buttonWidget.label)
 
             binding.backgroundType.setSelection(
@@ -265,24 +265,24 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
         setupServerSelect(buttonWidget?.serverId)
 
-        serviceAdapter = SingleItemArrayAdapter(this) {
-            if (it != null) getServiceString(it) else ""
+        actionAdapter = SingleItemArrayAdapter(this) {
+            if (it != null) getActionString(it) else ""
         }
-        binding.widgetTextConfigService.setAdapter(serviceAdapter)
+        binding.widgetTextConfigService.setAdapter(actionAdapter)
         binding.widgetTextConfigService.onFocusChangeListener = dropDownOnFocus
 
         serverManager.defaultServers.forEach { server ->
             lifecycleScope.launch {
                 try {
-                    services[server.id] = HashMap()
+                    actions[server.id] = HashMap()
                     serverManager.integrationRepository(server.id).getServices()?.forEach {
-                        services[server.id]!![getServiceString(it)] = it
+                        actions[server.id]!![getActionString(it)] = it
                     }
-                    if (server.id == selectedServerId) setAdapterServices(server.id)
+                    if (server.id == selectedServerId) setAdapterActions(server.id)
                 } catch (e: Exception) {
-                    // Custom components can cause services to not load
+                    // Custom components can cause actions to not load
                     // Display error text
-                    Log.e(TAG, "Unable to load services from Home Assistant", e)
+                    Log.e(TAG, "Unable to load actions from Home Assistant", e)
                     if (server.id == selectedServerId) binding.widgetConfigServiceError.visibility = View.VISIBLE
                 }
             }
@@ -292,7 +292,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                     serverManager.integrationRepository(server.id).getEntities()?.forEach {
                         entities[server.id]!![it.entityId] = it
                     }
-                    if (server.id == selectedServerId) setAdapterServices(server.id)
+                    if (server.id == selectedServerId) setAdapterActions(server.id)
                 } catch (e: Exception) {
                     // If entities fail to load, it's okay to pass
                     // an empty map to the dynamicFieldAdapter
@@ -300,7 +300,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             }
         }
 
-        binding.widgetTextConfigService.addTextChangedListener(serviceTextWatcher)
+        binding.widgetTextConfigService.addTextChangedListener(actionTextWatcher)
 
         binding.backgroundType.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
@@ -315,12 +315,12 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         binding.addFieldButton.setOnClickListener(onAddFieldListener)
         binding.addButton.setOnClickListener {
             if (requestLauncherSetup) {
-                val widgetConfigService = binding.widgetTextConfigService.text.toString()
+                val widgetConfigAction = binding.widgetTextConfigService.text.toString()
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
                     selectedServerId != null &&
                     (
-                        widgetConfigService in services[selectedServerId].orEmpty().keys ||
-                            widgetConfigService.split(".", limit = 2).size == 2
+                        widgetConfigAction in actions[selectedServerId].orEmpty().keys ||
+                            widgetConfigAction.split(".", limit = 2).size == 2
                         )
                 ) {
                     getSystemService<AppWidgetManager>()?.requestPinAppWidget(
@@ -379,27 +379,27 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
     override fun onServerSelected(serverId: Int) {
         binding.widgetTextConfigService.setText("")
-        setAdapterServices(serverId)
+        setAdapterActions(serverId)
     }
 
     @SuppressLint("NotifyDataSetChanged")
-    private fun setAdapterServices(serverId: Int) {
-        Log.d(TAG, "Services found: $services")
-        serviceAdapter?.clearAll()
-        if (services[serverId] != null) {
-            serviceAdapter?.addAll(services[serverId]?.values.orEmpty().toMutableList())
-            serviceAdapter?.sort()
+    private fun setAdapterActions(serverId: Int) {
+        Log.d(TAG, "Actions found: $actions")
+        actionAdapter?.clearAll()
+        if (actions[serverId] != null) {
+            actionAdapter?.addAll(actions[serverId]?.values.orEmpty().toMutableList())
+            actionAdapter?.sort()
         }
         dynamicFieldAdapter.replaceValues(
-            services[serverId].orEmpty() as HashMap<String, Service>,
+            actions[serverId].orEmpty() as HashMap<String, Action>,
             entities[serverId].orEmpty() as HashMap<String, Entity<Any>>
         )
 
-        serviceTextWatcher.afterTextChanged(binding.widgetTextConfigService.text)
+        actionTextWatcher.afterTextChanged(binding.widgetTextConfigService.text)
 
-        // Update service adapter
+        // Update action adapter
         runOnUiThread {
-            serviceAdapter?.filter?.filter(binding.widgetTextConfigService.text)
+            actionAdapter?.filter?.filter(binding.widgetTextConfigService.text)
         }
     }
 
@@ -419,7 +419,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         try {
             val context = this@ButtonWidgetConfigureActivity
 
-            // Set up a broadcast intent and pass the service call data as extras
+            // Set up a broadcast intent and pass the action data as extras
             val intent = Intent()
             intent.action = ButtonWidget.RECEIVE_DATA
             intent.component = ComponentName(context, ButtonWidget::class.java)
@@ -431,18 +431,18 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 selectedServerId!!
             )
 
-            // Analyze and send service and domain
-            val serviceText = binding.widgetTextConfigService.text.toString()
-            val services = services[selectedServerId].orEmpty()
-            val domain = services[serviceText]?.domain ?: serviceText.split(".", limit = 2)[0]
-            val service = services[serviceText]?.service ?: serviceText.split(".", limit = 2)[1]
+            // Analyze and send action and domain
+            val actionText = binding.widgetTextConfigService.text.toString()
+            val actions = actions[selectedServerId].orEmpty()
+            val domain = actions[actionText]?.domain ?: actionText.split(".", limit = 2)[0]
+            val action = actions[actionText]?.action ?: actionText.split(".", limit = 2)[1]
             intent.putExtra(
                 ButtonWidget.EXTRA_DOMAIN,
                 domain
             )
             intent.putExtra(
-                ButtonWidget.EXTRA_SERVICE,
-                service
+                ButtonWidget.EXTRA_ACTION,
+                action
             )
 
             // Fetch and send label and icon
@@ -455,8 +455,8 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 binding.widgetConfigIconSelector.tag as String
             )
 
-            // Analyze and send service data
-            val serviceDataMap = HashMap<String, Any>()
+            // Analyze and send action data
+            val actionDataMap = HashMap<String, Any>()
             dynamicFields.forEach {
                 var value = it.value
                 if (value != null) {
@@ -465,13 +465,13 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                         val trailingRegex = "[, ]+$".toRegex()
                         value = value.replace(trailingRegex, "")
                     }
-                    serviceDataMap[it.field] = value
+                    actionDataMap[it.field] = value
                 }
             }
 
             intent.putExtra(
-                ButtonWidget.EXTRA_SERVICE_DATA,
-                jacksonObjectMapper().writeValueAsString(serviceDataMap)
+                ButtonWidget.EXTRA_ACTION_DATA,
+                jacksonObjectMapper().writeValueAsString(actionDataMap)
             )
 
             intent.putExtra(
