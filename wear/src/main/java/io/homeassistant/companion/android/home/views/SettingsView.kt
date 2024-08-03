@@ -68,12 +68,14 @@ fun SettingsView(
     isToastEnabled: Boolean,
     isFavoritesOnly: Boolean,
     isAssistantAppAllowed: Boolean,
+    areNotificationsAllowed: Boolean,
     onHapticEnabled: (Boolean) -> Unit,
     onToastEnabled: (Boolean) -> Unit,
     setFavoritesOnly: (Boolean) -> Unit,
     onClickCameraTile: () -> Unit,
     onClickTemplateTiles: () -> Unit,
-    onAssistantAppAllowed: (Boolean) -> Unit
+    onAssistantAppAllowed: (Boolean) -> Unit,
+    onClickNotifications: () -> Unit
 ) {
     WearAppTheme {
         ThemeLazyColumn {
@@ -224,6 +226,20 @@ fun SettingsView(
                     colors = getToggleButtonColors()
                 )
             }
+            if (!areNotificationsAllowed) {
+                item {
+                    ListHeader(
+                        id = commonR.string.notifications
+                    )
+                }
+                item {
+                    SecondarySettingsChip(
+                        icon = CommunityMaterial.Icon.cmd_bell_ring,
+                        label = stringResource(commonR.string.suggestion_notifications_title),
+                        onClick = onClickNotifications
+                    )
+                }
+            }
             item {
                 ListHeader(
                     id = commonR.string.account
@@ -268,11 +284,13 @@ private fun PreviewSettingsView() {
         isToastEnabled = false,
         isFavoritesOnly = false,
         isAssistantAppAllowed = true,
+        areNotificationsAllowed = false,
         onHapticEnabled = {},
         onToastEnabled = {},
         setFavoritesOnly = {},
         onClickCameraTile = {},
         onClickTemplateTiles = {},
-        onAssistantAppAllowed = {}
+        onAssistantAppAllowed = {},
+        onClickNotifications = {}
     )
 }

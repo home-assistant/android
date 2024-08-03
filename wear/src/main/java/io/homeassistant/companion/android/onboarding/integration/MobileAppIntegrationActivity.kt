@@ -57,7 +57,7 @@ class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationVi
     }
 
     override fun deviceRegistered() {
-        val intent = HomeActivity.newInstance(this)
+        val intent = HomeActivity.newInstance(this, fromOnboarding = true)
         // empty the back stack
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
