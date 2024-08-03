@@ -12,6 +12,7 @@ import android.hardware.SensorManager.SENSOR_STATUS_ACCURACY_LOW
 import android.hardware.SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM
 import android.hardware.SensorManager.SENSOR_STATUS_NO_CONTACT
 import android.hardware.SensorManager.SENSOR_STATUS_UNRELIABLE
+import android.os.Build
 import android.util.Log
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
@@ -57,8 +58,12 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
     }
 
     override fun hasSensor(context: Context): Boolean {
+        // Starting with Android 13 (T), background access requires BODY_SENSORS_BACKGROUND permission
+        // which must be allowlisted by OEMs. Because Home Assistant isn't allowlisted, the sensor only
+        // works while the app is visible and is practically useless, so don't make it available on 13+.
         val packageManager: PackageManager = context.packageManager
-        return packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_HEART_RATE)
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU &&
+            packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_HEART_RATE)
     }
 
     private lateinit var latestContext: Context
