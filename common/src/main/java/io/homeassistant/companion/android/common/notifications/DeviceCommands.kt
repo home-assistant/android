@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.common.notifications
 
 import android.content.Context
 import android.util.Log
+import androidx.core.text.isDigitsOnly
 import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.common.sensors.SensorUpdateReceiver
 import io.homeassistant.companion.android.database.sensor.SensorDao
@@ -75,7 +76,10 @@ private fun checkCommandFormat(data: Map<String, String>): Boolean {
                                 (data[NotificationData.COMMAND] == DeviceCommandData.BLE_SET_MINOR && !data[DeviceCommandData.BLE_MINOR].isNullOrEmpty()) ||
                                 (
                                     data[NotificationData.COMMAND] == DeviceCommandData.BLE_SET_MEASURED_POWER &&
-                                        (!data[DeviceCommandData.BLE_MEASURED_POWER].isNullOrEmpty() && (data[DeviceCommandData.BLE_MEASURED_POWER]?.toIntOrNull() ?: BluetoothSensorManager.DEFAULT_MEASURED_POWER_AT_1M) < 0)
+                                        (
+                                            !data[DeviceCommandData.BLE_MEASURED_POWER].isNullOrEmpty() && data[DeviceCommandData.BLE_MEASURED_POWER]?.removePrefix('-'.toString())?.isDigitsOnly() == true &&
+                                                (data[DeviceCommandData.BLE_MEASURED_POWER]?.toIntOrNull() ?: BluetoothSensorManager.DEFAULT_MEASURED_POWER_AT_1M) < 0
+                                            )
                                     )
                             )
                     )
