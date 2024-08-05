@@ -39,8 +39,7 @@ class TileActionReceiver : BroadcastReceiver() {
                     it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     context.startActivity(it)
                 }
-            }
-            else {
+            } else {
                 runBlocking {
                     if (wearPrefsRepository.getWearHapticFeedback() && context != null) hapticClick(context)
 

@@ -130,11 +130,11 @@ fun ChooseEntityView(
             }
             if (expandedAppShortcuts) {
                 // HomeAssistant app shortcut
-                item {     
+                item {
                     Button(
                         modifier = Modifier
                             .fillMaxWidth(),
-                        icon = { 
+                        icon = {
                             Image(
                                 asset = CommunityMaterial.Icon2.cmd_home_assistant,
                                 colorFilter = ColorFilter.tint(Color.White)
@@ -154,11 +154,11 @@ fun ChooseEntityView(
                     )
                 }
                 // Assist shortcut
-                item {     
+                item {
                     Button(
                         modifier = Modifier
                             .fillMaxWidth(),
-                        icon = { 
+                        icon = {
                             Image(
                                 asset = CommunityMaterial.Icon.cmd_comment_processing_outline,
                                 colorFilter = ColorFilter.tint(Color.White)
