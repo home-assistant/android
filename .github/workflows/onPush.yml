@@ -187,9 +187,9 @@ jobs:
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
         run: |
           ./gradlew :common:assemble
-          ./gradlew :app:bundleRelease
+          ./gradlew :app:bundleFullRelease
           ./gradlew :wear:bundleRelease
-          ./gradlew :automotive:bundleRelease
+          ./gradlew :automotive:bundleFullRelease
 
       - name: Deploy to Playstore Internal
         run: bundle exec fastlane deploy_internal
