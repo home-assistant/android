@@ -44,6 +44,7 @@
     <string name="background_access_enabled">Home Assistant has access to run in the background</string>
     <string name="background_access_title">Background access</string>
     <string name="basic_sensor_lullaby">Lullaby</string>
+    <string name="basic_sensor_name_active_calories_burned">Active calories burned</string>
     <string name="basic_sensor_name_active_notification_count">Active notification count</string>
     <string name="basic_sensor_name_activity">Detected activity</string>
     <string name="basic_sensor_name_alarm">Next alarm</string>
@@ -105,8 +106,10 @@
     <string name="basic_sensor_name_sim2">SIM 2</string>
     <string name="basic_sensor_name_sleep_confidence">Sleep confidence</string>
     <string name="basic_sensor_name_sleep_segment">Sleep segment</string>
+    <string name="basic_sensor_name_total_calories_burned">Total calories burned</string>
     <string name="basic_sensor_name_total_rx_gb">Total Rx GB</string>
     <string name="basic_sensor_name_total_tx_gb">Total Tx GB</string>
+    <string name="basic_sensor_name_weight">Weight</string>
     <string name="basic_sensor_name_wifi_bssid">WiFi BSSID</string>
     <string name="basic_sensor_name_wifi_frequency">WiFi frequency</string>
     <string name="basic_sensor_name_wifi_ip">WiFi IP address</string>
@@ -560,6 +563,7 @@
     <string name="select_entity_to_display">Select entity to display</string>
     <string name="select_file">Select file</string>
     <string name="select_instance">Select your Home Assistant server</string>
+    <string name="sensor_description_active_calories_burned">Get active calories burned from Health Connect</string>
     <string name="sensor_description_active_notification_count">Total count of active notifications that are visible to the user including silent, persistent and the Sensor Worker notifications. Attributes will include the contents of all notifications if the corresponding setting is enabled. It\'s enabled by default.</string>
     <string name="sensor_description_app_importance">If the app is in the foreground, background or any other state it can be</string>
     <string name="sensor_description_android_auto">If the phone is currently connected to an Android Auto head unit</string>
@@ -636,12 +640,14 @@
     <string name="sensor_description_speakerphone">Whether speakerphone is enabled on the device</string>
     <string name="sensor_description_steps_sensor">The total number of steps since the last reboot of the device</string>
     <string name="sensor_description_storage_sensor">Information about the total and available storage space internally and externally</string>
+    <string name="sensor_description_total_calories_burned">Get total calories burned from Health Connect</string>
     <string name="sensor_description_total_rx_gb">Total Rx GB since last device reboot</string>
     <string name="sensor_description_total_tx_gb">Total Tx GB since last device reboot</string>
     <string name="sensor_description_volume_alarm">Volume level for alarms on the device</string>
     <string name="sensor_description_volume_call">Volume level for calls on the device</string>
     <string name="sensor_description_volume_music">Volume level for music on the device</string>
     <string name="sensor_description_volume_ring">Volume level for the ringer on the device</string>
+    <string name="sensor_description_weight">Last recorded weight in Health Connect</string>
     <string name="sensor_description_wifi_bssid">The mac address of the currently connected WiFi access point. Enabling the \"Get current BSSID\" toggle will create a new setting allowing you to rename the state sent back to Home Assistant for the chosen mac address. The toggle will default to off after the current BSSID is stored, so you will need to enable it once for each BSSID you wish to rename. You can also clear out the value to remove the setting in the next update.</string>
     <string name="sensor_description_wifi_connection">The name of the network the device is currently connected to</string>
     <string name="sensor_description_wifi_frequency">The frequency band of the connected network</string>
@@ -1267,4 +1273,5 @@
     <string name="state_tampering_detected">Tampering detected</string>
     <string name="state_update_available">Update available</string>
     <string name="state_up_to_date">Up-to-date</string>
+    <string name="sensor_name_health_connect">Health Connect sensors</string>
 </resources>
