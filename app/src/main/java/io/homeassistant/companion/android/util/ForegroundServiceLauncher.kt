@@ -103,9 +103,9 @@ class ForegroundServiceLauncher(private val serviceClass: Class<out Service>) {
     }
 
     @Synchronized
-    fun onServiceCreated(service: Service, id: Int, notification: Notification) {
+    fun onServiceCreated(service: Service, id: Int, notification: Notification, foregroundServiceType: Int) {
         // Make sure to call the startForeground method as fast as possible
-        service.startForeground(id, notification)
+        ServiceCompat.startForeground(service, id, notification, foregroundServiceType)
         isStarting = false
         isRunning = true
         restartInProcess = false
