@@ -131,9 +131,11 @@ class TemplateWidget : AppWidgetProvider() {
             val widgetsWithDifferentTemplate = allWidgets.filter { it.template != widgetTemplates[it.id] }
             if (widgetsWithDifferentTemplate.isNotEmpty()) {
                 if (thisSetScope) {
-                    context.applicationContext.registerReceiver(
+                    ContextCompat.registerReceiver(
+                        context.applicationContext,
                         this@TemplateWidget,
-                        IntentFilter(Intent.ACTION_SCREEN_OFF)
+                        IntentFilter(Intent.ACTION_SCREEN_OFF),
+                        ContextCompat.RECEIVER_NOT_EXPORTED
                     )
                 }
 

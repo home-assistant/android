@@ -10,6 +10,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
@@ -82,9 +83,11 @@ class NfcSetupActivity : BaseActivity() {
         mNfcAdapter?.let {
             NFCUtil.enableNFCInForeground(it, this, javaClass)
         }
-        registerReceiver(
+        ContextCompat.registerReceiver(
+            this,
             nfcStateChangedReceiver,
-            IntentFilter(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED)
+            IntentFilter(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED),
+            ContextCompat.RECEIVER_NOT_EXPORTED
         )
     }
 
