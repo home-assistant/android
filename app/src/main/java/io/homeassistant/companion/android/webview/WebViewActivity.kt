@@ -346,7 +346,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                         webView.clearHistory()
                         clearHistory = false
                     }
-                    enablePinchToZoom()
+                    setWebViewZoom()
                     if (moreInfoEntity != "" && view?.progress == 100 && isConnected) {
                         ioScope.launch {
                             val owner = "onPageFinished:$moreInfoEntity"
@@ -880,7 +880,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         appLocked = presenter.isAppLocked()
         binding.blurView.setBlurEnabled(appLocked)
 
-        enablePinchToZoom()
+        setWebViewZoom()
 
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG || presenter.isWebViewDebugEnabled())
 
@@ -1610,7 +1610,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         return super.dispatchKeyEvent(event)
     }
 
-    private fun enablePinchToZoom() {
+    private fun setWebViewZoom() {
+        // Set base zoom level (percentage must be scaled to device density/percentage)
+        webView.setInitialScale((resources.displayMetrics.density * presenter.getPageZoomLevel()).toInt())
+
         // Enable pinch to zoom
         webView.settings.builtInZoomControls = presenter.isPinchToZoomEnabled()
         // Use idea from https://github.com/home-assistant/iOS/pull/1472 to filter viewport

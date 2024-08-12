@@ -47,6 +47,10 @@ interface PrefsRepository {
 
     suspend fun saveScreenOrientation(orientation: String?)
 
+    suspend fun getPageZoomLevel(): Int
+
+    suspend fun setPageZoomLevel(level: Int?)
+
     suspend fun isPinchToZoomEnabled(): Boolean
 
     suspend fun setPinchToZoomEnabled(enabled: Boolean)

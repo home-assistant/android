@@ -30,6 +30,7 @@ interface WebViewPresenter {
 
     fun isKeepScreenOnEnabled(): Boolean
 
+    fun getPageZoomLevel(): Int
     fun isPinchToZoomEnabled(): Boolean
     fun isWebViewDebugEnabled(): Boolean
 
