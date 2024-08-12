@@ -1274,4 +1274,8 @@
     <string name="state_update_available">Update available</string>
     <string name="state_up_to_date">Up-to-date</string>
     <string name="sensor_name_health_connect">Health Connect sensors</string>
+    <string name="basic_sensor_name_signal_strength">Signal strength</string>
+    <string name="sensor_description_signal_strength">Get the most recently available signal strength information. Due to power saving this information may not always be current.</string>
+    <string name="basic_sensor_name_data_network_type">Data network type</string>
+    <string name="sensor_description_data_network_type">The radio technology (network type) currently in use on the device for data transmission</string>
 </resources>
