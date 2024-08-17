@@ -123,6 +123,9 @@ class HealthConnectSensorManager : SensorManager {
             pageSize = 1
         )
         val response = runBlocking { healthConnectClient.readRecords(weightRequest) }
+        if (response.records.isEmpty()) {
+            return
+        }
         onSensorUpdated(
             context,
             weight,
