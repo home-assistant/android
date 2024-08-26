@@ -61,6 +61,7 @@ class ButtonWidget : AppWidgetProvider() {
         internal const val EXTRA_ACTION_DATA = "EXTRA_SERVICE_DATA"
         internal const val EXTRA_LABEL = "EXTRA_LABEL"
         internal const val EXTRA_ICON_NAME = "EXTRA_ICON_NAME"
+        internal const val EXTRA_ICON_COLOR = "EXTRA_ICON_COLOR"
         internal const val EXTRA_BACKGROUND_TYPE = "EXTRA_BACKGROUND_TYPE"
         internal const val EXTRA_TEXT_COLOR = "EXTRA_TEXT_COLOR"
         internal const val EXTRA_REQUIRE_AUTHENTICATION = "EXTRA_REQUIRE_AUTHENTICATION"
@@ -232,6 +233,13 @@ class ButtonWidget : AppWidgetProvider() {
             // Render the icon into the Button's ImageView
             setImageViewBitmap(R.id.widgetImageButton, icon.toBitmap(width, height))
 
+            widget?.iconColor?.let {
+                if(it.isNotBlank()) {
+                    setInt(R.id.widgetImageButton, "setColorFilter", Color.parseColor(it))
+                    setInt(R.id.widgetImageButtonBackground, "setColorFilter", Color.parseColor(it))
+                }
+            }
+
             setOnClickPendingIntent(
                 R.id.widgetImageButtonLayout,
                 PendingIntent.getBroadcast(
@@ -367,6 +375,7 @@ class ButtonWidget : AppWidgetProvider() {
         val label: String? = extras.getString(EXTRA_LABEL)
         val requireAuthentication: Boolean = extras.getBoolean(EXTRA_REQUIRE_AUTHENTICATION)
         val icon: String = extras.getString(EXTRA_ICON_NAME) ?: "mdi:flash"
+        val iconColor: String? = extras.getString(EXTRA_ICON_COLOR)
         val backgroundType = BundleCompat.getSerializable(extras, EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
             ?: WidgetBackgroundType.DAYNIGHT
         val textColor: String? = extras.getString(EXTRA_TEXT_COLOR)
@@ -387,7 +396,7 @@ class ButtonWidget : AppWidgetProvider() {
                     "label: " + label
             )
 
-            val widget = ButtonWidgetEntity(appWidgetId, serverId, icon, domain, action, actionData, label, backgroundType, textColor, requireAuthentication)
+            val widget = ButtonWidgetEntity(appWidgetId, serverId, icon, domain, action, actionData, label, iconColor, backgroundType, textColor, requireAuthentication)
             buttonWidgetDao.add(widget)
 
             // It is the responsibility of the configuration activity to update the app widget

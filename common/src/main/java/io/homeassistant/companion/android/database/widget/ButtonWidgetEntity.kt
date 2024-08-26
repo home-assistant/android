@@ -20,6 +20,8 @@ data class ButtonWidgetEntity(
     val serviceData: String,
     @ColumnInfo(name = "label")
     val label: String?,
+    @ColumnInfo(name = "icon_color")
+    val iconColor: String?,
     @ColumnInfo(name = "background_type", defaultValue = "DAYNIGHT")
     override val backgroundType: WidgetBackgroundType = WidgetBackgroundType.DAYNIGHT,
     @ColumnInfo(name = "text_color")

@@ -239,6 +239,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             val actionText = "${buttonWidget.domain}.${buttonWidget.service}"
             binding.widgetTextConfigService.setText(actionText)
             binding.label.setText(buttonWidget.label)
+            binding.iconColor.setText(buttonWidget.iconColor)
 
             binding.backgroundType.setSelection(
                 when {
@@ -453,6 +454,10 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             intent.putExtra(
                 ButtonWidget.EXTRA_ICON_NAME,
                 binding.widgetConfigIconSelector.tag as String
+            )
+            intent.putExtra(
+                ButtonWidget.EXTRA_ICON_COLOR,
+                binding.iconColor.text.toString()
             )
 
             // Analyze and send action data

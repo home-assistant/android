@@ -121,6 +121,28 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
                 android:padding="5dp"
+                android:text="@string/label_icon_color" />
+
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/icon_color"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/widget_text_hint_icon_color"
+                android:imeOptions="actionDone"
+                android:inputType="text" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+        <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:padding="5dp"
                 android:text="@string/label_label" />
 
             <androidx.appcompat.widget.AppCompatEditText

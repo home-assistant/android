@@ -331,6 +331,7 @@
     <string name="label_entity_id">Entity ID:</string>
     <string name="label_entity_ids">Entity ID(s):</string>
     <string name="label_icon">Icon:</string>
+    <string name="label_icon_color">Icon color:</string>
     <string name="label_label">Label:</string>
     <string name="label_action">Action:</string>
     <string name="label">Label</string>
@@ -1025,6 +1026,7 @@
     <string name="widget_tap_action_label">Tap action:</string>
     <string name="widget_tap_action_toggle">Toggle</string>
     <string name="widget_template_error">Unable to render the template</string>
+    <string name="widget_text_hint_icon_color">Color in hex format (eg. #FF0000)</string>
     <string name="widget_text_hint_label">Label</string>
     <string name="widget_text_hint_action_data">Entity ID</string>
     <string name="widget_text_hint_action_domain">Domain</string>
