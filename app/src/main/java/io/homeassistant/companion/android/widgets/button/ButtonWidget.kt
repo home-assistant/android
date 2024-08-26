@@ -234,7 +234,7 @@ class ButtonWidget : AppWidgetProvider() {
             setImageViewBitmap(R.id.widgetImageButton, icon.toBitmap(width, height))
 
             widget?.iconColor?.let {
-                if(it.isNotBlank()) {
+                if (it.isNotBlank()) {
                     setInt(R.id.widgetImageButton, "setColorFilter", Color.parseColor(it))
                     setInt(R.id.widgetImageButtonBackground, "setColorFilter", Color.parseColor(it))
                 }
