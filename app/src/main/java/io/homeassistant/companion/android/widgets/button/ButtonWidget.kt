@@ -67,6 +67,7 @@ class ButtonWidget : AppWidgetProvider() {
 
         // Vector icon rendering resolution fallback (if we can't infer via AppWidgetManager for some reason)
         private const val DEFAULT_MAX_ICON_SIZE = 512
+        private const val SMALL_MAX_ICON_SIZE = 80
     }
 
     @Inject
@@ -202,6 +203,9 @@ class ButtonWidget : AppWidgetProvider() {
             val icon = DrawableCompat.wrap(iconDrawable)
             if (widget?.backgroundType == WidgetBackgroundType.TRANSPARENT) {
                 setInt(R.id.widgetImageButton, "setColorFilter", textColor)
+                setInt(R.id.widgetImageButton, "setBackgroundColor", Color.TRANSPARENT)
+            } else {
+                setInt(R.id.widgetImageButton, "setColorFilter", Color.TRANSPARENT)
             }
 
             // Determine reasonable dimensions for drawing vector icon as a bitmap
@@ -210,11 +214,11 @@ class ButtonWidget : AppWidgetProvider() {
             val maxWidth = (
                 awo?.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, DEFAULT_MAX_ICON_SIZE)
                     ?: DEFAULT_MAX_ICON_SIZE
-                ).coerceAtLeast(16)
+                ).coerceAtLeast(16).coerceAtMost(SMALL_MAX_ICON_SIZE)
             val maxHeight = (
                 awo?.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, DEFAULT_MAX_ICON_SIZE)
                     ?: DEFAULT_MAX_ICON_SIZE
-                ).coerceAtLeast(16)
+                ).coerceAtLeast(16).coerceAtMost(SMALL_MAX_ICON_SIZE)
             val width: Int
             val height: Int
             if (maxWidth > maxHeight) {

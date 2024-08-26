@@ -10,44 +10,43 @@
     android:background="@drawable/widget_button_background"
     android:padding="4dp">
 
-    <LinearLayout
+    <RelativeLayout
         android:id="@+id/widgetImageButtonLayout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:paddingVertical="4dp"
+        android:layout_height="wrap_content"
+        android:paddingVertical="8dp"
+        android:paddingHorizontal="4dp"
         android:orientation="vertical">
 
-        <ImageView
+        <ImageButton
             android:id="@+id/widgetImageButton"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:src="@drawable/ic_flash_on_24dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/rounded_image_background"
             android:contentDescription="@string/widget_button_image_description"
-            android:gravity="center"
-            android:tint="?colorWidgetPrimary"
-            tools:ignore="UseAppTint" />
+            android:src="@drawable/ic_flash_on_24dp"
+            app:tint="@color/colorDynamicWidgetBackground"/>
 
         <LinearLayout
             android:id="@+id/widgetLabelLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
             android:layout_margin="2dp">
 
             <TextView
                 android:id="@+id/widgetLabel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
                 android:text="@string/widget_label_placeholder_text_button"
-                android:textSize="12sp"
-                android:textAlignment="center"
-                android:gravity="center"
+                android:textStyle="bold"
+                android:textSize="20sp"
+                android:textAlignment="textStart"
                 android:textColor="?colorWidgetOnBackground"
                 android:minLines="1"
                 android:maxLines="2" />
         </LinearLayout>
-    </LinearLayout>
+    </RelativeLayout>
 
     <ProgressBar
         android:id="@+id/widgetProgressBar"
