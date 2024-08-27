@@ -6,7 +6,7 @@
     android:minHeight="40dp"
     android:minWidth="40dp"
     android:background="@drawable/widget_button_background"
-    android:padding="8dp">
+    android:padding="6dp">
 
     <RelativeLayout
         android:id="@+id/widgetImageButtonLayout"
@@ -49,8 +49,7 @@
                 android:text="@string/widget_label_placeholder_text_button"
                 android:textAlignment="textStart"
                 android:textColor="?colorWidgetOnBackground"
-                android:textSize="20sp"
-                android:textStyle="bold" />
+                android:textSize="12sp" />
         </LinearLayout>
     </RelativeLayout>
 
