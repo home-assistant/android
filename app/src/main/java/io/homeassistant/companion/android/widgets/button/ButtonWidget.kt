@@ -234,10 +234,7 @@ class ButtonWidget : AppWidgetProvider() {
             setImageViewBitmap(R.id.widgetImageButton, icon.toBitmap(width, height))
 
             widget?.iconColor?.let {
-                if (it.isNotBlank()) {
-                    setInt(R.id.widgetImageButton, "setColorFilter", Color.parseColor(it))
-                    setInt(R.id.widgetImageButtonBackground, "setColorFilter", Color.parseColor(it))
-                }
+                setCustomColorToIcon(it, this)
             }
 
             setOnClickPendingIntent(
@@ -405,5 +402,15 @@ class ButtonWidget : AppWidgetProvider() {
             // it is just calling onUpdate manually here.
             onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
         }
+    }
+
+    private fun setCustomColorToIcon(colorString: String, remoteViews: RemoteViews) {
+        val validColor = try {
+            Color.parseColor(colorString)
+        } catch (e: Exception) {
+            null
+        }
+        remoteViews.setInt(R.id.widgetImageButton, "setColorFilter", validColor ?: Color.TRANSPARENT)
+        remoteViews.setInt(R.id.widgetImageButtonBackground, "setColorFilter", validColor ?: Color.TRANSPARENT)
     }
 }

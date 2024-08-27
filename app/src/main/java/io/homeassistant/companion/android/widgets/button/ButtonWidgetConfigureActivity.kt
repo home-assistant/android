@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Intent
+import android.graphics.Color
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
 import android.os.Build
@@ -437,6 +438,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             val actions = actions[selectedServerId].orEmpty()
             val domain = actions[actionText]?.domain ?: actionText.split(".", limit = 2)[0]
             val action = actions[actionText]?.action ?: actionText.split(".", limit = 2)[1]
+            val iconColorText = validateIconColorText(binding.iconColor.text.toString())
             intent.putExtra(
                 ButtonWidget.EXTRA_DOMAIN,
                 domain
@@ -444,6 +446,10 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             intent.putExtra(
                 ButtonWidget.EXTRA_ACTION,
                 action
+            )
+            intent.putExtra(
+                ButtonWidget.EXTRA_ICON_COLOR,
+                iconColorText
             )
 
             // Fetch and send label and icon
@@ -454,10 +460,6 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             intent.putExtra(
                 ButtonWidget.EXTRA_ICON_NAME,
                 binding.widgetConfigIconSelector.tag as String
-            )
-            intent.putExtra(
-                ButtonWidget.EXTRA_ICON_COLOR,
-                binding.iconColor.text.toString()
             )
 
             // Analyze and send action data
@@ -510,6 +512,19 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         } catch (e: Exception) {
             Log.e(TAG, "Issue configuring widget", e)
             showAddWidgetError()
+        }
+    }
+
+    private fun validateIconColorText(input: String): String {
+        return if (input.isEmpty()) {
+            input
+        } else {
+            try {
+                Color.parseColor(input)
+                input
+            } catch (e: Exception) {
+                ""
+            }
         }
     }
 }

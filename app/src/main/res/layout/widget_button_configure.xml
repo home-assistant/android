@@ -128,7 +128,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/widget_text_hint_icon_color"
-                android:imeOptions="actionDone"
                 android:inputType="text" />
         </LinearLayout>
 
@@ -138,7 +137,7 @@
             android:gravity="center"
             android:orientation="horizontal">
 
-        <TextView
+            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
