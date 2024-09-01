@@ -29,5 +29,6 @@ dependencyResolutionManagement {
         mavenCentral()
         google()
         maven("https://jitpack.io")
+        maven("https://plugins.jetbrains.com/plugin/10766-database-debugger")
     }
 }

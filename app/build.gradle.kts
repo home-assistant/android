@@ -118,6 +118,7 @@ android {
 
 dependencies {
     implementation(project(":common"))
+    implementation(libs.mpgraph)
 
     coreLibraryDesugaring(libs.tools.desugar.jdk)
 

@@ -30,7 +30,6 @@ import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.util.CHANNEL_DATABASE
 import io.homeassistant.companion.android.database.authentication.Authentication
@@ -65,6 +64,9 @@ import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
+import io.homeassistant.companion.android.database.widget.GraphWidgetDao
+import io.homeassistant.companion.android.database.widget.GraphWidgetEntity
+import io.homeassistant.companion.android.database.widget.GraphWidgetHistoryEntity
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
@@ -73,8 +75,9 @@ import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundTypeConverter
 import io.homeassistant.companion.android.database.widget.WidgetTapActionConverter
-import java.util.UUID
 import kotlinx.coroutines.runBlocking
+import java.util.UUID
+import io.homeassistant.companion.android.common.R as commonR
 
 @Database(
     entities = [
@@ -86,6 +89,8 @@ import kotlinx.coroutines.runBlocking
         CameraWidgetEntity::class,
         MediaPlayerControlsWidgetEntity::class,
         StaticWidgetEntity::class,
+        GraphWidgetEntity::class,
+        GraphWidgetHistoryEntity::class,
         TemplateWidgetEntity::class,
         NotificationItem::class,
         LocationHistoryItem::class,
@@ -97,7 +102,7 @@ import kotlinx.coroutines.runBlocking
         Server::class,
         Setting::class
     ],
-    version = 47,
+    version = 48,
     autoMigrations = [
         AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
@@ -120,7 +125,8 @@ import kotlinx.coroutines.runBlocking
         AutoMigration(from = 43, to = 44),
         AutoMigration(from = 44, to = 45),
         AutoMigration(from = 45, to = 46),
-        AutoMigration(from = 46, to = 47)
+        AutoMigration(from = 46, to = 47),
+        AutoMigration(from = 47, to = 48)
     ]
 )
 @TypeConverters(
@@ -138,6 +144,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun cameraWidgetDao(): CameraWidgetDao
     abstract fun mediaPlayCtrlWidgetDao(): MediaPlayerControlsWidgetDao
     abstract fun staticWidgetDao(): StaticWidgetDao
+    abstract fun graphWidgetDao(): GraphWidgetDao
     abstract fun templateWidgetDao(): TemplateWidgetDao
     abstract fun notificationDao(): NotificationDao
     abstract fun locationHistoryDao(): LocationHistoryDao

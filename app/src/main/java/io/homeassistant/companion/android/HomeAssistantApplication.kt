@@ -24,14 +24,15 @@ import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.websocket.WebsocketBroadcastReceiver
 import io.homeassistant.companion.android.widgets.button.ButtonWidget
 import io.homeassistant.companion.android.widgets.entity.EntityWidget
+import io.homeassistant.companion.android.widgets.graph.GraphWidget
 import io.homeassistant.companion.android.widgets.mediaplayer.MediaPlayerControlsWidget
 import io.homeassistant.companion.android.widgets.template.TemplateWidget
-import javax.inject.Inject
-import javax.inject.Named
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import javax.inject.Inject
+import javax.inject.Named
 
 @HiltAndroidApp
 open class HomeAssistantApplication : Application() {
@@ -240,6 +241,7 @@ open class HomeAssistantApplication : Application() {
         // Update widgets when the screen turns on, updates are skipped if widgets were not added
         val buttonWidget = ButtonWidget()
         val entityWidget = EntityWidget()
+        val graphWidget = GraphWidget()
         val mediaPlayerWidget = MediaPlayerControlsWidget()
         val templateWidget = TemplateWidget()
 
@@ -249,6 +251,7 @@ open class HomeAssistantApplication : Application() {
 
         registerReceiver(buttonWidget, screenIntentFilter)
         registerReceiver(entityWidget, screenIntentFilter)
+        registerReceiver(graphWidget, screenIntentFilter)
         registerReceiver(mediaPlayerWidget, screenIntentFilter)
         registerReceiver(templateWidget, screenIntentFilter)
     }

@@ -42,6 +42,7 @@ import io.homeassistant.companion.android.util.compose.MdcAlertDialog
 import io.homeassistant.companion.android.widgets.button.ButtonWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.camera.CameraWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureActivity
+import io.homeassistant.companion.android.widgets.graph.GraphWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.mediaplayer.MediaPlayerControlsWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.template.TemplateWidgetConfigureActivity
 
@@ -49,6 +50,7 @@ enum class WidgetType(val widgetIcon: IIcon) {
     BUTTON(CommunityMaterial.Icon2.cmd_gesture_tap),
     CAMERA(CommunityMaterial.Icon.cmd_camera_image),
     STATE(CommunityMaterial.Icon3.cmd_shape),
+    GRAPH(CommunityMaterial.Icon2.cmd_file_chart),
     MEDIA(CommunityMaterial.Icon3.cmd_play_box_multiple),
     TEMPLATE(CommunityMaterial.Icon.cmd_code_braces);
 
@@ -57,6 +59,7 @@ enum class WidgetType(val widgetIcon: IIcon) {
         CAMERA -> CameraWidgetConfigureActivity::class.java
         MEDIA -> MediaPlayerControlsWidgetConfigureActivity::class.java
         STATE -> EntityWidgetConfigureActivity::class.java
+        GRAPH -> GraphWidgetConfigureActivity::class.java
         TEMPLATE -> TemplateWidgetConfigureActivity::class.java
     }
 }
@@ -82,6 +85,7 @@ fun ManageWidgetsView(
                 stringResource(R.string.widget_button_image_description) to WidgetType.BUTTON,
                 stringResource(R.string.widget_camera_description) to WidgetType.CAMERA,
                 stringResource(R.string.widget_static_image_description) to WidgetType.STATE,
+                stringResource(R.string.widget_graph_image_description) to WidgetType.GRAPH,
                 stringResource(R.string.widget_media_player_description) to WidgetType.MEDIA,
                 stringResource(R.string.template_widget) to WidgetType.TEMPLATE
             ).sortedBy { it.first }
@@ -110,7 +114,7 @@ fun ManageWidgetsView(
         ) {
             if (viewModel.buttonWidgetList.value.isEmpty() && viewModel.staticWidgetList.value.isEmpty() &&
                 viewModel.mediaWidgetList.value.isEmpty() && viewModel.templateWidgetList.value.isEmpty() &&
-                viewModel.cameraWidgetList.value.isEmpty()
+                viewModel.templateWidgetList.value.isEmpty() && viewModel.graphWidgetList.value.isEmpty()
             ) {
                 item {
                     EmptyState(
@@ -139,6 +143,15 @@ fun ManageWidgetsView(
                 viewModel.staticWidgetList.value,
                 widgetType = WidgetType.STATE,
                 title = R.string.entity_state_widgets,
+                widgetLabel = { item ->
+                    val label = item.label
+                    if (!label.isNullOrEmpty()) label else "${item.entityId} ${item.stateSeparator} ${item.attributeIds.orEmpty()}"
+                }
+            )
+            widgetItems(
+                viewModel.graphWidgetList.value,
+                widgetType = WidgetType.GRAPH,
+                title = R.string.graph_state_widgets,
                 widgetLabel = { item ->
                     val label = item.label
                     if (!label.isNullOrEmpty()) label else "${item.entityId} ${item.stateSeparator} ${item.attributeIds.orEmpty()}"

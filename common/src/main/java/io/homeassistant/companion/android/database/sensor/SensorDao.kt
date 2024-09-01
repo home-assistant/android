@@ -14,10 +14,10 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface SensorDao {
 
-    @Query("SELECT * FROM Sensors WHERE id = :id")
+    @Query("SELECT * FROM sensors WHERE id = :id")
     fun get(id: String): List<Sensor>
 
-    @Query("SELECT * FROM Sensors WHERE id = :id AND server_id = :serverId")
+    @Query("SELECT * FROM sensors WHERE id = :id AND server_id = :serverId")
     fun get(id: String, serverId: Int): Sensor?
 
     @Query("SELECT * FROM sensors")
@@ -35,10 +35,10 @@ interface SensorDao {
     @Query("SELECT * FROM sensors LEFT JOIN sensor_attributes ON sensors.id = sensor_attributes.sensor_id WHERE sensors.id = :id")
     fun getFullFlow(id: String): Flow<Map<Sensor, List<Attribute>>>
 
-    @Query("SELECT * FROM Sensors WHERE server_id = :serverId")
+    @Query("SELECT * FROM sensors WHERE server_id = :serverId")
     suspend fun getAllServer(serverId: Int): List<Sensor>
 
-    @Query("SELECT * FROM Sensors WHERE NOT(server_id IN (:serverIds))")
+    @Query("SELECT * FROM sensors WHERE NOT(server_id IN (:serverIds))")
     suspend fun getAllExceptServer(serverIds: List<Int>): List<Sensor>
 
     @Transaction
