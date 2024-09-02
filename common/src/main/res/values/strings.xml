@@ -297,6 +297,7 @@
     <string name="high_accuracy_mode_channel_name">High accuracy location</string>
     <string name="high_accuracy_mode_notification_title">High accuracy (GPS) mode enabled</string>
     <string name="history">History</string>
+    <string name="history_widget_desc">View any entity\'s historical state</string>
     <string name="hold_to_reorder">Tap and hold to reorder</string>
     <string name="home_assistant_not_discover">Unable to find your\nHome Assistant instance</string>
     <string name="icon">Icon</string>
@@ -346,6 +347,7 @@
     <string name="lights">Lights</string>
     <string name="button_widgets">Button widgets</string>
     <string name="entity_state_widgets">Entity state widgets</string>
+    <string name="history_widgets">History widgets</string>
     <string name="list_header_instances">Instances</string>
     <string name="list_header_other">Other</string>
     <string name="media_player_widgets">Media player widgets</string>
@@ -997,6 +999,8 @@
     <string name="widget_config_action_error">A custom component is preventing action data from loading.</string>
     <string name="widget_creation_error">Unable to create widget.</string>
     <string name="widget_entity_fetch_error">Unable to fetch data for configured entity.</string>
+    <string name="widget_entity_separator_label">Separator between entity IDs:</string>
+    <string name="widget_history_description">History widget</string>
     <string name="widget_image_description">Home Assistant widget</string>
     <string name="widget_label_placeholder_text_button">Toggle</string>
     <string name="widget_label_placeholder_text_media_player">Living room</string>

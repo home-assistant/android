@@ -42,6 +42,7 @@ import io.homeassistant.companion.android.util.compose.MdcAlertDialog
 import io.homeassistant.companion.android.widgets.button.ButtonWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.camera.CameraWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureActivity
+import io.homeassistant.companion.android.widgets.history.HistoryWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.mediaplayer.MediaPlayerControlsWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.template.TemplateWidgetConfigureActivity
 
@@ -50,7 +51,8 @@ enum class WidgetType(val widgetIcon: IIcon) {
     CAMERA(CommunityMaterial.Icon.cmd_camera_image),
     STATE(CommunityMaterial.Icon3.cmd_shape),
     MEDIA(CommunityMaterial.Icon3.cmd_play_box_multiple),
-    TEMPLATE(CommunityMaterial.Icon.cmd_code_braces);
+    TEMPLATE(CommunityMaterial.Icon.cmd_code_braces),
+    HISTORY(CommunityMaterial.Icon3.cmd_sun_clock);
 
     fun configureActivity() = when (this) {
         BUTTON -> ButtonWidgetConfigureActivity::class.java
@@ -58,6 +60,7 @@ enum class WidgetType(val widgetIcon: IIcon) {
         MEDIA -> MediaPlayerControlsWidgetConfigureActivity::class.java
         STATE -> EntityWidgetConfigureActivity::class.java
         TEMPLATE -> TemplateWidgetConfigureActivity::class.java
+        HISTORY -> HistoryWidgetConfigureActivity::class.java
     }
 }
 
@@ -81,6 +84,7 @@ fun ManageWidgetsView(
             val availableWidgets = listOf(
                 stringResource(R.string.widget_button_image_description) to WidgetType.BUTTON,
                 stringResource(R.string.widget_camera_description) to WidgetType.CAMERA,
+                stringResource(R.string.widget_history_description) to WidgetType.HISTORY,
                 stringResource(R.string.widget_static_image_description) to WidgetType.STATE,
                 stringResource(R.string.widget_media_player_description) to WidgetType.MEDIA,
                 stringResource(R.string.template_widget) to WidgetType.TEMPLATE
@@ -110,7 +114,7 @@ fun ManageWidgetsView(
         ) {
             if (viewModel.buttonWidgetList.value.isEmpty() && viewModel.staticWidgetList.value.isEmpty() &&
                 viewModel.mediaWidgetList.value.isEmpty() && viewModel.templateWidgetList.value.isEmpty() &&
-                viewModel.cameraWidgetList.value.isEmpty()
+                viewModel.cameraWidgetList.value.isEmpty() && viewModel.historyWidgetList.value.isEmpty()
             ) {
                 item {
                     EmptyState(
@@ -133,6 +137,12 @@ fun ManageWidgetsView(
                 viewModel.cameraWidgetList.value,
                 widgetType = WidgetType.CAMERA,
                 title = R.string.camera_widgets,
+                widgetLabel = { item -> item.entityId }
+            )
+            widgetItems(
+                viewModel.historyWidgetList.value,
+                widgetType = WidgetType.HISTORY,
+                title = R.string.history_widgets,
                 widgetLabel = { item -> item.entityId }
             )
             widgetItems(
