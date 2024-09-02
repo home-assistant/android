@@ -13,6 +13,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
+        android:layout_gravity="center"
+        android:gravity="center"
         android:paddingVertical="4dp">
 
         <ImageView
@@ -26,42 +28,56 @@
             android:visibility="gone" />
 
         <LinearLayout
-            android:id="@+id/widgetLabelLayout"
+            android:id="@+id/widgetStaticError"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:orientation="vertical"
             android:layout_margin="2dp">
 
             <ImageView
-                android:id="@+id/widgetStaticError"
                 android:layout_width="16dp"
                 android:layout_height="16dp"
-                android:layout_gravity="center_vertical|end"
+                android:layout_gravity="center"
+                android:padding="2dp"
                 android:layout_marginEnd="2dp"
                 android:contentDescription="@string/widget_entity_fetch_error"
                 android:src="@drawable/ic_sync_problem"
-                android:visibility="gone" />
+                android:visibility="visible" />
 
             <TextView
-                android:id="@+id/widgetLabel"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:gravity="center"
                 android:maxLines="2"
                 android:minLines="1"
-                android:text="@string/widget_label_placeholder_text_static_label"
+                android:text="@string/widget_entity_fetch_error"
                 android:textAlignment="center"
                 android:textColor="?colorWidgetOnBackground"
                 android:textSize="12sp" />
         </LinearLayout>
     </LinearLayout>
 
-    <ProgressBar
+    <LinearLayout
         android:id="@+id/widgetProgressBar"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:layout_gravity="center"
-        android:indeterminate="true"
-        android:indeterminateTint="@color/colorAccent"
-        android:visibility="invisible" />
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <ProgressBar
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:indeterminate="true"
+            android:indeterminateTint="@color/colorAccent" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/widget_graph_we_are_retrieving_data" />
+    </LinearLayout>
 </FrameLayout>

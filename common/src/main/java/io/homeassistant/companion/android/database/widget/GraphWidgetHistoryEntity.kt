@@ -17,13 +17,16 @@ import androidx.room.Index
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("sent_state")]
+    indices = [
+        Index("sent_state"),
+        Index("graph_widget_id")
+    ]
 )
 data class GraphWidgetHistoryEntity(
     @ColumnInfo(name = "entity_id")
     val entityId: String,
     @ColumnInfo(name = "graph_widget_id")
-    val graphWidgetId: Int, // This should match the type of GraphWidgetEntity's id
+    val graphWidgetId: Int,
     @ColumnInfo(name = "state")
     val state: String,
     @ColumnInfo(name = "sent_state")

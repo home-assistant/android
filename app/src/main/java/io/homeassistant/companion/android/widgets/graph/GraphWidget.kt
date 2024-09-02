@@ -27,6 +27,7 @@ import com.github.mikephil.charting.formatter.ValueFormatter
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.canSupportPrecision
 import io.homeassistant.companion.android.common.data.integration.friendlyState
@@ -39,9 +40,8 @@ import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.util.getAttribute
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
-import kotlinx.coroutines.launch
 import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class GraphWidget : BaseWidgetProvider() {
@@ -80,7 +80,6 @@ class GraphWidget : BaseWidgetProvider() {
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         }
 
-        //TODO
         val appWidgetManager = AppWidgetManager.getInstance(context)
         val options = appWidgetManager.getAppWidgetOptions(appWidgetId)
         val minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)
@@ -99,11 +98,10 @@ class GraphWidget : BaseWidgetProvider() {
             context.resources.displayMetrics
         ).toInt()
 
-
         val useDynamicColors = widget?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
         val views = RemoteViews(context.packageName, if (useDynamicColors) R.layout.widget_graph_wrapper_dynamiccolor else R.layout.widget_graph_wrapper_default)
             .apply {
-                if (widget != null) {
+                if (widget != null && historicData.histories?.isNotEmpty() == true) {
                     val serverId = widget.serverId
                     val entityId: String = widget.entityId
                     val attributeIds: String? = widget.attributeIds
@@ -122,12 +120,16 @@ class GraphWidget : BaseWidgetProvider() {
 
                     // Content
                     setViewVisibility(
-                        R.id.widgetTextLayout,
+                        R.id.chartImageView,
                         View.VISIBLE
                     )
                     setViewVisibility(
                         R.id.widgetProgressBar,
-                        View.INVISIBLE
+                        View.GONE
+                    )
+                    setViewVisibility(
+                        R.id.widgetStaticError,
+                        View.GONE
                     )
                     val resolvedText = resolveTextToShow(
                         context,
@@ -149,7 +151,8 @@ class GraphWidget : BaseWidgetProvider() {
                         if (resolvedText.exception) View.VISIBLE else View.GONE
                     )
                     setImageViewBitmap(
-                        R.id.chartImageView, createLineChart(
+                        R.id.chartImageView,
+                        createLineChart(
                             context = context,
                             label = label ?: entityId,
                             entries =
@@ -164,19 +167,45 @@ class GraphWidget : BaseWidgetProvider() {
                         R.id.chartImageView,
                         if (!resolvedText.exception) View.VISIBLE else View.GONE
                     )
-                    setOnClickPendingIntent(
-                        R.id.widgetTextLayout,
-                        PendingIntent.getBroadcast(
-                            context,
-                            appWidgetId,
-                            intent,
-                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                        )
+                } else if (widget != null && historicData.histories?.isNotEmpty() == false) {
+                    // Content
+                    setViewVisibility(
+                        R.id.chartImageView,
+                        View.GONE
+                    )
+                    setViewVisibility(
+                        R.id.widgetProgressBar,
+                        View.VISIBLE
+                    )
+                    setViewVisibility(
+                        R.id.widgetStaticError,
+                        View.GONE
                     )
                 } else {
-                    setTextViewText(R.id.widgetText, "")
-                    setTextViewText(R.id.widgetLabel, "")
+                    // Content
+                    setViewVisibility(
+                        R.id.chartImageView,
+                        View.GONE
+                    )
+                    setViewVisibility(
+                        R.id.widgetProgressBar,
+                        View.GONE
+                    )
+                    setViewVisibility(
+                        R.id.widgetStaticError,
+                        View.VISIBLE
+                    )
                 }
+
+                setOnClickPendingIntent(
+                    R.id.widgetTextLayout,
+                    PendingIntent.getBroadcast(
+                        context,
+                        appWidgetId,
+                        intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
+                )
             }
 
         return views
@@ -196,7 +225,6 @@ class GraphWidget : BaseWidgetProvider() {
 
     private fun createLineChart(context: Context, label: String, entries: List<Entry>, width: Int, height: Int): LineChart {
         val lineChart = LineChart(context).apply {
-
             setBackgroundColor(Color.WHITE)
 
             setDrawBorders(false)
@@ -213,9 +241,9 @@ class GraphWidget : BaseWidgetProvider() {
             }
 
             axisLeft.apply {
-                setDrawGridLines(true) // Remove grid lines
-                textColor = Color.DKGRAY // Dark gray for less contrast
-                textSize = 12f // Slightly increase text size
+                setDrawGridLines(true)
+                textColor = Color.DKGRAY
+                textSize = 12F
             }
 
             axisRight.apply {
@@ -237,19 +265,17 @@ class GraphWidget : BaseWidgetProvider() {
             description.isEnabled = false
         }
 
-        val mainGraphColor = context.resources.getColor(io.homeassistant.companion.android.common.R.color.colorPrimary)
+        val mainGraphColor = ContextCompat.getColor(context, commonR.color.colorPrimary)
 
-
-        // Create LineDataSet with smooth blue color
         val dataSet = LineDataSet(entries, label).apply {
             color = mainGraphColor
             lineWidth = 2F
             circleRadius = 1F
             setDrawCircleHole(false)
             setCircleColor(mainGraphColor)
-            mode = LineDataSet.Mode.CUBIC_BEZIER // For smooth line
-            setDrawCircles(true) // Remove circles on data points
-            setDrawValues(false)  // Remove value labels
+            mode = LineDataSet.Mode.CUBIC_BEZIER
+            setDrawCircles(true)
+            setDrawValues(false)
         }
 
         lineChart.data = LineData(dataSet)
@@ -258,7 +284,6 @@ class GraphWidget : BaseWidgetProvider() {
 
         return lineChart
     }
-
 
     private class TimeValueFormatter(private val timestamps: List<Long>) : ValueFormatter() {
         override fun getFormattedValue(value: Float): String {
@@ -275,7 +300,6 @@ class GraphWidget : BaseWidgetProvider() {
             }
         }
     }
-
 
     override suspend fun getAllWidgetIdsWithEntities(context: Context): Map<Int, Pair<Int, List<String>>> =
         graphWidgetDao.getAll().associate { it.id to (it.serverId to listOf(it.entityId)) }
@@ -384,7 +408,6 @@ class GraphWidget : BaseWidgetProvider() {
 
     override suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity<*>) {
         widgetScope?.launch {
-
             // Clean up old entries before updating the widget
             val oneHourInMillis = 60 * 60 * 1000L // 1 hour in milliseconds, this can be provided by UI
             graphWidgetDao.deleteEntriesOlderThan(appWidgetId, oneHourInMillis)
