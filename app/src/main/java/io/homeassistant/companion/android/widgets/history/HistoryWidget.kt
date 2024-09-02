@@ -19,12 +19,13 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.canSupportPrecision
+import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.friendlyState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryOptions
 import io.homeassistant.companion.android.database.widget.HistoryWidgetDao
 import io.homeassistant.companion.android.database.widget.HistoryWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
-import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.util.getAttribute
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import java.time.LocalDateTime
@@ -40,15 +41,12 @@ class HistoryWidget : BaseWidgetProvider() {
 
         internal const val EXTRA_SERVER_ID = "EXTRA_SERVER_ID"
         internal const val EXTRA_ENTITY_ID = "EXTRA_ENTITY_ID"
-        internal const val EXTRA_ATTRIBUTE_IDS = "EXTRA_ATTRIBUTE_IDS"
         internal const val EXTRA_LABEL = "EXTRA_LABEL"
         internal const val EXTRA_TEXT_SIZE = "EXTRA_TEXT_SIZE"
-        internal const val EXTRA_STATE_SEPARATOR = "EXTRA_STATE_SEPARATOR"
-        internal const val EXTRA_ATTRIBUTE_SEPARATOR = "EXTRA_ATTRIBUTE_SEPARATOR"
-        internal const val EXTRA_TAP_ACTION = "EXTRA_TAP_ACTION"
         internal const val EXTRA_BACKGROUND_TYPE = "EXTRA_BACKGROUND_TYPE"
         internal const val EXTRA_TEXT_COLOR = "EXTRA_TEXT_COLOR"
         internal const val DEFAULT_TEXT_SIZE = 30F
+        internal const val DEFAULT_ENTITY_ID_SEPARATOR = ","
 
         private data class ResolvedText(val text: CharSequence?, val exception: Boolean = false)
     }
@@ -71,12 +69,9 @@ class HistoryWidget : BaseWidgetProvider() {
         val views = RemoteViews(context.packageName, if (useDynamicColors) R.layout.widget_history_wrapper_dynamiccolor else R.layout.widget_history_wrapper_default).apply {
             if (widget != null) {
                 val serverId = widget.serverId
-                val entityId: String = widget.entityId
-                val attributeIds: String? = widget.attributeIds
+                val entityIds: String = widget.entityId
                 val label: String? = widget.label
                 val textSize: Float = widget.textSize
-                val stateSeparator: String = widget.stateSeparator
-                val attributeSeparator: String = widget.attributeSeparator
 
                 // Theming
                 if (widget.backgroundType == WidgetBackgroundType.TRANSPARENT) {
@@ -100,11 +95,8 @@ class HistoryWidget : BaseWidgetProvider() {
                 val resolvedText = resolveTextToShow(
                     context,
                     serverId,
-                    entityId,
+                    entityIds,
                     suggestedEntity,
-                    attributeIds,
-                    stateSeparator,
-                    attributeSeparator,
                     appWidgetId
                 )
                 setTextViewTextSize(
@@ -118,7 +110,7 @@ class HistoryWidget : BaseWidgetProvider() {
                 )
                 setTextViewText(
                     R.id.widgetLabel,
-                    label ?: entityId
+                    label ?: entityIds
                 )
                 setViewVisibility(
                     R.id.widgetStaticError,
@@ -148,35 +140,40 @@ class HistoryWidget : BaseWidgetProvider() {
     private suspend fun resolveTextToShow(
         context: Context,
         serverId: Int,
-        entityId: String?,
+        entityIds: String?,
         suggestedEntity: Entity<Map<String, Any>>?,
-        attributeIds: String?,
-        stateSeparator: String,
-        attributeSeparator: String,
         appWidgetId: Int
     ): ResolvedText {
-        var entityStatesList: List<Entity<Map<String, Any>>>? = null
+        var entitiesStatesList: List<List<Entity<Map<String, Any>>>>? = null
         var entityCaughtException = false
         try {
-            // NOTE: History allows to pass a list of entities, but we currently only support a single entity, hence the usage of firstOrNull
-            entityStatesList = entityId?.let { serverManager.integrationRepository(serverId).getHistory(listOf(it))?.firstOrNull() }
+            if (suggestedEntity != null) {
+                entitiesStatesList = serverManager.integrationRepository(serverId).getHistory(listOf(suggestedEntity.entityId))
+            } else {
+                entityIds?.let { ids -> entitiesStatesList = serverManager.integrationRepository(serverId).getHistory(ids.split(DEFAULT_ENTITY_ID_SEPARATOR)) }
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Unable to fetch entity", e)
             entityCaughtException = true
         }
-        val entityOptions = if (
-            entityStatesList?.any { it.entityId == entityId } == true &&
-            serverManager.getServer(serverId)?.version?.isAtLeast(2023, 3) == true
-        ) {
-            serverManager.webSocketRepository(serverId).getEntityRegistryFor(entityStatesList.first().entityId)?.options
-        } else {
-            null
+
+        val entityOptionsList = mutableMapOf<String, EntityRegistryOptions?>()
+
+        entitiesStatesList?.forEach { entityStateList ->
+            if (entityStateList.all { it.canSupportPrecision() && serverManager.getServer(serverId)?.version?.isAtLeast(2023, 3) == true }) {
+                entityOptionsList[entityStateList.first().entityId] = serverManager.webSocketRepository(serverId).getEntityRegistryFor(entityStateList.first().entityId)?.options
+            }
         }
 
         try {
+            val textBuilder = StringBuilder()
+            entitiesStatesList?.forEachIndexed { index, entityStatesList ->
+                if (index > 0) textBuilder.append("\n---\n")
+                textBuilder.append(getLastUpdateFromEntityStatesList(entityStatesList, context, entityOptionsList[entityStatesList.first().entityId]))
+            }
             historyWidgetDao.updateWidgetLastUpdate(
                 appWidgetId,
-                getLastUpdateFromEntityStatesList(entityStatesList, context, entityOptions, attributeIds, attributeSeparator, stateSeparator)
+                textBuilder.toString()
             )
             return ResolvedText(historyWidgetDao.get(appWidgetId)?.lastUpdate, entityCaughtException)
         } catch (e: Exception) {
@@ -189,19 +186,14 @@ class HistoryWidget : BaseWidgetProvider() {
         if (extras == null) return
 
         val serverId = if (extras.containsKey(EXTRA_SERVER_ID)) extras.getInt(EXTRA_SERVER_ID) else null
-        val entitySelection: String? = extras.getString(EXTRA_ENTITY_ID)
-        val attributeSelection: ArrayList<String>? = extras.getStringArrayList(EXTRA_ATTRIBUTE_IDS)
+        val entityIds: String? = extras.getString(EXTRA_ENTITY_ID)
         val labelSelection: String? = extras.getString(EXTRA_LABEL)
         val textSizeSelection: String? = extras.getString(EXTRA_TEXT_SIZE)
-        val stateSeparatorSelection: String? = extras.getString(EXTRA_STATE_SEPARATOR)
-        val attributeSeparatorSelection: String? = extras.getString(EXTRA_ATTRIBUTE_SEPARATOR)
-        val tapActionSelection = BundleCompat.getSerializable(extras, EXTRA_TAP_ACTION, WidgetTapAction::class.java)
-            ?: WidgetTapAction.REFRESH
         val backgroundTypeSelection = BundleCompat.getSerializable(extras, EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
             ?: WidgetBackgroundType.DAYNIGHT
         val textColorSelection: String? = extras.getString(EXTRA_TEXT_COLOR)
 
-        if (serverId == null || entitySelection == null) {
+        if (serverId == null || entityIds == null) {
             Log.e(TAG, "Did not receive complete service call data")
             return
         }
@@ -210,20 +202,15 @@ class HistoryWidget : BaseWidgetProvider() {
             Log.d(
                 TAG,
                 "Saving entity state config data:" + System.lineSeparator() +
-                    "entity id: " + entitySelection + System.lineSeparator() +
-                    "attribute: " + (attributeSelection ?: "N/A")
+                    "entity id: " + entityIds + System.lineSeparator()
             )
             historyWidgetDao.add(
                 HistoryWidgetEntity(
                     appWidgetId,
                     serverId,
-                    entitySelection,
-                    attributeSelection?.joinToString(","),
+                    entityIds,
                     labelSelection,
                     textSizeSelection?.toFloatOrNull() ?: DEFAULT_TEXT_SIZE,
-                    stateSeparatorSelection ?: "",
-                    attributeSeparatorSelection ?: "",
-                    tapActionSelection,
                     historyWidgetDao.get(appWidgetId)?.lastUpdate ?: "",
                     backgroundTypeSelection,
                     textColorSelection
@@ -251,36 +238,19 @@ class HistoryWidget : BaseWidgetProvider() {
     private fun getLastUpdateFromEntityStatesList(
         entityList: List<Entity<Map<String, Any>>>?,
         context: Context,
-        entityOptions: EntityRegistryOptions?,
-        attributeIds: String?,
-        attributeSeparator: String,
-        stateSeparator: String
+        entityOptions: EntityRegistryOptions?
     ): String = entityList?.fold("") { acc, entity ->
 
         val localDate = with(entity.lastUpdated) {
             LocalDateTime.ofInstant(toInstant(), timeZone.toZoneId())
         }
-        val entityTextToVisualize = StringBuilder(localDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")))
-        entityTextToVisualize.append(": ")
-        if (attributeIds == null) {
-            entityTextToVisualize.append(entity.friendlyState(context, entityOptions))
-        } else {
-            try {
-                val fetchedAttributes = entity.attributes as? Map<*, *> ?: mapOf<String, String>()
-                val attributeValues =
-                    attributeIds.split(",").map { id -> fetchedAttributes[id]?.toString() }
-                val lastUpdate =
-                    entity.friendlyState(context, entityOptions).plus(if (attributeValues.isNotEmpty()) stateSeparator else "")
-                        .plus(attributeValues.joinToString(attributeSeparator))
-                entityTextToVisualize.append(lastUpdate)
-            } catch (e: Exception) {
-                Log.e(TAG, "Unable to fetch entity state and attributes", e)
-            }
-        }
+        val entityTextToVisualize = StringBuilder("(")
+        entityTextToVisualize.append(localDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))).append(") ")
+        entityTextToVisualize.append(entity.friendlyState(context, entityOptions))
         if (acc.isEmpty()) {
-            acc.plus(entityTextToVisualize)
+            acc.plus(entity.friendlyName).plus(": ").plus(entityTextToVisualize)
         } else {
-            acc.plus(",\n").plus(entityTextToVisualize)
+            acc.plus("\n").plus(entity.friendlyName).plus(": ").plus(entityTextToVisualize)
         }
     } ?: ""
 }

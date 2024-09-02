@@ -50,80 +50,15 @@
                 android:layout_height="wrap_content"
                 android:labelFor="@id/widget_text_config_entity_id"
                 android:padding="5dp"
-                android:text="@string/label_entity_id" />
+                android:text="@string/label_entity_ids" />
 
-            <AutoCompleteTextView
+            <MultiAutoCompleteTextView
                 android:id="@+id/widget_text_config_entity_id"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:completionThreshold="0"
                 android:imeOptions="actionNext|flagNoFullscreen"
                 android:inputType="text" />
-
-        </LinearLayout>
-
-        <CheckBox
-            android:id="@+id/append_attribute_value_checkbox"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            android:checked="false"
-            android:text="@string/entity_attribute_checkbox" />
-
-        <LinearLayout
-            android:id="@+id/attribute_value_linear_layout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:layout_marginBottom="10dp"
-            android:orientation="vertical"
-            android:visibility="gone">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:gravity="center"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:labelFor="@id/widget_text_config_service"
-                    android:padding="5dp"
-                    android:text="@string/label_attribute" />
-
-                <MultiAutoCompleteTextView
-                    android:id="@+id/widget_text_config_attribute"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:completionThreshold="0"
-                    android:imeOptions="actionNext|flagNoFullscreen"
-                    android:inputType="text" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:gravity="center"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
-                    android:padding="5dp"
-                    android:text="@string/widget_attribute_separator_label"/>
-
-                <androidx.appcompat.widget.AppCompatEditText
-                    android:id="@+id/attribute_separator"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:imeOptions="actionNext"
-                    android:textAlignment="center"
-                    android:hint="@string/widget_separator_input_hint" />
-
-            </LinearLayout>
 
         </LinearLayout>
 
@@ -147,30 +82,7 @@
                 android:imeOptions="actionNext"
                 android:textAlignment="center"
                 android:inputType="number"
-                android:text="@string/widget_text_size_default" />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:gravity="center"
-            android:orientation="horizontal">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:padding="5dp"
-                android:text="@string/widget_state_separator_label"/>
-
-            <androidx.appcompat.widget.AppCompatEditText
-                android:id="@+id/state_separator"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:imeOptions="actionNext"
-                android:textAlignment="center"
-                android:hint="@string/widget_separator_input_hint" />
+                android:text="" />
 
         </LinearLayout>
 
@@ -194,28 +106,6 @@
                 android:hint="@string/widget_text_hint_label"
                 android:imeOptions="actionDone"
                 android:inputType="text" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/tap_action"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:visibility="gone">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:padding="5dp"
-                android:text="@string/widget_tap_action_label" />
-
-            <Spinner
-                android:id="@+id/tap_action_list"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical" />
         </LinearLayout>
 
         <LinearLayout

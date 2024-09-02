@@ -12,18 +12,10 @@ data class HistoryWidgetEntity(
     override val serverId: Int,
     @ColumnInfo(name = "entity_id")
     val entityId: String,
-    @ColumnInfo(name = "attribute_ids")
-    val attributeIds: String?,
     @ColumnInfo(name = "label")
     val label: String?,
     @ColumnInfo(name = "text_size")
     val textSize: Float,
-    @ColumnInfo(name = "state_separator")
-    val stateSeparator: String = "",
-    @ColumnInfo(name = "attribute_separator")
-    val attributeSeparator: String = "",
-    @ColumnInfo(name = "tap_action", defaultValue = "REFRESH")
-    val tapAction: WidgetTapAction,
     @ColumnInfo(name = "last_update")
     val lastUpdate: String,
     @ColumnInfo(name = "background_type", defaultValue = "DAYNIGHT")

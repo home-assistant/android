@@ -13,31 +13,26 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
-import android.widget.LinearLayout.VISIBLE
-import android.widget.MultiAutoCompleteTextView.CommaTokenizer
+import android.widget.MultiAutoCompleteTextView
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.core.graphics.toColorInt
-import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.EntityExt
-import io.homeassistant.companion.android.common.data.integration.domain
-import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.database.widget.HistoryWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
-import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.databinding.WidgetHistoryConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.util.getHexForColor
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
+import java.util.LinkedList
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -55,10 +50,8 @@ class HistoryWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     override val dao get() = historyWidgetDao
 
     private var entities = mutableMapOf<Int, List<Entity<Any>>>()
+    private var selectedEntities: LinkedList<Entity<*>?> = LinkedList()
 
-    private var selectedEntity: Entity<Any>? = null
-    private var appendAttributes: Boolean = false
-    private var selectedAttributeIds: ArrayList<String> = ArrayList()
     private var labelFromEntity = false
 
     private lateinit var binding: WidgetHistoryConfigureBinding
@@ -87,7 +80,10 @@ class HistoryWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             if (requestLauncherSetup) {
                 if (
                     Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-                    isValidServerId()
+                    isValidServerId() &&
+                    binding.widgetTextConfigEntityId.text.split(",").any {
+                        entities[selectedServerId!!].orEmpty().any { e -> e.entityId == it.trim() }
+                    }
                 ) {
                     getSystemService<AppWidgetManager>()?.requestPinAppWidget(
                         ComponentName(this, HistoryWidget::class.java),
@@ -129,9 +125,6 @@ class HistoryWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
         val historyWidget = historyWidgetDao.get(appWidgetId)
 
-        val tapActionValues = listOf(getString(commonR.string.widget_tap_action_toggle), getString(commonR.string.refresh))
-        binding.tapActionList.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, tapActionValues)
-
         val backgroundTypeValues = mutableListOf(
             getString(commonR.string.widget_background_type_daynight),
             getString(commonR.string.widget_background_type_transparent)
@@ -145,37 +138,6 @@ class HistoryWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             binding.widgetTextConfigEntityId.setText(historyWidget.entityId)
             binding.label.setText(historyWidget.label)
             binding.textSize.setText(historyWidget.textSize.toInt().toString())
-            binding.stateSeparator.setText(historyWidget.stateSeparator)
-            val entity = runBlocking {
-                try {
-                    serverManager.integrationRepository(historyWidget.serverId).getEntity(historyWidget.entityId)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Unable to get entity information", e)
-                    Toast.makeText(applicationContext, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
-                        .show()
-                    null
-                }
-            }
-
-            val attributeIds = historyWidget.attributeIds
-            if (!attributeIds.isNullOrEmpty()) {
-                binding.appendAttributeValueCheckbox.isChecked = true
-                appendAttributes = true
-                for (item in attributeIds.split(',')) {
-                    selectedAttributeIds.add(item)
-                }
-                binding.widgetTextConfigAttribute.setText(attributeIds.replace(",", ", "))
-                binding.attributeValueLinearLayout.visibility = VISIBLE
-                binding.attributeSeparator.setText(historyWidget.attributeSeparator)
-            }
-            if (entity != null) {
-                selectedEntity = entity as Entity<Any>?
-                setupAttributes()
-            }
-
-            val toggleable = entity?.domain in EntityExt.APP_PRESS_ACTION_DOMAINS
-            binding.tapAction.isVisible = toggleable
-            binding.tapActionList.setSelection(if (toggleable && historyWidget.tapAction == WidgetTapAction.TOGGLE) 0 else 1)
 
             binding.backgroundType.setSelection(
                 when {
@@ -193,6 +155,21 @@ class HistoryWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             binding.textColorBlack.isChecked =
                 historyWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, commonR.color.colorWidgetButtonLabelBlack) } ?: false
 
+            val entities = runBlocking {
+                try {
+                    historyWidget.entityId.split(",").map { s ->
+                        serverManager.integrationRepository(historyWidget.serverId).getEntity(s.trim())
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unable to get entity information", e)
+                    Toast.makeText(applicationContext, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
+                        .show()
+                    null
+                }
+            }
+            if (entities != null) {
+                selectedEntities.addAll(entities)
+            }
             binding.addButton.setText(commonR.string.update_widget)
         } else {
             binding.backgroundType.setSelection(0)
@@ -202,18 +179,8 @@ class HistoryWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         setupServerSelect(historyWidget?.serverId)
 
         binding.widgetTextConfigEntityId.setAdapter(entityAdapter)
+        binding.widgetTextConfigEntityId.setTokenizer(MultiAutoCompleteTextView.CommaTokenizer())
         binding.widgetTextConfigEntityId.onFocusChangeListener = dropDownOnFocus
-        binding.widgetTextConfigEntityId.onItemClickListener = entityDropDownOnItemClick
-        binding.widgetTextConfigAttribute.onFocusChangeListener = dropDownOnFocus
-        binding.widgetTextConfigAttribute.onItemClickListener = attributeDropDownOnItemClick
-        binding.widgetTextConfigAttribute.setOnClickListener {
-            if (!binding.widgetTextConfigAttribute.isPopupShowing) binding.widgetTextConfigAttribute.showDropDown()
-        }
-
-        binding.appendAttributeValueCheckbox.setOnCheckedChangeListener { _, isChecked ->
-            binding.attributeValueLinearLayout.isVisible = isChecked
-            appendAttributes = isChecked
-        }
 
         binding.label.addTextChangedListener(labelTextChanged)
 
@@ -248,9 +215,8 @@ class HistoryWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     }
 
     override fun onServerSelected(serverId: Int) {
-        selectedEntity = null
+        selectedEntities.clear()
         binding.widgetTextConfigEntityId.setText("")
-        setupAttributes()
         setAdapterEntities(serverId)
     }
 
@@ -271,25 +237,6 @@ class HistoryWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         }
     }
 
-    private val entityDropDownOnItemClick =
-        AdapterView.OnItemClickListener { parent, _, position, _ ->
-            selectedEntity = parent.getItemAtPosition(position) as Entity<Any>?
-            if (binding.label.text.isNullOrBlank() || labelFromEntity) {
-                selectedEntity?.friendlyName?.takeIf { it != selectedEntity?.entityId }?.let { name ->
-                    binding.label.removeTextChangedListener(labelTextChanged)
-                    binding.label.setText(name)
-                    labelFromEntity = true
-                    binding.label.addTextChangedListener(labelTextChanged)
-                }
-            }
-            setupAttributes()
-        }
-
-    private val attributeDropDownOnItemClick =
-        AdapterView.OnItemClickListener { parent, _, position, _ ->
-            selectedAttributeIds.add(parent.getItemAtPosition(position) as String)
-        }
-
     private val labelTextChanged = object : TextWatcher {
         override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
             // Not implemented
@@ -301,20 +248,6 @@ class HistoryWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
         override fun afterTextChanged(s: Editable?) {
             labelFromEntity = false
-        }
-    }
-
-    private fun setupAttributes() {
-        val fetchedAttributes = selectedEntity?.attributes as? Map<String, String>
-        val attributesAdapter = ArrayAdapter<String>(this, android.R.layout.simple_dropdown_item_1line)
-        binding.widgetTextConfigAttribute.setAdapter(attributesAdapter)
-        attributesAdapter.addAll(*fetchedAttributes?.keys.orEmpty().toTypedArray())
-        binding.widgetTextConfigAttribute.setTokenizer(CommaTokenizer())
-        runOnUiThread {
-            val toggleable = selectedEntity?.domain in EntityExt.APP_PRESS_ACTION_DOMAINS
-            binding.tapAction.isVisible = toggleable
-            binding.tapActionList.setSelection(if (toggleable) 0 else 1)
-            attributesAdapter.notifyDataSetChanged()
         }
     }
 
@@ -338,18 +271,15 @@ class HistoryWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 selectedServerId!!
             )
 
-            val entity = if (selectedEntity == null) {
-                binding.widgetTextConfigEntityId.text.toString()
-            } else {
-                selectedEntity!!.entityId
-            }
-            if (entity !in entities[selectedServerId].orEmpty().map { it.entityId }) {
-                showAddWidgetError()
-                return
+            selectedEntities = LinkedList()
+            val se = binding.widgetTextConfigEntityId.text.split(",")
+            se.forEach {
+                val entity = entities[selectedServerId]!!.firstOrNull { e -> e.entityId == it.trim() }
+                if (entity != null) selectedEntities.add(entity)
             }
             intent.putExtra(
                 HistoryWidget.EXTRA_ENTITY_ID,
-                entity
+                selectedEntities.map { e -> e?.entityId }.reduce { a, b -> "$a,$b" }
             )
 
             intent.putExtra(
@@ -360,36 +290,6 @@ class HistoryWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             intent.putExtra(
                 HistoryWidget.EXTRA_TEXT_SIZE,
                 binding.textSize.text.toString()
-            )
-
-            intent.putExtra(
-                HistoryWidget.EXTRA_STATE_SEPARATOR,
-                binding.stateSeparator.text.toString()
-            )
-
-            if (appendAttributes) {
-                val attributes = if (selectedAttributeIds.isEmpty()) {
-                    binding.widgetTextConfigAttribute.text.toString()
-                } else {
-                    selectedAttributeIds
-                }
-                intent.putExtra(
-                    HistoryWidget.EXTRA_ATTRIBUTE_IDS,
-                    attributes
-                )
-
-                intent.putExtra(
-                    HistoryWidget.EXTRA_ATTRIBUTE_SEPARATOR,
-                    binding.attributeSeparator.text.toString()
-                )
-            }
-
-            intent.putExtra(
-                HistoryWidget.EXTRA_TAP_ACTION,
-                when (binding.tapActionList.selectedItemPosition) {
-                    0 -> WidgetTapAction.TOGGLE
-                    else -> WidgetTapAction.REFRESH
-                }
             )
 
             intent.putExtra(

@@ -15,4 +15,4 @@
     android:description="@string/history_widget_desc"
     android:widgetCategory="home_screen"
     android:previewImage="@drawable/widget_example_entity"
-    android:previewLayout="@layout/widget_static_wrapper_dynamiccolor" />
+    android:previewLayout="@layout/widget_history_wrapper_dynamiccolor" />
