@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="historical_graph">Historical Graph</string>
+    <string name="widget_graph_we_are_retrieving_data">We are retrieving some data, please came back later</string>
+    <string name="graph_widget_desc">To see historical data on graph</string>
 </resources>

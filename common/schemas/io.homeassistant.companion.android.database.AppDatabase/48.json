@@ -2,7 +2,7 @@
     "formatVersion": 1,
     "database": {
         "version": 48,
-        "identityHash": "74986bc349d97b572c9acdaa1cb7f26d",
+        "identityHash": "7c947e581137cf86c2a89699b6289ff6",
         "entities": [
             {
                 "tableName": "sensor_attributes",
@@ -664,6 +664,15 @@
                         ],
                         "orders": [],
                         "createSql": "CREATE INDEX IF NOT EXISTS `index_graph_widget_history_sent_state` ON `${TABLE_NAME}` (`sent_state`)"
+                    },
+                    {
+                        "name": "index_graph_widget_history_graph_widget_id",
+                        "unique": false,
+                        "columnNames": [
+                            "graph_widget_id"
+                        ],
+                        "orders": [],
+                        "createSql": "CREATE INDEX IF NOT EXISTS `index_graph_widget_history_graph_widget_id` ON `${TABLE_NAME}` (`graph_widget_id`)"
                     }
                 ],
                 "foreignKeys": [
@@ -1271,7 +1280,7 @@
         "views": [],
         "setupQueries": [
             "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-            "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '74986bc349d97b572c9acdaa1cb7f26d')"
+            "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7c947e581137cf86c2a89699b6289ff6')"
         ]
     }
 }

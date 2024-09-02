@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -12,6 +13,7 @@ interface GraphWidgetDao : WidgetDao {
     @Query("SELECT * FROM graph_widget WHERE id = :id")
     fun get(id: Int): GraphWidgetEntity?
 
+    @Transaction
     @Query("SELECT * FROM graph_widget WHERE id = :id")
     suspend fun getWithHistories(id: Int): GraphWidgetWithHistories?
 
@@ -43,5 +45,4 @@ interface GraphWidgetDao : WidgetDao {
 
     @Query("DELETE FROM graph_widget_history WHERE graph_widget_id = :appWidgetId AND sent_state < :cutoffTime")
     suspend fun deleteEntriesOlderThan(appWidgetId: Int, cutoffTime: Long)
-
 }
