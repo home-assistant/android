@@ -6,7 +6,7 @@
     android:minHeight="40dp"
     android:minWidth="40dp"
     android:background="@drawable/widget_button_background"
-    android:padding="6dp">
+    android:padding="8dp">
 
     <RelativeLayout
         android:id="@+id/widgetImageButtonLayout"
@@ -19,7 +19,6 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:importantForAccessibility="no"
-            android:translationZ="-2dp"
             android:alpha="0.4"
             android:src="@drawable/rounded_image_background"/>
 
@@ -37,6 +36,7 @@
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:layout_below="@id/widgetImageButtonBackground"
+            android:padding="2dp"
             android:gravity="bottom">
 
             <TextView
@@ -49,7 +49,8 @@
                 android:text="@string/widget_label_placeholder_text_button"
                 android:textAlignment="textStart"
                 android:textColor="?colorWidgetOnBackground"
-                android:textSize="12sp" />
+                android:textSize="16sp"
+                android:textStyle="bold" />
         </LinearLayout>
     </RelativeLayout>
 

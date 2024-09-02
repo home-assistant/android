@@ -202,11 +202,11 @@ class ButtonWidget : AppWidgetProvider() {
                 size = IconicsSize.dp(24)
             }
             val icon = DrawableCompat.wrap(iconDrawable)
+            widget?.iconColor?.let {
+                setCustomColorToIcon(it, this)
+            }
             if (widget?.backgroundType == WidgetBackgroundType.TRANSPARENT) {
-                setInt(R.id.widgetImageButton, "setColorFilter", textColor)
                 setInt(R.id.widgetImageButton, "setBackgroundColor", Color.TRANSPARENT)
-            } else {
-                setInt(R.id.widgetImageButton, "setColorFilter", Color.TRANSPARENT)
             }
 
             // Determine reasonable dimensions for drawing vector icon as a bitmap
@@ -232,10 +232,6 @@ class ButtonWidget : AppWidgetProvider() {
 
             // Render the icon into the Button's ImageView
             setImageViewBitmap(R.id.widgetImageButton, icon.toBitmap(width, height))
-
-            widget?.iconColor?.let {
-                setCustomColorToIcon(it, this)
-            }
 
             setOnClickPendingIntent(
                 R.id.widgetImageButtonLayout,
