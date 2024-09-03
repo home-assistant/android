@@ -91,9 +91,20 @@ jobs:
         cp .github/mock-google-services.json wear/google-services.json
         cp .github/mock-google-services.json automotive/google-services.json
 
-    - name: Testing
+    - name: Run Unit Tests
+      run: ./gradlew test --no-daemon --parallel
+
+    - name: Display Test Results
       run: |
-        ./gradlew test
+          echo "Displaying test results..."
+          cat $(find . -name 'TEST-*.xml') | grep "<testsuite"
+
+    - name: Upload Test Results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+          name: test-results
+          path: app/build/test-results/testDebugUnitTest/
 
   pr_build:
     runs-on: ubuntu-latest

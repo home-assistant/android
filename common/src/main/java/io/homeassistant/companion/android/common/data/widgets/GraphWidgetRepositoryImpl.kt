@@ -1,6 +1,5 @@
-package io.homeassistant.companion.android.repository
+package io.homeassistant.companion.android.common.data.widgets
 
-import io.homeassistant.companion.android.common.data.widgets.GraphWidgetRepository
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetDao
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetEntity
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetHistoryEntity

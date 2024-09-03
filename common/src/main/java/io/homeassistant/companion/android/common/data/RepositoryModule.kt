@@ -5,7 +5,7 @@ import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.common.data.widgets.GraphWidgetRepository
-import io.homeassistant.companion.android.repository.GraphWidgetRepositoryImpl
+import io.homeassistant.companion.android.common.data.widgets.GraphWidgetRepositoryImpl
 
 @Module
 @InstallIn(SingletonComponent::class)

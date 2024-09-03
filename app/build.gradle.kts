@@ -28,6 +28,8 @@ android {
         versionName = project.version.toString()
         versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
 
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
         manifestPlaceholders["sentryRelease"] = "$applicationId@$versionName"
         manifestPlaceholders["sentryDsn"] = System.getenv("SENTRY_DSN") ?: ""
 
@@ -191,22 +193,20 @@ dependencies {
     "fullImplementation"(libs.car.projected)
 
     testImplementation(libs.junit)
-
-    testImplementation("org.mockito:mockito-core:5.5.0")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:5.1.0")
-
-    // Robolectric dependencies
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.core)
     testImplementation(libs.androidx.junit)
-    testImplementation("androidx.test:rules:1.5.0")
-    testImplementation("androidx.test:runner:1.5.2")
+    testImplementation(libs.androidx.rules)
+    testImplementation(libs.androidx.runner)
+    testImplementation(libs.mockito.kotlin)
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.kotlin.test)
 
-    // Add this for Mockito support if needed
-    testImplementation("org.mockito:mockito-core:4.11.0")
-
-    // Optional: Add this if you're using Kotlin-specific testing libraries
-    testImplementation("org.jetbrains.kotlin:kotlin-test:1.9.0")
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.room.testing)
+    androidTestImplementation(libs.mockito.core)
+    androidTestImplementation(libs.mockito.android)
 }
 
 // Disable to fix memory leak and be compatible with the configuration cache.

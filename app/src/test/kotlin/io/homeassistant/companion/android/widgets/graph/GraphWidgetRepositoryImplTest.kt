@@ -1,12 +1,12 @@
 package io.homeassistant.companion.android.widgets.graph
 
+import io.homeassistant.companion.android.common.data.widgets.GraphWidgetRepositoryImpl
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetDao
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetEntity
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetHistoryEntity
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetWithHistories
-import io.homeassistant.companion.android.repository.GraphWidgetRepositoryImpl
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
@@ -116,7 +116,7 @@ class GraphWidgetRepositoryImplTest {
         graphWidgetRepository.deleteEntriesOlderThan(widgetId, cutoffTime)
 
         verify(graphWidgetDao).deleteEntriesOlderThan(widgetId, cutoffTime)
-        assert(verify(graphWidgetDao.get(widgetId)) == null)
+        assert(graphWidgetDao.get(widgetId) == null)
     }
 
     @Test
