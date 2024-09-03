@@ -114,7 +114,7 @@ fun ManageWidgetsView(
         ) {
             if (viewModel.buttonWidgetList.value.isEmpty() && viewModel.staticWidgetList.value.isEmpty() &&
                 viewModel.mediaWidgetList.value.isEmpty() && viewModel.templateWidgetList.value.isEmpty() &&
-                viewModel.templateWidgetList.value.isEmpty() && viewModel.graphWidgetList.value.isEmpty()
+                viewModel.cameraWidgetList.value.isEmpty() && viewModel.graphWidgetList.value.isEmpty()
             ) {
                 item {
                     EmptyState(

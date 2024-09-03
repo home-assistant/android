@@ -101,7 +101,7 @@ class GraphWidget : BaseWidgetProvider() {
         val useDynamicColors = widget?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
         val views = RemoteViews(context.packageName, if (useDynamicColors) R.layout.widget_graph_wrapper_dynamiccolor else R.layout.widget_graph_wrapper_default)
             .apply {
-                if (widget != null && historicData.histories?.isNotEmpty() == true) {
+                if (widget != null && (historicData.histories?.size ?: 0) >= 2) {
                     val serverId = widget.serverId
                     val entityId: String = widget.entityId
                     val attributeIds: String? = widget.attributeIds
@@ -213,7 +213,6 @@ class GraphWidget : BaseWidgetProvider() {
 
     private fun createEntriesFromHistoricData(historicData: GraphWidgetWithHistories): List<Entry> {
         val entries = mutableListOf<Entry>()
-        entries.add(Entry(0F, historicData.graphWidget.lastUpdate.toFloat()))
         historicData.getOrderedHistories(
             startTime = System.currentTimeMillis() - (60 * 60 * 3000),
             endTime = System.currentTimeMillis()
