@@ -1,10 +1,11 @@
-package io.homeassistant.companion.android.database.widget
+package io.homeassistant.companion.android.database.widget.graph
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import io.homeassistant.companion.android.database.widget.WidgetDao
 import kotlinx.coroutines.flow.Flow
 
 @Dao

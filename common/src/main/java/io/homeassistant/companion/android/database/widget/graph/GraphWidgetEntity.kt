@@ -1,8 +1,12 @@
-package io.homeassistant.companion.android.database.widget
+package io.homeassistant.companion.android.database.widget.graph
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import io.homeassistant.companion.android.database.widget.ThemeableWidgetEntity
+import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
+import io.homeassistant.companion.android.database.widget.WidgetEntity
+import io.homeassistant.companion.android.database.widget.WidgetTapAction
 
 @Entity(tableName = "graph_widget")
 data class GraphWidgetEntity(

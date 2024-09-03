@@ -91,7 +91,7 @@ jobs:
         cp .github/mock-google-services.json wear/google-services.json
         cp .github/mock-google-services.json automotive/google-services.json
 
-    - name: Unit Testing
+    - name: Testing
       run: |
         ./gradlew test
 

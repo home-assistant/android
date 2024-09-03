@@ -65,9 +65,6 @@ import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
-import io.homeassistant.companion.android.database.widget.GraphWidgetDao
-import io.homeassistant.companion.android.database.widget.GraphWidgetEntity
-import io.homeassistant.companion.android.database.widget.GraphWidgetHistoryEntity
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
@@ -76,6 +73,9 @@ import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundTypeConverter
 import io.homeassistant.companion.android.database.widget.WidgetTapActionConverter
+import io.homeassistant.companion.android.database.widget.graph.GraphWidgetDao
+import io.homeassistant.companion.android.database.widget.graph.GraphWidgetEntity
+import io.homeassistant.companion.android.database.widget.graph.GraphWidgetHistoryEntity
 import java.util.UUID
 import kotlinx.coroutines.runBlocking
 

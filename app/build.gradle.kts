@@ -102,11 +102,9 @@ android {
 
     testOptions {
         unitTests.isReturnDefaultValues = true
-    }
-
-    tasks.withType<Test>().configureEach {
-        useJUnitPlatform {
-            includeEngines("spek2")
+        unitTests.isIncludeAndroidResources = true
+        unitTests.all {
+            it.enabled = true
         }
     }
 
@@ -191,6 +189,24 @@ dependencies {
 
     implementation(libs.car.core)
     "fullImplementation"(libs.car.projected)
+
+    testImplementation(libs.junit)
+
+    testImplementation("org.mockito:mockito-core:5.5.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.1.0")
+
+    // Robolectric dependencies
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.core)
+    testImplementation(libs.androidx.junit)
+    testImplementation("androidx.test:rules:1.5.0")
+    testImplementation("androidx.test:runner:1.5.2")
+
+    // Add this for Mockito support if needed
+    testImplementation("org.mockito:mockito-core:4.11.0")
+
+    // Optional: Add this if you're using Kotlin-specific testing libraries
+    testImplementation("org.jetbrains.kotlin:kotlin-test:1.9.0")
 }
 
 // Disable to fix memory leak and be compatible with the configuration cache.

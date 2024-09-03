@@ -35,7 +35,11 @@ import javax.inject.Singleton
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 
-@Module
+@Module(
+    includes = [
+        RepositoryModule::class
+    ]
+)
 @InstallIn(SingletonComponent::class)
 abstract class DataModule {
 

@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.database.widget
+package io.homeassistant.companion.android.database.widget.graph
 
 import androidx.room.Embedded
 import androidx.room.Relation
