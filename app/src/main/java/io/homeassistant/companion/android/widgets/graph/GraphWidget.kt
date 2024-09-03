@@ -181,20 +181,6 @@ class GraphWidget : BaseWidgetProvider() {
                         R.id.widgetStaticError,
                         View.GONE
                     )
-                } else {
-                    // Content
-                    setViewVisibility(
-                        R.id.chartImageView,
-                        View.GONE
-                    )
-                    setViewVisibility(
-                        R.id.widgetProgressBar,
-                        View.GONE
-                    )
-                    setViewVisibility(
-                        R.id.widgetStaticError,
-                        View.VISIBLE
-                    )
                 }
 
                 setOnClickPendingIntent(
