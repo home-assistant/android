@@ -172,6 +172,7 @@ class HistoryWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             }
             binding.addButton.setText(commonR.string.update_widget)
         } else {
+            binding.textSize.setText(HistoryWidget.DEFAULT_TEXT_SIZE.toInt().toString())
             binding.backgroundType.setSelection(0)
         }
         entityAdapter = SingleItemArrayAdapter(this) { it?.entityId ?: "" }
