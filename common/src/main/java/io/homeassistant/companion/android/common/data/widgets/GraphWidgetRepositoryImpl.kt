@@ -21,8 +21,14 @@ class GraphWidgetRepositoryImpl @Inject constructor(
         return graphWidgetDao.getWithHistories(id)
     }
 
+    override suspend fun updateWidgetLastUpdate(widgetId: Int, lastUpdate: String) {
+        graphWidgetDao.updateWidgetLastUpdate(widgetId, lastUpdate)
+    }
+
     override suspend fun add(entity: GraphWidgetEntity) {
+        graphWidgetDao.getWithHistories(entity.id)
         graphWidgetDao.add(entity)
+        graphWidgetDao.getWithHistories(entity.id)
     }
 
     override suspend fun delete(id: Int) {
@@ -41,24 +47,11 @@ class GraphWidgetRepositoryImpl @Inject constructor(
         return graphWidgetDao.getAllFlow().flowOn(Dispatchers.IO)
     }
 
-    override suspend fun updateWidgetLastUpdate(widgetId: Int, lastUpdate: String) {
-        graphWidgetDao.updateWidgetLastUpdate(widgetId, lastUpdate)
-    }
-
     override suspend fun deleteEntriesOlderThan(appWidgetId: Int, cutoffTime: Long) {
         graphWidgetDao.deleteEntriesOlderThan(appWidgetId, cutoffTime)
     }
 
     override suspend fun insertGraphWidgetHistory(historyEntity: GraphWidgetHistoryEntity) {
         graphWidgetDao.add(historyEntity)
-    }
-
-    override suspend fun getLastGraphWidgetHistory(appWidgetId: Int): GraphWidgetHistoryEntity? {
-        return graphWidgetDao.getLastGraphWidgetHistory(appWidgetId)
-    }
-
-    // New function to fetch the last two entries
-    override suspend fun getLastEntries(appWidgetId: Int): List<GraphWidgetHistoryEntity> {
-        return graphWidgetDao.getLastTwoEntries(appWidgetId)
     }
 }

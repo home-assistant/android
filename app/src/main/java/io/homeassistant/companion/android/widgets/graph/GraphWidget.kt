@@ -396,22 +396,12 @@ class GraphWidget : BaseWidgetProvider() {
 
     override suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity<*>) {
         widgetScope?.launch {
-            val graphEntity = entity as GraphWidgetEntity
-            val currentTimeMillis = System.currentTimeMillis()
-
-            // this should delete older entries based on timerange for example 24 hours is not in millis int
-            val oneHourInMillis = currentTimeMillis - (60 * 60 * 1000 * entity.timeRange)
-
-            graphWidgetRepository.deleteEntriesOlderThan(appWidgetId, oneHourInMillis)
-
-            val samplingTimeInMillis = graphEntity.samplingTime * 60 * 1000
-
             graphWidgetRepository.insertGraphWidgetHistory(
                 GraphWidgetHistoryEntity(
                     entityId = entity.entityId,
                     graphWidgetId = appWidgetId,
                     state = entity.friendlyState(context),
-                    sentState = currentTimeMillis
+                    sentState = System.currentTimeMillis()
                 )
             )
 
