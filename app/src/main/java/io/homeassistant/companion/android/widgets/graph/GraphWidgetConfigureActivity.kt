@@ -13,8 +13,6 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
-import android.widget.LinearLayout.VISIBLE
-import android.widget.MultiAutoCompleteTextView.CommaTokenizer
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.core.content.getSystemService
@@ -22,38 +20,36 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.friendlyName
+import io.homeassistant.companion.android.common.data.widgets.GraphWidgetRepository
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
-import io.homeassistant.companion.android.database.widget.graph.GraphWidgetDao
 import io.homeassistant.companion.android.databinding.WidgetGraphConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
-import javax.inject.Inject
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
+
+    @Inject
+    lateinit var repository: GraphWidgetRepository
 
     companion object {
         private const val TAG: String = "GraphWidgetConfigAct"
         private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.entity.GraphWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
     }
 
-    @Inject
-    lateinit var graphWidgetDao: GraphWidgetDao
-    override val dao get() = graphWidgetDao
-
     private var entities = mutableMapOf<Int, List<Entity<Any>>>()
 
     private var selectedEntity: Entity<Any>? = null
-    private var appendAttributes: Boolean = false
     private var selectedAttributeIds: ArrayList<String> = ArrayList()
     private var labelFromEntity = false
 
@@ -123,8 +119,7 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             return
         }
 
-        // TODO to save a bit of time Im temporally using this dao to get the widget info
-        val graphWidget = graphWidgetDao.get(appWidgetId)
+        val graphWidget = repository.get(appWidgetId)
 
         val tapActionValues = listOf(getString(commonR.string.widget_tap_action_toggle), getString(commonR.string.refresh))
         binding.tapActionList.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, tapActionValues)
@@ -151,20 +146,6 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 }
             }
 
-            val attributeIds = graphWidget.attributeIds
-            if (!attributeIds.isNullOrEmpty()) {
-                appendAttributes = true
-                for (item in attributeIds.split(','))
-                    selectedAttributeIds.add(item)
-                binding.widgetTextConfigAttribute.setText(attributeIds.replace(",", ", "))
-                binding.attributeValueLinearLayout.visibility = VISIBLE
-                binding.attributeSeparator.setText(graphWidget.attributeSeparator)
-            }
-            if (entity != null) {
-                selectedEntity = entity as Entity<Any>?
-                setupAttributes()
-            }
-
             val toggleable = entity?.domain in EntityExt.APP_PRESS_ACTION_DOMAINS
             binding.tapAction.isVisible = toggleable
             binding.tapActionList.setSelection(if (toggleable && graphWidget.tapAction == WidgetTapAction.TOGGLE) 0 else 1)
@@ -179,11 +160,6 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         binding.widgetTextConfigEntityId.setAdapter(entityAdapter)
         binding.widgetTextConfigEntityId.onFocusChangeListener = dropDownOnFocus
         binding.widgetTextConfigEntityId.onItemClickListener = entityDropDownOnItemClick
-        binding.widgetTextConfigAttribute.onFocusChangeListener = dropDownOnFocus
-        binding.widgetTextConfigAttribute.onItemClickListener = attributeDropDownOnItemClick
-        binding.widgetTextConfigAttribute.setOnClickListener {
-            if (!binding.widgetTextConfigAttribute.isPopupShowing) binding.widgetTextConfigAttribute.showDropDown()
-        }
 
         binding.label.addTextChangedListener(labelTextChanged)
 
@@ -205,7 +181,6 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     override fun onServerSelected(serverId: Int) {
         selectedEntity = null
         binding.widgetTextConfigEntityId.setText("")
-        setupAttributes()
         setAdapterEntities(serverId)
     }
 
@@ -237,7 +212,6 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                     binding.label.addTextChangedListener(labelTextChanged)
                 }
             }
-            setupAttributes()
         }
 
     private val attributeDropDownOnItemClick =
@@ -256,20 +230,6 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
         override fun afterTextChanged(s: Editable?) {
             labelFromEntity = false
-        }
-    }
-
-    private fun setupAttributes() {
-        val fetchedAttributes = selectedEntity?.attributes as? Map<String, String>
-        val attributesAdapter = ArrayAdapter<String>(this, android.R.layout.simple_dropdown_item_1line)
-        binding.widgetTextConfigAttribute.setAdapter(attributesAdapter)
-        attributesAdapter.addAll(*fetchedAttributes?.keys.orEmpty().toTypedArray())
-        binding.widgetTextConfigAttribute.setTokenizer(CommaTokenizer())
-        runOnUiThread {
-            val toggleable = selectedEntity?.domain in EntityExt.APP_PRESS_ACTION_DOMAINS
-            binding.tapAction.isVisible = toggleable
-            binding.tapActionList.setSelection(if (toggleable) 0 else 1)
-            attributesAdapter.notifyDataSetChanged()
         }
     }
 
@@ -312,23 +272,6 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 binding.label.text.toString()
             )
 
-            if (appendAttributes) {
-                val attributes = if (selectedAttributeIds.isEmpty()) {
-                    binding.widgetTextConfigAttribute.text.toString()
-                } else {
-                    selectedAttributeIds
-                }
-                intent.putExtra(
-                    GraphWidget.EXTRA_ATTRIBUTE_IDS,
-                    attributes
-                )
-
-                intent.putExtra(
-                    GraphWidget.EXTRA_ATTRIBUTE_SEPARATOR,
-                    binding.attributeSeparator.text.toString()
-                )
-            }
-
             intent.putExtra(
                 GraphWidget.EXTRA_TAP_ACTION,
                 when (binding.tapActionList.selectedItemPosition) {
@@ -337,15 +280,23 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 }
             )
 
-            val sliderValue = binding.hoursToSample.value
+            val sliderTimeRange = binding.timeRange.value
+            val sliderSamplingValue = binding.hoursToSample.value
 
-            val hoursToSample = if (sliderValue == 0f) {
+            val graphTimeRange = if (sliderTimeRange == 0F) {
                 24
             } else {
-                sliderValue.toInt()
+                sliderTimeRange.toInt()
             }
 
-            intent.putExtra(GraphWidget.EXTRA_HOURS_TO_SAMPLE, hoursToSample)
+            val graphSampleMinutes = if (sliderSamplingValue == 0F) {
+                5
+            } else {
+                sliderSamplingValue.toInt()
+            }
+
+            intent.putExtra(GraphWidget.EXTRA_SAMPLING_MINUTES, graphSampleMinutes)
+            intent.putExtra(GraphWidget.EXTRA_TIME_RANGE, graphTimeRange)
 
             context.sendBroadcast(intent)
 

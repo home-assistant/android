@@ -1,10 +1,11 @@
 package io.homeassistant.companion.android.common.data
 
+import io.homeassistant.companion.android.database.widget.WidgetEntity
 import kotlinx.coroutines.flow.Flow
 
-interface BaseDaoRepository<T> {
+interface BaseDaoRepository<T: WidgetEntity> {
 
-    suspend fun get(id: Int): T?
+    fun get(id: Int): T?
 
     suspend fun add(entity: T)
 

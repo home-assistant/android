@@ -10,17 +10,13 @@ import android.widget.Toast
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.database.widget.WidgetDao
 import javax.inject.Inject
 
 abstract class BaseWidgetConfigureActivity : BaseActivity() {
-
     @Inject
     lateinit var serverManager: ServerManager
 
     protected var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
-
-    abstract val dao: WidgetDao
 
     abstract val serverSelect: View
     abstract val serverSelectList: Spinner

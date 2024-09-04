@@ -24,7 +24,6 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.domain
@@ -38,9 +37,10 @@ import io.homeassistant.companion.android.util.getHexForColor
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
-import javax.inject.Inject
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
@@ -52,7 +52,6 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
     @Inject
     lateinit var staticWidgetDao: StaticWidgetDao
-    override val dao get() = staticWidgetDao
 
     private var entities = mutableMapOf<Int, List<Entity<Any>>>()
 

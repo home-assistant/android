@@ -16,7 +16,6 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
 import androidx.core.os.BundleCompat
-import com.fasterxml.jackson.annotation.ObjectIdGenerators.UUIDGenerator
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.Legend
 import com.github.mikephil.charting.components.XAxis
@@ -27,7 +26,6 @@ import com.github.mikephil.charting.formatter.ValueFormatter
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.canSupportPrecision
 import io.homeassistant.companion.android.common.data.integration.friendlyState
@@ -41,14 +39,16 @@ import io.homeassistant.companion.android.database.widget.graph.GraphWidgetWithH
 import io.homeassistant.companion.android.util.getAttribute
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.entity.EntityWidget.Companion.EXTRA_STATE_SEPARATOR
-import javax.inject.Inject
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class GraphWidget : BaseWidgetProvider() {
 
     companion object {
+
         private const val TAG = "GraphWidget"
         internal const val TOGGLE_ENTITY =
             "io.homeassistant.companion.android.widgets.entity.GraphWidget.TOGGLE_ENTITY"
@@ -57,12 +57,13 @@ class GraphWidget : BaseWidgetProvider() {
         internal const val EXTRA_ENTITY_ID = "EXTRA_ENTITY_ID"
         internal const val EXTRA_ATTRIBUTE_IDS = "EXTRA_ATTRIBUTE_IDS"
         internal const val EXTRA_LABEL = "EXTRA_LABEL"
-        internal const val EXTRA_TEXT_SIZE = "EXTRA_TEXT_SIZE"
-        internal const val EXTRA_HOURS_TO_SAMPLE = "EXTRA_HOURS_TO_SAMPLE"
         internal const val EXTRA_ATTRIBUTE_SEPARATOR = "EXTRA_ATTRIBUTE_SEPARATOR"
         internal const val EXTRA_TAP_ACTION = "EXTRA_TAP_ACTION"
         internal const val EXTRA_BACKGROUND_TYPE = "EXTRA_BACKGROUND_TYPE"
         internal const val EXTRA_TEXT_COLOR = "EXTRA_TEXT_COLOR"
+
+        internal const val EXTRA_SAMPLING_MINUTES = "EXTRA_SAMPLING_MINUTES"
+        internal const val EXTRA_TIME_RANGE = "EXTRA_TIME_RANGE"
 
         private data class ResolvedText(val text: CharSequence?, val exception: Boolean = false)
     }
@@ -320,22 +321,9 @@ class GraphWidget : BaseWidgetProvider() {
             null
         }
         if (attributeIds == null) {
-            graphWidgetRepository.add(
-                GraphWidgetEntity(
-                    appWidgetId,
-                    serverId,
-                    entityId.toString(),
-                    null,
-                    null,
-                    30F,
-                    "",
-                    "",
-                    WidgetTapAction.REFRESH,
-                    entity?.friendlyState(context, entityOptions)
-                        ?: graphWidgetRepository.get(appWidgetId)?.lastUpdate ?: "",
-                    WidgetBackgroundType.DAYNIGHT,
-                    null
-                )
+            graphWidgetRepository.updateWidgetLastUpdate(
+                appWidgetId,
+                entity?.friendlyState(context, entityOptions) ?: graphWidgetRepository.get(appWidgetId)?.lastUpdate ?: ""
             )
             return ResolvedText(graphWidgetRepository.get(appWidgetId)?.lastUpdate, entityCaughtException)
         }
@@ -347,22 +335,7 @@ class GraphWidget : BaseWidgetProvider() {
             val lastUpdate =
                 entity?.friendlyState(context, entityOptions).plus(if (attributeValues.isNotEmpty()) stateSeparator else "")
                     .plus(attributeValues.joinToString(attributeSeparator))
-            graphWidgetRepository.add(
-                GraphWidgetEntity(
-                    appWidgetId,
-                    serverId,
-                    entityId.toString(),
-                    attributeIds,
-                    null,
-                    30F,
-                    stateSeparator,
-                    attributeSeparator,
-                    WidgetTapAction.REFRESH,
-                    lastUpdate,
-                    WidgetBackgroundType.DAYNIGHT,
-                    null
-                )
-            )
+            graphWidgetRepository.updateWidgetLastUpdate(appWidgetId, lastUpdate)
             return ResolvedText(lastUpdate)
         } catch (e: Exception) {
             Log.e(TAG, "Unable to fetch entity state and attributes", e)
@@ -377,7 +350,6 @@ class GraphWidget : BaseWidgetProvider() {
         val entitySelection: String? = extras.getString(EXTRA_ENTITY_ID)
         val attributeSelection: ArrayList<String>? = extras.getStringArrayList(EXTRA_ATTRIBUTE_IDS)
         val labelSelection: String? = extras.getString(EXTRA_LABEL)
-        val textSizeSelection: String? = extras.getString(EXTRA_TEXT_SIZE)
         val stateSeparatorSelection: String? = extras.getString(EXTRA_STATE_SEPARATOR)
         val attributeSeparatorSelection: String? = extras.getString(EXTRA_ATTRIBUTE_SEPARATOR)
         val tapActionSelection = BundleCompat.getSerializable(extras, EXTRA_TAP_ACTION, WidgetTapAction::class.java)
@@ -385,6 +357,8 @@ class GraphWidget : BaseWidgetProvider() {
         val backgroundTypeSelection = BundleCompat.getSerializable(extras, EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
             ?: WidgetBackgroundType.DAYNIGHT
         val textColorSelection: String? = extras.getString(EXTRA_TEXT_COLOR)
+        val samplingTime = extras.getInt(EXTRA_SAMPLING_MINUTES)
+        val timeRange = extras.getInt(EXTRA_TIME_RANGE)
 
         if (serverId == null || entitySelection == null) {
             Log.e(TAG, "Did not receive complete service call data")
@@ -400,18 +374,19 @@ class GraphWidget : BaseWidgetProvider() {
             )
             graphWidgetRepository.add(
                 GraphWidgetEntity(
-                    appWidgetId,
-                    serverId,
-                    entitySelection,
-                    attributeSelection?.joinToString(","),
-                    labelSelection,
-                    textSizeSelection?.toFloatOrNull() ?: 30F,
-                    stateSeparatorSelection ?: "",
-                    attributeSeparatorSelection ?: "",
-                    tapActionSelection,
-                    graphWidgetRepository.get(appWidgetId)?.lastUpdate ?: "",
-                    backgroundTypeSelection,
-                    textColorSelection
+                    id = appWidgetId,
+                    serverId = serverId,
+                    entityId = entitySelection,
+                    attributeIds = attributeSelection?.joinToString(","),
+                    label = labelSelection,
+                    samplingTime = samplingTime,
+                    timeRange = timeRange,
+                    stateSeparator = stateSeparatorSelection ?: "",
+                    attributeSeparator = attributeSeparatorSelection ?: "",
+                    tapAction = tapActionSelection,
+                    lastUpdate = graphWidgetRepository.get(appWidgetId)?.lastUpdate ?: "",
+                    backgroundType = backgroundTypeSelection,
+                    textColor = textColorSelection
                 )
             )
 
@@ -421,18 +396,26 @@ class GraphWidget : BaseWidgetProvider() {
 
     override suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity<*>) {
         widgetScope?.launch {
-            // Clean up old entries before updating the widget
-            val oneHourInMillis = 60 * 60 * 1000L // 1 hour in milliseconds, this can be provided by UI
+            val graphEntity = entity as GraphWidgetEntity
+            val currentTimeMillis = System.currentTimeMillis()
+
+            // this should delete older entries based on timerange for example 24 hours is not in millis int
+            val oneHourInMillis = currentTimeMillis - (60 * 60 * 1000 * entity.timeRange)
+
             graphWidgetRepository.deleteEntriesOlderThan(appWidgetId, oneHourInMillis)
+
+            val samplingTimeInMillis = graphEntity.samplingTime * 60 * 1000
 
             graphWidgetRepository.insertGraphWidgetHistory(
                 GraphWidgetHistoryEntity(
-                    UUIDGenerator().generateId(entity.entityId + entity.lastChanged).toString(),
-                    appWidgetId,
-                    entity.friendlyState(context),
-                    entity.lastChanged.timeInMillis
+                    entityId = entity.entityId,
+                    graphWidgetId = appWidgetId,
+                    state = entity.friendlyState(context),
+                    sentState = currentTimeMillis
                 )
             )
+
+            // Get views and update widget
             val views = getWidgetRemoteViews(context, appWidgetId, entity as Entity<Map<String, Any>>)
             AppWidgetManager.getInstance(context).updateAppWidget(appWidgetId, views)
         }

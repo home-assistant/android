@@ -4,10 +4,10 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
+import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "graph_widget_history",
-    primaryKeys = ["entity_id", "graph_widget_id"],
     foreignKeys = [
         ForeignKey(
             entity = GraphWidgetEntity::class,
@@ -23,6 +23,8 @@ import androidx.room.Index
     ]
 )
 data class GraphWidgetHistoryEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
     @ColumnInfo(name = "entity_id")
     val entityId: String,
     @ColumnInfo(name = "graph_widget_id")

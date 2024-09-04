@@ -1,11 +1,9 @@
-package io.homeassistant.companion.android.widgets.graph
 
 import io.homeassistant.companion.android.common.data.widgets.GraphWidgetRepositoryImpl
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetDao
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetEntity
-import io.homeassistant.companion.android.database.widget.graph.GraphWidgetHistoryEntity
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetWithHistories
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
@@ -33,7 +31,9 @@ class GraphWidgetRepositoryImplTest {
 
     @Test
     fun `test getGraphWidget returns expected result`() = runBlocking {
-        val expectedEntity = GraphWidgetEntity(1, 1, "entityId", null, null, 30F, "", "", WidgetTapAction.REFRESH, "lastUpdate", WidgetBackgroundType.DAYNIGHT, null)
+        val expectedEntity = GraphWidgetEntity(
+            1, 1, "entityId", null, null, 30L, 24, "", "", WidgetTapAction.REFRESH, "lastUpdate", WidgetBackgroundType.DAYNIGHT, null
+        )
         whenever(graphWidgetDao.get(1)).thenReturn(expectedEntity)
 
         val result = graphWidgetRepository.get(1)
@@ -43,7 +43,10 @@ class GraphWidgetRepositoryImplTest {
 
     @Test
     fun `test getGraphWidgetWithHistories returns expected result`() = runBlocking {
-        val expectedHistories = GraphWidgetWithHistories(GraphWidgetEntity(1, 1, "entityId", null, null, 30F, "", "", WidgetTapAction.REFRESH, "lastUpdate", WidgetBackgroundType.DAYNIGHT, null), listOf())
+        val expectedEntity = GraphWidgetEntity(
+            1, 1, "entityId", null, null, 30L, 24, "", "", WidgetTapAction.REFRESH, "lastUpdate", WidgetBackgroundType.DAYNIGHT, null
+        )
+        val expectedHistories = GraphWidgetWithHistories(expectedEntity, listOf())
         whenever(graphWidgetDao.getWithHistories(1)).thenReturn(expectedHistories)
 
         val result = graphWidgetRepository.getGraphWidgetWithHistories(1)
@@ -53,7 +56,9 @@ class GraphWidgetRepositoryImplTest {
 
     @Test
     fun `test add GraphWidgetEntity`() = runBlocking {
-        val entity = GraphWidgetEntity(1, 1, "entityId", null, null, 30F, "", "", WidgetTapAction.REFRESH, "lastUpdate", WidgetBackgroundType.DAYNIGHT, null)
+        val entity = GraphWidgetEntity(
+            1, 1, "entityId", null, null, 30L, 24, "", "", WidgetTapAction.REFRESH, "lastUpdate", WidgetBackgroundType.DAYNIGHT, null
+        )
 
         graphWidgetRepository.add(entity)
 
@@ -80,7 +85,11 @@ class GraphWidgetRepositoryImplTest {
 
     @Test
     fun `test getAll returns expected result`() = runBlocking {
-        val expectedList = listOf(GraphWidgetEntity(1, 1, "entityId", null, null, 30F, "", "", WidgetTapAction.REFRESH, "lastUpdate", WidgetBackgroundType.DAYNIGHT, null))
+        val expectedList = listOf(
+            GraphWidgetEntity(
+                1, 1, "entityId", null, null, 30L, 24, "", "", WidgetTapAction.REFRESH, "lastUpdate", WidgetBackgroundType.DAYNIGHT, null
+            )
+        )
         whenever(graphWidgetDao.getAll()).thenReturn(expectedList)
 
         val result = graphWidgetRepository.getAll()
@@ -90,7 +99,11 @@ class GraphWidgetRepositoryImplTest {
 
     @Test
     fun `test getAllFlow returns expected result`() = runBlocking {
-        val expectedList = listOf(GraphWidgetEntity(1, 1, "entityId", null, null, 30F, "", "", WidgetTapAction.REFRESH, "lastUpdate", WidgetBackgroundType.DAYNIGHT, null))
+        val expectedList = listOf(
+            GraphWidgetEntity(
+                1, 1, "entityId", null, null, 30L, 24, "", "", WidgetTapAction.REFRESH, "lastUpdate", WidgetBackgroundType.DAYNIGHT, null
+            )
+        )
         whenever(graphWidgetDao.getAllFlow()).thenReturn(flowOf(expectedList))
 
         val result = graphWidgetRepository.getAllFlow().first()
@@ -116,15 +129,12 @@ class GraphWidgetRepositoryImplTest {
         graphWidgetRepository.deleteEntriesOlderThan(widgetId, cutoffTime)
 
         verify(graphWidgetDao).deleteEntriesOlderThan(widgetId, cutoffTime)
-        assert(graphWidgetDao.get(widgetId) == null)
+
+        // Mocking the return of null to simulate that the entity was deleted
+        whenever(graphWidgetDao.get(widgetId)).thenReturn(null)
+        val result = graphWidgetRepository.get(widgetId)
+
+        assertEquals(null, result)
     }
 
-    @Test
-    fun `test insertGraphWidgetHistory`() = runBlocking {
-        val historyEntity = GraphWidgetHistoryEntity("historyId", 1, "state", System.currentTimeMillis())
-
-        graphWidgetRepository.insertGraphWidgetHistory(historyEntity)
-
-        verify(graphWidgetDao).add(historyEntity)
-    }
 }

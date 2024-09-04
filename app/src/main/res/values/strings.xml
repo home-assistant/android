@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="historical_graph">Historical Graph</string>
-    <string name="widget_graph_we_are_retrieving_data">We are retrieving some data…</string>
+    <string name="widget_graph_we_are_retrieving_data">We are collecting some data…</string>
     <string name="graph_widget_desc">To see historical data on graph</string>
-    <string name="hours_to_sample">Hours to sample:</string>
+    <string name="interval_sampling">Interval sampling:</string>
+    <string name="graph_time_range">Graph Range (hours)</string>
 </resources>

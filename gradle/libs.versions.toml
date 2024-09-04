@@ -21,6 +21,7 @@ core = "1.5.0"
 coreKtx = "1.13.1"
 core-splashscreen = "1.1.0-rc01"
 cronet-embedded = "119.6045.31"
+debugDb = "1.0.7"
 emojiJava = "5.1.1"
 espressoCore = "3.4.0"
 firebase-bom = "33.1.2"
@@ -136,6 +137,7 @@ compose-uiTooling = { module = "androidx.compose.ui:ui-tooling" }
 core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
 core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "core-splashscreen" }
 cronet-embedded = { module = "org.chromium.net:cronet-embedded", version.ref = "cronet-embedded" }
+debug-db = { module = "com.github.amitshekhariitbhu.Android-Debug-Database:debug-db", version.ref = "debugDb" }
 emojiJava = { module = "com.vdurmont:emoji-java", version.ref = "emojiJava" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging" }

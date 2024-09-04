@@ -207,6 +207,8 @@ dependencies {
     androidTestImplementation(libs.androidx.room.testing)
     androidTestImplementation(libs.mockito.core)
     androidTestImplementation(libs.mockito.android)
+
+    debugImplementation(libs.debug.db)
 }
 
 // Disable to fix memory leak and be compatible with the configuration cache.

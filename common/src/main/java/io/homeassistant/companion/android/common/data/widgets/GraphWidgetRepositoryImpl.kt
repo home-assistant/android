@@ -4,16 +4,16 @@ import io.homeassistant.companion.android.database.widget.graph.GraphWidgetDao
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetEntity
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetHistoryEntity
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetWithHistories
-import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
+import javax.inject.Inject
 
 class GraphWidgetRepositoryImpl @Inject constructor(
     private val graphWidgetDao: GraphWidgetDao
 ) : GraphWidgetRepository {
 
-    override suspend fun get(id: Int): GraphWidgetEntity? {
+    override fun get(id: Int): GraphWidgetEntity? {
         return graphWidgetDao.get(id)
     }
 
@@ -51,5 +51,14 @@ class GraphWidgetRepositoryImpl @Inject constructor(
 
     override suspend fun insertGraphWidgetHistory(historyEntity: GraphWidgetHistoryEntity) {
         graphWidgetDao.add(historyEntity)
+    }
+
+    override suspend fun getLastGraphWidgetHistory(appWidgetId: Int): GraphWidgetHistoryEntity? {
+        return graphWidgetDao.getLastGraphWidgetHistory(appWidgetId)
+    }
+
+    // New function to fetch the last two entries
+    override suspend fun getLastEntries(appWidgetId: Int): List<GraphWidgetHistoryEntity> {
+        return graphWidgetDao.getLastTwoEntries(appWidgetId)
     }
 }
