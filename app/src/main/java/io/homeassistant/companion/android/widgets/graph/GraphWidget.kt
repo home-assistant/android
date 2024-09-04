@@ -40,6 +40,7 @@ import io.homeassistant.companion.android.database.widget.graph.GraphWidgetHisto
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetWithHistories
 import io.homeassistant.companion.android.util.getAttribute
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
+import io.homeassistant.companion.android.widgets.entity.EntityWidget.Companion.EXTRA_STATE_SEPARATOR
 import javax.inject.Inject
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -57,7 +58,7 @@ class GraphWidget : BaseWidgetProvider() {
         internal const val EXTRA_ATTRIBUTE_IDS = "EXTRA_ATTRIBUTE_IDS"
         internal const val EXTRA_LABEL = "EXTRA_LABEL"
         internal const val EXTRA_TEXT_SIZE = "EXTRA_TEXT_SIZE"
-        internal const val EXTRA_STATE_SEPARATOR = "EXTRA_STATE_SEPARATOR"
+        internal const val EXTRA_HOURS_TO_SAMPLE = "EXTRA_HOURS_TO_SAMPLE"
         internal const val EXTRA_ATTRIBUTE_SEPARATOR = "EXTRA_ATTRIBUTE_SEPARATOR"
         internal const val EXTRA_TAP_ACTION = "EXTRA_TAP_ACTION"
         internal const val EXTRA_BACKGROUND_TYPE = "EXTRA_BACKGROUND_TYPE"

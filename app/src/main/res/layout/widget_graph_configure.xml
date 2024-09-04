@@ -62,14 +62,6 @@
 
         </LinearLayout>
 
-        <CheckBox
-            android:id="@+id/append_attribute_value_checkbox"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            android:checked="false"
-            android:text="@string/entity_attribute_checkbox" />
-
         <LinearLayout
             android:id="@+id/attribute_value_linear_layout"
             android:layout_width="match_parent"
@@ -138,53 +130,6 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
                 android:padding="5dp"
-                android:text="@string/widget_text_size_label" />
-
-            <androidx.appcompat.widget.AppCompatEditText
-                android:id="@+id/textSize"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:imeOptions="actionDone"
-                android:inputType="number"
-                android:text="@string/widget_text_size_default"
-                android:textAlignment="center" />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:gravity="center"
-            android:orientation="horizontal">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:padding="5dp"
-                android:text="@string/widget_state_separator_label" />
-
-            <androidx.appcompat.widget.AppCompatEditText
-                android:id="@+id/state_separator"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/widget_separator_input_hint"
-                android:imeOptions="actionDone"
-                android:textAlignment="center" />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:gravity="center"
-            android:orientation="horizontal">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:padding="5dp"
                 android:text="@string/label_label" />
 
             <androidx.appcompat.widget.AppCompatEditText
@@ -218,69 +163,30 @@
                 android:layout_gravity="center_vertical" />
         </LinearLayout>
 
-        <LinearLayout
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/hours_to_sample" />
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/hoursToSample"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:gravity="center"
-            android:orientation="horizontal">
+            android:layout_height="wrap_content"
+            android:stepSize="1"
+            android:value="0"
+            android:valueFrom="0"
+            android:valueTo="48" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:padding="5dp"
-                android:text="@string/widget_background_type_label" />
-
-            <Spinner
-                android:id="@+id/background_type"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/text_color"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:visibility="gone"
-            tools:visibility="visible">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:padding="5dp"
-                android:text="@string/widget_text_color_label" />
-
-            <RadioGroup
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <RadioButton
-                    android:id="@+id/text_color_white"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="true"
-                    android:text="@string/widget_text_color_white" />
-
-                <RadioButton
-                    android:id="@+id/text_color_black"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/widget_text_color_black" />
-            </RadioGroup>
-        </LinearLayout>
-
-        <androidx.appcompat.widget.AppCompatButton
+        <Button
             android:id="@+id/add_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="end"
+            android:layout_margin="5dp"
             android:layout_marginTop="8dp"
-            android:text="@string/add_widget" />
+            android:text="@string/add_widget"
+            android:textColor="@color/colorBackground" />
     </LinearLayout>
 
 </androidx.core.widget.NestedScrollView>

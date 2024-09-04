@@ -17,9 +17,7 @@ import android.widget.LinearLayout.VISIBLE
 import android.widget.MultiAutoCompleteTextView.CommaTokenizer
 import android.widget.Spinner
 import android.widget.Toast
-import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
-import androidx.core.graphics.toColorInt
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.color.DynamicColors
@@ -29,12 +27,10 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.friendlyName
-import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetDao
 import io.homeassistant.companion.android.databinding.WidgetGraphConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
-import io.homeassistant.companion.android.util.getHexForColor
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
@@ -140,13 +136,10 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         if (DynamicColors.isDynamicColorAvailable()) {
             backgroundTypeValues.add(0, getString(commonR.string.widget_background_type_dynamiccolor))
         }
-        binding.backgroundType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
 
         if (graphWidget != null) {
             binding.widgetTextConfigEntityId.setText(graphWidget.entityId)
-            binding.label.setText(graphWidget.label)
-            binding.textSize.setText(graphWidget.textSize.toInt().toString())
-            binding.stateSeparator.setText(graphWidget.stateSeparator)
+
             val entity = runBlocking {
                 try {
                     serverManager.integrationRepository(graphWidget.serverId).getEntity(graphWidget.entityId)
@@ -160,7 +153,6 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
             val attributeIds = graphWidget.attributeIds
             if (!attributeIds.isNullOrEmpty()) {
-                binding.appendAttributeValueCheckbox.isChecked = true
                 appendAttributes = true
                 for (item in attributeIds.split(','))
                     selectedAttributeIds.add(item)
@@ -177,28 +169,9 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             binding.tapAction.isVisible = toggleable
             binding.tapActionList.setSelection(if (toggleable && graphWidget.tapAction == WidgetTapAction.TOGGLE) 0 else 1)
 
-            binding.backgroundType.setSelection(
-                when {
-                    graphWidget.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable() ->
-                        backgroundTypeValues.indexOf(getString(commonR.string.widget_background_type_dynamiccolor))
-
-                    graphWidget.backgroundType == WidgetBackgroundType.TRANSPARENT ->
-                        backgroundTypeValues.indexOf(getString(commonR.string.widget_background_type_transparent))
-
-                    else ->
-                        backgroundTypeValues.indexOf(getString(commonR.string.widget_background_type_daynight))
-                }
-            )
-            binding.textColor.visibility = if (graphWidget.backgroundType == WidgetBackgroundType.TRANSPARENT) View.VISIBLE else View.GONE
-            binding.textColorWhite.isChecked =
-                graphWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, android.R.color.white) } ?: true
-            binding.textColorBlack.isChecked =
-                graphWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, commonR.color.colorWidgetButtonLabelBlack) } ?: false
-
             binding.addButton.setText(commonR.string.update_widget)
-        } else {
-            binding.backgroundType.setSelection(0)
         }
+
         entityAdapter = SingleItemArrayAdapter(this) { it?.entityId ?: "" }
 
         setupServerSelect(graphWidget?.serverId)
@@ -212,27 +185,7 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             if (!binding.widgetTextConfigAttribute.isPopupShowing) binding.widgetTextConfigAttribute.showDropDown()
         }
 
-        binding.appendAttributeValueCheckbox.setOnCheckedChangeListener { _, isChecked ->
-            binding.attributeValueLinearLayout.isVisible = isChecked
-            appendAttributes = isChecked
-        }
-
         binding.label.addTextChangedListener(labelTextChanged)
-
-        binding.backgroundType.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                binding.textColor.visibility =
-                    if (parent?.adapter?.getItem(position) == getString(commonR.string.widget_background_type_transparent)) {
-                        View.VISIBLE
-                    } else {
-                        View.GONE
-                    }
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-                binding.textColor.visibility = View.GONE
-            }
-        }
 
         serverManager.defaultServers.forEach { server ->
             lifecycleScope.launch {
@@ -359,16 +312,6 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 binding.label.text.toString()
             )
 
-            intent.putExtra(
-                GraphWidget.EXTRA_TEXT_SIZE,
-                binding.textSize.text.toString()
-            )
-
-            intent.putExtra(
-                GraphWidget.EXTRA_STATE_SEPARATOR,
-                binding.stateSeparator.text.toString()
-            )
-
             if (appendAttributes) {
                 val attributes = if (selectedAttributeIds.isEmpty()) {
                     binding.widgetTextConfigAttribute.text.toString()
@@ -394,27 +337,18 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 }
             )
 
-            intent.putExtra(
-                GraphWidget.EXTRA_BACKGROUND_TYPE,
-                when (binding.backgroundType.selectedItem as String?) {
-                    getString(commonR.string.widget_background_type_dynamiccolor) -> WidgetBackgroundType.DYNAMICCOLOR
-                    getString(commonR.string.widget_background_type_transparent) -> WidgetBackgroundType.TRANSPARENT
-                    else -> WidgetBackgroundType.DAYNIGHT
-                }
-            )
+            val sliderValue = binding.hoursToSample.value
 
-            intent.putExtra(
-                GraphWidget.EXTRA_TEXT_COLOR,
-                if (binding.backgroundType.selectedItem as String? == getString(commonR.string.widget_background_type_transparent)) {
-                    getHexForColor(if (binding.textColorWhite.isChecked) android.R.color.white else commonR.color.colorWidgetButtonLabelBlack)
-                } else {
-                    null
-                }
-            )
+            val hoursToSample = if (sliderValue == 0f) {
+                24
+            } else {
+                sliderValue.toInt()
+            }
+
+            intent.putExtra(GraphWidget.EXTRA_HOURS_TO_SAMPLE, hoursToSample)
 
             context.sendBroadcast(intent)
 
-            // Make sure we pass back the original appWidgetId
             setResult(
                 RESULT_OK,
                 Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
