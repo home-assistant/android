@@ -281,7 +281,6 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             )
 
             val sliderTimeRange = binding.timeRange.value
-            val sliderSamplingValue = binding.hoursToSample.value
 
             val graphTimeRange = if (sliderTimeRange == 0F) {
                 24
@@ -289,13 +288,6 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 sliderTimeRange.toInt()
             }
 
-            val graphSampleMinutes = if (sliderSamplingValue == 0F) {
-                5
-            } else {
-                sliderSamplingValue.toInt()
-            }
-
-            intent.putExtra(GraphWidget.EXTRA_SAMPLING_MINUTES, graphSampleMinutes)
             intent.putExtra(GraphWidget.EXTRA_TIME_RANGE, graphTimeRange)
 
             context.sendBroadcast(intent)

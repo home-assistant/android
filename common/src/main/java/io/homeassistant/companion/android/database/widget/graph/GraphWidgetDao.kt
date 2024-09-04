@@ -18,7 +18,7 @@ interface GraphWidgetDao : WidgetDao {
     @Query("SELECT * FROM graph_widget WHERE id = :id")
     suspend fun getWithHistories(id: Int): GraphWidgetWithHistories?
 
-    @Insert(onConflict = OnConflictStrategy.NONE)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun add(graphWidgetEntity: GraphWidgetEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

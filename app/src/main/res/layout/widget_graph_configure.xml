@@ -128,27 +128,6 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/interval_sampling"
-        app:layout_constraintBottom_toTopOf="@+id/hoursToSample"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <com.google.android.material.slider.Slider
-        android:id="@+id/hoursToSample"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="36dp"
-        android:stepSize="1"
-        android:value="5"
-        android:valueFrom="1"
-        android:valueTo="60"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/linearLayout2" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
         android:text="@string/graph_time_range"
         app:layout_constraintBottom_toTopOf="@+id/timeRange"
         app:layout_constraintStart_toStartOf="parent" />
@@ -165,14 +144,14 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/hoursToSample" />
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout2" />
 
     <Button
         android:id="@+id/add_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="12dp"
         android:layout_marginEnd="8dp"
         android:text="@string/add_widget"
         android:textColor="@color/colorBackground"

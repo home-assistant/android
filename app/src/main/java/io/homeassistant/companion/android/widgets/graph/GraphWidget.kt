@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
 import androidx.core.os.BundleCompat
 import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.components.Description
 import com.github.mikephil.charting.components.Legend
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
@@ -62,7 +63,6 @@ class GraphWidget : BaseWidgetProvider() {
         internal const val EXTRA_BACKGROUND_TYPE = "EXTRA_BACKGROUND_TYPE"
         internal const val EXTRA_TEXT_COLOR = "EXTRA_TEXT_COLOR"
 
-        internal const val EXTRA_SAMPLING_MINUTES = "EXTRA_SAMPLING_MINUTES"
         internal const val EXTRA_TIME_RANGE = "EXTRA_TIME_RANGE"
 
         private data class ResolvedText(val text: CharSequence?, val exception: Boolean = false)
@@ -79,7 +79,7 @@ class GraphWidget : BaseWidgetProvider() {
         val widget = historicData?.graphWidget
 
         val intent = Intent(context, GraphWidget::class.java).apply {
-            action = if (widget?.tapAction == WidgetTapAction.TOGGLE) TOGGLE_ENTITY else UPDATE_VIEW
+            action = UPDATE_VIEW
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         }
 
@@ -160,14 +160,25 @@ class GraphWidget : BaseWidgetProvider() {
                             label = label ?: entityId,
                             entries = createEntriesFromHistoricData(historicData = historicData),
                             width = width,
-                            height = height
+                            height = height,
+                            timeRange = widget.timeRange.toString()
                         ).chartBitmap
                     )
                     setViewVisibility(
                         R.id.chartImageView,
                         if (!resolvedText.exception) View.VISIBLE else View.GONE
                     )
-                } else if (widget != null && historicData.histories?.isNotEmpty() == false) {
+
+                    setOnClickPendingIntent(
+                        R.id.widgetTextLayout,
+                        PendingIntent.getBroadcast(
+                            context,
+                            appWidgetId,
+                            intent,
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                        )
+                    )
+                } else if (historicData?.histories?.isNotEmpty() == false) {
                     // Content
                     setViewVisibility(
                         R.id.chartImageView,
@@ -208,7 +219,7 @@ class GraphWidget : BaseWidgetProvider() {
         return entries
     }
 
-    private fun createLineChart(context: Context, label: String, entries: List<Entry>, width: Int, height: Int): LineChart {
+    private fun createLineChart(context: Context, label: String, timeRange: String, entries: List<Entry>, width: Int, height: Int): LineChart {
         val lineChart = LineChart(context).apply {
             setBackgroundColor(Color.WHITE)
 
@@ -245,8 +256,13 @@ class GraphWidget : BaseWidgetProvider() {
                 setDrawInside(false)
             }
 
+            description = Description().apply {
+                text =  "$timeRange h"
+
+            }
+
             legend.isEnabled = true
-            description.isEnabled = false
+            description.isEnabled = true
         }
 
         val mainGraphColor = ContextCompat.getColor(context, commonR.color.colorPrimary)
@@ -357,10 +373,9 @@ class GraphWidget : BaseWidgetProvider() {
         val backgroundTypeSelection = BundleCompat.getSerializable(extras, EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
             ?: WidgetBackgroundType.DAYNIGHT
         val textColorSelection: String? = extras.getString(EXTRA_TEXT_COLOR)
-        val samplingTime = extras.getInt(EXTRA_SAMPLING_MINUTES)
         val timeRange = extras.getInt(EXTRA_TIME_RANGE)
 
-        if (serverId == null || entitySelection == null) {
+        if (entitySelection == null) {
             Log.e(TAG, "Did not receive complete service call data")
             return
         }
@@ -372,23 +387,24 @@ class GraphWidget : BaseWidgetProvider() {
                     "entity id: " + entitySelection + System.lineSeparator() +
                     "attribute: " + (attributeSelection ?: "N/A")
             )
-            graphWidgetRepository.add(
-                GraphWidgetEntity(
-                    id = appWidgetId,
-                    serverId = serverId,
-                    entityId = entitySelection,
-                    attributeIds = attributeSelection?.joinToString(","),
-                    label = labelSelection,
-                    samplingTime = samplingTime,
-                    timeRange = timeRange,
-                    stateSeparator = stateSeparatorSelection ?: "",
-                    attributeSeparator = attributeSeparatorSelection ?: "",
-                    tapAction = tapActionSelection,
-                    lastUpdate = graphWidgetRepository.get(appWidgetId)?.lastUpdate ?: "",
-                    backgroundType = backgroundTypeSelection,
-                    textColor = textColorSelection
+            if (graphWidgetRepository.get(appWidgetId) == null) {
+                graphWidgetRepository.add(
+                    GraphWidgetEntity(
+                        id = appWidgetId,
+                        serverId = serverId,
+                        entityId = entitySelection,
+                        attributeIds = attributeSelection?.joinToString(","),
+                        label = labelSelection,
+                        timeRange = timeRange,
+                        stateSeparator = stateSeparatorSelection ?: "",
+                        attributeSeparator = attributeSeparatorSelection ?: "",
+                        tapAction = tapActionSelection,
+                        lastUpdate = graphWidgetRepository.get(appWidgetId)?.lastUpdate ?: "",
+                        backgroundType = backgroundTypeSelection,
+                        textColor = textColorSelection
+                    )
                 )
-            )
+            }
 
             onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
         }
@@ -396,20 +412,36 @@ class GraphWidget : BaseWidgetProvider() {
 
     override suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity<*>) {
         widgetScope?.launch {
-            graphWidgetRepository.insertGraphWidgetHistory(
-                GraphWidgetHistoryEntity(
-                    entityId = entity.entityId,
-                    graphWidgetId = appWidgetId,
-                    state = entity.friendlyState(context),
-                    sentState = System.currentTimeMillis()
+
+            val graphEntity = graphWidgetRepository.get(appWidgetId)
+
+            if (graphEntity != null) {
+
+                val currentTimeMillis = System.currentTimeMillis()
+
+                // Calculate the cutoff time based on timeRange (in hours, provided by the entity)
+                val timeRangeInMillis = graphEntity.timeRange * 60 * 60 * 1000
+                val cutoffTimeMillis = currentTimeMillis - timeRangeInMillis
+
+                graphWidgetRepository.deleteEntriesOlderThan(appWidgetId, cutoffTimeMillis)
+
+                graphWidgetRepository.insertGraphWidgetHistory(
+                    GraphWidgetHistoryEntity(
+                        entityId = entity.entityId,
+                        graphWidgetId = appWidgetId,
+                        state = entity.friendlyState(context),
+                        sentState = currentTimeMillis
+                    )
                 )
-            )
+
+            }
 
             // Get views and update widget
             val views = getWidgetRemoteViews(context, appWidgetId, entity as Entity<Map<String, Any>>)
             AppWidgetManager.getInstance(context).updateAppWidget(appWidgetId, views)
         }
     }
+
 
     private fun toggleEntity(context: Context, appWidgetId: Int) {
         widgetScope?.launch {

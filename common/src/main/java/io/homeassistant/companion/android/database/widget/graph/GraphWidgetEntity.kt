@@ -20,8 +20,6 @@ data class GraphWidgetEntity(
     val attributeIds: String?,
     @ColumnInfo(name = "label")
     val label: String?,
-    @ColumnInfo(name = "sampling_minutes_time")
-    val samplingTime: Int = 5,
     @ColumnInfo(name = "graph_time_range")
     val timeRange: Int = 24,
     @ColumnInfo(name = "state_separator")

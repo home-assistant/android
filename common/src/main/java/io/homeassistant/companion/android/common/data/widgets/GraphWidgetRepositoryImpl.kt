@@ -26,9 +26,7 @@ class GraphWidgetRepositoryImpl @Inject constructor(
     }
 
     override suspend fun add(entity: GraphWidgetEntity) {
-        graphWidgetDao.getWithHistories(entity.id)
         graphWidgetDao.add(entity)
-        graphWidgetDao.getWithHistories(entity.id)
     }
 
     override suspend fun delete(id: Int) {
