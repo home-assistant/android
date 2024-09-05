@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 48,
-    "identityHash": "4d2ada8298feb9910aff4b4a245e1862",
+    "identityHash": "8f5ec76311e9f056099bca5a7b886be1",
     "entities": [
       {
         "tableName": "sensor_attributes",
@@ -532,7 +532,7 @@
       },
       {
         "tableName": "graph_widget",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `entity_id` TEXT NOT NULL, `attribute_ids` TEXT, `label` TEXT, `sampling_minutes_time` INTEGER NOT NULL, `graph_time_range` INTEGER NOT NULL, `state_separator` TEXT NOT NULL, `attribute_separator` TEXT NOT NULL, `tap_action` TEXT NOT NULL DEFAULT 'REFRESH', `last_update` TEXT NOT NULL, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `entity_id` TEXT NOT NULL, `attribute_ids` TEXT, `label` TEXT, `graph_time_range` INTEGER NOT NULL, `state_separator` TEXT NOT NULL, `attribute_separator` TEXT NOT NULL, `tap_action` TEXT NOT NULL DEFAULT 'REFRESH', `last_update` TEXT NOT NULL, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -564,12 +564,6 @@
             "columnName": "label",
             "affinity": "TEXT",
             "notNull": false
-          },
-          {
-            "fieldPath": "samplingTime",
-            "columnName": "sampling_minutes_time",
-            "affinity": "INTEGER",
-            "notNull": true
           },
           {
             "fieldPath": "timeRange",
@@ -1291,7 +1285,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4d2ada8298feb9910aff4b4a245e1862')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8f5ec76311e9f056099bca5a7b886be1')"
     ]
   }
 }
