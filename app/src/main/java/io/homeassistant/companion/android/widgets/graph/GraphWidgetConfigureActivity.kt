@@ -21,9 +21,9 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt
+import io.homeassistant.companion.android.common.data.integration.canSupportPrecision
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.widgets.GraphWidgetRepository
@@ -33,9 +33,10 @@ import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewMode
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
-import javax.inject.Inject
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
@@ -155,10 +156,13 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
             repository.get(appWidgetId)?.let {
                 binding.label.setText(it.label)
+                binding.timeRange.value = it.timeRange.toFloat()
+                binding.timeRangeLabel.text = getString(R.string.graph_time_range, it.timeRange)
             }
+        } else {
+            binding.timeRangeLabel.text = getString(R.string.graph_time_range, 24)
         }
 
-        binding.timeRangeLabel.text = getString(R.string.graph_time_range, 24)
         binding.timeRange.addOnChangeListener { _, value, _ ->
             binding.timeRangeLabel.text = getString(R.string.graph_time_range, value.toInt())
         }
@@ -198,7 +202,9 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         entityAdapter?.let { adapter ->
             adapter.clearAll()
             if (entities[serverId] != null) {
-                adapter.addAll(entities[serverId].orEmpty().toMutableList())
+                adapter.addAll(entities[serverId]?.filter {
+                    it.canSupportPrecision()
+                }.orEmpty().toMutableList())
                 adapter.sort()
             }
             runOnUiThread { adapter.notifyDataSetChanged() }
