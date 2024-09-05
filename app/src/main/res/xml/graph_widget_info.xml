@@ -9,7 +9,6 @@
     android:minResizeWidth="200dp"
     android:minResizeHeight="112dp"
     android:previewImage="@drawable/widget_example_graph"
-    android:previewLayout="@layout/widget_graph_wrapper_dynamiccolor"
     android:resizeMode="vertical|horizontal"
     android:targetCellWidth="8"
     android:targetCellHeight="4"
