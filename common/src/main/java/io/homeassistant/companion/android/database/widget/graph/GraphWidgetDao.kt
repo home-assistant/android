@@ -44,6 +44,15 @@ interface GraphWidgetDao : WidgetDao {
     @Query("UPDATE graph_widget SET last_update = :lastUpdate WHERE id = :widgetId")
     suspend fun updateWidgetLastUpdate(widgetId: Int, lastUpdate: String)
 
+    // Update the label field of a specific GraphWidgetEntity
+    @Query("UPDATE graph_widget SET label = :label WHERE id = :widgetId")
+    fun updateWidgetLabel(widgetId: Int, label: String)
+
+    // Update the label field of a specific GraphWidgetEntity
+    @Query("UPDATE graph_widget SET graph_time_range = :timeRange WHERE id = :widgetId")
+    fun updateWidgetTimeRange(widgetId: Int, timeRange: Int)
+
+    // Deletes old historic entries of a specific GraphWidgetEntity
     @Query("DELETE FROM graph_widget_history WHERE graph_widget_id = :appWidgetId AND sent_state < :cutoffTime")
     suspend fun deleteEntriesOlderThan(appWidgetId: Int, cutoffTime: Long)
 }

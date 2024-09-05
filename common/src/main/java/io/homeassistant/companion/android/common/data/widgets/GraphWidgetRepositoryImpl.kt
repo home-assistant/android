@@ -52,4 +52,12 @@ class GraphWidgetRepositoryImpl @Inject constructor(
     override suspend fun insertGraphWidgetHistory(historyEntity: GraphWidgetHistoryEntity) {
         graphWidgetDao.add(historyEntity)
     }
+
+    override fun updateWidgetLastLabel(appWidgetId: Int, labelText: String) {
+        graphWidgetDao.updateWidgetLabel(appWidgetId, labelText)
+    }
+
+    override fun updateWidgetTimeRange(appWidgetId: Int, timeRange: Int) {
+        graphWidgetDao.updateWidgetTimeRange(appWidgetId, timeRange)
+    }
 }

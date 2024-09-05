@@ -20,6 +20,7 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.domain
@@ -91,6 +92,7 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
                         )
                     )
+
                 } else {
                     showAddWidgetError()
                 }
@@ -151,6 +153,14 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             binding.tapActionList.setSelection(if (toggleable && graphWidget.tapAction == WidgetTapAction.TOGGLE) 0 else 1)
 
             binding.addButton.setText(commonR.string.update_widget)
+            binding.timeRangeLabel.text = getString(R.string.graph_time_range, binding.timeRange.value.toInt())
+            binding.timeRange.addOnChangeListener { _, value, _ ->
+                binding.timeRangeLabel.text = getString(R.string.graph_time_range, value.toInt())
+            }
+
+            repository.get(appWidgetId)?.let {
+                binding.label.setText(it.label)
+            }
         }
 
         entityAdapter = SingleItemArrayAdapter(this) { it?.entityId ?: "" }
@@ -291,6 +301,9 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             intent.putExtra(GraphWidget.EXTRA_TIME_RANGE, graphTimeRange)
 
             context.sendBroadcast(intent)
+
+            repository.updateWidgetLastLabel(appWidgetId, binding.label.text.toString())
+            repository.updateWidgetTimeRange(appWidgetId, binding.timeRange.value.toInt())
 
             setResult(
                 RESULT_OK,

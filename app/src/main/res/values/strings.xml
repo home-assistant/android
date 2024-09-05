@@ -4,5 +4,5 @@
     <string name="widget_graph_we_are_retrieving_data">We are collecting some data…</string>
     <string name="graph_widget_desc">To see historical data on graph</string>
     <string name="interval_sampling">Interval sampling:</string>
-    <string name="graph_time_range">Graph Range (hours)</string>
+    <string formatted="true" name="graph_time_range">Graph Range (%1$d hours)</string>
 </resources>
