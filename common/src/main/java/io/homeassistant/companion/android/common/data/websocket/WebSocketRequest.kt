@@ -4,6 +4,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.So
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharedFlow
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * A class that holds information about messages that are currently active (sent and no response
@@ -24,4 +25,6 @@ data class WebSocketRequest(
     val eventTimeout: Long = 0L,
     val onEvent: Channel<Any>? = null,
     var onResponse: CancellableContinuation<SocketResponse>? = null
-)
+) {
+    val hasContinuationBeenInvoked = AtomicBoolean(onResponse == null)
+}
