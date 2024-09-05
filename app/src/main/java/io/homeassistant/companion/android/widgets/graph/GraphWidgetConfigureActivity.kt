@@ -153,11 +153,11 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             binding.tapActionList.setSelection(if (toggleable && graphWidget.tapAction == WidgetTapAction.TOGGLE) 0 else 1)
 
             binding.addButton.setText(commonR.string.update_widget)
-            binding.timeRangeLabel.text = getString(R.string.graph_time_range, binding.timeRange.value.toInt())
             binding.timeRange.addOnChangeListener { _, value, _ ->
                 binding.timeRangeLabel.text = getString(R.string.graph_time_range, value.toInt())
             }
 
+            binding.timeRangeLabel.text = getString(R.string.graph_time_range, binding.timeRange.value.toInt())
             repository.get(appWidgetId)?.let {
                 binding.label.setText(it.label)
             }
