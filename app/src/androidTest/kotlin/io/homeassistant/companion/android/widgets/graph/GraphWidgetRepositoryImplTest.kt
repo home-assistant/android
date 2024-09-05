@@ -11,13 +11,13 @@ import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetDao
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetEntity
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetHistoryEntity
+import java.io.IOException
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.io.IOException
 
 @RunWith(AndroidJUnit4ClassRunner::class)
 class GraphWidgetRepositoryImplTest {
@@ -103,8 +103,8 @@ class GraphWidgetRepositoryImplTest {
         val currentTime = System.currentTimeMillis()
         val oldTime = currentTime - (60 * 60 * 1000) // 1 hour ago
 
-        val historyEntity1 = GraphWidgetHistoryEntity(1,"history1", 1, "State1", oldTime)
-        val historyEntity2 = GraphWidgetHistoryEntity(2,"history2", 1, "State2", currentTime)
+        val historyEntity1 = GraphWidgetHistoryEntity(1, "history1", 1, "State1", oldTime)
+        val historyEntity2 = GraphWidgetHistoryEntity(2, "history2", 1, "State2", currentTime)
 
         graphWidgetRepository.insertGraphWidgetHistory(historyEntity1)
         graphWidgetRepository.insertGraphWidgetHistory(historyEntity2)
@@ -115,5 +115,4 @@ class GraphWidgetRepositoryImplTest {
         assertEquals(1, widgetHistories?.histories?.size)
         assertEquals(historyEntity2, widgetHistories?.histories?.get(0))
     }
-
 }

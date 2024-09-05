@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.common.data
 import io.homeassistant.companion.android.database.widget.WidgetEntity
 import kotlinx.coroutines.flow.Flow
 
-interface BaseDaoRepository<T: WidgetEntity> {
+interface BaseDaoRepository<T : WidgetEntity> {
 
     fun get(id: Int): T?
 

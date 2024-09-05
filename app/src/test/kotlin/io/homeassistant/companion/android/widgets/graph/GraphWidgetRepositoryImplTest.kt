@@ -44,7 +44,7 @@ class GraphWidgetRepositoryImplTest {
     @Test
     fun `test getGraphWidgetWithHistories returns expected result`() = runBlocking {
         val expectedEntity = GraphWidgetEntity(
-            1, 1, "entityId", null, null,  24, "", "", WidgetTapAction.REFRESH, "lastUpdate", WidgetBackgroundType.DAYNIGHT, null
+            1, 1, "entityId", null, null, 24, "", "", WidgetTapAction.REFRESH, "lastUpdate", WidgetBackgroundType.DAYNIGHT, null
         )
         val expectedHistories = GraphWidgetWithHistories(expectedEntity, listOf())
         whenever(graphWidgetDao.getWithHistories(1)).thenReturn(expectedHistories)
@@ -136,5 +136,4 @@ class GraphWidgetRepositoryImplTest {
 
         assertEquals(null, result)
     }
-
 }

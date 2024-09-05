@@ -27,6 +27,7 @@ import com.github.mikephil.charting.formatter.ValueFormatter
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.canSupportPrecision
 import io.homeassistant.companion.android.common.data.integration.friendlyState
@@ -40,10 +41,9 @@ import io.homeassistant.companion.android.database.widget.graph.GraphWidgetWithH
 import io.homeassistant.companion.android.util.getAttribute
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.entity.EntityWidget.Companion.EXTRA_STATE_SEPARATOR
+import javax.inject.Inject
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class GraphWidget : BaseWidgetProvider() {
@@ -257,8 +257,7 @@ class GraphWidget : BaseWidgetProvider() {
             }
 
             description = Description().apply {
-                text =  "$timeRange h"
-
+                text = "$timeRange h"
             }
 
             legend.isEnabled = true
@@ -412,11 +411,9 @@ class GraphWidget : BaseWidgetProvider() {
 
     override suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity<*>) {
         widgetScope?.launch {
-
             val graphEntity = graphWidgetRepository.get(appWidgetId)
 
             if (graphEntity != null) {
-
                 val currentTimeMillis = System.currentTimeMillis()
 
                 // Calculate the cutoff time based on timeRange (in hours, provided by the entity)
@@ -433,7 +430,6 @@ class GraphWidget : BaseWidgetProvider() {
                         sentState = currentTimeMillis
                     )
                 )
-
             }
 
             // Get views and update widget
@@ -441,7 +437,6 @@ class GraphWidget : BaseWidgetProvider() {
             AppWidgetManager.getInstance(context).updateAppWidget(appWidgetId, views)
         }
     }
-
 
     private fun toggleEntity(context: Context, appWidgetId: Int) {
         widgetScope?.launch {
