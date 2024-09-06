@@ -50,7 +50,8 @@
         <service
             android:name=".location.HighAccuracyLocationService"
             android:enabled="true"
-            android:exported="true"/>
+            android:exported="true"
+            android:foregroundServiceType="location"/>
 
         <service
             android:name=".matter.MatterCommissioningService"
