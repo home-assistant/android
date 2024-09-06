@@ -49,6 +49,7 @@ import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.common.ActionFieldBinder
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetDynamicFieldAdapter
+import io.homeassistant.companion.android.widgets.common.WidgetUtils
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 
@@ -225,30 +226,19 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         }
 
         val buttonWidget = buttonWidgetDao.get(appWidgetId)
-
-        val backgroundTypeValues = mutableListOf(
-            getString(commonR.string.widget_background_type_daynight),
-            getString(commonR.string.widget_background_type_transparent)
-        )
-        if (DynamicColors.isDynamicColorAvailable()) {
-            backgroundTypeValues.add(0, getString(commonR.string.widget_background_type_dynamiccolor))
-        }
+        val backgroundTypeValues = WidgetUtils.getBackgroundOptionList(this)
         binding.backgroundType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
 
         if (buttonWidget != null) {
             val actionText = "${buttonWidget.domain}.${buttonWidget.service}"
             binding.widgetTextConfigService.setText(actionText)
             binding.label.setText(buttonWidget.label)
-
             binding.backgroundType.setSelection(
-                when {
-                    buttonWidget.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable() ->
-                        backgroundTypeValues.indexOf(getString(commonR.string.widget_background_type_dynamiccolor))
-                    buttonWidget.backgroundType == WidgetBackgroundType.TRANSPARENT ->
-                        backgroundTypeValues.indexOf(getString(commonR.string.widget_background_type_transparent))
-                    else ->
-                        backgroundTypeValues.indexOf(getString(commonR.string.widget_background_type_daynight))
-                }
+                WidgetUtils.getSelectedBackgroundOption(
+                    this,
+                    buttonWidget.backgroundType,
+                    backgroundTypeValues
+                )
             )
             binding.textColor.isVisible = buttonWidget.backgroundType == WidgetBackgroundType.TRANSPARENT
             binding.textColorWhite.isChecked =

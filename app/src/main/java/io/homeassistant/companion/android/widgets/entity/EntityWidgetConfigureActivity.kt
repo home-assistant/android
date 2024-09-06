@@ -22,7 +22,6 @@ import androidx.core.content.getSystemService
 import androidx.core.graphics.toColorInt
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
-import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -38,6 +37,7 @@ import io.homeassistant.companion.android.util.getHexForColor
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
+import io.homeassistant.companion.android.widgets.common.WidgetUtils
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -131,14 +131,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
         val tapActionValues = listOf(getString(commonR.string.widget_tap_action_toggle), getString(commonR.string.refresh))
         binding.tapActionList.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, tapActionValues)
-
-        val backgroundTypeValues = mutableListOf(
-            getString(commonR.string.widget_background_type_daynight),
-            getString(commonR.string.widget_background_type_transparent)
-        )
-        if (DynamicColors.isDynamicColorAvailable()) {
-            backgroundTypeValues.add(0, getString(commonR.string.widget_background_type_dynamiccolor))
-        }
+        val backgroundTypeValues = WidgetUtils.getBackgroundOptionList(this)
         binding.backgroundType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
 
         if (staticWidget != null) {
@@ -175,17 +168,6 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             val toggleable = entity?.domain in EntityExt.APP_PRESS_ACTION_DOMAINS
             binding.tapAction.isVisible = toggleable
             binding.tapActionList.setSelection(if (toggleable && staticWidget.tapAction == WidgetTapAction.TOGGLE) 0 else 1)
-
-            binding.backgroundType.setSelection(
-                when {
-                    staticWidget.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable() ->
-                        backgroundTypeValues.indexOf(getString(commonR.string.widget_background_type_dynamiccolor))
-                    staticWidget.backgroundType == WidgetBackgroundType.TRANSPARENT ->
-                        backgroundTypeValues.indexOf(getString(commonR.string.widget_background_type_transparent))
-                    else ->
-                        backgroundTypeValues.indexOf(getString(commonR.string.widget_background_type_daynight))
-                }
-            )
             binding.textColor.visibility = if (staticWidget.backgroundType == WidgetBackgroundType.TRANSPARENT) View.VISIBLE else View.GONE
             binding.textColorWhite.isChecked =
                 staticWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, android.R.color.white) } ?: true
