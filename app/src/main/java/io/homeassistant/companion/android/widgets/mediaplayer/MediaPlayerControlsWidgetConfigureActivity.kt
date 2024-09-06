@@ -119,7 +119,8 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
 
         val backgroundTypeValues = mutableListOf(
             getString(commonR.string.widget_background_type_dynamiccolor),
-            getString(commonR.string.widget_background_type_daynight)
+            getString(commonR.string.widget_background_type_daynight),
+            getString(commonR.string.widget_background_type_transparent)
         )
         if (DynamicColors.isDynamicColorAvailable()) {
             binding.backgroundType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
@@ -262,6 +263,7 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
                 MediaPlayerControlsWidget.EXTRA_BACKGROUND_TYPE,
                 when (binding.backgroundType.selectedItem as String?) {
                     getString(commonR.string.widget_background_type_dynamiccolor) -> WidgetBackgroundType.DYNAMICCOLOR
+                    getString(commonR.string.widget_background_type_transparent) -> WidgetBackgroundType.TRANSPARENT
                     else -> WidgetBackgroundType.DAYNIGHT
                 }
             )
