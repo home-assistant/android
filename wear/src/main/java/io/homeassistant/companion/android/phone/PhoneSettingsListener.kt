@@ -194,7 +194,7 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
                 updateTiles()
             }
 
-            val intent = HomeActivity.newInstance(applicationContext)
+            val intent = HomeActivity.newInstance(applicationContext, fromOnboarding = true)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             startActivity(intent)
         } catch (e: Exception) {
