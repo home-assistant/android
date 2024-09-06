@@ -12,6 +12,7 @@ import android.hardware.SensorManager.SENSOR_STATUS_ACCURACY_LOW
 import android.hardware.SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM
 import android.hardware.SensorManager.SENSOR_STATUS_NO_CONTACT
 import android.hardware.SensorManager.SENSOR_STATUS_UNRELIABLE
+import android.os.Build
 import android.util.Log
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
@@ -53,7 +54,11 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
-        return arrayOf(Manifest.permission.BODY_SENSORS)
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            arrayOf(Manifest.permission.BODY_SENSORS, Manifest.permission.BODY_SENSORS_BACKGROUND)
+        } else {
+            arrayOf(Manifest.permission.BODY_SENSORS)
+        }
     }
 
     override fun hasSensor(context: Context): Boolean {
