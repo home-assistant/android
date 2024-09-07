@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.common.sensors
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.content.pm.ServiceInfo
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -49,7 +50,15 @@ abstract class SensorWorkerBase(
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .build()
 
-            val foregroundInfo = ForegroundInfo(NOTIFICATION_ID, notification)
+            val foregroundInfo = ForegroundInfo(
+                NOTIFICATION_ID,
+                notification,
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+                } else {
+                    0
+                }
+            )
             try {
                 setForeground(foregroundInfo)
                 Log.d(TAG, "Updating all Sensors in foreground.")

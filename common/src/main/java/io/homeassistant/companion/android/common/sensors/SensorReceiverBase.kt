@@ -11,6 +11,7 @@ import android.content.res.Configuration
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.IntegrationException
@@ -51,7 +52,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                 SensorUpdateFrequencySetting.FAST_ALWAYS -> true
                 SensorUpdateFrequencySetting.FAST_WHILE_CHARGING -> {
                     val batteryStatusIntent =
-                        context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+                        ContextCompat.registerReceiver(context, null, IntentFilter(Intent.ACTION_BATTERY_CHANGED), ContextCompat.RECEIVER_NOT_EXPORTED)
                     return batteryStatusIntent?.let { BatterySensorManager.getIsCharging(it) } ?: false
                 }
                 else -> false

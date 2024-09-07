@@ -221,14 +221,14 @@ class GraphWidget : BaseWidgetProvider() {
 
     private fun createLineChart(context: Context, label: String, timeRange: String, entries: List<Entry>, width: Int, height: Int): LineChart {
         val lineChart = LineChart(context).apply {
-            setBackgroundColor(Color.WHITE)
-
+            val dynTextColor = ContextCompat.getColor(context, commonR.color.colorWidgetButtonLabel)
+            setBackgroundResource(commonR.color.colorWidgetButtonBackground)
             setDrawBorders(false)
 
             xAxis.apply {
                 setDrawGridLines(true)
                 position = XAxis.XAxisPosition.BOTTOM
-                textColor = Color.DKGRAY
+                textColor = dynTextColor
                 textSize = 12F
                 granularity = 2F
                 setAvoidFirstLastClipping(true)
@@ -237,7 +237,7 @@ class GraphWidget : BaseWidgetProvider() {
 
             axisLeft.apply {
                 setDrawGridLines(true)
-                textColor = Color.DKGRAY
+                textColor = dynTextColor
                 textSize = 12F
             }
 
@@ -248,7 +248,7 @@ class GraphWidget : BaseWidgetProvider() {
 
             legend.apply {
                 isEnabled = true
-                textColor = Color.DKGRAY
+                textColor = dynTextColor
                 textSize = 12F
                 verticalAlignment = Legend.LegendVerticalAlignment.BOTTOM
                 horizontalAlignment = Legend.LegendHorizontalAlignment.RIGHT

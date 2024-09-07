@@ -78,6 +78,7 @@ jobs:
       - name: Archive Build
         uses: actions/upload-artifact@v4
         with:
+          name: release-apks
           path: ./**/*.apk
 
       - name: Create Version File
@@ -184,6 +185,12 @@ jobs:
           ./gradlew :app:bundleRelease
           ./gradlew :wear:bundleRelease
           ./gradlew :automotive:bundleRelease
+
+      - name: Archive Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-aabs
+          path: ./**/*.aab
 
       - name: Deploy to Playstore Internal
         run: bundle exec fastlane deploy_internal

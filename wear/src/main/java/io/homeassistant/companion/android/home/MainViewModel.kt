@@ -12,6 +12,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
+import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -130,6 +131,8 @@ class MainViewModel @Inject constructor(
         private set
     var isAssistantAppAllowed by mutableStateOf(true)
         private set
+    var areNotificationsAllowed by mutableStateOf(false)
+        private set
 
     fun supportedDomains(): List<String> = HomePresenterImpl.supportedDomains
 
@@ -159,6 +162,8 @@ class MainViewModel @Inject constructor(
             )
             isAssistantAppAllowed =
                 app.packageManager.getComponentEnabledSetting(assistantAppComponent) != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+
+            refreshNotificationPermission()
         }
     }
 
@@ -544,6 +549,10 @@ class MainViewModel @Inject constructor(
             PackageManager.DONT_KILL_APP
         )
         isAssistantAppAllowed = allowed
+    }
+
+    fun refreshNotificationPermission() {
+        areNotificationsAllowed = NotificationManagerCompat.from(app).areNotificationsEnabled()
     }
 
     fun logout() {

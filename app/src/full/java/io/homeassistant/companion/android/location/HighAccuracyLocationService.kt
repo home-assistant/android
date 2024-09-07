@@ -8,6 +8,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
 import android.graphics.Color
 import android.location.Location
 import android.os.Build
@@ -148,7 +149,8 @@ class HighAccuracyLocationService : Service() {
         createNotificationBuilder(this)
         notification = notificationBuilder.build()
 
-        LAUNCHER.onServiceCreated(this, notificationId, notification)
+        val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) FOREGROUND_SERVICE_TYPE_LOCATION else 0
+        LAUNCHER.onServiceCreated(this, notificationId, notification, type)
 
         Log.d(TAG, "High accuracy location service created -> onCreate")
     }

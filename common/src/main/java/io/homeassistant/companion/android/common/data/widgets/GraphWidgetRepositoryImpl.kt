@@ -4,10 +4,10 @@ import io.homeassistant.companion.android.database.widget.graph.GraphWidgetDao
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetEntity
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetHistoryEntity
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetWithHistories
-import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
+import javax.inject.Inject
 
 class GraphWidgetRepositoryImpl @Inject constructor(
     private val graphWidgetDao: GraphWidgetDao
@@ -26,7 +26,7 @@ class GraphWidgetRepositoryImpl @Inject constructor(
     }
 
     override suspend fun add(entity: GraphWidgetEntity) {
-        if (graphWidgetDao.get(entity.id) != null) {
+        if (graphWidgetDao.get(entity.id) == null) {
             graphWidgetDao.add(entity)
         }
     }
