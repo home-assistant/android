@@ -27,7 +27,6 @@ import com.github.mikephil.charting.formatter.ValueFormatter
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.canSupportPrecision
 import io.homeassistant.companion.android.common.data.integration.friendlyState
@@ -41,9 +40,10 @@ import io.homeassistant.companion.android.database.widget.graph.GraphWidgetWithH
 import io.homeassistant.companion.android.util.getAttribute
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.entity.EntityWidget.Companion.EXTRA_STATE_SEPARATOR
-import javax.inject.Inject
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class GraphWidget : BaseWidgetProvider() {
@@ -69,13 +69,13 @@ class GraphWidget : BaseWidgetProvider() {
     }
 
     @Inject
-    lateinit var graphWidgetRepository: GraphWidgetRepository
+    lateinit var repository: GraphWidgetRepository
 
     override fun getWidgetProvider(context: Context): ComponentName =
         ComponentName(context, GraphWidget::class.java)
 
     override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity<Map<String, Any>>?): RemoteViews {
-        val historicData = graphWidgetRepository.getGraphWidgetWithHistories(appWidgetId)
+        val historicData = repository.getGraphWidgetWithHistories(appWidgetId)
         val widget = historicData?.graphWidget
 
         val intent = Intent(context, GraphWidget::class.java).apply {
@@ -301,7 +301,7 @@ class GraphWidget : BaseWidgetProvider() {
     }
 
     override suspend fun getAllWidgetIdsWithEntities(context: Context): Map<Int, Pair<Int, List<String>>> =
-        graphWidgetRepository.getAllFlow()
+        repository.getAllFlow()
             .first()
             .associate { it.id to (it.serverId to listOf(it.entityId)) }
 
@@ -336,11 +336,11 @@ class GraphWidget : BaseWidgetProvider() {
             null
         }
         if (attributeIds == null) {
-            graphWidgetRepository.updateWidgetLastUpdate(
+            repository.updateWidgetLastUpdate(
                 appWidgetId,
-                entity?.friendlyState(context, entityOptions) ?: graphWidgetRepository.get(appWidgetId)?.lastUpdate ?: ""
+                entity?.friendlyState(context, entityOptions) ?: repository.get(appWidgetId)?.lastUpdate ?: ""
             )
-            return ResolvedText(graphWidgetRepository.get(appWidgetId)?.lastUpdate, entityCaughtException)
+            return ResolvedText(repository.get(appWidgetId)?.lastUpdate, entityCaughtException)
         }
 
         try {
@@ -350,12 +350,12 @@ class GraphWidget : BaseWidgetProvider() {
             val lastUpdate =
                 entity?.friendlyState(context, entityOptions).plus(if (attributeValues.isNotEmpty()) stateSeparator else "")
                     .plus(attributeValues.joinToString(attributeSeparator))
-            graphWidgetRepository.updateWidgetLastUpdate(appWidgetId, lastUpdate)
+            repository.updateWidgetLastUpdate(appWidgetId, lastUpdate)
             return ResolvedText(lastUpdate)
         } catch (e: Exception) {
             Log.e(TAG, "Unable to fetch entity state and attributes", e)
         }
-        return ResolvedText(graphWidgetRepository.get(appWidgetId)?.lastUpdate, true)
+        return ResolvedText(repository.get(appWidgetId)?.lastUpdate, true)
     }
 
     override fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
@@ -386,24 +386,22 @@ class GraphWidget : BaseWidgetProvider() {
                     "entity id: " + entitySelection + System.lineSeparator() +
                     "attribute: " + (attributeSelection ?: "N/A")
             )
-            if (graphWidgetRepository.get(appWidgetId) == null) {
-                graphWidgetRepository.add(
-                    GraphWidgetEntity(
-                        id = appWidgetId,
-                        serverId = serverId,
-                        entityId = entitySelection,
-                        attributeIds = attributeSelection?.joinToString(","),
-                        label = labelSelection,
-                        timeRange = timeRange,
-                        stateSeparator = stateSeparatorSelection ?: "",
-                        attributeSeparator = attributeSeparatorSelection ?: "",
-                        tapAction = tapActionSelection,
-                        lastUpdate = graphWidgetRepository.get(appWidgetId)?.lastUpdate ?: "",
-                        backgroundType = backgroundTypeSelection,
-                        textColor = textColorSelection
-                    )
+            repository.add(
+                GraphWidgetEntity(
+                    id = appWidgetId,
+                    serverId = serverId,
+                    entityId = entitySelection,
+                    attributeIds = attributeSelection?.joinToString(","),
+                    label = labelSelection,
+                    timeRange = timeRange,
+                    stateSeparator = stateSeparatorSelection ?: "",
+                    attributeSeparator = attributeSeparatorSelection ?: "",
+                    tapAction = tapActionSelection,
+                    lastUpdate = repository.get(appWidgetId)?.lastUpdate ?: "",
+                    backgroundType = backgroundTypeSelection,
+                    textColor = textColorSelection
                 )
-            }
+            )
 
             onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
         }
@@ -411,7 +409,7 @@ class GraphWidget : BaseWidgetProvider() {
 
     override suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity<*>) {
         widgetScope?.launch {
-            val graphEntity = graphWidgetRepository.get(appWidgetId)
+            val graphEntity = repository.get(appWidgetId)
 
             if (graphEntity != null) {
                 val currentTimeMillis = System.currentTimeMillis()
@@ -420,9 +418,9 @@ class GraphWidget : BaseWidgetProvider() {
                 val timeRangeInMillis = graphEntity.timeRange * 60 * 60 * 1000
                 val cutoffTimeMillis = currentTimeMillis - timeRangeInMillis
 
-                graphWidgetRepository.deleteEntriesOlderThan(appWidgetId, cutoffTimeMillis)
+                repository.deleteEntriesOlderThan(appWidgetId, cutoffTimeMillis)
 
-                graphWidgetRepository.insertGraphWidgetHistory(
+                repository.insertGraphWidgetHistory(
                     GraphWidgetHistoryEntity(
                         entityId = entity.entityId,
                         graphWidgetId = appWidgetId,
@@ -448,7 +446,7 @@ class GraphWidget : BaseWidgetProvider() {
             appWidgetManager.partiallyUpdateAppWidget(appWidgetId, loadingViews)
 
             var success = false
-            graphWidgetRepository.get(appWidgetId)?.let {
+            repository.get(appWidgetId)?.let {
                 try {
                     onEntityPressedWithoutState(
                         it.entityId,
@@ -479,7 +477,7 @@ class GraphWidget : BaseWidgetProvider() {
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
         widgetScope?.launch {
-            graphWidgetRepository.deleteAll(appWidgetIds)
+            repository.deleteAll(appWidgetIds)
             appWidgetIds.forEach { removeSubscription(it) }
         }
     }

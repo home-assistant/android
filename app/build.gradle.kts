@@ -28,8 +28,6 @@ android {
         versionName = project.version.toString()
         versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
         manifestPlaceholders["sentryRelease"] = "$applicationId@$versionName"
         manifestPlaceholders["sentryDsn"] = System.getenv("SENTRY_DSN") ?: ""
 
@@ -104,9 +102,11 @@ android {
 
     testOptions {
         unitTests.isReturnDefaultValues = true
-        unitTests.isIncludeAndroidResources = true
-        unitTests.all {
-            it.enabled = true
+    }
+
+    tasks.withType<Test>().configureEach {
+        useJUnitPlatform {
+            includeEngines("spek2")
         }
     }
 
@@ -191,22 +191,6 @@ dependencies {
 
     implementation(libs.car.core)
     "fullImplementation"(libs.car.projected)
-
-    testImplementation(libs.junit)
-    testImplementation(libs.robolectric)
-    testImplementation(libs.androidx.core)
-    testImplementation(libs.androidx.junit)
-    testImplementation(libs.androidx.rules)
-    testImplementation(libs.androidx.runner)
-    testImplementation(libs.mockito.kotlin)
-    testImplementation(libs.mockito.core)
-    testImplementation(libs.kotlin.test)
-
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(libs.androidx.room.testing)
-    androidTestImplementation(libs.mockito.core)
-    androidTestImplementation(libs.mockito.android)
 }
 
 // Disable to fix memory leak and be compatible with the configuration cache.
