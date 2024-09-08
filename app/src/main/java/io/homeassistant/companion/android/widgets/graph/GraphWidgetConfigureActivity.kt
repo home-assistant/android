@@ -156,14 +156,14 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             repository.get(appWidgetId)?.let {
                 binding.label.setText(it.label)
                 binding.timeRange.value = it.timeRange.toFloat()
-                binding.timeRangeLabel.text = getString(R.string.graph_time_range, it.timeRange)
+                binding.timeRangeLabel.text = getString(commonR.string.graph_time_range, it.timeRange)
             }
         } else {
-            binding.timeRangeLabel.text = getString(R.string.graph_time_range, 24)
+            binding.timeRangeLabel.text = getString(commonR.string.graph_time_range, 24)
         }
 
         binding.timeRange.addOnChangeListener { _, value, _ ->
-            binding.timeRangeLabel.text = getString(R.string.graph_time_range, value.toInt())
+            binding.timeRangeLabel.text = getString(commonR.string.graph_time_range, value.toInt())
         }
 
         entityAdapter = SingleItemArrayAdapter(this) { it?.entityId ?: "" }
@@ -283,15 +283,6 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 GraphWidget.EXTRA_LABEL,
                 binding.label.text.toString()
             )
-
-            intent.putExtra(
-                GraphWidget.EXTRA_TAP_ACTION,
-                when (binding.tapActionList.selectedItemPosition) {
-                    0 -> WidgetTapAction.TOGGLE
-                    else -> WidgetTapAction.REFRESH
-                }
-            )
-
             val sliderTimeRange = binding.timeRange.value
 
             val graphTimeRange = if (sliderTimeRange == 0F) {

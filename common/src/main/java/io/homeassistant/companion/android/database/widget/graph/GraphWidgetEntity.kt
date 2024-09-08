@@ -16,16 +16,10 @@ data class GraphWidgetEntity(
     override val serverId: Int,
     @ColumnInfo(name = "entity_id")
     val entityId: String,
-    @ColumnInfo(name = "attribute_ids")
-    val attributeIds: String?,
     @ColumnInfo(name = "label")
     val label: String?,
     @ColumnInfo(name = "graph_time_range")
     val timeRange: Int = 24,
-    @ColumnInfo(name = "state_separator")
-    val stateSeparator: String = "",
-    @ColumnInfo(name = "attribute_separator")
-    val attributeSeparator: String = "",
     @ColumnInfo(name = "tap_action", defaultValue = "REFRESH")
     val tapAction: WidgetTapAction,
     @ColumnInfo(name = "last_update")

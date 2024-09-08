@@ -11,7 +11,7 @@ interface GraphWidgetRepository : BaseDaoRepository<GraphWidgetEntity> {
 
     suspend fun updateWidgetLastUpdate(widgetId: Int, lastUpdate: String)
 
-    suspend fun deleteEntriesOlderThan(appWidgetId: Int, cutoffTime: Long)
+    suspend fun deleteEntriesOlderThan(appWidgetId: Int, cutoffTime1: Int, cutoffTime: Long)
 
     suspend fun insertGraphWidgetHistory(historyEntity: GraphWidgetHistoryEntity)
 

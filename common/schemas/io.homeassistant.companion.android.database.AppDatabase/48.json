@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 48,
-    "identityHash": "8f5ec76311e9f056099bca5a7b886be1",
+    "identityHash": "6d270178a918867ceb109b2c52411ff9",
     "entities": [
       {
         "tableName": "sensor_attributes",
@@ -532,7 +532,7 @@
       },
       {
         "tableName": "graph_widget",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `entity_id` TEXT NOT NULL, `attribute_ids` TEXT, `label` TEXT, `graph_time_range` INTEGER NOT NULL, `state_separator` TEXT NOT NULL, `attribute_separator` TEXT NOT NULL, `tap_action` TEXT NOT NULL DEFAULT 'REFRESH', `last_update` TEXT NOT NULL, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `entity_id` TEXT NOT NULL, `label` TEXT, `graph_time_range` INTEGER NOT NULL, `tap_action` TEXT NOT NULL DEFAULT 'REFRESH', `last_update` TEXT NOT NULL, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -554,12 +554,6 @@
             "notNull": true
           },
           {
-            "fieldPath": "attributeIds",
-            "columnName": "attribute_ids",
-            "affinity": "TEXT",
-            "notNull": false
-          },
-          {
             "fieldPath": "label",
             "columnName": "label",
             "affinity": "TEXT",
@@ -569,18 +563,6 @@
             "fieldPath": "timeRange",
             "columnName": "graph_time_range",
             "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "stateSeparator",
-            "columnName": "state_separator",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "attributeSeparator",
-            "columnName": "attribute_separator",
-            "affinity": "TEXT",
             "notNull": true
           },
           {
@@ -1285,7 +1267,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8f5ec76311e9f056099bca5a7b886be1')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6d270178a918867ceb109b2c52411ff9')"
     ]
   }
 }

@@ -11,12 +11,7 @@ data class GraphWidgetWithHistories(
     )
     val histories: List<GraphWidgetHistoryEntity>?
 ) {
-    fun getOrderedHistories(startTime: Long? = null, endTime: Long? = null): List<GraphWidgetHistoryEntity>? {
-        return histories
-            ?.filter { history ->
-                (startTime == null || history.sentState >= startTime) &&
-                    (endTime == null || history.sentState <= endTime)
-            }
-            ?.sortedBy { it.sentState }
+    fun getOrderedHistories(): List<GraphWidgetHistoryEntity>? {
+        return histories?.sortedBy { it.sentState }
     }
 }

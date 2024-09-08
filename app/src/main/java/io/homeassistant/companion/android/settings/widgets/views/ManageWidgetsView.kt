@@ -154,7 +154,7 @@ fun ManageWidgetsView(
                 title = R.string.graph_state_widgets,
                 widgetLabel = { item ->
                     val label = item.label
-                    if (!label.isNullOrEmpty()) label else "${item.entityId} ${item.stateSeparator} ${item.attributeIds.orEmpty()}"
+                    if (!label.isNullOrEmpty()) label else item.entityId
                 }
             )
             widgetItems(

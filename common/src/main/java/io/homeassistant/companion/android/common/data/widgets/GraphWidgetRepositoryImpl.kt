@@ -47,8 +47,8 @@ class GraphWidgetRepositoryImpl @Inject constructor(
         return graphWidgetDao.getAllFlow().flowOn(Dispatchers.IO)
     }
 
-    override suspend fun deleteEntriesOlderThan(appWidgetId: Int, cutoffTime: Long) {
-        graphWidgetDao.deleteEntriesOlderThan(appWidgetId, cutoffTime)
+    override suspend fun deleteEntriesOlderThan(appWidgetId: Int, cutoffTimeInHours: Int, currentMillis: Long) {
+        graphWidgetDao.deleteEntriesOlderThan(appWidgetId, (cutoffTimeInHours * 60 * 60 * 1000) - currentMillis)
     }
 
     override suspend fun insertGraphWidgetHistory(historyEntity: GraphWidgetHistoryEntity) {
