@@ -52,6 +52,10 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Th
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TriggerEvent
 import io.homeassistant.companion.android.common.util.toHexString
 import io.homeassistant.companion.android.database.server.ServerUserInfo
+import java.io.IOException
+import java.util.Collections
+import java.util.concurrent.atomic.AtomicLong
+import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -80,10 +84,6 @@ import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okio.ByteString
 import okio.ByteString.Companion.toByteString
-import java.io.IOException
-import java.util.Collections
-import java.util.concurrent.atomic.AtomicLong
-import kotlin.coroutines.resumeWithException
 
 class WebSocketRepositoryImpl @AssistedInject constructor(
     private val okHttpClient: OkHttpClient,
@@ -432,7 +432,7 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
             }
         }
         return synchronized(activeMessages) {
-            activeMessages.values.find { it.message == subscribeMessage }?.eventFlow    as? Flow<T>
+            activeMessages.values.find { it.message == subscribeMessage }?.eventFlow as? Flow<T>
         }
     }
 
