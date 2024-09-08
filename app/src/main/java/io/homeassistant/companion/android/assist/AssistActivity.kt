@@ -21,6 +21,7 @@ import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.assist.ui.AssistSheetView
 import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.webview.WebViewActivity
 
@@ -68,6 +69,12 @@ class AssistActivity : BaseActivity() {
         updateShowWhenLocked()
 
         if (savedInstanceState == null) {
+            if (!viewModel.isRegistered()) {
+                startActivity(Intent(this, LaunchActivity::class.java))
+                finish()
+                return
+            }
+
             viewModel.onCreate(
                 hasPermission = hasRecordingPermission(),
                 serverId = if (intent.hasExtra(EXTRA_SERVER)) {
