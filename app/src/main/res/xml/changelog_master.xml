@@ -1,18 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2024.7.3 - Main" versioncode="3">
-        <change>Active Notification Sensor: Add a setting to control if notification attributes should be included</change>
-        <change>Camera Widget: Add new tap action option to open camera entity</change>
-        <change>Assist: Add setting to open Assist with a headset button</change>
+    <release version="2024.9.2 - Main" versioncode="3">
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2024.7.3 - Wear" versioncode="2">
+    <release version="2024.9.2 - Wear" versioncode="2">
+        <change>&lt;b&gt;Backward-incompatible change:&lt;/b&gt; Wear OS 4+ Heart rate sensor users will need to re-enable the sensor and grant all the time permission again in order to continue using the sensor</change>
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2024.7.3 - Automotive" versioncode="1">
-        <change>Active Notification Sensor: Add a setting to control if notification attributes should be included</change>
-        <change>Assist: Add setting to open Assist with a headset button</change>
+    <release version="2024.9.2 - Automotive" versioncode="1">
         <change>Bug fixes and dependency updates</change>
     </release>
 </changelog>

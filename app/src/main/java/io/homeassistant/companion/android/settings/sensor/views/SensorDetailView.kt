@@ -28,6 +28,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.Card
 import androidx.compose.material.Checkbox
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.Divider
 import androidx.compose.material.LocalContentAlpha
@@ -51,7 +52,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.ColorFilter
@@ -484,7 +484,6 @@ fun SensorDetailRow(
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun SensorDetailSettingDialog(
     viewModel: SensorDetailViewModel,
@@ -494,14 +493,23 @@ fun SensorDetailSettingDialog(
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
     val listSettingDialog = state.setting.valueType.listType
-    val inputValue = remember { mutableStateOf(state.setting.value) }
-    val checkedValue = remember { mutableStateListOf<String>().also { it.addAll(state.entriesSelected) } }
+    val inputValue = remember(state.loading) { mutableStateOf(state.setting.value) }
+    val checkedValue = remember(state.loading) { mutableStateListOf<String>().also { it.addAll(state.entriesSelected) } }
 
     MdcAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(viewModel.getSettingTranslatedTitle(state.setting.name)) },
         content = {
-            if (listSettingDialog) {
+            if (state.loading) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else if (listSettingDialog) {
                 LazyColumn {
                     items(state.entries, key = { (id) -> id }) { (id, entry) ->
                         SensorDetailSettingRow(
@@ -540,7 +548,9 @@ fun SensorDetailSettingDialog(
             }
         },
         onCancel = onDismiss,
-        onSave = if (state.setting.valueType != SensorSettingType.LIST) {
+        onSave = if (state.loading) {
+            null
+        } else if (state.setting.valueType != SensorSettingType.LIST) {
             {
                 if (listSettingDialog) {
                     inputValue.value = checkedValue.joinToString().replace("[", "").replace("]", "")

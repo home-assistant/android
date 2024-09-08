@@ -52,6 +52,8 @@ abstract class AssistViewModelBase(
     private var binaryHandlerId: Int? = null
     private var conversationId: String? = null
 
+    fun isRegistered(): Boolean = serverManager.isRegistered()
+
     abstract fun getInput(): AssistInputMode?
     abstract fun setInput(inputMode: AssistInputMode)
 
