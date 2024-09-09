@@ -21,5 +21,7 @@ interface GraphWidgetRepository : BaseDaoWidgetRepository<GraphWidgetEntity> {
 
     fun updateWidgetTimeRange(appWidgetId: Int, timeRange: Int)
 
+    fun updateWidgetSensorUnitOfMeasurement(appWidgetId: Int, unitOfMeasurement: String)
+
     fun updateWidgetSensorEntityId(appWidgetId: Int, entityId: String)
 }

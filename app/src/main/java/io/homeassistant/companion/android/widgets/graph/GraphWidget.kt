@@ -22,6 +22,7 @@ import com.github.mikephil.charting.formatter.ValueFormatter
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.friendlyState
@@ -33,10 +34,9 @@ import io.homeassistant.companion.android.database.widget.graph.GraphWidgetEntit
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetHistoryEntity
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetWithHistories
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
+import javax.inject.Inject
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class GraphWidget : BaseWidgetProvider() {
@@ -48,7 +48,7 @@ class GraphWidget : BaseWidgetProvider() {
         internal const val EXTRA_SERVER_ID = "EXTRA_SERVER_ID"
         internal const val EXTRA_ENTITY_ID = "EXTRA_ENTITY_ID"
         internal const val EXTRA_LABEL = "EXTRA_LABEL"
-
+        internal const val UNIT_OF_MEASUREMENT = "UNIT_OF_MEASUREMENT"
         internal const val EXTRA_TIME_RANGE = "EXTRA_TIME_RANGE"
 
         private data class ResolvedText(val text: CharSequence?, val exception: Boolean = false)
@@ -128,6 +128,7 @@ class GraphWidget : BaseWidgetProvider() {
                             context = context,
                             label = label ?: entityId,
                             historicData = historicData,
+                            unitOfMeasurement = widget.unitOfMeasurement,
                             width = width,
                             height = height,
                             timeRange = widget.timeRange.toString()
@@ -188,7 +189,7 @@ class GraphWidget : BaseWidgetProvider() {
         return entries
     }
 
-    private fun createLineChart(context: Context, label: String, timeRange: String, historicData: GraphWidgetWithHistories, width: Int, height: Int): LineChart {
+    private fun createLineChart(context: Context, label: String, timeRange: String, unitOfMeasurement: String, historicData: GraphWidgetWithHistories, width: Int, height: Int): LineChart {
         val entriesFromHistoricData = createEntriesFromHistoricData(historicData = historicData)
 
         val lineChart = LineChart(context).apply {
@@ -214,6 +215,7 @@ class GraphWidget : BaseWidgetProvider() {
                 setDrawGridLines(true)
                 textColor = dynTextColor
                 textSize = 12F
+                valueFormatter = UnitOfMeasurementValueFormatter(unitOfMeasurement)
             }
 
             axisRight.apply {
@@ -263,6 +265,12 @@ class GraphWidget : BaseWidgetProvider() {
     private class TimeValueFormatter(private val entriesFromHistoricData: List<GraphWidgetHistoryEntity>) : ValueFormatter() {
         override fun getFormattedValue(value: Float): String {
             return DateFormatter.formatTimeAndDateCompat(entriesFromHistoricData.get(value.toInt()).lastChanged)
+        }
+    }
+
+    private class UnitOfMeasurementValueFormatter(private val unitOfMeasurement: String) : ValueFormatter() {
+        override fun getFormattedValue(value: Float): String {
+            return "${value.toInt()}$unitOfMeasurement"
         }
     }
 
@@ -325,6 +333,7 @@ class GraphWidget : BaseWidgetProvider() {
 
         val entitySelection: String? = extras.getString(EXTRA_ENTITY_ID)
         val labelSelection: String? = extras.getString(EXTRA_LABEL)
+        val unitOfMeasurement: String? = extras.getString(UNIT_OF_MEASUREMENT)
 
         val timeRange = extras.getInt(EXTRA_TIME_RANGE)
 
@@ -349,6 +358,7 @@ class GraphWidget : BaseWidgetProvider() {
                     serverId = serverId,
                     entityId = entitySelection,
                     label = labelSelection,
+                    unitOfMeasurement = unitOfMeasurement.orEmpty(),
                     timeRange = timeRange,
                     tapAction = WidgetTapAction.REFRESH,
                     lastUpdate = currentTime

@@ -61,6 +61,10 @@ interface GraphWidgetDao : WidgetDao {
     @Query("UPDATE graph_widget SET entity_id = :entityId WHERE id = :widgetId")
     fun updateWidgetSensorEntityId(widgetId: Int, entityId: String)
 
+    // Update the unit of measurement field of a specific GraphWidgetEntity
+    @Query("UPDATE graph_widget SET unit_of_measurement = :unitOfMeasurement WHERE id = :widgetId")
+    fun updateWidgetSensorUnitOfMeasurement(widgetId: Int, unitOfMeasurement: String)
+
     // Delete all GraphWidgetHistoryEntity by widgetId
     @Query("DELETE FROM graph_widget_history WHERE graph_widget_id = :widgetId ")
     fun deleteAllEntries(widgetId: Int)

@@ -18,7 +18,6 @@ import androidx.core.content.getSystemService
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.canSupportPrecision
@@ -31,9 +30,10 @@ import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewMode
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
-import javax.inject.Inject
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
@@ -263,12 +263,22 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 entity
             )
 
+            val unitOfMeasurement = entities[selectedServerId].orEmpty().filter { it.entityId == entity }.map { (it.attributes as? Map<*, *>)?.get("unit_of_measurement")?.toString() }.first()
+
+            unitOfMeasurement?.let {
+                intent.putExtra(
+                    GraphWidget.UNIT_OF_MEASUREMENT,
+                    unitOfMeasurement
+                )
+                repository.updateWidgetSensorUnitOfMeasurement(appWidgetId, it)
+            }
+
             intent.putExtra(
                 GraphWidget.EXTRA_LABEL,
                 binding.label.text.toString()
             )
-            val sliderTimeRange = binding.timeRange.value
 
+            val sliderTimeRange = binding.timeRange.value
             val graphTimeRange = if (sliderTimeRange == 0F) {
                 24
             } else {

@@ -4,10 +4,10 @@ import io.homeassistant.companion.android.database.widget.graph.GraphWidgetDao
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetEntity
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetHistoryEntity
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetWithHistories
-import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
+import javax.inject.Inject
 
 class GraphWidgetRepositoryImpl @Inject constructor(
     private val graphWidgetDao: GraphWidgetDao
@@ -65,6 +65,10 @@ class GraphWidgetRepositoryImpl @Inject constructor(
 
     override fun updateWidgetTimeRange(appWidgetId: Int, timeRange: Int) {
         graphWidgetDao.updateWidgetTimeRange(appWidgetId, timeRange)
+    }
+
+    override fun updateWidgetSensorUnitOfMeasurement(appWidgetId: Int, unitOfMeasurement: String) {
+        graphWidgetDao.updateWidgetSensorUnitOfMeasurement(appWidgetId, unitOfMeasurement)
     }
 
     override fun updateWidgetSensorEntityId(appWidgetId: Int, entityId: String) {

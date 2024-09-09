@@ -18,6 +18,8 @@ data class GraphWidgetEntity(
     val entityId: String,
     @ColumnInfo(name = "label")
     val label: String?,
+    @ColumnInfo(name = "unit_of_measurement")
+    val unitOfMeasurement: String,
     @ColumnInfo(name = "graph_time_range")
     val timeRange: Int = 24,
     @ColumnInfo(name = "tap_action", defaultValue = "REFRESH")
