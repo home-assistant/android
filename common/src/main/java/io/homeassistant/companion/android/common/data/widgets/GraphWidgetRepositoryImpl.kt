@@ -55,8 +55,8 @@ class GraphWidgetRepositoryImpl @Inject constructor(
         graphWidgetDao.deleteAllEntries(appWidgetId)
     }
 
-    override suspend fun insertGraphWidgetHistory(historyEntity: GraphWidgetHistoryEntity) {
-        graphWidgetDao.add(historyEntity)
+    override suspend fun insertGraphWidgetHistory(historyEntityList: List<GraphWidgetHistoryEntity>) {
+        graphWidgetDao.insertAllInTransaction(historyEntityList)
     }
 
     override fun updateWidgetLastLabel(appWidgetId: Int, labelText: String) {
@@ -65,5 +65,9 @@ class GraphWidgetRepositoryImpl @Inject constructor(
 
     override fun updateWidgetTimeRange(appWidgetId: Int, timeRange: Int) {
         graphWidgetDao.updateWidgetTimeRange(appWidgetId, timeRange)
+    }
+
+    override fun updateWidgetSensorEntityId(appWidgetId: Int, entityId: String) {
+        graphWidgetDao.updateWidgetSensorEntityId(appWidgetId, entityId)
     }
 }

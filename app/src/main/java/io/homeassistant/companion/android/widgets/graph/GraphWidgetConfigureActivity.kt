@@ -169,8 +169,6 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                     entities[server.id] = fetchedEntities
                     if (server.id == selectedServerId) setAdapterEntities(server.id)
                 } catch (e: Exception) {
-                    // If entities fail to load, it's okay to pass
-                    // an empty map to the dynamicFieldAdapter
                     Log.e(TAG, "Failed to query entities", e)
                 }
             }
@@ -280,6 +278,7 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             intent.putExtra(GraphWidget.EXTRA_TIME_RANGE, graphTimeRange)
 
             repository.deleteEntries(appWidgetId)
+            repository.updateWidgetSensorEntityId(appWidgetId, binding.widgetTextConfigEntityId.text.toString())
             repository.updateWidgetLastLabel(appWidgetId, binding.label.text.toString())
             repository.updateWidgetTimeRange(appWidgetId, binding.timeRange.value.toInt())
 

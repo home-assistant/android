@@ -22,7 +22,12 @@ interface GraphWidgetDao : WidgetDao {
     suspend fun add(graphWidgetEntity: GraphWidgetEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun add(graphWidgetEntity: GraphWidgetHistoryEntity)
+    suspend fun addAll(graphWidgetEntities: List<GraphWidgetHistoryEntity>)
+
+    @Transaction
+    suspend fun insertAllInTransaction(entities: List<GraphWidgetHistoryEntity>) {
+        addAll(entities)
+    }
 
     // Delete a specific GraphWidgetEntity by id
     @Query("DELETE FROM graph_widget WHERE id = :id")
@@ -51,6 +56,10 @@ interface GraphWidgetDao : WidgetDao {
     // Update the label field of a specific GraphWidgetEntity
     @Query("UPDATE graph_widget SET graph_time_range = :timeRange WHERE id = :widgetId")
     fun updateWidgetTimeRange(widgetId: Int, timeRange: Int)
+
+    // Update the label field of a specific GraphWidgetEntity
+    @Query("UPDATE graph_widget SET entity_id = :entityId WHERE id = :widgetId")
+    fun updateWidgetSensorEntityId(widgetId: Int, entityId: String)
 
     // Delete all GraphWidgetHistoryEntity by widgetId
     @Query("DELETE FROM graph_widget_history WHERE graph_widget_id = :widgetId ")

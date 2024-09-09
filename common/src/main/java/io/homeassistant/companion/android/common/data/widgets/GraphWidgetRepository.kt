@@ -15,9 +15,11 @@ interface GraphWidgetRepository : BaseDaoWidgetRepository<GraphWidgetEntity> {
 
     fun deleteEntries(appWidgetId: Int)
 
-    suspend fun insertGraphWidgetHistory(historyEntity: GraphWidgetHistoryEntity)
+    suspend fun insertGraphWidgetHistory(historyEntityList: List<GraphWidgetHistoryEntity>)
 
     fun updateWidgetLastLabel(appWidgetId: Int, labelText: String)
 
     fun updateWidgetTimeRange(appWidgetId: Int, timeRange: Int)
+
+    fun updateWidgetSensorEntityId(appWidgetId: Int, entityId: String)
 }

@@ -179,10 +179,13 @@ class GraphWidget : BaseWidgetProvider() {
 
     private fun createEntriesFromHistoricData(historicData: GraphWidgetWithHistories): List<Entry> {
         val entries = mutableListOf<Entry>()
-        historicData.histories?.forEachIndexed { _, history ->
-            entries.add(Entry(history.lastChanged.toFloat(), history.state.toFloat()))
-        }
-        return entries.sortedBy { it.x }
+        historicData.histories
+            ?.sortedBy {
+                it.lastChanged
+            }?.forEachIndexed { index, history ->
+                entries.add(Entry(index.toFloat(), history.state.toFloat()))
+            }
+        return entries
     }
 
     private fun createLineChart(context: Context, label: String, timeRange: String, historicData: GraphWidgetWithHistories, width: Int, height: Int): LineChart {
@@ -201,7 +204,10 @@ class GraphWidget : BaseWidgetProvider() {
                 granularity = 1F
                 setAvoidFirstLastClipping(false)
                 isAutoScaleMinMaxEnabled = true
-                valueFormatter = TimeValueFormatter()
+                valueFormatter = historicData.histories
+                    ?.sortedBy {
+                        it.lastChanged
+                    }?.let { TimeValueFormatter(it) }
             }
 
             axisLeft.apply {
@@ -254,9 +260,9 @@ class GraphWidget : BaseWidgetProvider() {
         return lineChart
     }
 
-    private class TimeValueFormatter : ValueFormatter() {
+    private class TimeValueFormatter(private val entriesFromHistoricData: List<GraphWidgetHistoryEntity>) : ValueFormatter() {
         override fun getFormattedValue(value: Float): String {
-            return DateFormatter.formatTimeAndDateCompat(value.toLong())
+            return DateFormatter.formatTimeAndDateCompat(entriesFromHistoricData.get(value.toInt()).lastChanged)
         }
     }
 
@@ -287,28 +293,26 @@ class GraphWidget : BaseWidgetProvider() {
     }
 
     private suspend fun fetchHistory(appWidgetId: Int, serverId: Int, entityId: String, fromMillis: Long, toMillis: Long) {
-        val entitiesStatesList: List<List<Entity<Map<String, Any>>>>?
         try {
-            entitiesStatesList = serverManager.integrationRepository(serverId)
+            val historyEntities: List<GraphWidgetHistoryEntity> = serverManager.integrationRepository(serverId)
                 .getHistory(
                     significantChangesOnly = false,
                     entityIds = listOf(entityId),
                     timestamp = fromMillis,
                     endTimeMillis = toMillis
-                )
-
-            entitiesStatesList?.firstOrNull()?.filter {
-                it.state.toFloatOrNull() != null
-            }?.forEachIndexed { _, historyEntity ->
-                repository.insertGraphWidgetHistory(
+                )?.firstOrNull()
+                ?.filter { historyEntity ->
+                    historyEntity.state.toFloatOrNull() != null
+                }?.map { historyEntity ->
                     GraphWidgetHistoryEntity(
                         entityId = historyEntity.entityId,
                         graphWidgetId = appWidgetId,
                         state = historyEntity.state,
                         lastChanged = historyEntity.lastChanged.timeInMillis
                     )
-                )
-            }
+                } ?: emptyList()
+
+            repository.insertGraphWidgetHistory(historyEntities)
         } catch (e: Exception) {
             Log.e(TAG, "Unable to fetch entity history", e)
         }
@@ -369,20 +373,23 @@ class GraphWidget : BaseWidgetProvider() {
             val graphEntity = repository.get(appWidgetId)
 
             if (graphEntity != null) {
+                val now = System.currentTimeMillis()
                 repository.deleteEntriesOlderThan(appWidgetId, graphEntity.timeRange)
 
                 repository.insertGraphWidgetHistory(
-                    GraphWidgetHistoryEntity(
-                        entityId = entity.entityId,
-                        graphWidgetId = appWidgetId,
-                        state = entity.friendlyState(context),
-                        lastChanged = System.currentTimeMillis()
+                    listOf(
+                        GraphWidgetHistoryEntity(
+                            entityId = entity.entityId,
+                            graphWidgetId = appWidgetId,
+                            state = entity.friendlyState(context),
+                            lastChanged = now
+                        )
                     )
                 )
 
                 repository.updateWidgetLastUpdate(
                     appWidgetId,
-                    System.currentTimeMillis()
+                    now
                 )
             }
 
