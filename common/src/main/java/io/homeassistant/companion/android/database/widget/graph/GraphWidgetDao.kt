@@ -52,6 +52,10 @@ interface GraphWidgetDao : WidgetDao {
     @Query("UPDATE graph_widget SET graph_time_range = :timeRange WHERE id = :widgetId")
     fun updateWidgetTimeRange(widgetId: Int, timeRange: Int)
 
+    // Delete all GraphWidgetHistoryEntity by widgetId
+    @Query("DELETE FROM graph_widget_history WHERE graph_widget_id = :widgetId ")
+    fun deleteAllEntries(widgetId: Int)
+
     // Deletes old historic entries of a specific GraphWidgetEntity
     @Query("DELETE FROM graph_widget_history WHERE graph_widget_id = :appWidgetId AND last_changed <= :cutoffTime")
     suspend fun deleteEntriesOlderThan(appWidgetId: Int, cutoffTime: Long): Int

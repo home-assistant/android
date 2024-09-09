@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.common.data.widgets
 
-import android.util.Log
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetDao
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetEntity
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetHistoryEntity
@@ -49,8 +48,11 @@ class GraphWidgetRepositoryImpl @Inject constructor(
     }
 
     override suspend fun deleteEntriesOlderThan(appWidgetId: Int, cutoffTimeInHours: Int) {
-        val deleteEntriesOlderThan = graphWidgetDao.deleteEntriesOlderThan(appWidgetId, System.currentTimeMillis() - (60 * 60 * 1000 * cutoffTimeInHours))
-        Log.d("database", "Deleted: $deleteEntriesOlderThan")
+        graphWidgetDao.deleteEntriesOlderThan(appWidgetId, System.currentTimeMillis() - (60 * 60 * 1000 * cutoffTimeInHours))
+    }
+
+    override fun deleteEntries(appWidgetId: Int) {
+        graphWidgetDao.deleteAllEntries(appWidgetId)
     }
 
     override suspend fun insertGraphWidgetHistory(historyEntity: GraphWidgetHistoryEntity) {

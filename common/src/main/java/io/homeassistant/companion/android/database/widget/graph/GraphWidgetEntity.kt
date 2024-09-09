@@ -24,8 +24,6 @@ data class GraphWidgetEntity(
     val tapAction: WidgetTapAction,
     @ColumnInfo(name = "last_update")
     val lastUpdate: Long,
-    @ColumnInfo(name = "background_type", defaultValue = "DAYNIGHT")
     override val backgroundType: WidgetBackgroundType = WidgetBackgroundType.DAYNIGHT,
-    @ColumnInfo(name = "text_color")
     override val textColor: String? = null
 ) : WidgetEntity, ThemeableWidgetEntity

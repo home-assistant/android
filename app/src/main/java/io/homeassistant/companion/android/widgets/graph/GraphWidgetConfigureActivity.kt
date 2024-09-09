@@ -279,10 +279,11 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
             intent.putExtra(GraphWidget.EXTRA_TIME_RANGE, graphTimeRange)
 
-            context.sendBroadcast(intent)
-
+            repository.deleteEntries(appWidgetId)
             repository.updateWidgetLastLabel(appWidgetId, binding.label.text.toString())
             repository.updateWidgetTimeRange(appWidgetId, binding.timeRange.value.toInt())
+
+            context.sendBroadcast(intent)
 
             setResult(
                 RESULT_OK,

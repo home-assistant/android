@@ -75,9 +75,5 @@
             android:indeterminate="true"
             android:indeterminateTint="@color/colorAccent" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/widget_graph_we_are_retrieving_data" />
     </LinearLayout>
 </FrameLayout>

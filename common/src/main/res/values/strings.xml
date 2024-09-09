@@ -1276,9 +1276,8 @@
     <string name="state_up_to_date">Up-to-date</string>
     <string name="sensor_name_health_connect">Health Connect sensors</string>
     <string name="graph_state_widgets">Graph historic widget</string>
-    <string name="widget_graph_we_are_retrieving_data">We are collecting some data…</string>
     <string name="graph_widget_desc">To see historical data on graph</string>
     <string name="interval_sampling">Interval sampling:</string>
     <string name="historical_graph">Historical Graph</string>
-    <string formatted="true" name="graph_time_range">Graph Range (%1$d hours)</string>
+    <string formatted="true" name="graph_time_range">Graph range (%1$d hours)</string>
 </resources>

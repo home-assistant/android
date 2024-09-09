@@ -18,23 +18,25 @@ import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
+import com.github.mikephil.charting.formatter.ValueFormatter
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.friendlyState
 import io.homeassistant.companion.android.common.data.widgets.GraphWidgetRepository
+import io.homeassistant.companion.android.common.util.DateFormatter
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetEntity
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetHistoryEntity
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetWithHistories
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
-import javax.inject.Inject
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class GraphWidget : BaseWidgetProvider() {
@@ -125,7 +127,7 @@ class GraphWidget : BaseWidgetProvider() {
                         createLineChart(
                             context = context,
                             label = label ?: entityId,
-                            entries = createEntriesFromHistoricData(historicData = historicData),
+                            historicData = historicData,
                             width = width,
                             height = height,
                             timeRange = widget.timeRange.toString()
@@ -177,13 +179,15 @@ class GraphWidget : BaseWidgetProvider() {
 
     private fun createEntriesFromHistoricData(historicData: GraphWidgetWithHistories): List<Entry> {
         val entries = mutableListOf<Entry>()
-        historicData.getOrderedHistories()?.forEachIndexed { index, history ->
-            entries.add(Entry(index.toFloat() + 1, history.state.toFloat()))
+        historicData.histories?.forEachIndexed { _, history ->
+            entries.add(Entry(history.lastChanged.toFloat(), history.state.toFloat()))
         }
-        return entries
+        return entries.sortedBy { it.x }
     }
 
-    private fun createLineChart(context: Context, label: String, timeRange: String, entries: List<Entry>, width: Int, height: Int): LineChart {
+    private fun createLineChart(context: Context, label: String, timeRange: String, historicData: GraphWidgetWithHistories, width: Int, height: Int): LineChart {
+        val entriesFromHistoricData = createEntriesFromHistoricData(historicData = historicData)
+
         val lineChart = LineChart(context).apply {
             val dynTextColor = ContextCompat.getColor(context, commonR.color.colorWidgetButtonLabel)
             setBackgroundResource(commonR.color.colorWidgetButtonBackground)
@@ -194,9 +198,10 @@ class GraphWidget : BaseWidgetProvider() {
                 position = XAxis.XAxisPosition.BOTTOM
                 textColor = dynTextColor
                 textSize = 12F
-                granularity = 2F
-                setAvoidFirstLastClipping(true)
+                granularity = 1F
+                setAvoidFirstLastClipping(false)
                 isAutoScaleMinMaxEnabled = true
+                valueFormatter = TimeValueFormatter()
             }
 
             axisLeft.apply {
@@ -221,7 +226,7 @@ class GraphWidget : BaseWidgetProvider() {
             }
 
             description = Description().apply {
-                text = "$timeRange h"
+                text = DateFormatter.formatHours(context, timeRange.toInt())
                 textColor = dynTextColor
             }
 
@@ -231,7 +236,7 @@ class GraphWidget : BaseWidgetProvider() {
 
         val mainGraphColor = ContextCompat.getColor(context, commonR.color.colorPrimary)
 
-        val dataSet = LineDataSet(entries, label).apply {
+        val dataSet = LineDataSet(entriesFromHistoricData, label).apply {
             color = mainGraphColor
             lineWidth = 2F
             circleRadius = 1F
@@ -247,6 +252,12 @@ class GraphWidget : BaseWidgetProvider() {
         lineChart.layout(0, 0, width, height)
 
         return lineChart
+    }
+
+    private class TimeValueFormatter : ValueFormatter() {
+        override fun getFormattedValue(value: Float): String {
+            return DateFormatter.formatTimeAndDateCompat(value.toLong())
+        }
     }
 
     override suspend fun getAllWidgetIdsWithEntities(context: Context): Map<Int, Pair<Int, List<String>>> =
@@ -280,9 +291,10 @@ class GraphWidget : BaseWidgetProvider() {
         try {
             entitiesStatesList = serverManager.integrationRepository(serverId)
                 .getHistory(
-                    listOf(entityId),
-                    fromMillis,
-                    toMillis
+                    significantChangesOnly = false,
+                    entityIds = listOf(entityId),
+                    timestamp = fromMillis,
+                    endTimeMillis = toMillis
                 )
 
             entitiesStatesList?.firstOrNull()?.filter {
@@ -364,13 +376,13 @@ class GraphWidget : BaseWidgetProvider() {
                         entityId = entity.entityId,
                         graphWidgetId = appWidgetId,
                         state = entity.friendlyState(context),
-                        lastChanged = entity.lastChanged.timeInMillis
+                        lastChanged = System.currentTimeMillis()
                     )
                 )
 
                 repository.updateWidgetLastUpdate(
                     appWidgetId,
-                    entity.lastUpdated.timeInMillis
+                    System.currentTimeMillis()
                 )
             }
 
