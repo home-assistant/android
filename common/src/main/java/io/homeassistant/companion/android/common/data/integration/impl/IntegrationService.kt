@@ -4,6 +4,7 @@ import io.homeassistant.companion.android.common.data.integration.ZoneAttributes
 import io.homeassistant.companion.android.common.data.integration.impl.entities.CheckRateLimits
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.IntegrationRequest
+import io.homeassistant.companion.android.common.data.integration.impl.entities.MinimalEntityResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RegisterDeviceRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RegisterDeviceResponse
@@ -31,6 +32,12 @@ interface IntegrationService {
         @Url url: HttpUrl,
         @Header("Authorization") auth: String
     ): EntityResponse<Map<String, Any>>
+
+    @GET
+    suspend fun getHistory(
+        @Url url: HttpUrl,
+        @Header("Authorization") auth: String
+    ): List<List<MinimalEntityResponse<Map<String, Any>>>>?
 
     @POST
     suspend fun callWebhook(

@@ -21,8 +21,9 @@ import com.github.mikephil.charting.data.LineDataSet
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.canSupportPrecision
+import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.friendlyState
 import io.homeassistant.companion.android.common.data.widgets.GraphWidgetRepository
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -31,10 +32,9 @@ import io.homeassistant.companion.android.database.widget.graph.GraphWidgetEntit
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetHistoryEntity
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetWithHistories
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
+import javax.inject.Inject
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class GraphWidget : BaseWidgetProvider() {
@@ -88,7 +88,7 @@ class GraphWidget : BaseWidgetProvider() {
         val useDynamicColors = widget?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
         val views = RemoteViews(context.packageName, if (useDynamicColors) R.layout.widget_graph_wrapper_dynamiccolor else R.layout.widget_graph_wrapper_default)
             .apply {
-                if (widget != null && (historicData.histories?.size ?: 0) >= 2) {
+                if (widget != null && (historicData.histories?.size ?: 0) >= 1) {
                     val serverId = widget.serverId
                     val entityId: String = widget.entityId
                     val label: String? = widget.label
@@ -107,11 +107,9 @@ class GraphWidget : BaseWidgetProvider() {
                         View.GONE
                     )
                     val resolvedText = resolveTextToShow(
-                        context,
                         serverId,
                         entityId,
-                        suggestedEntity,
-                        appWidgetId
+                        suggestedEntity
                     )
 
                     setTextViewText(
@@ -147,7 +145,7 @@ class GraphWidget : BaseWidgetProvider() {
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                         )
                     )
-                } else if (historicData?.histories?.isNotEmpty() == false) {
+                } else {
                     // Content
                     setViewVisibility(
                         R.id.chartImageView,
@@ -257,11 +255,9 @@ class GraphWidget : BaseWidgetProvider() {
             .associate { it.id to (it.serverId to listOf(it.entityId)) }
 
     private suspend fun resolveTextToShow(
-        context: Context,
         serverId: Int,
         entityId: String?,
-        suggestedEntity: Entity<Map<String, Any>>?,
-        appWidgetId: Int
+        suggestedEntity: Entity<Map<String, Any>>?
     ): ResolvedText {
         var entity: Entity<Map<String, Any>>? = null
         var entityCaughtException = false
@@ -275,19 +271,35 @@ class GraphWidget : BaseWidgetProvider() {
             Log.e(TAG, "Unable to fetch entity", e)
             entityCaughtException = true
         }
-        val entityOptions = if (
-            entity?.canSupportPrecision() == true &&
-            serverManager.getServer(serverId)?.version?.isAtLeast(2023, 3) == true
-        ) {
-            serverManager.webSocketRepository(serverId).getEntityRegistryFor(entity.entityId)?.options
-        } else {
-            null
+
+        return ResolvedText(entity?.friendlyName, entityCaughtException)
+    }
+
+    private suspend fun fetchHistory(appWidgetId: Int, serverId: Int, entityId: String, fromMillis: Long, toMillis: Long) {
+        val entitiesStatesList: List<List<Entity<Map<String, Any>>>>?
+        try {
+            entitiesStatesList = serverManager.integrationRepository(serverId)
+                .getHistory(
+                    listOf(entityId),
+                    fromMillis,
+                    toMillis
+                )
+
+            entitiesStatesList?.firstOrNull()?.filter {
+                it.state.toFloatOrNull() != null
+            }?.forEachIndexed { _, historyEntity ->
+                repository.insertGraphWidgetHistory(
+                    GraphWidgetHistoryEntity(
+                        entityId = historyEntity.entityId,
+                        graphWidgetId = appWidgetId,
+                        state = historyEntity.state,
+                        lastChanged = historyEntity.lastChanged.timeInMillis
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to fetch entity history", e)
         }
-        repository.updateWidgetLastUpdate(
-            appWidgetId,
-            entity?.friendlyState(context, entityOptions) ?: repository.get(appWidgetId)?.lastUpdate ?: ""
-        )
-        return ResolvedText(repository.get(appWidgetId)?.lastUpdate, entityCaughtException)
     }
 
     override fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
@@ -311,6 +323,10 @@ class GraphWidget : BaseWidgetProvider() {
                 "Saving entity state config data:" + System.lineSeparator() +
                     "entity id: " + entitySelection + System.lineSeparator()
             )
+
+            val currentTime = System.currentTimeMillis()
+            val currentTimeMillisAgo = currentTime - 60 * 60 * 1000 * timeRange
+
             repository.add(
                 GraphWidgetEntity(
                     id = appWidgetId,
@@ -319,10 +335,19 @@ class GraphWidget : BaseWidgetProvider() {
                     label = labelSelection,
                     timeRange = timeRange,
                     tapAction = WidgetTapAction.REFRESH,
-                    lastUpdate = repository.get(appWidgetId)?.lastUpdate ?: ""
+                    lastUpdate = currentTime
                 )
             )
-
+            repository.get(appWidgetId)?.let {
+                fetchHistory(
+                    appWidgetId = appWidgetId,
+                    serverId = serverId,
+                    entityId = entitySelection,
+                    fromMillis = currentTimeMillisAgo,
+                    toMillis = currentTime
+                )
+            }
+            repository.deleteEntriesOlderThan(appWidgetId, timeRange)
             onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
         }
     }
@@ -332,17 +357,20 @@ class GraphWidget : BaseWidgetProvider() {
             val graphEntity = repository.get(appWidgetId)
 
             if (graphEntity != null) {
-                val currentTimeMillis = System.currentTimeMillis()
-
-                repository.deleteEntriesOlderThan(appWidgetId, graphEntity.timeRange, currentTimeMillis)
+                repository.deleteEntriesOlderThan(appWidgetId, graphEntity.timeRange)
 
                 repository.insertGraphWidgetHistory(
                     GraphWidgetHistoryEntity(
                         entityId = entity.entityId,
                         graphWidgetId = appWidgetId,
                         state = entity.friendlyState(context),
-                        sentState = currentTimeMillis
+                        lastChanged = entity.lastChanged.timeInMillis
                     )
+                )
+
+                repository.updateWidgetLastUpdate(
+                    appWidgetId,
+                    entity.lastUpdated.timeInMillis
                 )
             }
 

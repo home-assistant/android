@@ -18,7 +18,7 @@ import androidx.room.PrimaryKey
         )
     ],
     indices = [
-        Index("sent_state"),
+        Index("last_changed"),
         Index("graph_widget_id")
     ]
 )
@@ -31,6 +31,6 @@ data class GraphWidgetHistoryEntity(
     val graphWidgetId: Int,
     @ColumnInfo(name = "state")
     val state: String,
-    @ColumnInfo(name = "sent_state")
-    var sentState: Long
+    @ColumnInfo(name = "last_changed")
+    var lastChanged: Long
 )

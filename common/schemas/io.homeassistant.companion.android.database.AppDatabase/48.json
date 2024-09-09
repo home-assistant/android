@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 48,
-    "identityHash": "6d270178a918867ceb109b2c52411ff9",
+    "identityHash": "cca4b82db5b386eb12ab46a828e02535",
     "entities": [
       {
         "tableName": "sensor_attributes",
@@ -532,7 +532,7 @@
       },
       {
         "tableName": "graph_widget",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `entity_id` TEXT NOT NULL, `label` TEXT, `graph_time_range` INTEGER NOT NULL, `tap_action` TEXT NOT NULL DEFAULT 'REFRESH', `last_update` TEXT NOT NULL, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `entity_id` TEXT NOT NULL, `label` TEXT, `graph_time_range` INTEGER NOT NULL, `tap_action` TEXT NOT NULL DEFAULT 'REFRESH', `last_update` INTEGER NOT NULL, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -575,7 +575,7 @@
           {
             "fieldPath": "lastUpdate",
             "columnName": "last_update",
-            "affinity": "TEXT",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
@@ -603,7 +603,7 @@
       },
       {
         "tableName": "graph_widget_history",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `entity_id` TEXT NOT NULL, `graph_widget_id` INTEGER NOT NULL, `state` TEXT NOT NULL, `sent_state` INTEGER NOT NULL, FOREIGN KEY(`graph_widget_id`) REFERENCES `graph_widget`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `entity_id` TEXT NOT NULL, `graph_widget_id` INTEGER NOT NULL, `state` TEXT NOT NULL, `last_changed` INTEGER NOT NULL, FOREIGN KEY(`graph_widget_id`) REFERENCES `graph_widget`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -630,8 +630,8 @@
             "notNull": true
           },
           {
-            "fieldPath": "sentState",
-            "columnName": "sent_state",
+            "fieldPath": "lastChanged",
+            "columnName": "last_changed",
             "affinity": "INTEGER",
             "notNull": true
           }
@@ -644,13 +644,13 @@
         },
         "indices": [
           {
-            "name": "index_graph_widget_history_sent_state",
+            "name": "index_graph_widget_history_last_changed",
             "unique": false,
             "columnNames": [
-              "sent_state"
+              "last_changed"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_graph_widget_history_sent_state` ON `${TABLE_NAME}` (`sent_state`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_graph_widget_history_last_changed` ON `${TABLE_NAME}` (`last_changed`)"
           },
           {
             "name": "index_graph_widget_history_graph_widget_id",
@@ -1267,7 +1267,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6d270178a918867ceb109b2c52411ff9')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'cca4b82db5b386eb12ab46a828e02535')"
     ]
   }
 }

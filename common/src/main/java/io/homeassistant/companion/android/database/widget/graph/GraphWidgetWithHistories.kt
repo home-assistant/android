@@ -12,6 +12,6 @@ data class GraphWidgetWithHistories(
     val histories: List<GraphWidgetHistoryEntity>?
 ) {
     fun getOrderedHistories(): List<GraphWidgetHistoryEntity>? {
-        return histories?.sortedBy { it.sentState }
+        return histories?.sortedBy { it.lastChanged }
     }
 }

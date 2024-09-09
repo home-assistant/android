@@ -11,16 +11,13 @@ import android.text.TextWatcher
 import android.util.Log
 import android.view.View
 import android.widget.AdapterView
-import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.core.content.getSystemService
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
-import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt
@@ -121,17 +118,6 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         }
 
         val graphWidget = repository.get(appWidgetId)
-
-        val tapActionValues = listOf(getString(commonR.string.widget_tap_action_toggle), getString(commonR.string.refresh))
-        binding.tapActionList.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, tapActionValues)
-
-        val backgroundTypeValues = mutableListOf(
-            getString(commonR.string.widget_background_type_daynight),
-            getString(commonR.string.widget_background_type_transparent)
-        )
-        if (DynamicColors.isDynamicColorAvailable()) {
-            backgroundTypeValues.add(0, getString(commonR.string.widget_background_type_dynamiccolor))
-        }
 
         if (graphWidget != null) {
             binding.widgetTextConfigEntityId.setText(graphWidget.entityId)
