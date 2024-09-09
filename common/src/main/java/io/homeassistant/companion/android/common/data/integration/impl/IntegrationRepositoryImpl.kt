@@ -695,7 +695,14 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         }
     }
 
-    override suspend fun getHistory(entityIds: List<String>, timestamp: Long, endTimeMillis: Long): List<List<Entity<Map<String, Any>>>>? {
+    override suspend fun getHistory(
+        entityIds: List<String>,
+        timestamp: Long,
+        endTimeMillis: Long,
+        significantChangesOnly: Boolean,
+        minimalResponse: Boolean,
+        noAttributes: Boolean
+    ): List<List<Entity<Map<String, Any>>>>? {
         val url = server.connection.getUrl()?.toHttpUrlOrNull()
         if (url == null) {
             Log.e(TAG, "Unable to register device due to missing URL")
@@ -706,9 +713,9 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             filterEntityIds = entityIds,
             timestamp = DateFormatter.formatDateFromMillis(timestamp),
             endTime = DateFormatter.formatDateFromMillis(endTimeMillis),
-            significantChangesOnly = true,
-            minimalResponse = true,
-            noAttributes = true
+            significantChangesOnly = significantChangesOnly,
+            minimalResponse = minimalResponse,
+            noAttributes = noAttributes
         )
 
         val response = integrationService.getHistory(
