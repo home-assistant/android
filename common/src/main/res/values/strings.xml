@@ -1275,7 +1275,7 @@
     <string name="state_update_available">Update available</string>
     <string name="state_up_to_date">Up-to-date</string>
     <string name="sensor_name_health_connect">Health Connect sensors</string>
-    <string name="graph_state_widgets">Graph historic widget</string>
+    <string name="graph_state_widgets">Graph widget</string>
     <string name="graph_widget_desc">To see historical data on graph</string>
     <string name="interval_sampling">Interval sampling:</string>
     <string name="historical_graph">Historical Graph</string>
