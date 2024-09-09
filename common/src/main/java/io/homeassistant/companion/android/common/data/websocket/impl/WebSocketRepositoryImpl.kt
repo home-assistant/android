@@ -707,6 +707,8 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
             it.onResponse?.let { cont ->
                 if (!it.hasContinuationBeenInvoked.getAndSet(true) && cont.isActive) {
                     cont.resumeWith(Result.success(response))
+                } else {
+                    Log.w(TAG, "Response continuation has already been invoked for ${response.id}, ${response.event}")
                 }
             }
             if (it.eventFlow == null) {
@@ -822,6 +824,8 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
                             it.value.onResponse?.let { cont ->
                                 if (!it.value.hasContinuationBeenInvoked.getAndSet(true) && cont.isActive) {
                                     cont.resumeWithException(IOException())
+                                } else {
+                                    Log.w(TAG, "Response continuation has already been invoked, skipping IOException")
                                 }
                             }
                             activeMessages.remove(it.key)
