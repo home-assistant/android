@@ -14,8 +14,9 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:text="@string/select_entity_to_display"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:layout_editor_absoluteX="16dp" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <LinearLayout
         android:id="@+id/server_select"
@@ -46,13 +47,12 @@
         android:id="@+id/linearLayout"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="8dp"
         android:gravity="center"
         android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/server_select">
+        app:layout_constraintTop_toBottomOf="@+id/textView2">
 
         <TextView
             android:layout_width="wrap_content"
@@ -76,13 +76,12 @@
         android:id="@+id/linearLayout2"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="8dp"
         android:gravity="center"
         android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tap_action">
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout">
 
         <TextView
             android:layout_width="wrap_content"
@@ -98,31 +97,6 @@
             android:hint="@string/widget_text_hint_label"
             android:imeOptions="actionDone"
             android:inputType="text" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/tap_action"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_marginTop="12dp"
-        android:gravity="center"
-        android:orientation="horizontal"
-        android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@+id/linearLayout"
-        tools:layout_editor_absoluteX="16dp">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:padding="5dp"
-            android:text="@string/widget_tap_action_label" />
-
-        <Spinner
-            android:id="@+id/tap_action_list"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical" />
     </LinearLayout>
 
     <TextView
