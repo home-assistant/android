@@ -5,10 +5,10 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_gravity="center"
-    android:padding="16dp">
+    android:padding="@dimen/activity_margin">
 
     <TextView
-        android:id="@+id/textView2"
+        android:id="@+id/activity_headline"
         style="@style/TextAppearance.HomeAssistant.Headline"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -27,9 +27,10 @@
         android:orientation="horizontal"
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView2">
+        app:layout_constraintTop_toBottomOf="@+id/activity_headline">
 
         <TextView
+            style="@style/TextAppearance.Material3.LabelMedium"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
@@ -43,82 +44,94 @@
             android:layout_gravity="center_vertical" />
     </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/linearLayout"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_marginTop="8dp"
-        android:gravity="center"
-        android:orientation="horizontal"
+    <TextView
+        android:id="@+id/entityLabel"
+        style="@style/TextAppearance.Material3.LabelMedium"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:labelFor="@id/widget_text_config_entity_id"
+        android:text="@string/label_entity_id"
+        android:textSize="14sp"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView2">
+        app:layout_constraintTop_toBottomOf="@+id/activity_headline" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:labelFor="@id/widget_text_config_entity_id"
-            android:padding="5dp"
-            android:text="@string/label_entity_id" />
-
-        <AutoCompleteTextView
-            android:id="@+id/widget_text_config_entity_id"
-            style="@style/ThemeOverlay.Material3.AutoCompleteTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:completionThreshold="0"
-            android:imeOptions="actionNext|flagNoFullscreen"
-            android:inputType="text" />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/linearLayout2"
+    <AutoCompleteTextView
+        android:id="@+id/widget_text_config_entity_id"
+        style="@style/Widget.AppCompat.AutoCompleteTextView"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:completionThreshold="0"
+        android:gravity="center_vertical"
+        android:imeOptions="actionNext|flagNoFullscreen"
+        android:inputType="text"
+        android:labelFor="@id/entityLabel"
+        android:padding="15dp"
+        android:textSize="14sp"
+        app:layout_constraintTop_toBottomOf="@+id/activity_headline"
+        tools:hint="sensor.electric_meter"
+        tools:layout_editor_absoluteX="16dp" />
+
+    <androidx.appcompat.widget.AppCompatEditText
+        android:id="@+id/label"
+        style="@style/Widget.Material3.TextInputEditText.OutlinedBox.Dense"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:gravity="center"
-        android:orientation="horizontal"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/linearLayout">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:padding="5dp"
-            android:text="@string/label_label" />
-
-        <androidx.appcompat.widget.AppCompatEditText
-            android:id="@+id/label"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/widget_text_hint_label"
-            android:imeOptions="actionDone"
-            android:inputType="text" />
-    </LinearLayout>
+        android:hint="@string/widget_text_hint_label"
+        android:imeOptions="actionDone"
+        android:inputType="text"
+        android:textSize="18sp"
+        app:layout_constraintTop_toBottomOf="@+id/widget_text_config_entity_id"
+        tools:layout_editor_absoluteX="27dp" />
 
     <TextView
         android:id="@+id/timeRangeLabel"
+        style="@style/TextAppearance.Material3.LabelMedium"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:textSize="14sp"
         app:layout_constraintBottom_toTopOf="@+id/timeRange"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        tools:text="Time range: 180h" />
+
+
+    <CheckBox
+        android:id="@+id/smoothGraph"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:buttonTint="@color/colorAccent"
+        android:text="@string/smoother_stats"
+        android:textSize="14sp"
+        app:layout_constraintTop_toBottomOf="@+id/label"
+        tools:layout_editor_absoluteX="16dp" />
+
+    <CheckBox
+        android:id="@+id/significantChangesOnly"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:buttonTint="@color/colorAccent"
+        android:text="@string/significant_changes_only"
+        android:textSize="14sp"
+        app:layout_constraintTop_toBottomOf="@+id/smoothGraph"
+        tools:layout_editor_absoluteX="16dp" />
 
     <com.google.android.material.slider.Slider
         android:id="@+id/timeRange"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="28dp"
+        android:layout_marginTop="32dp"
         android:stepSize="1"
         android:value="24"
         android:valueFrom="1"
-        android:valueTo="48"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/linearLayout2" />
+        app:labelBehavior="gone"
+        android:valueTo="180"
+        app:layout_constraintTop_toBottomOf="@+id/significantChangesOnly"
+        tools:layout_editor_absoluteX="30dp" />
 
     <Button
         android:id="@+id/add_button"

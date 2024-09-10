@@ -21,10 +21,6 @@ class GraphWidgetRepositoryImpl @Inject constructor(
         return graphWidgetDao.getWithHistories(id)
     }
 
-    override suspend fun updateWidgetLastUpdate(widgetId: Int, lastUpdate: Long) {
-        graphWidgetDao.updateWidgetLastUpdate(widgetId, lastUpdate)
-    }
-
     override suspend fun add(entity: GraphWidgetEntity) {
         if (graphWidgetDao.get(entity.id) == null) {
             graphWidgetDao.add(entity)
@@ -59,33 +55,51 @@ class GraphWidgetRepositoryImpl @Inject constructor(
         graphWidgetDao.insertAllInTransaction(historyEntityList)
     }
 
-    override fun updateWidgetLastLabel(appWidgetId: Int, labelText: String) {
-        graphWidgetDao.updateWidgetLabel(appWidgetId, labelText)
-    }
-
-    override fun updateWidgetTimeRange(appWidgetId: Int, timeRange: Int) {
-        graphWidgetDao.updateWidgetTimeRange(appWidgetId, timeRange)
-    }
-
-    override fun updateWidgetSensorUnitOfMeasurement(appWidgetId: Int, unitOfMeasurement: String) {
-        graphWidgetDao.updateWidgetSensorUnitOfMeasurement(appWidgetId, unitOfMeasurement)
-    }
-
-    override fun updateWidgetSensorEntityId(appWidgetId: Int, entityId: String) {
-        graphWidgetDao.updateWidgetSensorEntityId(appWidgetId, entityId)
-    }
-
     override suspend fun checkIfExceedsAverageInterval(widgetId: Int, lastChangedToCompare: Long): Boolean {
         val lastChangedList = graphWidgetDao.getLastChangedTimesForWidget(widgetId)
 
         if (lastChangedList.size < 2) return false
 
-        val averageInterval = lastChangedList
-            .zipWithNext { a, b -> b - a }
-            .average()
+        val intervals = lastChangedList.zipWithNext { a, b -> b - a }
+        val averageInterval = intervals.average()
+
+        val maxInterval = intervals.maxOrNull() ?: averageInterval
+        val minInterval = intervals.minOrNull() ?: averageInterval
+        val proximityMultiplier = if (maxInterval != 0L) (maxInterval.toDouble().div(minInterval.toDouble())) else 1.0
+
+        val adjustedMultiplier = when {
+            proximityMultiplier < 1.5 -> 2.5
+            proximityMultiplier < 2.0 -> 2.75
+            else -> 3.0
+        }
 
         val lastChanged = lastChangedList.last()
+        return (lastChangedToCompare - lastChanged) > averageInterval * adjustedMultiplier
+    }
 
-        return (lastChangedToCompare - lastChanged) < averageInterval
+    override suspend fun updateWidgetData(
+        appWidgetId: Int,
+        labelText: String?,
+        timeRange: Int?,
+        unitOfMeasurement: String?,
+        entityId: String?,
+        smoothGraphs: Boolean?,
+        significantChangesOnly: Boolean?,
+        lastUpdate: Long?
+    ) {
+        graphWidgetDao.updateWidgetInTransaction(
+            appWidgetId = appWidgetId,
+            unitOfMeasurement = unitOfMeasurement,
+            entityId = entityId,
+            labelText = labelText,
+            timeRange = timeRange,
+            smoothGraphs = smoothGraphs,
+            significantChangesOnly = significantChangesOnly,
+            lastUpdate = lastUpdate
+        )
+    }
+
+    override fun exist(appWidgetId: Int): Boolean {
+        return graphWidgetDao.get(appWidgetId) != null
     }
 }

@@ -29,7 +29,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         const val UPDATE_VIEW =
             "io.homeassistant.companion.android.widgets.template.BaseWidgetProvider.UPDATE_VIEW"
         const val RECEIVE_DATA =
-            "io.homeassistant.companion.android.widgets.template.TemplateWidget.RECEIVE_DATA"
+            "io.homeassistant.companion.android.widgets.template.BaseWidgetProvider.RECEIVE_DATA"
 
         var widgetScope: CoroutineScope? = null
         val widgetEntities = mutableMapOf<Int, List<String>>()

@@ -7,6 +7,10 @@ interface BaseDaoWidgetRepository<T : WidgetEntity> {
 
     fun get(id: Int): T?
 
+    fun exist(appWidgetId: Int): Boolean {
+        return get(appWidgetId) != null
+    }
+
     suspend fun add(entity: T)
 
     suspend fun delete(id: Int)

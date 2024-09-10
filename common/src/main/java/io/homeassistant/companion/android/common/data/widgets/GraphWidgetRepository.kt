@@ -9,21 +9,22 @@ interface GraphWidgetRepository : BaseDaoWidgetRepository<GraphWidgetEntity> {
 
     suspend fun getGraphWidgetWithHistories(id: Int): GraphWidgetWithHistories?
 
-    suspend fun updateWidgetLastUpdate(widgetId: Int, lastUpdate: Long)
-
     suspend fun deleteEntriesOlderThan(appWidgetId: Int, cutoffTimeInHours: Int)
 
     fun deleteEntries(appWidgetId: Int)
 
     suspend fun insertGraphWidgetHistory(historyEntityList: List<GraphWidgetHistoryEntity>)
 
-    fun updateWidgetLastLabel(appWidgetId: Int, labelText: String)
-
-    fun updateWidgetTimeRange(appWidgetId: Int, timeRange: Int)
-
-    fun updateWidgetSensorUnitOfMeasurement(appWidgetId: Int, unitOfMeasurement: String)
-
-    fun updateWidgetSensorEntityId(appWidgetId: Int, entityId: String)
+    suspend fun updateWidgetData(
+        appWidgetId: Int,
+        labelText: String? = null,
+        timeRange: Int? = null,
+        unitOfMeasurement: String? = null,
+        entityId: String? = null,
+        smoothGraphs: Boolean? = null,
+        significantChangesOnly: Boolean? = null,
+        lastUpdate: Long? = null
+    )
 
     suspend fun checkIfExceedsAverageInterval(widgetId: Int, lastChangedToCompare: Long): Boolean
 }

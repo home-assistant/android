@@ -50,6 +50,8 @@ class GraphWidget : BaseWidgetProvider() {
         internal const val EXTRA_LABEL = "EXTRA_LABEL"
         internal const val UNIT_OF_MEASUREMENT = "UNIT_OF_MEASUREMENT"
         internal const val EXTRA_TIME_RANGE = "EXTRA_TIME_RANGE"
+        internal const val EXTRA_SMOOTH_GRAPHS = "EXTRA_SMOOTH_GRAPHS"
+        internal const val EXTRA_SIGNIFICANT_CHANGES_ONLY = "EXTRA_SIGNIFICANT_CHANGES_ONLY"
 
         private data class ResolvedText(val text: CharSequence?, val exception: Boolean = false)
     }
@@ -62,7 +64,7 @@ class GraphWidget : BaseWidgetProvider() {
 
     override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity<Map<String, Any>>?): RemoteViews {
         val historicData = repository.getGraphWidgetWithHistories(appWidgetId)
-        val widget = historicData?.graphWidget
+        val widgetEntity = historicData?.graphWidget
 
         val intent = Intent(context, GraphWidget::class.java).apply {
             action = UPDATE_VIEW
@@ -87,13 +89,13 @@ class GraphWidget : BaseWidgetProvider() {
             context.resources.displayMetrics
         ).toInt()
 
-        val useDynamicColors = widget?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
+        val useDynamicColors = widgetEntity?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
         val views = RemoteViews(context.packageName, if (useDynamicColors) R.layout.widget_graph_wrapper_dynamiccolor else R.layout.widget_graph_wrapper_default)
             .apply {
-                if (widget != null && (historicData.histories?.size ?: 0) >= 1) {
-                    val serverId = widget.serverId
-                    val entityId: String = widget.entityId
-                    val label: String? = widget.label
+                if (widgetEntity != null && (historicData.histories?.size ?: 0) >= 1) {
+                    val serverId = widgetEntity.serverId
+                    val entityId: String = widgetEntity.entityId
+                    val label: String? = widgetEntity.label
 
                     // Content
                     setViewVisibility(
@@ -113,7 +115,6 @@ class GraphWidget : BaseWidgetProvider() {
                         entityId,
                         suggestedEntity
                     )
-
                     setTextViewText(
                         R.id.widgetLabel,
                         label ?: entityId
@@ -128,10 +129,11 @@ class GraphWidget : BaseWidgetProvider() {
                             context = context,
                             label = label ?: entityId,
                             historicData = historicData,
-                            unitOfMeasurement = widget.unitOfMeasurement,
+                            unitOfMeasurement = widgetEntity.unitOfMeasurement,
                             width = width,
                             height = height,
-                            timeRange = widget.timeRange.toString()
+                            timeRange = widgetEntity.timeRange.toString(),
+                            smoothGraphs = widgetEntity.smoothGraphs
                         ).chartBitmap
                     )
                     setViewVisibility(
@@ -189,7 +191,7 @@ class GraphWidget : BaseWidgetProvider() {
         return entries
     }
 
-    private fun createLineChart(context: Context, label: String, timeRange: String, unitOfMeasurement: String, historicData: GraphWidgetWithHistories, width: Int, height: Int): LineChart {
+    private fun createLineChart(context: Context, label: String, timeRange: String, unitOfMeasurement: String, historicData: GraphWidgetWithHistories, width: Int, height: Int, smoothGraphs: Boolean): LineChart {
         val entriesFromHistoricData = createEntriesFromHistoricData(historicData = historicData)
 
         val lineChart = LineChart(context).apply {
@@ -248,7 +250,11 @@ class GraphWidget : BaseWidgetProvider() {
             circleRadius = 1F
             setDrawCircleHole(false)
             setCircleColor(mainGraphColor)
-            mode = LineDataSet.Mode.STEPPED
+            mode = if (smoothGraphs) {
+                LineDataSet.Mode.CUBIC_BEZIER
+            } else {
+                LineDataSet.Mode.STEPPED
+            }
             setDrawCircles(true)
             setDrawValues(false)
         }
@@ -298,11 +304,11 @@ class GraphWidget : BaseWidgetProvider() {
         return ResolvedText(entity?.friendlyName, entityCaughtException)
     }
 
-    private suspend fun fetchHistory(appWidgetId: Int, serverId: Int, entityId: String, fromMillis: Long, toMillis: Long) {
+    private suspend fun fetchHistory(appWidgetId: Int, serverId: Int, entityId: String, fromMillis: Long, toMillis: Long, significantChangesOnly: Boolean) {
         try {
             val historyEntities: List<GraphWidgetHistoryEntity> = serverManager.integrationRepository(serverId)
                 .getHistory(
-                    significantChangesOnly = false,
+                    significantChangesOnly = significantChangesOnly,
                     entityIds = listOf(entityId),
                     timestamp = fromMillis,
                     endTimeMillis = toMillis
@@ -318,6 +324,7 @@ class GraphWidget : BaseWidgetProvider() {
                     )
                 } ?: emptyList()
 
+            repository.deleteEntries(appWidgetId)
             repository.insertGraphWidgetHistory(historyEntities)
         } catch (e: Exception) {
             Log.e(TAG, "Unable to fetch entity history", e)
@@ -329,13 +336,16 @@ class GraphWidget : BaseWidgetProvider() {
 
         val serverId = extras.getInt(EXTRA_SERVER_ID)
 
-        val entitySelection: String? = extras.getString(EXTRA_ENTITY_ID)
-        val labelSelection: String? = extras.getString(EXTRA_LABEL)
-        val unitOfMeasurement: String? = extras.getString(UNIT_OF_MEASUREMENT)
+        val entitySelection: String = extras.getString(EXTRA_ENTITY_ID).orEmpty()
+        val labelSelection: String = extras.getString(EXTRA_LABEL).orEmpty()
+        val unitOfMeasurement: String = extras.getString(UNIT_OF_MEASUREMENT).orEmpty()
+
+        val significantChangesOnly: Boolean = extras.getBoolean(EXTRA_SIGNIFICANT_CHANGES_ONLY, false)
+        val smoothGraphs: Boolean = extras.getBoolean(EXTRA_SMOOTH_GRAPHS, false)
 
         val timeRange = extras.getInt(EXTRA_TIME_RANGE)
 
-        if (entitySelection == null) {
+        if (entitySelection.isEmpty()) {
             Log.e(TAG, "Missing entitySelection. Expected entity ($labelSelection) data but received null. Time range: $timeRange")
             return
         }
@@ -349,28 +359,45 @@ class GraphWidget : BaseWidgetProvider() {
 
             val timeRangeInMillis = getTimeRangeInMillis(timeRange)
 
-            repository.add(
-                GraphWidgetEntity(
-                    id = appWidgetId,
-                    serverId = serverId,
+            if (!repository.exist(appWidgetId)) {
+                repository.add(
+                    GraphWidgetEntity(
+                        id = appWidgetId,
+                        serverId = serverId,
+                        entityId = entitySelection,
+                        label = labelSelection,
+                        unitOfMeasurement = unitOfMeasurement,
+                        timeRange = timeRange,
+                        significantChangesOnly = significantChangesOnly,
+                        smoothGraphs = smoothGraphs,
+                        tapAction = WidgetTapAction.REFRESH,
+                        lastUpdate = timeRangeInMillis.first
+                    )
+                )
+            } else {
+                repository.deleteEntries(appWidgetId)
+                repository.updateWidgetData(
+                    appWidgetId = appWidgetId,
+                    unitOfMeasurement = unitOfMeasurement,
                     entityId = entitySelection,
-                    label = labelSelection,
-                    unitOfMeasurement = unitOfMeasurement.orEmpty(),
+                    labelText = labelSelection,
                     timeRange = timeRange,
-                    tapAction = WidgetTapAction.REFRESH,
+                    smoothGraphs = smoothGraphs,
+                    significantChangesOnly = significantChangesOnly,
                     lastUpdate = timeRangeInMillis.first
                 )
-            )
+            }
+
             repository.get(appWidgetId)?.let {
                 fetchHistory(
                     appWidgetId = appWidgetId,
                     serverId = serverId,
                     entityId = entitySelection,
                     fromMillis = timeRangeInMillis.second,
-                    toMillis = timeRangeInMillis.first
+                    toMillis = timeRangeInMillis.first,
+                    significantChangesOnly = significantChangesOnly
                 )
             }
-            repository.deleteEntriesOlderThan(appWidgetId, timeRange)
             onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
         }
     }
@@ -389,14 +416,17 @@ class GraphWidget : BaseWidgetProvider() {
                 val exceedsAverage = repository.checkIfExceedsAverageInterval(appWidgetId, timeRangeInMillis.first)
 
                 if (exceedsAverage) {
+                    Log.d(TAG, "Refreshing Data for ${entity.entityId}")
                     fetchHistory(
                         appWidgetId = appWidgetId,
-                        serverId = repository.get(appWidgetId)?.serverId!!.toInt(),
+                        serverId = graphEntity.serverId,
                         entityId = entity.entityId,
                         fromMillis = timeRangeInMillis.second,
-                        toMillis = timeRangeInMillis.first
+                        toMillis = timeRangeInMillis.first,
+                        significantChangesOnly = graphEntity.significantChangesOnly
                     )
                 } else {
+                    Log.d(TAG, "Local Data for ${entity.entityId}")
                     repository.deleteEntriesOlderThan(appWidgetId, graphEntity.timeRange)
                     repository.insertGraphWidgetHistory(
                         listOf(
@@ -409,9 +439,9 @@ class GraphWidget : BaseWidgetProvider() {
                         )
                     )
 
-                    repository.updateWidgetLastUpdate(
-                        appWidgetId,
-                        timeRangeInMillis.first
+                    repository.updateWidgetData(
+                        appWidgetId = appWidgetId,
+                        lastUpdate = timeRangeInMillis.first
                     )
                 }
             }

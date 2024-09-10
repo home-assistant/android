@@ -26,6 +26,10 @@ data class GraphWidgetEntity(
     val tapAction: WidgetTapAction,
     @ColumnInfo(name = "last_update")
     val lastUpdate: Long,
+    @ColumnInfo(name = "significantChangesOnly")
+    val significantChangesOnly: Boolean,
+    @ColumnInfo(name = "smoothGraphs")
+    val smoothGraphs: Boolean,
     override val backgroundType: WidgetBackgroundType = WidgetBackgroundType.DAYNIGHT,
     override val textColor: String? = null
 ) : WidgetEntity, ThemeableWidgetEntity

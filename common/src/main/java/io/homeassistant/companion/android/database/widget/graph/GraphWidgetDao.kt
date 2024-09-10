@@ -32,47 +32,63 @@ interface GraphWidgetDao : WidgetDao {
         addAll(entities)
     }
 
+    @Transaction
+    suspend fun updateWidgetInTransaction(
+        appWidgetId: Int,
+        labelText: String? = null,
+        timeRange: Int? = null,
+        unitOfMeasurement: String? = null,
+        entityId: String? = null,
+        smoothGraphs: Boolean? = null,
+        significantChangesOnly: Boolean? = null,
+        lastUpdate: Long? = null
+    ) {
+        labelText?.let { updateWidgetLabel(appWidgetId, it) }
+        timeRange?.let { updateWidgetTimeRange(appWidgetId, it) }
+        unitOfMeasurement?.let { updateWidgetSensorUnitOfMeasurement(appWidgetId, it) }
+        entityId?.let { updateWidgetSensorEntityId(appWidgetId, it) }
+        smoothGraphs?.let { updateWidgetSmoothGraphs(appWidgetId, it) }
+        significantChangesOnly?.let { updateWidgetSignificantChangesOnly(appWidgetId, it) }
+        lastUpdate?.let { updateWidgetLastUpdate(appWidgetId, it) }
+    }
+
     // Delete a specific GraphWidgetEntity by id
     @Query("DELETE FROM graph_widget WHERE id = :id")
     override suspend fun delete(id: Int)
 
-    // Delete multiple GraphWidgetEntity by ids
     @Query("DELETE FROM graph_widget WHERE id IN (:ids)")
     suspend fun deleteAll(ids: IntArray)
 
-    // Retrieve all GraphWidgetEntity records
     @Query("SELECT * FROM graph_widget")
     suspend fun getAll(): List<GraphWidgetEntity>
 
-    // Retrieve all GraphWidgetEntity records as a Flow
     @Query("SELECT * FROM graph_widget")
     fun getAllFlow(): Flow<List<GraphWidgetEntity>>
 
-    // Update the last_update field of a specific GraphWidgetEntity
     @Query("UPDATE graph_widget SET last_update = :lastUpdate WHERE id = :widgetId")
     suspend fun updateWidgetLastUpdate(widgetId: Int, lastUpdate: Long)
 
-    // Update the label field of a specific GraphWidgetEntity
     @Query("UPDATE graph_widget SET label = :label WHERE id = :widgetId")
     fun updateWidgetLabel(widgetId: Int, label: String)
 
-    // Update the label field of a specific GraphWidgetEntity
+    @Query("UPDATE graph_widget SET significantChangesOnly = :significantChangesOnly WHERE id = :widgetId")
+    fun updateWidgetSignificantChangesOnly(widgetId: Int, significantChangesOnly: Boolean)
+
+    @Query("UPDATE graph_widget SET smoothGraphs = :smoothGraphs WHERE id = :widgetId")
+    fun updateWidgetSmoothGraphs(widgetId: Int, smoothGraphs: Boolean)
+
     @Query("UPDATE graph_widget SET graph_time_range = :timeRange WHERE id = :widgetId")
     fun updateWidgetTimeRange(widgetId: Int, timeRange: Int)
 
-    // Update the label field of a specific GraphWidgetEntity
     @Query("UPDATE graph_widget SET entity_id = :entityId WHERE id = :widgetId")
     fun updateWidgetSensorEntityId(widgetId: Int, entityId: String)
 
-    // Update the unit of measurement field of a specific GraphWidgetEntity
     @Query("UPDATE graph_widget SET unit_of_measurement = :unitOfMeasurement WHERE id = :widgetId")
     fun updateWidgetSensorUnitOfMeasurement(widgetId: Int, unitOfMeasurement: String)
 
-    // Delete all GraphWidgetHistoryEntity by widgetId
     @Query("DELETE FROM graph_widget_history WHERE graph_widget_id = :widgetId ")
     fun deleteAllEntries(widgetId: Int)
 
-    // Deletes old historic entries of a specific GraphWidgetEntity
     @Query("DELETE FROM graph_widget_history WHERE graph_widget_id = :appWidgetId AND last_changed <= :cutoffTime")
     suspend fun deleteEntriesOlderThan(appWidgetId: Int, cutoffTime: Long): Int
 }

@@ -123,6 +123,8 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 binding.label.setText(it.label)
                 binding.timeRange.value = it.timeRange.toFloat()
                 binding.timeRangeLabel.text = getRangeHoursLabel(it.timeRange)
+                binding.smoothGraph.isChecked = it.smoothGraphs
+                binding.significantChangesOnly.isChecked = it.significantChangesOnly
             }
         } else {
             binding.timeRangeLabel.text = getRangeHoursLabel(binding.timeRange.value.toInt())
@@ -262,7 +264,6 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                     GraphWidget.UNIT_OF_MEASUREMENT,
                     unitOfMeasurement
                 )
-                repository.updateWidgetSensorUnitOfMeasurement(appWidgetId, it)
             }
 
             intent.putExtra(
@@ -271,11 +272,8 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             )
 
             intent.putExtra(GraphWidget.EXTRA_TIME_RANGE, binding.timeRange.value.toInt())
-
-            repository.deleteEntries(appWidgetId)
-            repository.updateWidgetSensorEntityId(appWidgetId, binding.widgetTextConfigEntityId.text.toString())
-            repository.updateWidgetLastLabel(appWidgetId, binding.label.text.toString())
-            repository.updateWidgetTimeRange(appWidgetId, binding.timeRange.value.toInt())
+            intent.putExtra(GraphWidget.EXTRA_SMOOTH_GRAPHS, binding.smoothGraph.isChecked)
+            intent.putExtra(GraphWidget.EXTRA_SIGNIFICANT_CHANGES_ONLY, binding.significantChangesOnly.isChecked)
 
             context.sendBroadcast(intent)
 
