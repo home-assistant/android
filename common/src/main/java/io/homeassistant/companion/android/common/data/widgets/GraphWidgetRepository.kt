@@ -24,4 +24,6 @@ interface GraphWidgetRepository : BaseDaoWidgetRepository<GraphWidgetEntity> {
     fun updateWidgetSensorUnitOfMeasurement(appWidgetId: Int, unitOfMeasurement: String)
 
     fun updateWidgetSensorEntityId(appWidgetId: Int, entityId: String)
+
+    suspend fun checkIfExceedsAverageInterval(widgetId: Int, lastChangedToCompare: Long): Boolean
 }

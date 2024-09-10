@@ -16,7 +16,6 @@ import android.widget.Spinner
 import androidx.core.content.getSystemService
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.canSupportPrecision
 import io.homeassistant.companion.android.common.data.integration.friendlyName
@@ -27,8 +26,9 @@ import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewMode
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
-import javax.inject.Inject
 import kotlinx.coroutines.launch
+import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
@@ -122,14 +122,10 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             repository.get(appWidgetId)?.let {
                 binding.label.setText(it.label)
                 binding.timeRange.value = it.timeRange.toFloat()
-                binding.timeRangeLabel.text = buildString {
-                    append(getString(commonR.string.time_range))
-                    append(" ")
-                    append(DateFormatter.formatHours(this@GraphWidgetConfigureActivity, it.timeRange))
-                }
+                binding.timeRangeLabel.text = getRangeHoursLabel(it.timeRange)
             }
         } else {
-            binding.timeRangeLabel.text = DateFormatter.formatHours(this, 24)
+            binding.timeRangeLabel.text = getRangeHoursLabel(binding.timeRange.value.toInt())
         }
 
         binding.timeRange.addOnChangeListener { _, value, _ ->
@@ -160,6 +156,14 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                     Log.e(TAG, "Failed to query entities", e)
                 }
             }
+        }
+    }
+
+    private fun getRangeHoursLabel(timeRange: Int): String {
+        return buildString {
+            append(getString(commonR.string.time_range))
+            append(" ")
+            append(DateFormatter.formatHours(this@GraphWidgetConfigureActivity, timeRange))
         }
     }
 
@@ -266,14 +270,7 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 binding.label.text.toString()
             )
 
-            val sliderTimeRange = binding.timeRange.value
-            val graphTimeRange = if (sliderTimeRange == 0F) {
-                24
-            } else {
-                sliderTimeRange.toInt()
-            }
-
-            intent.putExtra(GraphWidget.EXTRA_TIME_RANGE, graphTimeRange)
+            intent.putExtra(GraphWidget.EXTRA_TIME_RANGE, binding.timeRange.value.toInt())
 
             repository.deleteEntries(appWidgetId)
             repository.updateWidgetSensorEntityId(appWidgetId, binding.widgetTextConfigEntityId.text.toString())

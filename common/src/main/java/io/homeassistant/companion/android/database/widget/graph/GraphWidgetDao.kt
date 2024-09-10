@@ -18,6 +18,9 @@ interface GraphWidgetDao : WidgetDao {
     @Query("SELECT * FROM graph_widget WHERE id = :id")
     suspend fun getWithHistories(id: Int): GraphWidgetWithHistories?
 
+    @Query("SELECT last_changed FROM graph_widget_history WHERE graph_widget_id = :widgetId ORDER BY last_changed")
+    suspend fun getLastChangedTimesForWidget(widgetId: Int): List<Long>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun add(graphWidgetEntity: GraphWidgetEntity)
 

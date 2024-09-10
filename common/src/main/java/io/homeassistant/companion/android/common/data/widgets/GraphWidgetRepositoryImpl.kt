@@ -4,10 +4,10 @@ import io.homeassistant.companion.android.database.widget.graph.GraphWidgetDao
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetEntity
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetHistoryEntity
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetWithHistories
-import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
+import javax.inject.Inject
 
 class GraphWidgetRepositoryImpl @Inject constructor(
     private val graphWidgetDao: GraphWidgetDao
@@ -73,5 +73,19 @@ class GraphWidgetRepositoryImpl @Inject constructor(
 
     override fun updateWidgetSensorEntityId(appWidgetId: Int, entityId: String) {
         graphWidgetDao.updateWidgetSensorEntityId(appWidgetId, entityId)
+    }
+
+    override suspend fun checkIfExceedsAverageInterval(widgetId: Int, lastChangedToCompare: Long): Boolean {
+        val lastChangedList = graphWidgetDao.getLastChangedTimesForWidget(widgetId)
+
+        if (lastChangedList.size < 2) return false
+
+        val averageInterval = lastChangedList
+            .zipWithNext { a, b -> b - a }
+            .average()
+
+        val lastChanged = lastChangedList.last()
+
+        return (lastChangedToCompare - lastChanged) < averageInterval
     }
 }

@@ -22,7 +22,6 @@ import com.github.mikephil.charting.formatter.ValueFormatter
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.friendlyState
@@ -34,9 +33,10 @@ import io.homeassistant.companion.android.database.widget.graph.GraphWidgetEntit
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetHistoryEntity
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetWithHistories
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
-import javax.inject.Inject
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class GraphWidget : BaseWidgetProvider() {
@@ -346,8 +346,7 @@ class GraphWidget : BaseWidgetProvider() {
                     "entity id: " + entitySelection + System.lineSeparator()
             )
 
-            val currentTime = System.currentTimeMillis()
-            val currentTimeMillisAgo = currentTime - 60 * 60 * 1000 * timeRange
+            val timeRangeInMillis = getTimeRangeInMillis(timeRange)
 
             repository.add(
                 GraphWidgetEntity(
@@ -358,7 +357,7 @@ class GraphWidget : BaseWidgetProvider() {
                     unitOfMeasurement = unitOfMeasurement.orEmpty(),
                     timeRange = timeRange,
                     tapAction = WidgetTapAction.REFRESH,
-                    lastUpdate = currentTime
+                    lastUpdate = timeRangeInMillis.first
                 )
             )
             repository.get(appWidgetId)?.let {
@@ -366,8 +365,8 @@ class GraphWidget : BaseWidgetProvider() {
                     appWidgetId = appWidgetId,
                     serverId = serverId,
                     entityId = entitySelection,
-                    fromMillis = currentTimeMillisAgo,
-                    toMillis = currentTime
+                    fromMillis = timeRangeInMillis.second,
+                    toMillis = timeRangeInMillis.first
                 )
             }
             repository.deleteEntriesOlderThan(appWidgetId, timeRange)
@@ -375,29 +374,46 @@ class GraphWidget : BaseWidgetProvider() {
         }
     }
 
+    private fun getTimeRangeInMillis(timeRange: Int): Pair<Long, Long> {
+        val currentTime = System.currentTimeMillis()
+        return currentTime to currentTime - 60 * 60 * 1000 * timeRange
+    }
+
     override suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity<*>) {
         widgetScope?.launch {
             val graphEntity = repository.get(appWidgetId)
 
             if (graphEntity != null) {
-                val now = System.currentTimeMillis()
+                val timeRangeInMillis = getTimeRangeInMillis(graphEntity.timeRange)
+                val exceedsAverage = repository.checkIfExceedsAverageInterval(appWidgetId, timeRangeInMillis.first)
+
                 repository.deleteEntriesOlderThan(appWidgetId, graphEntity.timeRange)
 
-                repository.insertGraphWidgetHistory(
-                    listOf(
-                        GraphWidgetHistoryEntity(
-                            entityId = entity.entityId,
-                            graphWidgetId = appWidgetId,
-                            state = entity.friendlyState(context),
-                            lastChanged = now
+                if (exceedsAverage) {
+                    fetchHistory(
+                        appWidgetId = appWidgetId,
+                        serverId = repository.get(appWidgetId)?.serverId!!.toInt(),
+                        entityId = entity.entityId,
+                        fromMillis = timeRangeInMillis.second,
+                        toMillis = timeRangeInMillis.first
+                    )
+                } else {
+                    repository.insertGraphWidgetHistory(
+                        listOf(
+                            GraphWidgetHistoryEntity(
+                                entityId = entity.entityId,
+                                graphWidgetId = appWidgetId,
+                                state = entity.friendlyState(context),
+                                lastChanged = timeRangeInMillis.first
+                            )
                         )
                     )
-                )
 
-                repository.updateWidgetLastUpdate(
-                    appWidgetId,
-                    now
-                )
+                    repository.updateWidgetLastUpdate(
+                        appWidgetId,
+                        timeRangeInMillis.first
+                    )
+                }
             }
 
             val views = getWidgetRemoteViews(context, appWidgetId, entity as Entity<Map<String, Any>>)
