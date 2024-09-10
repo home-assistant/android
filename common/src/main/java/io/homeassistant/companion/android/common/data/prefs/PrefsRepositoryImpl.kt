@@ -26,6 +26,7 @@ class PrefsRepositoryImpl @Inject constructor(
         private const val CONTROLS_PANEL_PATH = "controls_panel_path"
         private const val PREF_FULLSCREEN_ENABLED = "fullscreen_enabled"
         private const val PREF_KEEP_SCREEN_ON_ENABLED = "keep_screen_on_enabled"
+        private const val PREF_PAGE_ZOOM_LEVEL = "page_zoom_level"
         private const val PREF_PINCH_TO_ZOOM_ENABLED = "pinch_to_zoom_enabled"
         private const val PREF_AUTOPLAY_VIDEO = "autoplay_video"
         private const val PREF_ALWAYS_SHOW_FIRST_VIEW_ON_APP_START = "always_show_first_view_on_app_start"
@@ -162,6 +163,13 @@ class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setKeepScreenOnEnabled(enabled: Boolean) {
         localStorage.putBoolean(PREF_KEEP_SCREEN_ON_ENABLED, enabled)
+    }
+
+    override suspend fun getPageZoomLevel(): Int =
+        localStorage.getInt(PREF_PAGE_ZOOM_LEVEL) ?: 100
+
+    override suspend fun setPageZoomLevel(level: Int?) {
+        localStorage.putInt(PREF_PAGE_ZOOM_LEVEL, level)
     }
 
     override suspend fun isPinchToZoomEnabled(): Boolean {

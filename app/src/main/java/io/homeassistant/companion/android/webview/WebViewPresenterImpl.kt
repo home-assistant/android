@@ -252,6 +252,10 @@ class WebViewPresenterImpl @Inject constructor(
         prefsRepository.isKeepScreenOnEnabled()
     }
 
+    override fun getPageZoomLevel(): Int = runBlocking {
+        prefsRepository.getPageZoomLevel()
+    }
+
     override fun isPinchToZoomEnabled(): Boolean = runBlocking {
         prefsRepository.isPinchToZoomEnabled()
     }

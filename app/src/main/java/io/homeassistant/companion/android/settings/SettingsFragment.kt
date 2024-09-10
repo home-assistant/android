@@ -163,6 +163,16 @@ class SettingsFragment(
             }
         }
 
+        findPreference<ListPreference>("page_zoom")?.let {
+            // The list of percentages for iOS/Android should match
+            // https://github.com/home-assistant/iOS/blob/ff66bbf2e3f9add0abb0b492499b81e824db36ed/Sources/Shared/Settings/SettingsStore.swift#L108
+            val percentages = listOf(50, 75, 85, 100, 115, 125, 150, 175, 200)
+            it.entries = percentages.map { pct ->
+                getString(if (pct == 100) commonR.string.page_zoom_default else commonR.string.page_zoom_pct, pct)
+            }.toTypedArray()
+            it.entryValues = percentages.map { pct -> pct.toString() }.toTypedArray()
+        }
+
         findPreference<PreferenceCategory>("widgets")?.isVisible = Build.MODEL != "Quest"
         findPreference<Preference>("manage_widgets")?.setOnPreferenceClickListener {
             parentFragmentManager.commit {

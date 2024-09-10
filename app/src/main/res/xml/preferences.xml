@@ -55,6 +55,11 @@
             android:icon="@drawable/ic_phone_check"
             android:title="@string/keep_screen_on"
             android:summary="@string/keep_screen_on_def"/>
+        <ListPreference
+            android:key="page_zoom"
+            android:icon="@drawable/ic_zoom_in"
+            android:title="@string/page_zoom"
+            app:useSimpleSummaryProvider="true"/>
         <SwitchPreference
             android:key="pinch_to_zoom"
             android:icon="@drawable/ic_gesture_pinch"
