@@ -182,9 +182,9 @@ jobs:
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
         run: |
           ./gradlew :common:assemble
-          ./gradlew :app:bundleRelease
+          ./gradlew :app:bundleFullRelease
           ./gradlew :wear:bundleRelease
-          ./gradlew :automotive:bundleRelease
+          ./gradlew :automotive:bundleFullRelease
 
       - name: Archive Build
         uses: actions/upload-artifact@v4
