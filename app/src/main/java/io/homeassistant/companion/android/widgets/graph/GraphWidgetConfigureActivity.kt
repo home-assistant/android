@@ -13,27 +13,22 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.AutoCompleteTextView
 import android.widget.Spinner
-import android.widget.Toast
 import androidx.core.content.getSystemService
-import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.canSupportPrecision
-import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.widgets.GraphWidgetRepository
-import io.homeassistant.companion.android.database.widget.WidgetTapAction
+import io.homeassistant.companion.android.common.util.DateFormatter
 import io.homeassistant.companion.android.databinding.WidgetGraphConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
@@ -122,34 +117,27 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         if (graphWidget != null) {
             binding.widgetTextConfigEntityId.setText(graphWidget.entityId)
 
-            val entity = runBlocking {
-                try {
-                    serverManager.integrationRepository(graphWidget.serverId).getEntity(graphWidget.entityId)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Unable to get entity information", e)
-                    Toast.makeText(applicationContext, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
-                        .show()
-                    null
-                }
-            }
-
-            val toggleable = entity?.domain in EntityExt.APP_PRESS_ACTION_DOMAINS
-            binding.tapAction.isVisible = toggleable
-            binding.tapActionList.setSelection(if (toggleable && graphWidget.tapAction == WidgetTapAction.TOGGLE) 0 else 1)
-
             binding.addButton.setText(commonR.string.update_widget)
 
             repository.get(appWidgetId)?.let {
                 binding.label.setText(it.label)
                 binding.timeRange.value = it.timeRange.toFloat()
-                binding.timeRangeLabel.text = getString(commonR.string.graph_time_range, it.timeRange)
+                binding.timeRangeLabel.text = buildString {
+                    append(getString(commonR.string.time_range))
+                    append(" ")
+                    append(DateFormatter.formatHours(this@GraphWidgetConfigureActivity, it.timeRange))
+                }
             }
         } else {
-            binding.timeRangeLabel.text = getString(commonR.string.graph_time_range, 24)
+            binding.timeRangeLabel.text = DateFormatter.formatHours(this, 24)
         }
 
         binding.timeRange.addOnChangeListener { _, value, _ ->
-            binding.timeRangeLabel.text = getString(commonR.string.graph_time_range, value.toInt())
+            binding.timeRangeLabel.text = buildString {
+                append(getString(commonR.string.time_range))
+                append(" ")
+                append(DateFormatter.formatHours(this@GraphWidgetConfigureActivity, value.toInt()))
+            }
         }
 
         entityAdapter = SingleItemArrayAdapter(this) { it?.entityId ?: "" }

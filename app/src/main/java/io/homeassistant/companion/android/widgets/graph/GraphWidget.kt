@@ -22,7 +22,6 @@ import com.github.mikephil.charting.formatter.ValueFormatter
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.friendlyState
@@ -34,9 +33,10 @@ import io.homeassistant.companion.android.database.widget.graph.GraphWidgetEntit
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetHistoryEntity
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetWithHistories
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
-import javax.inject.Inject
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class GraphWidget : BaseWidgetProvider() {
@@ -202,13 +202,10 @@ class GraphWidget : BaseWidgetProvider() {
                 position = XAxis.XAxisPosition.BOTTOM
                 textColor = dynTextColor
                 textSize = 12F
-                granularity = 1F
+                granularity = 5F
                 setAvoidFirstLastClipping(false)
                 isAutoScaleMinMaxEnabled = true
-                valueFormatter = historicData.histories
-                    ?.sortedBy {
-                        it.lastChanged
-                    }?.let { TimeValueFormatter(it) }
+                valueFormatter = historicData.histories?.let { TimeValueFormatter(it) }
             }
 
             axisLeft.apply {
@@ -264,13 +261,13 @@ class GraphWidget : BaseWidgetProvider() {
 
     private class TimeValueFormatter(private val entriesFromHistoricData: List<GraphWidgetHistoryEntity>) : ValueFormatter() {
         override fun getFormattedValue(value: Float): String {
-            return DateFormatter.formatTimeAndDateCompat(entriesFromHistoricData.get(value.toInt()).lastChanged)
+            return DateFormatter.formatTimeAndDateCompat(entriesFromHistoricData[value.toInt()].lastChanged)
         }
     }
 
     private class UnitOfMeasurementValueFormatter(private val unitOfMeasurement: String) : ValueFormatter() {
         override fun getFormattedValue(value: Float): String {
-            return "${value.toInt()}$unitOfMeasurement"
+            return "${value}$unitOfMeasurement"
         }
     }
 

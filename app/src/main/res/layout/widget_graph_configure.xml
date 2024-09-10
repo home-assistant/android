@@ -103,7 +103,6 @@
         android:id="@+id/timeRangeLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/graph_time_range"
         app:layout_constraintBottom_toTopOf="@+id/timeRange"
         app:layout_constraintStart_toStartOf="parent" />
 
