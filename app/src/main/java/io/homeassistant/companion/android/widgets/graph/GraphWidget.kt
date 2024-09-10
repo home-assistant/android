@@ -22,6 +22,7 @@ import com.github.mikephil.charting.formatter.ValueFormatter
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.friendlyState
@@ -33,10 +34,9 @@ import io.homeassistant.companion.android.database.widget.graph.GraphWidgetEntit
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetHistoryEntity
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetWithHistories
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
+import javax.inject.Inject
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class GraphWidget : BaseWidgetProvider() {
