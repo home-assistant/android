@@ -16,6 +16,7 @@ import android.widget.Spinner
 import androidx.core.content.getSystemService
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.canSupportPrecision
 import io.homeassistant.companion.android.common.data.integration.friendlyName
@@ -26,9 +27,8 @@ import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewMode
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
-import kotlinx.coroutines.launch
 import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {

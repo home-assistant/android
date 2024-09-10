@@ -22,6 +22,7 @@ import com.github.mikephil.charting.formatter.ValueFormatter
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.friendlyState
@@ -33,10 +34,9 @@ import io.homeassistant.companion.android.database.widget.graph.GraphWidgetEntit
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetHistoryEntity
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetWithHistories
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
+import javax.inject.Inject
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class GraphWidget : BaseWidgetProvider() {
@@ -202,7 +202,7 @@ class GraphWidget : BaseWidgetProvider() {
                 position = XAxis.XAxisPosition.BOTTOM
                 textColor = dynTextColor
                 textSize = 12F
-                granularity = 5F
+                granularity = 4F
                 setAvoidFirstLastClipping(false)
                 isAutoScaleMinMaxEnabled = true
                 valueFormatter = historicData.histories?.let { TimeValueFormatter(it) }
@@ -211,6 +211,7 @@ class GraphWidget : BaseWidgetProvider() {
             axisLeft.apply {
                 setDrawGridLines(true)
                 textColor = dynTextColor
+                granularity = 4F
                 textSize = 12F
                 valueFormatter = UnitOfMeasurementValueFormatter(unitOfMeasurement)
             }
@@ -247,7 +248,7 @@ class GraphWidget : BaseWidgetProvider() {
             circleRadius = 1F
             setDrawCircleHole(false)
             setCircleColor(mainGraphColor)
-            mode = LineDataSet.Mode.CUBIC_BEZIER
+            mode = LineDataSet.Mode.STEPPED
             setDrawCircles(true)
             setDrawValues(false)
         }
@@ -267,7 +268,7 @@ class GraphWidget : BaseWidgetProvider() {
 
     private class UnitOfMeasurementValueFormatter(private val unitOfMeasurement: String) : ValueFormatter() {
         override fun getFormattedValue(value: Float): String {
-            return "${value}$unitOfMeasurement"
+            return "${value.toBigDecimal().toDouble()}$unitOfMeasurement"
         }
     }
 
@@ -387,8 +388,6 @@ class GraphWidget : BaseWidgetProvider() {
                 val timeRangeInMillis = getTimeRangeInMillis(graphEntity.timeRange)
                 val exceedsAverage = repository.checkIfExceedsAverageInterval(appWidgetId, timeRangeInMillis.first)
 
-                repository.deleteEntriesOlderThan(appWidgetId, graphEntity.timeRange)
-
                 if (exceedsAverage) {
                     fetchHistory(
                         appWidgetId = appWidgetId,
@@ -398,6 +397,7 @@ class GraphWidget : BaseWidgetProvider() {
                         toMillis = timeRangeInMillis.first
                     )
                 } else {
+                    repository.deleteEntriesOlderThan(appWidgetId, graphEntity.timeRange)
                     repository.insertGraphWidgetHistory(
                         listOf(
                             GraphWidgetHistoryEntity(
