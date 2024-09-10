@@ -26,5 +26,5 @@ data class WebSocketRequest(
     val onEvent: Channel<Any>? = null,
     var onResponse: CancellableContinuation<SocketResponse>? = null
 ) {
-    val hasContinuationBeenInvoked = AtomicBoolean(onResponse == null)
+    val hasContinuationBeenInvoked = AtomicBoolean(false)
 }
