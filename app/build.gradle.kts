@@ -191,8 +191,6 @@ dependencies {
 
     implementation(libs.car.core)
     "fullImplementation"(libs.car.projected)
-    debugImplementation("com.github.amitshekhariitbhu.Android-Debug-Database:debug-db:1.0.7")
-
 }
 
 // Disable to fix memory leak and be compatible with the configuration cache.
