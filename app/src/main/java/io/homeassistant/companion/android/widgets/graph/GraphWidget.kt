@@ -114,9 +114,11 @@ class GraphWidget : BaseWidgetProvider<GraphWidgetRepository>() {
             repository.get(appWidgetId)?.let {
                 fetchHistory(appWidgetId = appWidgetId, forceFetch = true) {
                     onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
+                    return@fetchHistory
                 }
             }
         }
+        onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
     }
 
     override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity<Map<String, Any>>?): RemoteViews {
@@ -374,13 +376,14 @@ class GraphWidget : BaseWidgetProvider<GraphWidgetRepository>() {
                         repository.deleteEntries(appWidgetId)
                         repository.insertGraphWidgetHistory(historyEntities)
                         Log.d(TAG, "History fetched for widget $appWidgetId")
-                        onHistoryFetched() // Fetch successful
+                        onHistoryFetched()
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to fetch entity history", e)
                 }
             } else {
                 Log.d(TAG, "History fetch not necessary for widget $appWidgetId")
+                onHistoryFetched()
             }
         }
     }

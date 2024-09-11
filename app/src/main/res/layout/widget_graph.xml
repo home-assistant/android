@@ -21,8 +21,9 @@
     <FrameLayout
         android:id="@+id/widgetProgressBar"
         android:layout_width="match_parent"
+        android:padding="5dp"
         android:layout_height="match_parent"
-        android:background="@drawable/widget_button_background">
+        android:background="@android:color/white">
 
         <ProgressBar
             android:layout_width="48dp"

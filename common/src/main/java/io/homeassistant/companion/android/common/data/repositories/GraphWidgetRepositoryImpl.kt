@@ -48,7 +48,7 @@ class GraphWidgetRepositoryImpl @Inject constructor(
     override suspend fun checkIfExceedsAverageInterval(widgetId: Int, lastChangedToCompare: Long): Boolean {
         val lastChangedList = graphWidgetDao.getLastChangedTimesForWidget(widgetId)
 
-        if (lastChangedList.size < 2) return false
+        if (lastChangedList.size < 2) return true
 
         val intervals = lastChangedList.zipWithNext { a, b -> b - a }
         val averageInterval = intervals.average()
