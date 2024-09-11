@@ -16,7 +16,6 @@ import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
-import io.homeassistant.companion.android.database.widget.graph.GraphWidgetDao
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
@@ -26,7 +25,6 @@ class ManageWidgetsViewModel @Inject constructor(
     buttonWidgetDao: ButtonWidgetDao,
     cameraWidgetDao: CameraWidgetDao,
     staticWidgetDao: StaticWidgetDao,
-    graphWidgetDao: GraphWidgetDao,
     mediaPlayerControlsWidgetDao: MediaPlayerControlsWidgetDao,
     templateWidgetDao: TemplateWidgetDao,
     application: Application
@@ -41,7 +39,6 @@ class ManageWidgetsViewModel @Inject constructor(
     val buttonWidgetList = buttonWidgetDao.getAllFlow().collectAsState()
     val cameraWidgetList = cameraWidgetDao.getAllFlow().collectAsState()
     val staticWidgetList = staticWidgetDao.getAllFlow().collectAsState()
-    val graphWidgetList = graphWidgetDao.getAllFlow().collectAsState()
     val mediaWidgetList = mediaPlayerControlsWidgetDao.getAllFlow().collectAsState()
     val templateWidgetList = templateWidgetDao.getAllFlow().collectAsState()
     val supportsAddingWidgets: Boolean
