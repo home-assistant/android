@@ -18,6 +18,37 @@
         android:src="@mipmap/ic_launcher"
         android:visibility="gone" />
 
+    <LinearLayout
+        android:id="@+id/widgetGraphError"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="bottom"
+        android:orientation="horizontal"
+        android:layout_margin="2dp">
+
+        <ImageView
+            android:layout_width="21dp"
+            android:layout_height="21dp"
+            android:layout_gravity="start|bottom"
+            android:padding="2dp"
+            android:layout_marginEnd="2dp"
+            android:contentDescription="@string/widget_entity_fetch_error"
+            android:src="@drawable/ic_sync_problem"
+            android:visibility="visible" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:gravity="center"
+            android:maxLines="2"
+            android:minLines="1"
+            android:text=""
+            android:textAlignment="center"
+            android:textColor="?colorWidgetOnBackground"
+            android:textSize="12sp" />
+    </LinearLayout>
+
     <FrameLayout
         android:id="@+id/widgetProgressBar"
         android:layout_width="match_parent"

@@ -45,10 +45,11 @@ class GraphWidgetRepositoryImpl @Inject constructor(
         graphWidgetDao.insertAllInTransaction(historyEntityList)
     }
 
-    override suspend fun checkIfExceedsAverageInterval(widgetId: Int, lastChangedToCompare: Long): Boolean {
+    override suspend fun checkIfExceedsAverageInterval(widgetId: Int): Boolean {
         val lastChangedList = graphWidgetDao.getLastChangedTimesForWidget(widgetId)
+        val currentTime = System.currentTimeMillis()
 
-        if (lastChangedList.size < 2) return true
+        if (lastChangedList.size < 2) return false
 
         val intervals = lastChangedList.zipWithNext { a, b -> b - a }
         val averageInterval = intervals.average()
@@ -64,7 +65,7 @@ class GraphWidgetRepositoryImpl @Inject constructor(
         }
 
         val lastChanged = lastChangedList.last()
-        return (lastChangedToCompare - lastChanged) > averageInterval * adjustedMultiplier
+        return (currentTime - lastChanged) > averageInterval * adjustedMultiplier
     }
 
     override suspend fun updateWidgetData(

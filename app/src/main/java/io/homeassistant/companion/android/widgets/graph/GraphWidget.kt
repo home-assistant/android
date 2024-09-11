@@ -152,14 +152,22 @@ class GraphWidget : BaseWidgetProvider<GraphWidgetRepository>() {
         val views = RemoteViews(context.packageName, if (useDynamicColors) R.layout.widget_graph_wrapper_dynamiccolor else R.layout.widget_graph_wrapper_default)
             .apply {
                 if (widgetEntity != null && (historicData.histories?.size ?: 0) >= 1) {
-                    val serverId = widgetEntity.serverId
                     val entityId: String = widgetEntity.entityId
                     val label: String? = widgetEntity.label
 
-                    // Content
+                    val cantFetchEntity = cantFetchEntity(widgetEntity.serverId, widgetEntity.entityId)
+
                     setViewVisibility(
                         R.id.widgetProgressBar,
                         View.GONE
+                    )
+                    setTextViewText(
+                        R.id.widgetLabel,
+                        label ?: entityId
+                    )
+                    setViewVisibility(
+                        R.id.widgetStaticError,
+                        if (cantFetchEntity) View.VISIBLE else View.GONE
                     )
                     setImageViewBitmap(
                         R.id.chartImageView,
@@ -179,7 +187,7 @@ class GraphWidget : BaseWidgetProvider<GraphWidgetRepository>() {
                         View.VISIBLE
                     )
                     setOnClickPendingIntent(
-                        R.id.widgetLayout,
+                        R.id.chartImageView,
                         PendingIntent.getBroadcast(
                             context,
                             appWidgetId,
@@ -188,7 +196,6 @@ class GraphWidget : BaseWidgetProvider<GraphWidgetRepository>() {
                         )
                     )
                 } else {
-                    // Content
                     setViewVisibility(
                         R.id.chartImageView,
                         View.GONE
@@ -197,26 +204,19 @@ class GraphWidget : BaseWidgetProvider<GraphWidgetRepository>() {
                         R.id.widgetProgressBar,
                         View.VISIBLE
                     )
-                }
-
-                setOnClickPendingIntent(
-                    R.id.widgetTextLayout,
-                    PendingIntent.getBroadcast(
-                        context,
-                        appWidgetId,
-                        intent,
-                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    setOnClickPendingIntent(
+                        R.id.widgetTextLayout,
+                        PendingIntent.getBroadcast(
+                            context,
+                            appWidgetId,
+                            intent,
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                        )
                     )
-                )
+                }
             }
 
         return views
-    }
-
-    override suspend fun onRemoteViewsUpdated(context: Context, appWidgetId: Int, appWidgetManager: AppWidgetManager) {
-        fetchHistory(appWidgetId = appWidgetId) {
-            onUpdate(context, appWidgetManager, intArrayOf(appWidgetId))
-        }
     }
 
     override suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity<*>) {
@@ -350,7 +350,7 @@ class GraphWidget : BaseWidgetProvider<GraphWidgetRepository>() {
             val timeRangeInMillis = getTimeRangeInMillis(graphWidget.timeRange)
 
             // Check if it's necessary to fetch the history
-            val exceedsAverage = forceFetch || repository.checkIfExceedsAverageInterval(appWidgetId, timeRangeInMillis.first)
+            val exceedsAverage = forceFetch || repository.checkIfExceedsAverageInterval(appWidgetId)
 
             if (exceedsAverage) {
                 Log.d(TAG, "History fetch for widget $appWidgetId")
@@ -385,6 +385,15 @@ class GraphWidget : BaseWidgetProvider<GraphWidgetRepository>() {
                 Log.d(TAG, "History fetch not necessary for widget $appWidgetId")
                 onHistoryFetched()
             }
+        }
+    }
+
+    private suspend fun cantFetchEntity(serverId: Int, entityId: String): Boolean {
+        try {
+            return serverManager.integrationRepository(serverId).getEntity(entityId) == null
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to fetch entity", e)
+            return true
         }
     }
 

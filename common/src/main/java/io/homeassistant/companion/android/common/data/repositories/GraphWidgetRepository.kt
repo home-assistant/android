@@ -24,5 +24,5 @@ interface GraphWidgetRepository : BaseDaoWidgetRepository<GraphWidgetEntity> {
         lastUpdate: Long? = null
     )
 
-    suspend fun checkIfExceedsAverageInterval(widgetId: Int, lastChangedToCompare: Long): Boolean
+    suspend fun checkIfExceedsAverageInterval(widgetId: Int): Boolean
 }

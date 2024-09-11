@@ -65,7 +65,6 @@ abstract class BaseWidgetProvider<T : BaseDaoWidgetRepository<*>> : AppWidgetPro
             widgetScope?.launch {
                 val views = getWidgetRemoteViews(context, appWidgetId)
                 appWidgetManager.updateAppWidget(appWidgetId, views)
-                onRemoteViewsUpdated(context, appWidgetId, appWidgetManager)
             }
         }
     }
@@ -201,5 +200,4 @@ abstract class BaseWidgetProvider<T : BaseDaoWidgetRepository<*>> : AppWidgetPro
     // A map of widget IDs to [server ID, list of entity IDs]
     abstract fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int)
     abstract suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity<*>)
-    open suspend fun onRemoteViewsUpdated(context: Context, appWidgetId: Int, appWidgetManager: AppWidgetManager) {}
 }
