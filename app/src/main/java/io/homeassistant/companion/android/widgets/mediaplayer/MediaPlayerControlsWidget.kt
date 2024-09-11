@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -174,6 +175,10 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                 val title = entity?.attributes?.get("media_title")?.toString()
                 val album = entity?.attributes?.get("media_album_name")?.toString()
                 val icon = entity?.attributes?.get("icon")?.toString()
+
+                if (widget.backgroundType == WidgetBackgroundType.TRANSPARENT) {
+                    setInt(R.id.widgetLayout, "setBackgroundColor", Color.TRANSPARENT)
+                }
 
                 if ((artist != null || album != null) && title != null) {
                     setTextViewText(

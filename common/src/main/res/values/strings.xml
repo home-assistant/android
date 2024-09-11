@@ -324,6 +324,9 @@
     <string name="interval_in_view">In view</string>
     <string name="keep_screen_on_def">Do not lock screen when dashboard is active</string>
     <string name="keep_screen_on">Keep screen on</string>
+    <string name="page_zoom_default">%1$d%% (default)</string>
+    <string name="page_zoom_pct">%1$d%%</string>
+    <string name="page_zoom">Page zoom</string>
     <string name="pinch_to_zoom_def">Allow pinch-to-zoom gesture to zoom app window</string>
     <string name="pinch_to_zoom">Pinch-to-zoom</string>
     <string name="label_attribute">Attribute:</string>
