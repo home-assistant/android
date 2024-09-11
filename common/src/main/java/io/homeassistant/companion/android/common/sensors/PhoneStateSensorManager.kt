@@ -51,19 +51,37 @@ class PhoneStateSensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
 
-        val signalStrength = SensorManager.BasicSensor(
-            "signal_strength",
+        val sim1SignalStrength = SensorManager.BasicSensor(
+            "sim_1_signal_strength",
             "sensor",
-            commonR.string.basic_sensor_name_signal_strength,
+            commonR.string.basic_sensor_name_sim_1_signal_strength,
             commonR.string.sensor_description_signal_strength,
             "mdi:signal",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
 
-        val dataNetworkType = SensorManager.BasicSensor(
-            "data_network_type",
+        val sim2SignalStrength = SensorManager.BasicSensor(
+            "sim_2_signal_strength",
             "sensor",
-            commonR.string.basic_sensor_name_data_network_type,
+            commonR.string.basic_sensor_name_sim_2_signal_strength,
+            commonR.string.sensor_description_signal_strength,
+            "mdi:signal",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+        )
+
+        val sim1DataNetworkType = SensorManager.BasicSensor(
+            "sim_1_data_network_type",
+            "sensor",
+            commonR.string.basic_sensor_name_sim_1_data_network_type,
+            commonR.string.sensor_description_data_network_type,
+            "mdi:signal",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+        )
+
+        val sim2DataNetworkType = SensorManager.BasicSensor(
+            "sim_2_data_network_type",
+            "sensor",
+            commonR.string.basic_sensor_name_sim_2_data_network_type,
             commonR.string.sensor_description_data_network_type,
             "mdi:signal",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
@@ -106,9 +124,9 @@ class PhoneStateSensorManager : SensorManager {
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return when {
             (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS)) ->
-                listOf(phoneState, sim_1, sim_2, signalStrength, dataNetworkType)
+                listOf(phoneState, sim_1, sim_2, sim1SignalStrength, sim2SignalStrength, sim1DataNetworkType, sim2DataNetworkType)
             (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS)) ->
-                listOf(phoneState, sim_1, sim_2, dataNetworkType)
+                listOf(phoneState, sim_1, sim_2, sim1DataNetworkType, sim2DataNetworkType)
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1 -> {
                 listOf(phoneState, sim_1, sim_2)
             }
@@ -129,10 +147,12 @@ class PhoneStateSensorManager : SensorManager {
         updateSimSensor(context, 0)
         updateSimSensor(context, 1)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            updateSignalStrength(context)
+            updateSignalStrength(context, 0)
+            updateSignalStrength(context, 1)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            updateDataNetworkType(context)
+            updateDataNetworkType(context, 0)
+            updateDataNetworkType(context, 1)
         }
     }
 
@@ -225,47 +245,81 @@ class PhoneStateSensorManager : SensorManager {
     }
 
     @RequiresApi(Build.VERSION_CODES.Q)
-    private fun updateSignalStrength(context: Context) {
-        if (!isEnabled(context, signalStrength)) {
+    private fun updateSignalStrength(context: Context, slotIndex: Int) {
+        val signalStrengthSensor = when (slotIndex) {
+            0 -> sim1SignalStrength
+            1 -> sim2SignalStrength
+            else -> throw IllegalArgumentException("Invalid sim slot: $slotIndex")
+        }
+        if (!isEnabled(context, signalStrengthSensor)) {
             return
         }
 
-        val telephonyManager =
+        val baseTelephonyManager =
             context.applicationContext.getSystemService<TelephonyManager>()!!
+        val subscription = context.applicationContext.getSystemService<SubscriptionManager>()
+            ?.getActiveSubscriptionInfoForSimSlotIndex(slotIndex)
 
-        val signalQuality = when (telephonyManager.signalStrength?.level) {
-            CellSignalStrength.SIGNAL_STRENGTH_POOR -> "poor"
-            CellSignalStrength.SIGNAL_STRENGTH_GOOD -> "good"
-            CellSignalStrength.SIGNAL_STRENGTH_MODERATE -> "moderate"
-            CellSignalStrength.SIGNAL_STRENGTH_GREAT -> "great"
-            else -> STATE_UNKNOWN
-        }
-        onSensorUpdated(
-            context,
-            signalStrength,
-            telephonyManager.signalStrength?.cellSignalStrengths?.firstOrNull()?.dbm ?: STATE_UNKNOWN,
-            signalStrength.statelessIcon,
-            mapOf(
-                "asu" to telephonyManager.signalStrength?.cellSignalStrengths?.firstOrNull()?.asuLevel,
+        var state = STATE_UNAVAILABLE
+        var attrs = mapOf<String, Any?>()
+
+        subscription?.let {
+            val telephonyManager = baseTelephonyManager.createForSubscriptionId(subscription.subscriptionId)
+            val signalQuality = when (telephonyManager.signalStrength?.level) {
+                CellSignalStrength.SIGNAL_STRENGTH_POOR -> "poor"
+                CellSignalStrength.SIGNAL_STRENGTH_GOOD -> "good"
+                CellSignalStrength.SIGNAL_STRENGTH_MODERATE -> "moderate"
+                CellSignalStrength.SIGNAL_STRENGTH_GREAT -> "great"
+                else -> STATE_UNKNOWN
+            }
+            val signal = telephonyManager.signalStrength?.cellSignalStrengths?.firstOrNull()
+            state = signal?.dbm?.toString() ?: STATE_UNKNOWN
+            attrs = mapOf(
+                "asu" to signal?.asuLevel,
                 "quality" to signalQuality
             )
+        }
+
+        onSensorUpdated(
+            context,
+            signalStrengthSensor,
+            state,
+            signalStrengthSensor.statelessIcon,
+            attrs
         )
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    private fun updateDataNetworkType(context: Context) {
-        if (!isEnabled(context, dataNetworkType)) {
+    private fun updateDataNetworkType(context: Context, slotIndex: Int) {
+        val dataNetworkTypeSensor = when (slotIndex) {
+            0 -> sim1DataNetworkType
+            1 -> sim2DataNetworkType
+            else -> throw IllegalArgumentException("Invalid sim slot: $slotIndex")
+        }
+        if (!isEnabled(context, dataNetworkTypeSensor)) {
             return
         }
-        val telephonyManager =
+
+        val baseTelephonyManager =
             context.applicationContext.getSystemService<TelephonyManager>()!!
+        val subscription = context.applicationContext.getSystemService<SubscriptionManager>()
+            ?.getActiveSubscriptionInfoForSimSlotIndex(slotIndex)
+
+        var state = STATE_UNAVAILABLE
+        var attrs = mapOf<String, Any?>()
+
+        subscription?.let {
+            val telephonyManager = baseTelephonyManager.createForSubscriptionId(subscription.subscriptionId)
+            state = dataTypeMap.getOrDefault(telephonyManager.dataNetworkType, STATE_UNKNOWN)
+            attrs = mapOf("options" to dataTypeMap.values.toList())
+        }
 
         onSensorUpdated(
             context,
-            dataNetworkType,
-            dataTypeMap.getOrDefault(telephonyManager.dataNetworkType, STATE_UNKNOWN),
-            dataNetworkType.statelessIcon,
-            mapOf("options" to dataTypeMap.values.toList())
+            dataNetworkTypeSensor,
+            state,
+            dataNetworkTypeSensor.statelessIcon,
+            attrs
         )
     }
 }
