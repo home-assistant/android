@@ -70,7 +70,7 @@ interface GraphWidgetDao : WidgetDao {
     @Query("UPDATE graph_widget SET label = :label WHERE id = :widgetId")
     fun updateWidgetLabel(widgetId: Int, label: String)
 
-    @Query("UPDATE graph_widget SET smoothGraphs = :smoothGraphs WHERE id = :widgetId")
+    @Query("UPDATE graph_widget SET smooth_graphs = :smoothGraphs WHERE id = :widgetId")
     fun updateWidgetSmoothGraphs(widgetId: Int, smoothGraphs: Boolean)
 
     @Query("UPDATE graph_widget SET graph_time_range = :timeRange WHERE id = :widgetId")

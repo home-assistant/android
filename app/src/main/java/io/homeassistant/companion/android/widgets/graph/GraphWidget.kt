@@ -28,7 +28,6 @@ import io.homeassistant.companion.android.common.data.integration.friendlyState
 import io.homeassistant.companion.android.common.data.repositories.GraphWidgetRepository
 import io.homeassistant.companion.android.common.util.DateFormatter
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
-import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetEntity
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetHistoryEntity
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetWithHistories
@@ -96,7 +95,6 @@ class GraphWidget : BaseWidgetProvider<GraphWidgetRepository>() {
                         unitOfMeasurement = unitOfMeasurement,
                         timeRange = timeRange,
                         smoothGraphs = smoothGraphs,
-                        tapAction = WidgetTapAction.REFRESH,
                         lastUpdate = timeRangeInMillis.first
                     )
                 )

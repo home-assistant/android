@@ -85,7 +85,7 @@ fun ManageWidgetsView(
                 stringResource(R.string.widget_button_image_description) to WidgetType.BUTTON,
                 stringResource(R.string.widget_camera_description) to WidgetType.CAMERA,
                 stringResource(R.string.widget_static_image_description) to WidgetType.STATE,
-                stringResource(R.string.widget_graph_image_description) to WidgetType.GRAPH,
+                stringResource(R.string.graph_state_widgets) to WidgetType.GRAPH,
                 stringResource(R.string.widget_media_player_description) to WidgetType.MEDIA,
                 stringResource(R.string.template_widget) to WidgetType.TEMPLATE
             ).sortedBy { it.first }

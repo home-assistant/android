@@ -149,7 +149,7 @@
         <receiver
             android:name=".widgets.graph.GraphWidget"
             android:exported="false"
-            android:label="@string/widget_graph_image_description">
+            android:label="@string/graph_widget_desc">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="io.homeassistant.companion.android.widgets.GraphWidget.RECEIVE_DATA" />

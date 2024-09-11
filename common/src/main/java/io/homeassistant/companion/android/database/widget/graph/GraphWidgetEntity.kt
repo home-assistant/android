@@ -6,7 +6,6 @@ import androidx.room.PrimaryKey
 import io.homeassistant.companion.android.database.widget.ThemeableWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.database.widget.WidgetEntity
-import io.homeassistant.companion.android.database.widget.WidgetTapAction
 
 @Entity(tableName = "graph_widget")
 data class GraphWidgetEntity(
@@ -22,11 +21,9 @@ data class GraphWidgetEntity(
     val unitOfMeasurement: String,
     @ColumnInfo(name = "graph_time_range")
     val timeRange: Int = 24,
-    @ColumnInfo(name = "tap_action", defaultValue = "REFRESH")
-    val tapAction: WidgetTapAction,
     @ColumnInfo(name = "last_update")
     val lastUpdate: Long,
-    @ColumnInfo(name = "smoothGraphs")
+    @ColumnInfo(name = "smooth_graphs")
     val smoothGraphs: Boolean,
     override val backgroundType: WidgetBackgroundType = WidgetBackgroundType.DAYNIGHT,
     override val textColor: String? = null

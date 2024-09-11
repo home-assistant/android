@@ -1025,7 +1025,6 @@
     <string name="widget_spinner_server">Server:</string>
     <string name="widget_state_separator_label">State and attribute separator:</string>
     <string name="widget_static_image_description">Entity state</string>
-    <string name="widget_graph_image_description">Statistics widget</string>
     <string name="widget_tap_action_label">Tap action:</string>
     <string name="widget_tap_action_toggle">Toggle</string>
     <string name="widget_template_error">Unable to render the template</string>

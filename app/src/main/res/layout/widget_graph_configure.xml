@@ -98,7 +98,6 @@
         app:layout_constraintStart_toStartOf="parent"
         tools:text="Time range: 180h" />
 
-
     <CheckBox
         android:id="@+id/smoothGraph"
         android:layout_width="match_parent"
@@ -118,8 +117,8 @@
         android:stepSize="1"
         android:value="24"
         android:valueFrom="1"
-        app:labelBehavior="gone"
         android:valueTo="180"
+        app:labelBehavior="gone"
         app:layout_constraintTop_toBottomOf="@+id/smoothGraph"
         tools:layout_editor_absoluteX="30dp" />
 

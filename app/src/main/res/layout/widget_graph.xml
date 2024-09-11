@@ -18,11 +18,17 @@
         android:src="@mipmap/ic_launcher"
         android:visibility="gone" />
 
-    <ProgressBar
+    <FrameLayout
         android:id="@+id/widgetProgressBar"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_gravity="center"
-        android:indeterminate="true"
-        android:indeterminateTint="@color/colorAccent" />
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/widget_button_background">
+
+        <ProgressBar
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:indeterminate="true"
+            android:indeterminateTint="@color/colorAccent" />
+    </FrameLayout>
 </FrameLayout>

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 48,
-    "identityHash": "15ee11866fb7a346983fabad10936211",
+    "identityHash": "0821a1f66beadba22ea9a14826d7d078",
     "entities": [
       {
         "tableName": "sensor_attributes",
@@ -538,7 +538,7 @@
       },
       {
         "tableName": "graph_widget",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `entity_id` TEXT NOT NULL, `label` TEXT, `unit_of_measurement` TEXT NOT NULL, `graph_time_range` INTEGER NOT NULL, `tap_action` TEXT NOT NULL DEFAULT 'REFRESH', `last_update` INTEGER NOT NULL, `smoothGraphs` INTEGER NOT NULL, `backgroundType` TEXT NOT NULL, `textColor` TEXT, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `entity_id` TEXT NOT NULL, `label` TEXT, `unit_of_measurement` TEXT NOT NULL, `graph_time_range` INTEGER NOT NULL, `last_update` INTEGER NOT NULL, `smooth_graphs` INTEGER NOT NULL, `backgroundType` TEXT NOT NULL, `textColor` TEXT, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -578,13 +578,6 @@
             "notNull": true
           },
           {
-            "fieldPath": "tapAction",
-            "columnName": "tap_action",
-            "affinity": "TEXT",
-            "notNull": true,
-            "defaultValue": "'REFRESH'"
-          },
-          {
             "fieldPath": "lastUpdate",
             "columnName": "last_update",
             "affinity": "INTEGER",
@@ -592,7 +585,7 @@
           },
           {
             "fieldPath": "smoothGraphs",
-            "columnName": "smoothGraphs",
+            "columnName": "smooth_graphs",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -1290,7 +1283,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '15ee11866fb7a346983fabad10936211')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '0821a1f66beadba22ea9a14826d7d078')"
     ]
   }
 }
