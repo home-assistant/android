@@ -27,9 +27,9 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
 
     companion object {
         const val UPDATE_VIEW =
-            "io.homeassistant.companion.android.widgets.template.BaseWidgetProvider.UPDATE_VIEW"
+            "io.homeassistant.companion.android.widgets.BaseWidgetProvider.UPDATE_VIEW"
         const val RECEIVE_DATA =
-            "io.homeassistant.companion.android.widgets.template.BaseWidgetProvider.RECEIVE_DATA"
+            "io.homeassistant.companion.android.widgets.BaseWidgetProvider.RECEIVE_DATA"
 
         var widgetScope: CoroutineScope? = null
         val widgetEntities = mutableMapOf<Int, List<String>>()
@@ -63,6 +63,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             widgetScope?.launch {
                 val views = getWidgetRemoteViews(context, appWidgetId)
                 appWidgetManager.updateAppWidget(appWidgetId, views)
+                onRemoteViewsUpdated(context, appWidgetId, appWidgetManager)
             }
         }
     }
@@ -82,6 +83,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                 )
                 onScreenOn(context)
             }
+
             Intent.ACTION_SCREEN_ON -> onScreenOn(context)
             Intent.ACTION_SCREEN_OFF -> onScreenOff()
         }
@@ -185,4 +187,5 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     abstract suspend fun getAllWidgetIdsWithEntities(context: Context): Map<Int, Pair<Int, List<String>>>
     abstract fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int)
     abstract suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity<*>)
+    open suspend fun onRemoteViewsUpdated(context: Context, appWidgetId: Int, appWidgetManager: AppWidgetManager) {}
 }

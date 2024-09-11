@@ -62,6 +62,71 @@ class GraphWidget : BaseWidgetProvider() {
     override fun getWidgetProvider(context: Context): ComponentName =
         ComponentName(context, GraphWidget::class.java)
 
+    override fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
+        if (extras == null) return
+
+        val serverId = extras.getInt(EXTRA_SERVER_ID)
+
+        val entitySelection: String = extras.getString(EXTRA_ENTITY_ID).orEmpty()
+        val labelSelection: String = extras.getString(EXTRA_LABEL).orEmpty()
+        val unitOfMeasurement: String = extras.getString(UNIT_OF_MEASUREMENT).orEmpty()
+
+        val significantChangesOnly: Boolean = extras.getBoolean(EXTRA_SIGNIFICANT_CHANGES_ONLY, false)
+        val smoothGraphs: Boolean = extras.getBoolean(EXTRA_SMOOTH_GRAPHS, false)
+
+        val timeRange = extras.getInt(EXTRA_TIME_RANGE)
+
+        if (entitySelection.isEmpty()) {
+            Log.e(TAG, "Missing entitySelection. Expected entity ($labelSelection) data but received null. Time range: $timeRange")
+            return
+        }
+
+        widgetScope?.launch {
+            Log.d(
+                TAG,
+                "Saving entity state config data:" + System.lineSeparator() +
+                    "entity id: " + entitySelection + System.lineSeparator()
+            )
+
+            val timeRangeInMillis = getTimeRangeInMillis(timeRange)
+
+            if (!repository.exist(appWidgetId)) {
+                repository.add(
+                    GraphWidgetEntity(
+                        id = appWidgetId,
+                        serverId = serverId,
+                        entityId = entitySelection,
+                        label = labelSelection,
+                        unitOfMeasurement = unitOfMeasurement,
+                        timeRange = timeRange,
+                        significantChangesOnly = significantChangesOnly,
+                        smoothGraphs = smoothGraphs,
+                        tapAction = WidgetTapAction.REFRESH,
+                        lastUpdate = timeRangeInMillis.first
+                    )
+                )
+            } else {
+                repository.deleteEntries(appWidgetId)
+                repository.updateWidgetData(
+                    appWidgetId = appWidgetId,
+                    unitOfMeasurement = unitOfMeasurement,
+                    entityId = entitySelection,
+                    labelText = labelSelection,
+                    timeRange = timeRange,
+                    smoothGraphs = smoothGraphs,
+                    significantChangesOnly = significantChangesOnly,
+                    lastUpdate = timeRangeInMillis.first
+                )
+            }
+
+            repository.get(appWidgetId)?.let {
+                fetchHistory(appWidgetId = appWidgetId) {
+                    onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
+                }
+            }
+        }
+    }
+
     override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity<Map<String, Any>>?): RemoteViews {
         val historicData = repository.getGraphWidgetWithHistories(appWidgetId)
         val widgetEntity = historicData?.graphWidget
@@ -180,6 +245,75 @@ class GraphWidget : BaseWidgetProvider() {
         return views
     }
 
+    override suspend fun onRemoteViewsUpdated(context: Context, appWidgetId: Int, appWidgetManager: AppWidgetManager) {
+        fetchHistory(appWidgetId = appWidgetId) {
+            onUpdate(context, appWidgetManager, intArrayOf(appWidgetId))
+        }
+    }
+
+    override suspend fun getAllWidgetIdsWithEntities(context: Context): Map<Int, Pair<Int, List<String>>> =
+        repository.getAllFlow()
+            .first()
+            .associate { it.id to (it.serverId to listOf(it.entityId)) }
+
+    override suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity<*>) {
+        widgetScope?.launch {
+            val graphEntity = repository.get(appWidgetId)
+
+            if (graphEntity != null) {
+                val timeRangeInMillis = getTimeRangeInMillis(graphEntity.timeRange)
+
+                repository.deleteEntriesOlderThan(appWidgetId, graphEntity.timeRange)
+                repository.insertGraphWidgetHistory(
+                    listOf(
+                        GraphWidgetHistoryEntity(
+                            entityId = entity.entityId,
+                            graphWidgetId = appWidgetId,
+                            state = entity.friendlyState(context),
+                            lastChanged = timeRangeInMillis.first
+                        )
+                    )
+                )
+
+                repository.updateWidgetData(
+                    appWidgetId = appWidgetId,
+                    lastUpdate = timeRangeInMillis.first
+                )
+            }
+
+            val views = getWidgetRemoteViews(context, appWidgetId, entity as Entity<Map<String, Any>>)
+            AppWidgetManager.getInstance(context).updateAppWidget(appWidgetId, views)
+        }
+    }
+
+    override fun onDeleted(context: Context, appWidgetIds: IntArray) {
+        widgetScope?.launch {
+            repository.deleteAll(appWidgetIds)
+            appWidgetIds.forEach { removeSubscription(it) }
+        }
+    }
+
+    private suspend fun resolveTextToShow(
+        serverId: Int,
+        entityId: String?,
+        suggestedEntity: Entity<Map<String, Any>>?
+    ): ResolvedText {
+        var entity: Entity<Map<String, Any>>? = null
+        var entityCaughtException = false
+        try {
+            entity = if (suggestedEntity != null && suggestedEntity.entityId == entityId) {
+                suggestedEntity
+            } else {
+                entityId?.let { serverManager.integrationRepository(serverId).getEntity(it) }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to fetch entity", e)
+            entityCaughtException = true
+        }
+
+        return ResolvedText(entity?.friendlyName, entityCaughtException)
+    }
+
     private fun createEntriesFromHistoricData(historicData: GraphWidgetWithHistories): List<Entry> {
         val entries = mutableListOf<Entry>()
         historicData.histories
@@ -278,183 +412,52 @@ class GraphWidget : BaseWidgetProvider() {
         }
     }
 
-    override suspend fun getAllWidgetIdsWithEntities(context: Context): Map<Int, Pair<Int, List<String>>> =
-        repository.getAllFlow()
-            .first()
-            .associate { it.id to (it.serverId to listOf(it.entityId)) }
+    private suspend fun fetchHistory(appWidgetId: Int, onHistoryFetched: () -> Unit) {
+        val widgetData = repository.getGraphWidgetWithHistories(appWidgetId)
+        if (widgetData != null) {
+            val widgetEntity = widgetData.graphWidget
+            val timeRangeInMillis = getTimeRangeInMillis(widgetEntity.timeRange)
 
-    private suspend fun resolveTextToShow(
-        serverId: Int,
-        entityId: String?,
-        suggestedEntity: Entity<Map<String, Any>>?
-    ): ResolvedText {
-        var entity: Entity<Map<String, Any>>? = null
-        var entityCaughtException = false
-        try {
-            entity = if (suggestedEntity != null && suggestedEntity.entityId == entityId) {
-                suggestedEntity
+            // Check if it's necessary to fetch the history
+            val exceedsAverage = repository.checkIfExceedsAverageInterval(appWidgetId, timeRangeInMillis.first)
+
+            if (exceedsAverage) {
+                Log.d(TAG, "History fetch for widget $appWidgetId")
+                try {
+                    val historyEntities: List<GraphWidgetHistoryEntity> = serverManager.integrationRepository(widgetEntity.serverId)
+                        .getHistory(
+                            significantChangesOnly = widgetEntity.significantChangesOnly,
+                            entityIds = listOf(widgetEntity.entityId),
+                            timestamp = timeRangeInMillis.second,
+                            endTimeMillis = timeRangeInMillis.first
+                        )?.firstOrNull()
+                        ?.filter { it.state.toFloatOrNull() != null }
+                        ?.map { historyEntity ->
+                            GraphWidgetHistoryEntity(
+                                entityId = historyEntity.entityId,
+                                graphWidgetId = appWidgetId,
+                                state = historyEntity.state,
+                                lastChanged = historyEntity.lastChanged.timeInMillis
+                            )
+                        } ?: emptyList()
+
+                    if (historyEntities.isNotEmpty()) {
+                        repository.deleteEntries(appWidgetId)
+                        repository.insertGraphWidgetHistory(historyEntities)
+                        Log.d(TAG, "History fetched for widget $appWidgetId")
+                        onHistoryFetched() // Fetch successful
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unable to fetch entity history", e)
+                }
             } else {
-                entityId?.let { serverManager.integrationRepository(serverId).getEntity(it) }
+                Log.d(TAG, "History fetch not necessary for widget $appWidgetId")
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Unable to fetch entity", e)
-            entityCaughtException = true
-        }
-
-        return ResolvedText(entity?.friendlyName, entityCaughtException)
-    }
-
-    private suspend fun fetchHistory(appWidgetId: Int, serverId: Int, entityId: String, fromMillis: Long, toMillis: Long, significantChangesOnly: Boolean) {
-        try {
-            val historyEntities: List<GraphWidgetHistoryEntity> = serverManager.integrationRepository(serverId)
-                .getHistory(
-                    significantChangesOnly = significantChangesOnly,
-                    entityIds = listOf(entityId),
-                    timestamp = fromMillis,
-                    endTimeMillis = toMillis
-                )?.firstOrNull()
-                ?.filter { historyEntity ->
-                    historyEntity.state.toFloatOrNull() != null
-                }?.map { historyEntity ->
-                    GraphWidgetHistoryEntity(
-                        entityId = historyEntity.entityId,
-                        graphWidgetId = appWidgetId,
-                        state = historyEntity.state,
-                        lastChanged = historyEntity.lastChanged.timeInMillis
-                    )
-                } ?: emptyList()
-
-            repository.deleteEntries(appWidgetId)
-            repository.insertGraphWidgetHistory(historyEntities)
-        } catch (e: Exception) {
-            Log.e(TAG, "Unable to fetch entity history", e)
-        }
-    }
-
-    override fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
-        if (extras == null) return
-
-        val serverId = extras.getInt(EXTRA_SERVER_ID)
-
-        val entitySelection: String = extras.getString(EXTRA_ENTITY_ID).orEmpty()
-        val labelSelection: String = extras.getString(EXTRA_LABEL).orEmpty()
-        val unitOfMeasurement: String = extras.getString(UNIT_OF_MEASUREMENT).orEmpty()
-
-        val significantChangesOnly: Boolean = extras.getBoolean(EXTRA_SIGNIFICANT_CHANGES_ONLY, false)
-        val smoothGraphs: Boolean = extras.getBoolean(EXTRA_SMOOTH_GRAPHS, false)
-
-        val timeRange = extras.getInt(EXTRA_TIME_RANGE)
-
-        if (entitySelection.isEmpty()) {
-            Log.e(TAG, "Missing entitySelection. Expected entity ($labelSelection) data but received null. Time range: $timeRange")
-            return
-        }
-
-        widgetScope?.launch {
-            Log.d(
-                TAG,
-                "Saving entity state config data:" + System.lineSeparator() +
-                    "entity id: " + entitySelection + System.lineSeparator()
-            )
-
-            val timeRangeInMillis = getTimeRangeInMillis(timeRange)
-
-            if (!repository.exist(appWidgetId)) {
-                repository.add(
-                    GraphWidgetEntity(
-                        id = appWidgetId,
-                        serverId = serverId,
-                        entityId = entitySelection,
-                        label = labelSelection,
-                        unitOfMeasurement = unitOfMeasurement,
-                        timeRange = timeRange,
-                        significantChangesOnly = significantChangesOnly,
-                        smoothGraphs = smoothGraphs,
-                        tapAction = WidgetTapAction.REFRESH,
-                        lastUpdate = timeRangeInMillis.first
-                    )
-                )
-            } else {
-                repository.deleteEntries(appWidgetId)
-                repository.updateWidgetData(
-                    appWidgetId = appWidgetId,
-                    unitOfMeasurement = unitOfMeasurement,
-                    entityId = entitySelection,
-                    labelText = labelSelection,
-                    timeRange = timeRange,
-                    smoothGraphs = smoothGraphs,
-                    significantChangesOnly = significantChangesOnly,
-                    lastUpdate = timeRangeInMillis.first
-                )
-            }
-
-            repository.get(appWidgetId)?.let {
-                fetchHistory(
-                    appWidgetId = appWidgetId,
-                    serverId = serverId,
-                    entityId = entitySelection,
-                    fromMillis = timeRangeInMillis.second,
-                    toMillis = timeRangeInMillis.first,
-                    significantChangesOnly = significantChangesOnly
-                )
-            }
-            onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
         }
     }
 
     private fun getTimeRangeInMillis(timeRange: Int): Pair<Long, Long> {
         val currentTime = System.currentTimeMillis()
         return currentTime to currentTime - 60 * 60 * 1000 * timeRange
-    }
-
-    override suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity<*>) {
-        widgetScope?.launch {
-            val graphEntity = repository.get(appWidgetId)
-
-            if (graphEntity != null) {
-                val timeRangeInMillis = getTimeRangeInMillis(graphEntity.timeRange)
-                val exceedsAverage = repository.checkIfExceedsAverageInterval(appWidgetId, timeRangeInMillis.first)
-
-                if (exceedsAverage) {
-                    Log.d(TAG, "Refreshing Data for ${entity.entityId}")
-                    fetchHistory(
-                        appWidgetId = appWidgetId,
-                        serverId = graphEntity.serverId,
-                        entityId = entity.entityId,
-                        fromMillis = timeRangeInMillis.second,
-                        toMillis = timeRangeInMillis.first,
-                        significantChangesOnly = graphEntity.significantChangesOnly
-                    )
-                } else {
-                    Log.d(TAG, "Local Data for ${entity.entityId}")
-                    repository.deleteEntriesOlderThan(appWidgetId, graphEntity.timeRange)
-                    repository.insertGraphWidgetHistory(
-                        listOf(
-                            GraphWidgetHistoryEntity(
-                                entityId = entity.entityId,
-                                graphWidgetId = appWidgetId,
-                                state = entity.friendlyState(context),
-                                lastChanged = timeRangeInMillis.first
-                            )
-                        )
-                    )
-
-                    repository.updateWidgetData(
-                        appWidgetId = appWidgetId,
-                        lastUpdate = timeRangeInMillis.first
-                    )
-                }
-            }
-
-            val views = getWidgetRemoteViews(context, appWidgetId, entity as Entity<Map<String, Any>>)
-            AppWidgetManager.getInstance(context).updateAppWidget(appWidgetId, views)
-        }
-    }
-
-    override fun onDeleted(context: Context, appWidgetIds: IntArray) {
-        widgetScope?.launch {
-            repository.deleteAll(appWidgetIds)
-            appWidgetIds.forEach { removeSubscription(it) }
-        }
     }
 }
