@@ -23,7 +23,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.canSupportPrecision
 import io.homeassistant.companion.android.common.data.integration.friendlyState
 import io.homeassistant.companion.android.common.data.integration.onEntityPressedWithoutState
-import io.homeassistant.companion.android.database.widget.StaticWidgetDao
+import io.homeassistant.companion.android.common.data.repositories.StaticWidgetRepository
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
@@ -33,7 +33,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class EntityWidget : BaseWidgetProvider() {
+class EntityWidget : BaseWidgetProvider<StaticWidgetRepository>() {
 
     companion object {
         private const val TAG = "StaticWidget"
@@ -55,13 +55,15 @@ class EntityWidget : BaseWidgetProvider() {
     }
 
     @Inject
-    lateinit var staticWidgetDao: StaticWidgetDao
+    lateinit var repository: StaticWidgetRepository
+
+    override fun widgetRepository(): StaticWidgetRepository = repository
 
     override fun getWidgetProvider(context: Context): ComponentName =
         ComponentName(context, EntityWidget::class.java)
 
     override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity<Map<String, Any>>?): RemoteViews {
-        val widget = staticWidgetDao.get(appWidgetId)
+        val widget = repository.get(appWidgetId)
 
         val intent = Intent(context, EntityWidget::class.java).apply {
             action = if (widget?.tapAction == WidgetTapAction.TOGGLE) TOGGLE_ENTITY else UPDATE_VIEW
@@ -143,9 +145,6 @@ class EntityWidget : BaseWidgetProvider() {
         return views
     }
 
-    override suspend fun getAllWidgetIdsWithEntities(context: Context): Map<Int, Pair<Int, List<String>>> =
-        staticWidgetDao.getAll().associate { it.id to (it.serverId to listOf(it.entityId)) }
-
     private suspend fun resolveTextToShow(
         context: Context,
         serverId: Int,
@@ -177,11 +176,11 @@ class EntityWidget : BaseWidgetProvider() {
             null
         }
         if (attributeIds == null) {
-            staticWidgetDao.updateWidgetLastUpdate(
+            repository.updateWidgetLastUpdate(
                 appWidgetId,
-                entity?.friendlyState(context, entityOptions) ?: staticWidgetDao.get(appWidgetId)?.lastUpdate ?: ""
+                entity?.friendlyState(context, entityOptions) ?: repository.get(appWidgetId)?.lastUpdate ?: ""
             )
-            return ResolvedText(staticWidgetDao.get(appWidgetId)?.lastUpdate, entityCaughtException)
+            return ResolvedText(repository.get(appWidgetId)?.lastUpdate, entityCaughtException)
         }
 
         try {
@@ -191,12 +190,12 @@ class EntityWidget : BaseWidgetProvider() {
             val lastUpdate =
                 entity?.friendlyState(context, entityOptions).plus(if (attributeValues.isNotEmpty()) stateSeparator else "")
                     .plus(attributeValues.joinToString(attributeSeparator))
-            staticWidgetDao.updateWidgetLastUpdate(appWidgetId, lastUpdate)
+            repository.updateWidgetLastUpdate(appWidgetId, lastUpdate)
             return ResolvedText(lastUpdate)
         } catch (e: Exception) {
             Log.e(TAG, "Unable to fetch entity state and attributes", e)
         }
-        return ResolvedText(staticWidgetDao.get(appWidgetId)?.lastUpdate, true)
+        return ResolvedText(repository.get(appWidgetId)?.lastUpdate, true)
     }
 
     override fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
@@ -227,7 +226,7 @@ class EntityWidget : BaseWidgetProvider() {
                     "entity id: " + entitySelection + System.lineSeparator() +
                     "attribute: " + (attributeSelection ?: "N/A")
             )
-            staticWidgetDao.add(
+            repository.add(
                 StaticWidgetEntity(
                     appWidgetId,
                     serverId,
@@ -238,7 +237,7 @@ class EntityWidget : BaseWidgetProvider() {
                     stateSeparatorSelection ?: "",
                     attributeSeparatorSelection ?: "",
                     tapActionSelection,
-                    staticWidgetDao.get(appWidgetId)?.lastUpdate ?: "",
+                    repository.get(appWidgetId)?.lastUpdate ?: "",
                     backgroundTypeSelection,
                     textColorSelection
                 )
@@ -265,7 +264,7 @@ class EntityWidget : BaseWidgetProvider() {
             appWidgetManager.partiallyUpdateAppWidget(appWidgetId, loadingViews)
 
             var success = false
-            staticWidgetDao.get(appWidgetId)?.let {
+            repository.get(appWidgetId)?.let {
                 try {
                     onEntityPressedWithoutState(
                         it.entityId,
@@ -291,13 +290,6 @@ class EntityWidget : BaseWidgetProvider() {
         super.onReceive(context, intent)
         when (lastIntent) {
             TOGGLE_ENTITY -> toggleEntity(context, appWidgetId)
-        }
-    }
-
-    override fun onDeleted(context: Context, appWidgetIds: IntArray) {
-        widgetScope?.launch {
-            staticWidgetDao.deleteAll(appWidgetIds)
-            appWidgetIds.forEach { removeSubscription(it) }
         }
     }
 }

@@ -24,9 +24,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.friendlyState
-import io.homeassistant.companion.android.common.data.widgets.GraphWidgetRepository
+import io.homeassistant.companion.android.common.data.repositories.GraphWidgetRepository
 import io.homeassistant.companion.android.common.util.DateFormatter
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
@@ -35,11 +34,10 @@ import io.homeassistant.companion.android.database.widget.graph.GraphWidgetHisto
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetWithHistories
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import javax.inject.Inject
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class GraphWidget : BaseWidgetProvider() {
+class GraphWidget : BaseWidgetProvider<GraphWidgetRepository>() {
 
     companion object {
 
@@ -51,13 +49,12 @@ class GraphWidget : BaseWidgetProvider() {
         internal const val UNIT_OF_MEASUREMENT = "UNIT_OF_MEASUREMENT"
         internal const val EXTRA_TIME_RANGE = "EXTRA_TIME_RANGE"
         internal const val EXTRA_SMOOTH_GRAPHS = "EXTRA_SMOOTH_GRAPHS"
-        internal const val EXTRA_SIGNIFICANT_CHANGES_ONLY = "EXTRA_SIGNIFICANT_CHANGES_ONLY"
-
-        private data class ResolvedText(val text: CharSequence?, val exception: Boolean = false)
     }
 
     @Inject
     lateinit var repository: GraphWidgetRepository
+
+    override fun widgetRepository(): GraphWidgetRepository = repository
 
     override fun getWidgetProvider(context: Context): ComponentName =
         ComponentName(context, GraphWidget::class.java)
@@ -71,7 +68,6 @@ class GraphWidget : BaseWidgetProvider() {
         val labelSelection: String = extras.getString(EXTRA_LABEL).orEmpty()
         val unitOfMeasurement: String = extras.getString(UNIT_OF_MEASUREMENT).orEmpty()
 
-        val significantChangesOnly: Boolean = extras.getBoolean(EXTRA_SIGNIFICANT_CHANGES_ONLY, false)
         val smoothGraphs: Boolean = extras.getBoolean(EXTRA_SMOOTH_GRAPHS, false)
 
         val timeRange = extras.getInt(EXTRA_TIME_RANGE)
@@ -99,7 +95,6 @@ class GraphWidget : BaseWidgetProvider() {
                         label = labelSelection,
                         unitOfMeasurement = unitOfMeasurement,
                         timeRange = timeRange,
-                        significantChangesOnly = significantChangesOnly,
                         smoothGraphs = smoothGraphs,
                         tapAction = WidgetTapAction.REFRESH,
                         lastUpdate = timeRangeInMillis.first
@@ -114,13 +109,12 @@ class GraphWidget : BaseWidgetProvider() {
                     labelText = labelSelection,
                     timeRange = timeRange,
                     smoothGraphs = smoothGraphs,
-                    significantChangesOnly = significantChangesOnly,
                     lastUpdate = timeRangeInMillis.first
                 )
             }
 
             repository.get(appWidgetId)?.let {
-                fetchHistory(appWidgetId = appWidgetId) {
+                fetchHistory(appWidgetId = appWidgetId, forceFetch = true) {
                     onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
                 }
             }
@@ -164,29 +158,8 @@ class GraphWidget : BaseWidgetProvider() {
 
                     // Content
                     setViewVisibility(
-                        R.id.chartImageView,
-                        View.VISIBLE
-                    )
-                    setViewVisibility(
                         R.id.widgetProgressBar,
                         View.GONE
-                    )
-                    setViewVisibility(
-                        R.id.widgetStaticError,
-                        View.GONE
-                    )
-                    val resolvedText = resolveTextToShow(
-                        serverId,
-                        entityId,
-                        suggestedEntity
-                    )
-                    setTextViewText(
-                        R.id.widgetLabel,
-                        label ?: entityId
-                    )
-                    setViewVisibility(
-                        R.id.widgetStaticError,
-                        if (resolvedText.exception) View.VISIBLE else View.GONE
                     )
                     setImageViewBitmap(
                         R.id.chartImageView,
@@ -203,11 +176,10 @@ class GraphWidget : BaseWidgetProvider() {
                     )
                     setViewVisibility(
                         R.id.chartImageView,
-                        if (!resolvedText.exception) View.VISIBLE else View.GONE
+                        View.VISIBLE
                     )
-
                     setOnClickPendingIntent(
-                        R.id.widgetTextLayout,
+                        R.id.widgetLayout,
                         PendingIntent.getBroadcast(
                             context,
                             appWidgetId,
@@ -224,10 +196,6 @@ class GraphWidget : BaseWidgetProvider() {
                     setViewVisibility(
                         R.id.widgetProgressBar,
                         View.VISIBLE
-                    )
-                    setViewVisibility(
-                        R.id.widgetStaticError,
-                        View.GONE
                     )
                 }
 
@@ -251,18 +219,11 @@ class GraphWidget : BaseWidgetProvider() {
         }
     }
 
-    override suspend fun getAllWidgetIdsWithEntities(context: Context): Map<Int, Pair<Int, List<String>>> =
-        repository.getAllFlow()
-            .first()
-            .associate { it.id to (it.serverId to listOf(it.entityId)) }
-
     override suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity<*>) {
         widgetScope?.launch {
             val graphEntity = repository.get(appWidgetId)
 
             if (graphEntity != null) {
-                val timeRangeInMillis = getTimeRangeInMillis(graphEntity.timeRange)
-
                 repository.deleteEntriesOlderThan(appWidgetId, graphEntity.timeRange)
                 repository.insertGraphWidgetHistory(
                     listOf(
@@ -270,48 +231,19 @@ class GraphWidget : BaseWidgetProvider() {
                             entityId = entity.entityId,
                             graphWidgetId = appWidgetId,
                             state = entity.friendlyState(context),
-                            lastChanged = timeRangeInMillis.first
+                            lastChanged = entity.lastChanged.timeInMillis
                         )
                     )
                 )
 
                 repository.updateWidgetData(
                     appWidgetId = appWidgetId,
-                    lastUpdate = timeRangeInMillis.first
+                    lastUpdate = entity.lastChanged.timeInMillis
                 )
             }
 
-            val views = getWidgetRemoteViews(context, appWidgetId, entity as Entity<Map<String, Any>>)
-            AppWidgetManager.getInstance(context).updateAppWidget(appWidgetId, views)
+            onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
         }
-    }
-
-    override fun onDeleted(context: Context, appWidgetIds: IntArray) {
-        widgetScope?.launch {
-            repository.deleteAll(appWidgetIds)
-            appWidgetIds.forEach { removeSubscription(it) }
-        }
-    }
-
-    private suspend fun resolveTextToShow(
-        serverId: Int,
-        entityId: String?,
-        suggestedEntity: Entity<Map<String, Any>>?
-    ): ResolvedText {
-        var entity: Entity<Map<String, Any>>? = null
-        var entityCaughtException = false
-        try {
-            entity = if (suggestedEntity != null && suggestedEntity.entityId == entityId) {
-                suggestedEntity
-            } else {
-                entityId?.let { serverManager.integrationRepository(serverId).getEntity(it) }
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Unable to fetch entity", e)
-            entityCaughtException = true
-        }
-
-        return ResolvedText(entity?.friendlyName, entityCaughtException)
     }
 
     private fun createEntriesFromHistoricData(historicData: GraphWidgetWithHistories): List<Entry> {
@@ -412,22 +344,21 @@ class GraphWidget : BaseWidgetProvider() {
         }
     }
 
-    private suspend fun fetchHistory(appWidgetId: Int, onHistoryFetched: () -> Unit) {
-        val widgetData = repository.getGraphWidgetWithHistories(appWidgetId)
-        if (widgetData != null) {
-            val widgetEntity = widgetData.graphWidget
-            val timeRangeInMillis = getTimeRangeInMillis(widgetEntity.timeRange)
+    private suspend fun fetchHistory(appWidgetId: Int, forceFetch: Boolean = false, onHistoryFetched: () -> Unit) {
+        val graphWidget = repository.get(appWidgetId)
+        if (graphWidget != null) {
+            val timeRangeInMillis = getTimeRangeInMillis(graphWidget.timeRange)
 
             // Check if it's necessary to fetch the history
-            val exceedsAverage = repository.checkIfExceedsAverageInterval(appWidgetId, timeRangeInMillis.first)
+            val exceedsAverage = forceFetch || repository.checkIfExceedsAverageInterval(appWidgetId, timeRangeInMillis.first)
 
             if (exceedsAverage) {
                 Log.d(TAG, "History fetch for widget $appWidgetId")
                 try {
-                    val historyEntities: List<GraphWidgetHistoryEntity> = serverManager.integrationRepository(widgetEntity.serverId)
+                    val historyEntities: List<GraphWidgetHistoryEntity> = serverManager.integrationRepository(graphWidget.serverId)
                         .getHistory(
-                            significantChangesOnly = widgetEntity.significantChangesOnly,
-                            entityIds = listOf(widgetEntity.entityId),
+                            significantChangesOnly = true,
+                            entityIds = listOf(graphWidget.entityId),
                             timestamp = timeRangeInMillis.second,
                             endTimeMillis = timeRangeInMillis.first
                         )?.firstOrNull()

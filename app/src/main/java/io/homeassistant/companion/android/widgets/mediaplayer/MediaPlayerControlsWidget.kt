@@ -23,7 +23,7 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
+import io.homeassistant.companion.android.common.data.repositories.MediaPlayerControlsWidgetRepository
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.util.hasActiveConnection
@@ -34,7 +34,7 @@ import kotlin.collections.HashMap
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class MediaPlayerControlsWidget : BaseWidgetProvider() {
+class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetRepository>() {
 
     companion object {
         private const val TAG = "MediaPlayCtrlsWidget"
@@ -68,7 +68,9 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     }
 
     @Inject
-    lateinit var mediaPlayCtrlWidgetDao: MediaPlayerControlsWidgetDao
+    lateinit var repository: MediaPlayerControlsWidgetRepository
+
+    override fun widgetRepository(): MediaPlayerControlsWidgetRepository = repository
 
     override fun getWidgetProvider(context: Context): ComponentName =
         ComponentName(context, MediaPlayerControlsWidget::class.java)
@@ -145,7 +147,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         }
 
-        val widget = mediaPlayCtrlWidgetDao.get(appWidgetId)
+        val widget = repository.get(appWidgetId)
         val useDynamicColors = widget?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
         return RemoteViews(context.packageName, if (useDynamicColors) R.layout.widget_media_controls_wrapper_dynamiccolor else R.layout.widget_media_controls_wrapper_default).apply {
             if (widget != null) {
@@ -408,9 +410,6 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         }
     }
 
-    override suspend fun getAllWidgetIdsWithEntities(context: Context): Map<Int, Pair<Int, List<String>>> =
-        mediaPlayCtrlWidgetDao.getAll().associate { it.id to (it.serverId to it.entityId.split(",")) }
-
     private suspend fun getEntity(context: Context, serverId: Int, entityIds: List<String>, suggestedEntity: Entity<Map<String, Any>>?): Entity<Map<String, Any>>? {
         val entity: Entity<Map<String, Any>>?
         try {
@@ -492,7 +491,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                 "Saving action call config data:" + System.lineSeparator() +
                     "entity id: " + entitySelection + System.lineSeparator()
             )
-            mediaPlayCtrlWidgetDao.add(
+            repository.add(
                 MediaPlayerControlsWidgetEntity(
                     appWidgetId,
                     serverId,
@@ -511,7 +510,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     }
 
     override suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity<*>) {
-        mediaPlayCtrlWidgetDao.get(appWidgetId)?.let {
+        repository.get(appWidgetId)?.let {
             widgetScope?.launch {
                 val views = getWidgetRemoteViews(context, appWidgetId, getEntity(context, it.serverId, it.entityId.split(","), null))
                 AppWidgetManager.getInstance(context).updateAppWidget(appWidgetId, views)
@@ -522,7 +521,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     private fun callPreviousTrackAction(context: Context, appWidgetId: Int) {
         widgetScope?.launch {
             Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
-            val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
+            val entity: MediaPlayerControlsWidgetEntity? = repository.get(appWidgetId)
 
             if (entity == null) {
                 Log.d(TAG, "Failed to retrieve media player entity")
@@ -548,7 +547,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     private fun callRewindAction(context: Context, appWidgetId: Int) {
         widgetScope?.launch {
             Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
-            val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
+            val entity: MediaPlayerControlsWidgetEntity? = repository.get(appWidgetId)
 
             if (entity == null) {
                 Log.d(TAG, "Failed to retrieve media player entity")
@@ -602,7 +601,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     private fun callPlayPauseAction(context: Context, appWidgetId: Int) {
         widgetScope?.launch {
             Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
-            val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
+            val entity: MediaPlayerControlsWidgetEntity? = repository.get(appWidgetId)
 
             if (entity == null) {
                 Log.d(TAG, "Failed to retrieve media player entity")
@@ -632,7 +631,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     private fun callFastForwardAction(context: Context, appWidgetId: Int) {
         widgetScope?.launch {
             Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
-            val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
+            val entity: MediaPlayerControlsWidgetEntity? = repository.get(appWidgetId)
 
             if (entity == null) {
                 Log.d(TAG, "Failed to retrieve media player entity")
@@ -686,7 +685,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     private fun callNextTrackAction(context: Context, appWidgetId: Int) {
         widgetScope?.launch {
             Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
-            val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
+            val entity: MediaPlayerControlsWidgetEntity? = repository.get(appWidgetId)
 
             if (entity == null) {
                 Log.d(TAG, "Failed to retrieve media player entity")
@@ -716,7 +715,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     private fun callVolumeDownAction(context: Context, appWidgetId: Int) {
         widgetScope?.launch {
             Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
-            val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
+            val entity: MediaPlayerControlsWidgetEntity? = repository.get(appWidgetId)
 
             if (entity == null) {
                 Log.d(TAG, "Failed to retrieve media player entity")
@@ -746,7 +745,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     private fun callVolumeUpAction(context: Context, appWidgetId: Int) {
         widgetScope?.launch {
             Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
-            val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
+            val entity: MediaPlayerControlsWidgetEntity? = repository.get(appWidgetId)
 
             if (entity == null) {
                 Log.d(TAG, "Failed to retrieve media player entity")
@@ -770,13 +769,6 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
             } catch (e: Exception) {
                 Log.e(TAG, "Exception calling volume up action", e)
             }
-        }
-    }
-
-    override fun onDeleted(context: Context, appWidgetIds: IntArray) {
-        widgetScope?.launch {
-            mediaPlayCtrlWidgetDao.deleteAll(appWidgetIds)
-            appWidgetIds.forEach { removeSubscription(it) }
         }
     }
 }

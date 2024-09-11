@@ -10,6 +10,7 @@ data class ButtonWidgetEntity(
     override val id: Int,
     @ColumnInfo(name = "server_id", defaultValue = "0")
     override val serverId: Int,
+    override val entityId: String = "",
     @ColumnInfo(name = "icon_name")
     val iconName: String,
     @ColumnInfo(name = "domain")

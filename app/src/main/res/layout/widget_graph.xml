@@ -8,72 +8,21 @@
     android:minHeight="40dp"
     android:padding="4dp">
 
-    <LinearLayout
-        android:id="@+id/widgetTextLayout"
+    <ImageView
+        android:id="@+id/chartImageView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
         android:layout_gravity="center"
+        android:contentDescription="@string/graph_widget_desc"
         android:gravity="center"
-        android:paddingVertical="4dp">
+        android:src="@mipmap/ic_launcher"
+        android:visibility="gone" />
 
-        <ImageView
-            android:id="@+id/chartImageView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_gravity="center"
-            android:contentDescription="@string/graph_widget_desc"
-            android:gravity="center"
-            android:src="@mipmap/ic_launcher"
-            android:visibility="gone" />
-
-        <LinearLayout
-            android:id="@+id/widgetStaticError"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:layout_margin="2dp">
-
-            <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:layout_gravity="center"
-                android:padding="2dp"
-                android:layout_marginEnd="2dp"
-                android:contentDescription="@string/widget_entity_fetch_error"
-                android:src="@drawable/ic_sync_problem"
-                android:visibility="visible" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:gravity="center"
-                android:maxLines="2"
-                android:minLines="1"
-                android:text="@string/widget_entity_fetch_error"
-                android:textAlignment="center"
-                android:textColor="?colorWidgetOnBackground"
-                android:textSize="12sp" />
-        </LinearLayout>
-    </LinearLayout>
-
-    <LinearLayout
+    <ProgressBar
         android:id="@+id/widgetProgressBar"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:layout_gravity="center"
-        android:gravity="center"
-        android:orientation="vertical"
-        android:visibility="gone">
-
-        <ProgressBar
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:indeterminate="true"
-            android:indeterminateTint="@color/colorAccent" />
-
-    </LinearLayout>
+        android:indeterminate="true"
+        android:indeterminateTint="@color/colorAccent" />
 </FrameLayout>

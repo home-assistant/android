@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.common.data.widgets
+package io.homeassistant.companion.android.common.data.repositories
 
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetDao
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetEntity
@@ -13,13 +13,9 @@ class GraphWidgetRepositoryImpl @Inject constructor(
     private val graphWidgetDao: GraphWidgetDao
 ) : GraphWidgetRepository {
 
-    override fun get(id: Int): GraphWidgetEntity? {
-        return graphWidgetDao.get(id)
-    }
+    override fun get(id: Int): GraphWidgetEntity? = graphWidgetDao.get(id)
 
-    override suspend fun getGraphWidgetWithHistories(id: Int): GraphWidgetWithHistories? {
-        return graphWidgetDao.getWithHistories(id)
-    }
+    override suspend fun getGraphWidgetWithHistories(id: Int): GraphWidgetWithHistories? = graphWidgetDao.getWithHistories(id)
 
     override suspend fun add(entity: GraphWidgetEntity) {
         if (graphWidgetDao.get(entity.id) == null) {
@@ -27,21 +23,15 @@ class GraphWidgetRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun delete(id: Int) {
-        graphWidgetDao.delete(id)
-    }
+    override suspend fun delete(id: Int) = graphWidgetDao.delete(id)
 
-    override suspend fun deleteAll(ids: IntArray) {
-        graphWidgetDao.deleteAll(ids)
-    }
+    override suspend fun deleteAll(ids: IntArray) = graphWidgetDao.deleteAll(ids)
 
-    override suspend fun getAll(): List<GraphWidgetEntity> {
-        return graphWidgetDao.getAll()
-    }
+    override suspend fun getAll(): List<GraphWidgetEntity> = graphWidgetDao.getAll()
 
-    override fun getAllFlow(): Flow<List<GraphWidgetEntity>> {
-        return graphWidgetDao.getAllFlow().flowOn(Dispatchers.IO)
-    }
+    override fun getAllFlow(): Flow<List<GraphWidgetEntity>> = graphWidgetDao.getAllFlow().flowOn(Dispatchers.IO)
+
+    suspend fun updateWidgetLastUpdate(widgetId: Int, lastUpdate: Long) = graphWidgetDao.updateWidgetLastUpdate(widgetId, lastUpdate)
 
     override suspend fun deleteEntriesOlderThan(appWidgetId: Int, cutoffTimeInHours: Int) {
         graphWidgetDao.deleteEntriesOlderThan(appWidgetId, System.currentTimeMillis() - (60 * 60 * 1000 * cutoffTimeInHours))
@@ -84,7 +74,6 @@ class GraphWidgetRepositoryImpl @Inject constructor(
         unitOfMeasurement: String?,
         entityId: String?,
         smoothGraphs: Boolean?,
-        significantChangesOnly: Boolean?,
         lastUpdate: Long?
     ) {
         graphWidgetDao.updateWidgetInTransaction(
@@ -94,12 +83,7 @@ class GraphWidgetRepositoryImpl @Inject constructor(
             labelText = labelText,
             timeRange = timeRange,
             smoothGraphs = smoothGraphs,
-            significantChangesOnly = significantChangesOnly,
             lastUpdate = lastUpdate
         )
-    }
-
-    override fun exist(appWidgetId: Int): Boolean {
-        return graphWidgetDao.get(appWidgetId) != null
     }
 }

@@ -19,7 +19,7 @@ interface MediaPlayerControlsWidgetDao : WidgetDao {
     override suspend fun delete(id: Int)
 
     @Query("DELETE FROM media_player_controls_widgets WHERE id IN (:ids)")
-    suspend fun deleteAll(ids: IntArray)
+    override suspend fun deleteAll(ids: IntArray)
 
     @Query("SELECT * FROM media_player_controls_widgets")
     suspend fun getAll(): List<MediaPlayerControlsWidgetEntity>

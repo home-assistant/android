@@ -67,7 +67,7 @@
         android:completionThreshold="0"
         android:gravity="center_vertical"
         android:imeOptions="actionNext|flagNoFullscreen"
-        android:inputType="text"
+        android:inputType="text|textNoSuggestions"
         android:labelFor="@id/entityLabel"
         android:padding="15dp"
         android:textSize="14sp"
@@ -110,16 +110,6 @@
         app:layout_constraintTop_toBottomOf="@+id/label"
         tools:layout_editor_absoluteX="16dp" />
 
-    <CheckBox
-        android:id="@+id/significantChangesOnly"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:buttonTint="@color/colorAccent"
-        android:text="@string/significant_changes_only"
-        android:textSize="14sp"
-        app:layout_constraintTop_toBottomOf="@+id/smoothGraph"
-        tools:layout_editor_absoluteX="16dp" />
-
     <com.google.android.material.slider.Slider
         android:id="@+id/timeRange"
         android:layout_width="match_parent"
@@ -130,7 +120,7 @@
         android:valueFrom="1"
         app:labelBehavior="gone"
         android:valueTo="180"
-        app:layout_constraintTop_toBottomOf="@+id/significantChangesOnly"
+        app:layout_constraintTop_toBottomOf="@+id/smoothGraph"
         tools:layout_editor_absoluteX="30dp" />
 
     <Button

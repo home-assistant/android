@@ -11,19 +11,21 @@ import android.util.Log
 import android.widget.RemoteViews
 import androidx.core.content.ContextCompat
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.repositories.BaseDaoWidgetRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /**
  * A widget provider class for widgets that update based on entity state changes.
  */
-abstract class BaseWidgetProvider : AppWidgetProvider() {
+abstract class BaseWidgetProvider<T : BaseDaoWidgetRepository<*>> : AppWidgetProvider() {
 
     companion object {
         const val UPDATE_VIEW =
@@ -95,7 +97,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         widgetScope!!.launch {
             updateAllWidgets(context)
 
-            val allWidgets = getAllWidgetIdsWithEntities(context)
+            val allWidgets = getAllWidgetIdsWithEntities()
             val widgetsWithDifferentEntities = allWidgets.filter { it.value.second != widgetEntities[it.key] }
             if (widgetsWithDifferentEntities.isNotEmpty()) {
                 ContextCompat.registerReceiver(
@@ -147,7 +149,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         val systemWidgetIds = AppWidgetManager.getInstance(context)
             .getAppWidgetIds(widgetProvider)
             .toSet()
-        val dbWidgetIds = getAllWidgetIdsWithEntities(context).keys
+        val dbWidgetIds = getAllWidgetIdsWithEntities().keys
 
         val invalidWidgetIds = dbWidgetIds.minus(systemWidgetIds)
         if (invalidWidgetIds.isNotEmpty()) {
@@ -174,17 +176,29 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         }
     }
 
+    private suspend fun getAllWidgetIdsWithEntities(): Map<Int, Pair<Int, List<String>>> =
+        widgetRepository().getAllFlow()
+            .first()
+            .associate { it.id to (it.serverId to listOf(it.entityId)) }
+
     protected fun removeSubscription(appWidgetId: Int) {
         widgetEntities.remove(appWidgetId)
         widgetJobs[appWidgetId]?.cancel()
         widgetJobs.remove(appWidgetId)
     }
 
+    override fun onDeleted(context: Context, appWidgetIds: IntArray) {
+        widgetScope?.launch {
+            widgetRepository().deleteAll(appWidgetIds)
+            appWidgetIds.forEach { removeSubscription(it) }
+        }
+    }
+
+    abstract fun widgetRepository(): T
     abstract fun getWidgetProvider(context: Context): ComponentName
     abstract suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity<Map<String, Any>>? = null): RemoteViews
 
     // A map of widget IDs to [server ID, list of entity IDs]
-    abstract suspend fun getAllWidgetIdsWithEntities(context: Context): Map<Int, Pair<Int, List<String>>>
     abstract fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int)
     abstract suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity<*>)
     open suspend fun onRemoteViewsUpdated(context: Context, appWidgetId: Int, appWidgetManager: AppWidgetManager) {}

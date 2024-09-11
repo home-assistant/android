@@ -15,7 +15,7 @@ data class GraphWidgetEntity(
     @ColumnInfo(name = "server_id", defaultValue = "0")
     override val serverId: Int,
     @ColumnInfo(name = "entity_id")
-    val entityId: String,
+    override val entityId: String,
     @ColumnInfo(name = "label")
     val label: String?,
     @ColumnInfo(name = "unit_of_measurement")
@@ -26,8 +26,6 @@ data class GraphWidgetEntity(
     val tapAction: WidgetTapAction,
     @ColumnInfo(name = "last_update")
     val lastUpdate: Long,
-    @ColumnInfo(name = "significantChangesOnly")
-    val significantChangesOnly: Boolean,
     @ColumnInfo(name = "smoothGraphs")
     val smoothGraphs: Boolean,
     override val backgroundType: WidgetBackgroundType = WidgetBackgroundType.DAYNIGHT,

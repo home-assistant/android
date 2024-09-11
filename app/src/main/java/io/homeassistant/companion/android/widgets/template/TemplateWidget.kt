@@ -285,9 +285,10 @@ class TemplateWidget : AppWidgetProvider() {
                 TemplateWidgetEntity(
                     appWidgetId,
                     serverId,
+                    "",
                     template,
                     textSize,
-                    templateWidgetDao.get(appWidgetId)?.lastUpdate ?: "Loading",
+                    templateWidgetDao.get(appWidgetId)?.lastUpdate ?: ContextCompat.getString(context, commonR.string.loading),
                     backgroundTypeSelection,
                     textColorSelection
                 )

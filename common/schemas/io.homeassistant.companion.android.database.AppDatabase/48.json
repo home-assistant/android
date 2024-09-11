@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 48,
-    "identityHash": "b1d5e542f8782acd49adc8b21e12ab82",
+    "identityHash": "15ee11866fb7a346983fabad10936211",
     "entities": [
       {
         "tableName": "sensor_attributes",
@@ -249,7 +249,7 @@
       },
       {
         "tableName": "button_widgets",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `icon_name` TEXT NOT NULL, `domain` TEXT NOT NULL, `service` TEXT NOT NULL, `service_data` TEXT NOT NULL, `label` TEXT, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, `require_authentication` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `entityId` TEXT NOT NULL, `icon_name` TEXT NOT NULL, `domain` TEXT NOT NULL, `service` TEXT NOT NULL, `service_data` TEXT NOT NULL, `label` TEXT, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, `require_authentication` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -263,6 +263,12 @@
             "affinity": "INTEGER",
             "notNull": true,
             "defaultValue": "0"
+          },
+          {
+            "fieldPath": "entityId",
+            "columnName": "entityId",
+            "affinity": "TEXT",
+            "notNull": true
           },
           {
             "fieldPath": "iconName",
@@ -443,7 +449,7 @@
       },
       {
         "tableName": "static_widget",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `entity_id` TEXT NOT NULL, `attribute_ids` TEXT, `label` TEXT, `text_size` REAL NOT NULL, `state_separator` TEXT NOT NULL, `attribute_separator` TEXT NOT NULL, `tap_action` TEXT NOT NULL DEFAULT 'REFRESH', `last_update` TEXT NOT NULL, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `entityId` TEXT NOT NULL, `attribute_ids` TEXT, `label` TEXT, `text_size` REAL NOT NULL, `state_separator` TEXT NOT NULL, `attribute_separator` TEXT NOT NULL, `tap_action` TEXT NOT NULL DEFAULT 'REFRESH', `last_update` TEXT NOT NULL, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -460,7 +466,7 @@
           },
           {
             "fieldPath": "entityId",
-            "columnName": "entity_id",
+            "columnName": "entityId",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -532,7 +538,7 @@
       },
       {
         "tableName": "graph_widget",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `entity_id` TEXT NOT NULL, `label` TEXT, `unit_of_measurement` TEXT NOT NULL, `graph_time_range` INTEGER NOT NULL, `tap_action` TEXT NOT NULL DEFAULT 'REFRESH', `last_update` INTEGER NOT NULL, `significantChangesOnly` INTEGER NOT NULL, `smoothGraphs` INTEGER NOT NULL, `backgroundType` TEXT NOT NULL, `textColor` TEXT, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `entity_id` TEXT NOT NULL, `label` TEXT, `unit_of_measurement` TEXT NOT NULL, `graph_time_range` INTEGER NOT NULL, `tap_action` TEXT NOT NULL DEFAULT 'REFRESH', `last_update` INTEGER NOT NULL, `smoothGraphs` INTEGER NOT NULL, `backgroundType` TEXT NOT NULL, `textColor` TEXT, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -581,12 +587,6 @@
           {
             "fieldPath": "lastUpdate",
             "columnName": "last_update",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "significantChangesOnly",
-            "columnName": "significantChangesOnly",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -695,7 +695,7 @@
       },
       {
         "tableName": "template_widgets",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `template` TEXT NOT NULL, `text_size` REAL NOT NULL DEFAULT 12.0, `last_update` TEXT NOT NULL, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `entityId` TEXT NOT NULL, `template` TEXT NOT NULL, `text_size` REAL NOT NULL DEFAULT 12.0, `last_update` TEXT NOT NULL, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -709,6 +709,12 @@
             "affinity": "INTEGER",
             "notNull": true,
             "defaultValue": "0"
+          },
+          {
+            "fieldPath": "entityId",
+            "columnName": "entityId",
+            "affinity": "TEXT",
+            "notNull": true
           },
           {
             "fieldPath": "template",
@@ -1284,7 +1290,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b1d5e542f8782acd49adc8b21e12ab82')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '15ee11866fb7a346983fabad10936211')"
     ]
   }
 }

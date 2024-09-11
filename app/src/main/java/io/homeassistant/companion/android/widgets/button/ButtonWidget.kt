@@ -249,6 +249,7 @@ class ButtonWidget : AppWidgetProvider() {
             WidgetBackgroundType.TRANSPARENT -> {
                 views.setInt(R.id.widgetLayout, "setBackgroundColor", Color.TRANSPARENT)
             }
+
             else -> {
                 views.setInt(R.id.widgetLayout, "setBackgroundResource", R.drawable.widget_button_background)
             }
@@ -360,7 +361,7 @@ class ButtonWidget : AppWidgetProvider() {
         val domain: String? = extras.getString(EXTRA_DOMAIN)
         val action: String? = extras.getString(EXTRA_ACTION)
         val actionData: String? = extras.getString(EXTRA_ACTION_DATA)
-        val label: String? = extras.getString(EXTRA_LABEL)
+        val label: String = extras.getString(EXTRA_LABEL, "")
         val requireAuthentication: Boolean = extras.getBoolean(EXTRA_REQUIRE_AUTHENTICATION)
         val icon: String = extras.getString(EXTRA_ICON_NAME) ?: "mdi:flash"
         val backgroundType = BundleCompat.getSerializable(extras, EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
@@ -383,7 +384,18 @@ class ButtonWidget : AppWidgetProvider() {
                     "label: " + label
             )
 
-            val widget = ButtonWidgetEntity(appWidgetId, serverId, icon, domain, action, actionData, label, backgroundType, textColor, requireAuthentication)
+            val widget = ButtonWidgetEntity(
+                id = appWidgetId,
+                serverId,
+                iconName = icon,
+                domain = domain,
+                service = action,
+                serviceData = actionData,
+                label = label,
+                backgroundType = backgroundType,
+                textColor = textColor,
+                requireAuthentication = requireAuthentication
+            )
             buttonWidgetDao.add(widget)
 
             // It is the responsibility of the configuration activity to update the app widget

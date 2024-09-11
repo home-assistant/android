@@ -48,7 +48,6 @@ interface GraphWidgetDao : WidgetDao {
         unitOfMeasurement?.let { updateWidgetSensorUnitOfMeasurement(appWidgetId, it) }
         entityId?.let { updateWidgetSensorEntityId(appWidgetId, it) }
         smoothGraphs?.let { updateWidgetSmoothGraphs(appWidgetId, it) }
-        significantChangesOnly?.let { updateWidgetSignificantChangesOnly(appWidgetId, it) }
         lastUpdate?.let { updateWidgetLastUpdate(appWidgetId, it) }
     }
 
@@ -57,7 +56,7 @@ interface GraphWidgetDao : WidgetDao {
     override suspend fun delete(id: Int)
 
     @Query("DELETE FROM graph_widget WHERE id IN (:ids)")
-    suspend fun deleteAll(ids: IntArray)
+    override suspend fun deleteAll(ids: IntArray)
 
     @Query("SELECT * FROM graph_widget")
     suspend fun getAll(): List<GraphWidgetEntity>
@@ -70,9 +69,6 @@ interface GraphWidgetDao : WidgetDao {
 
     @Query("UPDATE graph_widget SET label = :label WHERE id = :widgetId")
     fun updateWidgetLabel(widgetId: Int, label: String)
-
-    @Query("UPDATE graph_widget SET significantChangesOnly = :significantChangesOnly WHERE id = :widgetId")
-    fun updateWidgetSignificantChangesOnly(widgetId: Int, significantChangesOnly: Boolean)
 
     @Query("UPDATE graph_widget SET smoothGraphs = :smoothGraphs WHERE id = :widgetId")
     fun updateWidgetSmoothGraphs(widgetId: Int, smoothGraphs: Boolean)

@@ -1,6 +1,5 @@
-package io.homeassistant.companion.android.common.data.widgets
+package io.homeassistant.companion.android.common.data.repositories
 
-import io.homeassistant.companion.android.common.data.BaseDaoWidgetRepository
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetEntity
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetHistoryEntity
 import io.homeassistant.companion.android.database.widget.graph.GraphWidgetWithHistories
@@ -22,7 +21,6 @@ interface GraphWidgetRepository : BaseDaoWidgetRepository<GraphWidgetEntity> {
         unitOfMeasurement: String? = null,
         entityId: String? = null,
         smoothGraphs: Boolean? = null,
-        significantChangesOnly: Boolean? = null,
         lastUpdate: Long? = null
     )
 

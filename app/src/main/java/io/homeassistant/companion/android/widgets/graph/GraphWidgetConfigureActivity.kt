@@ -20,7 +20,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.canSupportPrecision
 import io.homeassistant.companion.android.common.data.integration.friendlyName
-import io.homeassistant.companion.android.common.data.widgets.GraphWidgetRepository
+import io.homeassistant.companion.android.common.data.repositories.GraphWidgetRepository
 import io.homeassistant.companion.android.common.util.DateFormatter
 import io.homeassistant.companion.android.databinding.WidgetGraphConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
@@ -124,7 +124,6 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 binding.timeRange.value = it.timeRange.toFloat()
                 binding.timeRangeLabel.text = getRangeHoursLabel(it.timeRange)
                 binding.smoothGraph.isChecked = it.smoothGraphs
-                binding.significantChangesOnly.isChecked = it.significantChangesOnly
             }
         } else {
             binding.timeRangeLabel.text = getRangeHoursLabel(binding.timeRange.value.toInt())
@@ -273,7 +272,6 @@ class GraphWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
             intent.putExtra(GraphWidget.EXTRA_TIME_RANGE, binding.timeRange.value.toInt())
             intent.putExtra(GraphWidget.EXTRA_SMOOTH_GRAPHS, binding.smoothGraph.isChecked)
-            intent.putExtra(GraphWidget.EXTRA_SIGNIFICANT_CHANGES_ONLY, binding.significantChangesOnly.isChecked)
 
             context.sendBroadcast(intent)
 
