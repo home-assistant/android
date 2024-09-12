@@ -13,6 +13,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.drawable.Icon
 import android.media.AudioManager
 import android.media.MediaMetadataRetriever
 import android.media.RingtoneManager
@@ -38,6 +39,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.core.content.getSystemService
 import androidx.core.text.isDigitsOnly
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -63,11 +65,10 @@ import io.homeassistant.companion.android.common.notifications.handleText
 import io.homeassistant.companion.android.common.notifications.parseColor
 import io.homeassistant.companion.android.common.notifications.parseVibrationPattern
 import io.homeassistant.companion.android.common.notifications.prepareText
-import io.homeassistant.companion.android.common.util.TextToSpeechData
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.getActiveNotification
-import io.homeassistant.companion.android.common.util.speakText
-import io.homeassistant.companion.android.common.util.stopTTS
+import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
+import io.homeassistant.companion.android.common.util.tts.TextToSpeechData
 import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.database.sensor.SensorDao
@@ -82,9 +83,11 @@ import io.homeassistant.companion.android.vehicle.HaCarAppService
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebViewActivity
 import java.io.File
-import java.io.FileOutputStream
 import java.net.URL
 import java.net.URLDecoder
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -97,6 +100,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okio.sink
 import org.json.JSONObject
 
 class MessagingManager @Inject constructor(
@@ -106,7 +110,8 @@ class MessagingManager @Inject constructor(
     private val prefsRepository: PrefsRepository,
     private val notificationDao: NotificationDao,
     private val sensorDao: SensorDao,
-    private val settingsDao: SettingsDao
+    private val settingsDao: SettingsDao,
+    private val textToSpeechClient: TextToSpeechClient
 ) {
     companion object {
         const val TAG = "MessagingService"
@@ -128,6 +133,7 @@ class MessagingManager @Inject constructor(
         const val PERSISTENT = "persistent"
         const val CHRONOMETER = "chronometer"
         const val WHEN = "when"
+        const val WHEN_RELATIVE = "when_relative"
         const val CAR_UI = "car_ui"
         const val KEY_TEXT_REPLY = "key_text_reply"
         const val INTENT_CLASS_NAME = "intent_class_name"
@@ -317,9 +323,9 @@ class MessagingManager @Inject constructor(
                     removeNotificationChannel(jsonData[NotificationData.CHANNEL]!!)
                 }
                 jsonData[NotificationData.MESSAGE] == TextToSpeechData.TTS -> {
-                    speakText(context, jsonData)
+                    textToSpeechClient.speakText(jsonData)
                 }
-                jsonData[NotificationData.MESSAGE] == TextToSpeechData.COMMAND_STOP_TTS -> stopTTS()
+                jsonData[NotificationData.MESSAGE] == TextToSpeechData.COMMAND_STOP_TTS -> textToSpeechClient.stopTTS()
                 jsonData[NotificationData.MESSAGE] in DEVICE_COMMANDS && allowCommands -> {
                     Log.d(TAG, "Processing device command")
                     when (jsonData[NotificationData.MESSAGE]) {
@@ -980,10 +986,15 @@ class MessagingManager @Inject constructor(
         data: Map<String, String>
     ) {
         try { // Without this, a non-numeric when value will crash the app
-            val notificationWhen = data[WHEN]?.toLongOrNull()?.times(1000) ?: 0
+            var notificationWhen = data[WHEN]?.toLongOrNull()?.times(1000) ?: 0
+            val isRelative = data[WHEN_RELATIVE]?.toBoolean() ?: false
             val usesChronometer = data[CHRONOMETER]?.toBoolean() ?: false
 
             if (notificationWhen != 0L) {
+                if (isRelative) {
+                    notificationWhen += System.currentTimeMillis()
+                }
+
                 builder.setWhen(notificationWhen)
                 builder.setUsesChronometer(usesChronometer)
 
@@ -1199,8 +1210,15 @@ class MessagingManager @Inject constructor(
                 builder
                     .setLargeIcon(bitmap)
                     .setStyle(
-                        NotificationCompat.BigPictureStyle()
-                            .bigPicture(bitmap)
+                        NotificationCompat.BigPictureStyle().also { style ->
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                                saveTempAnimatedImage(serverId, url, !UrlUtil.isAbsoluteUrl(dataImage))?.let { filePath ->
+                                    style.bigPicture(Icon.createWithContentUri(filePath))
+                                } ?: run { style.bigPicture(bitmap) }
+                            } else {
+                                style.bigPicture(bitmap)
+                            }
+                        }
                             .bigLargeIcon(null as Bitmap?)
                     )
             }
@@ -1231,6 +1249,42 @@ class MessagingManager @Inject constructor(
                 Log.e(TAG, "Couldn't download image for notification", e)
             }
             return@withContext image
+        }
+
+    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    private suspend fun saveTempAnimatedImage(serverId: Int, url: URL?, requiresAuth: Boolean = false): Uri? =
+        withContext(
+            Dispatchers.IO
+        ) {
+            if (url == null || url.path.endsWith("gif").not()) {
+                return@withContext null
+            }
+
+            // delete previous images that are no longer needed
+            val imageCutoff = LocalDateTime.now().minusDays(2)
+            context.externalCacheDir?.listFiles()?.filter { file ->
+                file.absolutePath.endsWith("_animated_notification.gif") &&
+                    imageCutoff.isAfter(LocalDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), ZoneId.systemDefault()))
+            }?.forEach { expired -> expired.delete() }
+
+            val file = File(context.externalCacheDir, "${System.currentTimeMillis()}_animated_notification.gif")
+            try {
+                val request = Request.Builder().apply {
+                    url(url)
+                    if (requiresAuth) {
+                        addHeader("Authorization", serverManager.authenticationRepository(serverId).buildBearerToken())
+                    }
+                }.build()
+
+                val response = okHttpClient.newCall(request).execute()
+                val bytes = response.body?.bytes() ?: return@withContext null
+                file.writeBytes(bytes)
+
+                response.close()
+            } catch (e: Exception) {
+                Log.e(TAG, "Couldn't download image for notification", e)
+            }
+            return@withContext FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
         }
 
     private suspend fun handleVideo(
@@ -1297,10 +1351,11 @@ class MessagingManager @Inject constructor(
                         videoFile.parentFile?.mkdirs()
                         videoFile.createNewFile()
                     }
-                    FileOutputStream(videoFile).use { output ->
-                        response.body?.byteStream()?.copyTo(output)
+                    response.body.source().use { source ->
+                        videoFile.sink().use { sink ->
+                            source.readAll(sink)
+                        }
                     }
-                    response.close()
 
                     mediaRetriever.setDataSource(videoFile.absolutePath)
                     val durationInMicroSeconds = ((mediaRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: VIDEO_GUESS_MILLISECONDS)) * 1000
@@ -1735,7 +1790,8 @@ class MessagingManager @Inject constructor(
             } else {
                 WebViewActivity.newInstance(context, title, serverId)
             }
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
             intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
             context.startActivity(intent)
         } catch (e: Exception) {

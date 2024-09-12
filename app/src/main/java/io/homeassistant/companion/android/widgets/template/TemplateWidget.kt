@@ -8,7 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.util.TypedValue
@@ -16,6 +15,7 @@ import android.view.View
 import android.widget.RemoteViews
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
+import androidx.core.os.BundleCompat
 import androidx.core.text.HtmlCompat
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
@@ -131,9 +131,11 @@ class TemplateWidget : AppWidgetProvider() {
             val widgetsWithDifferentTemplate = allWidgets.filter { it.template != widgetTemplates[it.id] }
             if (widgetsWithDifferentTemplate.isNotEmpty()) {
                 if (thisSetScope) {
-                    context.applicationContext.registerReceiver(
+                    ContextCompat.registerReceiver(
+                        context.applicationContext,
                         this@TemplateWidget,
-                        IntentFilter(Intent.ACTION_SCREEN_OFF)
+                        IntentFilter(Intent.ACTION_SCREEN_OFF),
+                        ContextCompat.RECEIVER_NOT_EXPORTED
                     )
                 }
 
@@ -269,12 +271,8 @@ class TemplateWidget : AppWidgetProvider() {
         val serverId = if (extras.containsKey(EXTRA_SERVER_ID)) extras.getInt(EXTRA_SERVER_ID) else null
         val template: String? = extras.getString(EXTRA_TEMPLATE)
         val textSize: Float = extras.getFloat(EXTRA_TEXT_SIZE)
-        val backgroundTypeSelection: WidgetBackgroundType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            extras.getSerializable(EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
-        } else {
-            @Suppress("DEPRECATION")
-            extras.getSerializable(EXTRA_BACKGROUND_TYPE) as? WidgetBackgroundType
-        } ?: WidgetBackgroundType.DAYNIGHT
+        val backgroundTypeSelection = BundleCompat.getSerializable(extras, EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
+            ?: WidgetBackgroundType.DAYNIGHT
         val textColorSelection: String? = extras.getString(EXTRA_TEXT_COLOR)
 
         if (serverId == null || template == null) {

@@ -122,7 +122,7 @@ object ClimateControl : HaControl {
         }
         return when (action) {
             is FloatAction -> {
-                integrationRepository.callService(
+                integrationRepository.callAction(
                     entityStr.split(".")[0],
                     "set_temperature",
                     hashMapOf(
@@ -133,7 +133,7 @@ object ClimateControl : HaControl {
                 true
             }
             is ModeAction -> {
-                integrationRepository.callService(
+                integrationRepository.callAction(
                     action.templateId.split(".")[0],
                     "set_hvac_mode",
                     hashMapOf(
@@ -154,7 +154,7 @@ object ClimateControl : HaControl {
                 val supportedModes = this.climateStates[action.templateId]!!.supportedModes
                 val currentMode = this.climateStates[action.templateId]!!.currentMode
                 val nextMode = (supportedModes.indexOf(currentMode) + 1) % supportedModes.count()
-                integrationRepository.callService(
+                integrationRepository.callAction(
                     entityStr.split(".")[0],
                     "set_hvac_mode",
                     hashMapOf(

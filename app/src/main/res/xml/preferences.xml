@@ -55,6 +55,11 @@
             android:icon="@drawable/ic_phone_check"
             android:title="@string/keep_screen_on"
             android:summary="@string/keep_screen_on_def"/>
+        <ListPreference
+            android:key="page_zoom"
+            android:icon="@drawable/ic_zoom_in"
+            android:title="@string/page_zoom"
+            app:useSimpleSummaryProvider="true"/>
         <SwitchPreference
             android:key="pinch_to_zoom"
             android:icon="@drawable/ic_gesture_pinch"
@@ -122,6 +127,15 @@
             app:enableCopying="true"
             android:icon="@drawable/ic_notifications"
             android:summary="@string/rate_limit_summary"/>
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="@string/assist"
+        android:key="assist">
+        <SwitchPreference
+            android:key="assist_voice_command_intent"
+            android:icon="@drawable/ic_headphones_settings"
+            android:title="@string/open_with_headphone_button"
+            android:summary="@string/open_with_headphone_button_summary" />
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/basic_sensor_name_android_auto"

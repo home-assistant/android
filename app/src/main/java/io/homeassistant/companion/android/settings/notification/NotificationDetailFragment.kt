@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.settings.notification
 
-import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
@@ -8,6 +7,7 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
+import androidx.core.os.BundleCompat
 import androidx.core.view.MenuHost
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
@@ -35,11 +35,8 @@ class NotificationDetailFragment : Fragment() {
     private lateinit var notification: NotificationItem
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            arguments?.getSerializable(ARG_NOTIF, NotificationItem::class.java)
-        } else {
-            @Suppress("DEPRECATION")
-            arguments?.get(ARG_NOTIF) as? NotificationItem
+        notification = arguments?.let {
+            BundleCompat.getSerializable(it, ARG_NOTIF, NotificationItem::class.java)
         } ?: return
         super.onCreate(savedInstanceState)
     }

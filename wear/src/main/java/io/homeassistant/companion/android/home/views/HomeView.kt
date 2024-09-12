@@ -1,5 +1,9 @@
 package io.homeassistant.companion.android.home.views
 
+import android.content.Intent
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -134,6 +138,9 @@ fun LoadHomePage(
                 )
             }
             composable(SCREEN_SETTINGS) {
+                val notificationLaunch = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+                    mainViewModel.refreshNotificationPermission()
+                }
                 SettingsView(
                     loadingState = mainViewModel.loadingState.value,
                     favorites = mainViewModel.favoriteEntityIds.value,
@@ -159,6 +166,7 @@ fun LoadHomePage(
                     isToastEnabled = mainViewModel.isToastEnabled.value,
                     isFavoritesOnly = mainViewModel.isFavoritesOnly,
                     isAssistantAppAllowed = mainViewModel.isAssistantAppAllowed,
+                    areNotificationsAllowed = mainViewModel.areNotificationsAllowed,
                     onHapticEnabled = { mainViewModel.setHapticEnabled(it) },
                     onToastEnabled = { mainViewModel.setToastEnabled(it) },
                     setFavoritesOnly = { mainViewModel.setWearFavoritesOnly(it) },
@@ -169,7 +177,14 @@ fun LoadHomePage(
                         mainViewModel.loadTemplateTiles()
                         swipeDismissableNavController.navigate("$ROUTE_TEMPLATE_TILE/$SCREEN_SELECT_TEMPLATE_TILE")
                     },
-                    onAssistantAppAllowed = mainViewModel::setAssistantApp
+                    onAssistantAppAllowed = mainViewModel::setAssistantApp,
+                    onClickNotifications = {
+                        notificationLaunch.launch(
+                            Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                                putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                            }
+                        )
+                    }
                 )
             }
             composable(SCREEN_SET_FAVORITES) {

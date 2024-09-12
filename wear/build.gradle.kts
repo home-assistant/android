@@ -1,9 +1,10 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.kapt)
+    alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.compose.compiler)
 }
 
 android {
@@ -25,10 +26,6 @@ android {
         viewBinding = true
         compose = true
         buildConfig = true
-    }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
     }
 
     signingConfigs {
@@ -66,10 +63,6 @@ android {
     lint {
         disable += "MissingTranslation"
     }
-
-    kapt {
-        correctErrorTypes = true
-    }
 }
 
 dependencies {
@@ -93,7 +86,7 @@ dependencies {
     implementation(libs.wear.phone.interactions)
 
     implementation(libs.hilt.android)
-    kapt(libs.hilt.android.compiler)
+    ksp(libs.hilt.android.compiler)
 
     implementation(libs.jackson.module.kotlin)
     implementation(libs.okhttp)
@@ -105,7 +98,6 @@ dependencies {
 
     implementation(libs.activity.ktx)
     implementation(libs.activity.compose)
-    implementation(libs.compose.compiler)
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.foundation)
     implementation(libs.compose.material.icons.core)

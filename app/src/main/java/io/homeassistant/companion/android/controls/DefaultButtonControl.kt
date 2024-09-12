@@ -50,7 +50,7 @@ object DefaultButtonControl : HaControl {
         integrationRepository: IntegrationRepository,
         action: ControlAction
     ): Boolean {
-        integrationRepository.callService(
+        integrationRepository.callAction(
             action.templateId.split(".")[0],
             when (action.templateId.split(".")[0]) {
                 "button", "input_button" -> "press"

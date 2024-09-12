@@ -15,7 +15,7 @@ import io.homeassistant.companion.android.common.data.HomeAssistantApis.Companio
 import io.homeassistant.companion.android.common.data.HomeAssistantApis.Companion.USER_AGENT_STRING
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.authentication.AuthorizationException
-import io.homeassistant.companion.android.common.data.integration.ServiceData
+import io.homeassistant.companion.android.common.data.integration.ActionData
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
@@ -222,7 +222,7 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
             )
         )
 
-        val response: Map<String, Map<String, ServiceData>>? = mapResponse(socketResponse)
+        val response: Map<String, Map<String, ActionData>>? = mapResponse(socketResponse)
         return response?.map {
             DomainResponse(it.key, it.value)
         }
@@ -267,7 +267,7 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
         pipelineId: String?,
         conversationId: String?
     ): Flow<AssistPipelineEvent>? {
-        val data = mapOf(
+        var data = mapOf(
             "start_stage" to "intent",
             "end_stage" to "intent",
             "input" to mapOf(
@@ -275,9 +275,15 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
             ),
             "conversation_id" to conversationId
         )
+        pipelineId?.let {
+            data = data.plus("pipeline" to it)
+        }
+        server?.deviceRegistryId?.let {
+            data = data.plus("device_id" to it)
+        }
         return subscribeTo(
             SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
-            (pipelineId?.let { data.plus("pipeline" to it) } ?: data) as Map<Any, Any>
+            data as Map<Any, Any>
         )
     }
 
@@ -288,7 +294,7 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
         pipelineId: String?,
         conversationId: String?
     ): Flow<AssistPipelineEvent>? {
-        val data = mapOf(
+        var data = mapOf(
             "start_stage" to "stt",
             "end_stage" to (if (outputTts) "tts" else "intent"),
             "input" to mapOf(
@@ -296,9 +302,15 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
             ),
             "conversation_id" to conversationId
         )
+        pipelineId?.let {
+            data = data.plus("pipeline" to it)
+        }
+        server?.deviceRegistryId?.let {
+            data = data.plus("device_id" to it)
+        }
         return subscribeTo(
             SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
-            (pipelineId?.let { data.plus("pipeline" to it) } ?: data) as Map<Any, Any>
+            data as Map<Any, Any>
         )
     }
 
@@ -693,7 +705,11 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
         val id = response.id!!
         activeMessages[id]?.let {
             it.onResponse?.let { cont ->
-                if (cont.isActive) cont.resumeWith(Result.success(response))
+                if (!it.hasContinuationBeenInvoked.getAndSet(true) && cont.isActive) {
+                    cont.resumeWith(Result.success(response))
+                } else {
+                    Log.w(TAG, "Response continuation has already been invoked for ${response.id}, ${response.event}")
+                }
             }
             if (it.eventFlow == null) {
                 activeMessages.remove(id)
@@ -806,7 +822,11 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
                         .filterValues { it.eventFlow == null }
                         .forEach {
                             it.value.onResponse?.let { cont ->
-                                if (cont.isActive) cont.resumeWithException(IOException())
+                                if (!it.value.hasContinuationBeenInvoked.getAndSet(true) && cont.isActive) {
+                                    cont.resumeWithException(IOException())
+                                } else {
+                                    Log.w(TAG, "Response continuation has already been invoked, skipping IOException")
+                                }
                             }
                             activeMessages.remove(it.key)
                         }

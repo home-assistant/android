@@ -36,6 +36,7 @@ import io.homeassistant.companion.android.sensors.SensorReceiver
 import javax.inject.Inject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -75,6 +76,8 @@ class SensorDetailViewModel @Inject constructor(
         )
         data class SettingDialogState(
             val setting: SensorSetting,
+            /** Indicates if this is still loading entries in the background */
+            val loading: Boolean,
             /** List of entity ID to entity pairs */
             val entries: List<Pair<String, String>>,
             /** List of selected entity ID */
@@ -225,14 +228,27 @@ class SensorDetailViewModel @Inject constructor(
     fun setServersExpanded(expand: Boolean) = viewModelScope.launch { _serversDoExpand.emit(expand) }
 
     /**
-     * Builds a SettingDialogState based on the given Sensor Setting.
+     * Builds a SettingDialogState based on the given Sensor Setting. Depending on the
+     * device and/or connection, this may take some time.
      * Should trigger a dialog open in view.
      */
-    fun onSettingWithDialogPressed(setting: SensorSetting) {
+    fun onSettingWithDialogPressed(setting: SensorSetting) = viewModelScope.launch {
+        val dialogLoadingJob = launch {
+            // In case getting entries takes too long, display a temporary loading dialog
+            delay(1000L)
+            sensorSettingsDialog = SettingDialogState(
+                setting = setting,
+                loading = true,
+                entries = listOf(),
+                entriesSelected = listOf()
+            )
+        }
+
         val listKeys = getSettingKeys(setting)
         val listEntries = getSettingEntries(setting, null)
         val state = SettingDialogState(
             setting = setting,
+            loading = false,
             entries = when {
                 setting.valueType == SensorSettingType.LIST ||
                     setting.valueType == SensorSettingType.LIST_APPS ||
@@ -256,6 +272,7 @@ class SensorDetailViewModel @Inject constructor(
                     emptyList()
             }
         )
+        dialogLoadingJob.cancel()
         sensorSettingsDialog = state
     }
 

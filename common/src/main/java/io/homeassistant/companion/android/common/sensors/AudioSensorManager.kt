@@ -20,6 +20,7 @@ class AudioSensorManager : SensorManager {
             commonR.string.sensor_name_ringer_mode,
             commonR.string.sensor_description_audio_sensor,
             "mdi:volume-high",
+            deviceClass = "enum",
             updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
         private val audioState = SensorManager.BasicSensor(
@@ -27,7 +28,8 @@ class AudioSensorManager : SensorManager {
             "sensor",
             commonR.string.sensor_name_audio_mode,
             commonR.string.sensor_description_audio_mode,
-            "mdi:volume-high"
+            "mdi:volume-high",
+            deviceClass = "enum"
         )
         private val headphoneState = SensorManager.BasicSensor(
             "headphone_state",
@@ -44,7 +46,7 @@ class AudioSensorManager : SensorManager {
             commonR.string.sensor_description_mic_muted,
             "mdi:microphone-off",
             updateType =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 SensorManager.BasicSensor.UpdateType.INTENT
             } else {
                 SensorManager.BasicSensor.UpdateType.WORKER
@@ -212,7 +214,9 @@ class AudioSensorManager : SensorManager {
             audioSensor,
             ringerMode,
             icon,
-            mapOf()
+            mapOf(
+                "options" to listOf("normal", "silent", "vibrate")
+            )
         )
     }
 
@@ -226,6 +230,8 @@ class AudioSensorManager : SensorManager {
             AudioManager.MODE_IN_CALL -> "in_call"
             AudioManager.MODE_IN_COMMUNICATION -> "in_communication"
             AudioManager.MODE_CALL_SCREENING -> "call_screening"
+            AudioManager.MODE_CALL_REDIRECT -> "call_redirect"
+            AudioManager.MODE_COMMUNICATION_REDIRECT -> "communication_redirect"
             else -> STATE_UNKNOWN
         }
 
@@ -235,6 +241,8 @@ class AudioSensorManager : SensorManager {
             AudioManager.MODE_IN_CALL -> "mdi:phone"
             AudioManager.MODE_IN_COMMUNICATION -> "mdi:message-video"
             AudioManager.MODE_CALL_SCREENING -> "mdi:microphone-message"
+            AudioManager.MODE_CALL_REDIRECT -> "mdi:phone"
+            AudioManager.MODE_COMMUNICATION_REDIRECT -> "mdi:message-video"
             else -> "mdi:volume-low"
         }
 
@@ -243,7 +251,12 @@ class AudioSensorManager : SensorManager {
             audioState,
             audioMode,
             icon,
-            mapOf()
+            mapOf(
+                "options" to listOf(
+                    "normal", "ringing", "in_call", "in_communication", "call_screening",
+                    "call_redirect", "communication_redirect"
+                )
+            )
         )
     }
 
@@ -317,6 +330,8 @@ class AudioSensorManager : SensorManager {
             return
         }
 
+        // Use deprecated function as we can't perfectly map communication device to speakerphone
+        @Suppress("DEPRECATION")
         val isSpeakerOn = audioManager.isSpeakerphoneOn
 
         val icon = if (isSpeakerOn) "mdi:volume-high" else "mdi:volume-off"

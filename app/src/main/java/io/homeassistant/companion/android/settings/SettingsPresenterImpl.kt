@@ -1,7 +1,9 @@
 package io.homeassistant.companion.android.settings
 
 import android.app.role.RoleManager
+import android.content.ComponentName
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
 import android.util.Log
@@ -61,6 +63,11 @@ class SettingsPresenterImpl @Inject constructor(
 
     private lateinit var view: SettingsView
 
+    private val voiceCommandAppComponent = ComponentName(
+        BuildConfig.APPLICATION_ID,
+        "io.homeassistant.companion.android.assist.VoiceCommandIntentActivity"
+    )
+
     private var suggestionFlow = MutableStateFlow<SettingsHomeSuggestion?>(null)
 
     override fun getBoolean(key: String, defValue: Boolean): Boolean = runBlocking {
@@ -71,6 +78,10 @@ class SettingsPresenterImpl @Inject constructor(
             "crash_reporting" -> prefsRepository.isCrashReporting()
             "autoplay_video" -> prefsRepository.isAutoPlayVideoEnabled()
             "always_show_first_view_on_app_start" -> prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled()
+            "assist_voice_command_intent" -> {
+                val componentSetting = view.getPackageManager()?.getComponentEnabledSetting(voiceCommandAppComponent)
+                componentSetting != null && componentSetting != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+            }
             else -> throw IllegalArgumentException("No boolean found by this key: $key")
         }
     }
@@ -84,6 +95,12 @@ class SettingsPresenterImpl @Inject constructor(
                 "crash_reporting" -> prefsRepository.setCrashReporting(value)
                 "autoplay_video" -> prefsRepository.setAutoPlayVideo(value)
                 "always_show_first_view_on_app_start" -> prefsRepository.setAlwaysShowFirstViewOnAppStart(value)
+                "assist_voice_command_intent" ->
+                    view.getPackageManager()?.setComponentEnabledSetting(
+                        voiceCommandAppComponent,
+                        if (value) PackageManager.COMPONENT_ENABLED_STATE_DEFAULT else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                        PackageManager.DONT_KILL_APP
+                    )
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }
@@ -93,6 +110,7 @@ class SettingsPresenterImpl @Inject constructor(
         when (key) {
             "themes" -> themesManager.getCurrentTheme()
             "languages" -> langsManager.getCurrentLang()
+            "page_zoom" -> prefsRepository.getPageZoomLevel().toString()
             "screen_orientation" -> prefsRepository.getScreenOrientation()
             else -> throw IllegalArgumentException("No string found by this key: $key")
         }
@@ -103,6 +121,7 @@ class SettingsPresenterImpl @Inject constructor(
             when (key) {
                 "themes" -> themesManager.saveTheme(value)
                 "languages" -> langsManager.saveLang(value)
+                "page_zoom" -> prefsRepository.setPageZoomLevel(value?.toIntOrNull())
                 "screen_orientation" -> prefsRepository.saveScreenOrientation(value)
                 else -> throw IllegalArgumentException("No string found by this key: $key")
             }

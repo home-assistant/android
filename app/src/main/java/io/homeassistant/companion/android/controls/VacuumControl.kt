@@ -48,7 +48,7 @@ object VacuumControl : HaControl {
         integrationRepository: IntegrationRepository,
         action: ControlAction
     ): Boolean {
-        integrationRepository.callService(
+        integrationRepository.callAction(
             action.templateId.split(".")[0],
             if (entitySupportedFeatures and SUPPORT_TURN_ON == SUPPORT_TURN_ON) {
                 if ((action as? BooleanAction)?.newState == true) "turn_on" else "turn_off"

@@ -5,7 +5,7 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.os.Build
+import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -13,6 +13,7 @@ import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
 import android.widget.Toast
+import androidx.core.os.BundleCompat
 import com.google.android.material.color.DynamicColors
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
@@ -174,6 +175,10 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                 val title = entity?.attributes?.get("media_title")?.toString()
                 val album = entity?.attributes?.get("media_album_name")?.toString()
                 val icon = entity?.attributes?.get("icon")?.toString()
+
+                if (widget.backgroundType == WidgetBackgroundType.TRANSPARENT) {
+                    setInt(R.id.widgetLayout, "setBackgroundColor", Color.TRANSPARENT)
+                }
 
                 if ((artist != null || album != null) && title != null) {
                     setTextViewText(
@@ -453,13 +458,13 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                 super.onScreenOn(context)
             }
             UPDATE_MEDIA_IMAGE -> updateView(context, appWidgetId)
-            CALL_PREV_TRACK -> callPreviousTrackService(context, appWidgetId)
-            CALL_REWIND -> callRewindService(context, appWidgetId)
-            CALL_PLAYPAUSE -> callPlayPauseService(context, appWidgetId)
-            CALL_FASTFORWARD -> callFastForwardService(context, appWidgetId)
-            CALL_NEXT_TRACK -> callNextTrackService(context, appWidgetId)
-            CALL_VOLUME_DOWN -> callVolumeDownService(context, appWidgetId)
-            CALL_VOLUME_UP -> callVolumeUpService(context, appWidgetId)
+            CALL_PREV_TRACK -> callPreviousTrackAction(context, appWidgetId)
+            CALL_REWIND -> callRewindAction(context, appWidgetId)
+            CALL_PLAYPAUSE -> callPlayPauseAction(context, appWidgetId)
+            CALL_FASTFORWARD -> callFastForwardAction(context, appWidgetId)
+            CALL_NEXT_TRACK -> callNextTrackAction(context, appWidgetId)
+            CALL_VOLUME_DOWN -> callVolumeDownAction(context, appWidgetId)
+            CALL_VOLUME_UP -> callVolumeUpAction(context, appWidgetId)
         }
     }
 
@@ -473,12 +478,8 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         val showSeek: Boolean = extras.getBoolean(EXTRA_SHOW_SEEK)
         val showVolume: Boolean = extras.getBoolean(EXTRA_SHOW_VOLUME)
         val showSource: Boolean = extras.getBoolean(EXTRA_SHOW_SOURCE)
-        val backgroundType: WidgetBackgroundType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            extras.getSerializable(EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
-        } else {
-            @Suppress("DEPRECATION")
-            extras.getSerializable(EXTRA_BACKGROUND_TYPE) as? WidgetBackgroundType
-        } ?: WidgetBackgroundType.DAYNIGHT
+        val backgroundType = BundleCompat.getSerializable(extras, EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
+            ?: WidgetBackgroundType.DAYNIGHT
 
         if (serverId == null || entitySelection == null) {
             Log.e(TAG, "Did not receive complete configuration data")
@@ -488,7 +489,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         widgetScope?.launch {
             Log.d(
                 TAG,
-                "Saving service call config data:" + System.lineSeparator() +
+                "Saving action call config data:" + System.lineSeparator() +
                     "entity id: " + entitySelection + System.lineSeparator()
             )
             mediaPlayCtrlWidgetDao.add(
@@ -518,7 +519,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         }
     }
 
-    private fun callPreviousTrackService(context: Context, appWidgetId: Int) {
+    private fun callPreviousTrackAction(context: Context, appWidgetId: Int) {
         widgetScope?.launch {
             Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
             val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
@@ -530,21 +531,21 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
             Log.d(
                 TAG,
-                "Calling previous track service:" + System.lineSeparator() +
+                "Calling previous track action:" + System.lineSeparator() +
                     "entity id: " + entity.entityId + System.lineSeparator()
             )
 
             val domain = "media_player"
-            val service = "media_previous_track"
+            val action = "media_previous_track"
             val entityId: String = getEntity(context, entity.serverId, entity.entityId.split(","), null)?.entityId.toString()
 
-            val serviceDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
+            val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
 
-            serverManager.integrationRepository().callService(domain, service, serviceDataMap)
+            serverManager.integrationRepository().callAction(domain, action, actionDataMap)
         }
     }
 
-    private fun callRewindService(context: Context, appWidgetId: Int) {
+    private fun callRewindAction(context: Context, appWidgetId: Int) {
         widgetScope?.launch {
             Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
             val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
@@ -556,7 +557,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
             Log.d(
                 TAG,
-                "Calling rewind service:" + System.lineSeparator() +
+                "Calling rewind action:" + System.lineSeparator() +
                     "entity id: " + entity.entityId + System.lineSeparator()
             )
 
@@ -582,23 +583,23 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
             }
 
             val domain = "media_player"
-            val service = "media_seek"
+            val action = "media_seek"
             val entityId: String = getEntity(context, entity.serverId, entity.entityId.split(","), null)?.entityId.toString()
 
-            val serviceDataMap: HashMap<String, Any> = hashMapOf(
+            val actionDataMap: HashMap<String, Any> = hashMapOf(
                 "entity_id" to entityId,
                 "seek_position" to currentTime - 10
             )
 
             try {
-                serverManager.integrationRepository(entity.serverId).callService(domain, service, serviceDataMap)
+                serverManager.integrationRepository(entity.serverId).callAction(domain, action, actionDataMap)
             } catch (e: Exception) {
-                Log.e(TAG, "Exception calling rewind service", e)
+                Log.e(TAG, "Exception calling rewind action", e)
             }
         }
     }
 
-    private fun callPlayPauseService(context: Context, appWidgetId: Int) {
+    private fun callPlayPauseAction(context: Context, appWidgetId: Int) {
         widgetScope?.launch {
             Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
             val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
@@ -610,25 +611,25 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
             Log.d(
                 TAG,
-                "Calling play/pause service:" + System.lineSeparator() +
+                "Calling play/pause action:" + System.lineSeparator() +
                     "entity id: " + entity.entityId + System.lineSeparator()
             )
 
             val domain = "media_player"
-            val service = "media_play_pause"
+            val action = "media_play_pause"
             val entityId: String = getEntity(context, entity.serverId, entity.entityId.split(","), null)?.entityId.toString()
 
-            val serviceDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
+            val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
 
             try {
-                serverManager.integrationRepository(entity.serverId).callService(domain, service, serviceDataMap)
+                serverManager.integrationRepository(entity.serverId).callAction(domain, action, actionDataMap)
             } catch (e: Exception) {
-                Log.e(TAG, "Exception calling play pause service", e)
+                Log.e(TAG, "Exception calling play pause action", e)
             }
         }
     }
 
-    private fun callFastForwardService(context: Context, appWidgetId: Int) {
+    private fun callFastForwardAction(context: Context, appWidgetId: Int) {
         widgetScope?.launch {
             Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
             val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
@@ -640,7 +641,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
             Log.d(
                 TAG,
-                "Calling fast forward service:" + System.lineSeparator() +
+                "Calling fast forward action:" + System.lineSeparator() +
                     "entity id: " + entity.entityId + System.lineSeparator()
             )
 
@@ -666,23 +667,23 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
             }
 
             val domain = "media_player"
-            val service = "media_seek"
+            val action = "media_seek"
             val entityId: String = getEntity(context, entity.serverId, entity.entityId.split(","), null)?.entityId.toString()
 
-            val serviceDataMap: HashMap<String, Any> = hashMapOf(
+            val actionDataMap: HashMap<String, Any> = hashMapOf(
                 "entity_id" to entityId,
                 "seek_position" to currentTime + 10
             )
 
             try {
-                serverManager.integrationRepository(entity.serverId).callService(domain, service, serviceDataMap)
+                serverManager.integrationRepository(entity.serverId).callAction(domain, action, actionDataMap)
             } catch (e: Exception) {
-                Log.e(TAG, "Exception calling fast forward service", e)
+                Log.e(TAG, "Exception calling fast forward action", e)
             }
         }
     }
 
-    private fun callNextTrackService(context: Context, appWidgetId: Int) {
+    private fun callNextTrackAction(context: Context, appWidgetId: Int) {
         widgetScope?.launch {
             Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
             val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
@@ -694,25 +695,25 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
             Log.d(
                 TAG,
-                "Calling next track service:" + System.lineSeparator() +
+                "Calling next track action:" + System.lineSeparator() +
                     "entity id: " + entity.entityId + System.lineSeparator()
             )
 
             val domain = "media_player"
-            val service = "media_next_track"
+            val action = "media_next_track"
             val entityId: String = getEntity(context, entity.serverId, entity.entityId.split(","), null)?.entityId.toString()
 
-            val serviceDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
+            val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
 
             try {
-                serverManager.integrationRepository(entity.serverId).callService(domain, service, serviceDataMap)
+                serverManager.integrationRepository(entity.serverId).callAction(domain, action, actionDataMap)
             } catch (e: Exception) {
-                Log.e(TAG, "Exception calling next track service", e)
+                Log.e(TAG, "Exception calling next track action", e)
             }
         }
     }
 
-    private fun callVolumeDownService(context: Context, appWidgetId: Int) {
+    private fun callVolumeDownAction(context: Context, appWidgetId: Int) {
         widgetScope?.launch {
             Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
             val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
@@ -724,25 +725,25 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
             Log.d(
                 TAG,
-                "Calling volume down service:" + System.lineSeparator() +
+                "Calling volume down action:" + System.lineSeparator() +
                     "entity id: " + entity.entityId + System.lineSeparator()
             )
 
             val domain = "media_player"
-            val service = "volume_down"
+            val action = "volume_down"
             val entityId: String = getEntity(context, entity.serverId, entity.entityId.split(","), null)?.entityId.toString()
 
-            val serviceDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
+            val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
 
             try {
-                serverManager.integrationRepository(entity.serverId).callService(domain, service, serviceDataMap)
+                serverManager.integrationRepository(entity.serverId).callAction(domain, action, actionDataMap)
             } catch (e: Exception) {
-                Log.e(TAG, "Exception calling volume down service", e)
+                Log.e(TAG, "Exception calling volume down action", e)
             }
         }
     }
 
-    private fun callVolumeUpService(context: Context, appWidgetId: Int) {
+    private fun callVolumeUpAction(context: Context, appWidgetId: Int) {
         widgetScope?.launch {
             Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
             val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
@@ -754,20 +755,20 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
             Log.d(
                 TAG,
-                "Calling volume up service:" + System.lineSeparator() +
+                "Calling volume up action:" + System.lineSeparator() +
                     "entity id: " + entity.entityId + System.lineSeparator()
             )
 
             val domain = "media_player"
-            val service = "volume_up"
+            val action = "volume_up"
             val entityId: String = getEntity(context, entity.serverId, entity.entityId.split(","), null)?.entityId.toString()
 
-            val serviceDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
+            val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
 
             try {
-                serverManager.integrationRepository(entity.serverId).callService(domain, service, serviceDataMap)
+                serverManager.integrationRepository(entity.serverId).callAction(domain, action, actionDataMap)
             } catch (e: Exception) {
-                Log.e(TAG, "Exception calling volume up service", e)
+                Log.e(TAG, "Exception calling volume up action", e)
             }
         }
     }

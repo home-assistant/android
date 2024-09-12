@@ -9,6 +9,7 @@ import android.content.IntentFilter
 import android.os.Bundle
 import android.util.Log
 import android.widget.RemoteViews
+import androidx.core.content.ContextCompat
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import javax.inject.Inject
@@ -95,9 +96,11 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             val allWidgets = getAllWidgetIdsWithEntities(context)
             val widgetsWithDifferentEntities = allWidgets.filter { it.value.second != widgetEntities[it.key] }
             if (widgetsWithDifferentEntities.isNotEmpty()) {
-                context.applicationContext.registerReceiver(
+                ContextCompat.registerReceiver(
+                    context.applicationContext,
                     this@BaseWidgetProvider,
-                    IntentFilter(Intent.ACTION_SCREEN_OFF)
+                    IntentFilter(Intent.ACTION_SCREEN_OFF),
+                    ContextCompat.RECEIVER_NOT_EXPORTED
                 )
 
                 widgetsWithDifferentEntities.forEach { (id, pair) ->

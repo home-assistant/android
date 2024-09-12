@@ -5,6 +5,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.PowerManager
 import android.util.Log
@@ -261,7 +262,12 @@ class WebsocketManager(
             )
             .build()
         return try {
-            setForeground(ForegroundInfo(NOTIFICATION_ID, notification))
+            val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING
+            } else {
+                0
+            }
+            setForeground(ForegroundInfo(NOTIFICATION_ID, notification, type))
             true
         } catch (e: IllegalStateException) {
             if (e is CancellationException) return false

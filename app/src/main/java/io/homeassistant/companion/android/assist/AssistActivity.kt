@@ -5,24 +5,23 @@ import android.app.KeyguardManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.material.MaterialTheme
-import androidx.compose.runtime.SideEffect
-import androidx.compose.ui.graphics.Color
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
-import androidx.core.view.WindowCompat
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.assist.ui.AssistSheetView
 import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.webview.WebViewActivity
 
@@ -63,10 +62,19 @@ class AssistActivity : BaseActivity() {
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge(
+            navigationBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT)
+        )
         super.onCreate(savedInstanceState)
         updateShowWhenLocked()
 
         if (savedInstanceState == null) {
+            if (!viewModel.isRegistered()) {
+                startActivity(Intent(this, LaunchActivity::class.java))
+                finish()
+                return
+            }
+
             viewModel.onCreate(
                 hasPermission = hasRecordingPermission(),
                 serverId = if (intent.hasExtra(EXTRA_SERVER)) {
@@ -81,6 +89,9 @@ class AssistActivity : BaseActivity() {
                 },
                 startListening = if (intent.hasExtra(EXTRA_START_LISTENING)) {
                     intent.getBooleanExtra(EXTRA_START_LISTENING, true)
+                } else if (intent.action == Intent.ACTION_VOICE_COMMAND) {
+                    // Always start listening if triggered via the voice command (e.g., from a BT headset).
+                    true
                 } else {
                     null
                 }
@@ -89,15 +100,8 @@ class AssistActivity : BaseActivity() {
 
         val fromFrontend = intent.getBooleanExtra(EXTRA_FROM_FRONTEND, false)
 
-        WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             HomeAssistantAppTheme {
-                val systemUiController = rememberSystemUiController()
-                val useDarkIcons = MaterialTheme.colors.isLight
-                SideEffect {
-                    systemUiController.setSystemBarsColor(Color.Transparent, darkIcons = useDarkIcons)
-                }
-
                 AssistSheetView(
                     conversation = viewModel.conversation,
                     pipelines = viewModel.pipelines,
@@ -140,7 +144,12 @@ class AssistActivity : BaseActivity() {
         viewModel.onPause()
     }
 
-    override fun onNewIntent(intent: Intent?) {
+    override fun onDestroy() {
+        super.onDestroy()
+        viewModel.onDestroy()
+    }
+
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         this.intent = intent
 
@@ -160,6 +169,7 @@ class AssistActivity : BaseActivity() {
                 window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED)
             } else {
                 setShowWhenLocked(true)
+                setTurnScreenOn(true)
             }
         } else {
             if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.O) {

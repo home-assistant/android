@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-sdk tools:overrideLibrary="androidx.wear.remote.interactions,androidx.car.app.projected" />
+    <uses-sdk tools:overrideLibrary="androidx.wear.remote.interactions,androidx.car.app.projected, androidx.health.connect.client" />
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
@@ -26,7 +26,6 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.NFC" />
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
     <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
@@ -34,6 +33,9 @@
         tools:ignore="QueryAllPackagesPermission" />
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_REMOTE_MESSAGING"/>
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28"/>
@@ -100,6 +102,7 @@
                 <action android:name="android.bluetooth.device.action.ACL_CONNECTED" />
                 <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
                 <action android:name="io.homeassistant.companion.android.UPDATE_SENSORS" />
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
             </intent-filter>
         </receiver>
 
@@ -275,6 +278,7 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
 
+
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -348,9 +352,15 @@
         <activity
             android:name=".settings.SettingsActivity"
             android:parentActivityName=".webview.WebViewActivity"
-            android:exported="false"
+            android:exported="true"
             android:configChanges="orientation|screenSize"
-            android:theme="@style/Theme.HomeAssistant.Config"/>
+            android:theme="@style/Theme.HomeAssistant.Config">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".nfc.TagReaderActivity"
@@ -393,6 +403,11 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".barcode.BarcodeScannerActivity"
+            android:exported="false"
+            android:theme="@style/Theme.HomeAssistant.Config" />
+
         <activity android:name=".assist.AssistActivity"
             android:exported="true"
             android:windowSoftInputMode="adjustResize"
@@ -406,6 +421,15 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+        <activity-alias
+            android:name=".assist.VoiceCommandIntentActivity"
+            android:targetActivity=".assist.AssistActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VOICE_COMMAND" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
 
         <activity android:name=".widgets.assist.AssistShortcutActivity"
             android:label="@string/assist_shortcut"
@@ -870,6 +894,11 @@
             android:name=".notifications.NotificationActionReceiver"
             android:enabled="true"
             android:exported="true" />
+
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="dataSync|remoteMessaging"
+            tools:node="merge" />
 
     </application>
 

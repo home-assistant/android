@@ -15,7 +15,6 @@ import android.widget.Spinner
 import android.widget.Toast
 import androidx.core.content.getSystemService
 import androidx.lifecycle.lifecycleScope
-import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -26,6 +25,7 @@ import io.homeassistant.companion.android.databinding.WidgetMediaControlsConfigu
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
+import io.homeassistant.companion.android.widgets.common.WidgetUtils
 import java.util.LinkedList
 import javax.inject.Inject
 import kotlinx.coroutines.launch
@@ -58,8 +58,8 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
 
     private var entityAdapter: SingleItemArrayAdapter<Entity<Any>>? = null
 
-    public override fun onCreate(icicle: Bundle?) {
-        super.onCreate(icicle)
+    public override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
         // Set the result to CANCELED.  This will cause the widget host to cancel
         // out of the widget placement if the user presses the back button.
@@ -117,18 +117,8 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
 
         val mediaPlayerWidget = mediaPlayerControlsWidgetDao.get(appWidgetId)
 
-        val backgroundTypeValues = mutableListOf(
-            getString(commonR.string.widget_background_type_dynamiccolor),
-            getString(commonR.string.widget_background_type_daynight)
-        )
-        if (DynamicColors.isDynamicColorAvailable()) {
-            binding.backgroundType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
-            binding.backgroundType.setSelection(0)
-            binding.backgroundTypeParent.visibility = View.VISIBLE
-        } else {
-            binding.backgroundTypeParent.visibility = View.GONE
-        }
-
+        val backgroundTypeValues = WidgetUtils.getBackgroundOptionList(this)
+        binding.backgroundType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
         if (mediaPlayerWidget != null) {
             binding.label.setText(mediaPlayerWidget.label)
             binding.widgetTextConfigEntityId.setText(mediaPlayerWidget.entityId)
@@ -136,6 +126,13 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
             binding.widgetShowSeekButtonsCheckbox.isChecked = mediaPlayerWidget.showSeek
             binding.widgetShowSkipButtonsCheckbox.isChecked = mediaPlayerWidget.showSkip
             binding.widgetShowMediaPlayerSource.isChecked = mediaPlayerWidget.showSource
+            binding.backgroundType.setSelection(
+                WidgetUtils.getSelectedBackgroundOption(
+                    this,
+                    mediaPlayerWidget.backgroundType,
+                    backgroundTypeValues
+                )
+            )
             val entities = runBlocking {
                 try {
                     mediaPlayerWidget.entityId.split(",").map { s ->
@@ -148,14 +145,6 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
                     null
                 }
             }
-            binding.backgroundType.setSelection(
-                when {
-                    mediaPlayerWidget.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable() ->
-                        backgroundTypeValues.indexOf(getString(commonR.string.widget_background_type_dynamiccolor))
-                    else ->
-                        backgroundTypeValues.indexOf(getString(commonR.string.widget_background_type_daynight))
-                }
-            )
             if (entities != null) {
                 selectedEntities.addAll(entities)
             }
@@ -262,6 +251,7 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
                 MediaPlayerControlsWidget.EXTRA_BACKGROUND_TYPE,
                 when (binding.backgroundType.selectedItem as String?) {
                     getString(commonR.string.widget_background_type_dynamiccolor) -> WidgetBackgroundType.DYNAMICCOLOR
+                    getString(commonR.string.widget_background_type_transparent) -> WidgetBackgroundType.TRANSPARENT
                     else -> WidgetBackgroundType.DAYNIGHT
                 }
             )
@@ -280,9 +270,9 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
         }
     }
 
-    override fun onNewIntent(intent: Intent?) {
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        if (intent != null && intent.extras != null && intent.hasExtra(PIN_WIDGET_CALLBACK)) {
+        if (intent.extras != null && intent.hasExtra(PIN_WIDGET_CALLBACK)) {
             appWidgetId = intent.extras!!.getInt(
                 AppWidgetManager.EXTRA_APPWIDGET_ID,
                 AppWidgetManager.INVALID_APPWIDGET_ID

@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.common.sensors
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.content.pm.ServiceInfo
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -49,7 +50,15 @@ abstract class SensorWorkerBase(
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .build()
 
-            val foregroundInfo = ForegroundInfo(NOTIFICATION_ID, notification)
+            val foregroundInfo = ForegroundInfo(
+                NOTIFICATION_ID,
+                notification,
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+                } else {
+                    0
+                }
+            )
             try {
                 setForeground(foregroundInfo)
                 Log.d(TAG, "Updating all Sensors in foreground.")
@@ -66,6 +75,18 @@ abstract class SensorWorkerBase(
             }
             sensorReceiver.updateSensors(appContext, serverManager, sensorDao, null)
         }
+
+        // Cleanup orphaned sensors that may have been created by a slow or long running update
+        // writing data when deleting the server.
+        val currentServerIds = serverManager.defaultServers.map { it.id }
+        val orphanedSensors = sensorDao.getAllExceptServer(currentServerIds)
+        if (orphanedSensors.any()) {
+            Log.i(TAG, "Cleaning up ${orphanedSensors.size} orphaned sensor entries")
+            orphanedSensors.forEach {
+                sensorDao.removeSensor(it.id, it.serverId)
+            }
+        }
+
         Result.success()
     }
 

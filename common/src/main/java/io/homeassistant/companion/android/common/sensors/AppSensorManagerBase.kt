@@ -79,6 +79,7 @@ abstract class AppSensorManagerBase : SensorManager {
             commonR.string.basic_sensor_name_app_standby,
             commonR.string.sensor_description_app_standby,
             "mdi:android",
+            deviceClass = "enum",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-usage-sensors",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
@@ -89,6 +90,7 @@ abstract class AppSensorManagerBase : SensorManager {
             commonR.string.basic_sensor_name_app_importance,
             commonR.string.sensor_description_app_importance,
             "mdi:android",
+            deviceClass = "enum",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-importance-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
@@ -265,7 +267,9 @@ abstract class AppSensorManagerBase : SensorManager {
             app_standby_bucket,
             appStandbyBucket,
             app_standby_bucket.statelessIcon,
-            mapOf()
+            mapOf(
+                "options" to listOf("active", "frequent", "rare", "restricted", "working_set", "never")
+            )
         )
     }
 
@@ -319,7 +323,12 @@ abstract class AppSensorManagerBase : SensorManager {
             app_importance,
             importance,
             app_importance.statelessIcon,
-            mapOf()
+            mapOf(
+                "options" to listOf(
+                    "cached", "cant_save_state", "foreground", "foreground_service", "gone",
+                    "perceptible", "service", "top_sleeping", "visible", "not_running"
+                )
+            )
         )
     }
 }

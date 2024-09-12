@@ -21,6 +21,7 @@ class DNDSensorManager : SensorManager {
             commonR.string.sensor_name_dnd,
             commonR.string.sensor_description_dnd_sensor,
             "mdi:minus-circle",
+            deviceClass = "enum",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
@@ -76,8 +77,10 @@ class DNDSensorManager : SensorManager {
             context,
             dndSensor,
             state,
-            dndSensor.statelessIcon,
-            mapOf()
+            if (state != "off") dndSensor.statelessIcon else "mdi:minus-circle-off",
+            mapOf(
+                "options" to listOf("alarms_only", "off", "priority_only", "total_silence")
+            )
         )
     }
 }

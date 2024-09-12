@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.IntentSender
 import androidx.activity.result.ActivityResult
 import kotlinx.coroutines.flow.Flow
+import org.json.JSONObject
 
 interface WebViewPresenter {
 
@@ -29,6 +30,7 @@ interface WebViewPresenter {
 
     fun isKeepScreenOnEnabled(): Boolean
 
+    fun getPageZoomLevel(): Int
     fun isPinchToZoomEnabled(): Boolean
     fun isWebViewDebugEnabled(): Boolean
 
@@ -40,6 +42,8 @@ interface WebViewPresenter {
     fun isAlwaysShowFirstViewOnAppStartEnabled(): Boolean
 
     fun sessionTimeOut(): Int
+
+    fun onExternalBusMessage(message: JSONObject)
 
     fun onStart(context: Context)
 

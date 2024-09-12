@@ -8,17 +8,17 @@ import android.widget.AutoCompleteTextView
 import android.widget.MultiAutoCompleteTextView.CommaTokenizer
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.RecyclerView
+import io.homeassistant.companion.android.common.data.integration.Action
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.Service
 import io.homeassistant.companion.android.common.util.capitalize
 import io.homeassistant.companion.android.databinding.WidgetButtonConfigureDynamicFieldBinding
 import java.util.Locale
 import kotlin.Exception
 
 class WidgetDynamicFieldAdapter(
-    private var services: HashMap<String, Service>,
+    private var actions: HashMap<String, Action>,
     private var entities: HashMap<String, Entity<Any>>,
-    private val serviceFieldList: ArrayList<ServiceFieldBinder>
+    private val actionFieldList: ArrayList<ActionFieldBinder>
 ) : RecyclerView.Adapter<WidgetDynamicFieldAdapter.ViewHolder>() {
 
     companion object {
@@ -36,7 +36,7 @@ class WidgetDynamicFieldAdapter(
     }
 
     override fun getItemCount(): Int {
-        return serviceFieldList.size
+        return actionFieldList.size
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -52,8 +52,8 @@ class WidgetDynamicFieldAdapter(
         val autoCompleteTextView = binding.dynamicAutocompleteTextview
         val context = holder.itemView.context
 
-        val serviceText: String = serviceFieldList[position].service
-        val fieldKey = serviceFieldList[position].field
+        val actionText: String = actionFieldList[position].action
+        val fieldKey = actionFieldList[position].field
 
         // Set label for the text view
         // Reformat text to "Capital Words" instead of "capital_words"
@@ -67,11 +67,11 @@ class WidgetDynamicFieldAdapter(
             }
 
         // If the field has an example, use it as a hint
-        if (services[serviceText]?.serviceData?.fields?.get(fieldKey)?.example != null) {
+        if (actions[actionText]?.actionData?.fields?.get(fieldKey)?.example != null) {
             try {
                 // Fetch example text
                 var exampleText =
-                    services[serviceText]?.serviceData?.fields?.get(fieldKey)?.example.toString()
+                    actions[actionText]?.actionData?.fields?.get(fieldKey)?.example.toString()
 
                 // Strip of brackets if the example is a list
                 // Lists can be entered as comma-separated strings
@@ -99,7 +99,7 @@ class WidgetDynamicFieldAdapter(
             // Only populate with entities for the domain
             // or for homeassistant domain, which should be able
             // to manipulate entities in any domain
-            val domain = services[serviceText]?.domain
+            val domain = actions[actionText]?.domain
 
             // Add all as an available entity
             // all is a special keyword, so it won't be listed in any
@@ -121,12 +121,12 @@ class WidgetDynamicFieldAdapter(
             autoCompleteTextView.setAdapter(adapter)
             autoCompleteTextView.setTokenizer(CommaTokenizer())
             autoCompleteTextView.onFocusChangeListener = dropDownOnFocus
-        } else if (services[serviceText]?.serviceData?.fields?.get(fieldKey)?.values != null) {
+        } else if (actions[actionText]?.actionData?.fields?.get(fieldKey)?.values != null) {
             // If a non-"entity_id" field has specific values,
             // populate the autocomplete with valid values
             val fieldAdapter = SingleItemArrayAdapter<String>(context) { it!! }
             fieldAdapter.addAll(
-                services[serviceText]!!.serviceData.fields.getValue(fieldKey).values!!.sorted().toMutableList()
+                actions[actionText]!!.actionData.fields.getValue(fieldKey).values!!.sorted().toMutableList()
             )
             autoCompleteTextView.setAdapter(fieldAdapter)
             autoCompleteTextView.setTokenizer(CommaTokenizer())
@@ -140,11 +140,11 @@ class WidgetDynamicFieldAdapter(
         // Populate textview with stored text for that field
         // Currently value can by Any? but will currently only be storing String?
         // This may have to be changed later if multi-select gets implemented
-        if (serviceFieldList[position].value != null) {
+        if (actionFieldList[position].value != null) {
             try {
-                autoCompleteTextView.setText(serviceFieldList[position].value as String)
+                autoCompleteTextView.setText(actionFieldList[position].value as String)
             } catch (e: Exception) {
-                Log.d(TAG, "Unable to get service field list", e)
+                Log.d(TAG, "Unable to get action field list", e)
                 // Set text to empty string to prevent a recycled, incorrect value
                 autoCompleteTextView.setText("")
             }
@@ -155,21 +155,21 @@ class WidgetDynamicFieldAdapter(
         // Have the text view store its text for later recall
         autoCompleteTextView.doAfterTextChanged {
             // Only attempt to store data if we are in bounds
-            if (serviceFieldList.size >= holder.bindingAdapterPosition &&
+            if (actionFieldList.size >= holder.bindingAdapterPosition &&
                 holder.bindingAdapterPosition != RecyclerView.NO_POSITION
             ) {
                 // Don't store data that's empty (or just whitespace)
                 if (it.isNullOrBlank()) {
-                    serviceFieldList[holder.bindingAdapterPosition].value = null
+                    actionFieldList[holder.bindingAdapterPosition].value = null
                 } else {
-                    serviceFieldList[holder.bindingAdapterPosition].value = it.toString().toJsonType()
+                    actionFieldList[holder.bindingAdapterPosition].value = it.toString().toJsonType()
                 }
             }
         }
     }
 
-    fun replaceValues(services: HashMap<String, Service>, entities: HashMap<String, Entity<Any>>) {
-        this.services = services
+    fun replaceValues(actions: HashMap<String, Action>, entities: HashMap<String, Entity<Any>>) {
+        this.actions = actions
         this.entities = entities
     }
 

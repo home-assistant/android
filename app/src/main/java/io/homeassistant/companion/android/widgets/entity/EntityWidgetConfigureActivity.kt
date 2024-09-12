@@ -6,6 +6,8 @@ import android.content.ComponentName
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.View
 import android.widget.AdapterView
@@ -20,12 +22,12 @@ import androidx.core.content.getSystemService
 import androidx.core.graphics.toColorInt
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
-import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.domain
+import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
@@ -35,6 +37,7 @@ import io.homeassistant.companion.android.util.getHexForColor
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
+import io.homeassistant.companion.android.widgets.common.WidgetUtils
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -56,6 +59,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     private var selectedEntity: Entity<Any>? = null
     private var appendAttributes: Boolean = false
     private var selectedAttributeIds: ArrayList<String> = ArrayList()
+    private var labelFromEntity = false
 
     private lateinit var binding: WidgetStaticConfigureBinding
 
@@ -127,14 +131,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
         val tapActionValues = listOf(getString(commonR.string.widget_tap_action_toggle), getString(commonR.string.refresh))
         binding.tapActionList.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, tapActionValues)
-
-        val backgroundTypeValues = mutableListOf(
-            getString(commonR.string.widget_background_type_daynight),
-            getString(commonR.string.widget_background_type_transparent)
-        )
-        if (DynamicColors.isDynamicColorAvailable()) {
-            backgroundTypeValues.add(0, getString(commonR.string.widget_background_type_dynamiccolor))
-        }
+        val backgroundTypeValues = WidgetUtils.getBackgroundOptionList(this)
         binding.backgroundType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
 
         if (staticWidget != null) {
@@ -171,17 +168,6 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             val toggleable = entity?.domain in EntityExt.APP_PRESS_ACTION_DOMAINS
             binding.tapAction.isVisible = toggleable
             binding.tapActionList.setSelection(if (toggleable && staticWidget.tapAction == WidgetTapAction.TOGGLE) 0 else 1)
-
-            binding.backgroundType.setSelection(
-                when {
-                    staticWidget.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable() ->
-                        backgroundTypeValues.indexOf(getString(commonR.string.widget_background_type_dynamiccolor))
-                    staticWidget.backgroundType == WidgetBackgroundType.TRANSPARENT ->
-                        backgroundTypeValues.indexOf(getString(commonR.string.widget_background_type_transparent))
-                    else ->
-                        backgroundTypeValues.indexOf(getString(commonR.string.widget_background_type_daynight))
-                }
-            )
             binding.textColor.visibility = if (staticWidget.backgroundType == WidgetBackgroundType.TRANSPARENT) View.VISIBLE else View.GONE
             binding.textColorWhite.isChecked =
                 staticWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, android.R.color.white) } ?: true
@@ -209,6 +195,8 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             binding.attributeValueLinearLayout.isVisible = isChecked
             appendAttributes = isChecked
         }
+
+        binding.label.addTextChangedListener(labelTextChanged)
 
         binding.backgroundType.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
@@ -267,6 +255,14 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     private val entityDropDownOnItemClick =
         AdapterView.OnItemClickListener { parent, _, position, _ ->
             selectedEntity = parent.getItemAtPosition(position) as Entity<Any>?
+            if (binding.label.text.isNullOrBlank() || labelFromEntity) {
+                selectedEntity?.friendlyName?.takeIf { it != selectedEntity?.entityId }?.let { name ->
+                    binding.label.removeTextChangedListener(labelTextChanged)
+                    binding.label.setText(name)
+                    labelFromEntity = true
+                    binding.label.addTextChangedListener(labelTextChanged)
+                }
+            }
             setupAttributes()
         }
 
@@ -274,6 +270,20 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         AdapterView.OnItemClickListener { parent, _, position, _ ->
             selectedAttributeIds.add(parent.getItemAtPosition(position) as String)
         }
+
+    private val labelTextChanged = object : TextWatcher {
+        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+            // Not implemented
+        }
+
+        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+            // Not implemented
+        }
+
+        override fun afterTextChanged(s: Editable?) {
+            labelFromEntity = false
+        }
+    }
 
     private fun setupAttributes() {
         val fetchedAttributes = selectedEntity?.attributes as? Map<String, String>
@@ -395,9 +405,9 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         }
     }
 
-    override fun onNewIntent(intent: Intent?) {
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        if (intent != null && intent.extras != null && intent.hasExtra(PIN_WIDGET_CALLBACK)) {
+        if (intent.extras != null && intent.hasExtra(PIN_WIDGET_CALLBACK)) {
             appWidgetId = intent.extras!!.getInt(
                 AppWidgetManager.EXTRA_APPWIDGET_ID,
                 AppWidgetManager.INVALID_APPWIDGET_ID

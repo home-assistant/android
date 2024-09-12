@@ -6,14 +6,15 @@ import dagger.assisted.AssistedInject
 import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.LocalStorage
+import io.homeassistant.companion.android.common.data.integration.Action
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationException
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
-import io.homeassistant.companion.android.common.data.integration.Service
 import io.homeassistant.companion.android.common.data.integration.UpdateLocation
 import io.homeassistant.companion.android.common.data.integration.ZoneAttributes
+import io.homeassistant.companion.android.common.data.integration.impl.entities.ActionRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.FireEventRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.IntegrationRequest
@@ -22,7 +23,6 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RegisterDeviceRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.SensorRegistrationRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.SensorUpdateRequest
-import io.homeassistant.companion.android.common.data.integration.impl.entities.ServiceCallRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.Template
 import io.homeassistant.companion.android.common.data.integration.impl.entities.UpdateLocationRequest
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -268,18 +268,18 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         }
     }
 
-    override suspend fun callService(
+    override suspend fun callAction(
         domain: String,
-        service: String,
-        serviceData: HashMap<String, Any>
+        action: String,
+        actionData: HashMap<String, Any>
     ) {
         var wasSuccess = false
 
-        val serviceCallRequest =
-            ServiceCallRequest(
+        val actionRequest =
+            ActionRequest(
                 domain,
-                service,
-                serviceData
+                action,
+                actionData
             )
 
         var causeException: Exception? = null
@@ -290,7 +290,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                         it.toHttpUrlOrNull()!!,
                         IntegrationRequest(
                             "call_service",
-                            serviceCallRequest
+                            actionRequest
                         )
                     ).isSuccessful
             } catch (e: Exception) {
@@ -545,6 +545,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             server.copy(
                 _name = config.locationName,
                 _version = config.version,
+                deviceRegistryId = config.hassDeviceId ?: server.deviceRegistryId,
                 connection = server.connection.copy(
                     cloudUrl = config.remoteUiUrl,
                     cloudhookUrl = config.cloudhookUrl
@@ -553,12 +554,12 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         )
     }
 
-    override suspend fun getServices(): List<Service>? {
+    override suspend fun getServices(): List<Action>? {
         val response = webSocketRepository.getServices()
 
         return response?.flatMap {
             it.services.map { service ->
-                Service(it.domain, service.key, service.value)
+                Action(it.domain, service.key, service.value)
             }
         }?.toList()
     }
@@ -702,6 +703,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         val canRegisterEntityDisabledState = server.version?.isAtLeast(2022, 6, 0) == true
         val canRegisterDeviceClassDistance = server.version?.isAtLeast(2022, 10, 0) == true
         val canRegisterNullProperties = server.version?.isAtLeast(2023, 2, 0) == true
+        val canRegisterDeviceClassEnum = server.version?.isAtLeast(2023, 1, 0) == true
 
         val registrationData = SensorRegistrationRequest(
             sensorRegistration.uniqueId,
@@ -718,6 +720,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             sensorRegistration.name,
             when (sensorRegistration.deviceClass) {
                 "distance" -> if (canRegisterDeviceClassDistance) sensorRegistration.deviceClass else null
+                "enum" -> if (canRegisterDeviceClassEnum) sensorRegistration.deviceClass else null
                 else -> sensorRegistration.deviceClass
             },
             sensorRegistration.unitOfMeasurement,

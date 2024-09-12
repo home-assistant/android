@@ -70,7 +70,7 @@ object FanControl : HaControl {
     ): Boolean {
         when (action) {
             is BooleanAction -> {
-                integrationRepository.callService(
+                integrationRepository.callAction(
                     action.templateId.split(".")[0],
                     if (action.newState) "turn_on" else "turn_off",
                     hashMapOf("entity_id" to action.templateId)
@@ -78,7 +78,7 @@ object FanControl : HaControl {
             }
             is FloatAction -> {
                 val convertPercentage = action.newValue
-                integrationRepository.callService(
+                integrationRepository.callAction(
                     action.templateId.split(".")[0],
                     "set_percentage",
                     hashMapOf(

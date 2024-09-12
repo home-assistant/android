@@ -107,7 +107,8 @@ class EntityGridVehicleScreen(
                     carContext,
                     screenManager,
                     integrationRepository,
-                    allEntities
+                    allEntities,
+                    entityRegistry
                 ).build()
             )
             if (domains.isNotEmpty()) {

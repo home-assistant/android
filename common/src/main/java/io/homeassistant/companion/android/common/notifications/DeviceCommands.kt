@@ -24,6 +24,7 @@ object DeviceCommandData {
     // Ble Transmitter Commands
     const val BLE_SET_TRANSMIT_POWER = "ble_set_transmit_power"
     const val BLE_SET_ADVERTISE_MODE = "ble_set_advertise_mode"
+    const val BLE_SET_MEASURED_POWER = "ble_set_measured_power"
     const val BLE_ADVERTISE_LOW_LATENCY = "ble_advertise_low_latency"
     const val BLE_ADVERTISE_BALANCED = "ble_advertise_balanced"
     const val BLE_ADVERTISE_LOW_POWER = "ble_advertise_low_power"
@@ -39,13 +40,15 @@ object DeviceCommandData {
     const val BLE_MINOR = "ble_minor"
     const val BLE_ADVERTISE = "ble_advertise"
     const val BLE_TRANSMIT = "ble_transmit"
+    const val BLE_MEASURED_POWER = "ble_measured_power"
 
     val BLE_COMMANDS = listOf(
         BLE_SET_ADVERTISE_MODE,
         BLE_SET_TRANSMIT_POWER,
         BLE_SET_UUID,
         BLE_SET_MAJOR,
-        BLE_SET_MINOR
+        BLE_SET_MINOR,
+        BLE_SET_MEASURED_POWER
     )
     val BLE_TRANSMIT_COMMANDS =
         listOf(BLE_TRANSMIT_HIGH, BLE_TRANSMIT_LOW, BLE_TRANSMIT_MEDIUM, BLE_TRANSMIT_ULTRA_LOW)
@@ -69,7 +72,13 @@ private fun checkCommandFormat(data: Map<String, String>): Boolean {
                                 (!data[DeviceCommandData.BLE_TRANSMIT].isNullOrEmpty() && data[DeviceCommandData.BLE_TRANSMIT] in DeviceCommandData.BLE_TRANSMIT_COMMANDS) ||
                                 (data[NotificationData.COMMAND] == DeviceCommandData.BLE_SET_UUID && !data[DeviceCommandData.BLE_UUID].isNullOrEmpty()) ||
                                 (data[NotificationData.COMMAND] == DeviceCommandData.BLE_SET_MAJOR && !data[DeviceCommandData.BLE_MAJOR].isNullOrEmpty()) ||
-                                (data[NotificationData.COMMAND] == DeviceCommandData.BLE_SET_MINOR && !data[DeviceCommandData.BLE_MINOR].isNullOrEmpty())
+                                (data[NotificationData.COMMAND] == DeviceCommandData.BLE_SET_MINOR && !data[DeviceCommandData.BLE_MINOR].isNullOrEmpty()) ||
+                                (
+                                    data[NotificationData.COMMAND] == DeviceCommandData.BLE_SET_MEASURED_POWER &&
+                                        (
+                                            data[DeviceCommandData.BLE_MEASURED_POWER]?.toIntOrNull() != null && data[DeviceCommandData.BLE_MEASURED_POWER]?.toInt()!! < 0
+                                            )
+                                    )
                             )
                     )
         }
@@ -126,6 +135,7 @@ fun commandBleTransmitter(
             when (command) {
                 DeviceCommandData.BLE_SET_ADVERTISE_MODE -> BluetoothSensorManager.SETTING_BLE_ADVERTISE_MODE
                 DeviceCommandData.BLE_SET_TRANSMIT_POWER -> BluetoothSensorManager.SETTING_BLE_TRANSMIT_POWER
+                DeviceCommandData.BLE_SET_MEASURED_POWER -> BluetoothSensorManager.SETTING_BLE_MEASURED_POWER
                 DeviceCommandData.BLE_SET_UUID -> BluetoothSensorManager.SETTING_BLE_ID1
                 DeviceCommandData.BLE_SET_MAJOR -> BluetoothSensorManager.SETTING_BLE_ID2
                 DeviceCommandData.BLE_SET_MINOR -> BluetoothSensorManager.SETTING_BLE_ID3
@@ -145,6 +155,7 @@ fun commandBleTransmitter(
                     ?: BluetoothSensorManager.DEFAULT_BLE_MAJOR
                 DeviceCommandData.BLE_SET_MINOR -> data[DeviceCommandData.BLE_MINOR]
                     ?: BluetoothSensorManager.DEFAULT_BLE_MINOR
+                DeviceCommandData.BLE_SET_MEASURED_POWER -> data[DeviceCommandData.BLE_MEASURED_POWER].toString()
                 else -> {
                     when (data[DeviceCommandData.BLE_TRANSMIT]) {
                         DeviceCommandData.BLE_TRANSMIT_HIGH -> BluetoothSensorManager.BLE_TRANSMIT_HIGH

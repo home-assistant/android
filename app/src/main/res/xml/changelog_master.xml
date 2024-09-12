@@ -1,21 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2024.2.4 - Main" versioncode="3">
-        <change>Add instant updates for all Volume sensors</change>
-        <change>Add Network sensor for IPv6 addresses</change>
-        <change>Allow Climate entities to cycle through HVAC modes in device controls</change>
+    <release version="2024.9.2 - Main" versioncode="3">
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2024.2.4 - Wear" versioncode="2">
-        <change>Add instant updates for all Volume sensors</change>
-        <change>Add Network sensor for IPv6 addresses</change>
-        <change>Add option to update Camera and Template tiles when the tile is in view</change>
-        <change>Bug fixes, design tweaks and dependency updates</change>
+    <release version="2024.9.2 - Wear" versioncode="2">
+        <change>&lt;b&gt;Backward-incompatible change:&lt;/b&gt; Wear OS 4+ Heart rate sensor users will need to re-enable the sensor and grant all the time permission again in order to continue using the sensor</change>
+        <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2024.2.4 - Automotive" versioncode="1">
-        <change>Add instant updates for all Volume sensors</change>
-        <change>Add Network sensor for IPv6 addresses</change>
+    <release version="2024.9.2 - Automotive" versioncode="1">
         <change>Bug fixes and dependency updates</change>
     </release>
 </changelog>

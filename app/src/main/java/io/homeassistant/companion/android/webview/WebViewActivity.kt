@@ -77,6 +77,7 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.assist.AssistActivity
 import io.homeassistant.companion.android.authenticator.Authenticator
+import io.homeassistant.companion.android.barcode.BarcodeScannerActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
@@ -101,6 +102,7 @@ import io.homeassistant.companion.android.util.TLSWebViewClient
 import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebView.ErrorType
+import io.homeassistant.companion.android.webview.externalbus.ExternalBusMessage
 import java.util.concurrent.Executors
 import javax.inject.Inject
 import javax.inject.Named
@@ -110,7 +112,6 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -155,14 +156,17 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             }
         }
     private val writeNfcTag = registerForActivityResult(WriteNfcTag()) { messageId ->
-        webView.externalBus(
-            id = messageId,
-            type = "result",
-            success = true,
-            result = emptyMap<String, String>()
-        ) {
-            Log.d(TAG, "NFC Write Complete $it")
-        }
+        sendExternalBusMessage(
+            ExternalBusMessage(
+                id = messageId,
+                type = "result",
+                success = true,
+                result = emptyMap<String, String>(),
+                callback = {
+                    Log.d(TAG, "NFC Write Complete $it")
+                }
+            )
+        )
     }
     private val showWebFileChooser = registerForActivityResult(ShowWebFileChooser()) { result ->
         mFilePathCallback?.onReceiveValue(result)
@@ -203,6 +207,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var mFilePathCallback: ValueCallback<Array<Uri>>? = null
     private var isConnected = false
     private var isShowingError = false
+    private var isRelaunching = false
     private var alertDialog: AlertDialog? = null
     private var isVideoFullScreen = false
     private var videoHeight = 0
@@ -341,7 +346,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                         webView.clearHistory()
                         clearHistory = false
                     }
-                    enablePinchToZoom()
+                    setWebViewZoom()
                     if (moreInfoEntity != "" && view?.progress == 100 && isConnected) {
                         ioScope.launch {
                             val owner = "onPageFinished:$moreInfoEntity"
@@ -464,7 +469,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                 startActivity(browserIntent)
                                 return true
                             } else {
-                                Log.d(TAG, "No unique cases found to override")
+                                // Do nothing.
                             }
                         } catch (e: Exception) {
                             Log.e(TAG, "Unable to override the URL", e)
@@ -703,8 +708,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     @JavascriptInterface
                     fun revokeExternalAuth(callback: String) {
                         presenter.onRevokeExternalAuth(JSONObject(callback).get("callback") as String)
-                        relaunchApp()
-                        finish()
+                        isRelaunching = true // Prevent auth errors from showing
                     }
 
                     @JavascriptInterface
@@ -726,23 +730,36 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                     val hasNfc = pm.hasSystemFeature(PackageManager.FEATURE_NFC)
                                     val canCommissionMatter = presenter.appCanCommissionMatterDevice()
                                     val canExportThread = presenter.appCanExportThreadCredentials()
-                                    webView.externalBus(
-                                        id = JSONObject(message).get("id"),
-                                        type = "result",
-                                        success = true,
-                                        result = JSONObject(
-                                            mapOf(
-                                                "hasSettingsScreen" to true,
-                                                "canWriteTag" to hasNfc,
-                                                "hasExoPlayer" to true,
-                                                "canCommissionMatter" to canCommissionMatter,
-                                                "canImportThreadCredentials" to canExportThread,
-                                                "hasAssist" to true
-                                            )
+                                    val hasBarCodeScanner =
+                                        if (
+                                            pm.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) &&
+                                            !pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+                                        ) {
+                                            1
+                                        } else {
+                                            0
+                                        }
+                                    sendExternalBusMessage(
+                                        ExternalBusMessage(
+                                            id = JSONObject(message).get("id"),
+                                            type = "result",
+                                            success = true,
+                                            result = JSONObject(
+                                                mapOf(
+                                                    "hasSettingsScreen" to true,
+                                                    "canWriteTag" to hasNfc,
+                                                    "hasExoPlayer" to true,
+                                                    "canCommissionMatter" to canCommissionMatter,
+                                                    "canImportThreadCredentials" to canExportThread,
+                                                    "hasAssist" to true,
+                                                    "hasBarCodeScanner" to hasBarCodeScanner
+                                                )
+                                            ),
+                                            callback = {
+                                                Log.d(TAG, "Callback $it")
+                                            }
                                         )
-                                    ) {
-                                        Log.d(TAG, "Callback $it")
-                                    }
+                                    )
 
                                     // TODO This feature is deprecated and should be removed after 2022.6
                                     getAndSetStatusBarNavigationBarColors()
@@ -788,11 +805,25 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                         .create()
                                     alertDialog?.show()
                                 }
+                                "bar_code/scan" -> {
+                                    val payload = if (json.has("payload")) json.getJSONObject("payload") else null
+                                    if (payload?.has("title") != true || !payload.has("description")) return@post
+                                    startActivity(
+                                        BarcodeScannerActivity.newInstance(
+                                            this@WebViewActivity,
+                                            messageId = json.getInt("id"),
+                                            title = payload.getString("title"),
+                                            subtitle = payload.getString("description"),
+                                            action = if (payload.has("alternative_option_label")) payload.getString("alternative_option_label").ifBlank { null } else null
+                                        )
+                                    )
+                                }
                                 "exoplayer/play_hls" -> exoPlayHls(json)
                                 "exoplayer/stop" -> exoStopHls()
                                 "exoplayer/resize" -> exoResizeHls(json)
                                 "haptic" -> processHaptic(json.getJSONObject("payload").getString("hapticType"))
                                 "theme-update" -> getAndSetStatusBarNavigationBarColors()
+                                else -> presenter.onExternalBusMessage(json)
                             }
                         }
                     }
@@ -849,7 +880,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         appLocked = presenter.isAppLocked()
         binding.blurView.setBlurEnabled(appLocked)
 
-        enablePinchToZoom()
+        setWebViewZoom()
 
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG || presenter.isWebViewDebugEnabled())
 
@@ -871,6 +902,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             checkAndWarnForDisabledLocation()
         }
         changeLog.showChangeLog(this, false)
+
+        if (::loadedUrl.isInitialized) {
+            waitForConnection()
+        }
     }
 
     override fun onStop() {
@@ -881,7 +916,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     override fun onPause() {
         super.onPause()
         presenter.setAppActive(false)
-        if (!isFinishing) SensorReceiver.updateAllSensors(this)
+        if (!isFinishing && !isRelaunching) SensorReceiver.updateAllSensors(this)
     }
 
     private suspend fun checkAndWarnForDisabledLocation() {
@@ -958,14 +993,16 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             exoPlayerView.visibility = View.VISIBLE
             findViewById<ImageButton>(R.id.exo_ha_mute)?.setOnClickListener { exoToggleMute() }
         }
-        webView.externalBus(
-            id = json.get("id"),
-            type = "result",
-            success = true,
-            result = null
-        ) {
-            Log.d(TAG, "Callback $it")
-        }
+        sendExternalBusMessage(
+            ExternalBusMessage(
+                id = json.get("id"),
+                type = "result",
+                success = true,
+                callback = {
+                    Log.d(TAG, "Callback $it")
+                }
+            )
+        )
     }
 
     fun exoStopHls() {
@@ -1185,6 +1222,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     }
 
     override fun relaunchApp() {
+        isRelaunching = true
         startActivity(Intent(this, LaunchActivity::class.java))
         finish()
     }
@@ -1250,7 +1288,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         error: SslError?,
         description: String?
     ) {
-        if (isShowingError || !isStarted) {
+        if (isShowingError || !isStarted || isRelaunching) {
             return
         }
         isShowingError = true
@@ -1275,7 +1313,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
 
         if (tlsWebViewClient?.isTLSClientAuthNeeded == true &&
-            errorType == ErrorType.TIMEOUT &&
+            (errorType == ErrorType.TIMEOUT_GENERAL || errorType == ErrorType.TIMEOUT_EXTERNAL_BUS) &&
             !tlsWebViewClient.hasUserDeniedAccess
         ) {
             // Ignore if a timeout occurs but the user has not denied access
@@ -1360,26 +1398,33 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 startActivity(SettingsActivity.newInstance(this))
             }
             val isInternal = serverManager.getServer(presenter.getActiveServer())?.connection?.isInternal() == true
+            val buttonRefreshesInternal = failedConnection == "external" && isInternal
             alert.setNegativeButton(
-                if (failedConnection == "external" && isInternal) {
+                if (buttonRefreshesInternal) {
                     commonR.string.refresh_internal
                 } else {
                     commonR.string.refresh_external
                 }
             ) { _, _ ->
-                runBlocking {
-                    failedConnection = if (failedConnection == "external") {
-                        serverManager.getServer(presenter.getActiveServer())?.let { webView.loadUrl(it.connection.getUrl(true).toString()) }
-                        "internal"
-                    } else {
-                        serverManager.getServer(presenter.getActiveServer())?.let { webView.loadUrl(it.connection.getUrl(false).toString()) }
-                        "external"
-                    }
+                val url = serverManager.getServer(presenter.getActiveServer())?.let {
+                    val base = it.connection.getUrl(buttonRefreshesInternal) ?: return@let null
+                    Uri.parse(base.toString())
+                        .buildUpon()
+                        .appendQueryParameter("external_auth", "1")
+                        .build()
+                        .toString()
                 }
-                waitForConnection()
+                failedConnection = if (buttonRefreshesInternal) "internal" else "external"
+                if (url != null) {
+                    loadUrl(url = url, keepHistory = true, openInApp = true)
+                } else {
+                    waitForConnection()
+                }
             }
-            alert.setNeutralButton(commonR.string.wait) { _, _ ->
-                waitForConnection()
+            if (errorType == ErrorType.TIMEOUT_EXTERNAL_BUS) {
+                alert.setNeutralButton(commonR.string.wait) { _, _ ->
+                    waitForConnection()
+                }
             }
         }
         alertDialog = alert.create()
@@ -1483,35 +1528,30 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     !loadedUrl.toHttpUrl().pathSegments.first().contains("api") &&
                     !loadedUrl.toHttpUrl().pathSegments.first().contains("local")
                 ) {
-                    showError()
+                    showError(errorType = ErrorType.TIMEOUT_EXTERNAL_BUS)
                 }
             },
             CONNECTION_DELAY
         )
     }
 
-    private fun WebView.externalBus(
-        id: Any,
-        type: String,
-        success: Boolean,
-        result: Any? = null,
-        error: Any? = null,
-        callback: ValueCallback<String>?
-    ) {
+    override fun sendExternalBusMessage(message: ExternalBusMessage) {
         val map = mutableMapOf(
-            "id" to id,
-            "type" to type,
-            "success" to success
+            "id" to message.id,
+            "type" to message.type
         )
-        if (result != null) map["result"] = result
-        if (error != null) map["error"] = error
+        message.command?.let { map["command"] = it }
+        message.success?.let { map["success"] = it }
+        message.result?.let { map["result"] = it }
+        message.error?.let { map["error"] = it }
+        message.payload?.let { map["payload"] = it }
 
         val json = JSONObject(map.toMap())
         val script = "externalBus($json);"
 
         Log.d(TAG, script)
 
-        this.evaluateJavascript(script, callback)
+        webView.evaluateJavascript(script, message.callback)
     }
 
     private fun downloadFile(url: String, contentDisposition: String, mimetype: String) {
@@ -1560,9 +1600,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
     }
 
-    override fun dispatchKeyEvent(event: KeyEvent?): Boolean {
-        // Temporary workaround to sideload on Android TV and use a remote for basic navigation in WebView
-        if (event?.keyCode == KeyEvent.KEYCODE_DPAD_DOWN && event.action == KeyEvent.ACTION_DOWN) {
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        // Workaround to sideload on Android TV and use a remote for basic navigation in WebView
+        if (event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN && event.action == KeyEvent.ACTION_DOWN) {
             dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_TAB))
             return true
         }
@@ -1570,7 +1610,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         return super.dispatchKeyEvent(event)
     }
 
-    private fun enablePinchToZoom() {
+    private fun setWebViewZoom() {
+        // Set base zoom level (percentage must be scaled to device density/percentage)
+        webView.setInitialScale((resources.displayMetrics.density * presenter.getPageZoomLevel()).toInt())
+
         // Enable pinch to zoom
         webView.settings.builtInZoomControls = presenter.isPinchToZoomEnabled()
         // Use idea from https://github.com/home-assistant/iOS/pull/1472 to filter viewport
@@ -1627,10 +1670,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
     }
 
-    override fun onNewIntent(intent: Intent?) {
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         this.intent = intent
-        if (intent?.extras?.containsKey(EXTRA_SERVER) == true) {
+        if (intent.extras?.containsKey(EXTRA_SERVER) == true) {
             intent.extras?.getInt(EXTRA_SERVER)?.let {
                 presenter.setActiveServer(it)
                 intent.removeExtra(EXTRA_SERVER)

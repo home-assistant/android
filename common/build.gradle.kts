@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.kapt)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
 }
@@ -45,10 +44,6 @@ android {
         abortOnError = false
         disable += "MissingTranslation"
     }
-
-    kapt {
-        correctErrorTypes = true
-    }
 }
 
 dependencies {
@@ -57,11 +52,12 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
 
     implementation(libs.hilt.android)
-    kapt(libs.hilt.android.compiler)
+    ksp(libs.hilt.android.compiler)
 
     implementation(libs.appcompat)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.media)
 
     api(libs.androidx.room.runtime)
     api(libs.androidx.room.ktx)
@@ -71,7 +67,7 @@ dependencies {
     api(libs.androidx.work.runtime.ktx)
 
     api(libs.retrofit)
-    implementation(libs.converter.jackson)
+    implementation(libs.retrofit.converter.jackson)
     implementation(libs.okhttp)
     implementation(libs.logging.interceptor)
     implementation(libs.jackson.module.kotlin)

@@ -24,6 +24,7 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
             commonR.string.basic_sensor_name_android_auto,
             commonR.string.sensor_description_android_auto,
             "mdi:car",
+            deviceClass = "connectivity",
             updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
     }
@@ -93,7 +94,7 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
             context,
             androidAutoConnected,
             connected,
-            androidAutoConnected.statelessIcon,
+            if (connected) androidAutoConnected.statelessIcon else "mdi:car-off",
             mapOf(
                 "connection_type" to typeString
             )

@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.common.data.integration
 
-data class Service(
+data class Action(
     val domain: String,
-    val service: String,
-    val serviceData: ServiceData
+    val action: String,
+    val actionData: ActionData
 )

@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.settings.sensor.views
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
@@ -27,6 +28,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.Card
 import androidx.compose.material.Checkbox
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.Divider
 import androidx.compose.material.LocalContentAlpha
@@ -50,7 +52,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.ColorFilter
@@ -64,6 +65,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.health.connect.client.PermissionController
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.mikepenz.iconics.IconicsDrawable
@@ -75,6 +77,7 @@ import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.database.sensor.SensorWithAttributes
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
+import io.homeassistant.companion.android.sensors.HealthConnectSensorManager
 import io.homeassistant.companion.android.settings.sensor.SensorDetailViewModel
 import io.homeassistant.companion.android.util.compose.MdcAlertDialog
 import io.homeassistant.companion.android.util.compose.TransparentChip
@@ -92,6 +95,8 @@ fun SensorDetailView(
     val context = LocalContext.current
     var sensorUpdateTypeInfo by remember { mutableStateOf(false) }
     val jsonMapper by lazy { jacksonObjectMapper() }
+    val healthConnectPermission = rememberLauncherForActivityResult(PermissionController.createRequestPermissionResultContract(context.packageName)) {
+    }
 
     val sensorEnabled = viewModel.sensor?.sensor?.enabled
         ?: (
@@ -107,7 +112,11 @@ fun SensorDetailView(
             ).let { result ->
                 if (result == SnackbarResult.ActionPerformed) {
                     if (it.actionOpensSettings) {
-                        context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}")))
+                        if (viewModel.sensorId.startsWith("health_connect")) {
+                            healthConnectPermission.launch(HealthConnectSensorManager().requiredPermissions(viewModel.sensorId).toSet())
+                        } else {
+                            context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}")))
+                        }
                     } else {
                         onSetEnabled(true, it.serverId)
                     }
@@ -475,7 +484,6 @@ fun SensorDetailRow(
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun SensorDetailSettingDialog(
     viewModel: SensorDetailViewModel,
@@ -485,14 +493,23 @@ fun SensorDetailSettingDialog(
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
     val listSettingDialog = state.setting.valueType.listType
-    val inputValue = remember { mutableStateOf(state.setting.value) }
-    val checkedValue = remember { mutableStateListOf<String>().also { it.addAll(state.entriesSelected) } }
+    val inputValue = remember(state.loading) { mutableStateOf(state.setting.value) }
+    val checkedValue = remember(state.loading) { mutableStateListOf<String>().also { it.addAll(state.entriesSelected) } }
 
     MdcAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(viewModel.getSettingTranslatedTitle(state.setting.name)) },
         content = {
-            if (listSettingDialog) {
+            if (state.loading) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else if (listSettingDialog) {
                 LazyColumn {
                     items(state.entries, key = { (id) -> id }) { (id, entry) ->
                         SensorDetailSettingRow(
@@ -531,7 +548,9 @@ fun SensorDetailSettingDialog(
             }
         },
         onCancel = onDismiss,
-        onSave = if (state.setting.valueType != SensorSettingType.LIST) {
+        onSave = if (state.loading) {
+            null
+        } else if (state.setting.valueType != SensorSettingType.LIST) {
             {
                 if (listSettingDialog) {
                     inputValue.value = checkedValue.joinToString().replace("[", "").replace("]", "")

@@ -7,7 +7,6 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -19,6 +18,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.toColorInt
+import androidx.core.os.BundleCompat
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.google.android.material.color.DynamicColors
@@ -57,8 +57,8 @@ class ButtonWidget : AppWidgetProvider() {
 
         internal const val EXTRA_SERVER_ID = "EXTRA_SERVER_ID"
         internal const val EXTRA_DOMAIN = "EXTRA_DOMAIN"
-        internal const val EXTRA_SERVICE = "EXTRA_SERVICE"
-        internal const val EXTRA_SERVICE_DATA = "EXTRA_SERVICE_DATA"
+        internal const val EXTRA_ACTION = "EXTRA_SERVICE"
+        internal const val EXTRA_ACTION_DATA = "EXTRA_SERVICE_DATA"
         internal const val EXTRA_LABEL = "EXTRA_LABEL"
         internal const val EXTRA_ICON_NAME = "EXTRA_ICON_NAME"
         internal const val EXTRA_BACKGROUND_TYPE = "EXTRA_BACKGROUND_TYPE"
@@ -148,15 +148,15 @@ class ButtonWidget : AppWidgetProvider() {
 
         super.onReceive(context, intent)
         when (action) {
-            CALL_SERVICE_AUTH -> authThenCallConfiguredService(context, appWidgetId)
-            CALL_SERVICE -> callConfiguredService(context, appWidgetId)
-            RECEIVE_DATA -> saveServiceCallConfiguration(context, intent.extras, appWidgetId)
+            CALL_SERVICE_AUTH -> authThenCallConfiguredAction(context, appWidgetId)
+            CALL_SERVICE -> callConfiguredAction(context, appWidgetId)
+            RECEIVE_DATA -> saveActionCallConfiguration(context, intent.extras, appWidgetId)
             Intent.ACTION_SCREEN_ON -> updateAllWidgets(context)
         }
     }
 
-    private fun authThenCallConfiguredService(context: Context, appWidgetId: Int) {
-        Log.d(TAG, "Calling authentication, then configured service")
+    private fun authThenCallConfiguredAction(context: Context, appWidgetId: Int) {
+        Log.d(TAG, "Calling authentication, then configured action")
 
         val intent = Intent(context, WidgetAuthenticationActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NEW_DOCUMENT
@@ -260,8 +260,8 @@ class ButtonWidget : AppWidgetProvider() {
         views.setViewVisibility(R.id.widgetLabelLayout, labelVisibility)
     }
 
-    private fun callConfiguredService(context: Context, appWidgetId: Int) {
-        Log.d(TAG, "Calling widget service")
+    private fun callConfiguredAction(context: Context, appWidgetId: Int) {
+        Log.d(TAG, "Calling widget action")
 
         // Set up progress bar as immediate feedback to show the click has been received
         // Success or failure feedback will come from the mainScope coroutine
@@ -279,53 +279,53 @@ class ButtonWidget : AppWidgetProvider() {
             var feedbackColor = R.drawable.widget_button_background_red
             var feedbackIcon = R.drawable.ic_clear_black
 
-            // Load the service call data from Shared Preferences
+            // Load the action call data from Shared Preferences
             val domain = widget?.domain
-            val service = widget?.service
-            val serviceDataJson = widget?.serviceData
+            val action = widget?.service
+            val actionDataJson = widget?.serviceData
 
             Log.d(
                 TAG,
-                "Service Call Data loaded:" + System.lineSeparator() +
+                "Action Call Data loaded:" + System.lineSeparator() +
                     "domain: " + domain + System.lineSeparator() +
-                    "service: " + service + System.lineSeparator() +
-                    "service_data: " + serviceDataJson
+                    "action: " + action + System.lineSeparator() +
+                    "action_data: " + actionDataJson
             )
 
-            if (domain == null || service == null || serviceDataJson == null) {
-                Log.w(TAG, "Service Call Data incomplete.  Aborting service call")
+            if (domain == null || action == null || actionDataJson == null) {
+                Log.w(TAG, "Action Call Data incomplete.  Aborting action call")
             } else {
-                // If everything loaded correctly, package the service data and attempt the call
+                // If everything loaded correctly, package the action data and attempt the call
                 try {
                     // Convert JSON to HashMap
-                    val serviceDataMap: HashMap<String, Any> =
-                        jacksonObjectMapper().readValue(serviceDataJson)
+                    val actionDataMap: HashMap<String, Any> =
+                        jacksonObjectMapper().readValue(actionDataJson)
 
-                    if (serviceDataMap["entity_id"] != null) {
+                    if (actionDataMap["entity_id"] != null) {
                         val entityIdWithoutBrackets = Pattern.compile("\\[(.*?)\\]")
-                            .matcher(serviceDataMap["entity_id"].toString())
+                            .matcher(actionDataMap["entity_id"].toString())
                         if (entityIdWithoutBrackets.find()) {
                             val value = entityIdWithoutBrackets.group(1)
                             if (value != null) {
                                 if (value == "all" ||
                                     value.split(",").contains("all")
                                 ) {
-                                    serviceDataMap["entity_id"] = "all"
+                                    actionDataMap["entity_id"] = "all"
                                 }
                             }
                         }
                     }
 
-                    Log.d(TAG, "Sending service call to Home Assistant")
-                    serverManager.integrationRepository(widget.serverId).callService(domain, service, serviceDataMap)
-                    Log.d(TAG, "Service call sent successfully")
+                    Log.d(TAG, "Sending action call to Home Assistant")
+                    serverManager.integrationRepository(widget.serverId).callAction(domain, action, actionDataMap)
+                    Log.d(TAG, "Action call sent successfully")
 
-                    // If service call does not throw an exception, send positive feedback
+                    // If action call does not throw an exception, send positive feedback
                     feedbackColor = R.drawable.widget_button_background_green
                     feedbackIcon = R.drawable.ic_check_black_24dp
                 } catch (e: Exception) {
-                    Log.e(TAG, "Could not send service call.", e)
-                    Toast.makeText(context, commonR.string.service_call_failure, Toast.LENGTH_LONG).show()
+                    Log.e(TAG, "Could not send action call.", e)
+                    Toast.makeText(context, commonR.string.action_failure, Toast.LENGTH_LONG).show()
                 }
             }
 
@@ -353,41 +353,37 @@ class ButtonWidget : AppWidgetProvider() {
         }
     }
 
-    private fun saveServiceCallConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
+    private fun saveActionCallConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
         if (extras == null) return
 
         val serverId = if (extras.containsKey(EXTRA_SERVER_ID)) extras.getInt(EXTRA_SERVER_ID) else null
         val domain: String? = extras.getString(EXTRA_DOMAIN)
-        val service: String? = extras.getString(EXTRA_SERVICE)
-        val serviceData: String? = extras.getString(EXTRA_SERVICE_DATA)
+        val action: String? = extras.getString(EXTRA_ACTION)
+        val actionData: String? = extras.getString(EXTRA_ACTION_DATA)
         val label: String? = extras.getString(EXTRA_LABEL)
         val requireAuthentication: Boolean = extras.getBoolean(EXTRA_REQUIRE_AUTHENTICATION)
         val icon: String = extras.getString(EXTRA_ICON_NAME) ?: "mdi:flash"
-        val backgroundType: WidgetBackgroundType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            extras.getSerializable(EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
-        } else {
-            @Suppress("DEPRECATION")
-            extras.getSerializable(EXTRA_BACKGROUND_TYPE) as? WidgetBackgroundType
-        } ?: WidgetBackgroundType.DAYNIGHT
+        val backgroundType = BundleCompat.getSerializable(extras, EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
+            ?: WidgetBackgroundType.DAYNIGHT
         val textColor: String? = extras.getString(EXTRA_TEXT_COLOR)
 
-        if (serverId == null || domain == null || service == null || serviceData == null) {
-            Log.e(TAG, "Did not receive complete service call data")
+        if (serverId == null || domain == null || action == null || actionData == null) {
+            Log.e(TAG, "Did not receive complete action call data")
             return
         }
 
         mainScope.launch {
             Log.d(
                 TAG,
-                "Saving service call config data:" + System.lineSeparator() +
+                "Saving action call config data:" + System.lineSeparator() +
                     "domain: " + domain + System.lineSeparator() +
-                    "service: " + service + System.lineSeparator() +
-                    "service_data: " + serviceData + System.lineSeparator() +
+                    "action: " + action + System.lineSeparator() +
+                    "action_data: " + actionData + System.lineSeparator() +
                     "require_authentication: " + requireAuthentication + System.lineSeparator() +
                     "label: " + label
             )
 
-            val widget = ButtonWidgetEntity(appWidgetId, serverId, icon, domain, service, serviceData, label, backgroundType, textColor, requireAuthentication)
+            val widget = ButtonWidgetEntity(appWidgetId, serverId, icon, domain, action, actionData, label, backgroundType, textColor, requireAuthentication)
             buttonWidgetDao.add(widget)
 
             // It is the responsibility of the configuration activity to update the app widget

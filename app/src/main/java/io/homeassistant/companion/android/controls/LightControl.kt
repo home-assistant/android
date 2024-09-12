@@ -68,7 +68,7 @@ object LightControl : HaControl {
     ): Boolean {
         return when (action) {
             is BooleanAction -> {
-                integrationRepository.callService(
+                integrationRepository.callAction(
                     action.templateId.split(".")[0],
                     if (action.newState) "turn_on" else "turn_off",
                     hashMapOf(
@@ -79,7 +79,7 @@ object LightControl : HaControl {
             }
             is FloatAction -> {
                 val convertBrightness = action.newValue.div(100).times(255)
-                integrationRepository.callService(
+                integrationRepository.callAction(
                     action.templateId.split(".")[0],
                     "turn_on",
                     hashMapOf(

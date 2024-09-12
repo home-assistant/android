@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.common.data.integration
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-data class ServiceFields(
+data class ActionFields(
     val name: String?,
     val description: String?,
     val example: Any?,

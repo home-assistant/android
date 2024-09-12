@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.widgets.common
 
-data class ServiceFieldBinder(
-    val service: String,
+data class ActionFieldBinder(
+    val action: String,
     val field: String,
     var value: Any? = null
 )

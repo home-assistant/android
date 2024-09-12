@@ -112,11 +112,11 @@ class ConversationViewModel @Inject constructor(
     }
 
     /** @return `true` if the voice input intent should be fired */
-    fun onNewIntent(intent: Intent?): Boolean {
+    fun onNewIntent(intent: Intent): Boolean {
         if (
             (
-                (intent?.flags != null && intent.flags and Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT != 0) ||
-                    intent?.action in listOf(Intent.ACTION_ASSIST, "android.intent.action.VOICE_ASSIST")
+                (intent.flags and Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT != 0) ||
+                    intent.action in listOf(Intent.ACTION_ASSIST, "android.intent.action.VOICE_ASSIST")
                 ) &&
             inputMode != AssistInputMode.BLOCKED
         ) {
@@ -128,8 +128,6 @@ class ConversationViewModel @Inject constructor(
         }
         return false
     }
-
-    fun isRegistered(): Boolean = serverManager.isRegistered()
 
     override fun getInput(): AssistInputMode = inputMode
 
@@ -262,7 +260,7 @@ class ConversationViewModel @Inject constructor(
         ) { newMessage, isInput, isError ->
             _conversation.indexOf(message).takeIf { pos -> pos >= 0 }?.let { index ->
                 _conversation[index] = message.copy(
-                    message = newMessage,
+                    message = newMessage.trim(),
                     isInput = isInput ?: message.isInput,
                     isError = isError
                 )
