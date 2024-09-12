@@ -1028,7 +1028,7 @@
     <string name="widget_tap_action_label">Tap action:</string>
     <string name="widget_tap_action_toggle">Toggle</string>
     <string name="widget_template_error">Unable to render the template</string>
-    <string name="widget_text_hint_label">Entity name</string>
+    <string name="widget_text_hint_label">Label</string>
     <string name="widget_text_hint_action_data">Entity ID</string>
     <string name="widget_text_hint_action_domain">Domain</string>
     <string name="widget_text_hint_action_action">Action</string>
