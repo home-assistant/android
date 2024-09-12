@@ -118,13 +118,15 @@ class GraphWidget : BaseWidgetProvider<GraphWidgetRepository>() {
                 }
             }
         }
-        onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
     }
 
     override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity<Map<String, Any>>?): RemoteViews {
         val historicData = repository.getGraphWidgetWithHistories(appWidgetId)
         val widgetEntity = historicData?.graphWidget
-
+        fetchHistory(appWidgetId = appWidgetId) {
+            onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
+            return@fetchHistory
+        }
         val intent = Intent(context, GraphWidget::class.java).apply {
             action = UPDATE_VIEW
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
@@ -151,7 +153,7 @@ class GraphWidget : BaseWidgetProvider<GraphWidgetRepository>() {
         val useDynamicColors = widgetEntity?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
         val views = RemoteViews(context.packageName, if (useDynamicColors) R.layout.widget_graph_wrapper_dynamiccolor else R.layout.widget_graph_wrapper_default)
             .apply {
-                if (widgetEntity != null && (historicData.histories?.size ?: 0) >= 1) {
+                if (widgetEntity != null && (historicData.histories?.size ?: 0) > 1) {
                     val entityId: String = widgetEntity.entityId
                     val label: String? = widgetEntity.label
 
@@ -166,7 +168,7 @@ class GraphWidget : BaseWidgetProvider<GraphWidgetRepository>() {
                         label ?: entityId
                     )
                     setViewVisibility(
-                        R.id.widgetStaticError,
+                        R.id.widgetGraphError,
                         if (cantFetchEntity) View.VISIBLE else View.GONE
                     )
                     setImageViewBitmap(
@@ -241,8 +243,6 @@ class GraphWidget : BaseWidgetProvider<GraphWidgetRepository>() {
                     lastUpdate = entity.lastChanged.timeInMillis
                 )
             }
-
-            onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
         }
     }
 
@@ -383,7 +383,6 @@ class GraphWidget : BaseWidgetProvider<GraphWidgetRepository>() {
                 }
             } else {
                 Log.d(TAG, "History fetch not necessary for widget $appWidgetId")
-                onHistoryFetched()
             }
         }
     }
