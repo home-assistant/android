@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.data.websocket
 
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharedFlow
@@ -24,4 +25,6 @@ data class WebSocketRequest(
     val eventTimeout: Long = 0L,
     val onEvent: Channel<Any>? = null,
     var onResponse: CancellableContinuation<SocketResponse>? = null
-)
+) {
+    val hasContinuationBeenInvoked = AtomicBoolean(false)
+}
