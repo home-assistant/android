@@ -1282,5 +1282,10 @@
     <string name="time_range">Time range:</string>
     <string name="smoother_stats">Smoother stats</string>
     <string name="significant_changes_only">Significant changes only</string>
-
+    <string name="basic_sensor_name_sim_1_signal_strength">Signal strength (SIM 1)</string>
+    <string name="basic_sensor_name_sim_2_signal_strength">Signal strength (SIM 2)</string>
+    <string name="sensor_description_signal_strength">Get the most recently available signal strength information. Due to power saving this information may not always be current.</string>
+    <string name="basic_sensor_name_sim_1_data_network_type">Data network type (SIM 1)</string>
+    <string name="basic_sensor_name_sim_2_data_network_type">Data network type (SIM 2)</string>
+    <string name="sensor_description_data_network_type">The radio technology (network type) currently in use on the device for data transmission</string>
 </resources>

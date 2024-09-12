@@ -705,7 +705,11 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
         val id = response.id!!
         activeMessages[id]?.let {
             it.onResponse?.let { cont ->
-                if (cont.isActive) cont.resumeWith(Result.success(response))
+                if (!it.hasContinuationBeenInvoked.getAndSet(true) && cont.isActive) {
+                    cont.resumeWith(Result.success(response))
+                } else {
+                    Log.w(TAG, "Response continuation has already been invoked for ${response.id}, ${response.event}")
+                }
             }
             if (it.eventFlow == null) {
                 activeMessages.remove(id)
@@ -818,7 +822,11 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
                         .filterValues { it.eventFlow == null }
                         .forEach {
                             it.value.onResponse?.let { cont ->
-                                if (cont.isActive) cont.resumeWithException(IOException())
+                                if (!it.value.hasContinuationBeenInvoked.getAndSet(true) && cont.isActive) {
+                                    cont.resumeWithException(IOException())
+                                } else {
+                                    Log.w(TAG, "Response continuation has already been invoked, skipping IOException")
+                                }
                             }
                             activeMessages.remove(it.key)
                         }
