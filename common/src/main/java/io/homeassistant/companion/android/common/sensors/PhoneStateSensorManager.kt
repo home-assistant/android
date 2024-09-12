@@ -57,6 +57,8 @@ class PhoneStateSensorManager : SensorManager {
             commonR.string.basic_sensor_name_sim_1_signal_strength,
             commonR.string.sensor_description_signal_strength,
             "mdi:signal",
+            unitOfMeasurement = "dBm",
+            deviceClass = "signal_strength",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
 
@@ -66,6 +68,8 @@ class PhoneStateSensorManager : SensorManager {
             commonR.string.basic_sensor_name_sim_2_signal_strength,
             commonR.string.sensor_description_signal_strength,
             "mdi:signal",
+            unitOfMeasurement = "dBm",
+            deviceClass = "signal_strength",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
 
