@@ -108,7 +108,7 @@ fun SensorUi(
                 }
             }
         },
-        selectionControl = { ToggleSwitch(isChecked) },
+        toggleControl = { ToggleSwitch(isChecked) },
         colors = getToggleButtonColors()
     )
 }

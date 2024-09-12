@@ -105,7 +105,7 @@ fun SettingsView(
                     onCheckedChange = { setFavoritesOnly(it) },
                     label = { Text(stringResource(commonR.string.only_favorites)) },
                     enabled = favorites.isNotEmpty(),
-                    selectionControl = { ToggleSwitch(isFavoritesOnly) },
+                    toggleControl = { ToggleSwitch(isFavoritesOnly) },
                     icon = {
                         Image(
                             asset = CommunityMaterial.Icon2.cmd_home_heart,
@@ -141,7 +141,7 @@ fun SettingsView(
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     },
-                    selectionControl = { ToggleSwitch(isHapticEnabled) },
+                    toggleControl = { ToggleSwitch(isHapticEnabled) },
                     colors = getToggleButtonColors()
                 )
             }
@@ -162,7 +162,7 @@ fun SettingsView(
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     },
-                    selectionControl = { ToggleSwitch(isToastEnabled) },
+                    toggleControl = { ToggleSwitch(isToastEnabled) },
                     colors = getToggleButtonColors()
                 )
             }
@@ -222,7 +222,7 @@ fun SettingsView(
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     },
-                    selectionControl = { ToggleSwitch(isAssistantAppAllowed) },
+                    toggleControl = { ToggleSwitch(isAssistantAppAllowed) },
                     colors = getToggleButtonColors()
                 )
             }
