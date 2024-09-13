@@ -118,6 +118,14 @@ class MapVehicleScreen(
                         )
                         .setOnClickListener {
                             Log.i(TAG, "${pair.first.entityId} clicked")
+                            lifecycleScope.launch {
+                                integrationRepository.fireEvent(
+                                    "android.navigation_started",
+                                    mapOf(
+                                        "entity_id" to pair.first.entityId
+                                    )
+                                )
+                            }
                             val intent = Intent(
                                 CarContext.ACTION_NAVIGATE,
                                 Uri.parse("geo:${pair.second[0]},${pair.second[1]}")
