@@ -26,6 +26,7 @@ import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWid
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.util.hasActiveConnection
+import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import java.util.LinkedList
 import javax.inject.Inject
@@ -230,9 +231,9 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
                 var iconBitmap = IconicsDrawable(context, CommunityMaterial.Icon.cmd_cast).toBitmap()
                 if (icon?.startsWith("mdi") == true && icon.substringAfter(":").isNotBlank()) {
-                    val iconDrawable = IconicsDrawable(context, "cmd-${icon.substringAfter(":")}")
-                    if (iconDrawable.icon != null) {
-                        iconBitmap = iconDrawable.toBitmap()
+                    val mdiIcon = CommunityMaterial.getIconByMdiName(icon)
+                    if (mdiIcon != null) {
+                        iconBitmap = IconicsDrawable(context, mdiIcon).toBitmap()
                     }
                 }
 

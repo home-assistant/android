@@ -10,6 +10,7 @@ import android.service.controls.actions.ControlAction
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import com.mikepenz.iconics.IconicsDrawable
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import com.mikepenz.iconics.utils.sizeDp
 import com.mikepenz.iconics.utils.toAndroidIconCompat
 import io.homeassistant.companion.android.common.R
@@ -17,6 +18,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.friendlyState
+import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import io.homeassistant.companion.android.webview.WebViewActivity
 
 @RequiresApi(Build.VERSION_CODES.R)
@@ -53,12 +55,12 @@ interface HaControl {
         if (entity.attributes["icon"]?.toString()?.startsWith("mdi:") == true &&
             !entity.attributes["icon"]?.toString()?.substringAfter(":").isNullOrBlank()
         ) {
-            val iconName = entity.attributes["icon"]!!.toString().split(':')[1]
-            val iconDrawable =
-                IconicsDrawable(context, "cmd-$iconName").apply {
-                    sizeDp = 48
-                }
-            if (iconDrawable.icon != null) {
+            val icon = CommunityMaterial.getIconByMdiName(entity.attributes["icon"]!!.toString())
+            if (icon != null) {
+                val iconDrawable =
+                    IconicsDrawable(context, icon).apply {
+                        sizeDp = 48
+                    }
                 val colorTint = when {
                     entity.domain == "light" && entity.state == "on" -> R.color.colorDeviceControlsLightOn
                     entity.domain == "camera" -> R.color.colorDeviceControlsCamera
