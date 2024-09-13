@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.sensors
 
 import android.content.Context
+import android.content.pm.PackageManager.FEATURE_SENSOR_ACCELEROMETER
 import android.content.res.Configuration
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -17,6 +18,7 @@ import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 class DisplaySensorManager : SensorManager, SensorEventListener {
     companion object {
         private const val TAG = "DisplaySensors"
+        private var hasAccelerometer = false
         private var isListenerRegistered = false
         private var listenerLastRegistered = 0
 
@@ -55,7 +57,7 @@ class DisplaySensorManager : SensorManager, SensorEventListener {
             commonR.string.sensor_description_screen_rotation,
             "mdi:screen-rotation",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#screen-rotation-sensor",
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            unitOfMeasurement = "°"
         )
 
         val isFaceDown = SensorManager.BasicSensor(
@@ -71,7 +73,12 @@ class DisplaySensorManager : SensorManager, SensorEventListener {
         get() = commonR.string.sensor_name_display_sensors
 
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        return listOf(screenBrightness, screenOffTimeout, screenOrientation, screenRotation, isFaceDown)
+        hasAccelerometer = context.packageManager.hasSystemFeature(FEATURE_SENSOR_ACCELEROMETER)
+        return if (hasAccelerometer) {
+            listOf(screenBrightness, screenOffTimeout, screenOrientation, screenRotation, isFaceDown)
+        } else {
+            listOf(screenBrightness, screenOffTimeout, screenOrientation, screenRotation)
+        }
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
@@ -93,7 +100,9 @@ class DisplaySensorManager : SensorManager, SensorEventListener {
         updateScreenTimeout(context)
         updateScreenOrientation(context)
         updateScreenRotation(context)
-        updateIsFaceDown(context)
+        if (hasAccelerometer) {
+            updateIsFaceDown(context)
+        }
     }
 
     private fun updateScreenBrightness(context: Context) {
@@ -189,10 +198,10 @@ class DisplaySensorManager : SensorManager, SensorEventListener {
 
         @Suppress("DEPRECATION")
         val display = when (wm.defaultDisplay.rotation) {
-            Surface.ROTATION_0 -> "0°"
-            Surface.ROTATION_90 -> "90°"
-            Surface.ROTATION_180 -> "180°"
-            Surface.ROTATION_270 -> "270°"
+            Surface.ROTATION_0 -> "0"
+            Surface.ROTATION_90 -> "90"
+            Surface.ROTATION_180 -> "180"
+            Surface.ROTATION_270 -> "270"
             else -> STATE_UNKNOWN
         }
 
@@ -232,6 +241,8 @@ class DisplaySensorManager : SensorManager, SensorEventListener {
 
     override fun onSensorChanged(event: SensorEvent?) {
         if (event?.sensor?.type == Sensor.TYPE_ACCELEROMETER) {
+            // Following the example from: https://developer.android.com/reference/android/hardware/SensorEvent#values
+            // When the device is lying flat with the screen down the value is inverted
             onSensorUpdated(
                 latestContext,
                 isFaceDown,

@@ -1283,10 +1283,10 @@
     <string name="basic_sensor_name_sim_1_data_network_type">Data network type (SIM 1)</string>
     <string name="basic_sensor_name_sim_2_data_network_type">Data network type (SIM 2)</string>
     <string name="sensor_description_data_network_type">The radio technology (network type) currently in use on the device for data transmission</string>
-    <string name="sensor_name_screen_orientation">Screen Orientation</string>
+    <string name="sensor_name_screen_orientation">Screen orientation</string>
     <string name="sensor_description_screen_orientation">Overall orientation of the screen</string>
-    <string name="sensor_name_screen_rotation">Screen Rotation</string>
+    <string name="sensor_name_screen_rotation">Screen rotation</string>
     <string name="sensor_description_screen_rotation">The rotation of the screen from its \"natural\" orientation</string>
-    <string name="sensor_name_is_face_down">Is Face Down</string>
+    <string name="sensor_name_is_face_down">Is face down</string>
     <string name="sensor_description_is_face_down">If the device screen is facing down at the ground</string>
 </resources>
