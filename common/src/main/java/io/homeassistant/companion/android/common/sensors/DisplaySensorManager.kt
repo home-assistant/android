@@ -7,10 +7,11 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
+import android.hardware.display.DisplayManager
 import android.provider.Settings
 import android.util.Log
+import android.view.Display
 import android.view.Surface
-import android.view.WindowManager
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
@@ -194,23 +195,19 @@ class DisplaySensorManager : SensorManager, SensorEventListener {
             return
         }
 
-        val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val dm = context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
 
-        @Suppress("DEPRECATION")
-        val display = when (wm.defaultDisplay.rotation) {
-            Surface.ROTATION_0 -> "0"
-            Surface.ROTATION_90 -> "90"
-            Surface.ROTATION_180 -> "180"
-            Surface.ROTATION_270 -> "270"
-            else -> STATE_UNKNOWN
-        }
+        val display = getRotationString(dm.getDisplay(Display.DEFAULT_DISPLAY).rotation)
+
+        val hasMultipleDisplays = dm.displays.size > 1
+        val multiple = dm.displays.associate { it.name to getRotationString(it.rotation) }
 
         onSensorUpdated(
             context,
             screenRotation,
             display,
             screenRotation.statelessIcon,
-            mapOf()
+            if (hasMultipleDisplays) multiple else mapOf()
         )
     }
 
@@ -259,5 +256,13 @@ class DisplaySensorManager : SensorManager, SensorEventListener {
 
     override fun onAccuracyChanged(p0: Sensor?, p1: Int) {
         // No op
+    }
+
+    private fun getRotationString(rotate: Int): String = when (rotate) {
+        Surface.ROTATION_0 -> "0"
+        Surface.ROTATION_90 -> "90"
+        Surface.ROTATION_180 -> "180"
+        Surface.ROTATION_270 -> "270"
+        else -> STATE_UNKNOWN
     }
 }
