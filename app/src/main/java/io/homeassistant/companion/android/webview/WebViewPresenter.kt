@@ -65,4 +65,7 @@ interface WebViewPresenter {
     fun getMatterThreadIntent(): IntentSender?
     fun onMatterThreadIntentResult(context: Context, result: ActivityResult)
     fun finishMatterThreadFlow()
+
+    fun startScanningForImprov()
+    fun stopScanningForImprov()
 }

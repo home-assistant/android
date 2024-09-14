@@ -29,4 +29,6 @@ interface WebView {
     fun unlockAppIfNeeded()
 
     fun showError(errorType: ErrorType = ErrorType.TIMEOUT_GENERAL, error: SslError? = null, description: String? = null)
+
+    fun showImprovAvailable()
 }

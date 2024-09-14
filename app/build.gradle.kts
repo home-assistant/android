@@ -187,6 +187,7 @@ dependencies {
     implementation(libs.changeLog)
 
     implementation(libs.zxing)
+    implementation(files("libs/improv-sdk-0.0.2.aar"))
 
     implementation(libs.car.core)
     "fullImplementation"(libs.car.projected)

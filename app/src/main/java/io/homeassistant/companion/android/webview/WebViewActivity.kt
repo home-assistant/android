@@ -71,6 +71,8 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
+import com.google.android.material.snackbar.BaseTransientBottomBar.LENGTH_LONG
+import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.BuildConfig
@@ -87,6 +89,7 @@ import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.databinding.ActivityWebviewBinding
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
+import io.homeassistant.companion.android.improv.ui.ImprovSetupDialog
 import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.nfc.WriteNfcTag
 import io.homeassistant.companion.android.sensors.SensorReceiver
@@ -752,7 +755,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                                     "canCommissionMatter" to canCommissionMatter,
                                                     "canImportThreadCredentials" to canExportThread,
                                                     "hasAssist" to true,
-                                                    "hasBarCodeScanner" to hasBarCodeScanner
+                                                    "hasBarCodeScanner" to hasBarCodeScanner,
+                                                    "canSetupImprov" to true
                                                 )
                                             ),
                                             callback = {
@@ -818,6 +822,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                         )
                                     )
                                 }
+                                "improv/scan" -> presenter.startScanningForImprov()
                                 "exoplayer/play_hls" -> exoPlayHls(json)
                                 "exoplayer/stop" -> exoStopHls()
                                 "exoplayer/resize" -> exoResizeHls(json)
@@ -1666,6 +1671,23 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 Log.d(TAG, "User is in the Home Assistant config. Will not show first view of the default dashboard.")
             }
         }
+    }
+
+    override fun showImprovAvailable() {
+        Snackbar.make(
+            binding.root,
+            "Improv-WiFi devices are available to set up",
+            LENGTH_LONG
+        ).setAction(
+            "Configure"
+        ) {
+            showImprovDialog()
+        }.show()
+    }
+
+    private fun showImprovDialog() {
+        val dialog = ImprovSetupDialog()
+        dialog.show(supportFragmentManager, ImprovSetupDialog.TAG)
     }
 
     override fun onNewIntent(intent: Intent) {
