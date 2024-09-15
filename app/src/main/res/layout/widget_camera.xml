@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/widgetLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/widget_button_background"
+    android:background="@android:color/transparent"
     android:minWidth="40dp"
     android:minHeight="40dp"
     android:theme="@style/Theme.HomeAssistant.Widget">
@@ -21,17 +22,21 @@
     <FrameLayout
         android:id="@+id/widgetCameraPlaceholder"
         android:layout_width="match_parent"
-        android:background="@drawable/widget_button_background"
+        android:layout_gravity="center"
+        android:background="@android:color/transparent"
         android:layout_height="match_parent">
-
+        <ImageView
+            android:layout_width="80dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:contentDescription="@string/widget_camera_contentdescription"
+            android:scaleType="fitCenter"
+             android:src="@drawable/circle" />
         <ImageView
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:layout_gravity="center"
-            android:layout_marginStart="4dp"
-            android:layout_marginTop="4dp"
-            android:layout_marginBottom="4dp"
-            android:contentDescription="@string/widget_camera_contentdescription"
+             android:contentDescription="@string/widget_camera_contentdescription"
             android:scaleType="fitCenter"
             android:src="@android:drawable/ic_menu_camera" />
     </FrameLayout>
