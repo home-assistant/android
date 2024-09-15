@@ -2,14 +2,11 @@ package io.homeassistant.companion.android.widgets.camera
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
-import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.res.Resources
+import android.graphics.Bitmap
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
@@ -18,104 +15,45 @@ import com.squareup.picasso.Picasso
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.database.widget.CameraWidgetDao
+import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.repositories.CameraWidgetRepository
 import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
-import io.homeassistant.companion.android.util.hasActiveConnection
+import io.homeassistant.companion.android.util.DisplayUtils.getScreenWidth
 import io.homeassistant.companion.android.webview.WebViewActivity
-import javax.inject.Inject
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import io.homeassistant.companion.android.widgets.BaseWidgetProvider
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class CameraWidget : AppWidgetProvider() {
+class CameraWidget : BaseWidgetProvider<CameraWidgetRepository, Entity<*>>() {
 
     companion object {
         private const val TAG = "CameraWidget"
-        internal const val RECEIVE_DATA =
-            "io.homeassistant.companion.android.widgets.camera.CameraWidget.RECEIVE_DATA"
+
         internal const val UPDATE_IMAGE =
             "io.homeassistant.companion.android.widgets.camera.CameraWidget.UPDATE_IMAGE"
+
+        internal const val ENTITY_PICTURE_ATTRIBUTE = "entity_picture"
 
         internal const val EXTRA_SERVER_ID = "EXTRA_SERVER_ID"
         internal const val EXTRA_ENTITY_ID = "EXTRA_ENTITY_ID"
         internal const val EXTRA_TAP_ACTION = "EXTRA_TAP_ACTION"
-        private var lastIntent = ""
     }
 
-    @Inject
-    lateinit var serverManager: ServerManager
+    private var lastCameraBitmap: Bitmap? = null
 
-    @Inject
-    lateinit var cameraWidgetDao: CameraWidgetDao
+    override fun getWidgetProvider(context: Context): ComponentName =
+        ComponentName(context, CameraWidget::class.java)
 
-    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
-
-    override fun onUpdate(
-        context: Context,
-        appWidgetManager: AppWidgetManager,
-        appWidgetIds: IntArray
-    ) {
-        // There may be multiple widgets active, so update all of them
-        appWidgetIds.forEach { appWidgetId ->
-            updateAppWidget(
-                context,
-                appWidgetId,
-                appWidgetManager
-            )
-        }
-    }
-
-    private fun updateAppWidget(
-        context: Context,
-        appWidgetId: Int,
-        appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context)
-    ) {
-        if (!context.hasActiveConnection()) {
-            Log.d(TAG, "Skipping widget update since network connection is not active")
-            return
-        }
-        mainScope.launch {
-            val views = getWidgetRemoteViews(context, appWidgetId)
-            appWidgetManager.updateAppWidget(appWidgetId, views)
-        }
-    }
-
-    private fun updateAllWidgets(context: Context) {
-        mainScope.launch {
-            val appWidgetManager = AppWidgetManager.getInstance(context)
-            val systemWidgetIds = appWidgetManager.getAppWidgetIds(ComponentName(context, CameraWidget::class.java))
-            val dbWidgetList = cameraWidgetDao.getAll()
-
-            val invalidWidgetIds = dbWidgetList
-                .filter { !systemWidgetIds.contains(it.id) }
-                .map { it.id }
-            if (invalidWidgetIds.isNotEmpty()) {
-                Log.i(TAG, "Found widgets $invalidWidgetIds in database, but not in AppWidgetManager - sending onDeleted")
-                onDeleted(context, invalidWidgetIds.toIntArray())
-            }
-
-            val cameraWidgetList = dbWidgetList.filter { systemWidgetIds.contains(it.id) }
-            if (cameraWidgetList.isNotEmpty()) {
-                Log.d(TAG, "Updating all widgets")
-                for (item in cameraWidgetList) {
-                    updateAppWidget(context, item.id, appWidgetManager)
-                }
-            }
-        }
-    }
-
-    private suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews {
+    override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, hasActiveConnection: Boolean, suggestedEntity: Entity<*>?): RemoteViews {
         val updateCameraIntent = Intent(context, CameraWidget::class.java).apply {
             action = UPDATE_IMAGE
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         }
 
         return RemoteViews(context.packageName, R.layout.widget_camera).apply {
-            val widget = cameraWidgetDao.get(appWidgetId)
+            val widget = repository.get(appWidgetId)
             if (widget != null) {
                 var entityPictureUrl: String?
                 try {
@@ -129,18 +67,18 @@ class CameraWidget : AppWidgetProvider() {
                 val baseUrl = serverManager.getServer(widget.serverId)?.connection?.getUrl().toString().removeSuffix("/")
                 val url = "$baseUrl$entityPictureUrl"
                 if (entityPictureUrl == null) {
-                    setImageViewResource(
-                        R.id.widgetCameraImage,
-                        R.drawable.app_icon_round
-                    )
-                    setViewVisibility(
-                        R.id.widgetCameraPlaceholder,
-                        View.VISIBLE
-                    )
-                    setViewVisibility(
-                        R.id.widgetCameraImage,
-                        View.GONE
-                    )
+//                    setImageViewResource(
+//                        R.id.widgetCameraImage,
+//                        android.R.drawable.ic_menu_camera
+//                    )
+//                    setViewVisibility(
+//                        R.id.widgetCameraPlaceholder,
+//                        View.VISIBLE
+//                    )
+//                    setViewVisibility(
+//                        R.id.widgetCameraImage,
+//                        View.GONE
+//                    )
                 } else {
                     setViewVisibility(
                         R.id.widgetCameraImage,
@@ -151,24 +89,9 @@ class CameraWidget : AppWidgetProvider() {
                         View.GONE
                     )
                     Log.d(TAG, "Fetching camera image")
-                    Handler(Looper.getMainLooper()).post {
-                        val picasso = Picasso.get()
-                        if (BuildConfig.DEBUG) {
-                            picasso.isLoggingEnabled = true
-                        }
-                        try {
-                            picasso.invalidate(url)
-                            picasso.load(url).resize(getScreenWidth(), 0).onlyScaleDown().into(
-                                this,
-                                R.id.widgetCameraImage,
-                                intArrayOf(appWidgetId)
-                            )
-                        } catch (e: Exception) {
-                            Log.e(TAG, "Unable to fetch image", e)
-                        }
-                        Log.d(TAG, "Fetch and load complete")
-                    }
                 }
+
+                updateBitmapCameraImage(context, hasActiveConnection, this, appWidgetId, url)
 
                 val tapWidgetPendingIntent = when (widget.tapAction) {
                     WidgetTapAction.OPEN -> PendingIntent.getActivity(
@@ -185,7 +108,15 @@ class CameraWidget : AppWidgetProvider() {
                         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                     )
                 }
-                setOnClickPendingIntent(R.id.widgetCameraImage, tapWidgetPendingIntent)
+                setOnClickPendingIntent(
+                    R.id.widgetLayout,
+                    PendingIntent.getBroadcast(
+                        context,
+                        appWidgetId,
+                        updateCameraIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
+                )
                 setOnClickPendingIntent(R.id.widgetCameraPlaceholder, tapWidgetPendingIntent)
             }
         }
@@ -193,29 +124,18 @@ class CameraWidget : AppWidgetProvider() {
 
     private suspend fun retrieveCameraImageUrl(serverId: Int, entityId: String): String? {
         val entity = serverManager.integrationRepository(serverId).getEntity(entityId)
-        return entity?.attributes?.get("entity_picture")?.toString()
+        return entity?.attributes?.get(ENTITY_PICTURE_ATTRIBUTE)?.toString()
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        lastIntent = intent.action.toString()
-        val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
-
-        Log.d(
-            TAG,
-            "Broadcast received: " + System.lineSeparator() +
-                "Broadcast action: " + lastIntent + System.lineSeparator() +
-                "AppWidgetId: " + appWidgetId
-        )
-
         super.onReceive(context, intent)
+        val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
         when (lastIntent) {
-            RECEIVE_DATA -> saveEntityConfiguration(context, intent.extras, appWidgetId)
-            UPDATE_IMAGE -> updateAppWidget(context, appWidgetId)
-            Intent.ACTION_SCREEN_ON -> updateAllWidgets(context)
+            UPDATE_IMAGE -> forceUpdateView(context, appWidgetId)
         }
     }
 
-    private fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
+    override fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
         if (extras == null) return
 
         val serverSelection = if (extras.containsKey(EXTRA_SERVER_ID)) extras.getInt(EXTRA_SERVER_ID) else null
@@ -228,41 +148,60 @@ class CameraWidget : AppWidgetProvider() {
             return
         }
 
-        mainScope.launch {
+        widgetScope?.launch {
             Log.d(
                 TAG,
                 "Saving camera config data:" + System.lineSeparator() +
                     "entity id: " + entitySelection + System.lineSeparator()
             )
-            cameraWidgetDao.add(
+            repository.add(
                 CameraWidgetEntity(
-                    appWidgetId,
-                    serverSelection,
-                    entitySelection,
-                    tapActionSelection
+                    id = appWidgetId,
+                    entityId = entitySelection,
+                    serverId = serverSelection,
+                    tapAction = tapActionSelection
                 )
             )
-
-            onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
         }
     }
 
-    override fun onDeleted(context: Context, appWidgetIds: IntArray) {
-        // When the user deletes the widget, delete the preference associated with it.
-        mainScope.launch {
-            cameraWidgetDao.deleteAll(appWidgetIds)
+    private fun updateBitmapCameraImage(context: Context, hasActiveConnection: Boolean, views: RemoteViews, appWidgetId: Int, url: String) {
+        if (hasActiveConnection) {
+            widgetWorkScope?.launch {
+                val picasso = Picasso.get()
+                picasso.isLoggingEnabled = BuildConfig.DEBUG
+                try {
+                    picasso.invalidate(url)
+                    lastCameraBitmap = picasso.load(url)
+                        .stableKey(url)
+                        .resize(getScreenWidth(), 0)
+                        .onlyScaleDown().get()
+
+                    widgetScope?.launch {
+                        views.setImageViewBitmap(R.id.widgetCameraImage, lastCameraBitmap)
+                        AppWidgetManager.getInstance(context).partiallyUpdateAppWidget(appWidgetId, views)
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unable to fetch image", e)
+                }
+                Log.d(TAG, "Fetch and load complete")
+            }
+        } else {
+            widgetScope?.launch {
+                lastCameraBitmap?.let {
+                    views.setImageViewBitmap(R.id.widgetCameraImage, it)
+                    AppWidgetManager.getInstance(context).partiallyUpdateAppWidget(appWidgetId, views)
+                }
+            }
         }
     }
 
-    override fun onEnabled(context: Context) {
-        // Enter relevant functionality for when the first widget is created
-    }
+//    override suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity<*>) {
+//        super.onEntityStateChanged(context, appWidgetId, entity)
+//        widgetScope?.launch {
+//            forceUpdateView(context, appWidgetId)
+//        }
+//    }
 
-    override fun onDisabled(context: Context) {
-        // Enter relevant functionality for when the last widget is disabled
-    }
-
-    private fun getScreenWidth(): Int {
-        return Resources.getSystem().displayMetrics.widthPixels
-    }
+    override suspend fun getUpdates(serverId: Int, entityIds: List<String>): Flow<Entity<Map<String, Any>>> = serverManager.integrationRepository(serverId).getEntityUpdates(entityIds) as Flow<Entity<Map<String, Any>>>
 }

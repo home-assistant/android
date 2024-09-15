@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 47,
-    "identityHash": "f02f3b0062cfc7559bbd23f8148fb3b1",
+    "identityHash": "0c9247ff03d0dd1f6d7ef42c18c369ce",
     "entities": [
       {
         "tableName": "sensor_attributes",
@@ -249,7 +249,7 @@
       },
       {
         "tableName": "button_widgets",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `icon_name` TEXT NOT NULL, `domain` TEXT NOT NULL, `service` TEXT NOT NULL, `service_data` TEXT NOT NULL, `label` TEXT, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, `require_authentication` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `entity_id` TEXT, `icon_name` TEXT NOT NULL, `domain` TEXT NOT NULL, `service` TEXT NOT NULL, `service_data` TEXT NOT NULL, `label` TEXT, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, `require_authentication` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -263,6 +263,12 @@
             "affinity": "INTEGER",
             "notNull": true,
             "defaultValue": "0"
+          },
+          {
+            "fieldPath": "entityId",
+            "columnName": "entity_id",
+            "affinity": "TEXT",
+            "notNull": false
           },
           {
             "fieldPath": "iconName",
@@ -532,7 +538,7 @@
       },
       {
         "tableName": "template_widgets",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `template` TEXT NOT NULL, `text_size` REAL NOT NULL DEFAULT 12.0, `last_update` TEXT NOT NULL, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `entity_id` TEXT NOT NULL DEFAULT 'template', `template` TEXT NOT NULL, `text_size` REAL NOT NULL DEFAULT 12.0, `last_update` TEXT NOT NULL, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -546,6 +552,13 @@
             "affinity": "INTEGER",
             "notNull": true,
             "defaultValue": "0"
+          },
+          {
+            "fieldPath": "entityId",
+            "columnName": "entity_id",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'template'"
           },
           {
             "fieldPath": "template",
@@ -1121,7 +1134,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f02f3b0062cfc7559bbd23f8148fb3b1')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '0c9247ff03d0dd1f6d7ef42c18c369ce')"
     ]
   }
 }

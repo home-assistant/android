@@ -21,28 +21,24 @@ import androidx.lifecycle.lifecycleScope
 import com.fasterxml.jackson.databind.JsonMappingException
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
+import io.homeassistant.companion.android.common.data.repositories.TemplateWidgetRepository
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetTemplateConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.util.getHexForColor
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
+import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.RECEIVE_DATA
 import io.homeassistant.companion.android.widgets.common.WidgetUtils
-import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @AndroidEntryPoint
-class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
+class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity<TemplateWidgetRepository>() {
     companion object {
         private const val TAG: String = "TemplateWidgetConfigAct"
         private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.template.TemplateWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
     }
-
-    @Inject
-    lateinit var templateWidgetDao: TemplateWidgetDao
-    override val dao get() = templateWidgetDao
 
     private lateinit var binding: WidgetTemplateConfigureBinding
 
@@ -84,7 +80,7 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             return
         }
 
-        val templateWidget = templateWidgetDao.get(appWidgetId)
+        val templateWidget = repository.get(appWidgetId)
 
         val backgroundTypeValues = WidgetUtils.getBackgroundOptionList(this)
         binding.backgroundType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
@@ -171,7 +167,7 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         }
 
         val createIntent = Intent().apply {
-            action = TemplateWidget.RECEIVE_DATA
+            action = RECEIVE_DATA
             component = ComponentName(applicationContext, TemplateWidget::class.java)
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             putExtra(TemplateWidget.EXTRA_SERVER_ID, selectedServerId)

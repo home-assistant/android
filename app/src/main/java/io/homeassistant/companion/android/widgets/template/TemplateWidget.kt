@@ -2,12 +2,9 @@ package io.homeassistant.companion.android.widgets.template
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
-import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
-import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.util.TypedValue
@@ -21,189 +18,31 @@ import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
+import io.homeassistant.companion.android.common.data.repositories.TemplateWidgetRepository
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.util.getAttribute
-import javax.inject.Inject
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.isActive
+import io.homeassistant.companion.android.widgets.BaseWidgetProvider
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class TemplateWidget : AppWidgetProvider() {
+class TemplateWidget : BaseWidgetProvider<TemplateWidgetRepository, String?>() {
+
     companion object {
         private const val TAG = "TemplateWidget"
-
-        const val UPDATE_VIEW =
-            "io.homeassistant.companion.android.widgets.template.TemplateWidget.UPDATE_VIEW"
-        const val RECEIVE_DATA =
-            "io.homeassistant.companion.android.widgets.template.TemplateWidget.RECEIVE_DATA"
 
         internal const val EXTRA_SERVER_ID = "EXTRA_SERVER_ID"
         internal const val EXTRA_TEMPLATE = "extra_template"
         internal const val EXTRA_TEXT_SIZE = "EXTRA_TEXT_SIZE"
         internal const val EXTRA_BACKGROUND_TYPE = "EXTRA_BACKGROUND_TYPE"
         internal const val EXTRA_TEXT_COLOR = "EXTRA_TEXT_COLOR"
-
-        private var widgetScope: CoroutineScope? = null
-        private val widgetTemplates = mutableMapOf<Int, String>()
-        private val widgetJobs = mutableMapOf<Int, Job>()
     }
 
-    @Inject
-    lateinit var serverManager: ServerManager
+    override fun getWidgetProvider(context: Context): ComponentName =
+        ComponentName(context, TemplateWidget::class.java)
 
-    @Inject
-    lateinit var templateWidgetDao: TemplateWidgetDao
-
-    private var thisSetScope = false
-    private var lastIntent = ""
-
-    init {
-        setupWidgetScope()
-    }
-
-    private fun setupWidgetScope() {
-        if (widgetScope == null || !widgetScope!!.isActive) {
-            widgetScope = CoroutineScope(Dispatchers.Main + Job())
-            thisSetScope = true
-        }
-    }
-
-    override fun onUpdate(
-        context: Context,
-        appWidgetManager: AppWidgetManager,
-        appWidgetIds: IntArray
-    ) {
-        // There may be multiple widgets active, so update all of them
-        for (appWidgetId in appWidgetIds) {
-            widgetScope?.launch {
-                val views = getWidgetRemoteViews(context, appWidgetId)
-                appWidgetManager.updateAppWidget(appWidgetId, views)
-            }
-        }
-    }
-
-    override fun onDeleted(context: Context, appWidgetIds: IntArray) {
-        // When the user deletes the widget, delete the preference associated with it.
-        widgetScope?.launch {
-            templateWidgetDao.deleteAll(appWidgetIds)
-            appWidgetIds.forEach {
-                widgetTemplates.remove(it)
-                widgetJobs[it]?.cancel()
-                widgetJobs.remove(it)
-            }
-        }
-    }
-
-    override fun onReceive(context: Context, intent: Intent) {
-        lastIntent = intent.action.toString()
-        val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
-
-        super.onReceive(context, intent)
-        when (lastIntent) {
-            UPDATE_VIEW -> updateView(context, appWidgetId)
-            RECEIVE_DATA -> {
-                saveEntityConfiguration(
-                    context,
-                    intent.extras,
-                    appWidgetId
-                )
-                onScreenOn(context)
-            }
-            Intent.ACTION_SCREEN_ON -> onScreenOn(context)
-            Intent.ACTION_SCREEN_OFF -> onScreenOff()
-        }
-    }
-
-    private fun onScreenOn(context: Context) {
-        setupWidgetScope()
-        if (!serverManager.isRegistered()) return
-        widgetScope!!.launch {
-            updateAllWidgets(context)
-
-            val allWidgets = templateWidgetDao.getAll()
-            val widgetsWithDifferentTemplate = allWidgets.filter { it.template != widgetTemplates[it.id] }
-            if (widgetsWithDifferentTemplate.isNotEmpty()) {
-                if (thisSetScope) {
-                    ContextCompat.registerReceiver(
-                        context.applicationContext,
-                        this@TemplateWidget,
-                        IntentFilter(Intent.ACTION_SCREEN_OFF),
-                        ContextCompat.RECEIVER_NOT_EXPORTED
-                    )
-                }
-
-                widgetsWithDifferentTemplate.forEach { widget ->
-                    widgetJobs[widget.id]?.cancel()
-
-                    val templateUpdates =
-                        if (serverManager.getServer(widget.serverId) != null) {
-                            serverManager.integrationRepository(widget.serverId).getTemplateUpdates(widget.template)
-                        } else {
-                            null
-                        }
-                    if (templateUpdates != null) {
-                        widgetTemplates[widget.id] = widget.template
-                        widgetJobs[widget.id] = widgetScope!!.launch {
-                            templateUpdates.collect {
-                                onTemplateChanged(context, widget.id, it)
-                            }
-                        }
-                    } else { // Remove data to make it retry on the next update
-                        widgetTemplates.remove(widget.id)
-                        widgetJobs.remove(widget.id)
-                    }
-                }
-            }
-        }
-    }
-
-    private fun onScreenOff() {
-        if (thisSetScope) {
-            widgetScope?.cancel()
-            thisSetScope = false
-            widgetTemplates.clear()
-            widgetJobs.clear()
-        }
-    }
-
-    private suspend fun updateAllWidgets(
-        context: Context
-    ) {
-        val systemWidgetIds = AppWidgetManager.getInstance(context)
-            .getAppWidgetIds(ComponentName(context, TemplateWidget::class.java))
-            .toSet()
-        val dbWidgetIds = templateWidgetDao.getAll().map { it.id }
-
-        val invalidWidgetIds = dbWidgetIds.minus(systemWidgetIds)
-        if (invalidWidgetIds.isNotEmpty()) {
-            Log.i(TAG, "Found widgets $invalidWidgetIds in database, but not in AppWidgetManager - sending onDeleted")
-            onDeleted(context, invalidWidgetIds.toIntArray())
-        }
-
-        dbWidgetIds.filter { systemWidgetIds.contains(it) }.forEach {
-            updateView(context, it)
-        }
-    }
-
-    private fun updateView(
-        context: Context,
-        appWidgetId: Int,
-        appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context)
-    ) {
-        widgetScope?.launch {
-            val views = getWidgetRemoteViews(context, appWidgetId)
-            appWidgetManager.updateAppWidget(appWidgetId, views)
-        }
-    }
-
-    private suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedTemplate: String? = null): RemoteViews {
+    override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, hasActiveConnection: Boolean, suggestedEntity: String?): RemoteViews {
         // Every time AppWidgetManager.updateAppWidget(...) is called, the button listener
         // and label need to be re-assigned, or the next time the layout updates
         // (e.g home screen rotation) the widget will fall back on its default layout
@@ -214,7 +53,7 @@ class TemplateWidget : AppWidgetProvider() {
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         }
 
-        val widget = templateWidgetDao.get(appWidgetId)
+        val widget = repository.get(appWidgetId)
 
         val useDynamicColors = widget?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
         return RemoteViews(context.packageName, if (useDynamicColors) R.layout.widget_template_wrapper_dynamiccolor else R.layout.widget_template_wrapper_default).apply {
@@ -233,15 +72,16 @@ class TemplateWidget : AppWidgetProvider() {
                     var textColor = context.getAttribute(R.attr.colorWidgetOnBackground, ContextCompat.getColor(context, commonR.color.colorWidgetButtonLabel))
                     widget.textColor?.let { textColor = it.toColorInt() }
 
-                    setInt(R.id.widgetLayout, "setBackgroundColor", Color.TRANSPARENT)
                     setTextColor(R.id.widgetTemplateText, textColor)
                 }
 
+                setWidgetBackground(this, R.id.widgetLayout, widget)
+
                 // Content
-                var renderedTemplate: String? = templateWidgetDao.get(appWidgetId)?.lastUpdate ?: context.getString(commonR.string.loading)
+                var renderedTemplate: String? = repository.get(appWidgetId)?.lastUpdate ?: context.getString(commonR.string.loading)
                 try {
-                    renderedTemplate = suggestedTemplate ?: serverManager.integrationRepository(widget.serverId).renderTemplate(widget.template, mapOf()).toString()
-                    templateWidgetDao.updateTemplateWidgetLastUpdate(
+                    renderedTemplate = suggestedEntity ?: serverManager.integrationRepository(widget.serverId).renderTemplate(widget.template, mapOf()).toString()
+                    repository.updateWidgetLastUpdate(
                         appWidgetId,
                         renderedTemplate
                     )
@@ -265,7 +105,19 @@ class TemplateWidget : AppWidgetProvider() {
         }
     }
 
-    private fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
+    override fun onWidgetsViewUpdated(context: Context, appWidgetId: Int, appWidgetManager: AppWidgetManager, remoteViews: RemoteViews, hasActiveConnection: Boolean) {
+        super.onWidgetsViewUpdated(context, appWidgetId, appWidgetManager, remoteViews, hasActiveConnection)
+        remoteViews.setViewVisibility(
+            R.id.widgetTemplateError,
+            if (!hasActiveConnection) View.VISIBLE else View.GONE
+        )
+    }
+
+    override suspend fun getUpdates(serverId: Int, entityIds: List<String>): Flow<String?>? {
+        return serverManager.integrationRepository(serverId).getTemplateUpdates(entityIds.first())
+    }
+
+    override fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
         if (extras == null) return
 
         val serverId = if (extras.containsKey(EXTRA_SERVER_ID)) extras.getInt(EXTRA_SERVER_ID) else null
@@ -281,25 +133,18 @@ class TemplateWidget : AppWidgetProvider() {
         }
 
         widgetScope?.launch {
-            templateWidgetDao.add(
+            repository.add(
                 TemplateWidgetEntity(
                     appWidgetId,
                     serverId,
+                    "template_$appWidgetId",
                     template,
                     textSize,
-                    templateWidgetDao.get(appWidgetId)?.lastUpdate ?: "Loading",
+                    repository.get(appWidgetId)?.lastUpdate ?: ContextCompat.getString(context, commonR.string.loading),
                     backgroundTypeSelection,
                     textColorSelection
                 )
             )
-            onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
-        }
-    }
-
-    private fun onTemplateChanged(context: Context, appWidgetId: Int, template: String?) {
-        widgetScope?.launch {
-            val views = getWidgetRemoteViews(context, appWidgetId, template)
-            AppWidgetManager.getInstance(context).updateAppWidget(appWidgetId, views)
         }
     }
 }

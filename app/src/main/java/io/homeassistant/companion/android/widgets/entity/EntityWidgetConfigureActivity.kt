@@ -28,7 +28,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.friendlyName
-import io.homeassistant.companion.android.database.widget.StaticWidgetDao
+import io.homeassistant.companion.android.common.data.repositories.StaticWidgetRepository
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.databinding.WidgetStaticConfigureBinding
@@ -38,21 +38,16 @@ import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetUtils
-import javax.inject.Inject
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 @AndroidEntryPoint
-class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
+class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity<StaticWidgetRepository>() {
 
     companion object {
         private const val TAG: String = "StaticWidgetConfigAct"
         private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
     }
-
-    @Inject
-    lateinit var staticWidgetDao: StaticWidgetDao
-    override val dao get() = staticWidgetDao
 
     private var entities = mutableMapOf<Int, List<Entity<Any>>>()
 
@@ -127,7 +122,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             return
         }
 
-        val staticWidget = staticWidgetDao.get(appWidgetId)
+        val staticWidget = repository.get(appWidgetId)
 
         val tapActionValues = listOf(getString(commonR.string.widget_tap_action_toggle), getString(commonR.string.refresh))
         binding.tapActionList.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, tapActionValues)

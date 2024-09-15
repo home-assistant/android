@@ -19,20 +19,20 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
-import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
+import io.homeassistant.companion.android.common.data.repositories.MediaPlayerControlsWidgetRepository
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetMediaControlsConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
+import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.RECEIVE_DATA
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetUtils
 import java.util.LinkedList
-import javax.inject.Inject
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 @AndroidEntryPoint
-class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity() {
+class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity<MediaPlayerControlsWidgetRepository>() {
 
     companion object {
         private const val TAG: String = "MediaWidgetConfigAct"
@@ -40,10 +40,6 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
     }
 
     private var requestLauncherSetup = false
-
-    @Inject
-    lateinit var mediaPlayerControlsWidgetDao: MediaPlayerControlsWidgetDao
-    override val dao get() = mediaPlayerControlsWidgetDao
 
     private lateinit var binding: WidgetMediaControlsConfigureBinding
 
@@ -115,7 +111,7 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
             return
         }
 
-        val mediaPlayerWidget = mediaPlayerControlsWidgetDao.get(appWidgetId)
+        val mediaPlayerWidget = repository.get(appWidgetId)
 
         val backgroundTypeValues = WidgetUtils.getBackgroundOptionList(this)
         binding.backgroundType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
@@ -207,7 +203,7 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
 
             // Set up a broadcast intent and pass the service call data as extras
             val intent = Intent()
-            intent.action = MediaPlayerControlsWidget.RECEIVE_DATA
+            intent.action = RECEIVE_DATA
             intent.component = ComponentName(context, MediaPlayerControlsWidget::class.java)
 
             intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)

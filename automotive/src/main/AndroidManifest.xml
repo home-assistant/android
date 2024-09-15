@@ -120,7 +120,7 @@
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="io.homeassistant.companion.android.widgets.ButtonWidget.CALL_SERVICE" />
                 <action android:name="io.homeassistant.companion.android.widgets.ButtonWidget.CALL_SERVICE_AUTH" />
-                <action android:name="io.homeassistant.companion.android.widgets.ButtonWidget.RECEIVE_DATA" />
+                <action android:name="io.homeassistant.companion.android.widgets.RECEIVE_DATA" />
             </intent-filter>
 
             <meta-data
@@ -132,7 +132,7 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="io.homeassistant.companion.android.widgets.camera.CameraWidget.RECEIVE_DATA" />
+                <action android:name="io.homeassistant.companion.android.widgets.RECEIVE_DATA" />
                 <action android:name="io.homeassistant.companion.android.widgets.camera.CameraWidget.UPDATE_IMAGE" />
             </intent-filter>
 
@@ -145,7 +145,7 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="io.homeassistant.companion.android.widgets.StaticWidget.RECEIVE_DATA" />
+                <action android:name="io.homeassistant.companion.android.widgets.RECEIVE_DATA" />
             </intent-filter>
 
             <meta-data
@@ -157,7 +157,7 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.RECEIVE_DATA" />
+                <action android:name="io.homeassistant.companion.android.widgets.RECEIVE_DATA" />
                 <action android:name="io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.UPDATE_MEDIA_IMAGE" />
                 <action android:name="io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.CALL_PREV_TRACK" />
                 <action android:name="io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.CALL_REWIND" />
@@ -182,7 +182,7 @@
                 <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
                 <action android:name="io.homeassistant.companion.android.background.REQUEST_SENSORS_UPDATE" />
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="io.homeassistant.companion.android.widgets.template.TemplateWidget.RECEIVE_DATA" />
+                <action android:name="io.homeassistant.companion.android.widgets.RECEIVE_DATA" />
             </intent-filter>
 
             <meta-data

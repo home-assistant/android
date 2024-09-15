@@ -4,10 +4,10 @@
     android:id="@+id/widgetLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:minHeight="40dp"
-    android:minWidth="40dp"
     android:background="@drawable/widget_button_background"
     android:clipToOutline="true"
+    android:minWidth="40dp"
+    android:minHeight="40dp"
     tools:ignore="UseAppTint">
 
     <LinearLayout
@@ -17,29 +17,34 @@
         android:orientation="horizontal">
 
         <FrameLayout
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent">
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_gravity="center">
 
             <ImageView
                 android:id="@+id/widgetMediaImage"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:contentDescription="@string/widget_media_image_description"
                 android:adjustViewBounds="true"
+                android:contentDescription="@string/widget_media_image_description"
+                android:minWidth="100dp"
                 android:scaleType="centerCrop"
+                android:src="@android:drawable/ic_media_play"
                 android:visibility="invisible" />
 
             <ImageView
                 android:id="@+id/widgetMediaPlaceholder"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_gravity="center"
                 android:layout_marginStart="4dp"
                 android:layout_marginTop="4dp"
                 android:layout_marginBottom="4dp"
-                android:contentDescription="@string/widget_media_image_description"
                 android:adjustViewBounds="true"
+                android:contentDescription="@string/widget_media_image_description"
+                android:minWidth="100dp"
                 android:scaleType="fitCenter"
-                android:src="@drawable/app_icon_round" />
+                android:src="@android:drawable/ic_media_play" />
         </FrameLayout>
 
         <RelativeLayout
@@ -63,14 +68,14 @@
                 android:id="@+id/widgetSourceLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_toStartOf="@id/widgetSourceIcon"
+                android:ellipsize="marquee"
                 android:padding="6dp"
                 android:paddingStart="0dp"
                 android:paddingEnd="0dp"
                 android:singleLine="true"
-                android:ellipsize="marquee"
-                android:visibility="invisible"
                 android:textColor="?colorWidgetOnBackground"
-                android:layout_toStartOf="@id/widgetSourceIcon"
+                android:visibility="invisible"
                 tools:text="Media player Source" />
 
             <LinearLayout
@@ -78,8 +83,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_above="@id/widgetMediaButtonlayout"
-                android:layout_alignParentTop="true"
                 android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"
                 android:layout_alignParentEnd="true"
                 android:layout_marginStart="0dp"
                 android:layout_marginTop="24dp"
@@ -95,10 +100,10 @@
                     android:id="@+id/widgetLabel"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:singleLine="true"
                     android:ellipsize="marquee"
+                    android:gravity="center"
                     android:padding="0dp"
+                    android:singleLine="true"
                     android:text="@string/widget_label_placeholder_text_media_player"
                     android:textAlignment="center"
                     android:textColor="?colorWidgetOnBackground"
@@ -108,12 +113,12 @@
                     android:id="@+id/widgetMediaInfoTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="start"
-                    android:singleLine="true"
                     android:ellipsize="marquee"
+                    android:gravity="start"
                     android:padding="0dp"
                     android:paddingStart="4dp"
                     android:paddingEnd="4dp"
+                    android:singleLine="true"
                     android:textAlignment="textStart"
                     android:textColor="?colorWidgetOnBackground"
                     android:textSize="16sp"
@@ -123,12 +128,12 @@
                     android:id="@+id/widgetMediaInfoArtist"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="start"
-                    android:singleLine="true"
                     android:ellipsize="marquee"
+                    android:gravity="start"
                     android:padding="0dp"
                     android:paddingStart="4dp"
                     android:paddingEnd="4dp"
+                    android:singleLine="true"
                     android:textAlignment="textStart"
                     android:textColor="?colorWidgetOnBackground"
                     android:textSize="12sp"
@@ -152,8 +157,8 @@
                     android:padding="4dp"
                     android:scaleType="fitCenter"
                     android:src="@drawable/ic_volume_down"
-                    android:visibility="gone"
-                    android:tint="?colorWidgetButton" />
+                    android:tint="?colorWidgetButton"
+                    android:visibility="gone" />
 
                 <ImageButton
                     android:id="@+id/widgetVolumeUpButton"
@@ -165,8 +170,8 @@
                     android:padding="4dp"
                     android:scaleType="fitCenter"
                     android:src="@drawable/ic_volume_up"
-                    android:visibility="gone"
-                    android:tint="?colorWidgetButton" />
+                    android:tint="?colorWidgetButton"
+                    android:visibility="gone" />
 
                 <ImageButton
                     android:id="@+id/widgetPrevTrackButton"

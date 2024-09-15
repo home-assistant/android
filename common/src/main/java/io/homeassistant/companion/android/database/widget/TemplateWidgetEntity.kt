@@ -10,6 +10,8 @@ data class TemplateWidgetEntity(
     override val id: Int,
     @ColumnInfo(name = "server_id", defaultValue = "0")
     override val serverId: Int,
+    @ColumnInfo(name = "entity_id", defaultValue = "template")
+    override val entityId: String,
     @ColumnInfo(name = "template")
     val template: String,
     @ColumnInfo(name = "text_size", defaultValue = "12.0")

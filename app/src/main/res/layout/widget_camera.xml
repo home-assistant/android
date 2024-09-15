@@ -3,36 +3,47 @@
     android:id="@+id/widgetLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:minHeight="40dp"
+    android:background="@drawable/widget_button_background"
     android:minWidth="40dp"
-    android:background="@drawable/widget_transparent_background"
+    android:minHeight="40dp"
     android:theme="@style/Theme.HomeAssistant.Widget">
 
     <ImageView
         android:id="@+id/widgetCameraImage"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="invisible"
+        android:layout_gravity="center"
         android:adjustViewBounds="true"
         android:contentDescription="@string/widget_camera_contentdescription"
-        android:scaleType="fitCenter" />
-    <ImageView
+        android:scaleType="fitCenter"
+        android:visibility="invisible" />
+
+    <FrameLayout
         android:id="@+id/widgetCameraPlaceholder"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginStart="4dp"
-        android:layout_marginTop="4dp"
-        android:layout_marginBottom="4dp"
-        android:src="@drawable/app_icon_round"
-        android:contentDescription="@string/widget_camera_contentdescription"
-        android:scaleType="fitCenter" />
+        android:background="@drawable/widget_button_background"
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp"
+            android:contentDescription="@string/widget_camera_contentdescription"
+            android:scaleType="fitCenter"
+            android:src="@android:drawable/ic_menu_camera" />
+    </FrameLayout>
+
     <ImageView
         android:id="@+id/widgetCameraError"
-        android:contentDescription="@string/widget_entity_fetch_error"
         android:layout_width="16dp"
         android:layout_height="16dp"
+        android:layout_gravity="start|bottom"
         android:layout_marginBottom="4dp"
+        android:layout_marginStart="6dp"
+        android:contentDescription="@string/widget_entity_fetch_error"
         android:src="@drawable/ic_sync_problem"
-        android:layout_gravity="center_horizontal|bottom"
-        android:visibility="gone"/>
+        android:visibility="gone" />
 </FrameLayout>

@@ -20,18 +20,18 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
-import io.homeassistant.companion.android.database.widget.CameraWidgetDao
+import io.homeassistant.companion.android.common.data.repositories.CameraWidgetRepository
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.databinding.WidgetCameraConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
+import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.RECEIVE_DATA
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
-import javax.inject.Inject
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 @AndroidEntryPoint
-class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
+class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity<CameraWidgetRepository>() {
 
     companion object {
         private const val TAG: String = "CameraWidgetConfigAct"
@@ -50,10 +50,6 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
     private var entities = mutableMapOf<Int, List<Entity<Any>>>()
     private var selectedEntity: Entity<Any>? = null
-
-    @Inject
-    lateinit var cameraWidgetDao: CameraWidgetDao
-    override val dao get() = cameraWidgetDao
 
     private var entityAdapter: SingleItemArrayAdapter<Entity<Any>>? = null
 
@@ -109,7 +105,7 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         }
         initTapActionsSpinner()
 
-        val cameraWidget = cameraWidgetDao.get(appWidgetId)
+        val cameraWidget = repository.get(appWidgetId)
         if (cameraWidget != null) {
             setCurrentTapAction(tapAction = cameraWidget.tapAction)
             binding.widgetTextConfigEntityId.setText(cameraWidget.entityId)
@@ -191,7 +187,7 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
             // Set up a broadcast intent and pass the service call data as extras
             val intent = Intent()
-            intent.action = CameraWidget.RECEIVE_DATA
+            intent.action = RECEIVE_DATA
             intent.component = ComponentName(context, CameraWidget::class.java)
 
             intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)

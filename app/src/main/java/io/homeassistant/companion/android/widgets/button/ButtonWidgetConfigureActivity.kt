@@ -36,7 +36,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Action
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
+import io.homeassistant.companion.android.common.data.repositories.ButtonWidgetRepository
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetButtonConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
@@ -45,23 +45,19 @@ import io.homeassistant.companion.android.util.icondialog.IconDialogFragment
 import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import io.homeassistant.companion.android.util.icondialog.mdiName
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
+import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.RECEIVE_DATA
 import io.homeassistant.companion.android.widgets.common.ActionFieldBinder
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetDynamicFieldAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetUtils
-import javax.inject.Inject
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
+class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity<ButtonWidgetRepository>() {
     companion object {
         private const val TAG: String = "ButtonWidgetConfigAct"
         private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.button.ButtonWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
     }
-
-    @Inject
-    lateinit var buttonWidgetDao: ButtonWidgetDao
-    override val dao get() = buttonWidgetDao
 
     private var actions = mutableMapOf<Int, HashMap<String, Action>>()
     private var entities = mutableMapOf<Int, HashMap<String, Entity<Any>>>()
@@ -139,7 +135,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
                     val existingActionData = mutableMapOf<String, Any?>()
                     val addedFields = mutableListOf<String>()
-                    buttonWidgetDao.get(appWidgetId)?.let { buttonWidget ->
+                    repository.get(appWidgetId)?.let { buttonWidget ->
                         if (
                             buttonWidget.serverId != selectedServerId ||
                             "${buttonWidget.domain}.${buttonWidget.service}" != actionText
@@ -224,7 +220,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             return
         }
 
-        val buttonWidget = buttonWidgetDao.get(appWidgetId)
+        val buttonWidget = repository.get(appWidgetId)
         val backgroundTypeValues = WidgetUtils.getBackgroundOptionList(this)
         binding.backgroundType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
 
@@ -410,7 +406,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
             // Set up a broadcast intent and pass the action data as extras
             val intent = Intent()
-            intent.action = ButtonWidget.RECEIVE_DATA
+            intent.action = RECEIVE_DATA
             intent.component = ComponentName(context, ButtonWidget::class.java)
 
             intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)

@@ -23,6 +23,7 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepositoryImpl
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepositoryImpl
+import io.homeassistant.companion.android.common.data.repositories.RepositoryModule
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.ServerManagerImpl
 import io.homeassistant.companion.android.common.data.wifi.WifiHelper
@@ -35,7 +36,11 @@ import javax.inject.Singleton
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 
-@Module
+@Module(
+    includes = [
+        RepositoryModule::class
+    ]
+)
 @InstallIn(SingletonComponent::class)
 abstract class DataModule {
 
