@@ -6,6 +6,7 @@ google-services.json
 *.iml
 .idea/
 .gradle/
+.kotlin/
 build/
 *.keystore
 
