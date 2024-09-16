@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/widgetLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/transparent"
+    android:minHeight="40dp"
     android:minWidth="40dp"
-    android:minHeight="40dp">
+    android:background="@drawable/widget_transparent_background"
+    android:theme="@style/Theme.HomeAssistant.Widget">
 
     <ImageView
         android:id="@+id/widgetCameraImage"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:visibility="invisible"
         android:layout_gravity="center"
         android:adjustViewBounds="true"
         android:contentDescription="@string/widget_camera_contentdescription"
-        android:scaleType="fitCenter"
-        android:visibility="invisible" />
+        android:scaleType="fitCenter" />
 
     <FrameLayout
         android:id="@+id/widgetCameraPlaceholder"
@@ -39,8 +39,8 @@
         android:layout_width="16dp"
         android:layout_height="16dp"
         android:layout_gravity="start|bottom"
-        android:layout_marginBottom="4dp"
-        android:layout_marginStart="6dp"
+        android:layout_marginBottom="25dp"
+        android:layout_marginStart="12dp"
         android:contentDescription="@string/widget_entity_fetch_error"
         android:src="@drawable/ic_sync_problem"
         android:visibility="gone" />

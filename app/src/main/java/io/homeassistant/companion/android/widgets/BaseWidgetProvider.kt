@@ -65,51 +65,41 @@ abstract class BaseWidgetProvider<T : BaseDaoWidgetRepository<*>, WidgetDataType
         }
     }
 
-    private suspend fun updateAllWidgets(
-        context: Context
-    ) {
-        val widgetProvider = getWidgetProvider(context)
-        val systemWidgetIds = AppWidgetManager.getInstance(context)
-            .getAppWidgetIds(widgetProvider)
-            .toSet()
-        val dbWidgetIds = getAllWidgetIdsWithEntities().keys
-
-        val invalidWidgetIds = dbWidgetIds.minus(systemWidgetIds)
-        if (invalidWidgetIds.isNotEmpty()) {
-            Log.i(
-                getWidgetProvider(context).shortClassName,
-                "Found widgets $invalidWidgetIds in database, but not in AppWidgetManager - sending onDeleted"
-            )
-            onDeleted(context, invalidWidgetIds.toIntArray())
-        }
-
-        dbWidgetIds.filter { systemWidgetIds.contains(it) }.forEach {
-            forceUpdateView(context, it)
-        }
-    }
-
-    fun forceUpdateView(
+    override fun onUpdate(
         context: Context,
-        appWidgetId: Int,
-        appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context)
+        appWidgetManager: AppWidgetManager,
+        appWidgetIds: IntArray
     ) {
-        widgetScope?.launch {
-            val hasActiveConnection = context.hasActiveConnection()
-            val views = getWidgetRemoteViews(context, appWidgetId, hasActiveConnection)
-            Log.d(getWidgetProvider(context).shortClassName, "Updating Widget View updateAppWidget() hasActiveConnection: $hasActiveConnection")
-            appWidgetManager.updateAppWidget(appWidgetId, views)
-            onWidgetsViewUpdated(context, appWidgetId, appWidgetManager, views, hasActiveConnection)
+        // There may be multiple widgets active, so update all of them
+        for (appWidgetId in appWidgetIds) {
+            widgetScope?.launch {
+                forceUpdateView(context, appWidgetId, appWidgetManager)
+            }
         }
     }
 
-    private suspend fun getAllWidgetIdsWithEntities(): Map<Int, Pair<Int, List<String>>> =
-        repository.getAllFlow()
-            .first()
-            .associate {
-                it.id to (it.serverId to listOf(it.entityId.orEmpty()))
-            }
+    override fun onReceive(context: Context, intent: Intent) {
+        lastIntent = intent.action.toString()
+        val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
+        Log.d(getWidgetProvider(context).shortClassName, "Broadcast received: " + System.lineSeparator() + "Broadcast action: " + lastIntent + System.lineSeparator() + "AppWidgetId: " + appWidgetId)
 
-    open fun onScreenOn(context: Context) {
+        super.onReceive(context, intent)
+        when (lastIntent) {
+            UPDATE_VIEW -> forceUpdateView(context, appWidgetId)
+            RECEIVE_DATA -> {
+                saveEntityConfiguration(
+                    context,
+                    intent.extras,
+                    appWidgetId
+                )
+                onScreenOn(context)
+            }
+            Intent.ACTION_SCREEN_ON -> onScreenOn(context)
+            Intent.ACTION_SCREEN_OFF -> onScreenOff()
+        }
+    }
+
+    private fun onScreenOn(context: Context) {
         setupWidgetScope()
         if (!serverManager.isRegistered()) return
         widgetScope!!.launch {
@@ -151,8 +141,6 @@ abstract class BaseWidgetProvider<T : BaseDaoWidgetRepository<*>, WidgetDataType
         }
     }
 
-    abstract suspend fun getUpdates(serverId: Int, entityIds: List<String>): Flow<WidgetDataType>?
-
     private fun onScreenOff() {
         if (thisSetScope) {
             widgetWorkScope?.cancel()
@@ -162,6 +150,56 @@ abstract class BaseWidgetProvider<T : BaseDaoWidgetRepository<*>, WidgetDataType
             widgetJobs.clear()
         }
     }
+
+    private suspend fun updateAllWidgets(
+        context: Context
+    ) {
+        val widgetProvider = getWidgetProvider(context)
+        val systemWidgetIds = AppWidgetManager.getInstance(context)
+            .getAppWidgetIds(widgetProvider)
+            .toSet()
+        val dbWidgetIds = getAllWidgetIdsWithEntities().keys
+
+        val invalidWidgetIds = dbWidgetIds.minus(systemWidgetIds)
+        if (invalidWidgetIds.isNotEmpty()) {
+            Log.i(
+                widgetProvider.shortClassName,
+                "Found widgets $invalidWidgetIds in database, but not in AppWidgetManager - sending onDeleted"
+            )
+            onDeleted(context, invalidWidgetIds.toIntArray())
+        }
+
+        dbWidgetIds.filter { systemWidgetIds.contains(it) }.forEach {
+            forceUpdateView(context, it)
+        }
+    }
+
+    fun forceUpdateView(
+        context: Context,
+        appWidgetId: Int,
+        appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context)
+    ) {
+        widgetScope?.launch {
+            val hasActiveConnection = context.hasActiveConnection()
+            val views = getWidgetRemoteViews(context, appWidgetId, hasActiveConnection)
+            Log.d(getWidgetProvider(context).shortClassName, "Updating Widget View updateAppWidget() hasActiveConnection: $hasActiveConnection")
+            appWidgetManager.updateAppWidget(appWidgetId, views)
+            onWidgetsViewUpdated(context, appWidgetId, appWidgetManager, views, hasActiveConnection)
+        }
+    }
+
+    protected fun removeSubscription(appWidgetId: Int) {
+        widgetEntities.remove(appWidgetId)
+        widgetJobs[appWidgetId]?.cancel()
+        widgetJobs.remove(appWidgetId)
+    }
+
+    private suspend fun getAllWidgetIdsWithEntities(): Map<Int, Pair<Int, List<String>>> =
+        repository.getAllFlow()
+            .first()
+            .associate {
+                it.id to (it.serverId to listOf(it.entityId.orEmpty()))
+            }
 
     fun setWidgetBackground(views: RemoteViews, layoutId: Int, widget: ThemeableWidgetEntity?) {
         when (widget?.backgroundType) {
@@ -175,56 +213,10 @@ abstract class BaseWidgetProvider<T : BaseDaoWidgetRepository<*>, WidgetDataType
         }
     }
 
-    protected fun removeSubscription(appWidgetId: Int) {
-        widgetEntities.remove(appWidgetId)
-        widgetJobs[appWidgetId]?.cancel()
-        widgetJobs.remove(appWidgetId)
-    }
-
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
         widgetScope?.launch {
             repository.deleteAll(appWidgetIds)
             appWidgetIds.forEach { removeSubscription(it) }
-        }
-    }
-
-    override fun onUpdate(
-        context: Context,
-        appWidgetManager: AppWidgetManager,
-        appWidgetIds: IntArray
-    ) {
-        // There may be multiple widgets active, so update all of them
-        for (appWidgetId in appWidgetIds) {
-            widgetScope?.launch {
-                forceUpdateView(context, appWidgetId, appWidgetManager)
-            }
-        }
-    }
-
-    override fun onReceive(context: Context, intent: Intent) {
-        lastIntent = intent.action.toString()
-        val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
-        Log.d(
-            getWidgetProvider(context).shortClassName,
-            "Broadcast received: " + System.lineSeparator() +
-                "Broadcast action: " + lastIntent + System.lineSeparator() +
-                "AppWidgetId: " + appWidgetId
-        )
-
-        super.onReceive(context, intent)
-        when (lastIntent) {
-            UPDATE_VIEW -> forceUpdateView(context, appWidgetId)
-            RECEIVE_DATA -> {
-                saveEntityConfiguration(
-                    context,
-                    intent.extras,
-                    appWidgetId
-                )
-                onScreenOn(context)
-            }
-
-            Intent.ACTION_SCREEN_ON -> onScreenOn(context)
-            Intent.ACTION_SCREEN_OFF -> onScreenOff()
         }
     }
 
@@ -244,6 +236,7 @@ abstract class BaseWidgetProvider<T : BaseDaoWidgetRepository<*>, WidgetDataType
 
     abstract fun getWidgetProvider(context: Context): ComponentName
     abstract suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, hasActiveConnection: Boolean, suggestedEntity: WidgetDataType? = null): RemoteViews
+    abstract suspend fun getUpdates(serverId: Int, entityIds: List<String>): Flow<WidgetDataType>?
 
     // A map of widget IDs to [server ID, list of entity IDs]
     abstract fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int)

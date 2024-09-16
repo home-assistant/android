@@ -239,7 +239,6 @@ class EntityWidget : BaseWidgetProvider<StaticWidgetRepository, Entity<Map<Strin
             )
 
             forceUpdateView(context, appWidgetId)
-            // onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
         }
     }
 

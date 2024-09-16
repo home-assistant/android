@@ -83,8 +83,7 @@ class CameraWidget : BaseWidgetProvider<CameraWidgetRepository, Entity<*>>() {
                         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                     )
                 }
-                setOnClickPendingIntent(R.id.widgetLayout, PendingIntent.getBroadcast(context, appWidgetId, updateCameraIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
-                setOnClickPendingIntent(R.id.widgetCameraPlaceholder, tapWidgetPendingIntent)
+                setOnClickPendingIntent(R.id.widgetLayout, tapWidgetPendingIntent)
             }
         }
     }
@@ -177,6 +176,10 @@ class CameraWidget : BaseWidgetProvider<CameraWidgetRepository, Entity<*>>() {
                 }
             }
         }
+    }
+
+    override suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity<*>) {
+        super.onEntityStateChanged(context, appWidgetId, entity)
     }
 
     override suspend fun getUpdates(serverId: Int, entityIds: List<String>): Flow<Entity<Map<String, Any>>> = serverManager.integrationRepository(serverId).getEntityUpdates(entityIds) as Flow<Entity<Map<String, Any>>>

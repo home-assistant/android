@@ -27,7 +27,6 @@
                 android:contentDescription="@string/widget_media_image_description"
                 android:adjustViewBounds="true"
                 android:scaleType="centerCrop"
-                android:src="@drawable/app_icon_round"
                 android:visibility="invisible" />
 
             <ImageView
