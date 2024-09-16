@@ -139,8 +139,14 @@ class CameraWidget : BaseWidgetProvider<CameraWidgetRepository, Entity<*>>() {
                     "entity id: " + entitySelection + System.lineSeparator()
             )
             repository.add(
-                CameraWidgetEntity(id = appWidgetId, entityId = entitySelection, serverId = serverSelection, tapAction = tapActionSelection)
+                CameraWidgetEntity(
+                    appWidgetId,
+                    serverSelection,
+                    entitySelection,
+                    tapActionSelection
+                )
             )
+            forceUpdateView(context, appWidgetId)
         }
     }
 
@@ -176,10 +182,6 @@ class CameraWidget : BaseWidgetProvider<CameraWidgetRepository, Entity<*>>() {
                 }
             }
         }
-    }
-
-    override suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity<*>) {
-        super.onEntityStateChanged(context, appWidgetId, entity)
     }
 
     override suspend fun getUpdates(serverId: Int, entityIds: List<String>): Flow<Entity<Map<String, Any>>> = serverManager.integrationRepository(serverId).getEntityUpdates(entityIds) as Flow<Entity<Map<String, Any>>>

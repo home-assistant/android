@@ -64,7 +64,18 @@ class ButtonWidget : BaseWidgetProvider<ButtonWidgetRepository, Entity<Map<Strin
         private const val DEFAULT_MAX_ICON_SIZE = 512
     }
 
+    private val handlerLooper = Handler(Looper.getMainLooper())
+
     override fun getWidgetProvider(context: Context): ComponentName = ComponentName(context, ButtonWidget::class.java)
+
+    private fun authThenCallConfiguredAction(context: Context, appWidgetId: Int) {
+        Log.d(TAG, "Calling authentication, then configured action")
+
+        val intent = Intent(context, WidgetAuthenticationActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NEW_DOCUMENT
+        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+        context.startActivity(intent)
+    }
 
     override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, hasActiveConnection: Boolean, suggestedEntity: Entity<Map<String, Any>>?): RemoteViews {
         // Every time AppWidgetManager.updateAppWidget(...) is called, the button listener
@@ -88,7 +99,6 @@ class ButtonWidget : BaseWidgetProvider<ButtonWidgetRepository, Entity<Map<Strin
                 widget.textColor?.let { textColor = it.toColorInt() }
                 setTextColor(R.id.widgetLabel, textColor)
             }
-
             setWidgetBackground(this, R.id.widgetLayout, widget)
 
             // Label
@@ -147,60 +157,6 @@ class ButtonWidget : BaseWidgetProvider<ButtonWidgetRepository, Entity<Map<Strin
         }
     }
 
-    override fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
-        if (extras == null) return
-
-        val serverId = if (extras.containsKey(EXTRA_SERVER_ID)) extras.getInt(EXTRA_SERVER_ID) else null
-        val domain: String? = extras.getString(EXTRA_DOMAIN)
-        val action: String? = extras.getString(EXTRA_ACTION)
-        val actionData: String? = extras.getString(EXTRA_ACTION_DATA)
-        val label: String? = extras.getString(EXTRA_LABEL)
-        val requireAuthentication: Boolean = extras.getBoolean(EXTRA_REQUIRE_AUTHENTICATION)
-        val icon: String = extras.getString(EXTRA_ICON_NAME) ?: "mdi:flash"
-        val backgroundType = BundleCompat.getSerializable(extras, EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
-            ?: WidgetBackgroundType.DAYNIGHT
-        val textColor: String? = extras.getString(EXTRA_TEXT_COLOR)
-
-        if (serverId == null || domain == null || action == null || actionData == null) {
-            Log.e(TAG, "Did not receive complete action call data")
-            return
-        }
-
-        widgetScope?.launch {
-            Log.d(
-                TAG,
-                "Saving action call config data:" + System.lineSeparator() +
-                    "domain: " + domain + System.lineSeparator() +
-                    "action: " + action + System.lineSeparator() +
-                    "action_data: " + actionData + System.lineSeparator() +
-                    "require_authentication: " + requireAuthentication + System.lineSeparator() +
-                    "label: " + label
-            )
-
-            val widget = ButtonWidgetEntity(
-                appWidgetId,
-                serverId,
-                null,
-                icon,
-                domain,
-                action,
-                actionData,
-                label,
-                backgroundType,
-                textColor,
-                requireAuthentication
-            )
-
-            repository.add(widget)
-
-            // It is the responsibility of the configuration activity to update the app widget
-            // This method is only called during the initial setup of the widget,
-            // so rather than duplicating code in the ButtonWidgetConfigurationActivity,
-            // it is just calling onUpdate manually here.
-            // onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
-        }
-    }
-
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
         val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
@@ -212,15 +168,6 @@ class ButtonWidget : BaseWidgetProvider<ButtonWidgetRepository, Entity<Map<Strin
     }
 
     override suspend fun getUpdates(serverId: Int, entityIds: List<String>): Flow<Entity<Map<String, Any>>> = serverManager.integrationRepository(serverId).getEntityUpdates(entityIds) as Flow<Entity<Map<String, Any>>>
-
-    private fun authThenCallConfiguredAction(context: Context, appWidgetId: Int) {
-        Log.d(TAG, "Calling authentication, then configured action")
-
-        val intent = Intent(context, WidgetAuthenticationActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NEW_DOCUMENT
-        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-        context.startActivity(intent)
-    }
 
     private fun setLabelVisibility(views: RemoteViews, widget: ButtonWidgetEntity?) {
         val labelVisibility = if (widget?.label.isNullOrBlank()) View.GONE else View.VISIBLE
@@ -306,12 +253,53 @@ class ButtonWidget : BaseWidgetProvider<ButtonWidgetRepository, Entity<Map<Strin
             appWidgetManager.partiallyUpdateAppWidget(appWidgetId, feedbackViews)
 
             // Set a timer to change it back after 1 second
-            Handler(Looper.getMainLooper()).postDelayed(
+            handlerLooper.postDelayed(
                 {
                     forceUpdateView(context, appWidgetId, appWidgetManager)
                 },
                 1000
             )
+        }
+    }
+
+    override fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
+        if (extras == null) return
+
+        val serverId = if (extras.containsKey(EXTRA_SERVER_ID)) extras.getInt(EXTRA_SERVER_ID) else null
+        val domain: String? = extras.getString(EXTRA_DOMAIN)
+        val action: String? = extras.getString(EXTRA_ACTION)
+        val actionData: String? = extras.getString(EXTRA_ACTION_DATA)
+        val label: String? = extras.getString(EXTRA_LABEL)
+        val requireAuthentication: Boolean = extras.getBoolean(EXTRA_REQUIRE_AUTHENTICATION)
+        val icon: String = extras.getString(EXTRA_ICON_NAME) ?: "mdi:flash"
+        val backgroundType = BundleCompat.getSerializable(extras, EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
+            ?: WidgetBackgroundType.DAYNIGHT
+        val textColor: String? = extras.getString(EXTRA_TEXT_COLOR)
+
+        if (serverId == null || domain == null || action == null || actionData == null) {
+            Log.e(TAG, "Did not receive complete action call data")
+            return
+        }
+
+        widgetScope?.launch {
+            Log.d(
+                TAG,
+                "Saving action call config data:" + System.lineSeparator() +
+                    "domain: " + domain + System.lineSeparator() +
+                    "action: " + action + System.lineSeparator() +
+                    "action_data: " + actionData + System.lineSeparator() +
+                    "require_authentication: " + requireAuthentication + System.lineSeparator() +
+                    "label: " + label
+            )
+
+            val widget = ButtonWidgetEntity(appWidgetId, serverId, null, icon, domain, action, actionData, label, backgroundType, textColor, requireAuthentication)
+            repository.add(widget)
+
+            // It is the responsibility of the configuration activity to update the app widget
+            // This method is only called during the initial setup of the widget,
+            // so rather than duplicating code in the ButtonWidgetConfigurationActivity,
+            // it is just calling onUpdate manually here.
+            forceUpdateView(context, appWidgetId)
         }
     }
 }

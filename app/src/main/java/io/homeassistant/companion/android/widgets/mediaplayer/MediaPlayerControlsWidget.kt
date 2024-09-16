@@ -368,6 +368,46 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetRe
         }
     }
 
+    private suspend fun getEntity(context: Context, serverId: Int, entityIds: List<String>, suggestedEntity: Entity<Map<String, Any>>?): Entity<Map<String, Any>>? {
+        val entity: Entity<Map<String, Any>>?
+        try {
+            entity = if (suggestedEntity != null && entityIds.contains(suggestedEntity.entityId)) {
+                suggestedEntity
+            } else {
+                val entities: LinkedList<Entity<Map<String, Any>>?> = LinkedList()
+                entityIds.forEach {
+                    val e = serverManager.integrationRepository(serverId).getEntity(it)
+                    if (e?.state == "playing") return e
+                    entities.add(e)
+                }
+                return entities[0]
+            }
+        } catch (e: Exception) {
+            Log.d(TAG, "Failed to fetch entity or entity does not exist")
+            if (lastIntent == UPDATE_MEDIA_IMAGE) {
+                Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
+            }
+            return null
+        }
+
+        return entity
+    }
+
+    override fun onReceive(context: Context, intent: Intent) {
+        val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
+        super.onReceive(context, intent)
+        when (lastIntent) {
+            UPDATE_MEDIA_IMAGE -> forceUpdateView(context, appWidgetId)
+            CALL_PREV_TRACK -> callPreviousTrackAction(context, appWidgetId)
+            CALL_REWIND -> callRewindAction(context, appWidgetId)
+            CALL_PLAYPAUSE -> callPlayPauseAction(context, appWidgetId)
+            CALL_FASTFORWARD -> callFastForwardAction(context, appWidgetId)
+            CALL_NEXT_TRACK -> callNextTrackAction(context, appWidgetId)
+            CALL_VOLUME_DOWN -> callVolumeDownAction(context, appWidgetId)
+            CALL_VOLUME_UP -> callVolumeUpAction(context, appWidgetId)
+        }
+    }
+
     override fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
         if (extras == null) return
 
@@ -410,21 +450,6 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetRe
         }
     }
 
-    override fun onReceive(context: Context, intent: Intent) {
-        val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
-        super.onReceive(context, intent)
-        when (lastIntent) {
-            UPDATE_MEDIA_IMAGE -> forceUpdateView(context, appWidgetId)
-            CALL_PREV_TRACK -> callPreviousTrackAction(context, appWidgetId)
-            CALL_REWIND -> callRewindAction(context, appWidgetId)
-            CALL_PLAYPAUSE -> callPlayPauseAction(context, appWidgetId)
-            CALL_FASTFORWARD -> callFastForwardAction(context, appWidgetId)
-            CALL_NEXT_TRACK -> callNextTrackAction(context, appWidgetId)
-            CALL_VOLUME_DOWN -> callVolumeDownAction(context, appWidgetId)
-            CALL_VOLUME_UP -> callVolumeUpAction(context, appWidgetId)
-        }
-    }
-
     override suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity<Map<String, Any>>) {
         super.onEntityStateChanged(context, appWidgetId, entity)
         repository.get(appWidgetId)?.let {
@@ -432,33 +457,6 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetRe
                 forceUpdateView(context, appWidgetId)
             }
         }
-    }
-
-    override suspend fun getUpdates(serverId: Int, entityIds: List<String>): Flow<Entity<Map<String, Any>>> = serverManager.integrationRepository(serverId).getEntityUpdates(entityIds) as Flow<Entity<Map<String, Any>>>
-
-    private suspend fun getEntity(context: Context, serverId: Int, entityIds: List<String>, suggestedEntity: Entity<Map<String, Any>>?): Entity<Map<String, Any>>? {
-        val entity: Entity<Map<String, Any>>?
-        try {
-            entity = if (suggestedEntity != null && entityIds.contains(suggestedEntity.entityId)) {
-                suggestedEntity
-            } else {
-                val entities: LinkedList<Entity<Map<String, Any>>?> = LinkedList()
-                entityIds.forEach {
-                    val e = serverManager.integrationRepository(serverId).getEntity(it)
-                    if (e?.state == "playing") return e
-                    entities.add(e)
-                }
-                return entities[0]
-            }
-        } catch (e: Exception) {
-            Log.d(TAG, "Failed to fetch entity or entity does not exist")
-            if (lastIntent == UPDATE_MEDIA_IMAGE) {
-                Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
-            }
-            return null
-        }
-
-        return entity
     }
 
     private fun callPreviousTrackAction(context: Context, appWidgetId: Int) {
@@ -714,4 +712,6 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetRe
             }
         }
     }
+
+    override suspend fun getUpdates(serverId: Int, entityIds: List<String>): Flow<Entity<Map<String, Any>>> = serverManager.integrationRepository(serverId).getEntityUpdates(entityIds) as Flow<Entity<Map<String, Any>>>
 }
