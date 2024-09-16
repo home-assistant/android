@@ -19,9 +19,9 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
-import io.homeassistant.companion.android.common.data.repositories.MediaPlayerControlsWidgetRepository
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetMediaControlsConfigureBinding
+import io.homeassistant.companion.android.repositories.MediaPlayerControlsWidgetRepository
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.RECEIVE_DATA

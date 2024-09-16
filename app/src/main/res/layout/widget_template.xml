@@ -6,7 +6,6 @@
     android:background="@drawable/widget_button_background"
     android:minWidth="40dp"
     android:minHeight="40dp"
-    android:theme="@style/Theme.HomeAssistant.Widget"
     android:padding="4dp">
 
     <TextView

@@ -16,9 +16,9 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.repositories.CameraWidgetRepository
 import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
+import io.homeassistant.companion.android.repositories.CameraWidgetRepository
 import io.homeassistant.companion.android.util.DisplayUtils.getScreenWidth
 import io.homeassistant.companion.android.webview.WebViewActivity
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
@@ -55,43 +55,18 @@ class CameraWidget : BaseWidgetProvider<CameraWidgetRepository, Entity<*>>() {
         return RemoteViews(context.packageName, R.layout.widget_camera).apply {
             val widget = repository.get(appWidgetId)
             if (widget != null) {
-                var entityPictureUrl: String?
-                try {
-                    entityPictureUrl = retrieveCameraImageUrl(widget.serverId, widget.entityId)
-                    setViewVisibility(R.id.widgetCameraError, View.GONE)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to fetch entity or entity does not exist", e)
-                    setViewVisibility(R.id.widgetCameraError, View.VISIBLE)
-                    entityPictureUrl = null
-                }
-                val baseUrl = serverManager.getServer(widget.serverId)?.connection?.getUrl().toString().removeSuffix("/")
-                val url = "$baseUrl$entityPictureUrl"
-                if (entityPictureUrl == null) {
-//                    setImageViewResource(
-//                        R.id.widgetCameraImage,
-//                        android.R.drawable.ic_menu_camera
-//                    )
-//                    setViewVisibility(
-//                        R.id.widgetCameraPlaceholder,
-//                        View.VISIBLE
-//                    )
-//                    setViewVisibility(
-//                        R.id.widgetCameraImage,
-//                        View.GONE
-//                    )
-                } else {
-                    setViewVisibility(
-                        R.id.widgetCameraImage,
-                        View.VISIBLE
-                    )
-                    setViewVisibility(
-                        R.id.widgetCameraPlaceholder,
-                        View.GONE
-                    )
-                    Log.d(TAG, "Fetching camera image")
-                }
+                val buildImageUrl = buildImageUrl(widget)
 
-                updateBitmapCameraImage(context, hasActiveConnection, this, appWidgetId, url)
+                setViewVisibility(
+                    R.id.widgetCameraError,
+                    if (buildImageUrl.isNullOrEmpty()) {
+                        View.VISIBLE
+                    } else {
+                        View.GONE
+                    }
+                )
+
+                updateBitmapCameraImage(context, hasActiveConnection, this, appWidgetId, buildImageUrl)
 
                 val tapWidgetPendingIntent = when (widget.tapAction) {
                     WidgetTapAction.OPEN -> PendingIntent.getActivity(
@@ -108,23 +83,33 @@ class CameraWidget : BaseWidgetProvider<CameraWidgetRepository, Entity<*>>() {
                         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                     )
                 }
-                setOnClickPendingIntent(
-                    R.id.widgetLayout,
-                    PendingIntent.getBroadcast(
-                        context,
-                        appWidgetId,
-                        updateCameraIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                    )
-                )
+                setOnClickPendingIntent(R.id.widgetLayout, PendingIntent.getBroadcast(context, appWidgetId, updateCameraIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
                 setOnClickPendingIntent(R.id.widgetCameraPlaceholder, tapWidgetPendingIntent)
             }
         }
     }
 
+    private suspend fun buildImageUrl(cameraWidget: CameraWidgetEntity): String? {
+        val baseUrl = getServerUrl(cameraWidget.serverId)
+        val entityPictureUrl = retrieveCameraImageUrl(cameraWidget.serverId, cameraWidget.entityId)
+        entityPictureUrl?.let {
+            return "$baseUrl$entityPictureUrl"
+        }
+        return null
+    }
+
     private suspend fun retrieveCameraImageUrl(serverId: Int, entityId: String): String? {
-        val entity = serverManager.integrationRepository(serverId).getEntity(entityId)
-        return entity?.attributes?.get(ENTITY_PICTURE_ATTRIBUTE)?.toString()
+        val entity: Entity<Map<String, Any>>?
+        try {
+            entity = serverManager.integrationRepository(serverId).getEntity(entityId)
+            return entity?.attributes?.get(ENTITY_PICTURE_ATTRIBUTE)?.toString()
+        } catch (e: Exception) {
+            return null
+        }
+    }
+
+    private fun getServerUrl(serverId: Int): String {
+        return serverManager.getServer(serverId)?.connection?.getUrl().toString().removeSuffix("/")
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -155,18 +140,13 @@ class CameraWidget : BaseWidgetProvider<CameraWidgetRepository, Entity<*>>() {
                     "entity id: " + entitySelection + System.lineSeparator()
             )
             repository.add(
-                CameraWidgetEntity(
-                    id = appWidgetId,
-                    entityId = entitySelection,
-                    serverId = serverSelection,
-                    tapAction = tapActionSelection
-                )
+                CameraWidgetEntity(id = appWidgetId, entityId = entitySelection, serverId = serverSelection, tapAction = tapActionSelection)
             )
         }
     }
 
-    private fun updateBitmapCameraImage(context: Context, hasActiveConnection: Boolean, views: RemoteViews, appWidgetId: Int, url: String) {
-        if (hasActiveConnection) {
+    private fun updateBitmapCameraImage(context: Context, hasActiveConnection: Boolean, views: RemoteViews, appWidgetId: Int, url: String?) {
+        if (hasActiveConnection && !url.isNullOrEmpty()) {
             widgetWorkScope?.launch {
                 val picasso = Picasso.get()
                 picasso.isLoggingEnabled = BuildConfig.DEBUG
@@ -178,13 +158,16 @@ class CameraWidget : BaseWidgetProvider<CameraWidgetRepository, Entity<*>>() {
                         .onlyScaleDown().get()
 
                     widgetScope?.launch {
+                        views.setViewVisibility(R.id.widgetCameraImage, View.VISIBLE)
+                        views.setViewVisibility(R.id.widgetCameraError, View.GONE)
+                        views.setViewVisibility(R.id.widgetCameraPlaceholder, View.GONE)
                         views.setImageViewBitmap(R.id.widgetCameraImage, lastCameraBitmap)
                         AppWidgetManager.getInstance(context).partiallyUpdateAppWidget(appWidgetId, views)
+                        Log.d(TAG, "Fetch and load complete")
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to fetch image", e)
                 }
-                Log.d(TAG, "Fetch and load complete")
             }
         } else {
             widgetScope?.launch {
@@ -195,13 +178,6 @@ class CameraWidget : BaseWidgetProvider<CameraWidgetRepository, Entity<*>>() {
             }
         }
     }
-
-//    override suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity<*>) {
-//        super.onEntityStateChanged(context, appWidgetId, entity)
-//        widgetScope?.launch {
-//            forceUpdateView(context, appWidgetId)
-//        }
-//    }
 
     override suspend fun getUpdates(serverId: Int, entityIds: List<String>): Flow<Entity<Map<String, Any>>> = serverManager.integrationRepository(serverId).getEntityUpdates(entityIds) as Flow<Entity<Map<String, Any>>>
 }

@@ -6,8 +6,7 @@
     android:layout_height="match_parent"
     android:background="@android:color/transparent"
     android:minWidth="40dp"
-    android:minHeight="40dp"
-    android:theme="@style/Theme.HomeAssistant.Widget">
+    android:minHeight="40dp">
 
     <ImageView
         android:id="@+id/widgetCameraImage"
@@ -25,18 +24,12 @@
         android:layout_gravity="center"
         android:background="@android:color/transparent"
         android:layout_height="match_parent">
-        <ImageView
-            android:layout_width="80dp"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:contentDescription="@string/widget_camera_contentdescription"
-            android:scaleType="fitCenter"
-             android:src="@drawable/circle" />
+
         <ImageView
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:layout_gravity="center"
-             android:contentDescription="@string/widget_camera_contentdescription"
+            android:contentDescription="@string/widget_camera_contentdescription"
             android:scaleType="fitCenter"
             android:src="@android:drawable/ic_menu_camera" />
     </FrameLayout>

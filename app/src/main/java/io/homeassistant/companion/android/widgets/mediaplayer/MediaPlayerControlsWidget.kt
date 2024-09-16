@@ -22,9 +22,9 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.repositories.MediaPlayerControlsWidgetRepository
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
+import io.homeassistant.companion.android.repositories.MediaPlayerControlsWidgetRepository
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import java.util.LinkedList
 import kotlin.collections.HashMap

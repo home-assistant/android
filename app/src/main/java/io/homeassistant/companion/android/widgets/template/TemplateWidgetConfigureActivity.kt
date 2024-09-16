@@ -21,9 +21,9 @@ import androidx.lifecycle.lifecycleScope
 import com.fasterxml.jackson.databind.JsonMappingException
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.data.repositories.TemplateWidgetRepository
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetTemplateConfigureBinding
+import io.homeassistant.companion.android.repositories.TemplateWidgetRepository
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.util.getHexForColor
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity

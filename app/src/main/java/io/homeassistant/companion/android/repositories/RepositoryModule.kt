@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.common.data.repositories
+package io.homeassistant.companion.android.repositories
 
 import dagger.Binds
 import dagger.Module

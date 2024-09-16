@@ -12,10 +12,10 @@ import android.util.Log
 import android.widget.RemoteViews
 import androidx.core.content.ContextCompat
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.data.repositories.BaseDaoWidgetRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.ThemeableWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
+import io.homeassistant.companion.android.repositories.BaseDaoWidgetRepository
 import io.homeassistant.companion.android.util.hasActiveConnection
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope

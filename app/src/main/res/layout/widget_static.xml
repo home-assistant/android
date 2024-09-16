@@ -6,7 +6,6 @@
     android:minHeight="40dp"
     android:minWidth="40dp"
     android:background="@drawable/widget_button_background"
-    android:theme="@style/Theme.HomeAssistant.Widget"
     android:padding="4dp">
 
     <LinearLayout

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/widgetLayout"
     android:layout_width="match_parent"
@@ -8,8 +7,7 @@
     android:minHeight="40dp"
     android:minWidth="40dp"
     android:background="@drawable/widget_button_background"
-    android:padding="4dp"
-    android:theme="@style/Theme.HomeAssistant.Widget">
+    android:padding="4dp">
 
     <LinearLayout
         android:id="@+id/widgetImageButtonLayout"

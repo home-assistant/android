@@ -36,9 +36,9 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Action
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.repositories.ButtonWidgetRepository
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetButtonConfigureBinding
+import io.homeassistant.companion.android.repositories.ButtonWidgetRepository
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.util.getHexForColor
 import io.homeassistant.companion.android.util.icondialog.IconDialogFragment

@@ -22,10 +22,10 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.canSupportPrecision
 import io.homeassistant.companion.android.common.data.integration.friendlyState
 import io.homeassistant.companion.android.common.data.integration.onEntityPressedWithoutState
-import io.homeassistant.companion.android.common.data.repositories.StaticWidgetRepository
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
+import io.homeassistant.companion.android.repositories.StaticWidgetRepository
 import io.homeassistant.companion.android.util.getAttribute
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import kotlinx.coroutines.flow.Flow

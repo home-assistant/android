@@ -9,8 +9,8 @@ import android.widget.Spinner
 import android.widget.Toast
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.common.data.repositories.BaseDaoWidgetRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.repositories.BaseDaoWidgetRepository
 import javax.inject.Inject
 
 abstract class BaseWidgetConfigureActivity<T : BaseDaoWidgetRepository<*>> : BaseActivity() {
