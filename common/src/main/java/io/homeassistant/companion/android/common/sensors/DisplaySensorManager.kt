@@ -186,7 +186,9 @@ class DisplaySensorManager : SensorManager, SensorEventListener {
             screenOrientation,
             orientation,
             icon,
-            mapOf()
+            mapOf(
+                "options" to listOf("portrait", "landscape", "square", STATE_UNKNOWN)
+            )
         )
     }
 
