@@ -36,12 +36,12 @@
 
     <ImageView
         android:id="@+id/widgetCameraError"
+        android:contentDescription="@string/widget_entity_fetch_error"
         android:layout_width="16dp"
         android:layout_height="16dp"
-        android:layout_gravity="start|bottom"
-        android:layout_marginBottom="25dp"
+        android:layout_marginBottom="4dp"
         android:layout_marginStart="12dp"
-        android:contentDescription="@string/widget_entity_fetch_error"
         android:src="@drawable/ic_sync_problem"
+        android:layout_gravity="center_horizontal|bottom"
         android:visibility="gone" />
 </FrameLayout>

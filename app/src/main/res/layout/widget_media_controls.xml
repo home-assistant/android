@@ -40,6 +40,7 @@
                 android:contentDescription="@string/widget_media_image_description"
                 android:adjustViewBounds="true"
                 android:scaleType="fitCenter"
+                android:tint="?colorWidgetOnBackground"
                 android:src="@android:drawable/ic_media_play" />
         </FrameLayout>
 
