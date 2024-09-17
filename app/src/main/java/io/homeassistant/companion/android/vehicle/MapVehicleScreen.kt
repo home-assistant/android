@@ -119,12 +119,16 @@ class MapVehicleScreen(
                         .setOnClickListener {
                             Log.i(TAG, "${pair.first.entityId} clicked")
                             lifecycleScope.launch {
-                                integrationRepository.fireEvent(
-                                    "android.navigation_started",
-                                    mapOf(
-                                        "entity_id" to pair.first.entityId
+                                try {
+                                    integrationRepository.fireEvent(
+                                        "android.navigation_started",
+                                        mapOf(
+                                            "entity_id" to pair.first.entityId
+                                        )
                                     )
-                                )
+                                } catch (e: Exception) {
+                                    Log.e(TAG, "Unable to send navigation started event", e)
+                                }
                             }
                             val intent = Intent(
                                 CarContext.ACTION_NAVIGATE,
