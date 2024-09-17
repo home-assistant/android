@@ -187,7 +187,7 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity<CameraWidgetRe
 
             // Set up a broadcast intent and pass the service call data as extras
             val intent = Intent()
-            intent.action = RECEIVE_DATA
+            intent.action = CameraWidget.RECEIVE_DATA
             intent.component = ComponentName(context, CameraWidget::class.java)
 
             intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)

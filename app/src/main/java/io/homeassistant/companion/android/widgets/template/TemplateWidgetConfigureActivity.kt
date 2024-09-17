@@ -167,7 +167,7 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity<TemplateWidg
         }
 
         val createIntent = Intent().apply {
-            action = RECEIVE_DATA
+            action = TemplateWidget.RECEIVE_DATA
             component = ComponentName(applicationContext, TemplateWidget::class.java)
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             putExtra(TemplateWidget.EXTRA_SERVER_ID, selectedServerId)

@@ -33,14 +33,13 @@
                 android:id="@+id/widgetMediaPlaceholder"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:padding="30dp"
                 android:layout_marginStart="4dp"
                 android:layout_marginTop="4dp"
                 android:layout_marginBottom="4dp"
                 android:contentDescription="@string/widget_media_image_description"
                 android:adjustViewBounds="true"
                 android:scaleType="fitCenter"
-                android:src="@android:drawable/ic_media_play" />
+                android:src="@drawable/app_icon_round" />
         </FrameLayout>
 
         <RelativeLayout

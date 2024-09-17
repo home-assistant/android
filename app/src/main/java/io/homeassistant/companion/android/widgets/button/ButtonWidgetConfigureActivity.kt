@@ -406,7 +406,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity<ButtonWidgetRe
 
             // Set up a broadcast intent and pass the action data as extras
             val intent = Intent()
-            intent.action = RECEIVE_DATA
+            intent.action = ButtonWidget.RECEIVE_DATA
             intent.component = ComponentName(context, ButtonWidget::class.java)
 
             intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
