@@ -201,15 +201,19 @@ class DisplaySensorManager : SensorManager, SensorEventListener {
 
         val display = getRotationString(dm.getDisplay(Display.DEFAULT_DISPLAY).rotation)
 
-        val hasMultipleDisplays = dm.displays.size > 1
         val multiple = dm.displays.associate { it.name to getRotationString(it.rotation) }
-
+        val possibleStates = listOf("0", "90", "180", "270")
+        val attrs = if (dm.displays.size > 1) {
+            multiple.plus("options" to possibleStates)
+        } else {
+            mapOf("options" to possibleStates)
+        }
         onSensorUpdated(
             context,
             screenRotation,
             display,
             screenRotation.statelessIcon,
-            if (hasMultipleDisplays) multiple else mapOf()
+            attrs
         )
     }
 
