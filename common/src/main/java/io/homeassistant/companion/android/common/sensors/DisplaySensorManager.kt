@@ -61,13 +61,13 @@ class DisplaySensorManager : SensorManager, SensorEventListener {
             unitOfMeasurement = "°"
         )
 
-        val isFaceDown = SensorManager.BasicSensor(
-            "is_face_down",
-            "binary_sensor",
-            commonR.string.sensor_name_is_face_down,
-            commonR.string.sensor_description_is_face_down,
+        val isFaceDownOrUp = SensorManager.BasicSensor(
+            "is_face_down_or_up",
+            "sensor",
+            commonR.string.sensor_name_is_face_down_or_up,
+            commonR.string.sensor_description_is_face_down_or_up,
             "mdi:hand-pointing-down",
-            docsLink = "https://companion.home-assistant.io/docs/core/sensors#is-face-down-sensor"
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#is-face-down-or-up-sensor"
         )
     }
     override val name: Int
@@ -76,7 +76,7 @@ class DisplaySensorManager : SensorManager, SensorEventListener {
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         hasAccelerometer = context.packageManager.hasSystemFeature(FEATURE_SENSOR_ACCELEROMETER)
         return if (hasAccelerometer) {
-            listOf(screenBrightness, screenOffTimeout, screenOrientation, screenRotation, isFaceDown)
+            listOf(screenBrightness, screenOffTimeout, screenOrientation, screenRotation, isFaceDownOrUp)
         } else {
             listOf(screenBrightness, screenOffTimeout, screenOrientation, screenRotation)
         }
@@ -102,7 +102,7 @@ class DisplaySensorManager : SensorManager, SensorEventListener {
         updateScreenOrientation(context)
         updateScreenRotation(context)
         if (hasAccelerometer) {
-            updateIsFaceDown(context)
+            updateIsFaceDownOrUp(context)
         }
     }
 
@@ -217,8 +217,8 @@ class DisplaySensorManager : SensorManager, SensorEventListener {
         )
     }
 
-    private fun updateIsFaceDown(context: Context) {
-        if (!isEnabled(context, isFaceDown)) {
+    private fun updateIsFaceDownOrUp(context: Context) {
+        if (!isEnabled(context, isFaceDownOrUp)) {
             return
         }
         val now = System.currentTimeMillis()
@@ -246,12 +246,26 @@ class DisplaySensorManager : SensorManager, SensorEventListener {
         if (event?.sensor?.type == Sensor.TYPE_ACCELEROMETER) {
             // Following the example from: https://developer.android.com/reference/android/hardware/SensorEvent#values
             // When the device is lying flat with the screen down the value is inverted
+            val state = when {
+                event.values[2] < -9 -> "down"
+                event.values[2] > 9 -> "up"
+                else -> STATE_UNKNOWN
+            }
+            val icon = when (state) {
+                "down" -> "mdi:hand-pointing-down"
+                "up" -> "mdi:hand-pointing-up"
+                else -> "mdi:crosshairs-question"
+            }
             onSensorUpdated(
                 latestContext,
-                isFaceDown,
-                event.values[2] < -9,
-                isFaceDown.statelessIcon,
-                mapOf()
+                isFaceDownOrUp,
+                state,
+                icon,
+                mapOf(
+                    "x" to event.values[0],
+                    "y" to event.values[1],
+                    "z" to event.values[2]
+                )
             )
         }
 

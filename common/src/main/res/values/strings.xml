@@ -1287,6 +1287,6 @@
     <string name="sensor_description_screen_orientation">Overall orientation of the screen</string>
     <string name="sensor_name_screen_rotation">Screen rotation</string>
     <string name="sensor_description_screen_rotation">The rotation of the screen from its \"natural\" orientation. If the device has multiple displays the state will be for the default display. Attributes will exist for additional detected displays with the display name and its rotation angle.</string>
-    <string name="sensor_name_is_face_down">Is face down</string>
-    <string name="sensor_description_is_face_down">If the device screen is facing down at the ground</string>
+    <string name="sensor_name_is_face_down_or_up">Is face down or up</string>
+    <string name="sensor_description_is_face_down_or_up">If the device screen is facing down at the ground, up at the air or unknown</string>
 </resources>
