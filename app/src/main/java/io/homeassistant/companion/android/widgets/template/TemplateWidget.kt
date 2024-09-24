@@ -135,7 +135,7 @@ class TemplateWidget : AppWidgetProvider() {
                         context.applicationContext,
                         this@TemplateWidget,
                         IntentFilter(Intent.ACTION_SCREEN_OFF),
-                        ContextCompat.RECEIVER_EXPORTED
+                        ContextCompat.RECEIVER_NOT_EXPORTED
                     )
                 }
 
