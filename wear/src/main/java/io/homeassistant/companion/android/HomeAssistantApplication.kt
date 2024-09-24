@@ -52,7 +52,7 @@ open class HomeAssistantApplication : Application() {
                 addAction(Intent.ACTION_POWER_CONNECTED)
                 addAction(Intent.ACTION_POWER_DISCONNECTED)
             },
-            ContextCompat.RECEIVER_NOT_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED
         )
 
         // This will trigger an update any time the wifi state has changed
@@ -71,7 +71,7 @@ open class HomeAssistantApplication : Application() {
             this,
             sensorReceiver,
             IntentFilter(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED),
-            ContextCompat.RECEIVER_NOT_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED
         )
 
         // Listen to changes to the audio input/output on the device
@@ -93,7 +93,7 @@ open class HomeAssistantApplication : Application() {
                 this,
                 sensorReceiver,
                 IntentFilter(AudioManager.ACTION_MICROPHONE_MUTE_CHANGED),
-                ContextCompat.RECEIVER_NOT_EXPORTED
+                ContextCompat.RECEIVER_EXPORTED
             )
         }
 
@@ -103,7 +103,7 @@ open class HomeAssistantApplication : Application() {
                 this,
                 sensorReceiver,
                 IntentFilter(AudioManager.ACTION_SPEAKERPHONE_STATE_CHANGED),
-                ContextCompat.RECEIVER_NOT_EXPORTED
+                ContextCompat.RECEIVER_EXPORTED
             )
         }
 
@@ -116,7 +116,7 @@ open class HomeAssistantApplication : Application() {
                 addAction(Intent.ACTION_SCREEN_ON)
                 addAction(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED)
             },
-            ContextCompat.RECEIVER_NOT_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED
         )
 
         ContextCompat.registerReceiver(
@@ -125,7 +125,7 @@ open class HomeAssistantApplication : Application() {
             IntentFilter().apply {
                 addAction(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED)
             },
-            ContextCompat.RECEIVER_NOT_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED
         )
 
         // Listen to changes to Wet Mode State
@@ -144,7 +144,7 @@ open class HomeAssistantApplication : Application() {
             this,
             sensorReceiver,
             IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED),
-            ContextCompat.RECEIVER_NOT_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED
         )
 
         // Listen for NFC state changes
@@ -152,7 +152,7 @@ open class HomeAssistantApplication : Application() {
             this,
             sensorReceiver,
             IntentFilter(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED),
-            ContextCompat.RECEIVER_NOT_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED
         )
 
         // Update complications when the screen is on
@@ -161,6 +161,6 @@ open class HomeAssistantApplication : Application() {
         val screenIntentFilter = IntentFilter()
         screenIntentFilter.addAction(Intent.ACTION_SCREEN_ON)
 
-        ContextCompat.registerReceiver(this, complicationReceiver, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
+        ContextCompat.registerReceiver(this, complicationReceiver, screenIntentFilter, ContextCompat.RECEIVER_EXPORTED)
     }
 }

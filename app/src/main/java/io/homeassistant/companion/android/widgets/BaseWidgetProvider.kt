@@ -100,7 +100,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                     context.applicationContext,
                     this@BaseWidgetProvider,
                     IntentFilter(Intent.ACTION_SCREEN_OFF),
-                    ContextCompat.RECEIVER_NOT_EXPORTED
+                    ContextCompat.RECEIVER_EXPORTED
                 )
 
                 widgetsWithDifferentEntities.forEach { (id, pair) ->
