@@ -153,6 +153,7 @@
     <string name="complication_entity_state_label">Entity state</string>
     <string name="complication_entity_state_preview">Preview</string>
     <string name="config">Configuration</string>
+    <string name="configure">Configure</string>
     <string name="configure_action">Configure action</string>
     <string name="configure_widget_label">Widget label</string>
     <string name="confirm_delete_all_notification_message">Are you sure? This cannot be undone</string>
@@ -294,6 +295,7 @@
     <string name="grant_permission">Grant permission</string>
     <string name="help">Help</string>
     <string name="hide">Hide</string>
+    <string name="hide_password">Hide password</string>
     <string name="high_accuracy_mode_channel_name">High accuracy location</string>
     <string name="high_accuracy_mode_notification_title">High accuracy (GPS) mode enabled</string>
     <string name="history">History</string>
@@ -322,6 +324,20 @@
         <item quantity="other">%d seconds</item>
     </plurals>
     <string name="interval_in_view">In view</string>
+    <string name="improv_device_authorization_required">The device requires authorization, please press its authorization button or consult the device\'s manual for how to proceed.</string>
+    <string name="improv_device_authorized">Setting up Wi-Fi…</string>
+    <string name="improv_device_connecting">Connecting…</string>
+    <string name="improv_device_provisioned">Wi-Fi connected successfully</string>
+    <string name="improv_device_provisioning">Connecting to Wi-Fi…</string>
+    <string name="improv_error_invalid_rpc_packet">Invalid RPC packet</string>
+    <string name="improv_error_not_authorized">Not authorized</string>
+    <string name="improv_error_unable_to_connect">Unable to connect</string>
+    <string name="improv_error_unknown_command">Unknown command</string>
+    <string name="improv_error_unknown">Unknown error, please try again</string>
+    <string name="improv_hint">Improv Wi-Fi devices are available to set up</string>
+    <string name="improv_list_title">Devices ready to set up</string>
+    <string name="improv_wifi_title">Connect to Wi-Fi</string>
+    <string name="improv_wifi_ssid">Network name</string>
     <string name="keep_screen_on_def">Do not lock screen when dashboard is active</string>
     <string name="keep_screen_on">Keep screen on</string>
     <string name="page_zoom_default">%1$d%% (default)</string>

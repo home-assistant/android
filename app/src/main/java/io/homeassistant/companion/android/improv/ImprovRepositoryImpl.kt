@@ -20,6 +20,9 @@ class ImprovRepositoryImpl @Inject constructor() : ImprovRepository, ImprovManag
     private val deviceState = MutableStateFlow<DeviceState?>(null)
     private val errorState = MutableStateFlow<ErrorState?>(null)
 
+    private var wifiSsid: String? = null
+    private var wifiPassword: String? = null
+
     override fun getScanningState(): Flow<Boolean> = scanningState.asStateFlow()
     override fun getDevices(): Flow<List<ImprovDevice>> = devices.asStateFlow()
     override fun getDeviceState(): Flow<DeviceState?> = deviceState.asStateFlow()
@@ -33,12 +36,11 @@ class ImprovRepositoryImpl @Inject constructor() : ImprovRepository, ImprovManag
         // TODO handle permissions
     }
 
-    override fun connect(device: ImprovDevice) {
+    override fun connectAndSubmit(deviceName: String, deviceAddress: String, ssid: String, password: String) {
+        val device = ImprovDevice(deviceName, deviceAddress)
+        wifiSsid = ssid
+        wifiPassword = password
         manager?.connectToDevice(device)
-    }
-
-    override fun submitWifi(ssid: String, password: String) {
-        manager?.sendWifi(ssid, password)
     }
 
     override fun stopScanning() {
@@ -46,9 +48,8 @@ class ImprovRepositoryImpl @Inject constructor() : ImprovRepository, ImprovManag
     }
 
     override fun onConnectionStateChange(device: ImprovDevice?) {
-        if (device == null) {
-            deviceState.tryEmit(null)
-            errorState.tryEmit(null)
+        if (device == null) { // Disconnected
+            clearStatesForDevice()
         }
     }
 
@@ -69,5 +70,21 @@ class ImprovRepositoryImpl @Inject constructor() : ImprovRepository, ImprovManag
 
     override fun onStateChange(state: DeviceState) {
         this.deviceState.tryEmit(state)
+        if (state == DeviceState.AUTHORIZED) {
+            wifiSsid?.let { ssid ->
+                wifiPassword?.let { password ->
+                    manager?.sendWifi(ssid, password)
+                }
+            }
+        } else if (state == DeviceState.PROVISIONED) {
+            devices.tryEmit(emptyList())
+        }
+    }
+
+    private fun clearStatesForDevice() {
+        deviceState.tryEmit(null)
+        errorState.tryEmit(null)
+        wifiSsid = null
+        wifiPassword = null
     }
 }

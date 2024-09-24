@@ -1676,10 +1676,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     override fun showImprovAvailable() {
         Snackbar.make(
             binding.root,
-            "Improv-WiFi devices are available to set up",
+            commonR.string.improv_hint,
             LENGTH_LONG
         ).setAction(
-            "Configure"
+            commonR.string.configure
         ) {
             showImprovDialog()
         }.show()

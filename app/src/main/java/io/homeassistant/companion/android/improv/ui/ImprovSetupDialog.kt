@@ -80,10 +80,10 @@ class ImprovSetupDialog : BottomSheetDialogFragment() {
                     val state = screenState.collectAsState()
                     ImprovSheetView(
                         screenState = state.value,
-                        onConnectToDevice = { improvRepository.connect(it) },
-                        onConnectToWifi = { ssid, password -> improvRepository.submitWifi(ssid, password) },
+                        onConnect = improvRepository::connectAndSubmit,
                         onRestart = { improvRepository.startScanning(context) },
                         onDismiss = {
+                            // TODO cleanup state data
                             // setFragmentResult(RESULT_KEY, bundleOf(RESULT_SERVER to serverId))
                             dismiss()
                         }
@@ -107,7 +107,7 @@ class ImprovSetupDialog : BottomSheetDialogFragment() {
 
     override fun onResume() {
         super.onResume()
-        // TODO check if not already scanning
+        // TODO check if not already scanning / don't disrupt active connection
         context?.let { improvRepository.startScanning(it) }
     }
 

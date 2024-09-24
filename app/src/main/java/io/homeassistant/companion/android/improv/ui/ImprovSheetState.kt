@@ -9,4 +9,8 @@ data class ImprovSheetState(
     val devices: List<ImprovDevice>,
     val deviceState: DeviceState?,
     val errorState: ErrorState?
-)
+) {
+    /** @return `true` when [errorState] is not `null` or [ErrorState.NO_ERROR] */
+    val hasError
+        get() = errorState != null && errorState != ErrorState.NO_ERROR
+}

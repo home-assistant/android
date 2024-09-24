@@ -18,9 +18,7 @@ interface ImprovRepository {
 
     fun startScanning(context: Context)
 
-    fun connect(device: ImprovDevice)
-
-    fun submitWifi(ssid: String, password: String)
+    fun connectAndSubmit(deviceName: String, deviceAddress: String, ssid: String, password: String)
 
     fun stopScanning()
 }
