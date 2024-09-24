@@ -76,8 +76,7 @@ class NetworkSensorManager : SensorManager {
             "mdi:wifi-strength-3",
             unitOfMeasurement = "Mbps",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         val wifiState = SensorManager.BasicSensor(
             "wifi_state",
@@ -108,8 +107,7 @@ class NetworkSensorManager : SensorManager {
             deviceClass = "signal_strength",
             unitOfMeasurement = "dBm",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         val publicIp = SensorManager.BasicSensor(
             "public_ip_address",
