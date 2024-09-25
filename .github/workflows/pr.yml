@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 17
-        uses: actions/setup-java@v4.3.0
+        uses: actions/setup-java@v4.4.0
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -41,7 +41,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 17
-        uses: actions/setup-java@v4.3.0
+        uses: actions/setup-java@v4.4.0
         with:
           distribution: 'adopt'
           java-version: '17'
@@ -86,7 +86,7 @@ jobs:
         fi
 
     - name: Set up JDK 17
-      uses: actions/setup-java@v4.3.0
+      uses: actions/setup-java@v4.4.0
       with:
         distribution: 'adopt'
         java-version: '17'
