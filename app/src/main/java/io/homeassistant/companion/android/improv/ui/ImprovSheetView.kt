@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Button
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.LocalContentColor
@@ -40,6 +41,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.mikepenz.iconics.compose.Image
+import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import com.wifi.improv.DeviceState
 import com.wifi.improv.ErrorState
@@ -93,30 +95,14 @@ fun ImprovSheetView(
                     )
                 }
             } else if (screenState.deviceState == DeviceState.PROVISIONED) {
-                Image(
-                    asset = CommunityMaterial.Icon3.cmd_wifi_check,
-                    contentDescription = null,
-                    colorFilter = ColorFilter.tint(LocalContentColor.current),
-                    modifier = Modifier.size(40.dp)
-                )
-                Text(
+                ImprovTextWithIcon(
+                    icon = CommunityMaterial.Icon3.cmd_wifi_check,
                     text = stringResource(commonR.string.improv_device_provisioned),
-                    modifier = Modifier.fillMaxWidth(0.8f).padding(vertical = 16.dp),
-                    textAlign = TextAlign.Center
+                    onButtonClick = onDismiss
                 )
-                Button(
-                    onClick = onDismiss
-                ) {
-                    Text(stringResource(commonR.string.continue_connect))
-                }
             } else if (screenState.hasError) {
-                Image(
-                    asset = CommunityMaterial.Icon.cmd_alert,
-                    contentDescription = null,
-                    colorFilter = ColorFilter.tint(LocalContentColor.current),
-                    modifier = Modifier.size(40.dp)
-                )
-                Text(
+                ImprovTextWithIcon(
+                    icon = CommunityMaterial.Icon.cmd_alert,
                     text = stringResource(
                         when (screenState.errorState) {
                             ErrorState.UNABLE_TO_CONNECT -> commonR.string.improv_error_unable_to_connect
@@ -126,19 +112,13 @@ fun ImprovSheetView(
                             else -> commonR.string.improv_error_unknown
                         }
                     ),
-                    modifier = Modifier.fillMaxWidth(0.8f).padding(vertical = 16.dp),
-                    textAlign = TextAlign.Center
-                )
-                Button(
-                    onClick = {
+                    onButtonClick = {
                         selectedName = null
                         selectedAddress = null
                         submittedWifi = false
                         onRestart()
                     }
-                ) {
-                    Text(stringResource(commonR.string.continue_connect))
-                }
+                )
             } else {
                 CircularProgressIndicator()
                 Text(
@@ -177,6 +157,7 @@ fun ImprovDeviceRow(
     ) {
         Text(device.name.ifBlank { device.address })
     }
+    Divider()
 }
 
 @Composable
@@ -222,6 +203,24 @@ fun ImprovWifiInput(
         ) {
             Text(stringResource(commonR.string.continue_connect))
         }
+    }
+}
+
+@Composable
+fun ImprovTextWithIcon(icon: IIcon, text: String, onButtonClick: () -> Unit) {
+    Image(
+        asset = icon,
+        contentDescription = null,
+        colorFilter = ColorFilter.tint(LocalContentColor.current),
+        modifier = Modifier.size(40.dp)
+    )
+    Text(
+        text = text,
+        modifier = Modifier.fillMaxWidth(0.8f).padding(vertical = 16.dp),
+        textAlign = TextAlign.Center
+    )
+    Button(onButtonClick) {
+        Text(stringResource(commonR.string.continue_connect))
     }
 }
 

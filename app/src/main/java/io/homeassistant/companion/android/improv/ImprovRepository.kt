@@ -16,9 +16,15 @@ interface ImprovRepository {
 
     fun getErrorState(): Flow<ErrorState?>
 
+    fun getRequiredPermissions(): Array<String>
+
+    fun hasPermission(context: Context): Boolean
+
     fun startScanning(context: Context)
 
     fun connectAndSubmit(deviceName: String, deviceAddress: String, ssid: String, password: String)
 
     fun stopScanning()
+
+    fun clearStatesForDevice()
 }

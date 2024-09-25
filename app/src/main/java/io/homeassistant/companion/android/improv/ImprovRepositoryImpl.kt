@@ -1,6 +1,11 @@
 package io.homeassistant.companion.android.improv
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
+import android.util.Log
+import androidx.core.content.ContextCompat
 import com.wifi.improv.DeviceState
 import com.wifi.improv.ErrorState
 import com.wifi.improv.ImprovDevice
@@ -12,6 +17,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class ImprovRepositoryImpl @Inject constructor() : ImprovRepository, ImprovManagerCallback {
+
+    companion object {
+        private const val TAG = "ImprovRepository"
+    }
 
     private var manager: ImprovManager? = null
 
@@ -28,19 +37,44 @@ class ImprovRepositoryImpl @Inject constructor() : ImprovRepository, ImprovManag
     override fun getDeviceState(): Flow<DeviceState?> = deviceState.asStateFlow()
     override fun getErrorState(): Flow<ErrorState?> = errorState.asStateFlow()
 
+    override fun getRequiredPermissions(): Array<String> {
+        var required = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            required += Manifest.permission.BLUETOOTH_SCAN
+            required += Manifest.permission.BLUETOOTH_CONNECT
+        } else {
+            required += Manifest.permission.BLUETOOTH
+            required += Manifest.permission.BLUETOOTH_ADMIN
+        }
+        return required
+    }
+
+    override fun hasPermission(context: Context): Boolean =
+        getRequiredPermissions().all {
+            ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+        }
+
     override fun startScanning(context: Context) {
+        if (!hasPermission(context)) return
         if (manager == null) {
             manager = ImprovManager(context.applicationContext, this)
         }
-        manager?.findDevices()
-        // TODO handle permissions
+        try {
+            manager?.findDevices()
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Not allowed to start scanning", e)
+        }
     }
 
     override fun connectAndSubmit(deviceName: String, deviceAddress: String, ssid: String, password: String) {
         val device = ImprovDevice(deviceName, deviceAddress)
         wifiSsid = ssid
         wifiPassword = password
-        manager?.connectToDevice(device)
+        try {
+            manager?.connectToDevice(device)
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Not allowed to connect to device", e)
+        }
     }
 
     override fun stopScanning() {
@@ -74,6 +108,8 @@ class ImprovRepositoryImpl @Inject constructor() : ImprovRepository, ImprovManag
             wifiSsid?.let { ssid ->
                 wifiPassword?.let { password ->
                     manager?.sendWifi(ssid, password)
+                    wifiSsid = null
+                    wifiPassword = null
                 }
             }
         } else if (state == DeviceState.PROVISIONED) {
@@ -81,7 +117,7 @@ class ImprovRepositoryImpl @Inject constructor() : ImprovRepository, ImprovManag
         }
     }
 
-    private fun clearStatesForDevice() {
+    override fun clearStatesForDevice() {
         deviceState.tryEmit(null)
         errorState.tryEmit(null)
         wifiSsid = null

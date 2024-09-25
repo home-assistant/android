@@ -1,31 +1,37 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/launch_screen_background">
 
-    <WebView
-        android:id="@+id/webview"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
-    <eightbitlab.com.blurview.BlurView
-        android:id="@+id/blurView"
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-    </eightbitlab.com.blurview.BlurView>
 
-    <FrameLayout
-        android:id="@+id/exoviewGroup"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-        <androidx.media3.ui.PlayerView
-            android:id="@+id/exoplayerView"
+        <WebView
+            android:id="@+id/webview"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:show_buffering="always">
-        </androidx.media3.ui.PlayerView>
-    </FrameLayout>
+            android:layout_height="match_parent" />
 
-</RelativeLayout>
+        <eightbitlab.com.blurview.BlurView
+            android:id="@+id/blurView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+        </eightbitlab.com.blurview.BlurView>
+
+        <FrameLayout
+            android:id="@+id/exoviewGroup"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <androidx.media3.ui.PlayerView
+                android:id="@+id/exoplayerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:show_buffering="always">
+            </androidx.media3.ui.PlayerView>
+        </FrameLayout>
+
+    </RelativeLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

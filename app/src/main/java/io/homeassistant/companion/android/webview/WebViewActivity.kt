@@ -71,7 +71,7 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
-import com.google.android.material.snackbar.BaseTransientBottomBar.LENGTH_LONG
+import com.google.android.material.snackbar.BaseTransientBottomBar.LENGTH_INDEFINITE
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
@@ -158,6 +158,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 downloadFile(downloadFileUrl, downloadFileContentDisposition, downloadFileMimetype)
             }
         }
+    private val requestImprovPermissions =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+            if (it.all { result -> result.value }) {
+                presenter.startScanningForImprov()
+            }
+        }
     private val writeNfcTag = registerForActivityResult(WriteNfcTag()) { messageId ->
         sendExternalBusMessage(
             ExternalBusMessage(
@@ -233,6 +239,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var downloadFileUrl = ""
     private var downloadFileContentDisposition = ""
     private var downloadFileMimetype = ""
+    private var snackbar: Snackbar? = null
     private val javascriptInterface = "externalApp"
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -488,6 +495,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 ) {
                     super.doUpdateVisitedHistory(view, url, isReload)
                     onBackPressed.isEnabled = canGoBack()
+                    presenter.stopScanningForImprov(false)
+                    snackbar?.let {
+                        it.dismiss()
+                        snackbar = null
+                    }
                 }
             }
 
@@ -822,7 +834,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                         )
                                     )
                                 }
-                                "improv/scan" -> presenter.startScanningForImprov()
+                                "improv/scan" -> tryScanningForImprov()
                                 "exoplayer/play_hls" -> exoPlayHls(json)
                                 "exoplayer/stop" -> exoStopHls()
                                 "exoplayer/resize" -> exoResizeHls(json)
@@ -1673,21 +1685,19 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
     }
 
-    override fun showImprovAvailable() {
-        Snackbar.make(
-            binding.root,
-            commonR.string.improv_hint,
-            LENGTH_LONG
-        ).setAction(
-            commonR.string.configure
-        ) {
-            showImprovDialog()
-        }.show()
+    private fun tryScanningForImprov() {
+        if (!presenter.startScanningForImprov()) {
+            presenter.getImprovPermissions().let { requestImprovPermissions.launch(it) }
+        }
     }
 
-    private fun showImprovDialog() {
-        val dialog = ImprovSetupDialog()
-        dialog.show(supportFragmentManager, ImprovSetupDialog.TAG)
+    override fun showImprovAvailable() {
+        snackbar = Snackbar.make(binding.root, commonR.string.improv_hint, LENGTH_INDEFINITE)
+            .setAction(commonR.string.configure) {
+                val dialog = ImprovSetupDialog()
+                dialog.show(supportFragmentManager, ImprovSetupDialog.TAG)
+            }
+        snackbar?.show()
     }
 
     override fun onNewIntent(intent: Intent) {

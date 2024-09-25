@@ -63,6 +63,7 @@ class WebViewPresenterImpl @Inject constructor(
     private var urlForServer: Int? = null
 
     private var improvJob: Job? = null
+    private var improvJobStarted = 0L
 
     private val mutableMatterThreadStep = MutableStateFlow(MatterThreadStep.NOT_STARTED)
 
@@ -290,7 +291,7 @@ class WebViewPresenterImpl @Inject constructor(
                 Unit
             }
         } ?: Unit
-        stopScanningForImprov()
+        if (!active) stopScanningForImprov(true)
     }
 
     override fun isLockEnabled(): Boolean = runBlocking {
@@ -479,21 +480,26 @@ class WebViewPresenterImpl @Inject constructor(
         mutableMatterThreadStep.tryEmit(MatterThreadStep.NOT_STARTED)
     }
 
-    override fun startScanningForImprov() {
-        // TODO permissions
-        improvRepository.startScanning(view as Context)
-
+    override fun startScanningForImprov(): Boolean {
+        if (!improvRepository.hasPermission(view as Context)) return false
+        improvJobStarted = System.currentTimeMillis()
         improvJob = mainScope.launch {
+            withContext(Dispatchers.IO) {
+                improvRepository.startScanning(view as Context)
+            }
             improvRepository.getDevices().collect {
-                if (it.any()) {
-                    view.showImprovAvailable()
-                }
+                if (it.any()) view.showImprovAvailable()
             }
         }
+        return true
     }
 
-    override fun stopScanningForImprov() {
-        improvRepository.stopScanning()
-        improvJob?.cancel()
+    override fun getImprovPermissions(): Array<String> = improvRepository.getRequiredPermissions()
+
+    override fun stopScanningForImprov(force: Boolean) {
+        if (improvJob?.isActive == true && (force || System.currentTimeMillis() - improvJobStarted > 1000)) {
+            improvRepository.stopScanning()
+            improvJob?.cancel()
+        }
     }
 }

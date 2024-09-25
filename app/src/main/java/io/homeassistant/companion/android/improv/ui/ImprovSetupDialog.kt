@@ -19,6 +19,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.improv.ImprovRepository
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
@@ -81,10 +82,12 @@ class ImprovSetupDialog : BottomSheetDialogFragment() {
                     ImprovSheetView(
                         screenState = state.value,
                         onConnect = improvRepository::connectAndSubmit,
-                        onRestart = { improvRepository.startScanning(context) },
+                        onRestart = {
+                            improvRepository.clearStatesForDevice()
+                            startScanning()
+                        },
                         onDismiss = {
-                            // TODO cleanup state data
-                            // setFragmentResult(RESULT_KEY, bundleOf(RESULT_SERVER to serverId))
+                            improvRepository.clearStatesForDevice()
                             dismiss()
                         }
                     )
@@ -107,12 +110,19 @@ class ImprovSetupDialog : BottomSheetDialogFragment() {
 
     override fun onResume() {
         super.onResume()
-        // TODO check if not already scanning / don't disrupt active connection
-        context?.let { improvRepository.startScanning(it) }
+        if (screenState.value.deviceState == null) startScanning()
     }
 
     override fun onPause() {
         improvRepository.stopScanning()
         super.onPause()
+    }
+
+    private fun startScanning() {
+        context?.let {
+            lifecycleScope.launch(Dispatchers.IO) {
+                improvRepository.startScanning(it)
+            }
+        }
     }
 }
