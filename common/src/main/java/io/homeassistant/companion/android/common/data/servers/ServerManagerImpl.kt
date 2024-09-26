@@ -114,11 +114,15 @@ class ServerManagerImpl @Inject constructor(
 
     override fun getServer(id: Int): Server? {
         val serverId = if (id == SERVER_ID_ACTIVE) activeServerId() else id
-        return serverId?.let { mutableServers[serverId] ?: serverDao.get(serverId) }
+        return serverId?.let {
+            mutableServers[serverId]
+                ?: serverDao.get(serverId)?.apply { connection.wifiHelper = wifiHelper }
+        }
     }
 
     override fun getServer(webhookId: String): Server? =
-        mutableServers.values.firstOrNull { it.connection.webhookId == webhookId } ?: serverDao.get(webhookId)
+        mutableServers.values.firstOrNull { it.connection.webhookId == webhookId }
+            ?: serverDao.get(webhookId)?.apply { connection.wifiHelper = wifiHelper }
 
     override fun activateServer(id: Int) {
         if (id != SERVER_ID_ACTIVE && mutableServers[id] != null && mutableServers[id]?.type == ServerType.DEFAULT) {
