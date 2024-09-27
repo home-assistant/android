@@ -59,8 +59,8 @@ class SsidViewModel @Inject constructor(
      * @return `true` if the SSID was successfully added
      */
     fun addHomeWifiSsid(ssid: String): Boolean {
-        if (ssid.isBlank() || wifiSsids.any { it == ssid.trim() }) return false
-        setHomeWifiSsids((wifiSsids + ssid.trim()).sorted())
+        if (ssid.isBlank()) return false
+        setHomeWifiSsids((wifiSsids + ssid).sorted())
         return true
     }
 
