@@ -1187,16 +1187,14 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         newConfig: Configuration
     ) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
-        if (exoPlayerView.visibility != View.VISIBLE) {
+        if (exoPlayerView.visibility != View.VISIBLE && decor.getChildAt(3) != null) {
             if (isInPictureInPictureMode) {
                 (decor.getChildAt(3) as FrameLayout).layoutParams.height =
                     FrameLayout.LayoutParams.MATCH_PARENT
                 decor.requestLayout()
             } else {
-                if (decor.getChildAt(3) != null) {
-                    (decor.getChildAt(3) as FrameLayout).layoutParams.height = videoHeight
-                    decor.requestLayout()
-                }
+                (decor.getChildAt(3) as FrameLayout).layoutParams.height = videoHeight
+                decor.requestLayout()
             }
         }
     }
