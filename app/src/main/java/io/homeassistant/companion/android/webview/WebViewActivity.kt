@@ -592,7 +592,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
                 override fun onShowCustomView(view: View, callback: CustomViewCallback) {
                     myCustomView = view
-                    decor.addView(
+                    binding.content.addView(
                         view,
                         FrameLayout.LayoutParams(
                             FrameLayout.LayoutParams.WRAP_CONTENT,
@@ -604,7 +604,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 }
 
                 override fun onHideCustomView() {
-                    decor.removeView(myCustomView)
+                    binding.content.removeView(myCustomView)
                     if (!presenter.isFullScreen()) {
                         showSystemUI()
                     }
@@ -1204,15 +1204,13 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         newConfig: Configuration
     ) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
-        if (exoPlayerView.visibility != View.VISIBLE && decor.getChildAt(3) != null) {
-            if (isInPictureInPictureMode) {
-                (decor.getChildAt(3) as FrameLayout).layoutParams.height =
-                    FrameLayout.LayoutParams.MATCH_PARENT
-                decor.requestLayout()
+        if (exoPlayerView.visibility != View.VISIBLE && ::binding.isInitialized) {
+            binding.exoviewGroup.layoutParams.height = if (isInPictureInPictureMode) {
+                FrameLayout.LayoutParams.MATCH_PARENT
             } else {
-                (decor.getChildAt(3) as FrameLayout).layoutParams.height = videoHeight
-                decor.requestLayout()
+                videoHeight
             }
+            decor.requestLayout()
         }
     }
 

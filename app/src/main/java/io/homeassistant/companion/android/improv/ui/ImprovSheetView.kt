@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.improv.ui
 
+import android.net.wifi.WifiManager
+import android.os.Build
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -80,10 +82,20 @@ fun ImprovSheetView(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (selectedAddress != null && !submittedWifi) {
-                ImprovWifiInput(onSubmit = { ssid, password ->
-                    onConnect(selectedName ?: "", selectedAddress ?: "", ssid, password)
-                    submittedWifi = true
-                })
+                ImprovWifiInput(
+                    activeSsid = if (
+                        screenState.activeSsid?.isNotBlank() == true &&
+                        (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || screenState.activeSsid !== WifiManager.UNKNOWN_SSID)
+                    ) {
+                        screenState.activeSsid
+                    } else {
+                        null
+                    },
+                    onSubmit = { ssid, password ->
+                        onConnect(selectedName ?: "", selectedAddress ?: "", ssid, password)
+                        submittedWifi = true
+                    }
+                )
             } else if (screenState.scanning) {
                 screenState.devices.forEach {
                     ImprovDeviceRow(
@@ -151,7 +163,7 @@ fun ImprovDeviceRow(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .height(48.dp)
+            .height(56.dp)
             .clickable { onClick(device) },
         verticalArrangement = Arrangement.Center
     ) {
@@ -162,9 +174,10 @@ fun ImprovDeviceRow(
 
 @Composable
 fun ImprovWifiInput(
+    activeSsid: String?,
     onSubmit: (String, String) -> Unit
 ) {
-    var ssidInput by rememberSaveable { mutableStateOf("") }
+    var ssidInput by rememberSaveable { mutableStateOf(activeSsid ?: "") }
     var passwordInput by rememberSaveable { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     Column(Modifier.fillMaxWidth()) {

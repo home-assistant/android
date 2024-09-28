@@ -16,6 +16,7 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.data.wifi.WifiHelper
 import io.homeassistant.companion.android.improv.ImprovRepository
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import javax.inject.Inject
@@ -28,6 +29,9 @@ class ImprovSetupDialog : BottomSheetDialogFragment() {
 
     @Inject
     lateinit var improvRepository: ImprovRepository
+
+    @Inject
+    lateinit var wifiHelper: WifiHelper
 
     companion object {
         const val TAG = "ImprovSetupDialog"
@@ -46,6 +50,7 @@ class ImprovSetupDialog : BottomSheetDialogFragment() {
         super.onCreate(savedInstanceState)
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                screenState.emit(screenState.value.copy(activeSsid = wifiHelper.getWifiSsid()?.removeSurrounding("\"")))
                 launch {
                     improvRepository.getScanningState().collect {
                         screenState.emit(screenState.value.copy(scanning = it))
