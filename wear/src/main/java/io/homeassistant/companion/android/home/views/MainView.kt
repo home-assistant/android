@@ -64,7 +64,7 @@ fun MainView(
 
     WearAppTheme {
         ThemeLazyColumn {
-            if (favoriteEntityIds.isNotEmpty()) {
+            if (favoriteEntityIds.isNotEmpty() && !mainViewModel.isFavoritesOnly) {
                 item {
                     ExpandableListHeader(
                         string = stringResource(commonR.string.favorites),
