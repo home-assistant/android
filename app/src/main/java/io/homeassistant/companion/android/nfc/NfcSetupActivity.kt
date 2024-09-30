@@ -87,7 +87,7 @@ class NfcSetupActivity : BaseActivity() {
             this,
             nfcStateChangedReceiver,
             IntentFilter(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED),
-            ContextCompat.RECEIVER_NOT_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED
         )
     }
 

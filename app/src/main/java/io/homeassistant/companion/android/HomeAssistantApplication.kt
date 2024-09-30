@@ -94,7 +94,7 @@ open class HomeAssistantApplication : Application() {
                 addAction(Intent.ACTION_POWER_CONNECTED)
                 addAction(Intent.ACTION_POWER_DISCONNECTED)
             },
-            ContextCompat.RECEIVER_NOT_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED
         )
 
         // This will cause interactive and power save to update upon a state change
@@ -106,7 +106,7 @@ open class HomeAssistantApplication : Application() {
                 addAction(Intent.ACTION_SCREEN_ON)
                 addAction(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED)
             },
-            ContextCompat.RECEIVER_NOT_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED
         )
 
         // Update Quest only sensors when the device is a Quest
@@ -129,7 +129,7 @@ open class HomeAssistantApplication : Application() {
                 IntentFilter().apply {
                     addAction(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED)
                 },
-                ContextCompat.RECEIVER_NOT_EXPORTED
+                ContextCompat.RECEIVER_EXPORTED
             )
         }
 
@@ -152,7 +152,7 @@ open class HomeAssistantApplication : Application() {
             IntentFilter().apply {
                 addAction(TelephonyManager.ACTION_PHONE_STATE_CHANGED)
             },
-            ContextCompat.RECEIVER_NOT_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED
         )
 
         // Listen for bluetooth state changes
@@ -160,7 +160,7 @@ open class HomeAssistantApplication : Application() {
             this,
             sensorReceiver,
             IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED),
-            ContextCompat.RECEIVER_NOT_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED
         )
 
         // Listen for NFC state changes
@@ -168,7 +168,7 @@ open class HomeAssistantApplication : Application() {
             this,
             sensorReceiver,
             IntentFilter(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED),
-            ContextCompat.RECEIVER_NOT_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED
         )
 
         // Listen to changes to the audio input/output on the device
@@ -190,7 +190,7 @@ open class HomeAssistantApplication : Application() {
                 this,
                 sensorReceiver,
                 IntentFilter(AudioManager.ACTION_MICROPHONE_MUTE_CHANGED),
-                ContextCompat.RECEIVER_NOT_EXPORTED
+                ContextCompat.RECEIVER_EXPORTED
             )
         }
 
@@ -200,7 +200,7 @@ open class HomeAssistantApplication : Application() {
                 this,
                 sensorReceiver,
                 IntentFilter(AudioManager.ACTION_SPEAKERPHONE_STATE_CHANGED),
-                ContextCompat.RECEIVER_NOT_EXPORTED
+                ContextCompat.RECEIVER_EXPORTED
             )
         }
 
@@ -210,7 +210,7 @@ open class HomeAssistantApplication : Application() {
                 this,
                 sensorReceiver,
                 IntentFilter(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED),
-                ContextCompat.RECEIVER_NOT_EXPORTED
+                ContextCompat.RECEIVER_EXPORTED
             )
         }
 
@@ -226,7 +226,7 @@ open class HomeAssistantApplication : Application() {
             this,
             sensorReceiver,
             IntentFilter(Intent.ACTION_SHUTDOWN),
-            ContextCompat.RECEIVER_NOT_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED
         )
 
         // Register for all saved user intents
@@ -259,7 +259,7 @@ open class HomeAssistantApplication : Application() {
                     addAction(Intent.ACTION_MANAGED_PROFILE_AVAILABLE)
                     addAction(Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE)
                 },
-                ContextCompat.RECEIVER_NOT_EXPORTED
+                ContextCompat.RECEIVER_EXPORTED
             )
         }
 
@@ -270,7 +270,7 @@ open class HomeAssistantApplication : Application() {
                 this,
                 sensorReceiver,
                 IntentFilter(Intent.ACTION_TIME_TICK),
-                ContextCompat.RECEIVER_NOT_EXPORTED
+                ContextCompat.RECEIVER_EXPORTED
             )
         }
 
