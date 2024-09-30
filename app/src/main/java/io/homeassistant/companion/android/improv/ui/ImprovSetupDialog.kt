@@ -8,6 +8,8 @@ import android.view.WindowManager
 import android.widget.FrameLayout
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.ComposeView
+import androidx.core.os.bundleOf
+import androidx.fragment.app.setFragmentResult
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -23,6 +25,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 @AndroidEntryPoint
 class ImprovSetupDialog : BottomSheetDialogFragment() {
@@ -35,6 +38,9 @@ class ImprovSetupDialog : BottomSheetDialogFragment() {
 
     companion object {
         const val TAG = "ImprovSetupDialog"
+
+        const val RESULT_KEY = "ImprovSetupResult"
+        const val RESULT_DOMAIN = "domain"
     }
 
     private val screenState = MutableStateFlow(
@@ -92,6 +98,8 @@ class ImprovSetupDialog : BottomSheetDialogFragment() {
                             startScanning()
                         },
                         onDismiss = {
+                            val domain = improvRepository.getResultState().firstOrNull()?.toHttpUrlOrNull()?.queryParameter("domain")
+                            setFragmentResult(RESULT_KEY, bundleOf(RESULT_DOMAIN to domain))
                             improvRepository.clearStatesForDevice()
                             dismiss()
                         }

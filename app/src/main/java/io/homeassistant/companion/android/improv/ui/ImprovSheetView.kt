@@ -5,14 +5,13 @@ import android.os.Build
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Button
 import androidx.compose.material.CircularProgressIndicator
@@ -167,7 +166,7 @@ fun ImprovDeviceRow(
             .clickable { onClick(device) },
         verticalArrangement = Arrangement.Center
     ) {
-        Text(device.name.ifBlank { device.address })
+        Text(device.name.takeUnless { it.isNullOrBlank() } ?: device.address)
     }
     Divider()
 }
@@ -181,36 +180,38 @@ fun ImprovWifiInput(
     var passwordInput by rememberSaveable { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     Column(Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth()) {
-            TextField(
-                value = ssidInput,
-                onValueChange = { ssidInput = it },
-                label = { Text(stringResource(commonR.string.improv_wifi_ssid)) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                modifier = Modifier.weight(1f)
-            )
-            Spacer(Modifier.width(4.dp))
-            TextField(
-                value = passwordInput,
-                onValueChange = { passwordInput = it },
-                label = { Text(stringResource(commonR.string.password)) },
-                singleLine = true,
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                trailingIcon = {
-                    val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
-                    val description = stringResource(if (passwordVisible) commonR.string.hide_password else commonR.string.view_password)
-
-                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(image, description)
-                    }
-                },
-                modifier = Modifier.weight(1f)
-            )
-        }
+        TextField(
+            value = ssidInput,
+            onValueChange = { ssidInput = it },
+            label = { Text(stringResource(commonR.string.improv_wifi_ssid)) },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(Modifier.height(8.dp))
+        TextField(
+            value = passwordInput,
+            onValueChange = { passwordInput = it },
+            label = { Text(stringResource(commonR.string.password)) },
+            singleLine = true,
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = {
+                if (ssidInput.isNotBlank() && passwordInput.isNotBlank()) {
+                    onSubmit(ssidInput, passwordInput)
+                }
+            }),
+            trailingIcon = {
+                val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                val description = stringResource(if (passwordVisible) commonR.string.hide_password else commonR.string.view_password)
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(image, description)
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
         Button(
-            modifier = Modifier.padding(top = 8.dp).align(Alignment.CenterHorizontally),
+            modifier = Modifier.padding(vertical = 8.dp).align(Alignment.CenterHorizontally),
             enabled = ssidInput.isNotBlank() && passwordInput.isNotBlank(),
             onClick = { onSubmit(ssidInput, passwordInput) }
         ) {

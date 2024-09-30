@@ -1692,6 +1692,26 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     override fun showImprovAvailable() {
         snackbar = Snackbar.make(binding.root, commonR.string.improv_hint, LENGTH_INDEFINITE)
             .setAction(commonR.string.configure) {
+                supportFragmentManager.setFragmentResultListener(ImprovSetupDialog.RESULT_KEY, this) { _, bundle ->
+                    if (bundle.containsKey(ImprovSetupDialog.RESULT_DOMAIN)) {
+                        bundle.getString(ImprovSetupDialog.RESULT_DOMAIN)?.let { improvDomain ->
+                            val url = serverManager.getServer(presenter.getActiveServer())?.let url@{
+                                val base = it.connection.getUrl() ?: return@url null
+                                Uri.parse(base.toString())
+                                    .buildUpon()
+                                    .appendEncodedPath("config/integrations/dashboard/add")
+                                    .appendQueryParameter("domain", improvDomain)
+                                    .appendQueryParameter("external_auth", "1")
+                                    .build()
+                                    .toString()
+                            }
+                            if (url != null) {
+                                loadUrl(url = url, keepHistory = true, openInApp = true)
+                            }
+                        }
+                        supportFragmentManager.clearFragmentResultListener(ImprovSetupDialog.RESULT_KEY)
+                    }
+                }
                 val dialog = ImprovSetupDialog()
                 dialog.show(supportFragmentManager, ImprovSetupDialog.TAG)
             }

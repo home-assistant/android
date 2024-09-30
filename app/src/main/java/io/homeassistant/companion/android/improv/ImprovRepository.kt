@@ -16,6 +16,8 @@ interface ImprovRepository {
 
     fun getErrorState(): Flow<ErrorState?>
 
+    fun getResultState(): List<String>
+
     fun getRequiredPermissions(): Array<String>
 
     fun hasPermission(context: Context): Boolean

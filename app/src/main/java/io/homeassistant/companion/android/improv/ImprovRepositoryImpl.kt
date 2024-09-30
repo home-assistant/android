@@ -25,9 +25,10 @@ class ImprovRepositoryImpl @Inject constructor() : ImprovRepository, ImprovManag
     private var manager: ImprovManager? = null
 
     private val scanningState = MutableStateFlow(false)
-    private val devices = MutableStateFlow<List<ImprovDevice>>(listOf())
+    private val devices = MutableStateFlow(listOf<ImprovDevice>())
     private val deviceState = MutableStateFlow<DeviceState?>(null)
     private val errorState = MutableStateFlow<ErrorState?>(null)
+    private var resultState = listOf<String>()
 
     private var wifiSsid: String? = null
     private var wifiPassword: String? = null
@@ -36,6 +37,7 @@ class ImprovRepositoryImpl @Inject constructor() : ImprovRepository, ImprovManag
     override fun getDevices(): Flow<List<ImprovDevice>> = devices.asStateFlow()
     override fun getDeviceState(): Flow<DeviceState?> = deviceState.asStateFlow()
     override fun getErrorState(): Flow<ErrorState?> = errorState.asStateFlow()
+    override fun getResultState(): List<String> = resultState
 
     override fun getRequiredPermissions(): Array<String> {
         var required = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -103,7 +105,7 @@ class ImprovRepositoryImpl @Inject constructor() : ImprovRepository, ImprovManag
     }
 
     override fun onStateChange(state: DeviceState) {
-        this.deviceState.tryEmit(state)
+        deviceState.tryEmit(state)
         if (state == DeviceState.AUTHORIZED) {
             wifiSsid?.let { ssid ->
                 wifiPassword?.let { password ->
@@ -117,9 +119,14 @@ class ImprovRepositoryImpl @Inject constructor() : ImprovRepository, ImprovManag
         }
     }
 
+    override fun onRpcResult(result: List<String>) {
+        resultState = result
+    }
+
     override fun clearStatesForDevice() {
         deviceState.tryEmit(null)
         errorState.tryEmit(null)
+        resultState = listOf()
         wifiSsid = null
         wifiPassword = null
     }
