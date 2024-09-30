@@ -279,7 +279,7 @@ open class HomeAssistantApplication : Application() {
             this,
             sensorReceiver,
             IntentFilter(Intent.ACTION_CONFIGURATION_CHANGED),
-            ContextCompat.RECEIVER_NOT_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED
         )
 
         // Update widgets when the screen turns on, updates are skipped if widgets were not added
