@@ -1,25 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2024.9.4 - Main" versioncode="3">
-        <change>Add Signal strength and Data network type sensors for each SIM slot</change>
-        <change>Add measured power to notification command for BLE transmitter sensor</change>
-        <change>Add page zoom setting for dashboards</change>
-        <change>Add transparent background option for media player widget</change>
-        <change>Android Auto: Send android.navigation_started event when a entity under the navigation category is selected with entity ID included as event data</change>
+    <release version="2024.10.1 - Main" versioncode="3">
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2024.9.4 - Wear" versioncode="2">
-        <change>&lt;b&gt;Backward-incompatible change:&lt;/b&gt; Wear OS 4+ Heart rate sensor users will need to re-enable the sensor and grant all the time permission again in order to continue using the sensor</change>
-        <change>Add Signal strength and Data network type sensors for each SIM slot</change>
-        <change>Add measured power to notification command for BLE transmitter sensor</change>
+    <release version="2024.10.1 - Wear" versioncode="2">
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2024.9.4 - Automotive" versioncode="1">
-        <change>Add Signal strength and Data network type sensors for each SIM slot</change>
-        <change>Add measured power to notification command for BLE transmitter sensor</change>
-        <change>Add page zoom setting for dashboards</change>
-        <change>Driving Interface: Send android.navigation_started event when a entity under the navigation category is selected with entity ID included as event data</change>
+    <release version="2024.10.1 - Automotive" versioncode="1">
         <change>Bug fixes and dependency updates</change>
     </release>
 </changelog>
