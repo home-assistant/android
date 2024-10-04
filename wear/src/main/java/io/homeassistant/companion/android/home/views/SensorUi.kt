@@ -13,13 +13,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.wear.compose.material3.SwitchButton
 import androidx.wear.compose.material3.Text
-import androidx.wear.compose.material3.ToggleButton
 import androidx.wear.tooling.preview.devices.WearDevices
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.sensor.Sensor
-import io.homeassistant.companion.android.theme.getToggleButtonColors
-import io.homeassistant.companion.android.util.ToggleSwitch
+import io.homeassistant.companion.android.theme.getSwitchButtonColors
 import io.homeassistant.companion.android.util.batterySensorManager
 import io.homeassistant.companion.android.views.ThemeLazyColumn
 import kotlinx.coroutines.runBlocking
@@ -68,7 +67,7 @@ fun SensorUi(
     val perm = manager.checkPermission(LocalContext.current, basicSensor.id)
     val isChecked = (sensor == null && basicSensor.enabledByDefault) ||
         (sensor?.enabled == true && perm)
-    ToggleButton(
+    SwitchButton(
         checked = isChecked,
         onCheckedChange = { enabled ->
             val permissions = manager.requiredPermissions(basicSensor.id)
@@ -108,8 +107,7 @@ fun SensorUi(
                 }
             }
         },
-        toggleControl = { ToggleSwitch(isChecked) },
-        colors = getToggleButtonColors()
+        colors = getSwitchButtonColors()
     )
 }
 

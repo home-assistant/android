@@ -7,17 +7,16 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.wear.compose.foundation.lazy.items
+import androidx.wear.compose.material3.SwitchButton
 import androidx.wear.compose.material3.Text
-import androidx.wear.compose.material3.ToggleButton
 import com.mikepenz.iconics.compose.Image
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
-import io.homeassistant.companion.android.theme.getToggleButtonColors
+import io.homeassistant.companion.android.theme.getSwitchButtonColors
 import io.homeassistant.companion.android.theme.wearColorScheme
-import io.homeassistant.companion.android.util.ToggleSwitch
 import io.homeassistant.companion.android.views.ExpandableListHeader
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
@@ -73,7 +72,7 @@ private fun FavoriteToggleChip(
 
     val entityId = entity.entityId
     val checked = favoriteEntityIds.contains(entityId)
-    ToggleButton(
+    SwitchButton(
         checked = checked,
         onCheckedChange = {
             onFavoriteSelected(entityId, it)
@@ -93,7 +92,6 @@ private fun FavoriteToggleChip(
                 overflow = TextOverflow.Ellipsis
             )
         },
-        toggleControl = { ToggleSwitch(checked) },
-        colors = getToggleButtonColors()
+        colors = getSwitchButtonColors()
     )
 }

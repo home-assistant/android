@@ -19,8 +19,9 @@ import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material3.ExperimentalWearMaterial3Api
 import androidx.wear.compose.material3.IconButtonDefaults
 import androidx.wear.compose.material3.IconToggleButton
-import androidx.wear.compose.material3.InlineSlider
-import androidx.wear.compose.material3.InlineSliderDefaults
+import androidx.wear.compose.material3.IconToggleButtonDefaults
+import androidx.wear.compose.material3.Slider
+import androidx.wear.compose.material3.SliderDefaults
 import androidx.wear.compose.material3.Text
 import androidx.wear.compose.material3.touchTargetAwareSize
 import androidx.wear.tooling.preview.devices.WearDevices
@@ -85,9 +86,9 @@ fun DetailsPanelView(
                                 haptic
                             )
                         },
-                        colors = IconButtonDefaults.iconToggleButtonColors(
+                        colors = IconToggleButtonDefaults.iconToggleButtonColors(
                             checkedContainerColor = wearColorScheme.tertiary.copy(alpha = 0.2f),
-                            uncheckedContainerColor = wearColorScheme.surfaceDim
+                            uncheckedContainerColor = wearColorScheme.surfaceContainerLow
                         ),
                         modifier = Modifier.touchTargetAwareSize(IconButtonDefaults.SmallButtonSize)
                     ) {
@@ -193,7 +194,7 @@ fun FanSpeedSlider(
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp)
         )
-        InlineSlider(
+        Slider(
             value = position.value,
             onValueChange = {
                 onFanSpeedChanged(it)
@@ -247,7 +248,7 @@ fun BrightnessSlider(
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp)
         )
-        InlineSlider(
+        Slider(
             value = position.value,
             onValueChange = { brightness ->
                 onBrightnessChanged(brightness.div(100).times(255))
@@ -315,7 +316,7 @@ fun ColorTempSlider(
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp)
         )
-        InlineSlider(
+        Slider(
             value = currentValue,
             onValueChange = {
                 onColorTempChanged(it, useKelvin)
@@ -344,12 +345,12 @@ fun ColorTempSlider(
                     modifier = Modifier.size(IconButtonDefaults.iconSizeFor(IconButtonDefaults.ExtraSmallButtonSize))
                 )
             },
-            colors = InlineSliderDefaults.colors(
+            colors = SliderDefaults.sliderColors(
                 selectedBarColor = getColorTemperature(
                     ratio = (currentValue - minValue).toDouble() / (maxValue - minValue).toDouble(),
                     isKelvin = useKelvin
                 ),
-                containerColor = wearColorScheme.surfaceDim
+                containerColor = wearColorScheme.surfaceContainerLow
             ),
             modifier = Modifier.padding(bottom = 8.dp)
         )
