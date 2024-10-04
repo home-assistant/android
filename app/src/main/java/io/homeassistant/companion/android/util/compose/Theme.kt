@@ -13,6 +13,8 @@ val colorPrimary = Color(0xFF03A9F4)
 val colorPrimaryDark = Color(0xFF0288D1)
 val darkColorBackground = Color(0xFF1C1C1C)
 
+const val STEP_SCREEN_MAX_WIDTH = 600
+
 private val haLightColors = lightColors(
     primary = colorPrimary,
     primaryVariant = colorPrimaryDark,
