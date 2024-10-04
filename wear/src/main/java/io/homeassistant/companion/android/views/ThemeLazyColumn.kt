@@ -13,11 +13,8 @@ import androidx.wear.compose.foundation.lazy.ScalingLazyListState
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
-import com.google.android.horologist.annotations.ExperimentalHorologistApi
-import com.google.android.horologist.compose.rotaryinput.rotaryWithScroll
 import io.homeassistant.companion.android.home.views.TimeText
 
-@OptIn(ExperimentalHorologistApi::class)
 @Composable
 fun ThemeLazyColumn(
     state: ScalingLazyListState = rememberScalingLazyListState(),
@@ -32,9 +29,7 @@ fun ThemeLazyColumn(
         timeText = { TimeText(scalingLazyListState = state) }
     ) {
         ScalingLazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .rotaryWithScroll(state),
+            modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
                 start = 8.dp,
                 end = 8.dp
