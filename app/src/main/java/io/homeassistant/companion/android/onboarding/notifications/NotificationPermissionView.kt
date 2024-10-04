@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.onboarding.notifications
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -25,6 +24,7 @@ import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.onboarding.OnboardingHeaderView
+import io.homeassistant.companion.android.onboarding.OnboardingScreen
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 
 @Composable
@@ -32,12 +32,7 @@ fun NotificationPermissionView(
     onSetNotificationsEnabled: (Boolean) -> Unit
 ) {
     val scrollState = rememberScrollState()
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .fillMaxHeight()
-            .padding(16.dp)
-    ) {
+    OnboardingScreen {
         Column(
             modifier = Modifier
                 .verticalScroll(scrollState)

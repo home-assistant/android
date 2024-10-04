@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -39,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.onboarding.OnboardingHeaderView
+import io.homeassistant.companion.android.onboarding.OnboardingScreen
 import io.homeassistant.companion.android.onboarding.OnboardingViewModel
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -53,12 +53,7 @@ fun MobileAppIntegrationView(
 ) {
     val scrollState = rememberScrollState()
     val keyboardController = LocalSoftwareKeyboardController.current
-    Column(
-        modifier = Modifier
-            .fillMaxHeight()
-            .fillMaxWidth()
-            .padding(16.dp)
-    ) {
+    OnboardingScreen {
         Column(
             modifier = Modifier
                 .verticalScroll(scrollState)
