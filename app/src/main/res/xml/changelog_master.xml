@@ -2,15 +2,15 @@
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
     <release version="2024.10.1 - Main" versioncode="3">
-        <change>&lt;b&gt;Backward-incompatible change:&lt;/b&gt; Mobile Data sensor users may need to re-enable the sensor and grant the Phone permission, if not previously granted for another sensor.</change>
+        <change>&lt;b&gt;Backward-incompatible change:&lt;/b&gt; The Mobile data sensor now requires the Phone permission.</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2024.10.1 - Wear" versioncode="2">
-        <change>&lt;b&gt;Backward-incompatible change:&lt;/b&gt; Mobile Data sensor users may need to re-enable the sensor and grant the Phone permission, if not previously granted for another sensor.</change>
+        <change>&lt;b&gt;Backward-incompatible change:&lt;/b&gt; The Mobile data sensor now requires the Phone permission.</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2024.10.1 - Automotive" versioncode="1">
-        <change>&lt;b&gt;Backward-incompatible change:&lt;/b&gt; Mobile Data sensor users may need to re-enable the sensor and grant the Phone permission, if not previously granted for another sensor.</change>
+        <change>&lt;b&gt;Backward-incompatible change:&lt;/b&gt; The Mobile data sensor now requires the Phone permission.</change>
         <change>Bug fixes and dependency updates</change>
     </release>
 </changelog>
