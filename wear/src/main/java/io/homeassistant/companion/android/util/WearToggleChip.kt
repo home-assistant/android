@@ -54,24 +54,24 @@ object WearToggleChip {
 
         val contentBackgroundColor = if (hasColor) {
             val entityColor = entity.getLightColor()
-            if (entityColor != null) Color(entityColor) else wearColorScheme.surfaceBright
+            if (entityColor != null) Color(entityColor) else wearColorScheme.surfaceContainerHigh
         } else {
-            wearColorScheme.surfaceBright
+            wearColorScheme.surfaceContainerHigh
         }
 
         return when {
             (hasPosition || hasColor) -> {
                 val checkedStartBackgroundColor = if (hasColor) {
-                    contentBackgroundColor.copy(alpha = 0.5f).compositeOver(wearColorScheme.surfaceDim)
+                    contentBackgroundColor.copy(alpha = 0.5f).compositeOver(wearColorScheme.surfaceContainerLow)
                 } else {
-                    wearColorScheme.surfaceBright
+                    wearColorScheme.surfaceContainerHigh
                 }
                 val checkedEndBackgroundColor = if (hasPosition) {
-                    wearColorScheme.surfaceDim // Used as 'off' color
+                    wearColorScheme.surfaceContainerLow // Used as 'off' color
                 } else {
                     checkedStartBackgroundColor // On no position = entire background 'on'
                 }
-                val uncheckedBackgroundColor = wearColorScheme.surfaceDim
+                val uncheckedBackgroundColor = wearColorScheme.surfaceContainerLow
 
                 var checkedBackgroundColors = listOf(
                     checkedStartBackgroundColor,
@@ -176,12 +176,12 @@ object WearToggleChip {
                 }
             }
             else -> ToggleChipDefaults.toggleChipColors(
-                checkedStartBackgroundColor = wearColorScheme.surfaceBright,
-                checkedEndBackgroundColor = wearColorScheme.surfaceBright,
+                checkedStartBackgroundColor = wearColorScheme.surfaceContainerHigh,
+                checkedEndBackgroundColor = wearColorScheme.surfaceContainerHigh,
                 checkedContentColor = wearColorScheme.onPrimaryContainer,
                 checkedSecondaryContentColor = wearColorScheme.onPrimaryContainer.copy(alpha = 0.8f),
-                uncheckedStartBackgroundColor = wearColorScheme.surfaceDim,
-                uncheckedEndBackgroundColor = wearColorScheme.surfaceDim,
+                uncheckedStartBackgroundColor = wearColorScheme.surfaceContainerLow,
+                uncheckedEndBackgroundColor = wearColorScheme.surfaceContainerLow,
                 uncheckedContentColor = wearColorScheme.onSurface,
                 uncheckedSecondaryContentColor = wearColorScheme.onSurfaceVariant
             )
