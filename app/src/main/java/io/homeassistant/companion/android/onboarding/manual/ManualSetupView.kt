@@ -1,8 +1,7 @@
 package io.homeassistant.companion.android.onboarding.manual
 
 import android.content.res.Configuration
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
@@ -27,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.onboarding.OnboardingHeaderView
+import io.homeassistant.companion.android.onboarding.OnboardingScreen
 
 @Composable
 fun ManualSetupView(
@@ -35,15 +35,9 @@ fun ManualSetupView(
     manualContinueEnabled: Boolean,
     connectedClicked: () -> Unit
 ) {
-    val scrollState = rememberScrollState()
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    Column(
-        modifier = Modifier
-            .verticalScroll(scrollState)
-            .fillMaxWidth()
-            .padding(16.dp)
-    ) {
+    OnboardingScreen(Modifier.fillMaxHeight().verticalScroll(rememberScrollState())) {
         OnboardingHeaderView(
             icon = CommunityMaterial.Icon3.cmd_web,
             title = stringResource(id = commonR.string.manual_title)
@@ -63,7 +57,7 @@ fun ManualSetupView(
             modifier = Modifier.align(Alignment.CenterHorizontally),
             label = { Text(stringResource(id = commonR.string.input_url)) },
             singleLine = true,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, autoCorrect = false, keyboardType = KeyboardType.Uri),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, autoCorrectEnabled = false, keyboardType = KeyboardType.Uri),
             keyboardActions = KeyboardActions(
                 onDone = {
                     keyboardController?.hide()
