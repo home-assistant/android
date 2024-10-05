@@ -70,7 +70,8 @@ class HealthServicesSensorManager : SensorManager {
             commonR.string.sensor_name_daily_calories,
             commonR.string.sensor_description_daily_calories,
             "mdi:fire",
-            unitOfMeasurement = "kcal",
+            "energy",
+            unitOfMeasurement = "cal",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.WORKER
         )
