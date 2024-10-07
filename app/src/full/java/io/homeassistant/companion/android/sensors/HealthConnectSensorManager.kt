@@ -31,6 +31,7 @@ class HealthConnectSensorManager : SensorManager {
             commonR.string.basic_sensor_name_active_calories_burned,
             commonR.string.sensor_description_active_calories_burned,
             "mdi:fire",
+            "energy",
             unitOfMeasurement = "kcal",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.WORKER
@@ -43,6 +44,7 @@ class HealthConnectSensorManager : SensorManager {
             commonR.string.basic_sensor_name_total_calories_burned,
             commonR.string.sensor_description_total_calories_burned,
             "mdi:fire",
+            "energy",
             unitOfMeasurement = "kcal",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.WORKER

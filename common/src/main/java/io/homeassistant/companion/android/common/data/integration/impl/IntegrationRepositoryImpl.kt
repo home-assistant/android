@@ -704,6 +704,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         val canRegisterDeviceClassDistance = server.version?.isAtLeast(2022, 10, 0) == true
         val canRegisterNullProperties = server.version?.isAtLeast(2023, 2, 0) == true
         val canRegisterDeviceClassEnum = server.version?.isAtLeast(2023, 1, 0) == true
+        val canRegisterDeviceClassEnergyCalories = server.version?.isAtLeast(2024, 10, 0) == true
 
         val registrationData = SensorRegistrationRequest(
             sensorRegistration.uniqueId,
@@ -721,6 +722,13 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             when (sensorRegistration.deviceClass) {
                 "distance" -> if (canRegisterDeviceClassDistance) sensorRegistration.deviceClass else null
                 "enum" -> if (canRegisterDeviceClassEnum) sensorRegistration.deviceClass else null
+                "energy" -> if (
+                    canRegisterDeviceClassEnergyCalories || sensorRegistration.unitOfMeasurement !in listOf("cal", "kcal")
+                ) {
+                    sensorRegistration.deviceClass
+                } else {
+                    null
+                }
                 else -> sensorRegistration.deviceClass
             },
             sensorRegistration.unitOfMeasurement,
