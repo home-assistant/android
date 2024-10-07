@@ -274,6 +274,14 @@ open class HomeAssistantApplication : Application() {
             )
         }
 
+        // Register for changes to the configuration
+        ContextCompat.registerReceiver(
+            this,
+            sensorReceiver,
+            IntentFilter(Intent.ACTION_CONFIGURATION_CHANGED),
+            ContextCompat.RECEIVER_EXPORTED
+        )
+
         // Update widgets when the screen turns on, updates are skipped if widgets were not added
         val buttonWidget = ButtonWidget()
         val entityWidget = EntityWidget()

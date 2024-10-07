@@ -1,13 +1,18 @@
 package io.homeassistant.companion.android.common.sensors
 
 import android.content.Context
+import android.content.res.Configuration
+import android.hardware.display.DisplayManager
 import android.provider.Settings
 import android.util.Log
+import android.view.Display
+import android.view.Surface
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 
 class DisplaySensorManager : SensorManager {
     companion object {
-        private const val TAG = "ScreenBrightness"
+        private const val TAG = "DisplaySensors"
 
         val screenBrightness = SensorManager.BasicSensor(
             "screen_brightness",
@@ -26,16 +31,41 @@ class DisplaySensorManager : SensorManager {
             "mdi:cellphone-off",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#screen-off-timeout-sensor"
         )
+
+        val screenOrientation = SensorManager.BasicSensor(
+            "screen_orientation",
+            "sensor",
+            commonR.string.sensor_name_screen_orientation,
+            commonR.string.sensor_description_screen_orientation,
+            "mdi:screen-rotation",
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#screen-orientation-sensor",
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+        )
+
+        val screenRotation = SensorManager.BasicSensor(
+            "screen_rotation",
+            "sensor",
+            commonR.string.sensor_name_screen_rotation,
+            commonR.string.sensor_description_screen_rotation,
+            "mdi:screen-rotation",
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#screen-rotation-sensor",
+            unitOfMeasurement = "°"
+        )
     }
+
     override val name: Int
         get() = commonR.string.sensor_name_display_sensors
 
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        return listOf(screenBrightness, screenOffTimeout)
+        return listOf(screenBrightness, screenOffTimeout, screenOrientation, screenRotation)
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
+    }
+
+    override fun docsLink(): String {
+        return "https://companion.home-assistant.io/docs/core/sensors#display-sensors"
     }
 
     override fun requestSensorUpdate(
@@ -43,6 +73,8 @@ class DisplaySensorManager : SensorManager {
     ) {
         updateScreenBrightness(context)
         updateScreenTimeout(context)
+        updateScreenOrientation(context)
+        updateScreenRotation(context)
     }
 
     private fun updateScreenBrightness(context: Context) {
@@ -97,5 +129,70 @@ class DisplaySensorManager : SensorManager {
             screenOffTimeout.statelessIcon,
             mapOf()
         )
+    }
+
+    private fun updateScreenOrientation(context: Context) {
+        if (!isEnabled(context, screenOrientation)) {
+            return
+        }
+
+        @Suppress("DEPRECATION")
+        val orientation = when (context.resources.configuration.orientation) {
+            Configuration.ORIENTATION_PORTRAIT -> "portrait"
+            Configuration.ORIENTATION_LANDSCAPE -> "landscape"
+            Configuration.ORIENTATION_SQUARE -> "square"
+            Configuration.ORIENTATION_UNDEFINED -> STATE_UNKNOWN
+            else -> STATE_UNKNOWN
+        }
+
+        val icon = when (orientation) {
+            "portrait" -> "mdi:phone-rotate-portrait"
+            "landscape" -> "mdi:phone-rotate-landscape"
+            "square" -> "mdi:crop-square"
+            else -> screenOrientation.statelessIcon
+        }
+
+        onSensorUpdated(
+            context,
+            screenOrientation,
+            orientation,
+            icon,
+            mapOf(
+                "options" to listOf("portrait", "landscape", "square", STATE_UNKNOWN)
+            )
+        )
+    }
+
+    private fun updateScreenRotation(context: Context) {
+        if (!isEnabled(context, screenRotation)) {
+            return
+        }
+
+        val dm = context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
+
+        val display = getRotationString(dm.getDisplay(Display.DEFAULT_DISPLAY).rotation)
+
+        val multiple = dm.displays.associate { it.name to getRotationString(it.rotation) }
+        val possibleStates = listOf("0", "90", "180", "270")
+        val attrs = if (dm.displays.size > 1) {
+            multiple.plus("options" to possibleStates)
+        } else {
+            mapOf("options" to possibleStates)
+        }
+        onSensorUpdated(
+            context,
+            screenRotation,
+            display,
+            screenRotation.statelessIcon,
+            attrs
+        )
+    }
+
+    private fun getRotationString(rotate: Int): String = when (rotate) {
+        Surface.ROTATION_0 -> "0"
+        Surface.ROTATION_90 -> "90"
+        Surface.ROTATION_180 -> "180"
+        Surface.ROTATION_270 -> "270"
+        else -> STATE_UNKNOWN
     }
 }
