@@ -229,8 +229,7 @@ class MainViewModel @Inject constructor(
 
         if (!isFavoritesOnly) {
             areaRegistry = getAreaRegistry.await()?.also {
-                areas.clear()
-                areas.addAll(it)
+                areas = it.toMutableList()
             }
             deviceRegistry = getDeviceRegistry.await()
         }
@@ -269,10 +268,7 @@ class MainViewModel @Inject constructor(
         }
         homePresenter.getAreaRegistryUpdates()?.throttleLatest(1000)?.collect {
             areaRegistry = homePresenter.getAreaRegistry()
-            areas.clear()
-            areaRegistry?.let {
-                areas.addAll(it)
-            }
+            areas = areaRegistry.orEmpty().toMutableList()
             updateEntityDomains()
         }
     }
@@ -318,35 +314,22 @@ class MainViewModel @Inject constructor(
                     .map { it as Entity<Map<String, Any>> }
                     .sortedBy { (it.attributes["friendly_name"] ?: it.entityId) as String }
             )
-            entitiesByArea[area.areaId]?.let {
-                it.clear()
-                it.addAll(entitiesInArea)
-            } ?: run {
-                entitiesByArea[area.areaId] = entitiesInArea
-            }
+            entitiesByArea[area.areaId] = entitiesInArea.toMutableStateList()
         }
-        entitiesByAreaOrder.clear()
-        entitiesByAreaOrder.addAll(areasList.map { it.areaId })
+        entitiesByAreaOrder = areasList.map { it.areaId }.toMutableStateList()
+
         // Quick check: are there any areas in the list that no longer exist?
-        entitiesByArea.forEach {
-            if (!areasList.any { item -> item.areaId == it.key }) {
-                entitiesByArea.remove(it.key)
-            }
+        entitiesByArea.keys.removeAll { areaId ->
+            !areasList.any { it.areaId == areaId }
         }
 
         // Create a list with all discovered domains + their entities
         domainsList.forEach { domain ->
             val entitiesInDomain = mutableStateListOf<Entity<*>>()
             entitiesInDomain.addAll(entitiesList.filter { it.domain == domain })
-            entitiesByDomain[domain]?.let {
-                it.clear()
-                it.addAll(entitiesInDomain)
-            } ?: run {
-                entitiesByDomain[domain] = entitiesInDomain
-            }
+            entitiesByDomain[domain] = entitiesInDomain
         }
-        entitiesByDomainOrder.clear()
-        entitiesByDomainOrder.addAll(domainsList)
+        entitiesByDomainOrder = domainsList.toMutableStateList()
     }
 
     fun toggleEntity(entityId: String, state: String) {
