@@ -651,7 +651,7 @@
     <string name="sensor_description_volume_music">Volume level for music on the device</string>
     <string name="sensor_description_volume_ring">Volume level for the ringer on the device</string>
     <string name="sensor_description_weight">Last recorded weight in Health Connect</string>
-    <string name="sensor_description_wifi_bssid">The mac address of the currently connected WiFi access point. Enabling the \"Get current BSSID\" toggle will create a new setting allowing you to rename the state sent back to Home Assistant for the chosen mac address. The toggle will default to off after the current BSSID is stored, so you will need to enable it once for each BSSID you wish to rename. You can also clear out the value to remove the setting in the next update.</string>
+    <string name="sensor_description_wifi_bssid">The MAC address of the currently connected WiFi access point. Enabling the \"Get current BSSID\" toggle will create a new setting allowing you to rename the state sent back to Home Assistant for the chosen MAC address. The toggle will default to off after the current BSSID is stored, so you will need to enable it once for each BSSID you wish to rename. You can also clear out the value to remove the setting in the next update.</string>
     <string name="sensor_description_wifi_connection">The name of the network the device is currently connected to</string>
     <string name="sensor_description_wifi_frequency">The frequency band of the connected network</string>
     <string name="sensor_description_wifi_ip">The current IP address of the device on the network</string>
