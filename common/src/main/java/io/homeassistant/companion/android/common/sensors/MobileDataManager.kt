@@ -34,6 +34,7 @@ class MobileDataManager : SensorManager {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#mobile-data-sensors"
     }
+
     override val name: Int
         get() = commonR.string.sensor_name_mobile_data
 
@@ -42,7 +43,7 @@ class MobileDataManager : SensorManager {
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
-        return if (sensorId == mobileDataRoaming.id) {
+        return if (sensorId == mobileDataRoaming.id || Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             arrayOf(Manifest.permission.READ_PHONE_STATE)
         } else {
             arrayOf()
@@ -75,6 +76,8 @@ class MobileDataManager : SensorManager {
         if (telephonyManager?.simState == TelephonyManager.SIM_STATE_READY) {
             enabled = if (sensor.id == mobileDataRoaming.id && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 telephonyManager.isDataRoamingEnabled
+            } else if (sensor.id == mobileDataState.id && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                telephonyManager.isDataEnabled
             } else {
                 getInt(context.contentResolver, settingKey, 0) == 1
             }

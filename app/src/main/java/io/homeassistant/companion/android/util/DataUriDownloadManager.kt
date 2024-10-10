@@ -60,7 +60,7 @@ object DataUriDownloadManager {
                     context,
                     0,
                     sendIntent,
-                    PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_MUTABLE
+                    PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
             )
         } else {

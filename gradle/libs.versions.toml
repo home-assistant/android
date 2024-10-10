@@ -1,7 +1,7 @@
 [versions]
 activity-compose = "1.9.2"
 androidBeaconLibrary = "2.20.6"
-androidPlugin = "8.6.1"
+androidPlugin = "8.7.0"
 androidSdk-compile = "35"
 androidSdk-min = "21"
 androidSdk-target = "34"
@@ -14,16 +14,16 @@ blurView = "version-2.0.5"
 car-versions = "1.4.0"
 changeLog = "3.5"
 community-material-typeface = "7.0.96.1-kotlin"
-compose-bom = "2024.09.02"
+compose-bom = "2024.09.03"
 connectClient = "1.1.0-alpha09"
 constraintlayout = "2.1.4"
 coreKtx = "1.13.1"
 core-splashscreen = "1.1.0-rc01"
 cronet-embedded = "119.6045.31"
 emojiJava = "5.1.1"
-firebase-bom = "33.3.0"
+firebase-bom = "33.4.0"
 firebaseAppdistributionGradle = "5.0.0"
-fragment-ktx = "1.8.3"
+fragment-ktx = "1.8.4"
 googleServices = "4.4.2"
 guava = "33.3.1-android"
 healthServicesClient = "1.0.0-rc02"
@@ -40,7 +40,7 @@ lifecycle = "2.8.6"
 material = "1.12.0"
 media = "1.7.0"
 media3 = "1.4.1"
-navigation-compose = "2.8.1"
+navigation-compose = "2.8.2"
 okhttp = "5.0.0-alpha.14"
 paging = "3.3.2"
 picasso = "2.8"
@@ -53,21 +53,20 @@ recyclerview = "1.3.2"
 reorderable = "0.9.6"
 retrofit = "2.9.0"
 room = "2.6.1"
-sentry-android = "7.14.0"
+sentry-android = "7.15.0"
 tools-desugar-jdk-libs = "2.1.2"
 watchfaceComplicationsDataSourceKtx = "1.2.1"
 wear = "1.3.0"
-wear-compose-foundation = "1.3.1"
-wear-compose-material = "1.0.0-alpha19"
+wear-compose-foundation = "1.4.0"
+wear-compose-material = "1.0.0-alpha26"
 wear-protolayout = "1.2.0"
 wear-tiles = "1.4.0"
 wear-tooling = "1.0.0"
 wearPhoneInteractions = "1.0.1"
 wearInput = "1.2.0-alpha02"
-webkit = "1.12.0"
+webkit = "1.12.1"
 wear-remote-interactions = "1.0.0"
 workRuntimeKtx = "2.9.1"
-horologist = "0.5.28"
 zxing = "4.3.0"
 
 [plugins]
@@ -126,8 +125,6 @@ constraintlayout = { module = "androidx.constraintlayout:constraintlayout", vers
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
 hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hilt" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
-horologist-composables = { module = "com.google.android.horologist:horologist-composables", version.ref = "horologist" }
-horologist-layout = { module = "com.google.android.horologist:horologist-compose-layout", version.ref = "horologist" }
 iconics-compose = { module = "com.mikepenz:iconics-compose", version.ref = "iconics" }
 iconics-core = { module = "com.mikepenz:iconics-core", version.ref = "iconics" }
 improv = { module = "org.openhomefoundation.improv-wifi:sdk-android", version.ref = "improv" }
@@ -176,7 +173,6 @@ webkit = { module = "androidx.webkit:webkit", version.ref = "webkit" }
 zxing = { module = "com.journeyapps:zxing-android-embedded", version.ref = "zxing" }
 
 [bundles]
-horologist = ["horologist-layout", "horologist-composables"]
 media3 = ["media3-exoplayer", "media3-exoplayer-hls", "media3-ui"]
 paging = ["paging-runtime", "paging-compose"]
 wear-tiles = ["wear-tiles", "wear-protolayout-main", "wear-protolayout-expression", "wear-protolayout-material"]

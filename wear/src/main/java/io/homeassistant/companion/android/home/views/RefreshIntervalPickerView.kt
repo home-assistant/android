@@ -30,16 +30,12 @@ import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 import androidx.wear.compose.material3.touchTargetAwareSize
 import androidx.wear.tooling.preview.devices.WearDevices
-import com.google.android.horologist.annotations.ExperimentalHorologistApi
-import com.google.android.horologist.composables.picker.toRotaryScrollAdapter
-import com.google.android.horologist.compose.rotaryinput.rotaryWithSnap
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as R
 import io.homeassistant.companion.android.theme.wearColorScheme
 import io.homeassistant.companion.android.util.intervalToString
 
-@OptIn(ExperimentalHorologistApi::class)
 @Composable
 fun RefreshIntervalPickerView(
     currentInterval: Int,
@@ -67,9 +63,7 @@ fun RefreshIntervalPickerView(
         Picker(
             state = state,
             contentDescription = stringResource(R.string.refresh_interval),
-            modifier = Modifier
-                .weight(1f)
-                .rotaryWithSnap(state.toRotaryScrollAdapter())
+            modifier = Modifier.weight(1f)
         ) {
             Text(
                 text = intervalToString(LocalContext.current, options[it]),

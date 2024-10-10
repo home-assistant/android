@@ -82,3 +82,5 @@ The project currently uses [lokalise](https://lokalise.com/public/145814835dd655
   * This should cause the `Play Publish Production` Workflow to execute and should handle the rest for Google Play
   * Some platforms, such as the Amazon App Store, need to be updated manually
   * F-Droid uses the `version_code.txt` file of the latest release to detect a new production release and build it themselves, this may take some time
+ 
+[![Home Assistant - A project from the Open Home Foundation](https://www.openhomefoundation.org/badges/home-assistant.png)](https://www.openhomefoundation.org/)

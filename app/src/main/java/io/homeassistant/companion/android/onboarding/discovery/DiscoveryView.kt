@@ -40,6 +40,7 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.onboarding.OnboardingHeaderView
+import io.homeassistant.companion.android.onboarding.OnboardingScreen
 import io.homeassistant.companion.android.util.homeAssistantInstance1
 import io.homeassistant.companion.android.util.homeAssistantInstance2
 import kotlinx.coroutines.delay
@@ -57,11 +58,7 @@ fun DiscoveryView(
         discoveryTimeout = true
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-    ) {
+    OnboardingScreen {
         OnboardingHeaderView(
             icon = CommunityMaterial.Icon2.cmd_home_search,
             title = stringResource(id = commonR.string.select_instance)

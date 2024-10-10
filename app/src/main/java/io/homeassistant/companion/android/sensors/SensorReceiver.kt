@@ -66,7 +66,7 @@ class SensorReceiver : SensorReceiverBase() {
             DynamicColorSensorManager(),
             DevicePolicyManager(),
             GeocodeSensorManager(),
-            // HealthConnectSensorManager(),
+            HealthConnectSensorManager(),
             KeyguardSensorManager(),
             LastAppSensorManager(),
             LastRebootSensorManager(),
@@ -129,7 +129,11 @@ class SensorReceiver : SensorReceiverBase() {
         Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE to listOf(DevicePolicyManager.isWorkProfile.id),
         Intent.ACTION_MANAGED_PROFILE_AVAILABLE to listOf(DevicePolicyManager.isWorkProfile.id),
         WifiManager.WIFI_STATE_CHANGED_ACTION to listOf(NetworkSensorManager.wifiState.id),
-        NfcAdapter.ACTION_ADAPTER_STATE_CHANGED to listOf(NfcSensorManager.nfcStateSensor.id)
+        NfcAdapter.ACTION_ADAPTER_STATE_CHANGED to listOf(NfcSensorManager.nfcStateSensor.id),
+        Intent.ACTION_CONFIGURATION_CHANGED to listOf(
+            DisplaySensorManager.screenOrientation.id,
+            DisplaySensorManager.screenRotation.id
+        )
     )
 
     override fun getSensorSettingsIntent(
