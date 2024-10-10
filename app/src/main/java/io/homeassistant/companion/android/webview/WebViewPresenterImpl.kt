@@ -13,6 +13,7 @@ import io.homeassistant.companion.android.common.data.authentication.SessionStat
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
+import io.homeassistant.companion.android.improv.ImprovRepository
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
 import io.homeassistant.companion.android.util.UrlUtil
@@ -42,6 +43,7 @@ class WebViewPresenterImpl @Inject constructor(
     @ActivityContext context: Context,
     private val serverManager: ServerManager,
     private val externalBusRepository: ExternalBusRepository,
+    private val improvRepository: ImprovRepository,
     private val prefsRepository: PrefsRepository,
     private val matterUseCase: MatterManager,
     private val threadUseCase: ThreadManager
@@ -59,6 +61,9 @@ class WebViewPresenterImpl @Inject constructor(
 
     private var url: URL? = null
     private var urlForServer: Int? = null
+
+    private var improvJob: Job? = null
+    private var improvJobStarted = 0L
 
     private val mutableMatterThreadStep = MutableStateFlow(MatterThreadStep.NOT_STARTED)
 
@@ -286,6 +291,7 @@ class WebViewPresenterImpl @Inject constructor(
                 Unit
             }
         } ?: Unit
+        if (!active) stopScanningForImprov(true)
     }
 
     override fun isLockEnabled(): Boolean = runBlocking {
@@ -472,5 +478,28 @@ class WebViewPresenterImpl @Inject constructor(
 
     override fun finishMatterThreadFlow() {
         mutableMatterThreadStep.tryEmit(MatterThreadStep.NOT_STARTED)
+    }
+
+    override fun startScanningForImprov(): Boolean {
+        if (!improvRepository.hasPermission(view as Context)) return false
+        improvJobStarted = System.currentTimeMillis()
+        improvJob = mainScope.launch {
+            withContext(Dispatchers.IO) {
+                improvRepository.startScanning(view as Context)
+            }
+            improvRepository.getDevices().collect {
+                if (it.any()) view.showImprovAvailable()
+            }
+        }
+        return true
+    }
+
+    override fun getImprovPermissions(): Array<String> = improvRepository.getRequiredPermissions()
+
+    override fun stopScanningForImprov(force: Boolean) {
+        if (improvJob?.isActive == true && (force || System.currentTimeMillis() - improvJobStarted > 1000)) {
+            improvRepository.stopScanning()
+            improvJob?.cancel()
+        }
     }
 }

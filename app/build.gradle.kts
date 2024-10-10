@@ -187,6 +187,7 @@ dependencies {
     implementation(libs.changeLog)
 
     implementation(libs.zxing)
+    implementation(libs.improv)
 
     implementation(libs.car.core)
     "fullImplementation"(libs.car.projected)

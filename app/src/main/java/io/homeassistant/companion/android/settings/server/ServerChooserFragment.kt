@@ -54,6 +54,7 @@ class ServerChooserFragment : BottomSheetDialogFragment() {
         super.onViewCreated(view, savedInstanceState)
         dialog?.setOnShowListener {
             val dialog = it as BottomSheetDialog
+            dialog.window?.setDimAmount(0.03f)
             val bottomSheet = dialog.findViewById<View>(R.id.design_bottom_sheet) as FrameLayout
             val bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet)
             bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED

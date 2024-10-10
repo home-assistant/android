@@ -65,4 +65,9 @@ interface WebViewPresenter {
     fun getMatterThreadIntent(): IntentSender?
     fun onMatterThreadIntentResult(context: Context, result: ActivityResult)
     fun finishMatterThreadFlow()
+
+    /** @return `true` if the app tried starting scanning or `false` if it was missing permissions */
+    fun startScanningForImprov(): Boolean
+    fun getImprovPermissions(): Array<String>
+    fun stopScanningForImprov(force: Boolean)
 }

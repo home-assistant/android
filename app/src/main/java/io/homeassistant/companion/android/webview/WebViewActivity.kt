@@ -71,6 +71,8 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
+import com.google.android.material.snackbar.BaseTransientBottomBar.LENGTH_INDEFINITE
+import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.BuildConfig
@@ -87,6 +89,7 @@ import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.databinding.ActivityWebviewBinding
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
+import io.homeassistant.companion.android.improv.ui.ImprovSetupDialog
 import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.nfc.WriteNfcTag
 import io.homeassistant.companion.android.sensors.SensorReceiver
@@ -153,6 +156,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
             if (isGranted) {
                 downloadFile(downloadFileUrl, downloadFileContentDisposition, downloadFileMimetype)
+            }
+        }
+    private val requestImprovPermissions =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+            if (it.all { result -> result.value }) {
+                presenter.startScanningForImprov()
             }
         }
     private val writeNfcTag = registerForActivityResult(WriteNfcTag()) { messageId ->
@@ -230,6 +239,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var downloadFileUrl = ""
     private var downloadFileContentDisposition = ""
     private var downloadFileMimetype = ""
+    private var snackbar: Snackbar? = null
     private val javascriptInterface = "externalApp"
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -485,6 +495,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 ) {
                     super.doUpdateVisitedHistory(view, url, isReload)
                     onBackPressed.isEnabled = canGoBack()
+                    presenter.stopScanningForImprov(false)
+                    snackbar?.let {
+                        it.dismiss()
+                        snackbar = null
+                    }
                 }
             }
 
@@ -577,7 +592,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
                 override fun onShowCustomView(view: View, callback: CustomViewCallback) {
                     myCustomView = view
-                    decor.addView(
+                    binding.content.addView(
                         view,
                         FrameLayout.LayoutParams(
                             FrameLayout.LayoutParams.WRAP_CONTENT,
@@ -589,7 +604,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 }
 
                 override fun onHideCustomView() {
-                    decor.removeView(myCustomView)
+                    binding.content.removeView(myCustomView)
                     if (!presenter.isFullScreen()) {
                         showSystemUI()
                     }
@@ -752,7 +767,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                                     "canCommissionMatter" to canCommissionMatter,
                                                     "canImportThreadCredentials" to canExportThread,
                                                     "hasAssist" to true,
-                                                    "hasBarCodeScanner" to hasBarCodeScanner
+                                                    "hasBarCodeScanner" to hasBarCodeScanner,
+                                                    "canSetupImprov" to true
                                                 )
                                             ),
                                             callback = {
@@ -818,6 +834,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                         )
                                     )
                                 }
+                                "improv/scan" -> tryScanningForImprov()
                                 "exoplayer/play_hls" -> exoPlayHls(json)
                                 "exoplayer/stop" -> exoStopHls()
                                 "exoplayer/resize" -> exoResizeHls(json)
@@ -1187,15 +1204,13 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         newConfig: Configuration
     ) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
-        if (exoPlayerView.visibility != View.VISIBLE && decor.getChildAt(3) != null) {
-            if (isInPictureInPictureMode) {
-                (decor.getChildAt(3) as FrameLayout).layoutParams.height =
-                    FrameLayout.LayoutParams.MATCH_PARENT
-                decor.requestLayout()
+        if (exoPlayerView.visibility != View.VISIBLE && ::binding.isInitialized) {
+            binding.exoviewGroup.layoutParams.height = if (isInPictureInPictureMode) {
+                FrameLayout.LayoutParams.MATCH_PARENT
             } else {
-                (decor.getChildAt(3) as FrameLayout).layoutParams.height = videoHeight
-                decor.requestLayout()
+                videoHeight
             }
+            decor.requestLayout()
         }
     }
 
@@ -1666,6 +1681,41 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 Log.d(TAG, "User is in the Home Assistant config. Will not show first view of the default dashboard.")
             }
         }
+    }
+
+    private fun tryScanningForImprov() {
+        if (!presenter.startScanningForImprov()) {
+            presenter.getImprovPermissions().let { requestImprovPermissions.launch(it) }
+        }
+    }
+
+    override fun showImprovAvailable() {
+        snackbar = Snackbar.make(binding.root, commonR.string.improv_hint, LENGTH_INDEFINITE)
+            .setAction(commonR.string.configure) {
+                supportFragmentManager.setFragmentResultListener(ImprovSetupDialog.RESULT_KEY, this) { _, bundle ->
+                    if (bundle.containsKey(ImprovSetupDialog.RESULT_DOMAIN)) {
+                        bundle.getString(ImprovSetupDialog.RESULT_DOMAIN)?.let { improvDomain ->
+                            val url = serverManager.getServer(presenter.getActiveServer())?.let url@{
+                                val base = it.connection.getUrl() ?: return@url null
+                                Uri.parse(base.toString())
+                                    .buildUpon()
+                                    .appendEncodedPath("config/integrations/dashboard/add")
+                                    .appendQueryParameter("domain", improvDomain)
+                                    .appendQueryParameter("external_auth", "1")
+                                    .build()
+                                    .toString()
+                            }
+                            if (url != null) {
+                                loadUrl(url = url, keepHistory = true, openInApp = true)
+                            }
+                        }
+                        supportFragmentManager.clearFragmentResultListener(ImprovSetupDialog.RESULT_KEY)
+                    }
+                }
+                val dialog = ImprovSetupDialog()
+                dialog.show(supportFragmentManager, ImprovSetupDialog.TAG)
+            }
+        snackbar?.show()
     }
 
     override fun onNewIntent(intent: Intent) {
