@@ -187,7 +187,7 @@ dependencies {
     implementation(libs.changeLog)
 
     implementation(libs.zxing)
-    implementation(files("libs/improv-sdk-snapshot.aar")) // TODO fix me
+    implementation(libs.improv)
 
     implementation(libs.car.core)
     "fullImplementation"(libs.car.projected)
