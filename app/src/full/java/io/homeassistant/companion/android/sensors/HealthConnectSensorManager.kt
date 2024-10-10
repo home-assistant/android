@@ -3,7 +3,9 @@ package io.homeassistant.companion.android.sensors
 import android.content.Context
 import android.os.Build
 import android.os.Build.VERSION.SDK_INT
+import androidx.activity.result.contract.ActivityResultContract
 import androidx.health.connect.client.HealthConnectClient
+import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
 import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
@@ -25,6 +27,9 @@ import kotlinx.coroutines.runBlocking
 
 class HealthConnectSensorManager : SensorManager {
     companion object {
+        fun getPermissionResultContract(context: Context): ActivityResultContract<Set<String>, Set<String>>? =
+            PermissionController.createRequestPermissionResultContract(context.packageName)
+
         val activeCaloriesBurned = SensorManager.BasicSensor(
             id = "health_connect_active_calories_burned",
             type = "sensor",
@@ -60,7 +65,6 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.WORKER,
             deviceClass = "weight"
-
         )
     }
 
