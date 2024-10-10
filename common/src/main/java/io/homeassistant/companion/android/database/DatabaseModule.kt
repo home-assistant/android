@@ -19,6 +19,7 @@ import io.homeassistant.companion.android.database.wear.FavoriteCachesDao
 import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
+import io.homeassistant.companion.android.database.widget.HistoryWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
@@ -44,6 +45,9 @@ object DatabaseModule {
 
     @Provides
     fun provideCameraWidgetDao(database: AppDatabase): CameraWidgetDao = database.cameraWidgetDao()
+
+    @Provides
+    fun provideHistoryWidgetDao(database: AppDatabase): HistoryWidgetDao = database.historyWidgetDao()
 
     @Provides
     fun provideMediaPlayCtrlWidgetDao(database: AppDatabase): MediaPlayerControlsWidgetDao =

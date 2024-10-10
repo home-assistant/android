@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widgetLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:minHeight="40dp"
+    android:minWidth="40dp"
+    android:background="@drawable/widget_button_background"
+    android:padding="4dp">
+
+    <LinearLayout
+        android:id="@+id/widgetTextLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingVertical="4dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/widgetText"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_gravity="center"
+            android:text="@string/widget_label_placeholder_text_static_state"
+            android:textColor="?colorWidgetPrimary" />
+
+        <LinearLayout
+            android:id="@+id/widgetLabelLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="2dp">
+
+            <ImageView
+                android:id="@+id/widgetStaticError"
+                android:contentDescription="@string/widget_entity_fetch_error"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_marginEnd="2dp"
+                android:src="@drawable/ic_sync_problem"
+                android:layout_gravity="center_vertical|end"
+                android:visibility="gone"/>
+            <TextView
+                android:id="@+id/widgetLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="@string/widget_label_placeholder_text_static_label"
+                android:textSize="12sp"
+                android:textAlignment="center"
+                android:textColor="?colorWidgetOnBackground"
+                android:gravity="center"
+                android:minLines="1"
+                android:maxLines="2" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/widgetProgressBar"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:visibility="invisible"
+        android:indeterminate="true"
+        android:indeterminateTint="@color/colorAccent"
+        android:layout_gravity="center"
+        />
+</FrameLayout>

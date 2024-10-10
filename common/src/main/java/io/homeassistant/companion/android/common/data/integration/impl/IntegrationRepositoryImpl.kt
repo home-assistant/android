@@ -14,6 +14,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
 import io.homeassistant.companion.android.common.data.integration.UpdateLocation
 import io.homeassistant.companion.android.common.data.integration.ZoneAttributes
+import io.homeassistant.companion.android.common.data.integration.history.HistoryRequestParams
 import io.homeassistant.companion.android.common.data.integration.impl.entities.ActionRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.FireEventRequest
@@ -693,6 +694,34 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                     )
                 }
         }
+    }
+
+    override suspend fun getHistory(entityIds: List<String>): List<List<Entity<Map<String, Any>>>>? {
+        val url = server.connection.getUrl()?.toHttpUrlOrNull()
+        if (url == null) {
+            Log.e(TAG, "Unable to register device due to missing URL")
+            return null
+        }
+        val requestParams = HistoryRequestParams(
+            filterEntityIds = entityIds
+        )
+
+        val response = integrationService.getHistory(
+            requestParams.addToUrl(url.newBuilder().addPathSegments("api/history/period").build()),
+            serverManager.authenticationRepository(serverId).buildBearerToken()
+        )
+        return response.map { statesList ->
+            statesList.map {
+                Entity(
+                    it.entityId,
+                    it.state,
+                    it.attributes,
+                    it.lastChanged,
+                    it.lastUpdated,
+                    it.context
+                )
+            }
+        }.sortedBy { it.firstOrNull()?.entityId }.toList()
     }
 
     override suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>) {

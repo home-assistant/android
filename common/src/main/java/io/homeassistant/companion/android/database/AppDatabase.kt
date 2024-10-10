@@ -65,6 +65,8 @@ import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
+import io.homeassistant.companion.android.database.widget.HistoryWidgetDao
+import io.homeassistant.companion.android.database.widget.HistoryWidgetEntity
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
@@ -87,6 +89,7 @@ import kotlinx.coroutines.runBlocking
         MediaPlayerControlsWidgetEntity::class,
         StaticWidgetEntity::class,
         TemplateWidgetEntity::class,
+        HistoryWidgetEntity::class,
         NotificationItem::class,
         LocationHistoryItem::class,
         TileEntity::class,
@@ -97,7 +100,7 @@ import kotlinx.coroutines.runBlocking
         Server::class,
         Setting::class
     ],
-    version = 47,
+    version = 48,
     autoMigrations = [
         AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
@@ -120,7 +123,8 @@ import kotlinx.coroutines.runBlocking
         AutoMigration(from = 43, to = 44),
         AutoMigration(from = 44, to = 45),
         AutoMigration(from = 45, to = 46),
-        AutoMigration(from = 46, to = 47)
+        AutoMigration(from = 46, to = 47),
+        AutoMigration(from = 47, to = 48)
     ]
 )
 @TypeConverters(
@@ -136,6 +140,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun sensorDao(): SensorDao
     abstract fun buttonWidgetDao(): ButtonWidgetDao
     abstract fun cameraWidgetDao(): CameraWidgetDao
+    abstract fun historyWidgetDao(): HistoryWidgetDao
     abstract fun mediaPlayCtrlWidgetDao(): MediaPlayerControlsWidgetDao
     abstract fun staticWidgetDao(): StaticWidgetDao
     abstract fun templateWidgetDao(): TemplateWidgetDao

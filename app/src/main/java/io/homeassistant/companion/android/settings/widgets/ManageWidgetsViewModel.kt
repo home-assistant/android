@@ -13,6 +13,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
+import io.homeassistant.companion.android.database.widget.HistoryWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
@@ -24,6 +25,7 @@ import kotlinx.coroutines.launch
 class ManageWidgetsViewModel @Inject constructor(
     buttonWidgetDao: ButtonWidgetDao,
     cameraWidgetDao: CameraWidgetDao,
+    historyWidgetDao: HistoryWidgetDao,
     staticWidgetDao: StaticWidgetDao,
     mediaPlayerControlsWidgetDao: MediaPlayerControlsWidgetDao,
     templateWidgetDao: TemplateWidgetDao,
@@ -38,6 +40,7 @@ class ManageWidgetsViewModel @Inject constructor(
 
     val buttonWidgetList = buttonWidgetDao.getAllFlow().collectAsState()
     val cameraWidgetList = cameraWidgetDao.getAllFlow().collectAsState()
+    val historyWidgetList = historyWidgetDao.getAllFlow().collectAsState()
     val staticWidgetList = staticWidgetDao.getAllFlow().collectAsState()
     val mediaWidgetList = mediaPlayerControlsWidgetDao.getAllFlow().collectAsState()
     val templateWidgetList = templateWidgetDao.getAllFlow().collectAsState()

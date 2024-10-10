@@ -32,6 +32,12 @@ interface IntegrationService {
         @Header("Authorization") auth: String
     ): EntityResponse<Map<String, Any>>
 
+    @GET
+    suspend fun getHistory(
+        @Url url: HttpUrl,
+        @Header("Authorization") auth: String
+    ): Array<Array<EntityResponse<Map<String, Any>>>>
+
     @POST
     suspend fun callWebhook(
         @Url url: HttpUrl,

@@ -41,6 +41,7 @@ interface IntegrationRepository {
     suspend fun getEntity(entityId: String): Entity<Map<String, Any>>?
     suspend fun getEntityUpdates(): Flow<Entity<*>>?
     suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity<*>>?
+    suspend fun getHistory(entityIds: List<String>): List<List<Entity<Map<String, Any>>>>?
 
     suspend fun callAction(domain: String, action: String, actionData: HashMap<String, Any>)
 
