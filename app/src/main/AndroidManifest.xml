@@ -102,7 +102,6 @@
                 <action android:name="android.bluetooth.device.action.ACL_CONNECTED" />
                 <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
                 <action android:name="io.homeassistant.companion.android.UPDATE_SENSORS" />
-                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
             </intent-filter>
         </receiver>
 
@@ -354,13 +353,7 @@
             android:parentActivityName=".webview.WebViewActivity"
             android:exported="true"
             android:configChanges="orientation|screenSize"
-            android:theme="@style/Theme.HomeAssistant.Config">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
-
-                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
-            </intent-filter>
-        </activity>
+            android:theme="@style/Theme.HomeAssistant.Config" />
 
         <activity
             android:name=".nfc.TagReaderActivity"

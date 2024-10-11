@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.sensors
 import android.content.Context
 import android.os.Build
 import android.os.Build.VERSION.SDK_INT
+import android.util.Log
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
@@ -27,6 +28,8 @@ import kotlinx.coroutines.runBlocking
 
 class HealthConnectSensorManager : SensorManager {
     companion object {
+        private const val TAG = "HealthConnectSM"
+
         fun getPermissionResultContract(context: Context): ActivityResultContract<Set<String>, Set<String>>? =
             PermissionController.createRequestPermissionResultContract(context.packageName)
 
@@ -38,9 +41,7 @@ class HealthConnectSensorManager : SensorManager {
             "mdi:fire",
             "energy",
             unitOfMeasurement = "kcal",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.WORKER
-
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
 
         val totalCaloriesBurned = SensorManager.BasicSensor(
@@ -51,8 +52,7 @@ class HealthConnectSensorManager : SensorManager {
             "mdi:fire",
             "energy",
             unitOfMeasurement = "kcal",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.WORKER
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
 
         val weight = SensorManager.BasicSensor(
@@ -63,7 +63,6 @@ class HealthConnectSensorManager : SensorManager {
             "mdi:weight",
             unitOfMeasurement = "g",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.WORKER,
             deviceClass = "weight"
         )
     }
@@ -81,20 +80,19 @@ class HealthConnectSensorManager : SensorManager {
     }
 
     override fun requestSensorUpdate(context: Context) {
-        val healthConnectClient: HealthConnectClient = HealthConnectClient.getOrCreate(context)
-
         if (isEnabled(context, weight)) {
-            updateWeightSensor(context, healthConnectClient)
+            updateWeightSensor(context)
         }
         if (isEnabled(context, activeCaloriesBurned)) {
-            updateActiveCaloriesBurnedSensor(context, healthConnectClient)
+            updateActiveCaloriesBurnedSensor(context)
         }
         if (isEnabled(context, totalCaloriesBurned)) {
-            updateTotalCaloriesBurnedSensor(context, healthConnectClient)
+            updateTotalCaloriesBurnedSensor(context)
         }
     }
 
-    private fun updateTotalCaloriesBurnedSensor(context: Context, healthConnectClient: HealthConnectClient) {
+    private fun updateTotalCaloriesBurnedSensor(context: Context) {
+        val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
         val totalCaloriesBurnedRequest = runBlocking {
             healthConnectClient.aggregate(
                 AggregateRequest(
@@ -117,13 +115,13 @@ class HealthConnectSensorManager : SensorManager {
         }
     }
 
-    private fun updateWeightSensor(context: Context, healthConnectClient: HealthConnectClient) {
+    private fun updateWeightSensor(context: Context) {
+        val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
         val weightRequest = ReadRecordsRequest(
             recordType = WeightRecord::class,
             timeRangeFilter = TimeRangeFilter.between(
                 Instant.now().minus(30, ChronoUnit.DAYS),
                 Instant.now()
-
             ),
             ascendingOrder = false,
             pageSize = 1
@@ -141,7 +139,8 @@ class HealthConnectSensorManager : SensorManager {
         )
     }
 
-    private fun updateActiveCaloriesBurnedSensor(context: Context, healthConnectClient: HealthConnectClient) {
+    private fun updateActiveCaloriesBurnedSensor(context: Context) {
+        val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
         val activeCaloriesBurnedRequest = ReadRecordsRequest(
             recordType = ActiveCaloriesBurnedRecord::class,
             timeRangeFilter = TimeRangeFilter.between(
@@ -165,6 +164,10 @@ class HealthConnectSensorManager : SensorManager {
         )
     }
 
+    override fun docsLink(): String {
+        return "https://companion.home-assistant.io/docs/core/sensors#health-connect-sensors"
+    }
+
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return if (hasSensor(context)) {
             listOf(weight, activeCaloriesBurned, totalCaloriesBurned)
@@ -174,14 +177,24 @@ class HealthConnectSensorManager : SensorManager {
     }
 
     override fun hasSensor(context: Context): Boolean {
-        return SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
+        return SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE &&
+            HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE
     }
 
     override fun checkPermission(context: Context, sensorId: String): Boolean {
-        val healthConnectClient = HealthConnectClient.getOrCreate(context)
+        val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return false
         val result = runBlocking {
             healthConnectClient.permissionController.getGrantedPermissions().containsAll(requiredPermissions(sensorId).toSet())
         }
         return result
+    }
+
+    private fun getOrCreateHealthConnectClient(context: Context): HealthConnectClient? {
+        return try {
+            HealthConnectClient.getOrCreate(context.applicationContext)
+        } catch (e: RuntimeException) {
+            Log.e(TAG, "Unable to create Health Connect client", e)
+            null
+        }
     }
 }
