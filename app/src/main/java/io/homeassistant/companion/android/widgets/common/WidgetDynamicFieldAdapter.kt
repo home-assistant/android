@@ -195,12 +195,12 @@ class WidgetDynamicFieldAdapter(
 
             return jsonArray.toList()
         }
-        
+
         // Check if the string starts with a leading zero
         if (this.trim().startsWith("0") && this.trim().length > 1) {
             return this.trim() // Treat it as a string to preserve leading zeros
         }
-        
+
         // Parse the base types
         this.trim().let { trimmedStr ->
             trimmedStr.toIntOrNull()?.let { return it }
