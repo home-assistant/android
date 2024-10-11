@@ -5,12 +5,14 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.car.app.hardware.common.CarUnit
 import androidx.car.app.hardware.common.CarValue
 import androidx.car.app.hardware.info.EnergyLevel
 import androidx.car.app.hardware.info.EnergyProfile
 import androidx.car.app.hardware.info.EvStatus
 import androidx.car.app.hardware.info.Mileage
 import androidx.car.app.hardware.info.Model
+import androidx.car.app.hardware.info.Speed
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import io.homeassistant.companion.android.BuildConfig
@@ -138,6 +140,21 @@ class CarSensorManager :
             autoPermissions = listOf("com.google.android.gms.permission.CAR_FUEL"),
             automotivePermissions = listOf("android.car.permission.CAR_INFO")
         )
+        private val carSpeed = CarSensor(
+            SensorManager.BasicSensor(
+                "car_speed",
+                "sensor",
+                R.string.basic_sensor_name_car_speed,
+                R.string.sensor_description_car_speed,
+                "mdi:speedometer",
+                unitOfMeasurement = "m/s",
+                deviceClass = "speed",
+                stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
+                entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            ),
+            autoPermissions = listOf("com.google.android.gms.permission.CAR_SPEED"),
+            automotivePermissions = listOf("android.car.permission.CAR_SPEED", "android.car.permission.READ_CAR_DISPLAY_UNITS")
+        )
 
         private val allSensorsList = listOf(
             batteryLevel,
@@ -146,7 +163,8 @@ class CarSensorManager :
             evConnector,
             fuelLevel,
             fuelType,
-            odometerValue
+            odometerValue,
+            carSpeed
         )
 
         private enum class Listener {
@@ -154,7 +172,8 @@ class CarSensorManager :
             MODEL,
             MILEAGE,
             STATUS,
-            PROFILE
+            PROFILE,
+            SPEED
         }
 
         private val listenerSensors = mapOf(
@@ -162,14 +181,16 @@ class CarSensorManager :
             Listener.MODEL to listOf(carName),
             Listener.STATUS to listOf(carChargingStatus),
             Listener.MILEAGE to listOf(odometerValue),
-            Listener.PROFILE to listOf(evConnector, fuelType)
+            Listener.PROFILE to listOf(evConnector, fuelType),
+            Listener.SPEED to listOf(carSpeed)
         )
         private val listenerLastRegistered = mutableMapOf(
             Listener.ENERGY to -1L,
             Listener.MODEL to -1L,
             Listener.STATUS to -1L,
             Listener.MILEAGE to -1L,
-            Listener.PROFILE to -1L
+            Listener.PROFILE to -1L,
+            Listener.SPEED to -1L
         )
     }
 
@@ -336,6 +357,13 @@ class CarSensorManager :
                     car.fetchEnergyProfile(executor, ::onProfileAvailable)
                 }
             }
+            Listener.SPEED -> {
+                if (enable) {
+                    car.addSpeedListener(executor, ::onSpeedAvailable)
+                } else {
+                    car.removeSpeedListener(::onSpeedAvailable)
+                }
+            }
         }
 
         if (enable) {
@@ -482,6 +510,26 @@ class CarSensorManager :
         }
     }
 
+    private fun onSpeedAvailable(data: Speed) {
+        val speedStatus = carValueStatus(data.displaySpeedMetersPerSecond.status)
+        Log.d(TAG, "Received speed: $data")
+
+        if (isEnabled(latestContext, carSpeed)) {
+            onSensorUpdated(
+                latestContext,
+                carSpeed.sensor,
+                if (speedStatus == "success") data.displaySpeedMetersPerSecond.value!! else STATE_UNKNOWN,
+                carSpeed.sensor.statelessIcon,
+                mapOf(
+                    "status" to speedStatus,
+                    "raw_speed" to data.rawSpeedMetersPerSecond.value,
+                    "display_unit" to getSpeedUnit(data.speedDisplayUnit.value)
+                ),
+                forceUpdate = true
+            )
+        }
+    }
+
     private fun carValueStatus(value: Int): String? {
         return when (value) {
             CarValue.STATUS_SUCCESS -> "success"
@@ -506,5 +554,9 @@ class CarSensorManager :
             evConnectorList += evTypeMap.getOrDefault(it, STATE_UNKNOWN)
         }
         return evConnectorList.toString()
+    }
+
+    private fun getSpeedUnit(value: Int?): String {
+        return if (value != null) CarUnit.toString(value) else STATE_UNKNOWN
     }
 }
