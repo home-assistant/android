@@ -9,6 +9,7 @@ import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
+import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
 import androidx.health.connect.client.records.WeightRecord
 import androidx.health.connect.client.request.AggregateRequest
@@ -44,6 +45,16 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
 
+        val heartRate = SensorManager.BasicSensor(
+            id = "health_connect_heart_rate",
+            type = "sensor",
+            commonR.string.sensor_name_heart_rate,
+            commonR.string.sensor_description_health_connect_heart_rate,
+            "mdi:heart-pulse",
+            unitOfMeasurement = "bpm",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+        )
+
         val totalCaloriesBurned = SensorManager.BasicSensor(
             id = "health_connect_total_calories_burned",
             type = "sensor",
@@ -74,6 +85,7 @@ class HealthConnectSensorManager : SensorManager {
     override fun requiredPermissions(sensorId: String): Array<String> {
         return when {
             (sensorId == activeCaloriesBurned.id) -> arrayOf(HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class))
+            (sensorId == heartRate.id) -> arrayOf(HealthPermission.getReadPermission(HeartRateRecord::class))
             (sensorId == totalCaloriesBurned.id) -> arrayOf(HealthPermission.getReadPermission(TotalCaloriesBurnedRecord::class))
             (sensorId == weight.id) -> arrayOf(HealthPermission.getReadPermission(WeightRecord::class))
             else -> arrayOf()
@@ -89,6 +101,9 @@ class HealthConnectSensorManager : SensorManager {
         }
         if (isEnabled(context, totalCaloriesBurned)) {
             updateTotalCaloriesBurnedSensor(context)
+        }
+        if (isEnabled(context, heartRate)) {
+            updateHeartRateSensor(context)
         }
     }
 
@@ -174,13 +189,37 @@ class HealthConnectSensorManager : SensorManager {
         )
     }
 
+    private fun updateHeartRateSensor(context: Context) {
+        val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
+        val heartRateRequest = ReadRecordsRequest(
+            recordType = HeartRateRecord::class,
+            timeRangeFilter = TimeRangeFilter.between(
+                Instant.now().minus(30, ChronoUnit.DAYS),
+                Instant.now()
+            ),
+            ascendingOrder = false,
+            pageSize = 1
+        )
+        val response = runBlocking { healthConnectClient.readRecords(heartRateRequest) }
+        if (response.records.isEmpty() || response.records.last().samples.isEmpty()) {
+            return
+        }
+        onSensorUpdated(
+            context,
+            heartRate,
+            response.records.last().samples.last().beatsPerMinute,
+            heartRate.statelessIcon,
+            attributes = mapOf("date" to response.records.last().samples.last().time)
+        )
+    }
+
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#health-connect-sensors"
     }
 
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return if (hasSensor(context)) {
-            listOf(weight, activeCaloriesBurned, totalCaloriesBurned)
+            listOf(weight, activeCaloriesBurned, totalCaloriesBurned, heartRate)
         } else {
             emptyList()
         }
