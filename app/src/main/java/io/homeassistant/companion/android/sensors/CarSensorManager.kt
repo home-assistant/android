@@ -522,7 +522,6 @@ class CarSensorManager :
                 carSpeed.sensor.statelessIcon,
                 mapOf(
                     "status" to speedStatus,
-                    "raw_speed" to data.rawSpeedMetersPerSecond.value,
                     "display_unit" to getSpeedUnit(data.speedDisplayUnit.value)
                 ),
                 forceUpdate = true
