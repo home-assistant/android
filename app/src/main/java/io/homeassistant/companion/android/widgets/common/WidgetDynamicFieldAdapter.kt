@@ -196,16 +196,22 @@ class WidgetDynamicFieldAdapter(
             return jsonArray.toList()
         }
 
-        // Check if the string starts with a leading zero
-        if (this.trim().startsWith("0") && this.trim().length > 1) {
-            return this.trim() // Treat it as a string to preserve leading zeros
-        }
-
-        // Parse the base types
         this.trim().let { trimmedStr ->
+            // Check if the string is a double (e.g., 0.5)
+            trimmedStr.toDoubleOrNull()?.let {
+                return it
+            }
+
+            // Check if the string starts with a leading zero (but not a decimal number)
+            if (trimmedStr.startsWith("0") && trimmedStr.length > 1 && trimmedStr.toIntOrNull() != null) {
+                return this.trim() // Treat it as a string to preserve leading zeros
+            }
+
+            // Parse the base types
             trimmedStr.toIntOrNull()?.let { return it }
-            trimmedStr.toDoubleOrNull()?.let { return it }
             trimmedStr.toBooleanOrNull()?.let { return it }
+
+            // If none of the above, return the string as-is
             return this
         }
     }
