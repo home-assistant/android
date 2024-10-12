@@ -5,7 +5,6 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
-import androidx.car.app.hardware.common.CarUnit
 import androidx.car.app.hardware.common.CarValue
 import androidx.car.app.hardware.info.EnergyLevel
 import androidx.car.app.hardware.info.EnergyProfile
@@ -521,8 +520,7 @@ class CarSensorManager :
                 if (speedStatus == "success") data.displaySpeedMetersPerSecond.value!! else STATE_UNKNOWN,
                 carSpeed.sensor.statelessIcon,
                 mapOf(
-                    "status" to speedStatus,
-                    "display_unit" to getSpeedUnit(data.speedDisplayUnit.value)
+                    "status" to speedStatus
                 ),
                 forceUpdate = true
             )
@@ -553,9 +551,5 @@ class CarSensorManager :
             evConnectorList += evTypeMap.getOrDefault(it, STATE_UNKNOWN)
         }
         return evConnectorList.toString()
-    }
-
-    private fun getSpeedUnit(value: Int?): String {
-        return if (value != null) CarUnit.toString(value) else STATE_UNKNOWN
     }
 }
