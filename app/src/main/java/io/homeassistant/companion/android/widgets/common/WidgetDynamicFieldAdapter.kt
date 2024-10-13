@@ -197,19 +197,24 @@ class WidgetDynamicFieldAdapter(
         }
 
         this.trim().let { trimmedStr ->
-            // Check if the string is a double (e.g., 0.5)
-            trimmedStr.toDoubleOrNull()?.let {
-                return it
+            // Check if the string exactly equals "0"
+            if (trimmedStr == "0") {
+                return 0 // Return as Int
             }
 
             // Check if the string starts with a leading zero (but not a decimal number)
-            if (trimmedStr.startsWith("0") && trimmedStr.length > 1 && trimmedStr.toIntOrNull() != null) {
-                return this.trim() // Treat it as a string to preserve leading zeros
+            if (trimmedStr.startsWith("0") && trimmedStr.length > 1) {
+                if (trimmedStr.matches(Regex("0\\.\\d+"))) {
+                    // If the string starts with 0 and contains a point followed by valid digits, return as Double
+                    return trimmedStr.toDoubleOrNull() // could return null
+                }
+                return trimmedStr // Treat it as a string to preserve leading zeros
             }
 
             // Parse the base types
-            trimmedStr.toIntOrNull()?.let { return it }
-            trimmedStr.toBooleanOrNull()?.let { return it }
+            trimmedStr.toIntOrNull()?.let { return it } // Check for Integer first
+            trimmedStr.toDoubleOrNull()?.let { return it } // Then check for Double
+            trimmedStr.toBooleanOrNull()?.let { return it } // Then check for Boolean
 
             // If none of the above, return the string as-is
             return this
