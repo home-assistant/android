@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2024.10.2 - Main" versioncode="3">
+    <release version="2024.10.3 - Main" versioncode="3">
         <change>&lt;b&gt;Backward-incompatible change:&lt;/b&gt; The Mobile data sensor now requires the Phone permission.</change>
         <change>Add support for discovering Improv Wi-Fi devices with Bluetooth</change>
-        <change>Add new Health Connect (Play Store only) and Display sensors</change>
+        <change>Add new Display sensors</change>
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2024.10.2 - Wear" versioncode="2">
+    <release version="2024.10.3 - Wear" versioncode="2">
         <change>&lt;b&gt;Backward-incompatible change:&lt;/b&gt; The Mobile data sensor now requires the Phone permission.</change>
         <change>Add new Display sensors</change>
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2024.10.2 - Automotive" versioncode="1">
+    <release version="2024.10.3 - Automotive" versioncode="1">
         <change>&lt;b&gt;Backward-incompatible change:&lt;/b&gt; The Mobile data sensor now requires the Phone permission.</change>
         <change>Car sensors are now available for Play Store users, check documentation for steps to enable</change>
         <change>Add new Display sensors</change>
