@@ -4,7 +4,7 @@
     <release version="2024.10.2 - Main" versioncode="3">
         <change>&lt;b&gt;Backward-incompatible change:&lt;/b&gt; The Mobile data sensor now requires the Phone permission.</change>
         <change>Add support for discovering Improv Wi-Fi devices with Bluetooth</change>
-        <change>Add new Health Connect (Play Store only) and Display sensors</change>
+        <change>Add new Display sensors</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2024.10.2 - Wear" versioncode="2">
