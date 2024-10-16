@@ -5,6 +5,7 @@ import android.os.Build
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,6 +23,7 @@ import androidx.compose.material.LocalContentColor
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.Composable
@@ -159,14 +161,20 @@ fun ImprovDeviceRow(
     device: ImprovDevice,
     onClick: (ImprovDevice) -> Unit
 ) {
-    Column(
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp)
-            .clickable { onClick(device) },
-        verticalArrangement = Arrangement.Center
+            .clickable { onClick(device) }
     ) {
         Text(device.name.takeUnless { it.isNullOrBlank() } ?: device.address)
+        Icon(
+            imageVector = Icons.AutoMirrored.Default.ArrowForwardIos,
+            contentDescription = null,
+            modifier = Modifier.size(24.dp).padding(4.dp)
+        )
     }
     Divider()
 }
