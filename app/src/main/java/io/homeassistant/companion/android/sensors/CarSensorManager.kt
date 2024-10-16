@@ -78,6 +78,25 @@ class CarSensorManager :
                 "android.car.permission.READ_CAR_DISPLAY_UNITS"
             )
         )
+        private val rangeRemaining = CarSensor(
+            SensorManager.BasicSensor(
+                "car_range_remaining",
+                "sensor",
+                R.string.basic_sensor_name_car_range_remaining,
+                R.string.sensor_description_car_range_remaining,
+                "mdi:map-marker-distance",
+                unitOfMeasurement = "m",
+                stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
+                deviceClass = "distance",
+                entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            ),
+            autoPermissions = listOf("com.google.android.gms.permission.CAR_FUEL"),
+            automotivePermissions = listOf(
+                "android.car.permission.CAR_ENERGY",
+                "android.car.permission.CAR_ENERGY_PORTS",
+                "android.car.permission.READ_CAR_DISPLAY_UNITS"
+            )
+        )
         private val carName = CarSensor(
             SensorManager.BasicSensor(
                 "car_name",
@@ -163,7 +182,8 @@ class CarSensorManager :
             fuelLevel,
             fuelType,
             odometerValue,
-            carSpeed
+            carSpeed,
+            rangeRemaining
         )
 
         private enum class Listener {
@@ -176,7 +196,7 @@ class CarSensorManager :
         }
 
         private val listenerSensors = mapOf(
-            Listener.ENERGY to listOf(batteryLevel, fuelLevel),
+            Listener.ENERGY to listOf(batteryLevel, fuelLevel, rangeRemaining),
             Listener.MODEL to listOf(carName),
             Listener.STATUS to listOf(carChargingStatus),
             Listener.MILEAGE to listOf(odometerValue),
@@ -411,6 +431,19 @@ class CarSensorManager :
                 batteryLevel.sensor.statelessIcon,
                 mapOf(
                     "status" to batteryStatus
+                ),
+                forceUpdate = true
+            )
+        }
+        val rangeRemainingStatus = carValueStatus(data.rangeRemainingMeters.status)
+        if (isEnabled(latestContext, rangeRemaining)) {
+            onSensorUpdated(
+                latestContext,
+                rangeRemaining.sensor,
+                if (rangeRemainingStatus == "success") data.rangeRemainingMeters.value!! else STATE_UNKNOWN,
+                rangeRemaining.sensor.statelessIcon,
+                mapOf(
+                    "status" to rangeRemainingStatus
                 ),
                 forceUpdate = true
             )
