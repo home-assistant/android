@@ -1297,4 +1297,6 @@
     <string name="sensor_description_screen_rotation">The rotation of the screen from its \"natural\" orientation</string>
     <string name="basic_sensor_name_car_speed">Car speed</string>
     <string name="sensor_description_car_speed">The current speed of the car</string>
+    <string name="basic_sensor_name_car_range_remaining">Car range remaining</string>
+    <string name="sensor_description_car_range_remaining">The range remaining for the car in meters</string>
 </resources>
