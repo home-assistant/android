@@ -40,7 +40,7 @@
     <string name="autoplay_video_summary">Autoplay videos when dashboard is active. Enabling this setting may increase data usage unexpectedly, proceed with caution.</string>
     <string name="autoplay_video">Autoplay videos</string>
     <string name="available_as_assistant_app">Available as assistant app</string>
-    <string name="background_access_disabled">Home Assistant does not have access to run in the background. Without this permission the app will not be able to reliably send data back to your server. Click here to request permissions.</string>
+    <string name="background_access_disabled">Home Assistant does not have access to run in the background. Without this permission the app will not be able to reliably send data back to your server. Select to update permissions.</string>
     <string name="background_access_enabled">Home Assistant has access to run in the background</string>
     <string name="background_access_title">Background access</string>
     <string name="basic_sensor_lullaby">Lullaby</string>
@@ -299,7 +299,7 @@
     <string name="high_accuracy_mode_channel_name">High accuracy location</string>
     <string name="high_accuracy_mode_notification_title">High accuracy (GPS) mode enabled</string>
     <string name="history">History</string>
-    <string name="hold_to_reorder">Tap and hold to reorder</string>
+    <string name="hold_to_reorder">Hold to reorder</string>
     <string name="home_assistant_not_discover">Unable to find your\nHome Assistant instance</string>
     <string name="icon">Icon</string>
     <string name="input_booleans">Input booleans</string>
@@ -372,8 +372,8 @@
     <string name="loading_entities">Please wait while we load your entities</string>
     <string name="loading">Loading…</string>
     <string name="location_disabled_message">The location is disabled. The following enabled option(s) require you to enable location. If you do not enable the location, the sensor(s)/setting(s) will not work!\n\n%1$s\nDo you want to enable location?</string>
-    <string name="location_disabled_notification_message">The following enabled option(s) require you to enable location. If you do not enable the location, the sensor(s)/setting(s) will not work!\n\n%1$s\nClick to enable location.</string>
-    <string name="location_disabled_notification_short_message">Some setting(s) do not work. Click to enable location.</string>
+    <string name="location_disabled_notification_message">The following enabled option(s) require you to enable location. If you do not enable the location, the sensor(s)/setting(s) will not work!\n\n%1$s</string>
+    <string name="location_disabled_notification_short_message">Some setting(s) do not work</string>
     <string name="location_disabled_option_disable">Disable option</string>
     <string name="location_disabled_title">Location is disabled</string>
     <string name="location_history_empty_title">No recent locations</string>
@@ -404,7 +404,6 @@
     <string name="lock_home_bypass_summary">Disable app lock when connected to the home WiFi network</string>
     <string name="lock_home_bypass_title">Unlock on home WiFi</string>
     <string name="locks">Locks</string>
-    <string name="lockscreen_message">Tap to unlock:</string>
     <string name="lockscreen_title">App locked!</string>
     <string name="log_file_not_created">Log file could not be created.</string>
     <string name="log_loader_text">Collecting logs…</string>
@@ -455,9 +454,8 @@
     <string name="media_player">Media player</string>
     <string name="media_player_widget_desc">Control any media player and see current now playing image</string>
     <string name="message_checking">Checking Wear devices with app</string>
-    <string name="message_missing_all">The Wear app is missing on your watch, click the button below to install the app.</string>
+    <string name="message_missing_all">The Wear app is missing on your watch.</string>
     <string name="message_no_connected_nodes">No connected Wear devices, please make sure Bluetooth is on and your watch is paired.</string>
-    <string name="message_some_installed">The Wear app is installed on some of your Wear devices: (%1$s)\n\nClick the button below to install the app on the other devices.</string>
     <string name="missing_command_permission">Please open the Home Assistant app and send the command again to grant the proper permissions. You will be taken to a page to either grant the Home Assistant app the permission, or you will need to select Permissions from the details page and then grant the missing permission. For command_bluetooth the name of the permission is Nearby devices. If you are attempting to use command_activity to make a phone call you will also need to grant Phone permissions.</string>
     <string name="mute_unmute">Mute/Unmute</string>
     <string name="areas">Areas</string>
@@ -997,7 +995,7 @@
     <string name="webview_error_SSL_INVALID">A generic SSL error occurred when loading Home Assistant, please review the Home Assistant certificate or the connection settings and try again.</string>
     <string name="webview_error_SSL_NOTYETVALID">The Home Assistant certificate is not yet valid, please review the Home Assistant certificate or the connection settings and try again.</string>
     <string name="webview_error_SSL_UNTRUSTED">The Home Assistant certificate authority is not trusted, please review the Home Assistant certificate or the connection settings and try again.</string>
-    <string name="webview_error">There was an error loading Home Assistant, please review the connection settings and try again. We will attempt to try another provided URL when you click on Refresh.</string>
+    <string name="webview_error">There was an error loading Home Assistant, please review the connection settings and try again. We will attempt to try another provided URL when you select Refresh.</string>
     <string name="welcome_hass_desc">This app connects to your Home Assistant server and allows integrating data about you and your phone.\n\nHome Assistant is free and open source home automation software with a focus on local control and privacy.</string>
     <string name="welcome_hass">Welcome to Home Assistant Companion!</string>
     <string name="what_is_this_crash">Unable to load Home Assistant home page, do you have a browser installed?</string>
@@ -1073,7 +1071,7 @@
     <string name="notification_channels">Notification channels</string>
     <string name="notification_channels_summary">Manage all notification channels configured on the device. Channels control the behavior of its notifications including visibility and sound.</string>
     <string name="notification_permission">Notification permission</string>
-    <string name="notification_permission_summary">Home Assistant does not have permission to send you notifications. Click here to enable sending notifications.</string>
+    <string name="notification_permission_summary">Home Assistant does not have permission to send you notifications. Select to enable notifications.</string>
     <string name="info">Information</string>
     <string name="show_changelog">Show change log</string>
     <string name="show_changelog_summary">Show the change log dialog from when the app was updated</string>
@@ -1188,7 +1186,7 @@
     <string name="thread_export_none">You don\'t have any credentials to import.</string>
     <string name="thread_export_not_connected">You are not connected to a local network. Connect to Wi-Fi or ethernet to import Thread credentials.</string>
     <string name="thread_export_unavailable">Thread is currently unavailable</string>
-    <string name="tile_vibrate">Vibrate when clicked</string>
+    <string name="tile_vibrate">Vibrate when selected</string>
     <string name="tile_auth_required">Requires unlocked device</string>
     <string name="no_results">No results yet</string>
     <string name="no_assist_support">You must be at least on Home Assistant %1$s and have the %2$s integration enabled</string>
