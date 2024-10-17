@@ -372,7 +372,7 @@
     <string name="loading_entities">Please wait while we load your entities</string>
     <string name="loading">Loading…</string>
     <string name="location_disabled_message">Location is disabled, but is required for the following enabled option(s). If you do not enable location, the sensor(s)/setting(s) will not work!\n\n%1$s\nDo you want to enable location?</string>
-    <string name="location_disabled_notification_message">Location must be enabled for the following enabled option(s). If you do not enable location, the sensor(s)/setting(s) will not work!\n\n%1$s</string>
+    <string name="location_disabled_notification_message">Location is required for the following enabled option(s). If you do not enable location, the sensor(s)/setting(s) will not work!\n\n%1$s</string>
     <string name="location_disabled_notification_short_message">Some options require location to work</string>
     <string name="location_disabled_option_disable">Disable option</string>
     <string name="location_disabled_title">Location is disabled</string>
