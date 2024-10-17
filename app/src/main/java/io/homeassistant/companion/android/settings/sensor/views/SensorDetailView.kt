@@ -67,7 +67,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
@@ -80,6 +79,7 @@ import io.homeassistant.companion.android.sensors.HealthConnectSensorManager
 import io.homeassistant.companion.android.settings.sensor.SensorDetailViewModel
 import io.homeassistant.companion.android.util.compose.MdcAlertDialog
 import io.homeassistant.companion.android.util.compose.TransparentChip
+import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
@@ -288,12 +288,7 @@ fun SensorDetailTopPanel(
                         if (sensor?.enabled == true && sensor.icon.isNotBlank()) {
                             iconToUse = sensor.icon
                         }
-                        val mdiIcon = try {
-                            IconicsDrawable(context, "cmd-${iconToUse.split(":")[1]}").icon
-                        } catch (e: Exception) {
-                            null
-                        }
-
+                        val mdiIcon = CommunityMaterial.getIconByMdiName(iconToUse)
                         if (mdiIcon != null) {
                             Image(
                                 asset = mdiIcon,
