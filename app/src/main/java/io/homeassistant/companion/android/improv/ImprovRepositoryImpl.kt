@@ -65,6 +65,8 @@ class ImprovRepositoryImpl @Inject constructor() : ImprovRepository, ImprovManag
             manager?.findDevices()
         } catch (e: SecurityException) {
             Log.e(TAG, "Not allowed to start scanning", e)
+        } catch (e: NullPointerException) {
+            Log.e(TAG, "Unexpectedly missing BT to start scanning", e)
         }
     }
 

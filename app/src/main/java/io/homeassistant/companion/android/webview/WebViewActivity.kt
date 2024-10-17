@@ -1684,6 +1684,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     }
 
     private fun tryScanningForImprov() {
+        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) return
         if (!presenter.startScanningForImprov()) {
             presenter.getImprovPermissions().let { requestImprovPermissions.launch(it) }
         }
