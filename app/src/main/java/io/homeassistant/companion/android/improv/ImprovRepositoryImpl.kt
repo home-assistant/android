@@ -65,6 +65,8 @@ class ImprovRepositoryImpl @Inject constructor() : ImprovRepository, ImprovManag
             manager?.findDevices()
         } catch (e: SecurityException) {
             Log.e(TAG, "Not allowed to start scanning", e)
+        } catch (e: Exception) {
+            Log.w(TAG, "Unexpectedly cannot start scanning", e)
         }
     }
 
@@ -80,7 +82,11 @@ class ImprovRepositoryImpl @Inject constructor() : ImprovRepository, ImprovManag
     }
 
     override fun stopScanning() {
-        manager?.stopScan()
+        try {
+            manager?.stopScan()
+        } catch (e: Exception) {
+            Log.w(TAG, "Cannot stop scanning", e)
+        }
     }
 
     override fun onConnectionStateChange(device: ImprovDevice?) {
