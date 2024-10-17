@@ -371,9 +371,9 @@
     <string name="template_widgets">Template widgets</string>
     <string name="loading_entities">Please wait while we load your entities</string>
     <string name="loading">Loading…</string>
-    <string name="location_disabled_message">The location is disabled. The following enabled option(s) require you to enable location. If you do not enable the location, the sensor(s)/setting(s) will not work!\n\n%1$s\nDo you want to enable location?</string>
-    <string name="location_disabled_notification_message">The following enabled option(s) require you to enable location. If you do not enable the location, the sensor(s)/setting(s) will not work!\n\n%1$s</string>
-    <string name="location_disabled_notification_short_message">Some setting(s) do not work</string>
+    <string name="location_disabled_dialog_message">%1$s\nDo you want to enable location?</string>
+    <string name="location_disabled_notification_message">Location is required for the following enabled option(s). If you do not enable location, the sensor(s)/setting(s) will not work!\n\n%1$s</string>
+    <string name="location_disabled_notification_short_message">Some options require location to work</string>
     <string name="location_disabled_option_disable">Disable option</string>
     <string name="location_disabled_title">Location is disabled</string>
     <string name="location_history_empty_title">No recent locations</string>
@@ -396,7 +396,7 @@
     <string name="location_perm_info_message">Android set up restrictions for apps which want to use your WiFi, because WiFi can be theoretically used to determine your location.\n\nAlso to ensure the app can access WiFi in background (URL decision making, sensors) you need to allow location access all the time.\n\nTherefore, to use this option location access all the time is needed.\n\nContinue granting location access?</string>
     <string name="location_perm_info_title">Location access</string>
     <string name="location_tracking">Location tracking</string>
-    <string name="location_tracking_summary">View a history of location tracking updates to troubleshoot the device tracker(s)</string>
+    <string name="location_tracking_summary">View a history of location tracking updates to troubleshoot the device tracker</string>
     <string name="location_warn_channel">Location disabled</string>
     <string name="location">Location</string>
     <string name="lock_summary">Use biometric or screen lock credential to unlock app</string>
