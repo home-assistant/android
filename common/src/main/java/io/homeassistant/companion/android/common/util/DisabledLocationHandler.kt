@@ -114,7 +114,12 @@ object DisabledLocationHandler {
         } else {
             AlertDialog.Builder(context)
                 .setTitle(commonR.string.location_disabled_title)
-                .setMessage(context.applicationContext.getString(commonR.string.location_disabled_message, parameters))
+                .setMessage(
+                    context.applicationContext.getString(
+                        commonR.string.location_disabled_dialog_message,
+                        context.applicationContext.getString(commonR.string.location_disabled_notification_message, parameters)
+                    )
+                )
                 .setPositiveButton(positionTextId) { _, _ ->
                     context.applicationContext.startActivity(intent)
                 }
