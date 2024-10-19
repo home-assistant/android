@@ -87,7 +87,8 @@ class CarSensorManager :
                 "mdi:map-marker-distance",
                 unitOfMeasurement = "m",
                 stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
-                deviceClass = "distance"
+                deviceClass = "distance",
+                entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
             ),
             autoPermissions = listOf("com.google.android.gms.permission.CAR_FUEL"),
             automotivePermissions = listOf(
