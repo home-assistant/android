@@ -167,8 +167,7 @@ class CarSensorManager :
                 "mdi:speedometer",
                 unitOfMeasurement = "m/s",
                 deviceClass = "speed",
-                stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
-                entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+                stateClass = SensorManager.STATE_CLASS_MEASUREMENT
             ),
             autoPermissions = listOf("com.google.android.gms.permission.CAR_SPEED"),
             automotivePermissions = listOf("android.car.permission.CAR_SPEED", "android.car.permission.READ_CAR_DISPLAY_UNITS")
