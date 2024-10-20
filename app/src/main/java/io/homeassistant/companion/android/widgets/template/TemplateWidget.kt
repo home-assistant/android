@@ -285,6 +285,7 @@ class TemplateWidget : AppWidgetProvider() {
                 TemplateWidgetEntity(
                     appWidgetId,
                     serverId,
+                    "template_$appWidgetId",
                     template,
                     textSize,
                     templateWidgetDao.get(appWidgetId)?.lastUpdate ?: "Loading",

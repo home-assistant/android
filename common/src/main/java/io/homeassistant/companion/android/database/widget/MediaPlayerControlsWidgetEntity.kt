@@ -11,7 +11,7 @@ data class MediaPlayerControlsWidgetEntity(
     @ColumnInfo(name = "server_id", defaultValue = "0")
     override val serverId: Int,
     @ColumnInfo(name = "entity_id")
-    val entityId: String,
+    override val entityId: String,
     @ColumnInfo(name = "label")
     val label: String?,
     @ColumnInfo(name = "show_skip")
