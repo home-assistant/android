@@ -52,6 +52,7 @@ class HealthConnectSensorManager : SensorManager {
             "mdi:fire",
             "energy",
             unitOfMeasurement = "kcal",
+            stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
 
@@ -60,7 +61,7 @@ class HealthConnectSensorManager : SensorManager {
             type = "sensor",
             commonR.string.basic_sensor_name_weight,
             commonR.string.sensor_description_weight,
-            "mdi:weight",
+            "mdi:scale-bathroom",
             unitOfMeasurement = "g",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             deviceClass = "weight"
@@ -104,13 +105,16 @@ class HealthConnectSensorManager : SensorManager {
                 )
             )
         }
-        totalCaloriesBurnedRequest[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.let {
+        totalCaloriesBurnedRequest[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.let { energy ->
             onSensorUpdated(
                 context,
                 totalCaloriesBurned,
-                BigDecimal(it.inKilocalories).setScale(2, RoundingMode.HALF_EVEN),
+                BigDecimal(energy.inKilocalories).setScale(2, RoundingMode.HALF_EVEN),
                 totalCaloriesBurned.statelessIcon,
-                attributes = mapOf("endTime" to LocalDateTime.of(LocalDate.now(), LocalTime.now()).toInstant(ZoneOffset.UTC))
+                attributes = mapOf(
+                    "endTime" to LocalDateTime.of(LocalDate.now(), LocalTime.now()).toInstant(ZoneOffset.UTC),
+                    "package" to totalCaloriesBurnedRequest.dataOrigins.map { it.packageName }
+                )
             )
         }
     }
@@ -135,7 +139,10 @@ class HealthConnectSensorManager : SensorManager {
             weight,
             BigDecimal(response.records.last().weight.inGrams).setScale(2, RoundingMode.HALF_EVEN),
             weight.statelessIcon,
-            attributes = mapOf("date" to response.records.last().time)
+            attributes = mapOf(
+                "date" to response.records.last().time,
+                "package" to response.records.last().metadata.dataOrigin.packageName
+            )
         )
     }
 
@@ -160,7 +167,10 @@ class HealthConnectSensorManager : SensorManager {
             activeCaloriesBurned,
             BigDecimal(response.records.last().energy.inKilocalories).setScale(2, RoundingMode.HALF_EVEN),
             activeCaloriesBurned.statelessIcon,
-            attributes = mapOf("endTime" to response.records.last().endTime)
+            attributes = mapOf(
+                "endTime" to response.records.last().endTime,
+                "package" to response.records.last().metadata.dataOrigin.packageName
+            )
         )
     }
 
