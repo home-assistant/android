@@ -142,9 +142,8 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         context: Context
     ) {
         val widgetProvider = getWidgetProvider(context)
-        val systemWidgetIds = AppWidgetManager.getInstance(context)
-            .getAppWidgetIds(widgetProvider)
-            .toSet()
+        val appWidgetManager = AppWidgetManager.getInstance(context) ?: return
+        val systemWidgetIds = appWidgetManager.getAppWidgetIds(widgetProvider).toSet()
         val dbWidgetIds = getAllWidgetIdsWithEntities(context).keys
 
         val invalidWidgetIds = dbWidgetIds.minus(systemWidgetIds)
