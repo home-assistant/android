@@ -113,7 +113,7 @@ class HealthConnectSensorManager : SensorManager {
                 totalCaloriesBurned.statelessIcon,
                 attributes = mapOf(
                     "endTime" to LocalDateTime.of(LocalDate.now(), LocalTime.now()).toInstant(ZoneOffset.UTC),
-                    "package" to totalCaloriesBurnedRequest.dataOrigins.map { it.packageName }
+                    "sources" to totalCaloriesBurnedRequest.dataOrigins.map { it.packageName }
                 )
             )
         }
@@ -141,7 +141,7 @@ class HealthConnectSensorManager : SensorManager {
             weight.statelessIcon,
             attributes = mapOf(
                 "date" to response.records.last().time,
-                "package" to response.records.last().metadata.dataOrigin.packageName
+                "source" to response.records.last().metadata.dataOrigin.packageName
             )
         )
     }
@@ -169,7 +169,7 @@ class HealthConnectSensorManager : SensorManager {
             activeCaloriesBurned.statelessIcon,
             attributes = mapOf(
                 "endTime" to response.records.last().endTime,
-                "package" to response.records.last().metadata.dataOrigin.packageName
+                "source" to response.records.last().metadata.dataOrigin.packageName
             )
         )
     }
