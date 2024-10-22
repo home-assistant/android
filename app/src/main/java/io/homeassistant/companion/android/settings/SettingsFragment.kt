@@ -176,7 +176,7 @@ class SettingsFragment(
         val isAutomotive =
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && requireContext().packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
 
-        findPreference<PreferenceCategory>("widgets")?.isVisible = Build.MODEL != "Quest" || isAutomotive
+        findPreference<PreferenceCategory>("widgets")?.isVisible = Build.MODEL != "Quest" || !isAutomotive
         findPreference<Preference>("manage_widgets")?.setOnPreferenceClickListener {
             parentFragmentManager.commit {
                 replace(R.id.content, ManageWidgetsSettingsFragment::class.java, null)
