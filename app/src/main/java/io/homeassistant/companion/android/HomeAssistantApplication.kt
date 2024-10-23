@@ -5,6 +5,7 @@ import android.app.NotificationManager
 import android.bluetooth.BluetoothAdapter
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.net.wifi.WifiManager
 import android.nfc.NfcAdapter
@@ -282,19 +283,21 @@ open class HomeAssistantApplication : Application() {
             ContextCompat.RECEIVER_EXPORTED
         )
 
-        // Update widgets when the screen turns on, updates are skipped if widgets were not added
-        val buttonWidget = ButtonWidget()
-        val entityWidget = EntityWidget()
-        val mediaPlayerWidget = MediaPlayerControlsWidget()
-        val templateWidget = TemplateWidget()
+        if (!this.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            // Update widgets when the screen turns on, updates are skipped if widgets were not added
+            val buttonWidget = ButtonWidget()
+            val entityWidget = EntityWidget()
+            val mediaPlayerWidget = MediaPlayerControlsWidget()
+            val templateWidget = TemplateWidget()
 
-        val screenIntentFilter = IntentFilter()
-        screenIntentFilter.addAction(Intent.ACTION_SCREEN_ON)
-        screenIntentFilter.addAction(Intent.ACTION_SCREEN_OFF)
+            val screenIntentFilter = IntentFilter()
+            screenIntentFilter.addAction(Intent.ACTION_SCREEN_ON)
+            screenIntentFilter.addAction(Intent.ACTION_SCREEN_OFF)
 
-        ContextCompat.registerReceiver(this, buttonWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
-        ContextCompat.registerReceiver(this, entityWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
-        ContextCompat.registerReceiver(this, mediaPlayerWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
-        ContextCompat.registerReceiver(this, templateWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
+            ContextCompat.registerReceiver(this, buttonWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
+            ContextCompat.registerReceiver(this, entityWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
+            ContextCompat.registerReceiver(this, mediaPlayerWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
+            ContextCompat.registerReceiver(this, templateWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
+        }
     }
 }

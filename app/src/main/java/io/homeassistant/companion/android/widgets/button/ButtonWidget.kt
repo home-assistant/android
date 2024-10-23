@@ -93,7 +93,7 @@ class ButtonWidget : AppWidgetProvider() {
 
     private fun updateAllWidgets(context: Context) {
         mainScope.launch {
-            val appWidgetManager = AppWidgetManager.getInstance(context)
+            val appWidgetManager = AppWidgetManager.getInstance(context) ?: return@launch
             val systemWidgetIds = appWidgetManager.getAppWidgetIds(ComponentName(context, ButtonWidget::class.java))
             val dbWidgetList = buttonWidgetDao.getAll()
 

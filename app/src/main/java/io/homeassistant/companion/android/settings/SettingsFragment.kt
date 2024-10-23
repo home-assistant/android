@@ -173,7 +173,10 @@ class SettingsFragment(
             it.entryValues = percentages.map { pct -> pct.toString() }.toTypedArray()
         }
 
-        findPreference<PreferenceCategory>("widgets")?.isVisible = Build.MODEL != "Quest"
+        val isAutomotive =
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && requireContext().packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+
+        findPreference<PreferenceCategory>("widgets")?.isVisible = Build.MODEL != "Quest" && !isAutomotive
         findPreference<Preference>("manage_widgets")?.setOnPreferenceClickListener {
             parentFragmentManager.commit {
                 replace(R.id.content, ManageWidgetsSettingsFragment::class.java, null)
@@ -181,9 +184,6 @@ class SettingsFragment(
             }
             return@setOnPreferenceClickListener true
         }
-
-        val isAutomotive =
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && requireContext().packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
 
         if (Build.MODEL != "Quest") {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {

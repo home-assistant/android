@@ -176,9 +176,8 @@ class TemplateWidget : AppWidgetProvider() {
     private suspend fun updateAllWidgets(
         context: Context
     ) {
-        val systemWidgetIds = AppWidgetManager.getInstance(context)
-            .getAppWidgetIds(ComponentName(context, TemplateWidget::class.java))
-            .toSet()
+        val appWidgetManager = AppWidgetManager.getInstance(context) ?: return
+        val systemWidgetIds = appWidgetManager.getAppWidgetIds(ComponentName(context, TemplateWidget::class.java)).toSet()
         val dbWidgetIds = templateWidgetDao.getAll().map { it.id }
 
         val invalidWidgetIds = dbWidgetIds.minus(systemWidgetIds)
