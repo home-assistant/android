@@ -9,6 +9,7 @@ val SUPPORTED_DOMAINS_WITH_STRING = mapOf(
     "alarm_control_panel" to R.string.alarm_control_panels,
     "button" to R.string.buttons,
     "cover" to R.string.covers,
+    "fan" to R.string.fans,
     "input_boolean" to R.string.input_booleans,
     "input_button" to R.string.input_buttons,
     "light" to R.string.lights,
