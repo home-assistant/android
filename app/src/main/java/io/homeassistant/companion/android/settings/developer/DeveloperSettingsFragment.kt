@@ -13,6 +13,7 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.settings.developer.features.FeaturesSettingsFragment
 import io.homeassistant.companion.android.settings.developer.location.LocationTrackingFragment
 import io.homeassistant.companion.android.settings.log.LogFragment
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
@@ -71,6 +72,16 @@ class DeveloperSettingsFragment : DeveloperSettingsView, PreferenceFragmentCompa
                     ServerChooserFragment().show(parentFragmentManager, ServerChooserFragment.TAG)
                 } else {
                     startThreadDebug(ServerManager.SERVER_ID_ACTIVE)
+                }
+                return@setOnPreferenceClickListener true
+            }
+        }
+
+        findPreference<Preference>("features")?.let {
+            it.setOnPreferenceClickListener {
+                parentFragmentManager.commit {
+                    replace(R.id.content, FeaturesSettingsFragment::class.java, null)
+                    addToBackStack(getString(io.homeassistant.companion.android.common.R.string.feature_flag))
                 }
                 return@setOnPreferenceClickListener true
             }

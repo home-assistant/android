@@ -1299,4 +1299,8 @@
     <string name="sensor_description_car_speed">The current speed of the car</string>
     <string name="basic_sensor_name_car_range_remaining">Car range remaining</string>
     <string name="sensor_description_car_range_remaining">The range remaining for the car in meters</string>
+    <string name="feature_flag">Feature flag</string>
+    <string name="feature_flag_summary">Manage feature flags for the app (advanced users only). Proceed with caution, as this area contains experimental features that may affect stability.</string>
+    <string name="string_feature_flag_update">Update</string>
+    <string name="string_feature_flag_cancel">Cancel</string>
 </resources>

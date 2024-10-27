@@ -20,4 +20,9 @@
         android:icon="@drawable/ic_thread"
         android:title="@string/thread_debug"
         android:summary="@string/thread_debug_summary"/>
+    <Preference
+        android:key="features"
+        android:icon="@drawable/ic_flag"
+        android:title="@string/feature_flag"
+        android:summary="@string/feature_flag_summary"/>
 </PreferenceScreen>

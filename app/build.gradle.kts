@@ -104,10 +104,8 @@ android {
         unitTests.isReturnDefaultValues = true
     }
 
-    tasks.withType<Test>().configureEach {
-        useJUnitPlatform {
-            includeEngines("spek2")
-        }
+    tasks.withType<Test> {
+        useJUnitPlatform()
     }
 
     lint {
@@ -191,6 +189,10 @@ dependencies {
 
     implementation(libs.car.core)
     "fullImplementation"(libs.car.projected)
+
+    testImplementation(libs.junit.api)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testRuntimeOnly(libs.junit.engine)
 }
 
 // Disable to fix memory leak and be compatible with the configuration cache.
