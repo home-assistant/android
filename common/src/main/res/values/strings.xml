@@ -1100,7 +1100,7 @@
     <string name="sensor_update_type_info_title">About sensor updates</string>
     <string name="sensor_update_type_info_enable">Enable this sensor to send updates to Home Assistant.\n\n</string>
     <string name="sensor_update_type_info_intent">This sensor is updated instantly whenever the state changes.</string>
-    <string name="sensor_update_type_info_intent_only">Note: the sensor can only detect changes, it cannot read the current state. If the state changes if the device is restarted or while the app is not running, the sensor may not have the correct state.</string>
+    <string name="sensor_update_type_info_intent_only">Note: the sensor can only listen for changes, it cannot get the current state. If the state changes when the device is restarted or while the app is not running, the sensor may not have the correct state.</string>
     <string name="sensor_update_type_info_worker_fast_always">This sensor\'s state is updated every minute and when a sensor that updates instantly is updated.</string>
     <string name="sensor_update_type_info_worker_fast_charging">This sensor\'s state is updated every minute while charging, every 15 minutes when not charging, and when a sensor that updates instantly is updated.</string>
     <string name="sensor_update_type_info_worker_normal">This sensor\'s state is updated every 15 minutes and when a sensor that updates instantly is updated.</string>
