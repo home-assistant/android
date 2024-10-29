@@ -50,6 +50,7 @@ interface SensorManager {
     ) {
         enum class UpdateType {
             INTENT,
+            INTENT_ONLY,
             WORKER,
             LOCATION,
             CUSTOM

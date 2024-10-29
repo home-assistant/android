@@ -15,7 +15,7 @@ class DevicePolicyManager : SensorManager {
             R.string.sensor_name_work_profile,
             R.string.sensor_description_work_profile,
             "mdi:briefcase",
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT_ONLY
         )
     }
 
