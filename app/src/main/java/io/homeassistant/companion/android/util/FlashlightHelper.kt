@@ -1,17 +1,19 @@
 package io.homeassistant.companion.android.util
 
+import android.Manifest
 import android.content.Context
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresPermission
 import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
 class FlashlightHelper @Inject constructor(
-    @ApplicationContext context: Context,
+    @ApplicationContext context: Context
 ) {
 
     private val cameraManager by lazy { context.getSystemService<CameraManager>() }
@@ -28,6 +30,7 @@ class FlashlightHelper @Inject constructor(
         }
     }
 
+    @RequiresPermission(Manifest.permission.CAMERA)
     fun turnOnFlashlight() {
         try {
             cameraId?.let {
@@ -41,6 +44,7 @@ class FlashlightHelper @Inject constructor(
         }
     }
 
+    @RequiresPermission(Manifest.permission.CAMERA)
     fun turnOffFlashlight() {
         try {
             cameraId?.let {
