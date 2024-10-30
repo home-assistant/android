@@ -56,7 +56,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
         val messageId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, -1)
         val databaseId = intent.getLongExtra(EXTRA_NOTIFICATION_DB, 0)
 
-        val isReply = notificationAction.key == "REPLY"
+        val isReply = notificationAction.key == "REPLY" || notificationAction.behavior == "textInput"
         var replyText: String? = null
 
         val onComplete: () -> Unit = {
@@ -92,7 +92,6 @@ class NotificationActionReceiver : BroadcastReceiver() {
         if (isReply) {
             replyText = RemoteInput.getResultsFromIntent(intent)?.getCharSequence(KEY_TEXT_REPLY).toString()
             notificationAction.data += Pair("reply_text", replyText)
-            notificationAction.data += Pair("reply_title", notificationAction.title)
         }
 
         when (intent.action) {
