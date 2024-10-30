@@ -139,7 +139,7 @@ class MessagingManager @Inject constructor(
         const val INTENT_CLASS_NAME = "intent_class_name"
         const val URI = "URI"
         const val REPLY = "REPLY"
-        const val TEXT_INPUT = "textInput"
+        const val TEXT_INPUT = "textinput"
         const val HIGH_ACCURACY_UPDATE_INTERVAL = "high_accuracy_update_interval"
         const val PACKAGE_NAME = "package_name"
         const val CONFIRMATION = "confirmation"
@@ -1462,7 +1462,7 @@ class MessagingManager @Inject constructor(
                             )
                         }
                     }
-                    notificationAction.key == REPLY || notificationAction.behavior == TEXT_INPUT -> {
+                    notificationAction.key == REPLY || notificationAction.behavior?.lowercase() == TEXT_INPUT -> {
                         val remoteInput: RemoteInput = RemoteInput.Builder(KEY_TEXT_REPLY).run {
                             setLabel(context.getString(commonR.string.action_reply))
                             build()

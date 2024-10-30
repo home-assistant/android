@@ -56,7 +56,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
         val messageId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, -1)
         val databaseId = intent.getLongExtra(EXTRA_NOTIFICATION_DB, 0)
 
-        val isReply = notificationAction.key == "REPLY" || notificationAction.behavior == "textInput"
+        val isReply = notificationAction.key == "REPLY" || notificationAction.behavior?.lowercase() == "textinput"
         var replyText: String? = null
 
         val onComplete: () -> Unit = {
