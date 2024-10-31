@@ -166,6 +166,7 @@ fun SensorDetailView(
                         text = stringResource(
                             when (viewModel.basicSensor.updateType) {
                                 SensorManager.BasicSensor.UpdateType.INTENT -> commonR.string.sensor_update_type_chip_intent
+                                SensorManager.BasicSensor.UpdateType.INTENT_ONLY -> commonR.string.sensor_update_type_chip_intent_only
                                 SensorManager.BasicSensor.UpdateType.WORKER -> {
                                     when (viewModel.settingUpdateFrequency) {
                                         SensorUpdateFrequencySetting.FAST_ALWAYS -> commonR.string.sensor_update_type_chip_worker_fast_always
@@ -577,6 +578,9 @@ fun SensorDetailUpdateInfoDialog(
         content = {
             var infoString = when (basicSensor.updateType) {
                 SensorManager.BasicSensor.UpdateType.INTENT -> stringResource(commonR.string.sensor_update_type_info_intent)
+                SensorManager.BasicSensor.UpdateType.INTENT_ONLY -> {
+                    "${stringResource(commonR.string.sensor_update_type_info_intent)}\n\n${stringResource(commonR.string.sensor_update_type_info_intent_only)}"
+                }
                 SensorManager.BasicSensor.UpdateType.WORKER -> {
                     "${stringResource(
                         when (userSetting) {

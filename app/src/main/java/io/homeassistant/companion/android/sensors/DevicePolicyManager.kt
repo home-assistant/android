@@ -15,7 +15,7 @@ class DevicePolicyManager : SensorManager {
             R.string.sensor_name_work_profile,
             R.string.sensor_description_work_profile,
             "mdi:briefcase",
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT_ONLY
         )
     }
 
@@ -23,7 +23,7 @@ class DevicePolicyManager : SensorManager {
         return "https://companion.home-assistant.io/docs/core/sensors#work-profile-sensor"
     }
 
-    private var isManagedProfileAvailable: Boolean = false
+    private var isManagedProfileAvailable: Boolean? = null
 
     override val name: Int
         get() = R.string.sensor_name_device_policy
@@ -56,12 +56,14 @@ class DevicePolicyManager : SensorManager {
             return
         }
 
-        onSensorUpdated(
-            context,
-            isWorkProfile,
-            isManagedProfileAvailable,
-            isWorkProfile.statelessIcon,
-            mapOf()
-        )
+        isManagedProfileAvailable?.let { state ->
+            onSensorUpdated(
+                context,
+                isWorkProfile,
+                state,
+                isWorkProfile.statelessIcon,
+                mapOf()
+            )
+        }
     }
 }
