@@ -78,6 +78,8 @@ import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.NotificationSensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.SettingsActivity
+import io.homeassistant.companion.android.util.FlashlightHelper
+import io.homeassistant.companion.android.util.PermissionRequestMediator
 import io.homeassistant.companion.android.util.UrlUtil
 import io.homeassistant.companion.android.vehicle.HaCarAppService
 import io.homeassistant.companion.android.websocket.WebsocketManager
@@ -111,7 +113,9 @@ class MessagingManager @Inject constructor(
     private val notificationDao: NotificationDao,
     private val sensorDao: SensorDao,
     private val settingsDao: SettingsDao,
-    private val textToSpeechClient: TextToSpeechClient
+    private val textToSpeechClient: TextToSpeechClient,
+    private val flashlightHelper: FlashlightHelper,
+    private val permissionRequestMediator: PermissionRequestMediator
 ) {
     companion object {
         const val TAG = "MessagingService"
@@ -171,6 +175,7 @@ class MessagingManager @Inject constructor(
         const val COMMAND_AUTO_SCREEN_BRIGHTNESS = "command_auto_screen_brightness"
         const val COMMAND_SCREEN_BRIGHTNESS_LEVEL = "command_screen_brightness_level"
         const val COMMAND_SCREEN_OFF_TIMEOUT = "command_screen_off_timeout"
+        const val COMMAND_FLASHLIGHT = "command_flashlight"
 
         // DND commands
         const val DND_PRIORITY_ONLY = "priority_only"
@@ -225,7 +230,8 @@ class MessagingManager @Inject constructor(
             COMMAND_PERSISTENT_CONNECTION,
             COMMAND_AUTO_SCREEN_BRIGHTNESS,
             COMMAND_SCREEN_BRIGHTNESS_LEVEL,
-            COMMAND_SCREEN_OFF_TIMEOUT
+            COMMAND_SCREEN_OFF_TIMEOUT,
+            COMMAND_FLASHLIGHT
         )
         val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
         val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
@@ -533,6 +539,15 @@ class MessagingManager @Inject constructor(
                                 sendNotification(jsonData)
                             }
                         }
+                        COMMAND_FLASHLIGHT -> {
+                            val command = jsonData[NotificationData.COMMAND]
+                            if (command in DeviceCommandData.ENABLE_COMMANDS && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                handleDeviceCommands(jsonData)
+                            } else {
+                                Log.d(TAG, "Invalid flashlight command received, posting notification to device")
+                                sendNotification(jsonData)
+                            }
+                        }
                         else -> Log.d(TAG, "No command received")
                     }
                 }
@@ -774,6 +789,19 @@ class MessagingManager @Inject constructor(
                     }
                 } else if (!processScreenCommands(data)) {
                     mainScope.launch { sendNotification(data) }
+                }
+            }
+            COMMAND_FLASHLIGHT -> {
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                    when (command) {
+                        DeviceCommandData.TURN_OFF -> flashlightHelper.turnOffFlashlight()
+                        DeviceCommandData.TURN_ON -> flashlightHelper.turnOnFlashlight()
+                    }
+                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    Handler(Looper.getMainLooper()).post {
+                        Toast.makeText(context, commonR.string.missing_camera_permission, Toast.LENGTH_LONG).show()
+                    }
+                    requestCameraPermission()
                 }
             }
             else -> Log.d(TAG, "No command received")
@@ -1635,6 +1663,14 @@ class MessagingManager @Inject constructor(
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         context.startActivity(intent)
     }
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun requestRuntimePermission(permission: String) {
+        permissionRequestMediator.emitPermissionRequestEvent(permission)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun requestCameraPermission() = requestRuntimePermission(Manifest.permission.CAMERA)
 
     private fun getKeyEvent(key: String): Int {
         return when (key) {
