@@ -139,6 +139,7 @@ class MessagingManager @Inject constructor(
         const val INTENT_CLASS_NAME = "intent_class_name"
         const val URI = "URI"
         const val REPLY = "REPLY"
+        const val TEXT_INPUT = "textinput"
         const val HIGH_ACCURACY_UPDATE_INTERVAL = "high_accuracy_update_interval"
         const val PACKAGE_NAME = "package_name"
         const val CONFIRMATION = "confirmation"
@@ -1432,6 +1433,7 @@ class MessagingManager @Inject constructor(
                     data["action_${i}_key"].toString(),
                     data["action_${i}_title"].toString(),
                     data["action_${i}_uri"],
+                    data["action_${i}_behavior"],
                     data
                 )
                 val eventIntent = Intent(context, NotificationActionReceiver::class.java).apply {
@@ -1450,8 +1452,8 @@ class MessagingManager @Inject constructor(
                     )
                 }
 
-                when (notificationAction.key) {
-                    URI -> {
+                when {
+                    notificationAction.key == URI -> {
                         if (!notificationAction.uri.isNullOrBlank()) {
                             builder.addAction(
                                 commonR.drawable.ic_globe,
@@ -1460,7 +1462,7 @@ class MessagingManager @Inject constructor(
                             )
                         }
                     }
-                    REPLY -> {
+                    notificationAction.key == REPLY || notificationAction.behavior?.lowercase() == TEXT_INPUT -> {
                         val remoteInput: RemoteInput = RemoteInput.Builder(KEY_TEXT_REPLY).run {
                             setLabel(context.getString(commonR.string.action_reply))
                             build()

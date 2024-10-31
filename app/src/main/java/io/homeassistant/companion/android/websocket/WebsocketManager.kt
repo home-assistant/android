@@ -186,7 +186,8 @@ class WebsocketManager(
                             if (action is Map<*, *>) {
                                 flattened["action_${i + 1}_key"] = action["action"].toString()
                                 flattened["action_${i + 1}_title"] = action["title"].toString()
-                                flattened["action_${i + 1}_uri"] = action["uri"].toString()
+                                action["uri"]?.let { uri -> flattened["action_${i + 1}_uri"] = uri.toString() }
+                                action["behavior"]?.let { behavior -> flattened["action_${i + 1}_behavior"] = behavior.toString() }
                             }
                         }
                     } else {
