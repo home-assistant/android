@@ -540,7 +540,7 @@ class MessagingManager @Inject constructor(
                         }
                         COMMAND_FLASHLIGHT -> {
                             val command = jsonData[NotificationData.COMMAND]
-                            if (command in DeviceCommandData.ENABLE_COMMANDS) {
+                            if (command in DeviceCommandData.ENABLE_COMMANDS && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                                 handleDeviceCommands(jsonData)
                             } else {
                                 Log.d(TAG, "Invalid flashlight command received, posting notification to device")
