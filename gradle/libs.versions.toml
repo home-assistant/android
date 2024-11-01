@@ -66,7 +66,7 @@ wearPhoneInteractions = "1.0.1"
 wearInput = "1.2.0-alpha02"
 webkit = "1.12.1"
 wear-remote-interactions = "1.0.0"
-workRuntimeKtx = "2.9.1"
+workRuntimeKtx = "2.10.0"
 zxing = "4.3.0"
 
 [plugins]
