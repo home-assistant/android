@@ -983,6 +983,14 @@
     <string name="widget_config_action_error">A custom component is preventing action data from loading.</string>
     <string name="widget_creation_error">Unable to create widget.</string>
     <string name="widget_entity_fetch_error">Unable to fetch data for configured entity.</string>
+    <string name="grid_widget_actions">Actions</string>
+    <string name="widget_grid_add_entities">Add entities</string>
+    <string name="widget_grid_desc">A configurable grid of actions</string>
+    <string name="widget_grid_edit_action">Edit action</string>
+    <string name="widget_grid_label">Action grid</string>
+    <string name="widget_grid_name">Name</string>
+    <string name="widget_grid_title">Grid widget</string>
+    <string name="widget_image_description">Home Assistant widget</string>
     <string name="widget_label_placeholder_text_button">Toggle</string>
     <string name="widget_label_placeholder_text_media_player">Living room</string>
     <string name="widget_label_placeholder_text_static_state">72.9 °F</string>
