@@ -209,7 +209,10 @@ class HealthConnectSensorManager : SensorManager {
             heartRate,
             response.records.last().samples.last().beatsPerMinute,
             heartRate.statelessIcon,
-            attributes = mapOf("date" to response.records.last().samples.last().time)
+            attributes = mapOf(
+                "date" to response.records.last().samples.last().time,
+                "source" to response.records.last().metadata.dataOrigin.packageName
+            )
         )
     }
 
