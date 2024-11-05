@@ -1301,4 +1301,5 @@
     <string name="sensor_description_car_speed">The current speed of the car</string>
     <string name="basic_sensor_name_car_range_remaining">Car range remaining</string>
     <string name="sensor_description_car_range_remaining">The range remaining for the car in meters</string>
+    <string name="sensor_description_health_connect_heart_rate">Last recorded heart rate in beats per minute from Health Connect</string>
 </resources>
