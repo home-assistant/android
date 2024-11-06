@@ -30,6 +30,8 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.temporal.ChronoUnit
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 import kotlinx.coroutines.runBlocking
 
 class HealthConnectSensorManager : SensorManager {
@@ -216,18 +218,17 @@ class HealthConnectSensorManager : SensorManager {
                 )
             )
         }
-        totalCaloriesBurnedRequest[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.let { energy ->
-            onSensorUpdated(
-                context,
-                totalCaloriesBurned,
-                BigDecimal(energy.inKilocalories).setScale(2, RoundingMode.HALF_EVEN),
-                totalCaloriesBurned.statelessIcon,
-                attributes = mapOf(
-                    "endTime" to Instant.now(),
-                    "sources" to totalCaloriesBurnedRequest.dataOrigins.map { it.packageName }
-                )
+        val energy = totalCaloriesBurnedRequest[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories ?: 0.0
+        onSensorUpdated(
+            context,
+            totalCaloriesBurned,
+            BigDecimal(energy).setScale(2, RoundingMode.HALF_EVEN),
+            totalCaloriesBurned.statelessIcon,
+            attributes = mapOf(
+                "endTime" to Instant.now(),
+                "sources" to totalCaloriesBurnedRequest.dataOrigins.map { it.packageName }
             )
-        }
+        )
     }
 
     private fun updateWeightSensor(context: Context) {
@@ -342,91 +343,10 @@ class HealthConnectSensorManager : SensorManager {
 
     private fun updateDistanceSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val distanceRequest = ReadRecordsRequest(
-            recordType = DistanceRecord::class,
-            timeRangeFilter = TimeRangeFilter.between(
-                Instant.now().minus(30, ChronoUnit.DAYS),
-                Instant.now()
-            ),
-            ascendingOrder = false,
-            pageSize = 1
-        )
-        val response = runBlocking { healthConnectClient.readRecords(distanceRequest) }
-        if (response.records.isEmpty()) {
-            return
-        }
-        onSensorUpdated(
-            context,
-            distance,
-            response.records.last().distance.inMeters,
-            distance.statelessIcon,
-            attributes = mapOf(
-                "endTime" to response.records.last().endTime,
-                "source" to response.records.last().metadata.dataOrigin.packageName
-            )
-        )
-    }
-
-    private fun updateElevationGainedSensor(context: Context) {
-        val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val elevationGainedRequest = ReadRecordsRequest(
-            recordType = ElevationGainedRecord::class,
-            timeRangeFilter = TimeRangeFilter.between(
-                Instant.now().minus(30, ChronoUnit.DAYS),
-                Instant.now()
-            ),
-            ascendingOrder = false,
-            pageSize = 1
-        )
-        val response = runBlocking { healthConnectClient.readRecords(elevationGainedRequest) }
-        if (response.records.isEmpty()) {
-            return
-        }
-        onSensorUpdated(
-            context,
-            elevationGained,
-            response.records.last().elevation.inMeters,
-            elevationGained.statelessIcon,
-            attributes = mapOf(
-                "endTime" to response.records.last().endTime,
-                "source" to response.records.last().metadata.dataOrigin.packageName
-            )
-        )
-    }
-
-    private fun updateFloorsClimbedSensor(context: Context) {
-        val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val floorsClimbedRequest = ReadRecordsRequest(
-            recordType = FloorsClimbedRecord::class,
-            timeRangeFilter = TimeRangeFilter.between(
-                Instant.now().minus(30, ChronoUnit.DAYS),
-                Instant.now()
-            ),
-            ascendingOrder = false,
-            pageSize = 1
-        )
-        val response = runBlocking { healthConnectClient.readRecords(floorsClimbedRequest) }
-        if (response.records.isEmpty()) {
-            return
-        }
-        onSensorUpdated(
-            context,
-            floorsClimbed,
-            response.records.last().floors,
-            floorsClimbed.statelessIcon,
-            attributes = mapOf(
-                "endTime" to response.records.last().endTime,
-                "source" to response.records.last().metadata.dataOrigin.packageName
-            )
-        )
-    }
-
-    private fun updateSleepDurationSensor(context: Context) {
-        val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val sleepRequest = runBlocking {
+        val distanceRequest = runBlocking {
             healthConnectClient.aggregate(
                 AggregateRequest(
-                    metrics = setOf(SleepSessionRecord.SLEEP_DURATION_TOTAL),
+                    metrics = setOf(DistanceRecord.DISTANCE_TOTAL),
                     timeRangeFilter = TimeRangeFilter.between(
                         LocalDateTime.of(LocalDate.now(), LocalTime.MIDNIGHT),
                         LocalDateTime.of(LocalDate.now(), LocalTime.now())
@@ -434,18 +354,100 @@ class HealthConnectSensorManager : SensorManager {
                 )
             )
         }
-        sleepRequest[SleepSessionRecord.SLEEP_DURATION_TOTAL]?.let { sleep ->
-            onSensorUpdated(
-                context,
-                sleepDuration,
-                sleep.toMinutes(),
-                sleepDuration.statelessIcon,
-                attributes = mapOf(
-                    "endTime" to Instant.now(),
-                    "sources" to sleepRequest.dataOrigins.map { it.packageName }
+        val distanceTotal = distanceRequest[DistanceRecord.DISTANCE_TOTAL]?.inMeters ?: 0
+        onSensorUpdated(
+            context,
+            distance,
+            distanceTotal,
+            distance.statelessIcon,
+            attributes = mapOf(
+                "endTime" to Instant.now(),
+                "source" to distanceRequest.dataOrigins.map { it.packageName }
+            )
+        )
+    }
+
+    private fun updateElevationGainedSensor(context: Context) {
+        val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
+        val elevationGainedRequest = runBlocking {
+            healthConnectClient.aggregate(
+                AggregateRequest(
+                    metrics = setOf(ElevationGainedRecord.ELEVATION_GAINED_TOTAL),
+                    timeRangeFilter = TimeRangeFilter.between(
+                        LocalDateTime.of(LocalDate.now(), LocalTime.MIDNIGHT),
+                        LocalDateTime.of(LocalDate.now(), LocalTime.now())
+                    )
                 )
             )
         }
+        val elevationValue = elevationGainedRequest[ElevationGainedRecord.ELEVATION_GAINED_TOTAL]?.inMeters ?: 0
+        onSensorUpdated(
+            context,
+            elevationGained,
+            elevationValue,
+            elevationGained.statelessIcon,
+            attributes = mapOf(
+                "endTime" to Instant.now(),
+                "source" to elevationGainedRequest.dataOrigins.map { it.packageName }
+            )
+        )
+    }
+
+    private fun updateFloorsClimbedSensor(context: Context) {
+        val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
+        val floorsClimbedRequest = runBlocking {
+            healthConnectClient.aggregate(
+                AggregateRequest(
+                    metrics = setOf(FloorsClimbedRecord.FLOORS_CLIMBED_TOTAL),
+                    timeRangeFilter = TimeRangeFilter.between(
+                        LocalDateTime.of(LocalDate.now(), LocalTime.MIDNIGHT),
+                        LocalDateTime.of(LocalDate.now(), LocalTime.now())
+                    )
+                )
+            )
+        }
+        val floors = floorsClimbedRequest[FloorsClimbedRecord.FLOORS_CLIMBED_TOTAL] ?: 0
+        onSensorUpdated(
+            context,
+            floorsClimbed,
+            floors,
+            floorsClimbed.statelessIcon,
+            attributes = mapOf(
+                "endTime" to Instant.now(),
+                "source" to floorsClimbedRequest.dataOrigins.map { it.packageName }
+            )
+        )
+    }
+
+    private fun updateSleepDurationSensor(context: Context) {
+        val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
+        val sleepRequest = ReadRecordsRequest(
+            recordType = SleepSessionRecord::class,
+            timeRangeFilter = TimeRangeFilter.between(
+                Instant.now().minus(30, ChronoUnit.DAYS),
+                Instant.now()
+            ),
+            ascendingOrder = false,
+            pageSize = 1
+        )
+        val sleepRecords = runBlocking { healthConnectClient.readRecords(sleepRequest) }
+        if (sleepRecords.records.isEmpty()) {
+            return
+        }
+        val lastSleepRecord = sleepRecords.records.last()
+        val sleepRecordDuration = (lastSleepRecord.endTime.toEpochMilli() - lastSleepRecord.startTime.toEpochMilli())
+            .toDuration(DurationUnit.MILLISECONDS)
+            .inWholeMinutes
+        onSensorUpdated(
+            context,
+            sleepDuration,
+            sleepRecordDuration,
+            sleepDuration.statelessIcon,
+            attributes = mapOf(
+                "endTime" to lastSleepRecord.endTime,
+                "sources" to lastSleepRecord.metadata.dataOrigin.packageName
+            )
+        )
     }
 
     private fun updateStepsSensor(context: Context) {
@@ -461,18 +463,17 @@ class HealthConnectSensorManager : SensorManager {
                 )
             )
         }
-        stepsRequest[StepsRecord.COUNT_TOTAL]?.let { totalSteps ->
-            onSensorUpdated(
-                context,
-                steps,
-                totalSteps,
-                steps.statelessIcon,
-                attributes = mapOf(
-                    "endTime" to Instant.now(),
-                    "sources" to stepsRequest.dataOrigins.map { it.packageName }
-                )
+        val totalSteps = stepsRequest[StepsRecord.COUNT_TOTAL] ?: 0
+        onSensorUpdated(
+            context,
+            steps,
+            totalSteps,
+            steps.statelessIcon,
+            attributes = mapOf(
+                "endTime" to Instant.now(),
+                "sources" to stepsRequest.dataOrigins.map { it.packageName }
             )
-        }
+        )
     }
 
     override fun docsLink(): String {

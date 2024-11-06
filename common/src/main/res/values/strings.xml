@@ -1305,13 +1305,13 @@
     <string name="basic_sensor_name_body_fat">Body fat</string>
     <string name="sensor_description_body_fat">Last recorded body fat percentage from Health Connect</string>
     <string name="basic_sensor_name_distance">Distance</string>
-    <string name="sensor_description_distance">Get distance traveled in meters from Health Connect</string>
+    <string name="sensor_description_distance">Total distance traveled in meters since midnight from Health Connect</string>
     <string name="basic_sensor_name_elevation_gained">Elevation gained</string>
-    <string name="sensor_description_elevation_gained">Get elevation gained in meters from Health Connect</string>
+    <string name="sensor_description_elevation_gained">Total elevation gained in meters since midnight from Health Connect</string>
     <string name="basic_sensor_name_floors_climbed">Floors climbed</string>
-    <string name="sensor_description_floors_climbed">Get floors climbed from Health Connect</string>
+    <string name="sensor_description_floors_climbed">Total floors climbed since midnight from Health Connect</string>
     <string name="basic_sensor_name_sleep_duration">Sleep duration</string>
-    <string name="sensor_description_sleep_duration">Get sleep duration in minutes from Health Connect</string>
+    <string name="sensor_description_sleep_duration">Last recorded sleep duration in minutes from Health Connect</string>
     <string name="basic_sensor_name_steps">Steps</string>
-    <string name="sensor_description_steps">Get steps from Health Connect</string>
+    <string name="sensor_description_steps">Total steps taken since midnight from Health Connect</string>
 </resources>
