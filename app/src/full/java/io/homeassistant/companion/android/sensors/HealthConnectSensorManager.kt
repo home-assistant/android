@@ -7,6 +7,8 @@ import android.util.Log
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
+import androidx.health.connect.client.aggregate.AggregateMetric
+import androidx.health.connect.client.aggregate.AggregationResult
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
 import androidx.health.connect.client.records.BodyFatRecord
@@ -208,15 +210,7 @@ class HealthConnectSensorManager : SensorManager {
     private fun updateTotalCaloriesBurnedSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
         val totalCaloriesBurnedRequest = runBlocking {
-            healthConnectClient.aggregate(
-                AggregateRequest(
-                    metrics = setOf(TotalCaloriesBurnedRecord.ENERGY_TOTAL),
-                    timeRangeFilter = TimeRangeFilter.between(
-                        LocalDateTime.of(LocalDate.now(), LocalTime.MIDNIGHT),
-                        LocalDateTime.of(LocalDate.now(), LocalTime.now())
-                    )
-                )
-            )
+            healthConnectClient.aggregate(buildAggregationRequest(TotalCaloriesBurnedRecord.ENERGY_TOTAL))
         }
         val energy = totalCaloriesBurnedRequest[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories ?: 0.0
         onSensorUpdated(
@@ -224,10 +218,7 @@ class HealthConnectSensorManager : SensorManager {
             totalCaloriesBurned,
             BigDecimal(energy).setScale(2, RoundingMode.HALF_EVEN),
             totalCaloriesBurned.statelessIcon,
-            attributes = mapOf(
-                "endTime" to Instant.now(),
-                "sources" to totalCaloriesBurnedRequest.dataOrigins.map { it.packageName }
-            )
+            attributes = buildAggregationAttributes(totalCaloriesBurnedRequest)
         )
     }
 
@@ -344,15 +335,7 @@ class HealthConnectSensorManager : SensorManager {
     private fun updateDistanceSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
         val distanceRequest = runBlocking {
-            healthConnectClient.aggregate(
-                AggregateRequest(
-                    metrics = setOf(DistanceRecord.DISTANCE_TOTAL),
-                    timeRangeFilter = TimeRangeFilter.between(
-                        LocalDateTime.of(LocalDate.now(), LocalTime.MIDNIGHT),
-                        LocalDateTime.of(LocalDate.now(), LocalTime.now())
-                    )
-                )
-            )
+            healthConnectClient.aggregate(buildAggregationRequest(DistanceRecord.DISTANCE_TOTAL))
         }
         val distanceTotal = distanceRequest[DistanceRecord.DISTANCE_TOTAL]?.inMeters ?: 0
         onSensorUpdated(
@@ -360,25 +343,14 @@ class HealthConnectSensorManager : SensorManager {
             distance,
             distanceTotal,
             distance.statelessIcon,
-            attributes = mapOf(
-                "endTime" to Instant.now(),
-                "source" to distanceRequest.dataOrigins.map { it.packageName }
-            )
+            attributes = buildAggregationAttributes(distanceRequest)
         )
     }
 
     private fun updateElevationGainedSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
         val elevationGainedRequest = runBlocking {
-            healthConnectClient.aggregate(
-                AggregateRequest(
-                    metrics = setOf(ElevationGainedRecord.ELEVATION_GAINED_TOTAL),
-                    timeRangeFilter = TimeRangeFilter.between(
-                        LocalDateTime.of(LocalDate.now(), LocalTime.MIDNIGHT),
-                        LocalDateTime.of(LocalDate.now(), LocalTime.now())
-                    )
-                )
-            )
+            healthConnectClient.aggregate(buildAggregationRequest(ElevationGainedRecord.ELEVATION_GAINED_TOTAL))
         }
         val elevationValue = elevationGainedRequest[ElevationGainedRecord.ELEVATION_GAINED_TOTAL]?.inMeters ?: 0
         onSensorUpdated(
@@ -386,25 +358,14 @@ class HealthConnectSensorManager : SensorManager {
             elevationGained,
             elevationValue,
             elevationGained.statelessIcon,
-            attributes = mapOf(
-                "endTime" to Instant.now(),
-                "source" to elevationGainedRequest.dataOrigins.map { it.packageName }
-            )
+            attributes = buildAggregationAttributes(elevationGainedRequest)
         )
     }
 
     private fun updateFloorsClimbedSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
         val floorsClimbedRequest = runBlocking {
-            healthConnectClient.aggregate(
-                AggregateRequest(
-                    metrics = setOf(FloorsClimbedRecord.FLOORS_CLIMBED_TOTAL),
-                    timeRangeFilter = TimeRangeFilter.between(
-                        LocalDateTime.of(LocalDate.now(), LocalTime.MIDNIGHT),
-                        LocalDateTime.of(LocalDate.now(), LocalTime.now())
-                    )
-                )
-            )
+            healthConnectClient.aggregate(buildAggregationRequest(FloorsClimbedRecord.FLOORS_CLIMBED_TOTAL))
         }
         val floors = floorsClimbedRequest[FloorsClimbedRecord.FLOORS_CLIMBED_TOTAL] ?: 0
         onSensorUpdated(
@@ -412,10 +373,7 @@ class HealthConnectSensorManager : SensorManager {
             floorsClimbed,
             floors,
             floorsClimbed.statelessIcon,
-            attributes = mapOf(
-                "endTime" to Instant.now(),
-                "source" to floorsClimbedRequest.dataOrigins.map { it.packageName }
-            )
+            attributes = buildAggregationAttributes(floorsClimbedRequest)
         )
     }
 
@@ -453,15 +411,7 @@ class HealthConnectSensorManager : SensorManager {
     private fun updateStepsSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
         val stepsRequest = runBlocking {
-            healthConnectClient.aggregate(
-                AggregateRequest(
-                    metrics = setOf(StepsRecord.COUNT_TOTAL),
-                    timeRangeFilter = TimeRangeFilter.between(
-                        LocalDateTime.of(LocalDate.now(), LocalTime.MIDNIGHT),
-                        LocalDateTime.of(LocalDate.now(), LocalTime.now())
-                    )
-                )
-            )
+            healthConnectClient.aggregate(buildAggregationRequest(StepsRecord.COUNT_TOTAL))
         }
         val totalSteps = stepsRequest[StepsRecord.COUNT_TOTAL] ?: 0
         onSensorUpdated(
@@ -469,10 +419,7 @@ class HealthConnectSensorManager : SensorManager {
             steps,
             totalSteps,
             steps.statelessIcon,
-            attributes = mapOf(
-                "endTime" to Instant.now(),
-                "sources" to stepsRequest.dataOrigins.map { it.packageName }
-            )
+            attributes = buildAggregationAttributes(stepsRequest)
         )
     }
 
@@ -511,5 +458,22 @@ class HealthConnectSensorManager : SensorManager {
             Log.e(TAG, "Unable to create Health Connect client", e)
             null
         }
+    }
+
+    private fun buildAggregationRequest(metric: AggregateMetric<*>): AggregateRequest {
+        return AggregateRequest(
+            metrics = setOf(metric),
+            timeRangeFilter = TimeRangeFilter.between(
+                LocalDateTime.of(LocalDate.now(), LocalTime.MIDNIGHT),
+                LocalDateTime.of(LocalDate.now(), LocalTime.now())
+            )
+        )
+    }
+
+    private fun buildAggregationAttributes(result: AggregationResult): Map<String, Any> {
+        return mapOf(
+            "endTime" to Instant.now(),
+            "sources" to result.dataOrigins.map { it.packageName }
+        )
     }
 }
