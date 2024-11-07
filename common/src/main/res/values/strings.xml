@@ -1314,4 +1314,6 @@
     <string name="sensor_description_sleep_duration">Last recorded sleep duration in minutes from Health Connect</string>
     <string name="basic_sensor_name_steps">Steps</string>
     <string name="sensor_description_steps">Total steps taken since midnight from Health Connect</string>
+    <string name="basic_sensor_name_blood_glucose">Blood glucose</string>
+    <string name="sensor_description_blood_glucose">Last recorded blood glucose reading in milligrams per deciliter</string>
 </resources>

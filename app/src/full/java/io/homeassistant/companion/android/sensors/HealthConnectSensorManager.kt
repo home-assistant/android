@@ -11,11 +11,13 @@ import androidx.health.connect.client.aggregate.AggregateMetric
 import androidx.health.connect.client.aggregate.AggregationResult
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
+import androidx.health.connect.client.records.BloodGlucoseRecord
 import androidx.health.connect.client.records.BodyFatRecord
 import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.ElevationGainedRecord
 import androidx.health.connect.client.records.FloorsClimbedRecord
 import androidx.health.connect.client.records.HeartRateRecord
+import androidx.health.connect.client.records.MealType
 import androidx.health.connect.client.records.Record
 import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
@@ -26,12 +28,14 @@ import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.temporal.ChronoUnit
 import kotlin.reflect.KClass
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -62,6 +66,16 @@ class HealthConnectSensorManager : SensorManager {
             commonR.string.sensor_description_health_connect_heart_rate,
             "mdi:heart-pulse",
             unitOfMeasurement = "bpm",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+        )
+
+        val bloodGlucose = SensorManager.BasicSensor(
+            id = "health_connect_blood_glucose",
+            type = "sensor",
+            commonR.string.basic_sensor_name_blood_glucose,
+            commonR.string.sensor_description_blood_glucose,
+            "mdi:diabetes",
+            unitOfMeasurement = "mg/dL",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
 
@@ -162,6 +176,7 @@ class HealthConnectSensorManager : SensorManager {
     override fun requiredPermissions(sensorId: String): Array<String> {
         return when {
             (sensorId == activeCaloriesBurned.id) -> arrayOf(HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class))
+            (sensorId == bloodGlucose.id) -> arrayOf(HealthPermission.getReadPermission(BloodGlucoseRecord::class))
             (sensorId == bodyFat.id) -> arrayOf(HealthPermission.getReadPermission(BodyFatRecord::class))
             (sensorId == distance.id) -> arrayOf(HealthPermission.getReadPermission(DistanceRecord::class))
             (sensorId == elevationGained.id) -> arrayOf(HealthPermission.getReadPermission(ElevationGainedRecord::class))
@@ -187,6 +202,9 @@ class HealthConnectSensorManager : SensorManager {
         }
         if (isEnabled(context, heartRate)) {
             updateHeartRateSensor(context)
+        }
+        if (isEnabled(context, bloodGlucose)) {
+            updateBloodGlucoseSensor(context)
         }
         if (isEnabled(context, bodyFat)) {
             updateBodyFatSensor(context)
@@ -275,6 +293,28 @@ class HealthConnectSensorManager : SensorManager {
             heartRate.statelessIcon,
             attributes = mapOf(
                 "date" to response.records.last().samples.last().time,
+                "source" to response.records.last().metadata.dataOrigin.packageName
+            )
+        )
+    }
+
+    private fun updateBloodGlucoseSensor(context: Context) {
+        val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
+        val bloodGlucoseRequest = buildReadRecordsRequest(BloodGlucoseRecord::class) as ReadRecordsRequest<BloodGlucoseRecord>
+        val response = runBlocking { healthConnectClient.readRecords(bloodGlucoseRequest) }
+        if (response.records.isEmpty()) {
+            return
+        }
+        onSensorUpdated(
+            context,
+            bloodGlucose,
+            response.records.last().level.inMilligramsPerDeciliter,
+            bloodGlucose.statelessIcon,
+            attributes = mapOf(
+                "date" to response.records.last().time,
+                "mealType" to getMealType(response.records.last().mealType),
+                "relationToMeal" to getRelationToMeal(response.records.last().relationToMeal),
+                "specimenSource" to getSpecimenSource(response.records.last().specimenSource),
                 "source" to response.records.last().metadata.dataOrigin.packageName
             )
         )
@@ -390,7 +430,7 @@ class HealthConnectSensorManager : SensorManager {
         return if (hasSensor(context)) {
             listOf(
                 weight, activeCaloriesBurned, totalCaloriesBurned, heartRate, bodyFat, distance,
-                elevationGained, floorsClimbed, sleepDuration, steps
+                elevationGained, floorsClimbed, sleepDuration, steps, bloodGlucose
             )
         } else {
             emptyList()
@@ -433,8 +473,8 @@ class HealthConnectSensorManager : SensorManager {
         return ReadRecordsRequest(
             recordType = request,
             timeRangeFilter = TimeRangeFilter.between(
-                LocalDateTime.of(LocalDate.now(), LocalTime.MIDNIGHT),
-                LocalDateTime.of(LocalDate.now(), LocalTime.now())
+                Instant.now().minus(30, ChronoUnit.DAYS),
+                Instant.now()
             ),
             ascendingOrder = false,
             pageSize = 1
@@ -446,5 +486,40 @@ class HealthConnectSensorManager : SensorManager {
             "endTime" to Instant.now(),
             "sources" to result.dataOrigins.map { it.packageName }
         )
+    }
+
+    private fun getRelationToMeal(relation: Int): String {
+        return when (relation) {
+            BloodGlucoseRecord.RELATION_TO_MEAL_FASTING -> "fasting"
+            BloodGlucoseRecord.RELATION_TO_MEAL_BEFORE_MEAL -> "before_meal"
+            BloodGlucoseRecord.RELATION_TO_MEAL_GENERAL -> "general"
+            BloodGlucoseRecord.RELATION_TO_MEAL_AFTER_MEAL -> "after_meal"
+            BloodGlucoseRecord.RELATION_TO_MEAL_UNKNOWN -> STATE_UNKNOWN
+            else -> STATE_UNKNOWN
+        }
+    }
+
+    private fun getSpecimenSource(source: Int): String {
+        return when (source) {
+            BloodGlucoseRecord.SPECIMEN_SOURCE_CAPILLARY_BLOOD -> "capillary_blood"
+            BloodGlucoseRecord.SPECIMEN_SOURCE_INTERSTITIAL_FLUID -> "interstitial_fluid"
+            BloodGlucoseRecord.SPECIMEN_SOURCE_PLASMA -> "plasma"
+            BloodGlucoseRecord.SPECIMEN_SOURCE_SERUM -> "serum"
+            BloodGlucoseRecord.SPECIMEN_SOURCE_TEARS -> "tears"
+            BloodGlucoseRecord.SPECIMEN_SOURCE_UNKNOWN -> STATE_UNKNOWN
+            BloodGlucoseRecord.SPECIMEN_SOURCE_WHOLE_BLOOD -> "whole_blood"
+            else -> STATE_UNKNOWN
+        }
+    }
+
+    private fun getMealType(mealType: Int): String {
+        return when (mealType) {
+            MealType.MEAL_TYPE_BREAKFAST -> "breakfast"
+            MealType.MEAL_TYPE_LUNCH -> "lunch"
+            MealType.MEAL_TYPE_DINNER -> "dinner"
+            MealType.MEAL_TYPE_SNACK -> "snack"
+            MealType.MEAL_TYPE_UNKNOWN -> STATE_UNKNOWN
+            else -> STATE_UNKNOWN
+        }
     }
 }
