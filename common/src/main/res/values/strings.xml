@@ -1302,4 +1302,18 @@
     <string name="basic_sensor_name_car_range_remaining">Car range remaining</string>
     <string name="sensor_description_car_range_remaining">The range remaining for the car in meters</string>
     <string name="sensor_description_health_connect_heart_rate">Last recorded heart rate in beats per minute from Health Connect</string>
+    <string name="basic_sensor_name_body_fat">Body fat</string>
+    <string name="sensor_description_body_fat">Last recorded body fat percentage from Health Connect</string>
+    <string name="basic_sensor_name_distance">Distance</string>
+    <string name="sensor_description_distance">Total distance traveled in meters since midnight from Health Connect</string>
+    <string name="basic_sensor_name_elevation_gained">Elevation gained</string>
+    <string name="sensor_description_elevation_gained">Total elevation gained in meters since midnight from Health Connect</string>
+    <string name="basic_sensor_name_floors_climbed">Floors climbed</string>
+    <string name="sensor_description_floors_climbed">Total floors climbed since midnight from Health Connect</string>
+    <string name="basic_sensor_name_sleep_duration">Sleep duration</string>
+    <string name="sensor_description_sleep_duration">Last recorded sleep duration in minutes from Health Connect</string>
+    <string name="basic_sensor_name_steps">Steps</string>
+    <string name="sensor_description_steps">Total steps taken since midnight from Health Connect</string>
+    <string name="basic_sensor_name_blood_glucose">Blood glucose</string>
+    <string name="sensor_description_blood_glucose">Last recorded blood glucose reading in milligrams per deciliter from Health Connect</string>
 </resources>
