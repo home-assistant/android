@@ -16,6 +16,7 @@ import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.ElevationGainedRecord
 import androidx.health.connect.client.records.FloorsClimbedRecord
 import androidx.health.connect.client.records.HeartRateRecord
+import androidx.health.connect.client.records.Record
 import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
@@ -31,7 +32,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-import java.time.temporal.ChronoUnit
+import kotlin.reflect.KClass
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 import kotlinx.coroutines.runBlocking
@@ -224,15 +225,7 @@ class HealthConnectSensorManager : SensorManager {
 
     private fun updateWeightSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val weightRequest = ReadRecordsRequest(
-            recordType = WeightRecord::class,
-            timeRangeFilter = TimeRangeFilter.between(
-                Instant.now().minus(30, ChronoUnit.DAYS),
-                Instant.now()
-            ),
-            ascendingOrder = false,
-            pageSize = 1
-        )
+        val weightRequest = buildReadRecordsRequest(WeightRecord::class) as ReadRecordsRequest<WeightRecord>
         val response = runBlocking { healthConnectClient.readRecords(weightRequest) }
         if (response.records.isEmpty()) {
             return
@@ -251,16 +244,7 @@ class HealthConnectSensorManager : SensorManager {
 
     private fun updateActiveCaloriesBurnedSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val activeCaloriesBurnedRequest = ReadRecordsRequest(
-            recordType = ActiveCaloriesBurnedRecord::class,
-            timeRangeFilter = TimeRangeFilter.between(
-                Instant.now().minus(30, ChronoUnit.DAYS),
-                Instant.now()
-
-            ),
-            ascendingOrder = false,
-            pageSize = 1
-        )
+        val activeCaloriesBurnedRequest = buildReadRecordsRequest(ActiveCaloriesBurnedRecord::class) as ReadRecordsRequest<ActiveCaloriesBurnedRecord>
         val response = runBlocking { healthConnectClient.readRecords(activeCaloriesBurnedRequest) }
         if (response.records.isEmpty()) {
             return
@@ -279,15 +263,7 @@ class HealthConnectSensorManager : SensorManager {
 
     private fun updateHeartRateSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val heartRateRequest = ReadRecordsRequest(
-            recordType = HeartRateRecord::class,
-            timeRangeFilter = TimeRangeFilter.between(
-                Instant.now().minus(30, ChronoUnit.DAYS),
-                Instant.now()
-            ),
-            ascendingOrder = false,
-            pageSize = 1
-        )
+        val heartRateRequest = buildReadRecordsRequest(HeartRateRecord::class) as ReadRecordsRequest<HeartRateRecord>
         val response = runBlocking { healthConnectClient.readRecords(heartRateRequest) }
         if (response.records.isEmpty() || response.records.last().samples.isEmpty()) {
             return
@@ -306,16 +282,7 @@ class HealthConnectSensorManager : SensorManager {
 
     private fun updateBodyFatSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val bodyFatRequest = ReadRecordsRequest(
-            recordType = BodyFatRecord::class,
-            timeRangeFilter = TimeRangeFilter.between(
-                Instant.now().minus(30, ChronoUnit.DAYS),
-                Instant.now()
-            ),
-            ascendingOrder = false,
-            pageSize = 1
-        )
-
+        val bodyFatRequest = buildReadRecordsRequest(BodyFatRecord::class) as ReadRecordsRequest<BodyFatRecord>
         val response = runBlocking { healthConnectClient.readRecords(bodyFatRequest) }
         if (response.records.isEmpty()) {
             return
@@ -379,15 +346,7 @@ class HealthConnectSensorManager : SensorManager {
 
     private fun updateSleepDurationSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val sleepRequest = ReadRecordsRequest(
-            recordType = SleepSessionRecord::class,
-            timeRangeFilter = TimeRangeFilter.between(
-                Instant.now().minus(30, ChronoUnit.DAYS),
-                Instant.now()
-            ),
-            ascendingOrder = false,
-            pageSize = 1
-        )
+        val sleepRequest = buildReadRecordsRequest(SleepSessionRecord::class) as ReadRecordsRequest<SleepSessionRecord>
         val sleepRecords = runBlocking { healthConnectClient.readRecords(sleepRequest) }
         if (sleepRecords.records.isEmpty()) {
             return
@@ -467,6 +426,18 @@ class HealthConnectSensorManager : SensorManager {
                 LocalDateTime.of(LocalDate.now(), LocalTime.MIDNIGHT),
                 LocalDateTime.of(LocalDate.now(), LocalTime.now())
             )
+        )
+    }
+
+    private fun buildReadRecordsRequest(request: KClass<out Record>): ReadRecordsRequest<out Record> {
+        return ReadRecordsRequest(
+            recordType = request,
+            timeRangeFilter = TimeRangeFilter.between(
+                LocalDateTime.of(LocalDate.now(), LocalTime.MIDNIGHT),
+                LocalDateTime.of(LocalDate.now(), LocalTime.now())
+            ),
+            ascendingOrder = false,
+            pageSize = 1
         )
     }
 
