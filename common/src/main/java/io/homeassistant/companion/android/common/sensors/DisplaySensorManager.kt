@@ -29,6 +29,8 @@ class DisplaySensorManager : SensorManager {
             commonR.string.sensor_name_screen_off_timeout,
             commonR.string.sensor_description_screen_off_timeout,
             "mdi:cellphone-off",
+            unitOfMeasurement = "ms",
+            deviceClass = "duration",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#screen-off-timeout-sensor"
         )
 
