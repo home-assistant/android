@@ -62,6 +62,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
             commonR.string.sensor_description_sleep_segment,
             "mdi:sleep",
             unitOfMeasurement = "ms",
+            deviceClass = "duration",
             updateType = SensorManager.BasicSensor.UpdateType.CUSTOM
         )
     }
