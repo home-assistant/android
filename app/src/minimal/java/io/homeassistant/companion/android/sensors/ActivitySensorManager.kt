@@ -23,7 +23,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
         return emptyArray()
     }
 
-    override fun requestSensorUpdate(context: Context) {
+    override suspend fun requestSensorUpdate(context: Context) {
         // Noop
     }
 }

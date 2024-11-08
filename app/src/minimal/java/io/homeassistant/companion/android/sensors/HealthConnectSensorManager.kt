@@ -18,7 +18,7 @@ class HealthConnectSensorManager : SensorManager {
         return emptyArray()
     }
 
-    override fun requestSensorUpdate(context: Context) {
+    override suspend fun requestSensorUpdate(context: Context) {
     }
 
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
