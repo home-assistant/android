@@ -36,7 +36,7 @@ class DynamicColorSensorManager : SensorManager {
         return emptyArray()
     }
 
-    override fun requestSensorUpdate(context: Context) {
+    override suspend fun requestSensorUpdate(context: Context) {
         updateAccentColor(context)
     }
 
@@ -44,7 +44,7 @@ class DynamicColorSensorManager : SensorManager {
         return DynamicColors.isDynamicColorAvailable()
     }
 
-    private fun updateAccentColor(context: Context) {
+    private suspend fun updateAccentColor(context: Context) {
         if (!isEnabled(context, accentColorSensor)) {
             return
         }

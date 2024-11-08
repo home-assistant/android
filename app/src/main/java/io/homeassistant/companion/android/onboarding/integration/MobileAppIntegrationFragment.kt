@@ -31,6 +31,7 @@ import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import java.io.IOException
 import java.security.KeyStore
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 @AndroidEntryPoint
 class MobileAppIntegrationFragment : Fragment() {
@@ -70,10 +71,12 @@ class MobileAppIntegrationFragment : Fragment() {
         var checked = isChecked
         if (isChecked) {
             val locationEnabled = DisabledLocationHandler.isLocationEnabled(requireContext())
-            val permissionOk = LocationSensorManager().checkPermission(
-                requireContext(),
-                LocationSensorManager.backgroundLocation.id
-            )
+            val permissionOk = runBlocking {
+                LocationSensorManager().checkPermission(
+                    requireContext(),
+                    LocationSensorManager.backgroundLocation.id
+                )
+            }
 
             if (!locationEnabled) {
                 DisabledLocationHandler.showLocationDisabledWarnDialog(

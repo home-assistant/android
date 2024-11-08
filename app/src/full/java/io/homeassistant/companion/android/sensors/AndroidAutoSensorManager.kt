@@ -17,6 +17,7 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
     companion object {
 
         internal const val TAG = "AndroidAutoSM"
+        private var enabled = false
 
         private val androidAutoConnected = SensorManager.BasicSensor(
             "android_auto",
@@ -51,7 +52,7 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
     private lateinit var context: Context
     private var carConnection: CarConnection? = null
 
-    override fun requestSensorUpdate(context: Context) {
+    override suspend fun requestSensorUpdate(context: Context) {
         this.context = context.applicationContext
         if (!isEnabled(context, androidAutoConnected)) {
             return
@@ -70,11 +71,11 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
     }
 
     override fun onChanged(value: Int) {
-        if (!isEnabled(context, androidAutoConnected)) {
-            CoroutineScope(Dispatchers.Main + Job()).launch {
+        CoroutineScope(Dispatchers.Main + Job()).launch {
+            if (!isEnabled(context, androidAutoConnected)) {
                 carConnection?.type?.removeObserver(this@AndroidAutoSensorManager)
             }
-            return
+            return@launch
         }
         val (connected, typeString) = when (value) {
             CarConnection.CONNECTION_TYPE_NOT_CONNECTED -> {

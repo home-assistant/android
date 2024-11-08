@@ -26,13 +26,13 @@ class NfcSensorManager : SensorManager {
 
     override fun requiredPermissions(sensorId: String) = emptyArray<String>()
 
-    override fun requestSensorUpdate(context: Context) = updateNfcState(context)
+    override suspend fun requestSensorUpdate(context: Context) = updateNfcState(context)
 
     override fun hasSensor(context: Context): Boolean {
         return NfcAdapter.getDefaultAdapter(context) != null
     }
 
-    private fun updateNfcState(context: Context) {
+    private suspend fun updateNfcState(context: Context) {
         if (!isEnabled(context, nfcStateSensor)) {
             return
         }

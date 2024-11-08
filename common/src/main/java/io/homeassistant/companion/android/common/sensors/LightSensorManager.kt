@@ -51,14 +51,14 @@ class LightSensorManager : SensorManager, SensorEventListener {
     private lateinit var latestContext: Context
     private lateinit var mySensorManager: android.hardware.SensorManager
 
-    override fun requestSensorUpdate(
+    override suspend fun requestSensorUpdate(
         context: Context
     ) {
         latestContext = context
         updateLightSensor()
     }
 
-    private fun updateLightSensor() {
+    private suspend fun updateLightSensor() {
         if (!isEnabled(latestContext, lightSensor)) {
             return
         }

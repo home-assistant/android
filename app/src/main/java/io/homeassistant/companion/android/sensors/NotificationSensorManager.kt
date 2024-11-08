@@ -21,6 +21,8 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
 
 class NotificationSensorManager : NotificationListenerService(), SensorManager {
     companion object {
@@ -91,13 +93,13 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         return arrayOf(Manifest.permission.BIND_NOTIFICATION_LISTENER_SERVICE)
     }
 
-    override fun checkPermission(context: Context, sensorId: String): Boolean {
+    override suspend fun checkPermission(context: Context, sensorId: String): Boolean {
         return NotificationManagerCompat
             .getEnabledListenerPackages(context)
             .contains(context.packageName)
     }
 
-    override fun requestSensorUpdate(context: Context) {
+    override suspend fun requestSensorUpdate(context: Context) {
         updateMediaSession(context)
     }
 
@@ -116,59 +118,61 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
 
         updateActiveNotificationCount()
 
-        if (!isEnabled(applicationContext, lastNotification)) {
-            return
+        MainScope().launch {
+            if (!isEnabled(applicationContext, lastNotification)) {
+                return@launch
+            }
+
+            val allowPackages = getSetting(
+                applicationContext,
+                lastNotification,
+                SETTING_ALLOW_LIST,
+                SensorSettingType.LIST_APPS,
+                default = ""
+            ).split(", ").filter { it.isNotBlank() }
+
+            val disableAllowListRequirement = getToggleSetting(
+                applicationContext,
+                lastNotification,
+                SETTING_DISABLE_ALLOW_LIST,
+                default = false
+            )
+
+            if (sbn.packageName == application.packageName ||
+                (allowPackages.isNotEmpty() && sbn.packageName !in allowPackages) ||
+                (!disableAllowListRequirement && allowPackages.isEmpty())
+            ) {
+                return@launch
+            }
+
+            val attr = mappedBundle(sbn.notification.extras).orEmpty()
+                .plus("package" to sbn.packageName)
+                .plus("post_time" to sbn.postTime)
+                .plus("is_clearable" to sbn.isClearable)
+                .plus("is_ongoing" to sbn.isOngoing)
+                .plus("group_id" to sbn.notification.group)
+                .plus("category" to sbn.notification.category)
+                .toMutableMap()
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                attr["channel_id"] = sbn.notification.channelId
+            }
+
+            // Attempt to use the text of the notification but fallback to package name if all else fails.
+            val state = attr["android.text"] ?: attr["android.title"] ?: sbn.packageName
+
+            onSensorUpdated(
+                applicationContext,
+                lastNotification,
+                state.toString().take(255),
+                lastNotification.statelessIcon,
+                attr,
+                forceUpdate = true
+            )
+
+            // Need to send update!
+            SensorReceiver.updateAllSensors(applicationContext)
         }
-
-        val allowPackages = getSetting(
-            applicationContext,
-            lastNotification,
-            SETTING_ALLOW_LIST,
-            SensorSettingType.LIST_APPS,
-            default = ""
-        ).split(", ").filter { it.isNotBlank() }
-
-        val disableAllowListRequirement = getToggleSetting(
-            applicationContext,
-            lastNotification,
-            SETTING_DISABLE_ALLOW_LIST,
-            default = false
-        )
-
-        if (sbn.packageName == application.packageName ||
-            (allowPackages.isNotEmpty() && sbn.packageName !in allowPackages) ||
-            (!disableAllowListRequirement && allowPackages.isEmpty())
-        ) {
-            return
-        }
-
-        val attr = mappedBundle(sbn.notification.extras).orEmpty()
-            .plus("package" to sbn.packageName)
-            .plus("post_time" to sbn.postTime)
-            .plus("is_clearable" to sbn.isClearable)
-            .plus("is_ongoing" to sbn.isOngoing)
-            .plus("group_id" to sbn.notification.group)
-            .plus("category" to sbn.notification.category)
-            .toMutableMap()
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            attr["channel_id"] = sbn.notification.channelId
-        }
-
-        // Attempt to use the text of the notification but fallback to package name if all else fails.
-        val state = attr["android.text"] ?: attr["android.title"] ?: sbn.packageName
-
-        onSensorUpdated(
-            applicationContext,
-            lastNotification,
-            state.toString().take(255),
-            lastNotification.statelessIcon,
-            attr,
-            forceUpdate = true
-        )
-
-        // Need to send update!
-        SensorReceiver.updateAllSensors(applicationContext)
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification) {
@@ -176,92 +180,96 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
 
         updateActiveNotificationCount()
 
-        if (!isEnabled(applicationContext, lastRemovedNotification)) {
-            return
+        MainScope().launch {
+            if (!isEnabled(applicationContext, lastRemovedNotification)) {
+                return@launch
+            }
+
+            val allowPackages = getSetting(
+                applicationContext,
+                lastRemovedNotification,
+                SETTING_ALLOW_LIST,
+                SensorSettingType.LIST_APPS,
+                default = ""
+            ).split(", ").filter { it.isNotBlank() }
+
+            val disableAllowListRequirement = getToggleSetting(
+                applicationContext,
+                lastRemovedNotification,
+                SETTING_DISABLE_ALLOW_LIST,
+                default = false
+            )
+
+            if (sbn.packageName == application.packageName ||
+                (allowPackages.isNotEmpty() && sbn.packageName !in allowPackages) ||
+                (!disableAllowListRequirement && allowPackages.isEmpty())
+            ) {
+                return@launch
+            }
+
+            val attr = mappedBundle(sbn.notification.extras).orEmpty()
+                .plus("package" to sbn.packageName)
+                .plus("post_time" to sbn.postTime)
+                .plus("is_clearable" to sbn.isClearable)
+                .plus("is_ongoing" to sbn.isOngoing)
+                .plus("group_id" to sbn.notification.group)
+                .plus("category" to sbn.notification.category)
+                .toMutableMap()
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                attr["channel_id"] = sbn.notification.channelId
+            }
+
+            // Attempt to use the text of the notification but fallback to package name if all else fails.
+            val state = attr["android.text"] ?: attr["android.title"] ?: sbn.packageName
+
+            onSensorUpdated(
+                applicationContext,
+                lastRemovedNotification,
+                state.toString().take(255),
+                lastRemovedNotification.statelessIcon,
+                attr,
+                forceUpdate = true
+            )
+
+            // Need to send update!
+            SensorReceiver.updateAllSensors(applicationContext)
         }
-
-        val allowPackages = getSetting(
-            applicationContext,
-            lastRemovedNotification,
-            SETTING_ALLOW_LIST,
-            SensorSettingType.LIST_APPS,
-            default = ""
-        ).split(", ").filter { it.isNotBlank() }
-
-        val disableAllowListRequirement = getToggleSetting(
-            applicationContext,
-            lastRemovedNotification,
-            SETTING_DISABLE_ALLOW_LIST,
-            default = false
-        )
-
-        if (sbn.packageName == application.packageName ||
-            (allowPackages.isNotEmpty() && sbn.packageName !in allowPackages) ||
-            (!disableAllowListRequirement && allowPackages.isEmpty())
-        ) {
-            return
-        }
-
-        val attr = mappedBundle(sbn.notification.extras).orEmpty()
-            .plus("package" to sbn.packageName)
-            .plus("post_time" to sbn.postTime)
-            .plus("is_clearable" to sbn.isClearable)
-            .plus("is_ongoing" to sbn.isOngoing)
-            .plus("group_id" to sbn.notification.group)
-            .plus("category" to sbn.notification.category)
-            .toMutableMap()
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            attr["channel_id"] = sbn.notification.channelId
-        }
-
-        // Attempt to use the text of the notification but fallback to package name if all else fails.
-        val state = attr["android.text"] ?: attr["android.title"] ?: sbn.packageName
-
-        onSensorUpdated(
-            applicationContext,
-            lastRemovedNotification,
-            state.toString().take(255),
-            lastRemovedNotification.statelessIcon,
-            attr,
-            forceUpdate = true
-        )
-
-        // Need to send update!
-        SensorReceiver.updateAllSensors(applicationContext)
     }
 
     private fun updateActiveNotificationCount() {
-        if (!isEnabled(applicationContext, activeNotificationCount) || !listenerConnected) {
-            return
-        }
+        MainScope().launch {
+            if (!isEnabled(applicationContext, activeNotificationCount) || !listenerConnected) {
+                return@launch
+            }
 
-        try {
-            val attr: MutableMap<String, Any?> = mutableMapOf()
-            val includeContentsAsAttrsSetting = getToggleSetting(applicationContext, activeNotificationCount, SETTING_INCLUDE_CONTENTS_AS_ATTRS, default = true)
-            if (includeContentsAsAttrsSetting) {
-                for (item in activeNotifications) {
-                    attr += mappedBundle(item.notification.extras, "_${item.packageName}_${item.id}").orEmpty()
-                        .plus("${item.packageName}_${item.id}_post_time" to item.postTime)
-                        .plus("${item.packageName}_${item.id}_is_ongoing" to item.isOngoing)
-                        .plus("${item.packageName}_${item.id}_is_clearable" to item.isClearable)
-                        .plus("${item.packageName}_${item.id}_group_id" to item.notification.group)
-                        .plus("${item.packageName}_${item.id}_category" to item.notification.category)
+            try {
+                val attr: MutableMap<String, Any?> = mutableMapOf()
+                val includeContentsAsAttrsSetting = getToggleSetting(applicationContext, activeNotificationCount, SETTING_INCLUDE_CONTENTS_AS_ATTRS, default = true)
+                if (includeContentsAsAttrsSetting) {
+                    for (item in activeNotifications) {
+                        attr += mappedBundle(item.notification.extras, "_${item.packageName}_${item.id}").orEmpty()
+                            .plus("${item.packageName}_${item.id}_post_time" to item.postTime)
+                            .plus("${item.packageName}_${item.id}_is_ongoing" to item.isOngoing)
+                            .plus("${item.packageName}_${item.id}_is_clearable" to item.isClearable)
+                            .plus("${item.packageName}_${item.id}_group_id" to item.notification.group)
+                            .plus("${item.packageName}_${item.id}_category" to item.notification.category)
 
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        attr["${item.packageName}_${item.id}_channel_id"] = item.notification.channelId
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            attr["${item.packageName}_${item.id}_channel_id"] = item.notification.channelId
+                        }
                     }
                 }
+                onSensorUpdated(
+                    applicationContext,
+                    activeNotificationCount,
+                    activeNotifications.size,
+                    activeNotificationCount.statelessIcon,
+                    attr
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to update active notifications", e)
             }
-            onSensorUpdated(
-                applicationContext,
-                activeNotificationCount,
-                activeNotifications.size,
-                activeNotificationCount.statelessIcon,
-                attr
-            )
-        } catch (e: Exception) {
-            Log.e(TAG, "Unable to update active notifications", e)
         }
     }
 
@@ -280,7 +288,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         PlaybackState.STATE_SKIPPING_TO_QUEUE_ITEM to "Skip to Queue Item"
     )
 
-    private fun updateMediaSession(context: Context) {
+    private suspend fun updateMediaSession(context: Context) {
         if (!isEnabled(context, mediaSession)) {
             return
         }

@@ -51,12 +51,12 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
         return packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_PROXIMITY)
     }
 
-    override fun requestSensorUpdate(context: Context) {
+    override suspend fun requestSensorUpdate(context: Context) {
         latestContext = context
         updateProximitySensor()
     }
 
-    private fun updateProximitySensor() {
+    private suspend fun updateProximitySensor() {
         if (!isEnabled(latestContext, proximitySensor)) {
             return
         }

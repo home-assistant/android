@@ -70,7 +70,7 @@ class DisplaySensorManager : SensorManager {
         return "https://companion.home-assistant.io/docs/core/sensors#display-sensors"
     }
 
-    override fun requestSensorUpdate(
+    override suspend fun requestSensorUpdate(
         context: Context
     ) {
         updateScreenBrightness(context)
@@ -79,7 +79,7 @@ class DisplaySensorManager : SensorManager {
         updateScreenRotation(context)
     }
 
-    private fun updateScreenBrightness(context: Context) {
+    private suspend fun updateScreenBrightness(context: Context) {
         if (!isEnabled(context, screenBrightness)) {
             return
         }
@@ -110,7 +110,7 @@ class DisplaySensorManager : SensorManager {
         )
     }
 
-    private fun updateScreenTimeout(context: Context) {
+    private suspend fun updateScreenTimeout(context: Context) {
         if (!isEnabled(context, screenOffTimeout)) {
             return
         }
@@ -133,7 +133,7 @@ class DisplaySensorManager : SensorManager {
         )
     }
 
-    private fun updateScreenOrientation(context: Context) {
+    private suspend fun updateScreenOrientation(context: Context) {
         if (!isEnabled(context, screenOrientation)) {
             return
         }
@@ -165,7 +165,7 @@ class DisplaySensorManager : SensorManager {
         )
     }
 
-    private fun updateScreenRotation(context: Context) {
+    private suspend fun updateScreenRotation(context: Context) {
         if (!isEnabled(context, screenRotation)) {
             return
         }

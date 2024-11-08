@@ -20,6 +20,8 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.vehicle.HaCarAppService
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
 
 @RequiresApi(Build.VERSION_CODES.O)
 class CarSensorManager :
@@ -219,7 +221,7 @@ class CarSensorManager :
     private val carSensorsList get() = allSensorsList.filter { (isAutomotive && it.automotiveEnabled) || (!isAutomotive && it.autoEnabled) }
     private val sensorsList get() = carSensorsList.map { it.sensor }
 
-    private fun allDisabled(): Boolean = sensorsList.none { isEnabled(latestContext, it) }
+    private suspend fun allDisabled(): Boolean = sensorsList.none { isEnabled(latestContext, it) }
 
     private fun connected(): Boolean = HaCarAppService.carInfo != null
 
@@ -285,7 +287,7 @@ class CarSensorManager :
         } ?: emptyArray()
     }
 
-    fun isEnabled(context: Context, carSensor: CarSensor): Boolean {
+    suspend fun isEnabled(context: Context, carSensor: CarSensor): Boolean {
         this.latestContext = context.applicationContext
 
         if ((isAutomotive && !carSensor.automotiveEnabled) || (!isAutomotive && !carSensor.autoEnabled)) {
@@ -295,7 +297,7 @@ class CarSensorManager :
         return super.isEnabled(context, carSensor.sensor)
     }
 
-    override fun requestSensorUpdate(context: Context) {
+    override suspend fun requestSensorUpdate(context: Context) {
         this.latestContext = context.applicationContext
 
         if (allDisabled()) {
@@ -391,7 +393,7 @@ class CarSensorManager :
         }
     }
 
-    private fun updateCarInfo() {
+    private suspend fun updateCarInfo() {
         listenerSensors.forEach { (listener, sensors) ->
             if (sensors.any { isEnabled(latestContext, it) }) {
                 if (listenerLastRegistered[listener] != -1L && listenerLastRegistered[listener]!! + SensorManager.SENSOR_LISTENER_TIMEOUT < System.currentTimeMillis()) {
@@ -409,154 +411,144 @@ class CarSensorManager :
     private fun onEnergyAvailable(data: EnergyLevel) {
         val fuelStatus = carValueStatus(data.fuelPercent.status)
         Log.d(TAG, "Received Energy level: $data")
-        if (isEnabled(latestContext, fuelLevel)) {
-            onSensorUpdated(
-                latestContext,
-                fuelLevel.sensor,
-                if (fuelStatus == "success") data.fuelPercent.value!! else STATE_UNKNOWN,
-                fuelLevel.sensor.statelessIcon,
-                mapOf(
-                    "status" to fuelStatus
-                ),
-                forceUpdate = true
-            )
-        }
+        onSensorUpdated(
+            latestContext,
+            fuelLevel.sensor,
+            if (fuelStatus == "success") data.fuelPercent.value!! else STATE_UNKNOWN,
+            fuelLevel.sensor.statelessIcon,
+            mapOf(
+                "status" to fuelStatus
+            ),
+            forceUpdate = true
+        )
         val batteryStatus = carValueStatus(data.batteryPercent.status)
-        if (isEnabled(latestContext, batteryLevel)) {
-            onSensorUpdated(
-                latestContext,
-                batteryLevel.sensor,
-                if (batteryStatus == "success") data.batteryPercent.value!! else STATE_UNKNOWN,
-                batteryLevel.sensor.statelessIcon,
-                mapOf(
-                    "status" to batteryStatus
-                ),
-                forceUpdate = true
-            )
-        }
+        onSensorUpdated(
+            latestContext,
+            batteryLevel.sensor,
+            if (batteryStatus == "success") data.batteryPercent.value!! else STATE_UNKNOWN,
+            batteryLevel.sensor.statelessIcon,
+            mapOf(
+                "status" to batteryStatus
+            ),
+            forceUpdate = true
+        )
         val rangeRemainingStatus = carValueStatus(data.rangeRemainingMeters.status)
-        if (isEnabled(latestContext, rangeRemaining)) {
-            onSensorUpdated(
-                latestContext,
-                rangeRemaining.sensor,
-                if (rangeRemainingStatus == "success") data.rangeRemainingMeters.value!! else STATE_UNKNOWN,
-                rangeRemaining.sensor.statelessIcon,
-                mapOf(
-                    "status" to rangeRemainingStatus
-                ),
-                forceUpdate = true
-            )
+        onSensorUpdated(
+            latestContext,
+            rangeRemaining.sensor,
+            if (rangeRemainingStatus == "success") data.rangeRemainingMeters.value!! else STATE_UNKNOWN,
+            rangeRemaining.sensor.statelessIcon,
+            mapOf(
+                "status" to rangeRemainingStatus
+            ),
+            forceUpdate = true
+        )
+        MainScope().launch {
+            setListener(Listener.ENERGY, false)
         }
-        setListener(Listener.ENERGY, false)
     }
 
     private fun onModelAvailable(data: Model) {
         val status = carValueStatus(data.name.status)
         Log.d(TAG, "Received model information: $data")
-        if (isEnabled(latestContext, carName)) {
-            onSensorUpdated(
-                latestContext,
-                carName.sensor,
-                if (status == "success") data.name.value!! else STATE_UNKNOWN,
-                carName.sensor.statelessIcon,
-                mapOf(
-                    "car_manufacturer" to data.manufacturer.value,
-                    "car_manufactured_year" to data.year.value,
-                    "status" to status
-                ),
-                forceUpdate = true
-            )
+        onSensorUpdated(
+            latestContext,
+            carName.sensor,
+            if (status == "success") data.name.value!! else STATE_UNKNOWN,
+            carName.sensor.statelessIcon,
+            mapOf(
+                "car_manufacturer" to data.manufacturer.value,
+                "car_manufactured_year" to data.year.value,
+                "status" to status
+            ),
+            forceUpdate = true
+        )
+        MainScope().launch {
+            setListener(Listener.MODEL, false)
         }
-        setListener(Listener.MODEL, false)
     }
 
     @androidx.annotation.OptIn(androidx.car.app.annotations.ExperimentalCarApi::class)
     fun onStatusAvailable(data: EvStatus) {
         val status = carValueStatus(data.evChargePortConnected.status)
         Log.d(TAG, "Received status available: $data")
-        if (isEnabled(latestContext, carChargingStatus)) {
-            onSensorUpdated(
-                latestContext,
-                carChargingStatus.sensor,
-                if (status == "success") (data.evChargePortConnected.value == true) else STATE_UNKNOWN,
-                carChargingStatus.sensor.statelessIcon,
-                mapOf(
-                    "car_charge_port_open" to (data.evChargePortOpen.value == true),
-                    "status" to status
-                ),
-                forceUpdate = true
-            )
+        onSensorUpdated(
+            latestContext,
+            carChargingStatus.sensor,
+            if (status == "success") (data.evChargePortConnected.value == true) else STATE_UNKNOWN,
+            carChargingStatus.sensor.statelessIcon,
+            mapOf(
+                "car_charge_port_open" to (data.evChargePortOpen.value == true),
+                "status" to status
+            ),
+            forceUpdate = true
+        )
+        MainScope().launch {
+            setListener(Listener.STATUS, false)
         }
-        setListener(Listener.STATUS, false)
     }
 
     @androidx.annotation.OptIn(androidx.car.app.annotations.ExperimentalCarApi::class)
     fun onMileageAvailable(data: Mileage) {
         val status = carValueStatus(data.odometerMeters.status)
         Log.d(TAG, "Received mileage: $data")
-        if (isEnabled(latestContext, odometerValue)) {
-            onSensorUpdated(
-                latestContext,
-                odometerValue.sensor,
-                if (status == "success") data.odometerMeters.value!! else STATE_UNKNOWN,
-                odometerValue.sensor.statelessIcon,
-                mapOf(
-                    "status" to status
-                ),
-                forceUpdate = true
-            )
+        onSensorUpdated(
+            latestContext,
+            odometerValue.sensor,
+            if (status == "success") data.odometerMeters.value!! else STATE_UNKNOWN,
+            odometerValue.sensor.statelessIcon,
+            mapOf(
+                "status" to status
+            ),
+            forceUpdate = true
+        )
+        MainScope().launch {
+            setListener(Listener.MILEAGE, false)
         }
-        setListener(Listener.MILEAGE, false)
     }
 
     private fun onProfileAvailable(data: EnergyProfile) {
         val fuelTypeStatus = carValueStatus(data.fuelTypes.status)
         val evConnectorTypeStatus = carValueStatus(data.evConnectorTypes.status)
         Log.d(TAG, "Received energy profile: $data")
-        if (isEnabled(latestContext, fuelType)) {
-            onSensorUpdated(
-                latestContext,
-                fuelType.sensor,
-                if (fuelTypeStatus == "success") getFuelType(data.fuelTypes.value!!) else STATE_UNKNOWN,
-                fuelType.sensor.statelessIcon,
-                mapOf(
-                    "status" to fuelTypeStatus,
-                    "options" to fuelTypeMap.values.toList()
-                ),
-                forceUpdate = true
-            )
-        }
-        if (isEnabled(latestContext, evConnector)) {
-            onSensorUpdated(
-                latestContext,
-                evConnector.sensor,
-                if (evConnectorTypeStatus == "success") getEvConnectorType(data.evConnectorTypes.value!!) else STATE_UNKNOWN,
-                evConnector.sensor.statelessIcon,
-                mapOf(
-                    "status" to evConnectorTypeStatus,
-                    "options" to evTypeMap.values.toList()
-                ),
-                forceUpdate = true
-            )
-        }
+        onSensorUpdated(
+            latestContext,
+            fuelType.sensor,
+            if (fuelTypeStatus == "success") getFuelType(data.fuelTypes.value!!) else STATE_UNKNOWN,
+            fuelType.sensor.statelessIcon,
+            mapOf(
+                "status" to fuelTypeStatus,
+                "options" to fuelTypeMap.values.toList()
+            ),
+            forceUpdate = true
+        )
+        onSensorUpdated(
+            latestContext,
+            evConnector.sensor,
+            if (evConnectorTypeStatus == "success") getEvConnectorType(data.evConnectorTypes.value!!) else STATE_UNKNOWN,
+            evConnector.sensor.statelessIcon,
+            mapOf(
+                "status" to evConnectorTypeStatus,
+                "options" to evTypeMap.values.toList()
+            ),
+            forceUpdate = true
+        )
     }
 
     private fun onSpeedAvailable(data: Speed) {
         val speedStatus = carValueStatus(data.displaySpeedMetersPerSecond.status)
         Log.d(TAG, "Received speed: $data")
 
-        if (isEnabled(latestContext, carSpeed)) {
-            onSensorUpdated(
-                latestContext,
-                carSpeed.sensor,
-                if (speedStatus == "success") data.displaySpeedMetersPerSecond.value!! else STATE_UNKNOWN,
-                carSpeed.sensor.statelessIcon,
-                mapOf(
-                    "status" to speedStatus
-                ),
-                forceUpdate = true
-            )
-        }
+        onSensorUpdated(
+            latestContext,
+            carSpeed.sensor,
+            if (speedStatus == "success") data.displaySpeedMetersPerSecond.value!! else STATE_UNKNOWN,
+            carSpeed.sensor.statelessIcon,
+            mapOf(
+                "status" to speedStatus
+            ),
+            forceUpdate = true
+        )
     }
 
     private fun carValueStatus(value: Int): String? {

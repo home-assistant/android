@@ -182,38 +182,38 @@ class SensorDetailViewModel @Inject constructor(
     }
 
     fun setEnabled(isEnabled: Boolean, serverId: Int?) {
-        if (isEnabled) {
-            sensorManager?.requiredPermissions(sensorId)?.let { permissions ->
-                val fineLocation = DisabledLocationHandler.containsLocationPermission(permissions, true)
-                val coarseLocation = DisabledLocationHandler.containsLocationPermission(permissions, false)
-
-                if ((fineLocation || coarseLocation) &&
-                    !DisabledLocationHandler.isLocationEnabled(getApplication())
-                ) {
-                    val sensorName = basicSensor?.let {
-                        getApplication<Application>().getString(
-                            basicSensor.name
-                        )
-                    }.orEmpty()
-                    locationPermissionRequests.value = LocationPermissionsDialog(block = true, serverId = serverId, sensors = arrayOf(sensorName))
-                    return
-                } else {
-                    if (!sensorManager.checkPermission(getApplication(), sensorId)) {
-                        if (sensorManager is NetworkSensorManager) {
-                            locationPermissionRequests.value = LocationPermissionsDialog(false, serverId, emptyArray(), permissions)
-                        } else if (sensorManager is LastAppSensorManager && !sensorManager.checkUsageStatsPermission(getApplication())) {
-                            permissionRequests.value = PermissionsDialog(serverId, permissions)
-                        } else {
-                            permissionRequests.value = PermissionsDialog(serverId, permissions)
-                        }
-
-                        return
-                    }
-                }
-            } ?: return
-        }
-
         viewModelScope.launch {
+            if (isEnabled) {
+                sensorManager?.requiredPermissions(sensorId)?.let { permissions ->
+                    val fineLocation = DisabledLocationHandler.containsLocationPermission(permissions, true)
+                    val coarseLocation = DisabledLocationHandler.containsLocationPermission(permissions, false)
+
+                    if ((fineLocation || coarseLocation) &&
+                        !DisabledLocationHandler.isLocationEnabled(getApplication())
+                    ) {
+                        val sensorName = basicSensor?.let {
+                            getApplication<Application>().getString(
+                                basicSensor.name
+                            )
+                        }.orEmpty()
+                        locationPermissionRequests.value = LocationPermissionsDialog(block = true, serverId = serverId, sensors = arrayOf(sensorName))
+                        return@launch
+                    } else {
+                        if (!sensorManager.checkPermission(getApplication(), sensorId)) {
+                            if (sensorManager is NetworkSensorManager) {
+                                locationPermissionRequests.value = LocationPermissionsDialog(false, serverId, emptyArray(), permissions)
+                            } else if (sensorManager is LastAppSensorManager && !sensorManager.checkUsageStatsPermission(getApplication())) {
+                                permissionRequests.value = PermissionsDialog(serverId, permissions)
+                            } else {
+                                permissionRequests.value = PermissionsDialog(serverId, permissions)
+                            }
+
+                            return@launch
+                        }
+                    }
+                } ?: return@launch
+            }
+
             updateSensorEntity(isEnabled, serverId)
             if (isEnabled) {
                 try {
@@ -288,13 +288,15 @@ class SensorDetailViewModel @Inject constructor(
     }
 
     fun setSetting(setting: SensorSetting) {
-        sensorDao.add(setting)
-        try {
-            sensorManager?.requestSensorUpdate(getApplication())
-        } catch (e: Exception) {
-            Log.e(TAG, "Exception while requesting update for sensor $sensorId", e)
+        viewModelScope.launch {
+            sensorDao.add(setting)
+            try {
+                sensorManager?.requestSensorUpdate(getApplication())
+            } catch (e: Exception) {
+                Log.e(TAG, "Exception while requesting update for sensor $sensorId", e)
+            }
+            refreshSensorData()
         }
-        refreshSensorData()
     }
 
     private suspend fun updateSensorEntity(isEnabled: Boolean, serverId: Int?) {

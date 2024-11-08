@@ -89,7 +89,7 @@ class TrafficStatsManager : SensorManager {
         }
         return true
     }
-    override fun requestSensorUpdate(
+    override suspend fun requestSensorUpdate(
         context: Context
     ) {
         updateMobileRxBytes(context)
@@ -98,7 +98,7 @@ class TrafficStatsManager : SensorManager {
         updateTotalTxBytes(context)
     }
 
-    private fun updateMobileRxBytes(context: Context) {
+    private suspend fun updateMobileRxBytes(context: Context) {
         if (!isEnabled(context, rxBytesMobile)) {
             return
         }
@@ -119,7 +119,7 @@ class TrafficStatsManager : SensorManager {
         )
     }
 
-    private fun updateMobileTxBytes(context: Context) {
+    private suspend fun updateMobileTxBytes(context: Context) {
         if (!isEnabled(context, txBytesMobile)) {
             return
         }
@@ -139,7 +139,7 @@ class TrafficStatsManager : SensorManager {
             mapOf()
         )
     }
-    private fun updateTotalRxBytes(context: Context) {
+    private suspend fun updateTotalRxBytes(context: Context) {
         if (!isEnabled(context, rxBytesTotal)) {
             return
         }
@@ -160,7 +160,7 @@ class TrafficStatsManager : SensorManager {
         )
     }
 
-    private fun updateTotalTxBytes(context: Context) {
+    private suspend fun updateTotalTxBytes(context: Context) {
         if (!isEnabled(context, txBytesTotal)) {
             return
         }

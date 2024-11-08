@@ -57,14 +57,14 @@ class StepsSensorManager : SensorManager, SensorEventListener {
         return packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_COUNTER)
     }
 
-    override fun requestSensorUpdate(
+    override suspend fun requestSensorUpdate(
         context: Context
     ) {
         latestContext = context
         updateStepsSensor()
     }
 
-    private fun updateStepsSensor() {
+    private suspend fun updateStepsSensor() {
         if (!isEnabled(latestContext, stepsSensor)) {
             return
         }

@@ -38,7 +38,7 @@ class WetModeSensorManager : SensorManager {
         return emptyArray()
     }
 
-    override fun requestSensorUpdate(
+    override suspend fun requestSensorUpdate(
         context: Context,
         intent: Intent?
     ) {
@@ -51,11 +51,11 @@ class WetModeSensorManager : SensorManager {
         updateWetMode(context)
     }
 
-    override fun requestSensorUpdate(context: Context) {
+    override suspend fun requestSensorUpdate(context: Context) {
         // No Op
     }
 
-    private fun updateWetMode(context: Context) {
+    private suspend fun updateWetMode(context: Context) {
         if (!isEnabled(context, wetModeSensor)) {
             return
         }

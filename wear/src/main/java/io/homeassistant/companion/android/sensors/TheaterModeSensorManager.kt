@@ -36,11 +36,11 @@ class TheaterModeSensorManager : SensorManager {
         return emptyArray()
     }
 
-    override fun requestSensorUpdate(context: Context) {
+    override suspend fun requestSensorUpdate(context: Context) {
         updateTheaterMode(context)
     }
 
-    private fun updateTheaterMode(context: Context) {
+    private suspend fun updateTheaterMode(context: Context) {
         if (!isEnabled(context, theaterMode)) {
             return
         }

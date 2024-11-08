@@ -52,6 +52,7 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
@@ -209,51 +210,56 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     override fun onReceive(context: Context, intent: Intent) {
         latestContext = context
 
-        when (intent.action) {
-            Intent.ACTION_BOOT_COMPLETED,
-            ACTION_REQUEST_LOCATION_UPDATES -> setupLocationTracking()
-            ACTION_PROCESS_LOCATION,
-            ACTION_PROCESS_HIGH_ACCURACY_LOCATION -> handleLocationUpdate(intent)
-            ACTION_PROCESS_GEO -> handleGeoUpdate(intent)
-            ACTION_REQUEST_ACCURATE_LOCATION_UPDATE -> requestSingleAccurateLocation()
-            ACTION_FORCE_HIGH_ACCURACY -> {
-                when (val command = intent.extras?.getString("command")) {
-                    DeviceCommandData.TURN_ON, DeviceCommandData.TURN_OFF, MessagingManager.FORCE_ON -> {
-                        val turnOn = command != DeviceCommandData.TURN_OFF
-                        if (turnOn) {
-                            Log.d(TAG, "Forcing of high accuracy mode enabled")
-                        } else {
-                            Log.d(TAG, "Forcing of high accuracy mode disabled")
-                        }
-                        forceHighAccuracyModeOn = turnOn
-                        forceHighAccuracyModeOff = false
-                        setHighAccuracyModeSetting(latestContext, turnOn)
-                        ioScope.launch {
-                            setupBackgroundLocation()
-                        }
-                    }
+        MainScope().launch {
+            when (intent.action) {
+                Intent.ACTION_BOOT_COMPLETED,
+                ACTION_REQUEST_LOCATION_UPDATES -> setupLocationTracking()
 
-                    MessagingManager.FORCE_OFF -> {
-                        Log.d(TAG, "High accuracy mode forced off")
-                        forceHighAccuracyModeOn = false
-                        forceHighAccuracyModeOff = true
-                        ioScope.launch {
-                            setupBackgroundLocation()
-                        }
-                    }
+                ACTION_PROCESS_LOCATION,
+                ACTION_PROCESS_HIGH_ACCURACY_LOCATION -> handleLocationUpdate(intent)
 
-                    MessagingManager.HIGH_ACCURACY_SET_UPDATE_INTERVAL -> {
-                        if (lastHighAccuracyMode) {
-                            restartHighAccuracyService(getHighAccuracyModeIntervalSetting(latestContext))
+                ACTION_PROCESS_GEO -> handleGeoUpdate(intent)
+                ACTION_REQUEST_ACCURATE_LOCATION_UPDATE -> requestSingleAccurateLocation()
+                ACTION_FORCE_HIGH_ACCURACY -> {
+                    when (val command = intent.extras?.getString("command")) {
+                        DeviceCommandData.TURN_ON, DeviceCommandData.TURN_OFF, MessagingManager.FORCE_ON -> {
+                            val turnOn = command != DeviceCommandData.TURN_OFF
+                            if (turnOn) {
+                                Log.d(TAG, "Forcing of high accuracy mode enabled")
+                            } else {
+                                Log.d(TAG, "Forcing of high accuracy mode disabled")
+                            }
+                            forceHighAccuracyModeOn = turnOn
+                            forceHighAccuracyModeOff = false
+                            setHighAccuracyModeSetting(latestContext, turnOn)
+                            ioScope.launch {
+                                setupBackgroundLocation()
+                            }
+                        }
+
+                        MessagingManager.FORCE_OFF -> {
+                            Log.d(TAG, "High accuracy mode forced off")
+                            forceHighAccuracyModeOn = false
+                            forceHighAccuracyModeOff = true
+                            ioScope.launch {
+                                setupBackgroundLocation()
+                            }
+                        }
+
+                        MessagingManager.HIGH_ACCURACY_SET_UPDATE_INTERVAL -> {
+                            if (lastHighAccuracyMode) {
+                                restartHighAccuracyService(getHighAccuracyModeIntervalSetting(latestContext))
+                            }
                         }
                     }
                 }
+
+                else -> Log.w(TAG, "Unknown intent action: ${intent.action}!")
             }
-            else -> Log.w(TAG, "Unknown intent action: ${intent.action}!")
         }
     }
 
-    private fun setupLocationTracking() {
+    private suspend fun setupLocationTracking() {
         if (!checkPermission(latestContext, backgroundLocation.id)) {
             Log.w(TAG, "Not starting location reporting because of permissions.")
             return
@@ -439,7 +445,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         return updateIntervalHighAccuracySecondsInt
     }
 
-    private fun getHighAccuracyModeState(): Boolean {
+    private suspend fun getHighAccuracyModeState(): Boolean {
         val highAccuracyMode = getHighAccuracyModeSetting()
 
         if (!highAccuracyMode) return false
@@ -469,7 +475,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         }
     }
 
-    private fun shouldEnableHighAccuracyMode(): Boolean {
+    private suspend fun shouldEnableHighAccuracyMode(): Boolean {
         val highAccuracyModeBTDevicesSetting = getSetting(
             latestContext,
             backgroundLocation,
@@ -640,7 +646,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         }
     }
 
-    private fun requestLocationUpdates() {
+    private suspend fun requestLocationUpdates() {
         if (!checkPermission(latestContext, backgroundLocation.id)) {
             Log.w(TAG, "Not registering for location updates because of permissions.")
             return
@@ -692,7 +698,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         }
     }
 
-    private fun handleLocationUpdate(intent: Intent) {
+    private suspend fun handleLocationUpdate(intent: Intent) {
         Log.d(TAG, "Received location update.")
         val serverIds = getEnabledServers(latestContext, backgroundLocation)
         serverIds.forEach {
@@ -732,7 +738,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         }
     }
 
-    private fun handleGeoUpdate(intent: Intent) {
+    private suspend fun handleGeoUpdate(intent: Intent) {
         Log.d(TAG, "Received geofence update.")
         if (!isEnabled(latestContext, zoneLocation)) {
             isZoneLocationSetup = false
@@ -1029,7 +1035,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             )
     }
 
-    private fun getHighAccuracyModeTriggerRange(): Int {
+    private suspend fun getHighAccuracyModeTriggerRange(): Int {
         val enabled = isEnabled(latestContext, zoneLocation)
 
         if (!enabled) return 0
@@ -1053,7 +1059,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         return highAccuracyTriggerRangeInt
     }
 
-    private fun getHighAccuracyModeZones(expandedZones: Boolean): List<String> {
+    private suspend fun getHighAccuracyModeZones(expandedZones: Boolean): List<String> {
         val enabled = isEnabled(latestContext, zoneLocation)
 
         if (!enabled) return emptyList()
@@ -1074,7 +1080,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         }
     }
 
-    private fun requestSingleAccurateLocation() {
+    private suspend fun requestSingleAccurateLocation() {
         if (!checkPermission(latestContext, singleAccurateLocation.id)) {
             Log.w(TAG, "Not getting single accurate location because of permissions.")
             return
@@ -1233,7 +1239,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         }
     }
 
-    override fun requestSensorUpdate(context: Context) {
+    override suspend fun requestSensorUpdate(context: Context) {
         latestContext = context
         if (isEnabled(context, zoneLocation) || isEnabled(context, backgroundLocation)) {
             setupLocationTracking()

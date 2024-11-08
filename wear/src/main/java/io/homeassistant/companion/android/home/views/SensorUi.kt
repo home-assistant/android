@@ -8,6 +8,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -64,7 +69,9 @@ fun SensorUi(
         onSensorClicked(basicSensor.id, allGranted)
     }
 
-    val perm = manager.checkPermission(LocalContext.current, basicSensor.id)
+    var perm by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    LaunchedEffect(Unit) { perm = manager.checkPermission(context, basicSensor.id) }
     val isChecked = (sensor == null && basicSensor.enabledByDefault) ||
         (sensor?.enabled == true && perm)
     SwitchButton(

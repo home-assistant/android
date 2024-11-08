@@ -63,7 +63,7 @@ class KeyguardSensorManager : SensorManager {
         return emptyArray()
     }
 
-    override fun requestSensorUpdate(
+    override suspend fun requestSensorUpdate(
         context: Context
     ) {
         val km = context.getSystemService<KeyguardManager>()!!
@@ -79,7 +79,7 @@ class KeyguardSensorManager : SensorManager {
     }
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP_MR1)
-    private fun updateDeviceLocked(context: Context, km: KeyguardManager) {
+    private suspend fun updateDeviceLocked(context: Context, km: KeyguardManager) {
         if (!isEnabled(context, deviceLocked)) {
             return
         }
@@ -97,7 +97,7 @@ class KeyguardSensorManager : SensorManager {
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
-    private fun updateDeviceSecure(context: Context, km: KeyguardManager) {
+    private suspend fun updateDeviceSecure(context: Context, km: KeyguardManager) {
         if (!isEnabled(context, deviceSecure)) {
             return
         }
@@ -114,7 +114,7 @@ class KeyguardSensorManager : SensorManager {
         )
     }
 
-    private fun updateKeyguardLocked(context: Context, km: KeyguardManager) {
+    private suspend fun updateKeyguardLocked(context: Context, km: KeyguardManager) {
         if (!isEnabled(context, keyguardLocked)) {
             return
         }
@@ -131,7 +131,7 @@ class KeyguardSensorManager : SensorManager {
         )
     }
 
-    private fun updateKeyguardSecure(context: Context, km: KeyguardManager) {
+    private suspend fun updateKeyguardSecure(context: Context, km: KeyguardManager) {
         if (!isEnabled(context, keyguardSecure)) {
             return
         }

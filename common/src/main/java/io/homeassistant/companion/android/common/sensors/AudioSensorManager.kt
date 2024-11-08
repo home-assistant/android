@@ -170,7 +170,7 @@ class AudioSensorManager : SensorManager {
         return emptyArray()
     }
 
-    override fun requestSensorUpdate(context: Context) {
+    override suspend fun requestSensorUpdate(context: Context) {
         val audioManager = context.getSystemService<AudioManager>()!!
         updateAudioSensor(context, audioManager)
         updateAudioState(context, audioManager)
@@ -190,7 +190,7 @@ class AudioSensorManager : SensorManager {
         }
     }
 
-    private fun updateAudioSensor(context: Context, audioManager: AudioManager) {
+    private suspend fun updateAudioSensor(context: Context, audioManager: AudioManager) {
         if (!isEnabled(context, audioSensor)) {
             return
         }
@@ -220,7 +220,7 @@ class AudioSensorManager : SensorManager {
         )
     }
 
-    private fun updateAudioState(context: Context, audioManager: AudioManager) {
+    private suspend fun updateAudioState(context: Context, audioManager: AudioManager) {
         if (!isEnabled(context, audioState)) {
             return
         }
@@ -260,7 +260,7 @@ class AudioSensorManager : SensorManager {
         )
     }
 
-    private fun updateHeadphoneState(context: Context, audioManager: AudioManager) {
+    private suspend fun updateHeadphoneState(context: Context, audioManager: AudioManager) {
         if (!isEnabled(context, headphoneState)) {
             return
         }
@@ -289,7 +289,7 @@ class AudioSensorManager : SensorManager {
         )
     }
 
-    private fun updateMicMuted(context: Context, audioManager: AudioManager) {
+    private suspend fun updateMicMuted(context: Context, audioManager: AudioManager) {
         if (!isEnabled(context, micMuted)) {
             return
         }
@@ -307,7 +307,7 @@ class AudioSensorManager : SensorManager {
         )
     }
 
-    private fun updateMusicActive(context: Context, audioManager: AudioManager) {
+    private suspend fun updateMusicActive(context: Context, audioManager: AudioManager) {
         if (!isEnabled(context, musicActive)) {
             return
         }
@@ -325,7 +325,7 @@ class AudioSensorManager : SensorManager {
         )
     }
 
-    private fun updateSpeakerphoneState(context: Context, audioManager: AudioManager) {
+    private suspend fun updateSpeakerphoneState(context: Context, audioManager: AudioManager) {
         if (!isEnabled(context, speakerphoneState)) {
             return
         }
@@ -345,7 +345,7 @@ class AudioSensorManager : SensorManager {
         )
     }
 
-    private fun updateVolumeAlarm(context: Context, audioManager: AudioManager) {
+    private suspend fun updateVolumeAlarm(context: Context, audioManager: AudioManager) {
         if (!isEnabled(context, volAlarm)) {
             return
         }
@@ -360,7 +360,7 @@ class AudioSensorManager : SensorManager {
         )
     }
 
-    private fun updateVolumeCall(context: Context, audioManager: AudioManager) {
+    private suspend fun updateVolumeCall(context: Context, audioManager: AudioManager) {
         if (!isEnabled(context, volCall)) {
             return
         }
@@ -376,7 +376,7 @@ class AudioSensorManager : SensorManager {
         )
     }
 
-    private fun updateVolumeMusic(context: Context, audioManager: AudioManager) {
+    private suspend fun updateVolumeMusic(context: Context, audioManager: AudioManager) {
         if (!isEnabled(context, volMusic)) {
             return
         }
@@ -392,7 +392,7 @@ class AudioSensorManager : SensorManager {
         )
     }
 
-    private fun updateVolumeRing(context: Context, audioManager: AudioManager) {
+    private suspend fun updateVolumeRing(context: Context, audioManager: AudioManager) {
         if (!isEnabled(context, volRing)) {
             return
         }
@@ -408,7 +408,7 @@ class AudioSensorManager : SensorManager {
         )
     }
 
-    private fun updateVolumeNotification(context: Context, audioManager: AudioManager) {
+    private suspend fun updateVolumeNotification(context: Context, audioManager: AudioManager) {
         if (!isEnabled(context, volNotification)) {
             return
         }
@@ -424,7 +424,7 @@ class AudioSensorManager : SensorManager {
         )
     }
 
-    private fun updateVolumeSystem(context: Context, audioManager: AudioManager) {
+    private suspend fun updateVolumeSystem(context: Context, audioManager: AudioManager) {
         if (!isEnabled(context, volSystem)) {
             return
         }
@@ -441,7 +441,7 @@ class AudioSensorManager : SensorManager {
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private fun updateVolumeAccessibility(context: Context, audioManager: AudioManager) {
+    private suspend fun updateVolumeAccessibility(context: Context, audioManager: AudioManager) {
         if (!isEnabled(context, volAccessibility)) {
             return
         }
@@ -457,7 +457,7 @@ class AudioSensorManager : SensorManager {
         )
     }
 
-    private fun updateVolumeDTMF(context: Context, audioManager: AudioManager) {
+    private suspend fun updateVolumeDTMF(context: Context, audioManager: AudioManager) {
         if (!isEnabled(context, volDTMF)) {
             return
         }

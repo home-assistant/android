@@ -98,10 +98,13 @@ fun SensorDetailView(
         rememberLauncherForActivityResult(it) { }
     }
 
-    val sensorEnabled = viewModel.sensor?.sensor?.enabled
-        ?: (
-            viewModel.basicSensor != null && viewModel.basicSensor.enabledByDefault && viewModel.sensorManager?.checkPermission(context, viewModel.basicSensor.id) == true
-            )
+    var sensorEnabled by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        sensorEnabled = viewModel.sensor?.sensor?.enabled
+            ?: (
+                viewModel.basicSensor != null && viewModel.basicSensor.enabledByDefault && viewModel.sensorManager?.checkPermission(context, viewModel.basicSensor.id) == true
+                )
+    }
 
     val scaffoldState = rememberScaffoldState()
     LaunchedEffect("snackbar") {

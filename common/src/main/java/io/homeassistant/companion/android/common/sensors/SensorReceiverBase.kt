@@ -114,18 +114,18 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
 
         @Suppress("DEPRECATION")
         if (isSensorEnabled(LastUpdateManager.lastUpdate.id)) {
-            LastUpdateManager().sendLastUpdate(context, intent.action)
-            val allSettings = sensorDao.getSettings(LastUpdateManager.lastUpdate.id)
-            for (setting in allSettings) {
-                if (setting.value != "" && intent.action == setting.value) {
-                    val eventData = intent.extras?.keySet()
-                        ?.associate { it.toString() to intent.extras?.get(it).toString() }
-                        ?.plus("intent" to intent.action.toString())
-                        ?: mapOf("intent" to intent.action.toString())
-                    Log.d(tag, "Event data: $eventData")
-                    sensorDao.get(LastUpdateManager.lastUpdate.id).forEach { sensor ->
-                        if (!sensor.enabled) return@forEach
-                        ioScope.launch {
+            ioScope.launch {
+                LastUpdateManager().sendLastUpdate(context, intent.action)
+                val allSettings = sensorDao.getSettings(LastUpdateManager.lastUpdate.id)
+                for (setting in allSettings) {
+                    if (setting.value != "" && intent.action == setting.value) {
+                        val eventData = intent.extras?.keySet()
+                            ?.associate { it.toString() to intent.extras?.get(it).toString() }
+                            ?.plus("intent" to intent.action.toString())
+                            ?: mapOf("intent" to intent.action.toString())
+                        Log.d(tag, "Event data: $eventData")
+                        sensorDao.get(LastUpdateManager.lastUpdate.id).forEach { sensor ->
+                            if (!sensor.enabled) return@forEach
                             try {
                                 serverManager.integrationRepository(sensor.serverId).fireEvent(
                                     "android.intent_received",

@@ -192,7 +192,7 @@ class NetworkSensorManager : SensorManager {
         }
     }
 
-    override fun requestSensorUpdate(
+    override suspend fun requestSensorUpdate(
         context: Context
     ) {
         updateHotspotEnabledSensor(context)
@@ -227,7 +227,7 @@ class NetworkSensorManager : SensorManager {
             false
         }
     }
-    private fun updateHotspotEnabledSensor(context: Context) {
+    private suspend fun updateHotspotEnabledSensor(context: Context) {
         if (!isEnabled(context, hotspotState)) {
             return
         }
@@ -246,7 +246,7 @@ class NetworkSensorManager : SensorManager {
             mapOf()
         )
     }
-    private fun updateWifiConnectionSensor(context: Context) {
+    private suspend fun updateWifiConnectionSensor(context: Context) {
         if (!isEnabled(context, wifiConnection) || !hasWifi(context)) {
             return
         }
@@ -287,7 +287,7 @@ class NetworkSensorManager : SensorManager {
         )
     }
 
-    private fun updateBSSIDSensor(context: Context) {
+    private suspend fun updateBSSIDSensor(context: Context) {
         if (!isEnabled(context, bssidState) || !hasWifi(context)) {
             return
         }
@@ -331,7 +331,7 @@ class NetworkSensorManager : SensorManager {
         )
     }
 
-    private fun updateWifiIPSensor(context: Context) {
+    private suspend fun updateWifiIPSensor(context: Context) {
         if (!isEnabled(context, wifiIp) || !hasWifi(context)) {
             return
         }
@@ -369,7 +369,7 @@ class NetworkSensorManager : SensorManager {
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
-    private fun updateIP6Sensor(context: Context) {
+    private suspend fun updateIP6Sensor(context: Context) {
         if (!isEnabled(context, ip6Addresses)) {
             return
         }
@@ -399,7 +399,7 @@ class NetworkSensorManager : SensorManager {
         )
     }
 
-    private fun updateWifiLinkSpeedSensor(context: Context) {
+    private suspend fun updateWifiLinkSpeedSensor(context: Context) {
         if (!isEnabled(context, wifiLinkSpeed) || !hasWifi(context)) {
             return
         }
@@ -442,7 +442,7 @@ class NetworkSensorManager : SensorManager {
         )
     }
 
-    private fun updateWifiSensor(context: Context) {
+    private suspend fun updateWifiSensor(context: Context) {
         if (!isEnabled(context, wifiState) || !hasWifi(context)) {
             return
         }
@@ -466,7 +466,7 @@ class NetworkSensorManager : SensorManager {
         )
     }
 
-    private fun updateWifiFrequencySensor(context: Context) {
+    private suspend fun updateWifiFrequencySensor(context: Context) {
         if (!isEnabled(context, wifiFrequency) || !hasWifi(context)) {
             return
         }
@@ -492,7 +492,7 @@ class NetworkSensorManager : SensorManager {
         )
     }
 
-    private fun updateWifiSignalStrengthSensor(context: Context) {
+    private suspend fun updateWifiSignalStrengthSensor(context: Context) {
         if (!isEnabled(context, wifiSignalStrength) || !hasWifi(context)) {
             return
         }
@@ -535,7 +535,7 @@ class NetworkSensorManager : SensorManager {
             (ip shr 24 and 0xFF)
     }
 
-    private fun updatePublicIpSensor(context: Context) {
+    private suspend fun updatePublicIpSensor(context: Context) {
         if (!isEnabled(context, publicIp)) {
             return
         }
@@ -571,7 +571,7 @@ class NetworkSensorManager : SensorManager {
 
     @SuppressLint("MissingPermission")
     @RequiresApi(Build.VERSION_CODES.M)
-    private fun updateNetworkType(context: Context) {
+    private suspend fun updateNetworkType(context: Context) {
         if (!isEnabled(context, networkType)) {
             return
         }

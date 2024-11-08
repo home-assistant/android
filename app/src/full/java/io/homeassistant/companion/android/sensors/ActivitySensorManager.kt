@@ -20,6 +20,8 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class ActivitySensorManager : BroadcastReceiver(), SensorManager {
@@ -70,7 +72,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {
             ACTION_UPDATE_ACTIVITY -> handleActivityUpdate(intent, context)
-            ACTION_SLEEP_ACTIVITY -> handleSleepUpdate(intent, context)
+            ACTION_SLEEP_ACTIVITY -> MainScope().launch { handleSleepUpdate(intent, context) }
             else -> Log.w(TAG, "Unknown intent action: ${intent.action}!")
         }
     }
@@ -121,7 +123,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
         }
     }
 
-    private fun handleSleepUpdate(intent: Intent, context: Context) {
+    private suspend fun handleSleepUpdate(intent: Intent, context: Context) {
         Log.d(TAG, "Received sleep update")
         if (SleepClassifyEvent.hasEvents(intent) && isEnabled(context, sleepConfidence)) {
             Log.d(TAG, "Sleep classify event detected")
@@ -222,7 +224,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
         }
     }
 
-    override fun requestSensorUpdate(context: Context) {
+    override suspend fun requestSensorUpdate(context: Context) {
         if (isEnabled(context, activity)) {
             val actReg = ActivityRecognition.getClient(context)
             val pendingIntent = getActivityPendingIntent(context)

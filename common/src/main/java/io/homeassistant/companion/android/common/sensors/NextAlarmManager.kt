@@ -57,13 +57,13 @@ class NextAlarmManager : SensorManager {
         return emptyArray()
     }
 
-    override fun requestSensorUpdate(
+    override suspend fun requestSensorUpdate(
         context: Context
     ) {
         updateNextAlarm(context)
     }
 
-    private fun updateNextAlarm(context: Context) {
+    private suspend fun updateNextAlarm(context: Context) {
         if (!isEnabled(context, nextAlarm)) {
             return
         }

@@ -152,7 +152,7 @@ class BatterySensorManager : SensorManager {
         return emptyArray()
     }
 
-    override fun requestSensorUpdate(
+    override suspend fun requestSensorUpdate(
         context: Context
     ) {
         val intent = ContextCompat.registerReceiver(context, null, IntentFilter(Intent.ACTION_BATTERY_CHANGED), ContextCompat.RECEIVER_NOT_EXPORTED)
@@ -176,7 +176,7 @@ class BatterySensorManager : SensorManager {
         return (level.toFloat() / scale.toFloat() * 100.0f).toInt()
     }
 
-    private fun updateBatteryLevel(context: Context, intent: Intent) {
+    private suspend fun updateBatteryLevel(context: Context, intent: Intent) {
         if (!isEnabled(context, batteryLevel)) {
             return
         }
@@ -208,7 +208,7 @@ class BatterySensorManager : SensorManager {
         )
     }
 
-    private fun updateBatteryState(context: Context, intent: Intent) {
+    private suspend fun updateBatteryState(context: Context, intent: Intent) {
         if (!isEnabled(context, batteryState)) {
             return
         }
@@ -233,7 +233,7 @@ class BatterySensorManager : SensorManager {
         )
     }
 
-    private fun updateIsCharging(context: Context, intent: Intent) {
+    private suspend fun updateIsCharging(context: Context, intent: Intent) {
         if (!isEnabled(context, isChargingState)) {
             return
         }
@@ -250,7 +250,7 @@ class BatterySensorManager : SensorManager {
         )
     }
 
-    private fun updateChargerType(context: Context, intent: Intent) {
+    private suspend fun updateChargerType(context: Context, intent: Intent) {
         if (!isEnabled(context, chargerTypeState)) {
             return
         }
@@ -274,7 +274,7 @@ class BatterySensorManager : SensorManager {
         )
     }
 
-    private fun updateBatteryHealth(context: Context, intent: Intent) {
+    private suspend fun updateBatteryHealth(context: Context, intent: Intent) {
         if (!isEnabled(context, batteryHealthState)) {
             return
         }
@@ -296,7 +296,7 @@ class BatterySensorManager : SensorManager {
         )
     }
 
-    private fun updateBatteryTemperature(context: Context, intent: Intent) {
+    private suspend fun updateBatteryTemperature(context: Context, intent: Intent) {
         if (!isEnabled(context, batteryTemperature)) {
             return
         }
@@ -312,7 +312,7 @@ class BatterySensorManager : SensorManager {
         )
     }
 
-    private fun updateBatteryPower(context: Context, intent: Intent) {
+    private suspend fun updateBatteryPower(context: Context, intent: Intent) {
         if (!isEnabled(context, batteryPower)) {
             return
         }
@@ -336,7 +336,7 @@ class BatterySensorManager : SensorManager {
     }
 
     @RequiresApi(Build.VERSION_CODES.P)
-    private fun updateRemainingChargeTime(context: Context) {
+    private suspend fun updateRemainingChargeTime(context: Context) {
         if (!isEnabled(context, remainingChargeTime)) {
             return
         }
