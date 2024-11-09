@@ -1,8 +1,6 @@
 package io.homeassistant.companion.android.sensors
 
 import android.content.Context
-import android.os.Build
-import android.os.Build.VERSION.SDK_INT
 import android.util.Log
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.health.connect.client.HealthConnectClient
@@ -427,8 +425,7 @@ class HealthConnectSensorManager : SensorManager {
     }
 
     override fun hasSensor(context: Context): Boolean {
-        return SDK_INT >= Build.VERSION_CODES.P &&
-            HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE
+        return HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE
     }
 
     override suspend fun checkPermission(context: Context, sensorId: String): Boolean {

@@ -20,7 +20,6 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.vehicle.HaCarAppService
-import kotlinx.coroutines.launch
 
 @RequiresApi(Build.VERSION_CODES.O)
 class CarSensorManager :
@@ -442,9 +441,7 @@ class CarSensorManager :
             ),
             forceUpdate = true
         )
-        sensorWorkerScope.launch {
-            setListener(Listener.ENERGY, false)
-        }
+        setListener(Listener.ENERGY, false)
     }
 
     private fun onModelAvailable(data: Model) {
@@ -462,9 +459,7 @@ class CarSensorManager :
             ),
             forceUpdate = true
         )
-        sensorWorkerScope.launch {
-            setListener(Listener.MODEL, false)
-        }
+        setListener(Listener.MODEL, false)
     }
 
     @androidx.annotation.OptIn(androidx.car.app.annotations.ExperimentalCarApi::class)
@@ -482,9 +477,7 @@ class CarSensorManager :
             ),
             forceUpdate = true
         )
-        sensorWorkerScope.launch {
-            setListener(Listener.STATUS, false)
-        }
+        setListener(Listener.STATUS, false)
     }
 
     @androidx.annotation.OptIn(androidx.car.app.annotations.ExperimentalCarApi::class)
@@ -501,9 +494,7 @@ class CarSensorManager :
             ),
             forceUpdate = true
         )
-        sensorWorkerScope.launch {
-            setListener(Listener.MILEAGE, false)
-        }
+        setListener(Listener.MILEAGE, false)
     }
 
     private fun onProfileAvailable(data: EnergyProfile) {

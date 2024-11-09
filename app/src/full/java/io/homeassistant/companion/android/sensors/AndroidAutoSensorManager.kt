@@ -71,31 +71,32 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
         sensorWorkerScope.launch {
             if (!isEnabled(context, androidAutoConnected)) {
                 carConnection?.type?.removeObserver(this@AndroidAutoSensorManager)
+                return@launch
             }
-            return@launch
-        }
-        val (connected, typeString) = when (value) {
-            CarConnection.CONNECTION_TYPE_NOT_CONNECTED -> {
-                false to "Disconnected"
+
+            val (connected, typeString) = when (value) {
+                CarConnection.CONNECTION_TYPE_NOT_CONNECTED -> {
+                    false to "Disconnected"
+                }
+                CarConnection.CONNECTION_TYPE_PROJECTION -> {
+                    true to "Projection"
+                }
+                CarConnection.CONNECTION_TYPE_NATIVE -> {
+                    true to "Native"
+                }
+                else -> {
+                    false to "Unknown($value)"
+                }
             }
-            CarConnection.CONNECTION_TYPE_PROJECTION -> {
-                true to "Projection"
-            }
-            CarConnection.CONNECTION_TYPE_NATIVE -> {
-                true to "Native"
-            }
-            else -> {
-                false to "Unknown($value)"
-            }
-        }
-        onSensorUpdated(
-            context,
-            androidAutoConnected,
-            connected,
-            if (connected) androidAutoConnected.statelessIcon else "mdi:car-off",
-            mapOf(
-                "connection_type" to typeString
+            onSensorUpdated(
+                context,
+                androidAutoConnected,
+                connected,
+                if (connected) androidAutoConnected.statelessIcon else "mdi:car-off",
+                mapOf(
+                    "connection_type" to typeString
+                )
             )
-        )
+        }
     }
 }
