@@ -21,7 +21,6 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
-import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 
 class NotificationSensorManager : NotificationListenerService(), SensorManager {
@@ -118,7 +117,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
 
         updateActiveNotificationCount()
 
-        MainScope().launch {
+        sensorWorkerScope.launch {
             if (!isEnabled(applicationContext, lastNotification)) {
                 return@launch
             }
@@ -180,7 +179,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
 
         updateActiveNotificationCount()
 
-        MainScope().launch {
+        sensorWorkerScope.launch {
             if (!isEnabled(applicationContext, lastRemovedNotification)) {
                 return@launch
             }
@@ -238,7 +237,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
     }
 
     private fun updateActiveNotificationCount() {
-        MainScope().launch {
+        sensorWorkerScope.launch {
             if (!isEnabled(applicationContext, activeNotificationCount) || !listenerConnected) {
                 return@launch
             }

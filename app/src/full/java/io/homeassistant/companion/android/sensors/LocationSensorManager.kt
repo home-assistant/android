@@ -52,7 +52,6 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
@@ -210,7 +209,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     override fun onReceive(context: Context, intent: Intent) {
         latestContext = context
 
-        MainScope().launch {
+        sensorWorkerScope.launch {
             when (intent.action) {
                 Intent.ACTION_BOOT_COMPLETED,
                 ACTION_REQUEST_LOCATION_UPDATES -> setupLocationTracking()

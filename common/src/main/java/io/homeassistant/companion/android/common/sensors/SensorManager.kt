@@ -20,6 +20,9 @@ import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import java.util.Locale
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 
 interface SensorManager {
 
@@ -33,6 +36,9 @@ interface SensorManager {
     }
 
     val name: Int
+
+    val sensorWorkerScope: CoroutineScope
+        get() = CoroutineScope(Dispatchers.Main + Job())
 
     data class BasicSensor(
         val id: String,

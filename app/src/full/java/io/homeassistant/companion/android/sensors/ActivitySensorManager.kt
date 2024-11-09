@@ -20,7 +20,6 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import java.util.concurrent.TimeUnit
-import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -72,7 +71,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {
             ACTION_UPDATE_ACTIVITY -> handleActivityUpdate(intent, context)
-            ACTION_SLEEP_ACTIVITY -> MainScope().launch { handleSleepUpdate(intent, context) }
+            ACTION_SLEEP_ACTIVITY -> sensorWorkerScope.launch { handleSleepUpdate(intent, context) }
             else -> Log.w(TAG, "Unknown intent action: ${intent.action}!")
         }
     }

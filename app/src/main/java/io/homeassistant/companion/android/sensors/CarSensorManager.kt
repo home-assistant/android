@@ -20,7 +20,6 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.vehicle.HaCarAppService
-import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -443,7 +442,7 @@ class CarSensorManager :
             ),
             forceUpdate = true
         )
-        MainScope().launch {
+        sensorWorkerScope.launch {
             setListener(Listener.ENERGY, false)
         }
     }
@@ -463,7 +462,7 @@ class CarSensorManager :
             ),
             forceUpdate = true
         )
-        MainScope().launch {
+        sensorWorkerScope.launch {
             setListener(Listener.MODEL, false)
         }
     }
@@ -483,7 +482,7 @@ class CarSensorManager :
             ),
             forceUpdate = true
         )
-        MainScope().launch {
+        sensorWorkerScope.launch {
             setListener(Listener.STATUS, false)
         }
     }
@@ -502,7 +501,7 @@ class CarSensorManager :
             ),
             forceUpdate = true
         )
-        MainScope().launch {
+        sensorWorkerScope.launch {
             setListener(Listener.MILEAGE, false)
         }
     }

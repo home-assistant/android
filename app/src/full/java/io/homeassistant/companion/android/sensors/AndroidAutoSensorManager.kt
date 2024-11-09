@@ -7,9 +7,6 @@ import androidx.car.app.connection.CarConnection
 import androidx.lifecycle.Observer
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 class AndroidAutoSensorManager : SensorManager, Observer<Int> {
@@ -57,7 +54,7 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
         if (!isEnabled(context, androidAutoConnected)) {
             return
         }
-        CoroutineScope(Dispatchers.Main + Job()).launch {
+        sensorWorkerScope.launch {
             if (carConnection == null) {
                 carConnection = try {
                     CarConnection(context.applicationContext)
@@ -71,7 +68,7 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
     }
 
     override fun onChanged(value: Int) {
-        CoroutineScope(Dispatchers.Main + Job()).launch {
+        sensorWorkerScope.launch {
             if (!isEnabled(context, androidAutoConnected)) {
                 carConnection?.type?.removeObserver(this@AndroidAutoSensorManager)
             }

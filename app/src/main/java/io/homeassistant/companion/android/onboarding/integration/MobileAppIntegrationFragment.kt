@@ -31,7 +31,6 @@ import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import java.io.IOException
 import java.security.KeyStore
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 @AndroidEntryPoint
 class MobileAppIntegrationFragment : Fragment() {
@@ -68,37 +67,37 @@ class MobileAppIntegrationFragment : Fragment() {
     }
 
     private fun onLocationTrackingChanged(isChecked: Boolean) {
-        var checked = isChecked
-        if (isChecked) {
-            val locationEnabled = DisabledLocationHandler.isLocationEnabled(requireContext())
-            val permissionOk = runBlocking {
-                LocationSensorManager().checkPermission(
+        lifecycleScope.launch {
+            var checked = isChecked
+            if (isChecked) {
+                val locationEnabled = DisabledLocationHandler.isLocationEnabled(requireContext())
+                val permissionOk = LocationSensorManager().checkPermission(
                     requireContext(),
                     LocationSensorManager.backgroundLocation.id
                 )
+
+                if (!locationEnabled) {
+                    DisabledLocationHandler.showLocationDisabledWarnDialog(
+                        requireActivity(),
+                        arrayOf(getString(LocationSensorManager.backgroundLocation.name))
+                    )
+                    checked = false
+                } else if (!permissionOk) {
+                    dialog = AlertDialog.Builder(requireContext())
+                        .setTitle(commonR.string.enable_location_tracking)
+                        .setMessage(commonR.string.enable_location_tracking_prompt)
+                        .setPositiveButton(android.R.string.ok) { _, _ ->
+                            requestPermissions(LocationSensorManager.backgroundLocation.id)
+                        }
+                        .setNegativeButton(android.R.string.cancel) { _, _ -> }
+                        .create()
+                    dialog?.show()
+                    checked = false
+                }
             }
 
-            if (!locationEnabled) {
-                DisabledLocationHandler.showLocationDisabledWarnDialog(
-                    requireActivity(),
-                    arrayOf(getString(LocationSensorManager.backgroundLocation.name))
-                )
-                checked = false
-            } else if (!permissionOk) {
-                dialog = AlertDialog.Builder(requireContext())
-                    .setTitle(commonR.string.enable_location_tracking)
-                    .setMessage(commonR.string.enable_location_tracking_prompt)
-                    .setPositiveButton(android.R.string.ok) { _, _ ->
-                        requestPermissions(LocationSensorManager.backgroundLocation.id)
-                    }
-                    .setNegativeButton(android.R.string.cancel) { _, _ -> }
-                    .create()
-                dialog?.show()
-                checked = false
-            }
+            viewModel.setLocationTracking(checked)
         }
-
-        viewModel.setLocationTracking(checked)
     }
 
     private fun onSelectTLSCertificateClicked() {
