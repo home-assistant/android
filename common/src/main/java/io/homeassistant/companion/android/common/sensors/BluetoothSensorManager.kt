@@ -20,6 +20,8 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import java.util.UUID
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class BluetoothSensorManager : SensorManager {
@@ -130,6 +132,8 @@ class BluetoothSensorManager : SensorManager {
             SensorUpdateReceiver.updateSensors(context)
         }
     }
+
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#bluetooth-sensors"
@@ -321,7 +325,7 @@ class BluetoothSensorManager : SensorManager {
             uuidFilter,
             getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_UUID_FILTER_EXCLUDE, SensorSettingType.TOGGLE, "false").toBoolean()
         )
-        sensorWorkerScope.launch {
+        ioScope.launch {
             enableDisableSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_UUID_FILTER_EXCLUDE, uuidFilter.isNotEmpty())
         }
 
@@ -380,7 +384,7 @@ class BluetoothSensorManager : SensorManager {
     }
 
     fun updateBeaconMonitoringSensor(context: Context) {
-        sensorWorkerScope.launch {
+        ioScope.launch {
             if (!isEnabled(context, beaconMonitor)) {
                 monitoringManager.stopMonitoring(context, beaconMonitoringDevice)
                 return@launch
