@@ -3,7 +3,7 @@
     tools:ignore="MissingDefaultResource">
     <release version="2024.11.4 - Main" versioncode="3">
         <change>Android Auto: Add new Car sensors and support toggling fans</change>
-        <change>Android 9+ and Play Store: Add Health Connect sensors</change>
+        <change>Android 14+ and Play Store: Add Health Connect sensors</change>
         <change>Add notification command to control flashlight</change>
         <change>Add support to identify multiple notification reply actions</change>
         <change>Bug fixes and dependency updates</change>
