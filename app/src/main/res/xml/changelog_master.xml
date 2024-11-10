@@ -1,15 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2024.10.4 - Main" versioncode="3">
-        <change>Android Auto: Add new Car sensors</change>
+    <release version="2024.11.4 - Main" versioncode="3">
+        <change>Android Auto: Add new Car sensors and support toggling fans</change>
+        <change>Android 14+ and Play Store: Add Health Connect sensors</change>
+        <change>Add notification command to control flashlight</change>
+        <change>Add support to identify multiple notification reply actions</change>
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2024.10.4 - Wear" versioncode="2">
+    <release version="2024.11.4 - Wear" versioncode="2">
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2024.10.4 - Automotive" versioncode="1">
+    <release version="2024.11.4 - Automotive" versioncode="1">
         <change>Add new Car sensors</change>
+        <change>Driving Interface: Add support for toggling fans</change>
         <change>Bug fixes and dependency updates</change>
     </release>
 </changelog>
