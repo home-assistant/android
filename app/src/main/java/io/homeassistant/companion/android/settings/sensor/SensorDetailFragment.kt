@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.settings.sensor
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.LayoutInflater
@@ -11,6 +12,7 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.net.toUri
@@ -25,6 +27,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.LocationPermissionInfoHandler
+import io.homeassistant.companion.android.sensors.HealthConnectSensorManager
 import io.homeassistant.companion.android.settings.sensor.views.SensorDetailView
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import kotlinx.coroutines.launch
@@ -49,6 +52,7 @@ class SensorDetailFragment : Fragment() {
     private val permissionsRequest = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
         viewModel.onPermissionsResult(it, requestForServer)
     }
+    private var healthPermissionsRequest: ActivityResultLauncher<Set<String>>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,6 +64,12 @@ class SensorDetailFragment : Fragment() {
                 launch {
                     viewModel.serversDoExpand.collect { activity?.invalidateMenu() }
                 }
+            }
+        }
+
+        HealthConnectSensorManager.getPermissionResultContract()?.let { contract ->
+            healthPermissionsRequest = registerForActivityResult(contract) {
+                viewModel.onPermissionsResult(it.associateWith { true }, requestForServer)
             }
         }
     }
@@ -129,7 +139,11 @@ class SensorDetailFragment : Fragment() {
                     activityResultRequest.launch(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
                 it.permissions.any { perm -> perm == Manifest.permission.PACKAGE_USAGE_STATS } ->
                     activityResultRequest.launch(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
-                android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R ->
+                it.permissions.any { perm -> perm.startsWith("android.permission.health") } -> {
+                    val healthConnectPermissions = it.permissions.filter { perm -> perm.startsWith("android.permission.health") }
+                    healthPermissionsRequest?.launch(healthConnectPermissions.toSet())
+                }
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.R ->
                     if (it.permissions.size == 1 && it.permissions[0] == Manifest.permission.ACCESS_BACKGROUND_LOCATION) {
                         permissionsRequest.launch(it.permissions)
                     } else {
@@ -149,7 +163,7 @@ class SensorDetailFragment : Fragment() {
                         continueYesCallback = {
                             requestForServer = it.serverId
                             permissionsRequest.launch(
-                                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                                     it.permissions.toSet().minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION).toTypedArray()
                                 } else {
                                     it.permissions

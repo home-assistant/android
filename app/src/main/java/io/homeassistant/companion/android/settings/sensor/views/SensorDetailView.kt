@@ -94,7 +94,7 @@ fun SensorDetailView(
     val context = LocalContext.current
     var sensorUpdateTypeInfo by remember { mutableStateOf(false) }
     val jsonMapper by lazy { jacksonObjectMapper() }
-    val healthConnectPermission = HealthConnectSensorManager.getPermissionResultContract(context)?.let {
+    val healthConnectPermission = HealthConnectSensorManager.getPermissionResultContract()?.let {
         rememberLauncherForActivityResult(it) { }
     }
 

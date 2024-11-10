@@ -42,8 +42,8 @@ class HealthConnectSensorManager : SensorManager {
     companion object {
         private const val TAG = "HealthConnectSM"
 
-        fun getPermissionResultContract(context: Context): ActivityResultContract<Set<String>, Set<String>>? =
-            PermissionController.createRequestPermissionResultContract(context.packageName)
+        fun getPermissionResultContract(): ActivityResultContract<Set<String>, Set<String>>? =
+            PermissionController.createRequestPermissionResultContract()
 
         val activeCaloriesBurned = SensorManager.BasicSensor(
             id = "health_connect_active_calories_burned",

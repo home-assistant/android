@@ -7,7 +7,7 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 
 class HealthConnectSensorManager : SensorManager {
     companion object {
-        fun getPermissionResultContract(context: Context): ActivityResultContract<Set<String>, Set<String>>? =
+        fun getPermissionResultContract(): ActivityResultContract<Set<String>, Set<String>>? =
             null
     }
 
