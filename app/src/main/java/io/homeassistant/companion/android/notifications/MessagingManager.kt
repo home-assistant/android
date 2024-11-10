@@ -138,6 +138,9 @@ class MessagingManager @Inject constructor(
         const val CHRONOMETER = "chronometer"
         const val WHEN = "when"
         const val WHEN_RELATIVE = "when_relative"
+        const val PROGRESS = "progress"
+        const val PROGRESS_MAX = "progress_max"
+        const val PROGRESS_INDETERMINATE = "progress_indeterminate"
         const val CAR_UI = "car_ui"
         const val KEY_TEXT_REPLY = "key_text_reply"
         const val INTENT_CLASS_NAME = "intent_class_name"
@@ -977,6 +980,8 @@ class MessagingManager @Inject constructor(
 
         handleChronometer(notificationBuilder, data)
 
+        handleProgress(notificationBuilder, data)
+
         val useCarNotification = handleCarUiVisible(context, notificationBuilder, data)
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
@@ -1035,6 +1040,23 @@ class MessagingManager @Inject constructor(
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error while handling chronometer notification", e)
+        }
+    }
+
+    private fun handleProgress(
+        builder: NotificationCompat.Builder,
+        data: Map<String, String>
+    ) {
+        try { // Without this, a non-numeric when value will crash the app
+            val progress = data[PROGRESS]?.toIntOrNull() ?: -1
+            val progressMax = data[PROGRESS_MAX]?.toIntOrNull() ?: 1
+            val progressIndeterminate = data[PROGRESS_INDETERMINATE]?.toBoolean() ?: false
+
+            if (progress != -1) {
+                builder.setProgress(progressMax, progress, progressIndeterminate)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error while handling progress notification", e)
         }
     }
 
