@@ -34,13 +34,13 @@ class TimeZoneManager : SensorManager {
         return emptyArray()
     }
 
-    override fun requestSensorUpdate(
+    override suspend fun requestSensorUpdate(
         context: Context
     ) {
         updateTimeZone(context)
     }
 
-    private fun updateTimeZone(context: Context) {
+    private suspend fun updateTimeZone(context: Context) {
         if (!isEnabled(context, currentTimeZone)) {
             return
         }

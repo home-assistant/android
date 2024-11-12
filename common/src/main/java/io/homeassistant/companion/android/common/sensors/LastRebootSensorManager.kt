@@ -49,14 +49,14 @@ class LastRebootSensorManager : SensorManager {
         return emptyArray()
     }
 
-    override fun requestSensorUpdate(
+    override suspend fun requestSensorUpdate(
         context: Context
     ) {
         updateLastReboot(context)
     }
 
     @SuppressLint("SimpleDateFormat")
-    private fun updateLastReboot(context: Context) {
+    private suspend fun updateLastReboot(context: Context) {
         if (!isEnabled(context, lastRebootSensor)) {
             return
         }

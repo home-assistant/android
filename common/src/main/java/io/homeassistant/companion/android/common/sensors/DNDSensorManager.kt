@@ -41,7 +41,7 @@ class DNDSensorManager : SensorManager {
         return emptyArray()
     }
 
-    override fun requestSensorUpdate(context: Context) {
+    override suspend fun requestSensorUpdate(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             updateDNDState(context)
         }
@@ -56,7 +56,7 @@ class DNDSensorManager : SensorManager {
         }
     }
 
-    private fun updateDNDState(context: Context) {
+    private suspend fun updateDNDState(context: Context) {
         if (!isEnabled(context, dndSensor)) {
             return
         }

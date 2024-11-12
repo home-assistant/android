@@ -36,11 +36,11 @@ class DevicePolicyManager : SensorManager {
         return emptyArray()
     }
 
-    override fun requestSensorUpdate(context: Context) {
+    override suspend fun requestSensorUpdate(context: Context) {
         updateWorkProfile(context)
     }
 
-    override fun requestSensorUpdate(context: Context, intent: Intent?) {
+    override suspend fun requestSensorUpdate(context: Context, intent: Intent?) {
         // The intent has the only record we get of this state, so save it off in our instance
         if (intent?.action == Intent.ACTION_MANAGED_PROFILE_AVAILABLE) {
             isManagedProfileAvailable = true
@@ -51,7 +51,7 @@ class DevicePolicyManager : SensorManager {
         updateWorkProfile(context)
     }
 
-    private fun updateWorkProfile(context: Context) {
+    private suspend fun updateWorkProfile(context: Context) {
         if (!isEnabled(context, isWorkProfile)) {
             return
         }

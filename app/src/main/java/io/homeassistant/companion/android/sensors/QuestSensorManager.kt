@@ -43,7 +43,7 @@ class QuestSensorManager : SensorManager {
         return Build.MODEL == "Quest"
     }
 
-    override fun requestSensorUpdate(
+    override suspend fun requestSensorUpdate(
         context: Context
     ) {
         val intent = ContextCompat.registerReceiver(
@@ -61,7 +61,7 @@ class QuestSensorManager : SensorManager {
         return intent.getBooleanExtra("state", false)
     }
 
-    private fun updateHeadsetMount(context: Context, intent: Intent) {
+    private suspend fun updateHeadsetMount(context: Context, intent: Intent) {
         if (!isEnabled(context, headsetMounted)) {
             return
         }

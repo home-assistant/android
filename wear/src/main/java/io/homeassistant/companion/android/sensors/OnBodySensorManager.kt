@@ -50,12 +50,12 @@ class OnBodySensorManager : SensorManager, SensorEventListener {
         return mySensorManager.getDefaultSensor(Sensor.TYPE_LOW_LATENCY_OFFBODY_DETECT, true) != null
     }
 
-    override fun requestSensorUpdate(context: Context) {
+    override suspend fun requestSensorUpdate(context: Context) {
         latestContext = context
         updateOnBodySensor()
     }
 
-    private fun updateOnBodySensor() {
+    private suspend fun updateOnBodySensor() {
         if (!isEnabled(latestContext, onBodySensor)) {
             return
         }

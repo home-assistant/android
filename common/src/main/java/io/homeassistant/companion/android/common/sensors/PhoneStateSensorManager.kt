@@ -144,7 +144,7 @@ class PhoneStateSensorManager : SensorManager {
         return arrayOf(Manifest.permission.READ_PHONE_STATE)
     }
 
-    override fun requestSensorUpdate(
+    override suspend fun requestSensorUpdate(
         context: Context
     ) {
         checkPhoneState(context)
@@ -161,7 +161,7 @@ class PhoneStateSensorManager : SensorManager {
     }
 
     @SuppressLint("MissingPermission")
-    private fun checkPhoneState(context: Context) {
+    private suspend fun checkPhoneState(context: Context) {
         if (isEnabled(context, phoneState)) {
             var currentPhoneState = STATE_UNKNOWN
 
@@ -201,7 +201,7 @@ class PhoneStateSensorManager : SensorManager {
     }
 
     @SuppressLint("MissingPermission")
-    private fun updateSimSensor(context: Context, slotIndex: Int) {
+    private suspend fun updateSimSensor(context: Context, slotIndex: Int) {
         val basicSimSensor = when (slotIndex) {
             0 -> sim_1
             1 -> sim_2
@@ -249,7 +249,7 @@ class PhoneStateSensorManager : SensorManager {
     }
 
     @RequiresApi(Build.VERSION_CODES.Q)
-    private fun updateSignalStrength(context: Context, slotIndex: Int) {
+    private suspend fun updateSignalStrength(context: Context, slotIndex: Int) {
         val signalStrengthSensor = when (slotIndex) {
             0 -> sim1SignalStrength
             1 -> sim2SignalStrength
@@ -294,7 +294,7 @@ class PhoneStateSensorManager : SensorManager {
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    private fun updateDataNetworkType(context: Context, slotIndex: Int) {
+    private suspend fun updateDataNetworkType(context: Context, slotIndex: Int) {
         val dataNetworkTypeSensor = when (slotIndex) {
             0 -> sim1DataNetworkType
             1 -> sim2DataNetworkType

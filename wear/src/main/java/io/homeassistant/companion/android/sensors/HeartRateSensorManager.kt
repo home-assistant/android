@@ -69,14 +69,14 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
     private lateinit var latestContext: Context
     private lateinit var mySensorManager: android.hardware.SensorManager
 
-    override fun requestSensorUpdate(
+    override suspend fun requestSensorUpdate(
         context: Context
     ) {
         latestContext = context
         updateHeartRate()
     }
 
-    private fun updateHeartRate() {
+    private suspend fun updateHeartRate() {
         if (!isEnabled(latestContext, heartRate)) {
             return
         }

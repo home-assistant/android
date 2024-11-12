@@ -7,9 +7,6 @@ import androidx.car.app.connection.CarConnection
 import androidx.lifecycle.Observer
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 class AndroidAutoSensorManager : SensorManager, Observer<Int> {
@@ -17,6 +14,7 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
     companion object {
 
         internal const val TAG = "AndroidAutoSM"
+        private var enabled = false
 
         private val androidAutoConnected = SensorManager.BasicSensor(
             "android_auto",
@@ -51,12 +49,12 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
     private lateinit var context: Context
     private var carConnection: CarConnection? = null
 
-    override fun requestSensorUpdate(context: Context) {
+    override suspend fun requestSensorUpdate(context: Context) {
         this.context = context.applicationContext
         if (!isEnabled(context, androidAutoConnected)) {
             return
         }
-        CoroutineScope(Dispatchers.Main + Job()).launch {
+        sensorWorkerScope.launch {
             if (carConnection == null) {
                 carConnection = try {
                     CarConnection(context.applicationContext)
@@ -70,34 +68,35 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
     }
 
     override fun onChanged(value: Int) {
-        if (!isEnabled(context, androidAutoConnected)) {
-            CoroutineScope(Dispatchers.Main + Job()).launch {
+        sensorWorkerScope.launch {
+            if (!isEnabled(context, androidAutoConnected)) {
                 carConnection?.type?.removeObserver(this@AndroidAutoSensorManager)
+                return@launch
             }
-            return
-        }
-        val (connected, typeString) = when (value) {
-            CarConnection.CONNECTION_TYPE_NOT_CONNECTED -> {
-                false to "Disconnected"
+
+            val (connected, typeString) = when (value) {
+                CarConnection.CONNECTION_TYPE_NOT_CONNECTED -> {
+                    false to "Disconnected"
+                }
+                CarConnection.CONNECTION_TYPE_PROJECTION -> {
+                    true to "Projection"
+                }
+                CarConnection.CONNECTION_TYPE_NATIVE -> {
+                    true to "Native"
+                }
+                else -> {
+                    false to "Unknown($value)"
+                }
             }
-            CarConnection.CONNECTION_TYPE_PROJECTION -> {
-                true to "Projection"
-            }
-            CarConnection.CONNECTION_TYPE_NATIVE -> {
-                true to "Native"
-            }
-            else -> {
-                false to "Unknown($value)"
-            }
-        }
-        onSensorUpdated(
-            context,
-            androidAutoConnected,
-            connected,
-            if (connected) androidAutoConnected.statelessIcon else "mdi:car-off",
-            mapOf(
-                "connection_type" to typeString
+            onSensorUpdated(
+                context,
+                androidAutoConnected,
+                connected,
+                if (connected) androidAutoConnected.statelessIcon else "mdi:car-off",
+                mapOf(
+                    "connection_type" to typeString
+                )
             )
-        )
+        }
     }
 }

@@ -45,14 +45,14 @@ class AndroidOsSensorManager : SensorManager {
         return arrayOf()
     }
 
-    override fun requestSensorUpdate(
+    override suspend fun requestSensorUpdate(
         context: Context
     ) {
         checkState(context, osVersion)
         checkState(context, osSecurityPatch)
     }
 
-    private fun checkState(
+    private suspend fun checkState(
         context: Context,
         sensor: SensorManager.BasicSensor
     ) {

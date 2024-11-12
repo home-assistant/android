@@ -1,14 +1,17 @@
 package io.homeassistant.companion.android.sensors
 
 import android.content.Context
+import android.content.Intent
 import androidx.activity.result.contract.ActivityResultContract
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
 
 class HealthConnectSensorManager : SensorManager {
     companion object {
-        fun getPermissionResultContract(context: Context): ActivityResultContract<Set<String>, Set<String>>? =
+        fun getPermissionResultContract(): ActivityResultContract<Set<String>, Set<String>>? =
             null
+
+        fun getPermissionIntent(): Intent? = null
     }
 
     override val name: Int
@@ -18,7 +21,7 @@ class HealthConnectSensorManager : SensorManager {
         return emptyArray()
     }
 
-    override fun requestSensorUpdate(context: Context) {
+    override suspend fun requestSensorUpdate(context: Context) {
     }
 
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {

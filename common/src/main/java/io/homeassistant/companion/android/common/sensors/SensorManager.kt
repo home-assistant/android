@@ -20,6 +20,9 @@ import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import java.util.Locale
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 
 interface SensorManager {
 
@@ -33,6 +36,9 @@ interface SensorManager {
     }
 
     val name: Int
+
+    val sensorWorkerScope: CoroutineScope
+        get() = CoroutineScope(Dispatchers.Main + Job())
 
     data class BasicSensor(
         val id: String,
@@ -69,7 +75,7 @@ interface SensorManager {
      */
     fun requiredPermissions(sensorId: String): Array<String>
 
-    fun checkPermission(context: Context, sensorId: String): Boolean {
+    suspend fun checkPermission(context: Context, sensorId: String): Boolean {
         return requiredPermissions(sensorId).all {
             if (sensorId != "last_used_app") {
                 context.checkPermission(it, myPid(), myUid()) == PackageManager.PERMISSION_GRANTED
@@ -98,7 +104,7 @@ interface SensorManager {
     }
 
     /** @return `true` if this sensor is enabled on any server */
-    fun isEnabled(context: Context, basicSensor: BasicSensor): Boolean {
+    suspend fun isEnabled(context: Context, basicSensor: BasicSensor): Boolean {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val permission = checkPermission(context, basicSensor.id)
         return sensorDao.getAnyIsEnabled(
@@ -110,7 +116,7 @@ interface SensorManager {
     }
 
     /** @return `true` if this sensor is enabled for the specified server */
-    fun isEnabled(context: Context, basicSensor: BasicSensor, serverId: Int): Boolean {
+    suspend fun isEnabled(context: Context, basicSensor: BasicSensor, serverId: Int): Boolean {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val permission = checkPermission(context, basicSensor.id)
         return sensorDao.getOrDefault(
@@ -122,7 +128,7 @@ interface SensorManager {
     }
 
     /** @return Set of server IDs for which this sensor is enabled */
-    fun getEnabledServers(context: Context, basicSensor: BasicSensor): Set<Int> {
+    suspend fun getEnabledServers(context: Context, basicSensor: BasicSensor): Set<Int> {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val permission = checkPermission(context, basicSensor.id)
         return sensorDao.get(basicSensor.id).filter { it.enabled && permission }.map { it.serverId }.toSet()
@@ -133,7 +139,7 @@ interface SensorManager {
      * The intent will be null if the update is being done on a timer, rather than as a result
      * of a broadcast being received.
      */
-    fun requestSensorUpdate(context: Context, intent: Intent?) {
+    suspend fun requestSensorUpdate(context: Context, intent: Intent?) {
         // Few sensors care about the intent, so allow them to just implement the interface that
         // does not get passed that parameter.
         requestSensorUpdate(context)
@@ -142,7 +148,7 @@ interface SensorManager {
     /**
      * Request to update a sensor, without a corresponding broadcast intent.
      */
-    fun requestSensorUpdate(context: Context)
+    suspend fun requestSensorUpdate(context: Context)
 
     suspend fun getAvailableSensors(context: Context): List<BasicSensor>
 

@@ -108,7 +108,7 @@ fun commandBeaconMonitor(
     return true
 }
 
-fun commandBleTransmitter(
+suspend fun commandBleTransmitter(
     context: Context,
     data: Map<String, String>,
     sensorDao: SensorDao,

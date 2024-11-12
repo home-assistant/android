@@ -49,14 +49,14 @@ class LastAppSensorManager : SensorManager {
     }
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP_MR1)
-    override fun requestSensorUpdate(
+    override suspend fun requestSensorUpdate(
         context: Context
     ) {
         updateLastApp(context)
     }
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP_MR1)
-    private fun updateLastApp(context: Context) {
+    private suspend fun updateLastApp(context: Context) {
         if (!isEnabled(context, last_used)) {
             return
         }

@@ -18,8 +18,6 @@ import io.homeassistant.companion.android.location.HighAccuracyLocationService
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 class GeocodeSensorManager : SensorManager {
@@ -62,12 +60,10 @@ class GeocodeSensorManager : SensorManager {
         }
     }
 
-    override fun requestSensorUpdate(
+    override suspend fun requestSensorUpdate(
         context: Context
     ) {
-        MainScope().launch {
-            updateGeocodedLocation(context)
-        }
+        updateGeocodedLocation(context)
     }
 
     private suspend fun updateGeocodedLocation(context: Context) {

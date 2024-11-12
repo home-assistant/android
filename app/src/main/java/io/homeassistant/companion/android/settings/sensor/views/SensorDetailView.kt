@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.settings.sensor.views
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
@@ -94,14 +93,14 @@ fun SensorDetailView(
     val context = LocalContext.current
     var sensorUpdateTypeInfo by remember { mutableStateOf(false) }
     val jsonMapper by lazy { jacksonObjectMapper() }
-    val healthConnectPermission = HealthConnectSensorManager.getPermissionResultContract(context)?.let {
-        rememberLauncherForActivityResult(it) { }
-    }
 
-    val sensorEnabled = viewModel.sensor?.sensor?.enabled
-        ?: (
-            viewModel.basicSensor != null && viewModel.basicSensor.enabledByDefault && viewModel.sensorManager?.checkPermission(context, viewModel.basicSensor.id) == true
-            )
+    var sensorEnabled by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        sensorEnabled = viewModel.sensor?.sensor?.enabled
+            ?: (
+                viewModel.basicSensor != null && viewModel.basicSensor.enabledByDefault && viewModel.sensorManager?.checkPermission(context, viewModel.basicSensor.id) == true
+                )
+    }
 
     val scaffoldState = rememberScaffoldState()
     LaunchedEffect("snackbar") {
@@ -113,7 +112,9 @@ fun SensorDetailView(
                 if (result == SnackbarResult.ActionPerformed) {
                     if (it.actionOpensSettings) {
                         if (viewModel.sensorId.startsWith("health_connect")) {
-                            healthConnectPermission?.launch(HealthConnectSensorManager().requiredPermissions(viewModel.sensorId).toSet())
+                            HealthConnectSensorManager.getPermissionIntent()?.let { intent ->
+                                context.startActivity(intent)
+                            }
                         } else {
                             context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}")))
                         }

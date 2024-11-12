@@ -47,7 +47,7 @@ class PressureSensorManager : SensorManager, SensorEventListener {
         return emptyArray()
     }
 
-    override fun requestSensorUpdate(context: Context) {
+    override suspend fun requestSensorUpdate(context: Context) {
         latestContext = context
         updatePressureSensor()
     }
@@ -57,7 +57,7 @@ class PressureSensorManager : SensorManager, SensorEventListener {
         return packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_BAROMETER)
     }
 
-    private fun updatePressureSensor() {
+    private suspend fun updatePressureSensor() {
         if (!isEnabled(latestContext, pressureSensor)) {
             return
         }

@@ -38,13 +38,13 @@ class LastUpdateManager : SensorManager {
         return emptyArray()
     }
 
-    override fun requestSensorUpdate(
+    override suspend fun requestSensorUpdate(
         context: Context
     ) {
         // No op
     }
 
-    fun sendLastUpdate(context: Context, intentAction: String?) {
+    suspend fun sendLastUpdate(context: Context, intentAction: String?) {
         if (!isEnabled(context, lastUpdate)) {
             return
         }
