@@ -9,6 +9,8 @@ class HealthConnectSensorManager : SensorManager {
     companion object {
         fun getPermissionResultContract(): ActivityResultContract<Set<String>, Set<String>>? =
             null
+
+        fun getPermissionIntent(): Intent? = null
     }
 
     override val name: Int

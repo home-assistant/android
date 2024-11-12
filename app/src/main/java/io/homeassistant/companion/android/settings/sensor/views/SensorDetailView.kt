@@ -116,7 +116,7 @@ fun SensorDetailView(
                 if (result == SnackbarResult.ActionPerformed) {
                     if (it.actionOpensSettings) {
                         if (viewModel.sensorId.startsWith("health_connect")) {
-                            healthConnectPermission?.launch(HealthConnectSensorManager().requiredPermissions(viewModel.sensorId).toSet())
+                            context.startActivity(HealthConnectSensorManager.getPermissionIntent())
                         } else {
                             context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}")))
                         }

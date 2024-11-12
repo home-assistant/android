@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.sensors
 
 import android.content.Context
+import android.content.Intent
 import android.util.Log
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.health.connect.client.HealthConnectClient
@@ -41,6 +42,8 @@ import kotlin.time.toDuration
 class HealthConnectSensorManager : SensorManager {
     companion object {
         private const val TAG = "HealthConnectSM"
+
+        fun getPermissionIntent(): Intent? = Intent(HealthConnectClient.ACTION_HEALTH_CONNECT_SETTINGS)
 
         fun getPermissionResultContract(): ActivityResultContract<Set<String>, Set<String>>? =
             PermissionController.createRequestPermissionResultContract()
