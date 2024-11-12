@@ -1315,4 +1315,24 @@
     <string name="sensor_description_blood_glucose">Last recorded blood glucose reading in milligrams per deciliter from Health Connect</string>
     <string name="general">General</string>
     <string name="sensor_updates">Sensor updates</string>
+    <string name="basic_sensor_name_basal_metabolic_rate">Basal metabolic rate</string>
+    <string name="sensor_description_basal_metabolic_rate">Last recorded energy burned if at rest all day based on height and weight</string>
+    <string name="basic_sensor_name_diastolic_blood_pressure">Diastolic blood pressure</string>
+    <string name="sensor_description_diastolic_blood_pressure">Last recorded diastolic blood pressure in millimeters of Mercury</string>
+    <string name="basic_sensor_name_systolic_blood_pressure">Systolic blood pressure</string>
+    <string name="sensor_description_systolic_blood_pressure">Last recorded systolic blood pressure in millimeters of Mercury</string>
+    <string name="basic_sensor_name_body_temperature">Body temperature</string>
+    <string name="sensor_description_body_temperature">Last recorded body temperature</string>
+    <string name="basic_sensor_name_bone_mass">Bone mass</string>
+    <string name="sensor_description_bone_mass">Last recorded bone mass</string>
+    <string name="basic_sensor_name_height">Height</string>
+    <string name="sensor_description_height">Last recorded height</string>
+    <string name="basic_sensor_name_lean_body_mass">Lean body mass</string>
+    <string name="sensor_description_lean_body_mass">Last recorded lean body mass</string>
+    <string name="basic_sensor_name_oxygen_saturation">Oxygen saturation</string>
+    <string name="sensor_description_oxygen_saturation">Last recorded blood oxygen saturation</string>
+    <string name="basic_sensor_name_respiratory_rate">Respiratory rate</string>
+    <string name="sensor_description_respiratory_rate">Last recorded respiratory rate in breathes per minute</string>
+    <string name="basic_sensor_name_vo2_max">VO2 max</string>
+    <string name="sensor_description_vo2_max">Last recorded VO2 max score</string>
 </resources>
