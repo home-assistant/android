@@ -75,6 +75,7 @@ class HealthConnectSensorManager : SensorManager {
             commonR.string.basic_sensor_name_blood_glucose,
             commonR.string.sensor_description_blood_glucose,
             "mdi:diabetes",
+            deviceClass = "blood_glucose_concentration",
             unitOfMeasurement = "mg/dL",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )

@@ -705,6 +705,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         val canRegisterNullProperties = server.version?.isAtLeast(2023, 2, 0) == true
         val canRegisterDeviceClassEnum = server.version?.isAtLeast(2023, 1, 0) == true
         val canRegisterDeviceClassEnergyCalories = server.version?.isAtLeast(2024, 10, 0) == true
+        val canRegisterDeviceClassBloodGlucose = server.version?.isAtLeast(2024, 12, 0) == true
 
         val registrationData = SensorRegistrationRequest(
             sensorRegistration.uniqueId,
@@ -729,6 +730,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 } else {
                     null
                 }
+                "blood_glucose_concentration" -> if (canRegisterDeviceClassBloodGlucose) sensorRegistration.deviceClass else null
                 else -> sensorRegistration.deviceClass
             },
             sensorRegistration.unitOfMeasurement,
