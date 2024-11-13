@@ -1322,17 +1322,17 @@
     <string name="basic_sensor_name_systolic_blood_pressure">Systolic blood pressure</string>
     <string name="sensor_description_systolic_blood_pressure">Last recorded systolic blood pressure in millimeters of Mercury</string>
     <string name="basic_sensor_name_body_temperature">Body temperature</string>
-    <string name="sensor_description_body_temperature">Last recorded body temperature</string>
+    <string name="sensor_description_body_temperature">Last recorded body temperature from Health Connect</string>
     <string name="basic_sensor_name_bone_mass">Bone mass</string>
-    <string name="sensor_description_bone_mass">Last recorded bone mass</string>
+    <string name="sensor_description_bone_mass">Last recorded bone mass from Health Connect</string>
     <string name="basic_sensor_name_height">Height</string>
-    <string name="sensor_description_height">Last recorded height</string>
+    <string name="sensor_description_height">Last recorded height from Health Connect</string>
     <string name="basic_sensor_name_lean_body_mass">Lean body mass</string>
-    <string name="sensor_description_lean_body_mass">Last recorded lean body mass</string>
+    <string name="sensor_description_lean_body_mass">Last recorded lean body mass from Health Connect</string>
     <string name="basic_sensor_name_oxygen_saturation">Oxygen saturation</string>
-    <string name="sensor_description_oxygen_saturation">Last recorded blood oxygen saturation</string>
+    <string name="sensor_description_oxygen_saturation">Last recorded blood oxygen saturation from Health Connect</string>
     <string name="basic_sensor_name_respiratory_rate">Respiratory rate</string>
-    <string name="sensor_description_respiratory_rate">Last recorded respiratory rate in breathes per minute</string>
+    <string name="sensor_description_respiratory_rate">Last recorded respiratory rate in breaths per minute from Health Connect</string>
     <string name="basic_sensor_name_vo2_max">VO2 max</string>
-    <string name="sensor_description_vo2_max">Last recorded VO2 max score</string>
+    <string name="sensor_description_vo2_max">Last recorded VO2 max score from Health Connect</string>
 </resources>

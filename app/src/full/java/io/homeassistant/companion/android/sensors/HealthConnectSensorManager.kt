@@ -91,17 +91,6 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
 
-        val systolicBloodPressure = SensorManager.BasicSensor(
-            id = "health_connect_systolic_blood_pressure",
-            type = "sensor",
-            commonR.string.basic_sensor_name_systolic_blood_pressure,
-            commonR.string.sensor_description_systolic_blood_pressure,
-            "mdi:heart-pulse",
-            deviceClass = "pressure",
-            unitOfMeasurement = "mmHg",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
-        )
-
         val bodyFat = SensorManager.BasicSensor(
             id = "health_connect_body_fat",
             type = "sensor",
@@ -251,6 +240,17 @@ class HealthConnectSensorManager : SensorManager {
             "mdi:walk",
             unitOfMeasurement = "steps",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+        )
+
+        val systolicBloodPressure = SensorManager.BasicSensor(
+            id = "health_connect_systolic_blood_pressure",
+            type = "sensor",
+            commonR.string.basic_sensor_name_systolic_blood_pressure,
+            commonR.string.sensor_description_systolic_blood_pressure,
+            "mdi:heart-pulse",
+            deviceClass = "pressure",
+            unitOfMeasurement = "mmHg",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
 
