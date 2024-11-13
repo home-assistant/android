@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import androidx.wear.watchface.complications.datasource.ComplicationDataSourceService.Companion.EXTRA_CONFIG_COMPLICATION_ID
 import androidx.wear.watchface.complications.datasource.ComplicationDataSourceUpdateRequester
 import dagger.hilt.android.AndroidEntryPoint
@@ -24,6 +25,7 @@ class ComplicationReceiver : BroadcastReceiver() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     override fun onReceive(context: Context, intent: Intent) {
+        Log.d(TAG, "onReceive intent action: ${intent.action}")
         val result = goAsync()
 
         try {
