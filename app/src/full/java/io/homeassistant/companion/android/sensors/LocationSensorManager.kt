@@ -231,18 +231,14 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                             forceHighAccuracyModeOn = turnOn
                             forceHighAccuracyModeOff = false
                             setHighAccuracyModeSetting(latestContext, turnOn)
-                            ioScope.launch {
-                                setupBackgroundLocation()
-                            }
+                            setupBackgroundLocation()
                         }
 
                         MessagingManager.FORCE_OFF -> {
                             Log.d(TAG, "High accuracy mode forced off")
                             forceHighAccuracyModeOn = false
                             forceHighAccuracyModeOff = true
-                            ioScope.launch {
-                                setupBackgroundLocation()
-                            }
+                            setupBackgroundLocation()
                         }
 
                         MessagingManager.HIGH_ACCURACY_SET_UPDATE_INTERVAL -> {
@@ -268,53 +264,52 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         val zoneEnabled = isEnabled(latestContext, zoneLocation)
         val zoneServers = getEnabledServers(latestContext, zoneLocation)
 
-        ioScope.launch {
-            try {
-                if (!backgroundEnabled && !zoneEnabled) {
-                    removeAllLocationUpdateRequests()
-                    isBackgroundLocationSetup = false
-                    isZoneLocationSetup = false
-                }
-                if (!zoneEnabled && isZoneLocationSetup) {
-                    removeGeofenceUpdateRequests()
-                    isZoneLocationSetup = false
-                }
-                if (!backgroundEnabled && isBackgroundLocationSetup) {
-                    removeBackgroundUpdateRequests()
-                    stopHighAccuracyService()
-                    isBackgroundLocationSetup = false
-                }
-                if (zoneEnabled && !isZoneLocationSetup) {
-                    isZoneLocationSetup = true
-                    requestZoneUpdates()
-                }
-                if (zoneEnabled && isZoneLocationSetup && geofenceRegistered != zoneServers) {
-                    Log.d(TAG, "Zone enabled servers changed. Reconfigure zones.")
-                    removeGeofenceUpdateRequests()
-                    requestZoneUpdates()
-                }
-
-                val now = System.currentTimeMillis()
-                if (
-                    (!highAccuracyModeEnabled && isBackgroundLocationSetup) &&
-                    (lastLocationReceived.all { (it.value + (DEFAULT_LOCATION_MAX_WAIT_TIME * 2L)) < now })
-                ) {
-                    Log.d(TAG, "Background location updates appear to have stopped, restarting location updates")
-                    isBackgroundLocationSetup = false
-                    removeBackgroundUpdateRequests()
-                } else if (
-                    highAccuracyModeEnabled &&
-                    (lastLocationReceived.all { (it.value + (getHighAccuracyModeUpdateInterval().toLong() * 2000L)) < now })
-                ) {
-                    Log.d(TAG, "High accuracy mode appears to have stopped, restarting high accuracy mode")
-                    isBackgroundLocationSetup = false
-                    stopHighAccuracyService()
-                }
-
-                setupBackgroundLocation(backgroundEnabled, zoneEnabled)
-            } catch (e: Exception) {
-                Log.e(TAG, "Issue setting up location tracking", e)
+        try {
+            if (!backgroundEnabled && !zoneEnabled) {
+                removeAllLocationUpdateRequests()
+                isBackgroundLocationSetup = false
+                isZoneLocationSetup = false
             }
+            if (!zoneEnabled && isZoneLocationSetup) {
+                removeGeofenceUpdateRequests()
+                isZoneLocationSetup = false
+            }
+            if (!backgroundEnabled && isBackgroundLocationSetup) {
+                removeBackgroundUpdateRequests()
+                stopHighAccuracyService()
+                isBackgroundLocationSetup = false
+            }
+            if (zoneEnabled && !isZoneLocationSetup) {
+                isZoneLocationSetup = true
+                requestZoneUpdates()
+            }
+            if (zoneEnabled && isZoneLocationSetup && geofenceRegistered != zoneServers) {
+                Log.d(TAG, "Zone enabled servers changed. Reconfigure zones.")
+                removeGeofenceUpdateRequests()
+                requestZoneUpdates()
+            }
+
+            val now = System.currentTimeMillis()
+            if (
+                (!highAccuracyModeEnabled && isBackgroundLocationSetup) &&
+                (lastLocationReceived.all { (it.value + (DEFAULT_LOCATION_MAX_WAIT_TIME * 2L)) < now })
+            ) {
+                Log.d(TAG, "Background location updates appear to have stopped, restarting location updates")
+                isBackgroundLocationSetup = false
+                fusedLocationProviderClient?.flushLocations()
+                removeBackgroundUpdateRequests()
+            } else if (
+                highAccuracyModeEnabled &&
+                (lastLocationReceived.all { (it.value + (getHighAccuracyModeUpdateInterval().toLong() * 2000L)) < now })
+            ) {
+                Log.d(TAG, "High accuracy mode appears to have stopped, restarting high accuracy mode")
+                isBackgroundLocationSetup = false
+                stopHighAccuracyService()
+            }
+
+            setupBackgroundLocation(backgroundEnabled, zoneEnabled)
+        } catch (e: Exception) {
+            Log.e(TAG, "Issue setting up location tracking", e)
         }
     }
 
@@ -723,7 +718,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                 HighAccuracyLocationService.updateNotificationAddress(latestContext, location)
                 // Send new location to Home Assistant
                 serverIds.forEach {
-                    ioScope.launch { sendLocationUpdate(location, it, trigger) }
+                    sendLocationUpdate(location, it, trigger)
                 }
             }
         }
@@ -790,16 +785,14 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                     "vertical_accuracy" to if (Build.VERSION.SDK_INT >= 26) geofencingEvent.triggeringLocation!!.verticalAccuracyMeters.toInt() else 0,
                     "zone" to zone.substring(zone.indexOf("_") + 1)
                 )
-                ioScope.launch {
-                    try {
-                        val serverId = zone.split("_")[0].toIntOrNull() ?: return@launch
-                        val enabled = isEnabled(latestContext, zoneLocation, serverId)
-                        if (!enabled) return@launch
-                        serverManager(latestContext).integrationRepository(serverId).fireEvent(zoneStatusEvent, zoneAttr as Map<String, Any>)
-                        Log.d(TAG, "Event sent to Home Assistant")
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Unable to send event to Home Assistant", e)
-                    }
+                try {
+                    val serverId = zone.split("_")[0].toIntOrNull() ?: return
+                    val enabled = isEnabled(latestContext, zoneLocation, serverId)
+                    if (!enabled) return
+                    serverManager(latestContext).integrationRepository(serverId).fireEvent(zoneStatusEvent, zoneAttr as Map<String, Any>)
+                    Log.d(TAG, "Event sent to Home Assistant")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unable to send event to Home Assistant", e)
                 }
             }
         }
@@ -823,15 +816,11 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             requestSingleAccurateLocation()
         } else {
             getEnabledServers(latestContext, zoneLocation).forEach {
-                ioScope.launch {
-                    sendLocationUpdate(geofencingEvent.triggeringLocation!!, it, trigger)
-                }
+                sendLocationUpdate(geofencingEvent.triggeringLocation!!, it, trigger)
             }
         }
 
-        ioScope.launch {
-            setupBackgroundLocation()
-        }
+        setupBackgroundLocation()
     }
 
     private suspend fun sendLocationUpdate(location: Location, serverId: Int, trigger: LocationUpdateTrigger?) {
@@ -930,28 +919,26 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             "false"
         ).toBoolean()
 
-        ioScope.launch {
-            try {
-                serverManager(latestContext).integrationRepository(serverId).updateLocation(updateLocation)
-                Log.d(TAG, "Location update sent successfully for $serverId as $updateLocationAs")
-                lastLocationSend[serverId] = now
-                lastUpdateLocation[serverId] = updateLocationString
-                logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.SENT)
+        try {
+            serverManager(latestContext).integrationRepository(serverId).updateLocation(updateLocation)
+            Log.d(TAG, "Location update sent successfully for $serverId as $updateLocationAs")
+            lastLocationSend[serverId] = now
+            lastUpdateLocation[serverId] = updateLocationString
+            logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.SENT)
 
-                // Update Geocoded Location Sensor
-                if (geocodeIncludeLocation) {
-                    val intent = Intent(latestContext, SensorReceiver::class.java)
-                    intent.action = SensorReceiverBase.ACTION_UPDATE_SENSOR
-                    intent.putExtra(
-                        SensorReceiverBase.EXTRA_SENSOR_ID,
-                        GeocodeSensorManager.geocodedLocation.id
-                    )
-                    latestContext.sendBroadcast(intent)
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Could not update location for $serverId.", e)
-                logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.FAILED_SEND)
+            // Update Geocoded Location Sensor
+            if (geocodeIncludeLocation) {
+                val intent = Intent(latestContext, SensorReceiver::class.java)
+                intent.action = SensorReceiverBase.ACTION_UPDATE_SENSOR
+                intent.putExtra(
+                    SensorReceiverBase.EXTRA_SENSOR_ID,
+                    GeocodeSensorManager.geocodedLocation.id
+                )
+                latestContext.sendBroadcast(intent)
             }
+        } catch (e: Exception) {
+            Log.e(TAG, "Could not update location for $serverId.", e)
+            logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.FAILED_SEND)
         }
     }
 
@@ -996,14 +983,20 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
         var geofenceCount = 0
         getEnabledServers(latestContext, zoneLocation).map { serverId ->
-            ioScope.async {
+            sensorWorkerScope.async {
                 val configuredZones = getZones(serverId, forceRefresh = true)
                 configuredZones.forEach {
                     addGeofenceToBuilder(geofencingRequestBuilder, serverId, it)
                     geofenceCount++
+                    if (geofenceCount >= 100) {
+                        return@async
+                    }
                     if (highAccuracyTriggerRange > 0 && highAccuracyZones.contains("${serverId}_${it.entityId}")) {
                         addGeofenceToBuilder(geofencingRequestBuilder, serverId, it, highAccuracyTriggerRange)
                         geofenceCount++
+                        if (geofenceCount >= 100) {
+                            return@async
+                        }
                     }
                 }
                 geofenceRegistered.add(serverId)
