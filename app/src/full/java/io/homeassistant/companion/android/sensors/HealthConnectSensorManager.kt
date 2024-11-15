@@ -93,7 +93,7 @@ class HealthConnectSensorManager : SensorManager {
         val distance = SensorManager.BasicSensor(
             id = "health_connect_distance",
             type = "sensor",
-            commonR.string.basic_sensor_name_distance,
+            commonR.string.sensor_name_daily_distance,
             commonR.string.sensor_description_distance,
             "mdi:map-marker-distance",
             deviceClass = "distance",
@@ -105,7 +105,7 @@ class HealthConnectSensorManager : SensorManager {
         val elevationGained = SensorManager.BasicSensor(
             id = "health_connect_elevation_gained",
             type = "sensor",
-            commonR.string.basic_sensor_name_elevation_gained,
+            commonR.string.basic_sensor_name_daily_elevation_gained,
             commonR.string.sensor_description_elevation_gained,
             "mdi:elevation-rise",
             deviceClass = "distance",
@@ -117,7 +117,7 @@ class HealthConnectSensorManager : SensorManager {
         val floorsClimbed = SensorManager.BasicSensor(
             id = "health_connect_floors_climbed",
             type = "sensor",
-            commonR.string.basic_sensor_name_floors_climbed,
+            commonR.string.sensor_name_daily_floors,
             commonR.string.sensor_description_floors_climbed,
             "mdi:stairs",
             unitOfMeasurement = "floors",
@@ -139,7 +139,7 @@ class HealthConnectSensorManager : SensorManager {
         val steps = SensorManager.BasicSensor(
             id = "health_connect_steps",
             type = "sensor",
-            commonR.string.basic_sensor_name_steps,
+            commonR.string.sensor_name_daily_steps,
             commonR.string.sensor_description_steps,
             "mdi:walk",
             unitOfMeasurement = "steps",
