@@ -144,6 +144,10 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
                 return@launch
             }
 
+            if (sbn.notification.group == "ranker_group") {
+                return@launch
+            }
+
             val attr = mappedBundle(sbn.notification.extras).orEmpty()
                 .plus("package" to sbn.packageName)
                 .plus("post_time" to sbn.postTime)
