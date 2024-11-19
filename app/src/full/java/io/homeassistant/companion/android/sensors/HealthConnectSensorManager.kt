@@ -444,7 +444,7 @@ class HealthConnectSensorManager : SensorManager {
             healthConnectClient.permissionController.getGrantedPermissions().containsAll(requiredPermissions(sensorId).toSet())
         } catch (e: Exception) {
             Log.e(TAG, "Unable to check permissions", e)
-            false
+            true // default to true as we still need to check sensor enabled state
         }
     }
 
